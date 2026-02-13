@@ -44,8 +44,10 @@ class VisualFlightMission:
             self.target_px, self.tgt_type, self.search_poly = self.sim.setup_on_map()
             
             self.eyes = VisionSystem(camera_index=None, model_path="best.tflite")
-            if self.tgt_type == "dummy": self.eyes.using_ai = True
-            else: self.eyes.using_ai = False
+            if self.tgt_type == "dummy" and self.eyes.model is not None:
+                self.eyes.using_ai = True
+            else:
+                self.eyes.using_ai = False
             
         else: # REAL MODE
             self.geo = GeoTransformer(map_w_px=4800) 
