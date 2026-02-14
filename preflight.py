@@ -119,8 +119,12 @@ def main():
     plat = detect_platform()
     print(f"\n  [PLATFORM]   {plat}")
 
-    # --- Mode ---
-    mode = os.environ.get("DRONE_MODE", "SIMULATION")
+    # --- Mode (read from config.py so it matches main.py) ---
+    try:
+        import config as _cfg
+        mode = _cfg.MODE
+    except Exception:
+        mode = os.environ.get("DRONE_MODE", "REAL")
     print(f"  [MODE]       {mode}")
 
     # --- Connection string (from config auto-detect) ---

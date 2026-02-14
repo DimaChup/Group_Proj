@@ -28,7 +28,7 @@ ssh pi@<pi-ip-address>
 source pienv/bin/activate
 
 # Navigate to project
-cd ~/v3
+cd ~/sar-drone
 
 # Set mode to REAL
 export DRONE_MODE=REAL

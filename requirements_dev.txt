@@ -1,0 +1,7 @@
+# Requirements for development (Windows / WSL / Linux laptop)
+# Install with: pip install -r requirements_dev.txt
+pymavlink
+opencv-python
+numpy<2
+ultralytics
+matplotlib

@@ -96,8 +96,7 @@ tests/             ← all test scripts
 | `simulation.py` | Laptop simulation only |
 | `generate_dataset.py` | Training data generation — laptop only |
 | `project_data/` | Training/project data — laptop only |
-| `requirements_linux.txt` | Full dev machine freeze — too heavy for Pi |
-| `requirements_windows.txt` | Windows only |
+| `requirements_dev.txt` | Laptop dev dependencies — not needed on Pi |
 | `Dockerfile.pi-test` | Docker testing only |
 | `.git/` | Not needed unless you want git on Pi |
 
@@ -118,10 +117,10 @@ source pienv/bin/activate
 ### 2.2 Install dependencies
 
 ```bash
-pip install pymavlink opencv-python-headless "numpy<2" tflite-runtime
+pip install -r requirements_pi.txt
 ```
 
-That's it. Only 4 packages:
+That's it. Only 4 packages (defined in `requirements_pi.txt`):
 
 | Package | What it's for |
 |---------|--------------|

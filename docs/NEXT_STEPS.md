@@ -1,33 +1,93 @@
 # Next Steps - Clear Roadmap
 
+Each phase adds one layer of complexity. Don't skip ahead — each phase proves the previous one works.
+
+```
+PHASE 0: Laptop         → Code works, simulation runs, model detects
+PHASE 1: Pi + Vision    → Camera works, AI detects on real hardware
+PHASE 2: Pi + Vision + Cube  → CV and flight controller talk to each other
+PHASE 3: First Flight   → Calibrate with real drone (manual only)
+PHASE 4: Ground Station  → Remote monitoring and control
+PHASE 5: Autonomous     → Full mission with gradual confidence building
+```
+
 ---
 
-## PHASE 1: Bench Work (no flying needed)
+## PHASE 0: Laptop (before you touch the Pi)
 
-Everything here is done on a desk or carrying the drone by hand.
-**Do ALL of this before your first test flight date.**
+**Goal**: Prove the code works and you understand the system.
 
-| Step | Script | What it proves | How you know it works |
-|------|--------|---------------|----------------------|
-| 1 | `python tests/pi_1_camera.py` | Camera gives frames | Prints frame size, shows image |
-| 2 | `python tests/pi_2_detect.py` | AI detects dummy | Bounding box on screen, or beeps via PuTTY (`--headless`) |
-| 3 | `python tests/pi_3_benchmark.py` | Inference speed OK | Average < 200ms per frame |
-| 3b | `python tests/pi_8_camera_test.py` | **Camera + CV quality** | Reports: pipeline FPS, motion blur effect, is blur killing detection? |
-| 3c | `python tests/pi_9_resolution_test.py` | **Resolution sweet spot** | Tests 640x480 → 320x240 → 160x120: which is fastest while still detecting? |
-| 4 | `python tests/pi_6_fov_test.py` | Bench FOV check | Hold camera over ruler, compare predicted vs actual |
+| Step | What to do | How you know it works |
+|------|-----------|----------------------|
+| 0a | Run `python simulation.py` | See search pattern, click to place dummy, watch drone find it |
+| 0b | Run `python tests/pi_3_benchmark.py` | Model loads, detects on test image, prints speed + position |
+| 0c | Read `docs/PI_SETUP.md` | Know exactly what to do when Pi arrives |
+| 0d | Push code to git (including `best.tflite`) | Ready to clone onto Pi |
+
+**Sign-off**: Simulation works. Model detects. Code is in git.
+
+---
+
+## PHASE 1: Pi — Vision Only (no Cube needed)
+
+**Goal**: Camera + AI detection working on Pi hardware.
+
+### Setup (one time)
+```bash
+sudo raspi-config    # enable camera, reboot
+mkdir -p ~/sar-drone && cd ~/sar-drone
+git clone <your-repo-url> .
+python3 -m venv --system-site-packages pienv
+source pienv/bin/activate
+pip install -r requirements_pi.txt
+```
+
+### Tests
+
+| Step | Script | What it proves | Pass criteria |
+|------|--------|---------------|--------------|
+| 1 | `python tests/pi_1_camera.py` | Camera gives frames | Prints frame size |
+| 2 | `python tests/pi_2_detect.py` | AI detects dummy | Bounding box on dummy printout |
+| 3 | `python tests/pi_3_benchmark.py` | Speed OK | Avg < 200ms |
+| 3b | `python tests/pi_8_camera_test.py --headless` | FPS + blur | Reports pipeline FPS, blur impact |
+| 3c | `python tests/pi_9_resolution_test.py --headless` | Best resolution | Recommends optimal resolution |
+| 4 | `python tests/pi_6_fov_test.py --headless` | Bench FOV | Predicted vs actual match |
+
+### After Phase 1: Update config.py
+
+Based on step 3c, if a lower resolution works:
+```python
+IMAGE_W = 320   # or whatever pi_9 recommends
+IMAGE_H = 240
+```
+
+**Sign-off**: Camera captures frames. AI detects dummy. Speed is acceptable. Best resolution chosen.
+
+---
+
+## PHASE 2: Pi — Vision + Cube (bench, no flying)
+
+**Goal**: CV and Cube work together on the desk.
+
+### Wiring
+
+| Pi GPIO | Cube TELEM2 |
+|---------|-------------|
+| TX (GPIO 14, pin 8) | RX |
+| RX (GPIO 15, pin 10) | TX |
+| GND (pin 6) | GND |
+
+### Tests
+
+| Step | Script | What it proves | Pass criteria |
+|------|--------|---------------|--------------|
 | 5 | `python tests/test_cube.py` | Cube talks to Pi | Heartbeat + yaw/pitch/roll printed |
-| 6 | `python tests/pi_4_detect_and_log.py` | **CV + Cube together** | Carry drone over dummy → buzzer beeps, guidance commands, CSV log |
+| 6 | `python tests/pi_4_detect_and_log.py` | **CV + Cube together** | Buzzer beeps, guidance commands, CSV log |
 | 7 | `python preflight.py` | All connections OK | All checks pass |
 
-### Step 6 is the big one
+### Step 6 is the big bench test
 
-Carry the drone by hand over a dummy printout. The script does everything at once:
-
-1. Detects dummy with CV
-2. Reads yaw/altitude/GPS from Cube
-3. Buzzer beeps on detection
-4. Logs to `detection_log.csv`
-5. Shows guidance: **"go LEFT"**, **"go RIGHT"**, **"CENTRED - DESCEND"**
+Carry the drone by hand over a dummy printout:
 
 ```
 [READY] Carry drone over dummy. Follow guidance commands.
@@ -37,63 +97,43 @@ Carry the drone by hand over a dummy printout. The script does everything at onc
   [14:23:05] DETECTED #3  conf=0.93  >> CENTRED - DESCEND  GPS=(no fix)  yaw=48
 ```
 
-**Done when**: Buzzer beeps, guidance makes sense, CSV has entries.
+This proves: camera detects → Cube reads telemetry → buzzer beeps → guidance logic works → CSV logs.
 
-### After bench work: update config.py
-
-Based on steps 3b and 3c, update `config.py` if needed:
-- `IMAGE_W` / `IMAGE_H` — if a lower resolution is faster without losing detection
-- Note the pipeline FPS and blur results for reference on flight day
-
-### Bench work sign-off checklist
-
-Before going to the field, confirm:
-- [ ] Camera captures frames reliably
-- [ ] AI detects dummy with confidence > 0.4
-- [ ] Inference speed < 200ms (ideally < 100ms)
-- [ ] Best resolution chosen and set in config.py
-- [ ] Cube heartbeat works over serial
-- [ ] CV + Cube work together (step 6 passed)
-- [ ] Preflight passes (step 7)
-- [ ] Spare battery, dummy printout, tape measure packed for flight day
+**Sign-off**: Buzzer beeps on detection. Guidance makes sense. CSV has entries. Preflight passes.
 
 ---
 
-## PHASE 2: First Test Flight Day
+## PHASE 3: First Test Flight Day (manual only)
 
-**All manual — pilot flies with RC, no autonomous code running.**
-The goal is to collect calibration data and prove detection works from the air.
+**Goal**: Calibrate with real data. No autonomous code — pilot flies with RC the whole time.
 
 ### What to bring
 
-- [ ] Drone with Pi + Camera + Cube (all wired)
-- [ ] Laptop with SSH access to Pi (WiFi hotspot or direct cable)
-- [ ] RC controller (pilot flies manually the whole time)
-- [ ] Telemetry radio pair (optional but useful for Mission Planner view)
-- [ ] Large dummy printout — lay flat on the ground
-- [ ] Tape measure or ground markers at known distances (for FOV measurement)
-- [ ] Notebook for recording numbers
-- [ ] Fully charged batteries (drone + Pi)
+- [ ] Drone with Pi + Camera + Cube (all wired, bench-tested)
+- [ ] Laptop with SSH access to Pi
+- [ ] RC controller
+- [ ] Large dummy printout — lay flat on ground
+- [ ] Tape measure or ground markers
+- [ ] Notebook + pen
+- [ ] Fully charged batteries
 
 ### Roles
 
 | Person | Job |
 |--------|-----|
 | Pilot | Flies with RC. Holds altitude when told. Safety override. |
-| Operator | SSH into Pi on laptop. Runs scripts. Records data. |
-| Spotter | Watches drone, calls out altitude from Mission Planner or RC telemetry |
+| Operator | SSH into Pi. Runs scripts. Records data. |
+| Spotter | Calls out altitude from Mission Planner or RC telemetry |
 | Safety | Watches for people/obstacles, calls "LAND NOW" if needed |
 
-### Flight Day Step-by-Step
+### Step 8: Max Detection Altitude
 
-#### Step 8: Hover + Detection Test (is CV working from the air?)
+Can the drone see the dummy from above?
 
-This is the most important test. Can the drone actually see the dummy from above?
-
-1. Place dummy flat on the ground, clear area around it
-2. SSH into Pi: `python tests/pi_2_detect.py --headless`
-3. Pilot takes off manually, hovers directly above dummy
-4. Hold steady at each altitude for ~10 seconds:
+1. Place dummy flat on ground
+2. SSH: `python tests/pi_2_detect.py --headless`
+3. Pilot hovers directly above dummy
+4. Hold at each altitude ~10 seconds:
 
 | Altitude | Detected? | Confidence | Notes |
 |----------|-----------|------------|-------|
@@ -104,69 +144,41 @@ This is the most important test. Can the drone actually see the dummy from above
 | 25m      |           |            |       |
 | 30m      |           |            |       |
 
-5. Operator watches SSH terminal — detection prints when found
-6. Record the **max altitude where confidence > 0.5 consistently**
-7. Ctrl+C to stop the script
+5. Record max altitude where confidence > 0.5 consistently
+6. Ctrl+C to stop
 
-**What this tells you:**
-- `TARGET_ALT` — set to max reliable detection height (search at this altitude)
-- `VERIFY_ALT` — set to ~half of TARGET_ALT (descend to this for closer look)
-- If detection fails at all heights → problem with model, camera angle, or dummy size
+**Result** → update `config.py`:
+- `TARGET_ALT` = max reliable detection height
+- `VERIFY_ALT` = ~half of TARGET_ALT
 
-#### Step 9: FOV Calibration (how much ground does the camera see?)
+### Step 9: FOV Calibration
 
-1. Lay tape measure or markers on the ground at known distances (e.g. 5m apart)
-2. SSH into Pi: `python tests/pi_7_alt_test.py`
-3. Pilot hovers at altitude 1 (e.g. 10m), holds steady
-4. Operator presses SPACE → script reads altitude from Cube
-5. Look at what camera sees — enter the ground width visible (metres)
-6. Pilot climbs to altitude 2 (e.g. 20m), repeat
-7. Press 'q' when done — script shows results
+How much ground does the camera see at altitude?
 
-The script will output:
-```
-  Your actual FOV:  62.3 degrees
-  Config FOV:       45.4 degrees
-  Difference:       +16.9 degrees
+1. Lay markers on ground at known distances
+2. SSH: `python tests/pi_7_alt_test.py`
+3. Pilot hovers at ~10m, operator presses SPACE, enters ground width visible
+4. Pilot climbs to ~20m, repeat
+5. Script outputs actual FOV and correction values
 
-  >> UPDATE config.py with ONE of these:
-     SENSOR_WIDTH_MM = 7.21  (keep FOCAL_LENGTH_MM = 6.0)
-     FOCAL_LENGTH_MM = 4.18  (keep SENSOR_WIDTH_MM = 5.02)
-```
+**Result** → update `config.py`:
+- `SENSOR_WIDTH_MM` or `FOCAL_LENGTH_MM` (script tells you which)
 
-**Update config.py immediately** — this affects how the search pattern spacing is calculated.
+### Step 10: (bonus) CV + Cube from the Air
 
-#### Step 10: (If time allows) Carry test with CV + Cube
+If time allows:
+1. SSH: `python tests/pi_4_detect_and_log.py`
+2. Pilot hovers at ~15m above dummy, flies side to side
+3. Watch: does guidance say LEFT/RIGHT/CENTRED correctly?
+4. Does buzzer beep?
 
-If there's flight time left, try `pi_4_detect_and_log.py` while hovering:
-1. SSH into Pi: `python tests/pi_4_detect_and_log.py`
-2. Pilot hovers at ~15m above dummy
-3. Slowly fly side to side across the dummy
-4. Watch: does it detect? Does guidance say LEFT/RIGHT/CENTRED correctly?
-5. Check: does buzzer beep on the Cube?
-
-This proves the full pipeline works from the air — not just detection, but guidance too.
-
-### After Flight Day: Update config.py
-
-| Parameter | What to change | Where it came from |
-|-----------|---------------|-------------------|
-| `TARGET_ALT` | Max reliable detection height | Step 8 altitude table |
-| `VERIFY_ALT` | ~half of TARGET_ALT | Step 8 altitude table |
-| `SENSOR_WIDTH_MM` or `FOCAL_LENGTH_MM` | Corrected FOV | Step 9 output |
-| `IMAGE_W` / `IMAGE_H` | Best resolution (if not already set from bench) | Step 3c bench result |
-
-### Flight day sign-off checklist
-
-- [ ] Know the max detection altitude → `TARGET_ALT` updated
-- [ ] Know the real FOV → `SENSOR_WIDTH_MM` or `FOCAL_LENGTH_MM` updated
-- [ ] CV works from the air (detections seen in SSH terminal)
-- [ ] If step 10 done: guidance commands make sense from the air
-- [ ] All data noted down / detection_log.csv saved
+**Sign-off**: Know max detection altitude. Know real FOV. config.py updated with real numbers.
 
 ---
 
-## PHASE 3: Ground Station Setup (can overlap with above)
+## PHASE 4: Ground Station + Pre-Autonomous Prep
+
+**Goal**: Can monitor and control the mission remotely.
 
 ```
 [Camera] ---> [Pi] <--serial--> [Cube] <--telemetry radio--> [GS / Mission Planner]
@@ -174,93 +186,112 @@ This proves the full pipeline works from the air — not just detection, but gui
                 +-------------- WiFi (SSH) ---------------------+
 ```
 
-| Step | What | How you know it works |
-|------|------|----------------------|
+| Step | What | Pass criteria |
+|------|------|--------------|
 | 11 | Plug in telemetry radios | Mission Planner shows drone on map |
-| 12 | SSH from laptop to Pi | Can run commands on Pi remotely |
-| 13 | `python main.py` over SSH | Full mission runs, MP shows flight, Y/N works |
+| 12 | SSH from laptop to Pi | Can run scripts remotely |
+| 13 | Ground test: `python main.py` (no props!) | State machine runs, MP shows commands, kill switch works |
+
+Step 13 is critical — run the full mission code connected to the real Cube but **with no propellers**. Watch Mission Planner to see if it tries to arm, sends waypoints, etc.
+
+**Sign-off**: Telemetry works. SSH works. main.py talks to real Cube without errors.
 
 ---
 
-## PHASE 4: Second Test Flight Day (semi-autonomous)
+## PHASE 5: Autonomous Flight (gradual)
 
-**Careful transition from manual to automatic. Pilot always has RC override.**
+**Goal**: Full mission. Build confidence step by step.
 
-### Step 14: Ground test with real Cube (no props)
+### Step 14: Short hover test
 
-Before flying autonomous, test on the ground with no props:
-1. `python main.py` on Pi
-2. Watch Mission Planner — does it try to arm? Send waypoints?
-3. Verify state machine runs through INIT → CONNECTING → ARMING
-4. Kill switch / disarm works instantly
-5. This proves the code talks to real Cube correctly
+- Props on, pilot ready with RC kill switch
+- `python main.py` — let it arm and take off
+- **Immediately switch to manual if anything unexpected happens**
+- Just prove: arm → takeoff → hover at TARGET_ALT → RTL
+- Don't even need the dummy yet
 
-### Step 15: First autonomous flight
+### Step 15: Full search with dummy
 
-1. Place dummy somewhere in the search area
-2. Pilot ready on RC with kill switch
-3. `python main.py` over SSH
-4. Drone takes off, follows search pattern
-5. When it detects dummy → operator gets Y/N prompt over SSH
-6. Press Y → drone lands. Press N → drone continues search.
-7. **Pilot takes over manually at ANY sign of unexpected behaviour**
+- Place dummy somewhere in search area
+- `python main.py` over SSH
+- Drone takes off → flies search pattern → detects dummy → Y/N prompt
+- Press Y → drone lands near target
+- Press N → drone continues search
+- **Pilot takes over at ANY sign of unexpected behaviour**
 
-### Step 16: Iterate
+### Step 16: Iterate and refine
 
-- Adjust search speed if drone moves too fast for detection
-- Adjust pattern spacing based on real FOV
-- Test edge cases: dummy at edge of search area, wind, partial occlusion
-- Test N rejection → does it resume search correctly?
+- Search speed too fast? → lower `SEARCH_SPEED_MPS` in config.py
+- Pattern has gaps? → adjust search pattern spacing based on real FOV
+- False positives? → raise confidence threshold in vision.py
+- Missed dummy? → try bigger model, retrain with aerial data (see CV_GUIDE.md)
+- Test N rejection → resume search correctly?
+- Test edge cases: dummy at edge, wind, partial occlusion
 
 ---
 
 ## Summary
 
-| Phase | Steps | Needs | Can do now? |
-|-------|-------|-------|-------------|
-| 1. Bench testing | 1-7 (incl 3b, 3c) | Pi + Camera + Cube on desk | **YES** |
-| 2. First flight day | 8-10 | Manual hover with RC | After bench work passes |
-| 3. Ground station | 11-13 | Telemetry radios + WiFi | Partly (MP setup) |
-| 4. Second flight day | 14-16 | Everything above done | After calibration |
-
-**You can validate 80% of the system on a bench before ever leaving the ground.**
-
----
-
-## Why this order?
-
-| Phase | What's new | What could go wrong |
-|-------|-----------|-------------------|
-| Bench (1-7) | Camera, CV, Cube, wiring | Library issues, baud rate, serial port |
-| First flight (8-10) | Real altitude, real FOV, real detection | Config params wrong, detection range, camera angle |
-| GS (11-13) | Telemetry, WiFi, SSH | Radio, firewall, network |
-| Second flight (14-16) | Autonomous control | Search pattern, timing, wind, everything physical |
-
-Each phase isolates one type of problem. If step 6 fails, you know it's the Cube wiring — not the camera, because steps 1-3 already proved that works.
+| Phase | What | Needs | Can do now? |
+|-------|------|-------|-------------|
+| 0. Laptop | Simulation + model test | Laptop only | **YES** |
+| 1. Pi Vision | Camera + AI on Pi | Pi + Camera | **When Pi arrives** |
+| 2. Pi Vision+Cube | CV + Cube on bench | Pi + Camera + Cube | After Phase 1 |
+| 3. First flight | Calibrate (manual RC) | All hardware + field | After Phase 2 |
+| 4. Ground station | Telemetry + SSH | Radios + WiFi | Can overlap with 2-3 |
+| 5. Autonomous | Full mission | Everything | After calibration |
 
 ---
 
-## Quick Pre-Flight-Day Summary
+## Evolution of Functionality
 
 ```
-BEFORE FLIGHT DAY (bench):
-  Steps 1-7  →  camera works, AI detects, speed ok, Cube talks, CV+Cube together, preflight passes
-  Result: You KNOW the system works on a desk. No surprises from software.
+Phase 0:  [Laptop]  simulation works, model detects test image
+             │
+Phase 1:  [Pi]  camera works → AI detects dummy on desk
+             │
+Phase 2:  [Pi + Cube]  CV + Cube talk → buzzer beeps → guidance works on bench
+             │
+Phase 3:  [Real drone]  detection from air → calibrate FOV + altitude → real config values
+             │
+Phase 4:  [+ Ground Station]  remote monitoring → ground test main.py (no props)
+             │
+Phase 5:  [Autonomous]  hover test → full search → detect → land → iterate
+             │
+         [FINAL GOAL]  Reliable autonomous SAR: search → detect → verify → land
+```
 
-ON FLIGHT DAY 1 (manual only):
-  Step 8   →  hover above dummy at 5m/10m/15m/20m/25m/30m → find max detection height
-  Step 9   →  hover at 2 heights → measure ground footprint → calibrate FOV
-  Step 10  →  (bonus) hover while running CV+Cube script → guidance works from air?
-  Result: You KNOW config.py has real numbers. Detection works from real altitude.
+Each phase adds ONE new thing. If something breaks, you know exactly which layer caused it.
 
-AFTER FLIGHT DAY 1:
-  Update config.py with real TARGET_ALT, VERIFY_ALT, FOV values
+---
 
-BEFORE FLIGHT DAY 2:
-  Steps 11-13 →  ground station, SSH, test main.py with no props
+## Quick Reference
 
-ON FLIGHT DAY 2 (semi-autonomous):
-  Step 14  →  ground test (no props) with main.py
-  Step 15  →  first autonomous flight with dummy in search area
-  Step 16  →  iterate, tune, edge cases
+```bash
+# PHASE 0 — Laptop
+python simulation.py
+python tests/pi_3_benchmark.py
+
+# PHASE 1 — Pi Vision
+python tests/pi_1_camera.py              # camera
+python tests/pi_2_detect.py              # detection
+python tests/pi_3_benchmark.py           # speed
+python tests/pi_8_camera_test.py --headless   # FPS + blur
+python tests/pi_9_resolution_test.py --headless  # resolution
+python tests/pi_6_fov_test.py --headless      # bench FOV
+
+# PHASE 2 — Pi Vision + Cube
+python tests/test_cube.py                # Cube heartbeat
+python tests/pi_4_detect_and_log.py      # CV + Cube together
+python preflight.py                      # all checks
+
+# PHASE 3 — First Flight (manual)
+python tests/pi_2_detect.py --headless   # detection at altitude
+python tests/pi_7_alt_test.py            # FOV calibration
+
+# PHASE 4 — Ground Station
+python main.py                           # ground test (no props!)
+
+# PHASE 5 — Autonomous
+python main.py                           # full mission
 ```
