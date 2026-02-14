@@ -348,6 +348,47 @@ Override anytime:
 
 The same `python main.py` command works everywhere. The hardware decides the connection.
 
+### What You Still Need (Hardware Checklist)
+
+The code is ready. These are the hardware/setup steps remaining:
+
+```
+STATUS    WHAT                          WHY                                    TEST
+──────    ────                          ───                                    ────
+[DONE]    Simulation working            Logic, search pattern, detection       main.py SIMULATION mode
+[ ]       Raspberry Pi set up           Transfer code, install dependencies    SSH in, python --version
+[ ]       CSI camera on Pi              Real frames instead of simulated       pi_1_test_camera.py
+[ ]       best.tflite model on Pi       Ultralytics too heavy for Pi CPU       pi_2_detect_image.py
+[ ]       AI detection on Pi            Confirm it detects dummy printout      pi_3_live_detect.py
+[ ]       Cube wired to Pi (UART)       Real flight controller connection      pi_4_detect_and_log.py
+[ ]       Bench test (no props)         Verify commands in Mission Planner     main.py REAL mode, props OFF
+[ ]       Manual flight with detection  Calibrate detection altitude           Pilot flies, Pi logs detections
+[ ]       Full autonomous flight        The real mission                       main.py REAL mode, props ON
+```
+
+Each step proves the previous one works. If something breaks, you know exactly which step caused it.
+
+### Biggest Risk Unknowns
+
+These are the things simulation can't tell you — you find out on real hardware:
+
+1. **Detection altitude**: Does the AI see the dummy from 30m with the real camera?
+   The real camera has different resolution, lens, and lighting than map.jpg crops.
+   Phase 3 (manual flight with passive detection) answers this before any autonomous flight.
+
+2. **Inference speed on Pi**: TFLite on Pi CPU will be slower than Ultralytics on your
+   laptop GPU. If it's too slow, the drone might fly past a target before detection fires.
+   pi_3 and pi_8 test scripts measure this.
+
+3. **GPS accuracy**: SITL has perfect GPS. Real GPS drifts ~2-3m. The centering and
+   landing logic may need tuning based on real GPS behaviour.
+
+4. **Wind and movement**: Simulation has no wind. Real flight means the camera frame
+   is moving and tilting. Detection confidence may drop.
+
+None of these require code rewrites — just tuning config.py values (altitudes, speeds,
+thresholds) based on real test data.
+
 ---
 
 ## The Mission State Machine
