@@ -86,15 +86,21 @@ def check_model(model_path="best.tflite"):
     except Exception as e:
         return False, f"Error: {e}"
 
-def check_mavlink(conn_str, timeout=5):
+def check_mavlink(conn_str, baud=57600, timeout=5):
     """Test MAVLink heartbeat on the connection."""
     try:
         from pymavlink import mavutil
-        m = mavutil.mavlink_connection(conn_str)
+        if conn_str.startswith("/dev/"):
+            m = mavutil.mavlink_connection(conn_str, baud=baud)
+        else:
+            m = mavutil.mavlink_connection(conn_str)
         hb = m.wait_heartbeat(timeout=timeout)
         m.close()
         if hb:
-            return True, f"Heartbeat received (system {hb.get_srcSystem()})"
+            baud_info = f", baud={baud}" if conn_str.startswith("/dev/") else ""
+            return True, f"Heartbeat received (system {hb.get_srcSystem()}{baud_info})"
+        if conn_str.startswith("/dev/"):
+            return False, f"No heartbeat (baud={baud} - wrong baud rate?)"
         return False, "No heartbeat within timeout"
     except ImportError:
         return False, "pymavlink not installed"
@@ -135,7 +141,8 @@ def main():
         src = "auto-detected serial port"
     else:
         src = "default"
-    print(f"  [CONNECTION] {conn_str} ({src})")
+    baud_info = f", baud={baud}" if conn_str.startswith("/dev/") else ""
+    print(f"  [CONNECTION] {conn_str}{baud_info} ({src})")
 
     # --- Run checks ---
     results = []
@@ -162,7 +169,7 @@ def main():
 
     # 2. MAVLink heartbeat (only if port/serial was reachable)
     if ok:
-        hb_ok, hb_msg = check_mavlink(conn_str)
+        hb_ok, hb_msg = check_mavlink(conn_str, baud=baud)
         status = "OK" if hb_ok else "FAIL"
         print(f"  [{status:4s}] {'HEARTBEAT':12s}  {hb_msg}")
         results.append(("HEARTBEAT", hb_ok, hb_msg))
