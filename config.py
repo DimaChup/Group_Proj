@@ -2,17 +2,21 @@
 # ==========================================
 #       CONFIGURATION & SETTINGS
 # ==========================================
+import os
 
 # --- OPERATION MODE ---
 # "SIMULATION": Uses map.jpg and mouse clicks for setup.
 # "REAL": Uses Real Camera and assumes waypoints are loaded/generated elsewhere.
-MODE = "SIMULATION" 
+# Override with: export DRONE_MODE=REAL
+MODE = os.environ.get("DRONE_MODE", "SIMULATION")
 
 # --- FLIGHT CONNECTION ---
-# Sim: 'tcp:127.0.0.1:5762'
-# Real (Pi to Cube via Serial): '/dev/ttyACM0' or '/dev/ttyAMA0'
-CONNECTION_STR = 'tcp:127.0.0.1:5762'
-BAUD_RATE = 57600
+# Windows sim: 'tcp:127.0.0.1:5762'
+# WSL sim:     'tcp:<gateway-ip>:5762'  (run: ip route show default | awk '{print $3}')
+# Pi real:     '/dev/ttyAMA0'
+# Override with: export DRONE_CONN=tcp:172.20.80.1:5762
+CONNECTION_STR = os.environ.get("DRONE_CONN", 'tcp:127.0.0.1:5762')
+BAUD_RATE = int(os.environ.get("DRONE_BAUD", 57600))
 
 # --- ALTITUDES ---
 TARGET_ALT = 30.0 # Search Altitude (Meters)
