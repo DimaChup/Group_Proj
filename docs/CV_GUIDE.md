@@ -4,6 +4,101 @@ How the vision system works, how to improve it, and how to swap models — witho
 
 ---
 
+## The Journey: Basic → Working → Optimised
+
+Get it working first with defaults. Then measure. Then improve. Don't skip ahead.
+
+### Stage 1: Get Basic Detection Running on Pi
+
+Goal: AI detects a dummy held in front of the camera. Nothing fancy.
+
+```
+[ ] Pi set up, venv activated, dependencies installed (PI_SETUP.md)
+[ ] Camera gives frames                        → pi_1_camera.py
+[ ] AI loads and detects dummy on bench         → pi_2_detect.py --headless
+[ ] Note inference speed (just observe for now) → pi_3_benchmark.py
+```
+
+At this point you have: camera works, AI works, detection works. Don't tune anything yet.
+
+### Stage 2: Measure Everything (Before First Flight)
+
+Goal: know your numbers so you can make informed decisions.
+
+```
+[ ] Inference speed: ___ms per frame            → pi_3_benchmark.py
+[ ] Best resolution that still detects          → pi_9_resolution_test.py
+    Result: ___x___ at ___ms
+[ ] Camera FPS vs pipeline FPS                  → pi_8_camera_test.py
+    Camera: ___fps, Pipeline: ___fps
+[ ] Bench FOV check (camera over ruler)         → pi_6_fov_test.py
+    Measured FOV matches config? Y/N
+    If N → update SENSOR_WIDTH_MM or FOCAL_LENGTH_MM in config.py
+```
+
+Update config.py with findings:
+```python
+IMAGE_W = ___    # best resolution from pi_9
+IMAGE_H = ___
+```
+
+### Stage 3: First Flight Data Collection
+
+Goal: find out what simulation couldn't tell you.
+
+```
+[ ] Manual flight (pilot on RC, Pi logging passively)
+[ ] Save frames at 5m, 10m, 15m, 20m, 25m, 30m  → pi_2_detect.py during flight
+[ ] At what altitude does detection first fail?    → ___m
+[ ] Any false positives? What triggered them?      → note: ___
+[ ] Real FOV at altitude                           → pi_7_alt_test.py
+```
+
+Update config.py with findings:
+```python
+TARGET_ALT = ___     # highest altitude where detection works reliably
+VERIFY_ALT = ___     # lower altitude for close-up confirmation
+```
+
+### Stage 4: Optimise (Iterate After Each Flight)
+
+Now you have real data. Improve one thing at a time.
+
+```
+OPTION A — Better training data (biggest impact):
+  [ ] Collect real aerial frames from flights
+  [ ] Label with Roboflow or CVAT
+  [ ] Retrain: yolo detect train model=yolov8n.pt data=dataset.yaml epochs=100
+  [ ] Export: yolo export model=best.pt format=tflite
+  [ ] Copy new best.tflite to Pi
+  [ ] Benchmark old vs new: pi_3_benchmark.py
+  [ ] Keep whichever is better
+
+OPTION B — Try a bigger model (if nano struggles at altitude):
+  [ ] Train YOLOv8s instead of YOLOv8n
+  [ ] Export to tflite, benchmark on Pi
+  [ ] Is it fast enough? (< 200ms target)
+  [ ] If yes and detects better → keep it
+
+OPTION C — Tune confidence threshold:
+  [ ] Too many false positives? → raise threshold (0.4 → 0.5 or 0.6)
+  [ ] Missing real targets? → lower threshold (0.4 → 0.3)
+  [ ] Change in vision.py lines 117 and 140
+
+OPTION D — Tune flight parameters:
+  [ ] AI too slow for flight speed? → lower SEARCH_SPEED_MPS in config.py
+  [ ] Detection only works close? → lower TARGET_ALT
+  [ ] Blur killing detection? → lower speed or try global shutter camera
+
+OPTION E — Frame skipping (if camera outpaces AI):
+  [ ] If camera gives 30fps but AI does 5fps → skip frames
+  [ ] Already handled by vision.py (processes latest frame, drops old ones)
+```
+
+The loop: **fly → measure → adjust one thing → fly again → repeat**
+
+---
+
 ## Architecture: Modular by Design
 
 ```
