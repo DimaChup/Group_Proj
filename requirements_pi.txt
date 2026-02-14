@@ -1,0 +1,6 @@
+# Requirements for Raspberry Pi
+# Install with: pip install -r requirements_pi.txt
+pymavlink
+opencv-python-headless
+numpy<2
+tflite-runtime

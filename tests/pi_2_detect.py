@@ -3,12 +3,16 @@
 STEP 2: Camera + AI detection. Gets frames and runs TFLite detection.
 This is the full CV pipeline on Pi - camera -> model -> result.
 
-Usage: python tests/pi_2_detect.py
+Usage:
+    python tests/pi_2_detect.py             # with display (screen connected)
+    python tests/pi_2_detect.py --headless  # no display (SSH / no screen)
 """
 import sys
 import os
 import time
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+headless = "--headless" in sys.argv
 
 import cv2
 import numpy as np
@@ -72,48 +76,61 @@ print(f"[OK] AI Model: {backend}")
 # ==========================================
 #   STEP C: Live detection loop
 # ==========================================
-print(f"\nRunning live detection. Press 'q' to quit.\n")
+if headless:
+    print(f"\nRunning in HEADLESS mode (no display). Press Ctrl+C to quit.\n")
+else:
+    print(f"\nRunning live detection with display. Press 'q' to quit.\n")
 
 frame_count = 0
 detect_count = 0
 total_ms = 0
 
-while True:
-    frame = get_frame()
-    if frame is None:
-        continue
+try:
+    while True:
+        frame = get_frame()
+        if frame is None:
+            continue
 
-    frame_count += 1
+        frame_count += 1
 
-    # Run detection
-    start = time.time()
-    found, x, y, conf = eyes.detect_in_image(frame)
-    elapsed_ms = (time.time() - start) * 1000
-    total_ms += elapsed_ms
+        # Run detection
+        start = time.time()
+        found, x, y, conf = eyes.detect_in_image(frame)
+        elapsed_ms = (time.time() - start) * 1000
+        total_ms += elapsed_ms
 
-    if found:
-        detect_count += 1
+        if found:
+            detect_count += 1
 
-    # Display info
-    avg_ms = total_ms / frame_count
-    fps = 1000.0 / avg_ms if avg_ms > 0 else 0
-    cv2.putText(frame, f"{backend} | {elapsed_ms:.0f}ms | {fps:.1f}fps",
-                (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2)
-    cv2.putText(frame, f"Detections: {detect_count}/{frame_count}",
-                (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2)
+        # Display info
+        avg_ms = total_ms / frame_count
+        fps = 1000.0 / avg_ms if avg_ms > 0 else 0
+        cv2.putText(frame, f"{backend} | {elapsed_ms:.0f}ms | {fps:.1f}fps",
+                    (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2)
+        cv2.putText(frame, f"Detections: {detect_count}/{frame_count}",
+                    (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2)
 
-    if found:
-        cv2.putText(frame, f"TARGET ({conf:.2f}) at ({x},{y})",
-                    (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+        if found:
+            cv2.putText(frame, f"TARGET ({conf:.2f}) at ({x},{y})",
+                        (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
 
-    cv2.imshow("Pi Detection Test", frame)
+        if headless:
+            # No display - print status + terminal beep on detection
+            if found:
+                print(f"\a  [{frame_count:4d}] DETECTED  conf={conf:.2f}  pos=({x},{y})  {elapsed_ms:.0f}ms")
+            elif frame_count % 30 == 0:
+                print(f"  [{frame_count:4d}] scanning... {elapsed_ms:.0f}ms  ({detect_count} detections so far)")
+        else:
+            cv2.imshow("Pi Detection Test", frame)
+            key = cv2.waitKey(1) & 0xFF
+            if key == ord('q'):
+                break
+            elif key == ord('s'):
+                cv2.imwrite("pi_detect_frame.jpg", frame)
+                print(f"  Saved: pi_detect_frame.jpg (found={found}, conf={conf:.2f})")
 
-    key = cv2.waitKey(1) & 0xFF
-    if key == ord('q'):
-        break
-    elif key == ord('s'):
-        cv2.imwrite("pi_detect_frame.jpg", frame)
-        print(f"  Saved: pi_detect_frame.jpg (found={found}, conf={conf:.2f})")
+except KeyboardInterrupt:
+    print("\nStopping...")
 
 # Cleanup
 if cap:

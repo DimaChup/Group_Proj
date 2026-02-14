@@ -29,16 +29,23 @@ class VisionSystem:
     def __init__(self, camera_index=0, model_path="best.tflite"):
         self.cap = None
         if camera_index is not None:
-            print(f"[VISION] Opening Camera Index {camera_index}...")
+            try:
+                import config as _cfg
+                cam_w, cam_h = _cfg.IMAGE_W, _cfg.IMAGE_H
+            except Exception:
+                cam_w, cam_h = 640, 480
+            print(f"[VISION] Opening Camera Index {camera_index} ({cam_w}x{cam_h})...")
             self.cap = cv2.VideoCapture(camera_index)
-            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, cam_w)
+            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, cam_h)
             self.cap.set(cv2.CAP_PROP_FPS, 30)
 
         # --- AI MODEL SETUP ---
         self.model = None
         self.using_ai = False
         self._use_tflite_direct = False
+        self.last_bbox_w = 0  # last detection bounding box width (pixels)
+        self.last_bbox_h = 0  # last detection bounding box height (pixels)
 
         if not os.path.exists(model_path):
             print(f"[VISION] Model file not found: {model_path}")
@@ -116,6 +123,8 @@ class VisionSystem:
                 cy = int(best_det[1] * h)
                 bw = int(best_det[2] * w)
                 bh = int(best_det[3] * h)
+                self.last_bbox_w = bw
+                self.last_bbox_h = bh
                 x1 = cx - bw // 2
                 y1 = cy - bh // 2
                 x2 = cx + bw // 2
@@ -133,6 +142,8 @@ class VisionSystem:
             best_box = max(results[0].boxes, key=lambda x: x.conf[0])
             x, y, w, h = best_box.xywh[0].cpu().numpy()
             conf = float(best_box.conf[0])
+            self.last_bbox_w = int(w)
+            self.last_bbox_h = int(h)
             x1, y1, x2, y2 = best_box.xyxy[0].cpu().numpy()
             cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
             cv2.putText(frame, f"AI {conf:.2f}", (int(x1), int(y1)-10),
