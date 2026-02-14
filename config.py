@@ -3,6 +3,38 @@
 #       CONFIGURATION & SETTINGS
 # ==========================================
 import os
+import platform
+import subprocess
+
+# --- AUTO-DETECT CONNECTION ---
+def _detect_connection():
+    """Auto-detect the best connection string. No hardcoded IPs."""
+    # 1. Environment variable always wins
+    env = os.environ.get("DRONE_CONN")
+    if env:
+        return env
+
+    # 2. Pi: check for serial ports
+    for port in ["/dev/ttyAMA0", "/dev/ttyACM0", "/dev/ttyUSB0"]:
+        if os.path.exists(port):
+            return port
+
+    # 3. WSL: auto-detect gateway IP to reach Windows SITL
+    if platform.system() == "Linux":
+        try:
+            with open("/proc/version", "r") as f:
+                if "microsoft" in f.read().lower():
+                    result = subprocess.run(["ip", "route", "show", "default"],
+                                            capture_output=True, text=True)
+                    parts = result.stdout.strip().split()
+                    if "via" in parts:
+                        gw = parts[parts.index("via") + 1]
+                        return f"tcp:{gw}:5762"
+        except Exception:
+            pass
+
+    # 4. Default: Windows localhost
+    return "tcp:127.0.0.1:5762"
 
 # --- OPERATION MODE ---
 # "SIMULATION": Uses map.jpg and mouse clicks for setup.
@@ -11,11 +43,9 @@ import os
 MODE = os.environ.get("DRONE_MODE", "SIMULATION")
 
 # --- FLIGHT CONNECTION ---
-# Windows sim: 'tcp:127.0.0.1:5762'
-# WSL sim:     'tcp:<gateway-ip>:5762'  (run: ip route show default | awk '{print $3}')
-# Pi real:     '/dev/ttyAMA0'
+# Auto-detects: Pi->serial, WSL->gateway IP, Windows->localhost
 # Override with: export DRONE_CONN=tcp:172.20.80.1:5762
-CONNECTION_STR = os.environ.get("DRONE_CONN", 'tcp:127.0.0.1:5762')
+CONNECTION_STR = _detect_connection()
 BAUD_RATE = int(os.environ.get("DRONE_BAUD", 57600))
 
 # --- ALTITUDES ---
