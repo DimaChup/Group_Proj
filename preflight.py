@@ -163,6 +163,22 @@ def main():
         ok, msg = False, f"Unknown connection type: {conn_str}"
         tag = "CONN"
 
+    # If connection failed, prompt user to enter IP manually
+    if not ok and not conn_str.startswith("/dev/"):
+        status = "FAIL"
+        print(f"  [{status:4s}] {tag:12s}  {msg}")
+        print(f"\n  Connection failed. Is SITL/Mission Planner running?")
+        print(f"  If it's on another machine, enter its IP address.")
+        print(f"  (Find it with 'ipconfig' on Windows or 'hostname -I' on Linux)")
+        user_ip = input("\n  Enter IP address (or press Enter to skip): ").strip()
+        if user_ip:
+            conn_str = f"tcp:{user_ip}:5762"
+            print(f"  Trying: {conn_str}")
+            ok, msg = check_tcp(user_ip, 5762)
+            if ok:
+                print(f"\n  Connected! To skip this prompt next time, run:")
+                print(f"    export DRONE_CONN={conn_str}")
+
     status = "OK" if ok else "FAIL"
     print(f"  [{status:4s}] {tag:12s}  {msg}")
     results.append((tag, ok, msg))

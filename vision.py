@@ -112,10 +112,10 @@ class VisionSystem:
                     best_det = det
 
             if best_det is not None:
-                cx = int(best_det[0] / input_w * w)
-                cy = int(best_det[1] / input_h * h)
-                bw = int(best_det[2] / input_w * w)
-                bh = int(best_det[3] / input_h * h)
+                cx = int(best_det[0] * w)
+                cy = int(best_det[1] * h)
+                bw = int(best_det[2] * w)
+                bh = int(best_det[3] * h)
                 x1 = cx - bw // 2
                 y1 = cy - bh // 2
                 x2 = cx + bw // 2
