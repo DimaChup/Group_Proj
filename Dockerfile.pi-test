@@ -1,0 +1,20 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install only Pi-lightweight packages (no ultralytics, no torch)
+RUN pip install --no-cache-dir \
+    pymavlink \
+    opencv-python-headless \
+    matplotlib \
+    "numpy<2" \
+    tflite-runtime
+
+# Copy project files
+COPY *.py ./
+COPY best.tflite ./
+COPY map.jpg ./
+COPY dummy.png ./
+
+
+CMD ["python3", "-c", "from vision import VisionSystem; v = VisionSystem(camera_index=None); print('Model loaded:', v.using_ai)"]

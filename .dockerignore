@@ -1,0 +1,6 @@
+venv/
+__pycache__/
+*.pyc
+runs/
+project_data/
+.git/
