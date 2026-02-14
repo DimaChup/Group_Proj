@@ -40,7 +40,7 @@ def _detect_connection():
 # "SIMULATION": Uses map.jpg and mouse clicks for setup.
 # "REAL": Uses Real Camera and assumes waypoints are loaded/generated elsewhere.
 # Override with: export DRONE_MODE=REAL
-MODE = os.environ.get("DRONE_MODE", "SIMULATION")
+MODE = os.environ.get("DRONE_MODE", "REAL")
 
 # --- FLIGHT CONNECTION ---
 # Auto-detects: Pi->serial, WSL->gateway IP, Windows->localhost
@@ -74,6 +74,19 @@ REAL_CAMERA_INDEX = 0 # Usually 0 for Pi Cam
 # --- SPEED SETTINGS ---
 TRANSIT_SPEED_MPS = 15.0  
 SEARCH_SPEED_MPS = 10.0   
+
+# --- REAL MODE SEARCH AREA ---
+# Define your search area as GPS coordinates (lat, lon corners)
+# Measure these on Google Maps or Mission Planner before flight day
+# The same lawnmower planner from simulation will generate the pattern
+SEARCH_AREA_GPS = [
+    # (lat, lon) - polygon corners, at least 3 points
+    # Example: a rectangle near Bristol (REPLACE with your real area)
+    (51.42530, -2.67260),
+    (51.42530, -2.67180),
+    (51.42480, -2.67180),
+    (51.42480, -2.67260),
+]
 
 # --- LOGGING ---
 LOG_FILE = "flight_log.csv"

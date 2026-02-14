@@ -48,12 +48,13 @@ class VisualFlightMission:
             else: self.eyes.using_ai = False
             
         else: # REAL MODE
-            self.geo = GeoTransformer(map_w_px=4800) 
             self.sim = None
-            self.search_poly = [] 
-            
+
+            # Try to show map for interactive polygon drawing
+            self.search_poly = self._setup_real_search_area()
+
             self.eyes = VisionSystem(camera_index=config.REAL_CAMERA_INDEX, model_path="best.tflite")
-            self.eyes.using_ai = True 
+            self.eyes.using_ai = True
             print("Vision System: Real Camera Initialized")
 
         # 2. Planner
@@ -95,6 +96,71 @@ class VisualFlightMission:
         self.log_file = open(config.LOG_FILE, 'w', newline='')
         self.logger = csv.writer(self.log_file)
         self.logger.writerow(["Timestamp", "State", "Lat", "Lon", "Alt", "Target_Conf"])
+
+    def _setup_real_search_area(self):
+        """Interactive polygon drawing for REAL mode. Falls back to config GPS if no map."""
+        # Try loading the map for interactive drawing
+        map_img = cv2.imread(config.MAP_FILE)
+        if map_img is not None:
+            map_h, map_w = map_img.shape[:2]
+            self.geo = GeoTransformer(map_w_px=map_w)
+
+            # Scale for display
+            MAX_H = 800
+            scale = min(1.0, MAX_H / map_h)
+            display = cv2.resize(map_img, (int(map_w * scale), int(map_h * scale)))
+
+            polygon = []
+            closed = False
+
+            def mouse_cb(event, x, y, flags, param):
+                nonlocal closed
+                real_x, real_y = int(x / scale), int(y / scale)
+                if event == cv2.EVENT_LBUTTONDOWN and not closed:
+                    polygon.append((real_x, real_y))
+                elif event == cv2.EVENT_RBUTTONDOWN and len(polygon) >= 3:
+                    closed = True
+
+                # Redraw
+                vis = display.copy()
+                if polygon:
+                    pts = np.array([[int(p[0]*scale), int(p[1]*scale)] for p in polygon], np.int32)
+                    cv2.polylines(vis, [pts], closed, (0, 255, 0), 2)
+                    for p in pts:
+                        cv2.circle(vis, tuple(p), 4, (0, 255, 0), -1)
+                cv2.imshow("Draw Search Area", vis)
+
+            cv2.namedWindow("Draw Search Area")
+            cv2.imshow("Draw Search Area", display)
+            cv2.setMouseCallback("Draw Search Area", mouse_cb)
+            print("--- REAL MODE SEARCH AREA ---")
+            print("Left-Click: add polygon points")
+            print("Right-Click: close polygon")
+            print("Press any key: start mission")
+            print("Press ESC: use SEARCH_AREA_GPS from config.py instead")
+            key = cv2.waitKey(0) & 0xFF
+            cv2.destroyWindow("Draw Search Area")
+
+            if closed and len(polygon) >= 3:
+                # Convert drawn polygon to GPS and print for future config use
+                print(f"[REAL] Search polygon drawn: {len(polygon)} points")
+                gps_coords = [self.geo.pixels_to_gps(p[0], p[1]) for p in polygon]
+                print("[REAL] GPS coordinates (copy to config.py SEARCH_AREA_GPS):")
+                for lat, lon in gps_coords:
+                    print(f"    ({lat:.6f}, {lon:.6f}),")
+                return polygon
+
+            if key == 27:
+                print("[REAL] Skipped drawing — using SEARCH_AREA_GPS from config.py")
+
+        # Fallback: use GPS coordinates from config.py
+        self.geo = GeoTransformer(map_w_px=4800)
+        if hasattr(config, 'SEARCH_AREA_GPS') and len(config.SEARCH_AREA_GPS) >= 3:
+            poly = [self.geo.gps_to_pixels(lat, lon) for lat, lon in config.SEARCH_AREA_GPS]
+            print(f"[REAL] Search area loaded from config: {len(poly)} GPS corners")
+            return poly
+        print("[REAL] No search area defined — no search pattern")
+        return []
 
     def update_telemetry(self):
         if not self.master: return
@@ -305,13 +371,15 @@ class VisualFlightMission:
             elif self.state == State.TAKEOFF:
                 if self.alt >= config.TARGET_ALT * 0.90:
                     print("Target Altitude Reached.")
-                    
+
                     if config.MODE == "SIMULATION":
-                        self.waypoints = self.planner.generate_search_pattern(self.sim.map_w, self.sim.map_h, (self.lat, self.lon))
+                        canvas_w, canvas_h = self.sim.map_w, self.sim.map_h
                     else:
-                        print("Real Mode: No Map Polygon. Hovering or waiting for command...")
-                        self.state = State.SEARCH 
-                        
+                        canvas_w, canvas_h = 4800, 4800  # virtual canvas for planner
+
+                    self.waypoints = self.planner.generate_search_pattern(
+                        canvas_w, canvas_h, (self.lat, self.lon))
+
                     if self.waypoints:
                         # NEW LOGIC: Go to TRANSIT first, then SEARCH
                         print(f"Path generated. Transiting to start point: {self.waypoints[0]}")

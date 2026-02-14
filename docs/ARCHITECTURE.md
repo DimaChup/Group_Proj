@@ -285,6 +285,69 @@ They only come together when main.py runs on the Pi with everything connected.
 
 **The transition from simulation to real is about swapping connections, not rewriting code.**
 
+### The Progression: Same Code, Different Hardware
+
+You don't jump straight from simulation to a flying drone. There are intermediate steps,
+and the same codebase handles all of them:
+
+```
+                          same main.py
+                          same vision.py
+                          same planning.py
+                               │
+                ┌──────────────┼──────────────┐
+                │              │              │
+           Laptop+SITL    Laptop+SITL    Pi+Real Cube
+           simulated cam   real webcam    real CSI cam
+           (SIMULATION)     (REAL)         (REAL)
+                │              │              │
+           "Does the      "Does real     "Full autonomous
+            logic work?"   camera+AI       mission"
+                            detect?"
+```
+
+**Step 1 — Simulation (where you are now):**
+Run `DRONE_MODE=SIMULATION`. Camera is simulated (crops from map.jpg). Flight controller
+is SITL. Everything on your laptop. Test the state machine, search pattern, detection logic.
+
+**Step 2 — Real camera, still SITL:**
+Run `DRONE_MODE=REAL`. Your laptop webcam (or USB camera) replaces the simulated camera.
+SITL still handles flight. This proves your real camera + AI model can detect targets
+while the drone logic runs against the simulator. Point camera at a printout of the dummy.
+
+**Step 3 — Real camera + Real Cube (bench, no props):**
+Same code, now on the Pi with Cube wired via UART. Props OFF. config.py auto-detects
+the serial port (`/dev/ttyAMA0`). Run main.py over SSH — verify it arms, sends waypoints,
+and the state machine transitions correctly. Mission Planner shows commands on the map.
+
+**Step 4 — Full flight:**
+Same code. Props on. Pilot has RC override. The only change from step 3 is putting
+propellers on and flying outdoors.
+
+### How config.py Auto-Detects the Connection
+
+No code changes needed between steps. config.py figures out what you're connected to:
+
+```
+On your laptop right now:
+  No serial ports found
+  → Falls through to tcp:127.0.0.1:5762
+  → Connects to SITL
+  → You're in simulation/testing mode
+
+On the Pi with Cube wired to UART:
+  /dev/ttyAMA0 exists
+  → Returns /dev/ttyAMA0
+  → Connects to real Cube
+  → You're controlling real hardware
+
+Override anytime:
+  export DRONE_CONN=tcp:192.168.1.42:5762
+  → Environment variable always wins
+```
+
+The same `python main.py` command works everywhere. The hardware decides the connection.
+
 ---
 
 ## The Mission State Machine
