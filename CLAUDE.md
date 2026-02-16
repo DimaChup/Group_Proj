@@ -120,6 +120,13 @@ tests/ ................ All test scripts (pi_1 through pi_9, test_cube, etc.)
 - **Same main.py for simulation and real.** The MODE flag only changes camera source and connection string. State machine logic is identical.
 - **Interactive polygon drawing in REAL mode.** If map.jpg available, shows map for drawing. If headless (Pi), falls back to SEARCH_AREA_GPS in config.py.
 
+### Development Workflow
+- **Always develop and edit code on the laptop** (better tools, faster iteration, simulation)
+- **Test in simulation on laptop first**, then push to GitHub, then pull on Pi and test on hardware
+- **Never edit code directly on Pi** — the laptop is the single source of truth for code changes
+- **If adding a new import/dependency**, also add it to `requirements_pi.txt` (or confirm it already exists on Pi)
+- The architecture (config.py auto-detect, vision.py dual backend) means the same code runs on both platforms without changes
+
 ## File Locations
 
 | File | Purpose | Notes |
