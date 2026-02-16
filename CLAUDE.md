@@ -69,8 +69,9 @@ v3/
 ├── generate_dataset.py        ← Creates synthetic training data from map.jpg + dummy.png
 ├── test_flight10.py           ← Legacy flight test script
 │
-├── requirements_dev.txt       ← Laptop: pymavlink, opencv, numpy, ultralytics, matplotlib
-├── requirements_pi.txt        ← Pi: pymavlink, opencv-headless, numpy, tflite-runtime
+├── requirements_dev.txt       ← Windows laptop: full pip freeze (~90 packages, exact versions)
+├── requirements_linux.txt     ← WSL/Linux laptop: full pip freeze (no Windows-specific packages)
+├── requirements_pi.txt        ← Pi: pymavlink, opencv-headless, numpy<2, tflite-runtime
 │
 ├── docs/
 │   ├── ARCHITECTURE.md        ← System overview, evolving diagrams, hardware checklist
@@ -128,8 +129,9 @@ tests/ ................ All test scripts (pi_1 through pi_9, test_cube, etc.)
 | map.jpg | Satellite image for simulation | ~12MB, tracked in git |
 | dummy.png | Test dummy image | For generate_dataset.py and bench testing |
 | flight_log.csv | Runtime log | In .gitignore (changes every run) |
-| requirements_dev.txt | Laptop dependencies | pymavlink, opencv, numpy, ultralytics, matplotlib |
-| requirements_pi.txt | Pi dependencies | pymavlink, opencv-headless, numpy, tflite-runtime |
+| requirements_dev.txt | Windows laptop dependencies | Full pip freeze (~90 packages, exact versions) |
+| requirements_linux.txt | WSL/Linux laptop dependencies | Full pip freeze (Linux-compatible) |
+| requirements_pi.txt | Pi dependencies | 4 packages: pymavlink, opencv-headless, numpy<2, tflite-runtime |
 
 ## How to Run
 
@@ -164,7 +166,7 @@ Three platforms, three approaches. All pull from the same GitHub repo.
 # 1. Clone the repo
 git clone https://github.com/DimaChup/Group_Proj.git
 cd Group_Proj
-git checkout MainOne2
+git checkout MainOne3
 
 # 2. Create venv
 python -m venv venv
@@ -189,24 +191,38 @@ python simple_simulator.py
 "Fatal error in launcher". Also use `cmd /c "python -m pip freeze > file.txt"` when
 freezing — PowerShell's `>` creates UTF-16 which pip can't read.
 
-### WSL / Linux (Docker-style testing)
+### WSL / Linux (Simulation only — no webcam access)
 
 ```bash
-# 1. Clone
+# 1. Clone (or access Windows files via /mnt/c/)
 git clone https://github.com/DimaChup/Group_Proj.git
 cd Group_Proj
-git checkout MainOne2
+git checkout MainOne3
 
 # 2. Create venv
 python3 -m venv venv
 source venv/bin/activate
 
-# 3. Install
-pip install -r requirements_dev.txt
+# 3. Install (use Linux freeze, or install top-level packages)
+pip install -r requirements_linux.txt
+# OR if no freeze file: pip install pymavlink opencv-python-headless matplotlib numpy ultralytics
 
 # 4. Verify
 python -c "import cv2; print('OpenCV:', cv2.__version__)"
 python -c "import ultralytics; print('Ultralytics:', ultralytics.__version__)"
+
+# 5. Test simulation only (WSL can't access laptop webcam for real mode)
+DRONE_MODE=SIMULATION python simple_simulator.py
+```
+
+### Docker (Pi environment simulation)
+
+```bash
+# From project directory (WSL or Windows with Docker Desktop)
+docker build -f Dockerfile.pi-test -t pi-test .
+docker run pi-test
+# Pass: prints "Model loaded: True"
+# Tests: TFLite loads model on slim Linux with Pi-level dependencies
 ```
 
 ### Raspberry Pi (Production)
@@ -215,7 +231,7 @@ python -c "import ultralytics; print('Ultralytics:', ultralytics.__version__)"
 # 1. Clone
 git clone https://github.com/DimaChup/Group_Proj.git ~/sar-drone
 cd ~/sar-drone
-git checkout MainOne2
+git checkout MainOne3
 
 # 2. Create venv (--system-site-packages needed for picamera2)
 python3 -m venv --system-site-packages pienv
@@ -244,13 +260,37 @@ See `docs/PI_SETUP.md` for full Pi setup including hardware (camera, serial, wir
 
 | File | For | Contents |
 |------|-----|----------|
-| `requirements_dev.txt` | Windows/Linux laptop | Full pip freeze (~90 packages, exact versions) |
+| `requirements_dev.txt` | Windows laptop | Full pip freeze (~90 packages, exact Windows versions) |
+| `requirements_linux.txt` | WSL / Linux laptop | Full pip freeze from Linux (no pywin32 etc.) |
 | `requirements_pi.txt` | Raspberry Pi | 4 lightweight packages (pymavlink, opencv-headless, numpy<2, tflite-runtime) |
 
-Both files MUST be UTF-8 encoded. If regenerating on Windows, use:
+**How it works**: The code is identical on every platform — you always pull the same branch from
+GitHub. The ONLY thing that changes is which requirements file you install:
+
+| You're on... | Install with... | Why different? |
+|--------------|----------------|----------------|
+| Windows laptop | `requirements_dev.txt` | Full freeze includes Windows-specific packages (pywin32 etc.) |
+| WSL / Linux | `requirements_linux.txt` | Full freeze without Windows packages |
+| Raspberry Pi | `requirements_pi.txt` | Lightweight: only 4 packages (no ultralytics/torch — uses TFLite instead) |
+
+**Why not one file?** A `pip freeze` captures every installed package including platform-specific
+ones. Windows freeze has `pywin32` which fails on Linux. Linux freeze has packages that fail on
+Windows. Pi needs completely different packages (tflite-runtime instead of ultralytics+torch).
+`requirements_pi.txt` is hand-written (only 4 top-level packages) and works on any Linux.
+
+### What Can Be Tested Where
+
+| Platform | Simulation | Real (webcam) | Real (Pi camera) | Docker Pi test |
+|----------|-----------|---------------|-------------------|---------------|
+| Windows | Yes | Yes | No | Yes (via Docker Desktop) |
+| WSL/Linux | Yes | No | No | Yes |
+| Raspberry Pi | No | No | Yes | N/A |
+
+All files MUST be UTF-8 encoded. If regenerating on Windows, use:
 ```bash
 cmd /c "python -m pip freeze > requirements_dev.txt"
 ```
+On Linux/WSL, normal `pip freeze > requirements_linux.txt` works fine.
 
 ## The Approach: Simulation → Real
 
@@ -258,6 +298,8 @@ We don't jump to flying. Progression:
 
 1. **Simulation on laptop** (DONE) — prove logic works
 2. **Real camera + SITL on laptop** (DONE) — prove real camera + AI works
+2b. **WSL simulation** (DONE) — prove code runs on Linux
+2c. **Docker Pi test** (DONE) — prove TFLite model loads on Pi-like environment
 3. **Pi + camera (no Cube)** — prove vision on real hardware
 4. **Pi + camera + Cube (bench, no props)** — prove commands are correct
 5. **Manual flight (pilot on RC, Pi logging)** — calibrate detection altitude
@@ -324,13 +366,13 @@ preflight.py ............ All systems go?
 - Commit after each successful test milestone
 - Never break main — merge only when something works
 - Remote: https://github.com/DimaChup/Group_Proj.git
-- Current working branch: MainOne2
+- Current working branch: MainOne3
 
 ## Session Log
 
 Track what was done each session so context is never lost.
 
-### Session: 2026-02-16
+### Session: 2026-02-16 (part 1)
 - Audited all 7 docs for redundancy and inconsistencies
 - Created docs/ARCHITECTURE.md with evolving Phase 0-5 diagrams
 - Fixed the REAL mode gap: drone had no waypoints in real mode — added SEARCH_AREA_GPS to config.py, unified TAKEOFF state for both modes
@@ -343,6 +385,20 @@ Track what was done each session so context is never lost.
 - Added "The Journey: Basic → Optimised" stages to CV_GUIDE.md
 - Updated .gitignore (added .claude/, flight_log.csv)
 - Pushed to Group_Proj remote
+
+### Session: 2026-02-16 (part 2) — Cross-platform environment testing
+- Tested simulation + real mode on Windows — both work
+- Tested simulation on WSL/Linux (myenv) — works
+- Tested Docker Pi environment (Dockerfile.pi-test) — TFLite model loads (prints "Model loaded: True")
+- Froze Windows dependencies: `cmd /c "python -m pip freeze > requirements_dev.txt"` (UTF-8)
+- Froze Linux dependencies: `pip freeze > requirements_linux.txt`
+- Discovered: full pip freeze is platform-specific (Windows has pywin32, Linux doesn't) — need separate freeze files
+- Discovered: PowerShell `>` creates UTF-16 files pip can't read — must use `cmd /c "..."` on Windows
+- Discovered: `pip.exe` launcher can break if venv was created from a moved Python install — use `python -m pip` as workaround
+- Added "Recreating the Environment" section to CLAUDE.md (Windows, WSL, Pi, Docker)
+- Added requirements file strategy docs (platform-specific freezes + cross-platform requirements_pi.txt)
+- Pushed to MainOne3 branch on Group_Proj remote
+- **Next: Pi setup tomorrow — clone MainOne3, create pienv, run progressive tests (PI_SETUP.md)**
 
 ---
 
