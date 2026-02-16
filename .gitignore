@@ -5,3 +5,5 @@ project_data/
 runs/
 *.pt
 nul
+.claude/
+flight_log.csv
