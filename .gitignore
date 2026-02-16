@@ -7,3 +7,4 @@ runs/
 nul
 .claude/
 flight_log.csv
+test_env
