@@ -138,7 +138,8 @@ tests/ ................ All test scripts (pi_1 through pi_9, test_cube, etc.)
 ### Simulation (laptop)
 ```bash
 # Need: SITL running (Mission Planner or mavproxy), venv activated
-set DRONE_MODE=SIMULATION      # Windows
+set DRONE_MODE=SIMULATION      # Windows (cmd)
+# export DRONE_MODE=SIMULATION  # Linux/WSL
 python main.py
 ```
 
@@ -166,7 +167,7 @@ Three platforms, three approaches. All pull from the same GitHub repo.
 # 1. Clone the repo
 git clone https://github.com/DimaChup/Group_Proj.git
 cd Group_Proj
-git checkout MainOne3
+git checkout MainOne4
 
 # 2. Create venv
 python -m venv venv
@@ -184,7 +185,7 @@ python -c "import numpy; print('NumPy:', numpy.__version__)"
 
 # 6. Test simulation
 set DRONE_MODE=SIMULATION
-python simple_simulator.py
+python main.py
 ```
 
 **Known issue**: On Windows, use `python -m pip` instead of `pip` if pip.exe gives
@@ -197,7 +198,7 @@ freezing — PowerShell's `>` creates UTF-16 which pip can't read.
 # 1. Clone (or access Windows files via /mnt/c/)
 git clone https://github.com/DimaChup/Group_Proj.git
 cd Group_Proj
-git checkout MainOne3
+git checkout MainOne4
 
 # 2. Create venv
 python3 -m venv venv
@@ -212,7 +213,7 @@ python -c "import cv2; print('OpenCV:', cv2.__version__)"
 python -c "import ultralytics; print('Ultralytics:', ultralytics.__version__)"
 
 # 5. Test simulation only (WSL can't access laptop webcam for real mode)
-DRONE_MODE=SIMULATION python simple_simulator.py
+DRONE_MODE=SIMULATION python main.py
 ```
 
 ### Docker (Pi environment simulation)
@@ -231,7 +232,7 @@ docker run pi-test
 # 1. Clone
 git clone https://github.com/DimaChup/Group_Proj.git ~/sar-drone
 cd ~/sar-drone
-git checkout MainOne3
+git checkout MainOne4
 
 # 2. Create venv (--system-site-packages needed for picamera2)
 python3 -m venv --system-site-packages pienv
@@ -366,7 +367,7 @@ preflight.py ............ All systems go?
 - Commit after each successful test milestone
 - Never break main — merge only when something works
 - Remote: https://github.com/DimaChup/Group_Proj.git
-- Current working branch: MainOne3
+- Current working branch: MainOne4
 
 ## Session Log
 
@@ -398,7 +399,15 @@ Track what was done each session so context is never lost.
 - Added "Recreating the Environment" section to CLAUDE.md (Windows, WSL, Pi, Docker)
 - Added requirements file strategy docs (platform-specific freezes + cross-platform requirements_pi.txt)
 - Pushed to MainOne3 branch on Group_Proj remote
-- **Next: Pi setup tomorrow — clone MainOne3, create pienv, run progressive tests (PI_SETUP.md)**
+- **Next: Pi setup tomorrow — clone MainOne4, create pienv, run progressive tests (PI_SETUP.md)**
+
+### Session: 2026-02-16 (part 3) — Housekeeping
+- Switched to MainOne4 branch (identical code to MainOne3, same commit)
+- Fixed CLAUDE.md: updated all branch references from MainOne3 → MainOne4
+- Fixed CLAUDE.md: corrected "How to Run" commands from `simple_simulator.py` → `main.py` (simple_simulator.py doesn't exist, main.py is the entry point)
+- Confirmed project structure matches documentation — all files accounted for
+- MainOne4 NOT yet pushed to remote (need: `git push origin MainOne4`)
+- **Next: Push MainOne4, then Pi setup — clone, create pienv, run progressive tests (PI_SETUP.md)**
 
 ---
 
