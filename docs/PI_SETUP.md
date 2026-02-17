@@ -322,14 +322,45 @@ python preflight.py
 
 | Problem | Fix |
 |---------|-----|
-| `ModuleNotFoundError: No module named 'tflite_runtime'` | `pip install tflite-runtime` or `pip install tensorflow` |
+| `ModuleNotFoundError: No module named 'tflite_runtime'` | `pip install tflite-runtime` or `pip install ai-edge-litert` (Python 3.13+) |
 | `ModuleNotFoundError: No module named 'cv2'` | `pip install opencv-python-headless` |
 | `ModuleNotFoundError: No module named 'picamera2'` | Already installed system-wide. Did you use `--system-site-packages` when creating venv? |
 | `[VISION] Model file not found` | `best.tflite` is missing. Copy it: `scp best.tflite pi@<IP>:~/sar-drone/` |
 | `Camera failed to open` | `sudo raspi-config` → enable camera → reboot |
-| `No heartbeat` from Cube | Swap TX/RX wires. Check baud rate. Check `ls /dev/ttyAMA0` |
+| `Camera busy` error | Another script is using the camera. Run `pkill -f python` first |
+| `No heartbeat` from Cube | Use mavproxy bridge (see below). Check baud rate (921600). |
 | `numpy` version error | `pip install "numpy<2"` |
 | `Permission denied` on serial | `sudo usermod -a -G dialout $USER` then logout/login |
+| Blue-tinted camera images | Do NOT use `cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)` — IMX296 outputs BGR already |
+| `sudo python3` missing cv2 | Use venv python3 instead of sudo python3 |
+
+### IMX296 Camera Color Note
+
+The Pi Global Shutter Camera (IMX296) outputs **BGR data** despite picamera2 calling it RGB888.
+Do NOT add `cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)` — this double-swaps channels and causes
+a blue tint. Use frames directly from `picam.capture_array()`.
+
+### Cube Connection via Mavproxy Bridge
+
+Python 3.13 has a known issue with pyserial causing broken MAVLink reads over direct serial.
+Use mavproxy as a UDP bridge instead:
+
+```bash
+# Terminal 1: Start mavproxy bridge
+sudo /opt/mavlink/mavlink-venv/bin/mavproxy.py \
+  --master=/dev/ttyAMA0 \
+  --baudrate=921600 \
+  --streamrate=10 \
+  --out=udpout:127.0.0.1:14550 \
+  --out=tcpin:0.0.0.0:5762
+
+# Terminal 2: Run your scripts (they connect via UDP)
+source pienv/bin/activate
+python tests/test_cube.py
+```
+
+The `udpout:127.0.0.1:14550` output is for Pi scripts (config.py auto-detects this).
+The `tcpin:0.0.0.0:5762` output is for Mission Planner on your laptop (connect TCP to Pi's IP).
 
 ---
 

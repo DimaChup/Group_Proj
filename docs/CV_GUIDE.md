@@ -317,6 +317,26 @@ After flight testing, tune based on your false positive vs false negative rates.
 
 Use `tests/pi_8_camera_test.py` to measure blur impact on detection.
 
+### IMPORTANT: IMX296 Global Shutter Camera Color Fix
+
+The IMX296 sensor outputs **BGR data** despite picamera2 labeling the format as RGB888.
+This means `cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)` **must NOT be used** — it double-swaps
+the channels, causing a blue tint on all images.
+
+**Symptoms if you add cvtColor**: Skin appears blue, reds and blues are swapped.
+
+**Root cause**: The IMX296 ISP pipeline outputs data in BGR order. The RGB888 label in
+picamera2 refers to the buffer format (3 bytes per pixel), not the actual channel ordering.
+
+**Fix**: Use frames directly from `picam.capture_array()` without any color conversion.
+The data is already in OpenCV's native BGR format.
+
+This was discovered by testing all 6 permutations of channel ordering (RGB, RBG, GRB, GBR,
+BRG, BGR). Only "no conversion" (BGR passthrough) produced correct colors.
+
+**If you add a new test script with picamera2**: Do NOT add color conversion. Just use the
+raw frame. See `vision.py` get_frame() for the reference implementation.
+
 ---
 
 ## Testing Workflow

@@ -33,17 +33,25 @@ communication (Python 3.13 + pyserial serial reads are broken).
 - Config auto-detection (SITL on laptop, mavproxy UDP bridge on Pi)
 - Manual override (M key) and RC kill switch support
 - Preflight connectivity checker (preflight.py)
-- Pi camera (picamera2) working at 640x480
-- TFLite inference on Pi: ~206ms avg, 4.8 FPS, 50/50 detection at 0.966 confidence
+- Pi camera (picamera2) working at 640x480 with correct colors
+- **Camera color fix applied**: IMX296 outputs BGR despite RGB888 label — no cvtColor conversion needed
+- TFLite inference on Pi: ~256ms avg, 3.9 FPS, 50/50 detection at 0.966 confidence
 - Cube connection on Pi via mavproxy bridge (921600 baud, udpout/udpin)
 - ai-edge-litert replaces tflite-runtime on Python 3.13
+- Mission Planner connects to Cube via mavproxy TCP bridge (tcpin:0.0.0.0:5762)
+- Passive flight script ready (pi_passive_flight.py — pilot flies RC, Pi detects + buzzer)
 
 ### What's Not Done Yet
 - [x] Pi setup (OS, venv, dependencies)
 - [x] Camera tested on Pi
 - [x] TFLite inference tested on Pi
 - [x] Cube wired to Pi and tested
-- [ ] CV Optimization (see below)
+- [x] Camera color fix (BGR/RGB issue resolved)
+- [x] Mission Planner connected to Cube via Pi
+- [ ] Test detection with corrected colors on Pi (push code, pull, test with dummy)
+- [ ] Outdoor GPS fix test
+- [ ] Manual flight with passive detection (pi_passive_flight.py)
+- [ ] Full autonomous bench test (main.py, no props)
 
 ### Flight Testing Steps (follow in order)
 Each step builds trust before adding risk. **Never skip a step.**
@@ -80,7 +88,7 @@ Each step builds trust before adding risk. **Never skip a step.**
 ### CV Optimization (Future Work)
 - [ ] **Lower confidence threshold** — try 0.3 or 0.25 (currently 0.4 in vision.py) to catch more detections at cost of false positives
 - [ ] **Retrain with real camera images** — current model trained on synthetic composites (map.jpg + dummy.png). Capture real photos of dummy in grass at various altitudes and retrain
-- [ ] **Blue tint correction validation** — gray world algorithm added but needs outdoor testing to confirm colours match training data
+- [x] **Camera color fix** — IMX296 outputs BGR despite RGB888 label. Removed incorrect cvtColor conversion. Colors now correct.
 - [ ] **Larger model** — try YOLOv8s instead of YOLOv8n (more accurate, slower). Benchmark on Pi with pi_3_benchmark.py
 - [ ] **Resolution tuning** — run pi_9_resolution_test.py to find best resolution vs speed vs detection tradeoff
 - [ ] **Motion blur handling** — test detection quality at different drone speeds. Consider shorter exposure / higher shutter speed in picamera2 config
@@ -140,9 +148,17 @@ v3/
     ├── pi_7_alt_test.py       ← Test: FOV calibration at altitude (--headless)
     ├── pi_8_camera_test.py    ← Test: FPS + motion blur impact (--headless)
     ├── pi_9_resolution_test.py← Test: resolution vs speed vs detection quality
+    ├── pi_passive_flight.py   ← Test: passive detection during manual RC flight + buzzer
+    ├── pi_cv_test.py          ← Test: CV detection quality with Pi camera
+    ├── pi_camera_tune.py      ← Test: camera parameter tuning
     ├── pi_cube_debug.py       ← Diagnostic: MAVLink message types + rates from Cube
     ├── pi_diagnostics.py      ← Visual dashboard: all subsystem connectivity + live rates
     ├── pi_gps_test.py         ← GPS lock test: wait for satellite fix, show status
+    ├── pi_color_picker.py     ← Tool: color channel ordering picker (6 options)
+    ├── pi_color_fix.py        ← Tool: computed color correction with grid
+    ├── pi_color_manual.py     ← Tool: manual slider-based color tuning
+    ├── pi_color_calibrate.py  ← Tool: color calibration with reference chart
+    ├── test_tflite_laptop.py  ← Test: TFLite inference on laptop (same path as Pi)
     ├── test_camera.py         ← Quick camera preview + snapshot
     ├── test_cube.py           ← Cube heartbeat, GPS, attitude, battery
     ├── test_cv.py             ← AI model loading + detection test
@@ -401,9 +417,15 @@ pi_6_fov_test.py ........ FOV calibration?  (--headless)
 pi_7_alt_test.py ........ FOV at real altitude? (flight day)
 pi_8_camera_test.py ..... FPS + blur impact?  (--headless)
 pi_9_resolution_test.py . Best resolution?
+pi_passive_flight.py .... Passive detection during manual RC flight
 test_cube.py ............ Cube heartbeat + GPS?
 preflight.py ............ All systems go?
 ```
+
+### Camera Note (IMX296 Global Shutter)
+The IMX296 sensor outputs BGR data despite picamera2 labeling it RGB888.
+**Do NOT add `cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)`** — the data is already BGR.
+This was discovered by testing all 6 channel permutations. See session log 2026-02-17 part 2.
 
 ## Documentation
 
@@ -533,6 +555,44 @@ Track what was done each session so context is never lost.
   sudo /opt/mavlink/mavlink-venv/bin/mavproxy.py --master=/dev/ttyAMA0 --baudrate=921600 --streamrate=10 --out=udpout:127.0.0.1:14550 --out=tcpin:0.0.0.0:5762
   ```
 - **Next: Outdoor test (GPS fix), then manual flight with passive detection**
+
+### Session: 2026-02-17 (part 2) — Camera color fix + documentation
+- **CRITICAL FIX: IMX296 Global Shutter Camera BGR/RGB issue**
+  - Camera outputs BGR data despite picamera2 labeling it RGB888
+  - All code had `cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)` which was DOUBLE-swapping channels
+  - This caused a blue tint on all camera images — spent hours trying AWB modes, manual gains,
+    gray world correction, ISP tuning file edits, kernel update (rpi-update) before discovering root cause
+  - **Fix**: Remove the `cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)` conversion entirely
+  - The sensor data is already in BGR format (OpenCV's native format), so no conversion needed
+  - Discovery method: tested all 6 permutations of R,G,B channels — RGB (no conversion) looked correct
+- **Files modified for BGR fix**:
+  - vision.py: removed COLOR_RGB2BGR in get_frame() picamera2 path
+  - config.py: disabled CAMERA_COLOR_CORRECTION, removed CAMERA_SWAP_RB
+  - tests/pi_1_camera.py: removed COLOR_RGB2BGR
+  - tests/pi_2_detect.py: removed COLOR_RGB2BGR
+  - tests/pi_4b_detect_buzzer.py: removed COLOR_RGB2BGR
+  - tests/pi_5b_telemetry.py: removed COLOR_RGB2BGR
+  - tests/pi_5_guidance.py: removed COLOR_RGB2BGR
+  - tests/pi_6_fov_test.py: removed COLOR_RGB2BGR
+  - tests/pi_8_camera_test.py: removed COLOR_RGB2BGR
+  - tests/pi_9_resolution_test.py: removed COLOR_RGB2BGR
+  - tests/pi_diagnostics.py: removed COLOR_RGB2BGR
+- **New files created**:
+  - tests/test_tflite_laptop.py: standalone TFLite inference test (same code path as Pi, no Ultralytics)
+  - tests/pi_color_picker.py: color correction picker (6 channel ordering options)
+  - tests/pi_color_fix.py: computed color correction with grid
+  - tests/pi_color_manual.py: manual slider-based color tuning
+  - tests/pi_color_calibrate.py: color calibration with reference chart
+- **rpi-update performed**: kernel updated on Pi (no negative effects, but didn't fix colors — the fix was the BGR conversion removal)
+- **Mission Planner connected to Cube via mavproxy TCP bridge** (tcpin:0.0.0.0:5762)
+- **Benchmark results**: 256ms avg inference, 3.9 FPS, 50/50 detection, 0.966 confidence
+- **Known issue**: pi_color_manual.py and pi_color_calibrate.py still have COLOR_RGB2BGR (they were diagnostic tools, not critical)
+- **Next steps**:
+  1. Push BGR fix to GitHub, pull on Pi
+  2. Test detection with corrected colors (pi_2_detect.py --headless with dummy)
+  3. Passive flight test (pi_passive_flight.py during manual RC flight)
+  4. Outdoor GPS fix test
+  5. Full autonomous flight prep
 
 ---
 

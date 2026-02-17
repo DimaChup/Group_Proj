@@ -356,13 +356,16 @@ The code is ready. These are the hardware/setup steps remaining:
 STATUS    WHAT                          WHY                                    TEST
 ──────    ────                          ───                                    ────
 [DONE]    Simulation working            Logic, search pattern, detection       main.py SIMULATION mode
-[ ]       Raspberry Pi set up           Transfer code, install dependencies    SSH in, python --version
-[ ]       CSI camera on Pi              Real frames instead of simulated       pi_1_test_camera.py
-[ ]       best.tflite model on Pi       Ultralytics too heavy for Pi CPU       pi_2_detect_image.py
-[ ]       AI detection on Pi            Confirm it detects dummy printout      pi_3_live_detect.py
-[ ]       Cube wired to Pi (UART)       Real flight controller connection      pi_4_detect_and_log.py
+[DONE]    Raspberry Pi set up           Transfer code, install dependencies    SSH in, python --version
+[DONE]    CSI camera on Pi              Real frames instead of simulated       pi_1_camera.py
+[DONE]    Camera color fix              IMX296 BGR/RGB issue resolved          pi_color_picker.py
+[DONE]    best.tflite model on Pi       ai-edge-litert on Python 3.13         pi_2_detect.py
+[DONE]    AI detection on Pi            256ms avg, 3.9 FPS, 0.966 conf        pi_3_benchmark.py
+[DONE]    Cube wired to Pi (UART)       Via mavproxy bridge (921600 baud)      test_cube.py
+[DONE]    Mission Planner via Pi        TCP bridge (tcpin:0.0.0.0:5762)        Mission Planner TCP connect
+[ ]       Outdoor GPS fix test          Verify GPS works outside               pi_gps_test.py
+[ ]       Manual flight with detection  Calibrate detection altitude           pi_passive_flight.py
 [ ]       Bench test (no props)         Verify commands in Mission Planner     main.py REAL mode, props OFF
-[ ]       Manual flight with detection  Calibrate detection altitude           Pilot flies, Pi logs detections
 [ ]       Full autonomous flight        The real mission                       main.py REAL mode, props ON
 ```
 

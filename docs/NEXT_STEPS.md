@@ -3,11 +3,11 @@
 Each phase adds one layer of complexity. Don't skip ahead — each phase proves the previous one works.
 
 ```
-PHASE 0: Laptop         → Code works, simulation runs, model detects
-PHASE 1: Pi + Vision    → Camera works, AI detects on real hardware
-PHASE 2: Pi + Vision + Cube  → CV and flight controller talk to each other
-PHASE 3: First Flight   → Calibrate with real drone (manual only)
-PHASE 4: Ground Station  → Remote monitoring and control
+PHASE 0: Laptop         → Code works, simulation runs, model detects          ✅ DONE
+PHASE 1: Pi + Vision    → Camera works, AI detects on real hardware           ✅ DONE
+PHASE 2: Pi + Vision + Cube  → CV and flight controller talk to each other    ✅ DONE
+PHASE 3: First Flight   → Calibrate with real drone (manual only)             ← YOU ARE HERE
+PHASE 4: Ground Station  → Remote monitoring and control                      (can overlap with 3)
 PHASE 5: Autonomous     → Full mission with gradual confidence building
 ```
 
@@ -28,9 +28,12 @@ PHASE 5: Autonomous     → Full mission with gradual confidence building
 
 ---
 
-## PHASE 1: Pi — Vision Only (no Cube needed)
+## PHASE 1: Pi — Vision Only (no Cube needed) — DONE
 
 **Goal**: Camera + AI detection working on Pi hardware.
+
+**Status**: COMPLETE. Camera works (picamera2, 640x480). TFLite detection working (256ms avg,
+3.9 FPS, 50/50 detection at 0.966 confidence). Camera color fix applied (IMX296 BGR issue).
 
 ### Setup (one time)
 ```bash
@@ -40,18 +43,24 @@ git clone <your-repo-url> .
 python3 -m venv --system-site-packages pienv
 source pienv/bin/activate
 pip install -r requirements_pi.txt
+# If tflite-runtime fails on Python 3.13: pip install ai-edge-litert
 ```
 
 ### Tests
 
-| Step | Script | What it proves | Pass criteria |
-|------|--------|---------------|--------------|
-| 1 | `python tests/pi_1_camera.py` | Camera gives frames | Prints frame size |
-| 2 | `python tests/pi_2_detect.py` | AI detects dummy | Bounding box on dummy printout |
-| 3 | `python tests/pi_3_benchmark.py` | Speed OK | Avg < 200ms |
-| 3b | `python tests/pi_8_camera_test.py --headless` | FPS + blur | Reports pipeline FPS, blur impact |
-| 3c | `python tests/pi_9_resolution_test.py --headless` | Best resolution | Recommends optimal resolution |
-| 4 | `python tests/pi_6_fov_test.py --headless` | Bench FOV | Predicted vs actual match |
+| Step | Script | What it proves | Pass criteria | Status |
+|------|--------|---------------|--------------|--------|
+| 1 | `python tests/pi_1_camera.py` | Camera gives frames | Prints frame size | PASS |
+| 2 | `python tests/pi_2_detect.py` | AI detects dummy | Bounding box on dummy printout | PASS |
+| 3 | `python tests/pi_3_benchmark.py` | Speed OK | Avg < 200ms | 256ms (acceptable) |
+| 3b | `python tests/pi_8_camera_test.py --headless` | FPS + blur | Reports pipeline FPS, blur impact | -- |
+| 3c | `python tests/pi_9_resolution_test.py --headless` | Best resolution | Recommends optimal resolution | -- |
+| 4 | `python tests/pi_6_fov_test.py --headless` | Bench FOV | Predicted vs actual match | -- |
+
+### Camera Color Note
+The IMX296 Global Shutter Camera outputs BGR data despite picamera2 labeling it RGB888.
+Do NOT add `cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)` — this double-swaps channels.
+Use frames directly from `picam.capture_array()`. See CV_GUIDE.md for details.
 
 ### After Phase 1: Update config.py
 
@@ -65,47 +74,51 @@ IMAGE_H = 240
 
 ---
 
-## PHASE 2: Pi — Vision + Cube (bench, no flying)
+## PHASE 2: Pi — Vision + Cube (bench, no flying) — DONE
 
 **Goal**: CV and Cube work together on the desk.
 
-### Wiring
+**Status**: COMPLETE. Cube connected via mavproxy bridge (921600 baud). Heartbeat, GPS, attitude,
+battery all confirmed. Buzzer beeps on detection. Guidance commands working. Mission Planner
+connected via TCP bridge (tcpin:0.0.0.0:5762).
 
-| Pi GPIO | Cube TELEM2 |
-|---------|-------------|
-| TX (GPIO 14, pin 8) | RX |
-| RX (GPIO 15, pin 10) | TX |
-| GND (pin 6) | GND |
+### Connection Setup
+
+**Important**: Python 3.13 + pyserial has broken serial reads. Use mavproxy as a UDP bridge:
+
+```bash
+# Terminal 1: Start mavproxy bridge
+sudo /opt/mavlink/mavlink-venv/bin/mavproxy.py \
+  --master=/dev/ttyAMA0 --baudrate=921600 --streamrate=10 \
+  --out=udpout:127.0.0.1:14550 --out=tcpin:0.0.0.0:5762
+```
 
 ### Tests
 
-| Step | Script | What it proves | Pass criteria |
-|------|--------|---------------|--------------|
-| 5 | `python tests/test_cube.py` | Cube talks to Pi | Heartbeat + yaw/pitch/roll printed |
-| 6 | `python tests/pi_4_detect_and_log.py` | **CV + Cube together** | Buzzer beeps, guidance commands, CSV log |
-| 7 | `python preflight.py` | All connections OK | All checks pass |
+| Step | Script | What it proves | Pass criteria | Status |
+|------|--------|---------------|--------------|--------|
+| 5 | `python tests/test_cube.py` | Cube talks to Pi | Heartbeat + yaw/pitch/roll printed | PASS |
+| 6 | `python tests/pi_4b_detect_buzzer.py --headless` | **CV + Cube together** | Buzzer beeps, guidance commands | PASS |
+| 7 | `python preflight.py` | All connections OK | All checks pass | -- |
 
-### Step 6 is the big bench test
+### Bench test results (pi_4b_detect_buzzer.py)
+- 144 detections from 513 frames, 210ms avg inference
+- Guidance commands working (LEFT, RIGHT, FORWARD, BACK, CENTRED)
+- Yaw data flowing from Cube
+- Buzzer works on Pi monitor; may not sound over SSH headless
 
-Carry the drone by hand over a dummy printout:
-
-```
-[READY] Carry drone over dummy. Follow guidance commands.
-
-  [14:23:01] DETECTED #1  conf=0.87  >> LEFT + FORWARD  GPS=(no fix)  yaw=45
-  [14:23:03] DETECTED #2  conf=0.91  >> RIGHT  GPS=(no fix)  yaw=47
-  [14:23:05] DETECTED #3  conf=0.93  >> CENTRED - DESCEND  GPS=(no fix)  yaw=48
-```
-
-This proves: camera detects → Cube reads telemetry → buzzer beeps → guidance logic works → CSV logs.
-
-**Sign-off**: Buzzer beeps on detection. Guidance makes sense. CSV has entries. Preflight passes.
+**Sign-off**: Buzzer beeps on detection. Guidance makes sense. CSV has entries.
 
 ---
 
-## PHASE 3: First Test Flight Day (manual only)
+## PHASE 3: First Test Flight Day (manual only) — NEXT
 
 **Goal**: Calibrate with real data. No autonomous code — pilot flies with RC the whole time.
+
+**Pre-requisites before going to field**:
+1. Push BGR fix code to GitHub, pull on Pi, verify detection works with correct colors
+2. Test GPS fix outdoors (pi_gps_test.py)
+3. Have pi_passive_flight.py ready — this is your main flight day script
 
 ### What to bring
 
@@ -232,13 +245,13 @@ Step 13 is critical — run the full mission code connected to the real Cube but
 
 ## Summary
 
-| Phase | What | Needs | Can do now? |
-|-------|------|-------|-------------|
-| 0. Laptop | Simulation + model test | Laptop only | **YES** |
-| 1. Pi Vision | Camera + AI on Pi | Pi + Camera | **When Pi arrives** |
-| 2. Pi Vision+Cube | CV + Cube on bench | Pi + Camera + Cube | After Phase 1 |
-| 3. First flight | Calibrate (manual RC) | All hardware + field | After Phase 2 |
-| 4. Ground station | Telemetry + SSH | Radios + WiFi | Can overlap with 2-3 |
+| Phase | What | Needs | Status |
+|-------|------|-------|--------|
+| 0. Laptop | Simulation + model test | Laptop only | **DONE** |
+| 1. Pi Vision | Camera + AI on Pi | Pi + Camera | **DONE** |
+| 2. Pi Vision+Cube | CV + Cube on bench | Pi + Camera + Cube | **DONE** |
+| 3. First flight | Calibrate (manual RC) | All hardware + field | **NEXT** |
+| 4. Ground station | Telemetry + SSH | Radios + WiFi | Partially done (MP connected via TCP) |
 | 5. Autonomous | Full mission | Everything | After calibration |
 
 ---
