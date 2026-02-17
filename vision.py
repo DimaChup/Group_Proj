@@ -237,6 +237,9 @@ class VisionSystem:
             import config as _cfg
             if getattr(_cfg, "CAMERA_COLOR_CORRECTION", False):
                 frame = self._gray_world(frame)
+            # Flip 180° if camera is mounted inverted
+            if getattr(_cfg, "CAMERA_FLIP_180", False):
+                frame = cv2.flip(frame, -1)
         except Exception:
             pass
 

@@ -85,6 +85,7 @@ CAMERA_AWB_MODE = "auto"
 CAMERA_COLOUR_GAINS = (1.5, 1.2)
 # Software color correction (gray world algorithm) — not needed after channel fix
 CAMERA_COLOR_CORRECTION = False
+CAMERA_FLIP_180 = True   # Camera mounted inverted on drone — flip image 180°
 
 # --- SPEED SETTINGS ---
 TRANSIT_SPEED_MPS = 15.0  
