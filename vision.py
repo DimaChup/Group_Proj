@@ -32,6 +32,7 @@ if YOLO is None:
 class VisionSystem:
     def __init__(self, camera_index=0, model_path="best.tflite"):
         self.cap = None
+        self._picam = None
         if camera_index is not None:
             try:
                 import config as _cfg
@@ -40,9 +41,31 @@ class VisionSystem:
                 cam_w, cam_h = 640, 480
             print(f"[VISION] Opening Camera Index {camera_index} ({cam_w}x{cam_h})...")
             self.cap = cv2.VideoCapture(camera_index)
-            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, cam_w)
-            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, cam_h)
-            self.cap.set(cv2.CAP_PROP_FPS, 30)
+            if self.cap.isOpened():
+                ret, _ = self.cap.read()
+                if ret:
+                    self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, cam_w)
+                    self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, cam_h)
+                    self.cap.set(cv2.CAP_PROP_FPS, 30)
+                    print("[VISION] Camera opened via OpenCV")
+                else:
+                    self.cap.release()
+                    self.cap = None
+            else:
+                self.cap = None
+            # Fallback: picamera2 (Raspberry Pi)
+            if self.cap is None:
+                try:
+                    from picamera2 import Picamera2
+                    self._picam = Picamera2()
+                    self._picam.configure(self._picam.create_preview_configuration(
+                        main={"size": (cam_w, cam_h), "format": "RGB888"}
+                    ))
+                    self._picam.start()
+                    import time; time.sleep(1)
+                    print("[VISION] Camera opened via picamera2")
+                except Exception as e:
+                    print(f"[VISION] No camera available: {e}")
 
         # --- AI MODEL SETUP ---
         self.model = None
@@ -157,12 +180,19 @@ class VisionSystem:
         return False, 0, 0, 0.0
 
     def get_frame(self):
-        if not self.cap: return None
-        ret, frame = self.cap.read()
-        return frame if ret else None
+        if self.cap:
+            ret, frame = self.cap.read()
+            return frame if ret else None
+        if self._picam:
+            frame = self._picam.capture_array()
+            return cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+        return None
 
     def process_frame_manually(self, frame):
         return self.detect_in_image(frame)
 
     def release(self):
         if self.cap: self.cap.release()
+        if self._picam:
+            try: self._picam.stop()
+            except Exception: pass
