@@ -207,9 +207,6 @@ def main():
                 time.sleep(0.05)
                 continue
 
-            # Flip 180° — camera is mounted inverted on the drone
-            frame = cv2.flip(frame, -1)
-
             frame_count += 1
             fps_count += 1
             now = time.time()
