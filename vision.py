@@ -20,10 +20,14 @@ if YOLO is None:
         TFLiteInterpreter = Interpreter
     except ImportError:
         try:
-            import tensorflow as tf
-            TFLiteInterpreter = tf.lite.Interpreter
+            from ai_edge_litert.interpreter import Interpreter
+            TFLiteInterpreter = Interpreter
         except ImportError:
-            pass
+            try:
+                import tensorflow as tf
+                TFLiteInterpreter = tf.lite.Interpreter
+            except ImportError:
+                pass
 
 class VisionSystem:
     def __init__(self, camera_index=0, model_path="best.tflite"):
