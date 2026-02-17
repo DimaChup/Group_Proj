@@ -15,9 +15,15 @@ def _detect_connection():
         return env
 
     # 2. Pi: check for serial ports
+    #    Use mavproxy UDP bridge (start mavproxy first!) because
+    #    Python 3.13 + pyserial has broken serial reads on Pi.
+    #    Start mavproxy with:
+    #      sudo /opt/mavlink/mavlink-venv/bin/mavproxy.py \
+    #        --master=/dev/ttyAMA0 --baudrate=921600 \
+    #        --out=udp:127.0.0.1:14550
     for port in ["/dev/ttyAMA0", "/dev/ttyACM0", "/dev/ttyUSB0"]:
         if os.path.exists(port):
-            return port
+            return "udp:127.0.0.1:14550"
 
     # 3. WSL: auto-detect gateway IP to reach Windows SITL
     if platform.system() == "Linux":
@@ -46,7 +52,7 @@ MODE = os.environ.get("DRONE_MODE", "REAL")
 # Auto-detects: Pi->serial, WSL->gateway IP, Windows->localhost
 # Override with: export DRONE_CONN=tcp:172.20.80.1:5762
 CONNECTION_STR = _detect_connection()   
-BAUD_RATE = int(os.environ.get("DRONE_BAUD", 57600))
+BAUD_RATE = int(os.environ.get("DRONE_BAUD", 921600))
 
 # --- ALTITUDES ---
 TARGET_ALT = 30.0 # Search Altitude (Meters)
