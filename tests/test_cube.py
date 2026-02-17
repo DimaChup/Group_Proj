@@ -50,9 +50,18 @@ def test_cube(conn_str=None, baud=None):
             print("    - Check firewall settings")
         return False
 
-    # 2. Wait for heartbeat
+    # 2. Wait for heartbeat (use recv_match loop for Python 3.13 compatibility)
     print("  Waiting for heartbeat...")
-    hb = master.wait_heartbeat(timeout=10)
+    hb = None
+    start_hb = time.time()
+    while time.time() - start_hb < 10:
+        try:
+            msg = master.recv_match(type='HEARTBEAT', blocking=True, timeout=1)
+            if msg:
+                hb = msg
+                break
+        except Exception:
+            continue
     if not hb:
         print(f"  [FAIL] No heartbeat received after 10 seconds.")
         if is_serial:
