@@ -83,10 +83,8 @@ REAL_CAMERA_INDEX = 0 # Usually 0 for Pi Cam
 CAMERA_AWB_MODE = "auto"
 # Manual colour gains (red, blue) — only used when AWB_MODE = "manual"
 CAMERA_COLOUR_GAINS = (1.5, 1.2)
-# Software color correction (gray world algorithm)
-CAMERA_COLOR_CORRECTION = True
-# IMX296 R/B channel swap — set True only if kernel driver swaps channels
-CAMERA_SWAP_RB = False
+# Software color correction (gray world algorithm) — not needed after channel fix
+CAMERA_COLOR_CORRECTION = False
 
 # --- SPEED SETTINGS ---
 TRANSIT_SPEED_MPS = 15.0  

@@ -227,14 +227,8 @@ class VisionSystem:
                 return None
         elif self._picam:
             frame = self._picam.capture_array()
-            frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-            # IMX296 Global Shutter Camera has R/B channels swapped in driver
-            try:
-                import config as _cfg
-                if getattr(_cfg, "CAMERA_SWAP_RB", False):
-                    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            except Exception:
-                pass
+            # IMX296 Global Shutter: sensor outputs BGR despite RGB888 label
+            # No conversion needed — data is already in OpenCV's BGR format
         else:
             return None
 
