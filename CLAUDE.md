@@ -465,7 +465,31 @@ Track what was done each session so context is never lost.
   - Buzzer beeps on Pi monitor mode; silent in SSH headless (may need audio forwarding)
 - **Known**: Buzzer beep via MAVLink works when script runs on Pi's own monitor/terminal,
   but not when run over SSH headless — likely a timing/resource issue, not a code bug
-- **Next: Run main.py on Pi with Cube (bench test, no props), then manual flight test**
+- Created **pi_5b_telemetry.py**: full bench test — camera + AI + buzzer + guidance + live Cube telemetry
+  - Telemetry overlay on camera feed: GPS, altitude, yaw/pitch/roll, battery
+  - Fixed recv_match bug: drain all messages first, then read from mav.messages cache
+  - --streamrate=10 on mavproxy boosted ATTITUDE from 0.4 Hz to 7.4 Hz
+- Created **pi_cube_debug.py**: diagnostic — shows all MAVLink message types + rates + latest values
+- Created **pi_gps_test.py**: standalone GPS lock test — live table showing fix type, sats, coords
+  - GPS hardware confirmed working (fix_type=1 = "searching"), just no fix indoors (0 sats)
+- **vision.py updated**: picamera2 fallback added to VisionSystem
+  - OpenCV tried first (laptop unchanged), falls back to picamera2 on Pi
+  - get_frame() returns BGR from both backends
+  - release() cleans up both backends
+  - Tested on Pi: `Frame: (480, 640, 3)` — works
+- **main.py runs on Pi!** — connects to Cube, opens camera, loads AI model
+  - Stuck at ARMING indoors (no GPS, no RC) — expected
+  - Cube pre-arm buzzer silenced via mavproxy: `param set NTF_BUZZ_ENABLE 0`
+- **Mission Planner connected to real Cube via Pi**:
+  - mavproxy: `--out=tcpin:0.0.0.0:5762` for MP + `--out=udpout:127.0.0.1:14550` for Pi scripts
+  - MP connects TCP to Pi IP (192.168.1.121:5762)
+  - Slight delay over WiFi but fully functional
+- **Pi IP**: 192.168.1.121 (on local network)
+- **Full mavproxy command** (Pi Terminal 1):
+  ```
+  sudo /opt/mavlink/mavlink-venv/bin/mavproxy.py --master=/dev/ttyAMA0 --baudrate=921600 --streamrate=10 --out=udpout:127.0.0.1:14550 --out=tcpin:0.0.0.0:5762
+  ```
+- **Next: Outdoor test (GPS fix), then manual flight with passive detection**
 
 ---
 
