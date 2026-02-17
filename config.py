@@ -20,10 +20,10 @@ def _detect_connection():
     #    Start mavproxy with:
     #      sudo /opt/mavlink/mavlink-venv/bin/mavproxy.py \
     #        --master=/dev/ttyAMA0 --baudrate=921600 \
-    #        --out=udp:127.0.0.1:14550
+    #        --out=udpout:127.0.0.1:14550
     for port in ["/dev/ttyAMA0", "/dev/ttyACM0", "/dev/ttyUSB0"]:
         if os.path.exists(port):
-            return "udp:127.0.0.1:14550"
+            return "udpin:0.0.0.0:14550"
 
     # 3. WSL: auto-detect gateway IP to reach Windows SITL
     if platform.system() == "Linux":
