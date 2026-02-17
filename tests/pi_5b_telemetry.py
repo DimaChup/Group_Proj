@@ -159,8 +159,15 @@ telem = {
 }
 
 def update_telemetry():
-    """Read latest Cube messages (non-blocking) and update telem dict."""
-    gps = mav.recv_match(type='GLOBAL_POSITION_INT', blocking=False)
+    """Drain all pending messages, then read latest of each type from mav.messages."""
+    # Drain the buffer — processes ALL pending messages so mav.messages stays current
+    while True:
+        msg = mav.recv_msg()
+        if msg is None:
+            break
+
+    # Read latest of each type from the message cache
+    gps = mav.messages.get('GLOBAL_POSITION_INT')
     if gps:
         telem["lat"] = gps.lat / 1e7
         telem["lon"] = gps.lon / 1e7
@@ -171,17 +178,17 @@ def update_telemetry():
         telem["ground_speed"] = math.sqrt(vx**2 + vy**2)
         telem["hdg"] = gps.hdg / 100.0 if gps.hdg != 65535 else 0.0
 
-    att = mav.recv_match(type='ATTITUDE', blocking=False)
+    att = mav.messages.get('ATTITUDE')
     if att:
         telem["yaw"] = math.degrees(att.yaw)
         telem["pitch"] = math.degrees(att.pitch)
         telem["roll"] = math.degrees(att.roll)
 
-    bat = mav.recv_match(type='SYS_STATUS', blocking=False)
+    bat = mav.messages.get('SYS_STATUS')
     if bat:
         telem["voltage"] = bat.voltage_battery / 1000.0
 
-    gps_raw = mav.recv_match(type='GPS_RAW_INT', blocking=False)
+    gps_raw = mav.messages.get('GPS_RAW_INT')
     if gps_raw:
         fix_names = {0: "No GPS", 1: "No Fix", 2: "2D", 3: "3D",
                      4: "DGPS", 5: "RTK Float", 6: "RTK Fixed"}
