@@ -28,17 +28,18 @@ def check(name, func):
 
 
 def check_camera_opencv():
-    """Try OpenCV camera (laptop webcam)."""
+    """Try OpenCV camera (laptop webcam). Tries index 0 and 1."""
     import cv2
-    cap = cv2.VideoCapture(0)
-    if cap.isOpened():
-        ret, frame = cap.read()
-        cap.release()
-        if ret:
-            return True, f"{frame.shape[1]}x{frame.shape[0]} via OpenCV"
-        return False, "Opened but no frames"
-    cap.release()
-    return False, "Not available"
+    for idx in [0, 1]:
+        cap = cv2.VideoCapture(idx)
+        if cap.isOpened():
+            ret, frame = cap.read()
+            cap.release()
+            if ret:
+                return True, f"{frame.shape[1]}x{frame.shape[0]} via OpenCV (index {idx})"
+        else:
+            cap.release()
+    return False, "Not available (tried index 0 and 1)"
 
 
 def check_camera_picamera2():
@@ -57,13 +58,17 @@ def check_camera_picamera2():
 
 
 def check_camera():
-    """Try OpenCV first, then picamera2."""
+    """Try picamera2 first (Pi), then OpenCV (laptop)."""
+    # Try picamera2 first — on Pi this is the real camera
+    # OpenCV VideoCapture(0) can lock the device and block picamera2
     try:
-        return check_camera_opencv()
+        return check_camera_picamera2()
+    except ImportError:
+        pass  # Not on Pi, try OpenCV
     except Exception:
         pass
     try:
-        return check_camera_picamera2()
+        return check_camera_opencv()
     except Exception as e:
         return False, f"No camera: {e}"
 
