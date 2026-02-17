@@ -240,17 +240,23 @@ def check_gs_port():
     has_tcp_out = any('tcpin' in o or 'tcp' in o
                       for o in mavproxy_info["outputs"])
 
-    if port_open:
-        gs_s.ok = True
-        gs_s.text = "TCP 5762 LISTENING"
-    elif mavproxy_info["running"] and has_tcp_out:
-        # Port refused our connection — likely MP is already connected!
-        gs_s.ok = True
-        gs_s.text = "MP CONNECTED"
+    if mavproxy_info["running"] and has_tcp_out:
+        # mavproxy has TCP output configured — GS link is available
+        if port_open:
+            gs_s.ok = True
+            gs_s.text = "TCP 5762 LISTENING"
+        else:
+            # Port refused = MP already connected (this is good!)
+            gs_s.ok = True
+            gs_s.text = "MP CONNECTED"
     elif mavproxy_info["running"] and not has_tcp_out:
         gs_s.ok = False
         gs_s.text = "NO TCP OUTPUT"
         gs_s.error = "Add --out=tcpin:0.0.0.0:5762"
+    elif port_open:
+        # Port open but mavproxy not detected (unusual but OK)
+        gs_s.ok = True
+        gs_s.text = "TCP 5762 LISTENING"
     else:
         gs_s.ok = False
         gs_s.text = "NOT DETECTED"

@@ -43,10 +43,49 @@ communication (Python 3.13 + pyserial serial reads are broken).
 - [x] Camera tested on Pi
 - [x] TFLite inference tested on Pi
 - [x] Cube wired to Pi and tested
-- [ ] Bench test (no props) with real Cube — run main.py on Pi
-- [ ] Manual flight with passive detection (calibrate altitude)
-- [ ] Full autonomous flight
-- [ ] Improve AI model (retrain with real camera images)
+- [ ] CV Optimization (see below)
+
+### Flight Testing Steps (follow in order)
+Each step builds trust before adding risk. **Never skip a step.**
+
+1. **[ ] Mission Planner AUTO waypoints (no custom code)**
+   - Upload a simple square pattern (4 waypoints) in Mission Planner at 10-15m altitude
+   - Switch to AUTO on RC, drone flies the pattern, RTLs
+   - Proves: Cube, GPS, motors, RTL all work. Your code not involved.
+   - Kill switch: RC mode switch to STABILIZE/LOITER at any time
+
+2. **[ ] Waypoint test script (no CV)** — `tests/pi_waypoint_test.py` (to be written)
+   - Your code arms, takes off to 10m, flies 3-4 GPS waypoints in GUIDED mode, lands
+   - No camera, no detection, no decision-making
+   - Proves: your mavlink commands (arm, takeoff, goto, land) work on real hardware
+   - Kill switch: RC override always active
+
+3. **[ ] Manual flight + passive CV** — `tests/pi_passive_flight.py`
+   - Pilot flies manually on RC
+   - Pi runs camera + AI, logs detections, buzzer beeps — sends ZERO commands
+   - Review log after: did it detect the dummy? At what altitude/distance?
+   - Proves: CV works in real outdoor conditions, calibrates detection altitude
+
+4. **[ ] Autonomous search + CV logging only (no action)**
+   - Run main.py but with detection in "log only" mode — CV detects and logs but never triggers descent/landing
+   - Drone flies the search pattern autonomously, comes home after
+   - Review log: would it have found the target? Where? False positives?
+   - Proves: full search pattern works, CV detects from altitude, no dangerous surprises
+
+5. **[ ] Full autonomous mission**
+   - Everything enabled: search, detect, centre, descend, verify, land
+   - Operator confirms Y/N at verify stage
+   - This is the real thing
+
+### CV Optimization (Future Work)
+- [ ] **Lower confidence threshold** — try 0.3 or 0.25 (currently 0.4 in vision.py) to catch more detections at cost of false positives
+- [ ] **Retrain with real camera images** — current model trained on synthetic composites (map.jpg + dummy.png). Capture real photos of dummy in grass at various altitudes and retrain
+- [ ] **Blue tint correction validation** — gray world algorithm added but needs outdoor testing to confirm colours match training data
+- [ ] **Larger model** — try YOLOv8s instead of YOLOv8n (more accurate, slower). Benchmark on Pi with pi_3_benchmark.py
+- [ ] **Resolution tuning** — run pi_9_resolution_test.py to find best resolution vs speed vs detection tradeoff
+- [ ] **Motion blur handling** — test detection quality at different drone speeds. Consider shorter exposure / higher shutter speed in picamera2 config
+- [ ] **Altitude calibration** — run pi_cv_test.py on Pi to find max reliable detection altitude, adjust TARGET_ALT in config.py
+- [ ] **Data augmentation** — add brightness, contrast, blur, rotation variations to training pipeline (generate_dataset.py)
 
 ## Project File Structure
 
