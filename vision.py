@@ -209,14 +209,37 @@ class VisionSystem:
 
         return False, 0, 0, 0.0
 
+    @staticmethod
+    def _gray_world(frame):
+        """Gray world auto white balance — neutralises color cast."""
+        f = frame.astype(np.float32)
+        avg_b, avg_g, avg_r = f[:,:,0].mean(), f[:,:,1].mean(), f[:,:,2].mean()
+        avg_all = (avg_b + avg_g + avg_r) / 3.0
+        if avg_b > 0: f[:,:,0] = np.clip(f[:,:,0] * (avg_all / avg_b), 0, 255)
+        if avg_g > 0: f[:,:,1] = np.clip(f[:,:,1] * (avg_all / avg_g), 0, 255)
+        if avg_r > 0: f[:,:,2] = np.clip(f[:,:,2] * (avg_all / avg_r), 0, 255)
+        return f.astype(np.uint8)
+
     def get_frame(self):
         if self.cap:
             ret, frame = self.cap.read()
-            return frame if ret else None
-        if self._picam:
+            if not ret:
+                return None
+        elif self._picam:
             frame = self._picam.capture_array()
-            return cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-        return None
+            frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+        else:
+            return None
+
+        # Apply color correction if enabled
+        try:
+            import config as _cfg
+            if getattr(_cfg, "CAMERA_COLOR_CORRECTION", False):
+                frame = self._gray_world(frame)
+        except Exception:
+            pass
+
+        return frame
 
     def process_frame_manually(self, frame):
         return self.detect_in_image(frame)

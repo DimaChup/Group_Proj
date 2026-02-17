@@ -84,6 +84,9 @@ CAMERA_AWB_MODE = "daylight"
 # Manual colour gains (red, blue) — only used when AWB_MODE = "manual"
 # Increase red / decrease blue to fix blue tint. Default: (1.5, 1.2)
 CAMERA_COLOUR_GAINS = (1.5, 1.2)
+# Software color correction (gray world algorithm) — fixes blue tint
+# that hardware AWB can't. Applied to every frame from get_frame().
+CAMERA_COLOR_CORRECTION = True
 
 # --- SPEED SETTINGS ---
 TRANSIT_SPEED_MPS = 15.0  
