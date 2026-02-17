@@ -80,16 +80,13 @@ REAL_CAMERA_INDEX = 0 # Usually 0 for Pi Cam
 # --- CAMERA WHITE BALANCE (Pi only) ---
 # "auto", "daylight", "cloudy", "indoor", or "manual"
 # Use "daylight" or "cloudy" for outdoor flights to fix blue tint
-CAMERA_AWB_MODE = "daylight"
+CAMERA_AWB_MODE = "auto"
 # Manual colour gains (red, blue) — only used when AWB_MODE = "manual"
-# Increase red / decrease blue to fix blue tint. Default: (1.5, 1.2)
 CAMERA_COLOUR_GAINS = (1.5, 1.2)
-# Software color correction (gray world algorithm) — fixes blue tint
-# that hardware AWB can't. Applied to every frame from get_frame().
-CAMERA_COLOR_CORRECTION = True
-# IMX296 Global Shutter Camera has Red/Blue channels swapped in kernel driver.
-# Set True to swap them back in software. Set False after running sudo rpi-update.
-CAMERA_SWAP_RB = True
+# Software color correction (gray world algorithm)
+CAMERA_COLOR_CORRECTION = False
+# IMX296 R/B channel swap — set True only if kernel driver swaps channels
+CAMERA_SWAP_RB = False
 
 # --- SPEED SETTINGS ---
 TRANSIT_SPEED_MPS = 15.0  
