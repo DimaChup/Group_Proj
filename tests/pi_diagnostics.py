@@ -240,13 +240,16 @@ def check_gs_port():
     has_tcp_out = any('tcpin' in o or 'tcp' in o
                       for o in mavproxy_info["outputs"])
 
+    # Fallback: if Cube is connected via UDP, mavproxy MUST be running
+    # even if ps detection failed (sudo/permissions issue)
+    cube_via_udp = cube_s.ok and 'udp' in config.CONNECTION_STR.lower()
+
     if mavproxy_info["running"] and has_tcp_out:
-        # mavproxy has TCP output configured — GS link is available
+        # mavproxy detected with TCP output configured
         if port_open:
             gs_s.ok = True
             gs_s.text = "TCP 5762 LISTENING"
         else:
-            # Port refused = MP already connected (this is good!)
             gs_s.ok = True
             gs_s.text = "MP CONNECTED"
     elif mavproxy_info["running"] and not has_tcp_out:
@@ -254,9 +257,17 @@ def check_gs_port():
         gs_s.text = "NO TCP OUTPUT"
         gs_s.error = "Add --out=tcpin:0.0.0.0:5762"
     elif port_open:
-        # Port open but mavproxy not detected (unusual but OK)
         gs_s.ok = True
         gs_s.text = "TCP 5762 LISTENING"
+    elif cube_via_udp and not port_open:
+        # Cube works via UDP = mavproxy IS running.
+        # Port refused = MP already took it = success!
+        gs_s.ok = True
+        gs_s.text = "MP CONNECTED"
+    elif cube_via_udp:
+        # mavproxy running (Cube works) but port not checked yet
+        gs_s.ok = True
+        gs_s.text = "GS AVAILABLE"
     else:
         gs_s.ok = False
         gs_s.text = "NOT DETECTED"
