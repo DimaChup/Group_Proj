@@ -96,10 +96,14 @@ v3/
     ├── pi_4_detect_and_log.py ← Test: camera + Cube + buzzer + CSV logging
     ├── pi_4b_detect_buzzer.py ← Test: pi_2 style display + Cube buzzer + guidance + CSV
     ├── pi_5_guidance.py       ← Test: detection + directional commands (--headless)
+    ├── pi_5b_telemetry.py     ← Test: pi_4b + live Cube telemetry overlay (alt, GPS, yaw)
     ├── pi_6_fov_test.py       ← Test: FOV calibration on bench (--headless)
     ├── pi_7_alt_test.py       ← Test: FOV calibration at altitude (--headless)
     ├── pi_8_camera_test.py    ← Test: FPS + motion blur impact (--headless)
     ├── pi_9_resolution_test.py← Test: resolution vs speed vs detection quality
+    ├── pi_cube_debug.py       ← Diagnostic: MAVLink message types + rates from Cube
+    ├── pi_diagnostics.py      ← Visual dashboard: all subsystem connectivity + live rates
+    ├── pi_gps_test.py         ← GPS lock test: wait for satellite fix, show status
     ├── test_camera.py         ← Quick camera preview + snapshot
     ├── test_cube.py           ← Cube heartbeat, GPS, attitude, battery
     ├── test_cv.py             ← AI model loading + detection test
