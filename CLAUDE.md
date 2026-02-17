@@ -21,27 +21,32 @@ Autonomous SAR (Search and Rescue) drone that:
 The state machine, search pattern, detection, centering, descent, verification, and
 landing all work end-to-end in simulation.
 
-**REAL MODE: CODE READY, UNTESTED ON HARDWARE** — Same main.py runs in REAL mode
-with real camera + SITL on laptop. Interactive polygon drawing works. Webcam detection
-tested. Not yet tested on Pi or with real Cube.
+**PI HARDWARE: TESTED AND WORKING** — Camera, AI detection, and Cube connection all
+verified on Raspberry Pi 5 (Python 3.13). Requires mavproxy UDP bridge for Cube
+communication (Python 3.13 + pyserial serial reads are broken).
 
 ### What Works
 - Full state machine: INIT → CONNECTING → ARMING → TAKEOFF → SEARCH → CENTERING → DESCENDING → VERIFY → APPROACH → LANDING → DONE
 - Lawnmower search pattern generation from any polygon
 - AI detection with dual backend (Ultralytics on laptop, TFLite on Pi)
 - Interactive polygon drawing in both SIMULATION and REAL mode
-- Config auto-detection (SITL on laptop, serial Cube on Pi)
+- Config auto-detection (SITL on laptop, mavproxy UDP bridge on Pi)
 - Manual override (M key) and RC kill switch support
 - Preflight connectivity checker (preflight.py)
+- Pi camera (picamera2) working at 640x480
+- TFLite inference on Pi: ~206ms avg, 4.8 FPS, 50/50 detection at 0.966 confidence
+- Cube connection on Pi via mavproxy bridge (921600 baud, udpout/udpin)
+- ai-edge-litert replaces tflite-runtime on Python 3.13
 
 ### What's Not Done Yet
-- [ ] Pi setup (OS, venv, dependencies)
-- [ ] Camera tested on Pi
-- [ ] TFLite inference tested on Pi
-- [ ] Cube wired to Pi and tested
-- [ ] Bench test (no props) with real Cube
+- [x] Pi setup (OS, venv, dependencies)
+- [x] Camera tested on Pi
+- [x] TFLite inference tested on Pi
+- [x] Cube wired to Pi and tested
+- [ ] Bench test (no props) with real Cube — run main.py on Pi
 - [ ] Manual flight with passive detection (calibrate altitude)
 - [ ] Full autonomous flight
+- [ ] Improve AI model (retrain with real camera images)
 
 ## Project File Structure
 
@@ -308,8 +313,8 @@ We don't jump to flying. Progression:
 2. **Real camera + SITL on laptop** (DONE) — prove real camera + AI works
 2b. **WSL simulation** (DONE) — prove code runs on Linux
 2c. **Docker Pi test** (DONE) — prove TFLite model loads on Pi-like environment
-3. **Pi + camera (no Cube)** — prove vision on real hardware
-4. **Pi + camera + Cube (bench, no props)** — prove commands are correct
+3. **Pi + camera (no Cube)** (DONE) — prove vision on real hardware
+4. **Pi + camera + Cube (bench, no props)** (DONE — connection verified) — prove commands are correct
 5. **Manual flight (pilot on RC, Pi logging)** — calibrate detection altitude
 6. **Full autonomous flight** — the mission
 
@@ -415,6 +420,35 @@ Track what was done each session so context is never lost.
 - Confirmed project structure matches documentation — all files accounted for
 - MainOne4 NOT yet pushed to remote (need: `git push origin MainOne4`)
 - **Next: Push MainOne4, then Pi setup — clone, create pienv, run progressive tests (PI_SETUP.md)**
+
+### Session: 2026-02-17 — Pi setup and hardware testing
+- Pushed MainOne4 to remote, cloned on Pi at ~/dima/Group_Proj
+- Created pienv with `--system-site-packages` on Pi (Python 3.13.5)
+- **tflite-runtime doesn't support Python 3.13** — installed `ai-edge-litert` instead
+- Updated vision.py import chain: tflite_runtime → ai_edge_litert → tensorflow
+- numpy<2 (1.26.4) built from source on Pi (~5 min compile, works)
+- Installed opencv-python (GUI version) for live camera preview on Pi monitor
+- **pi_1_camera.py**: PASS — picamera2 detected, 640x480, RGB format
+- **pi_2_detect.py**: PASS — TFLite detection working, some detections on real camera
+- **pi_3_benchmark.py**: PASS — 206ms avg inference, 4.8 FPS, 50/50 detection, 0.966 confidence
+- **Cube serial issue**: Python 3.13 + pyserial = broken serial reads (bytes dropped, BAD_DATA)
+  - Raw `cat /dev/ttyAMA0` gets data fine, pymavlink can't parse it
+  - Solution: mavproxy as UDP bridge (already installed at /opt/mavlink/mavlink-venv/)
+- **Cube baud rate is 921600** (not 57600 as previously assumed)
+- Updated config.py: auto-detects serial port → returns `udpin:0.0.0.0:14550`
+- Updated config.py: default baud rate 57600 → 921600
+- **test_cube.py**: PASS via mavproxy bridge — Heartbeat, GPS, Attitude, Battery all OK
+- ArduCopter V4.6.3, CubeOrangePlus, Frame: QUAD/X confirmed
+- Updated test_cube.py: use recv_match loop instead of wait_heartbeat (Python 3.13 compat)
+- **Pi startup procedure**:
+  1. Terminal 1: `sudo /opt/mavlink/mavlink-venv/bin/mavproxy.py --master=/dev/ttyAMA0 --baudrate=921600 --out=udpout:127.0.0.1:14550`
+  2. Terminal 2: `cd ~/dima/Group_Proj && source pienv/bin/activate && python3 main.py`
+- **Known issues**:
+  - Camera slightly out of focus (twist lens ring to adjust)
+  - Detection quality lower with real camera vs simulation (expected — lighting, print quality)
+  - No GPS fix indoors (normal)
+  - Battery shows 0.0V when powered via USB only (normal)
+- **Next: Run main.py on Pi with Cube (bench test, no props), then manual flight test**
 
 ---
 
