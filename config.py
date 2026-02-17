@@ -84,7 +84,7 @@ CAMERA_AWB_MODE = "auto"
 # Manual colour gains (red, blue) — only used when AWB_MODE = "manual"
 CAMERA_COLOUR_GAINS = (1.5, 1.2)
 # Software color correction (gray world algorithm)
-CAMERA_COLOR_CORRECTION = False
+CAMERA_COLOR_CORRECTION = True
 # IMX296 R/B channel swap — set True only if kernel driver swaps channels
 CAMERA_SWAP_RB = False
 
