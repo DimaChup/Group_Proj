@@ -87,6 +87,9 @@ CAMERA_COLOUR_GAINS = (1.5, 1.2)
 # Software color correction (gray world algorithm) — fixes blue tint
 # that hardware AWB can't. Applied to every frame from get_frame().
 CAMERA_COLOR_CORRECTION = True
+# IMX296 Global Shutter Camera has Red/Blue channels swapped in kernel driver.
+# Set True to swap them back in software. Set False after running sudo rpi-update.
+CAMERA_SWAP_RB = True
 
 # --- SPEED SETTINGS ---
 TRANSIT_SPEED_MPS = 15.0  
