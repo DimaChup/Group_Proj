@@ -18,8 +18,8 @@ Controls:
   's' — save current frame as snapshot
 
 Usage:
-    python tests/pi_passive_flight.py                    # with screen
-    python tests/pi_passive_flight.py --headless         # terminal only (SSH)
+    python tests2/passive_flight.py                    # with screen
+    python tests2/passive_flight.py --headless         # terminal only (SSH)
 """
 
 import sys
