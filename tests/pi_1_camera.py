@@ -73,8 +73,7 @@ while True:
             break
     else:
         frame = picam.capture_array()
-        # picamera2 gives RGB, convert to BGR for OpenCV display
-        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+        # IMX296 sensor outputs BGR despite RGB888 label — no conversion needed
 
     cv2_display.putText(frame, f"Source: {source}", (10, 30),
                         cv2_display.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)

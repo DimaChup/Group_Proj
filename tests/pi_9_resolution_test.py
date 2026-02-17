@@ -56,7 +56,8 @@ else:
             time.sleep(1)
             # Grab one frame as source
             frame = picam.capture_array()
-            static_image = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+            # IMX296 sensor outputs BGR despite RGB888 label — no conversion needed
+            static_image = frame
             picam.stop()
             print(f"[OK] Grabbed frame from picamera2")
         except Exception as e:

@@ -63,7 +63,8 @@ def get_frame():
         return frame if ret else None
     else:
         frame = picam.capture_array()
-        return cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+        # IMX296 sensor outputs BGR despite RGB888 label — no conversion needed
+        return frame
 
 # ==========================================
 #   STEP B: Load AI model (from vision.py)
