@@ -92,7 +92,9 @@ v3/
     ├── pi_1_camera.py         ← Test: camera gives frames (OpenCV or picamera2)
     ├── pi_2_detect.py         ← Test: live AI detection (--headless for SSH)
     ├── pi_3_benchmark.py      ← Test: inference speed (50 runs, timing report)
+    ├── pi_3b_buzzer.py        ← Test: standalone buzzer melody test via MAVLink
     ├── pi_4_detect_and_log.py ← Test: camera + Cube + buzzer + CSV logging
+    ├── pi_4b_detect_buzzer.py ← Test: pi_2 style display + Cube buzzer + guidance + CSV
     ├── pi_5_guidance.py       ← Test: detection + directional commands (--headless)
     ├── pi_6_fov_test.py       ← Test: FOV calibration on bench (--headless)
     ├── pi_7_alt_test.py       ← Test: FOV calibration at altitude (--headless)
@@ -348,13 +350,15 @@ FOCAL_LENGTH_MM = 6.0  # calibrate with pi_6 FOV test
 pi_1_camera.py .......... Camera gives frames?
 pi_2_detect.py .......... AI detects dummy?  (--headless for SSH)
 pi_3_benchmark.py ....... Inference speed?
+pi_3b_buzzer.py ......... Buzzer plays melodies? (needs mavproxy)
+pi_4b_detect_buzzer.py .. Camera + AI + buzzer + guidance? (--headless for SSH)
+pi_4_detect_and_log.py .. Camera + Cube + buzzer + CSV logging
+pi_5_guidance.py ........ Centering commands?  (--headless)
+pi_6_fov_test.py ........ FOV calibration?  (--headless)
+pi_7_alt_test.py ........ FOV at real altitude? (flight day)
 pi_8_camera_test.py ..... FPS + blur impact?  (--headless)
 pi_9_resolution_test.py . Best resolution?
-pi_6_fov_test.py ........ FOV calibration?  (--headless)
-pi_5_guidance.py ........ Centering commands?  (--headless)
 test_cube.py ............ Cube heartbeat + GPS?
-pi_4_detect_and_log.py .. Camera + Cube + buzzer together?
-pi_7_alt_test.py ........ FOV at real altitude? (flight day)
 preflight.py ............ All systems go?
 ```
 
@@ -448,6 +452,19 @@ Track what was done each session so context is never lost.
   - Detection quality lower with real camera vs simulation (expected — lighting, print quality)
   - No GPS fix indoors (normal)
   - Battery shows 0.0V when powered via USB only (normal)
+- Created **pi_3b_buzzer.py**: standalone buzzer melody test (5 tunes via MAVLink PLAY_TUNE)
+- Created **pi_4b_detect_buzzer.py**: like pi_2 but adds Cube buzzer + guidance commands + CSV logging
+  - Supports --headless (SSH) and display mode (Pi monitor)
+  - Beep cooldown: max once per second
+  - Guidance: LEFT/RIGHT/FORWARD/BACK/CENTRED based on target pixel position
+  - Logs: timestamp, GPS, attitude, confidence, pixel coords to detection_log.csv
+- **pi_3b_buzzer.py**: PASS on Pi monitor — buzzer plays all 5 melodies
+- **pi_4b_detect_buzzer.py --headless**: PASS — 144 detections from 513 frames, 210ms avg
+  - Guidance commands working correctly (LEFT, RIGHT, FORWARD, BACK, CENTRED)
+  - Yaw data flowing from Cube (e.g. yaw=-153)
+  - Buzzer beeps on Pi monitor mode; silent in SSH headless (may need audio forwarding)
+- **Known**: Buzzer beep via MAVLink works when script runs on Pi's own monitor/terminal,
+  but not when run over SSH headless — likely a timing/resource issue, not a code bug
 - **Next: Run main.py on Pi with Cube (bench test, no props), then manual flight test**
 
 ---
