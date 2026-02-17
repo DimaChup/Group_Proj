@@ -176,10 +176,15 @@ def main():
     print("   Expected setup:")
     print("   ┌────────┐  serial  ┌────┐  mavproxy  ┌────────────┐")
     print("   │  Cube  │─────────>│ Pi │────UDP─────>│ Pi scripts │")
-    print("   └────────┘          └────┘────TCP─────>│ Mission    │")
-    print("   ┌────────┐   CSI      │                │ Planner    │")
-    print("   │ Camera │───────────>│                │ (laptop)   │")
-    print("   └────────┘            │                └────────────┘")
+    print("   │        │          └────┘────TCP─────>│ Mission    │")
+    print("   │        │                      WiFi   │ Planner    │")
+    print("   │        │  telemetry radio            │ (laptop)   │")
+    print("   │        │─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ >│            │")
+    print("   └────────┘                             └────────────┘")
+    print("   ┌────────┐   CSI    ┌────┐")
+    print("   │ Camera │─────────>│ Pi │   ┌────────┐")
+    print("   └────────┘          └────┘   │   RC   │──radio──> Cube")
+    print("                                └────────┘  (kill switch)")
     print()
 
     print("─" * 60)
@@ -214,6 +219,30 @@ def main():
         print("    --out=udpout:127.0.0.1:14550 --out=tcpin:0.0.0.0:5762")
         results['cube'] = False
         results['mp_port'] = False
+
+    # 5. RC + Telemetry radio (can't check from Pi, just show info)
+    print("\n  RC + GROUND STATION (check manually):")
+    if results.get('cube'):
+        # Check RC input from Cube telemetry
+        try:
+            from pymavlink import mavutil
+            mav = mavutil.mavlink_connection("udpin:0.0.0.0:14550")
+            mav.recv_match(type='HEARTBEAT', blocking=True, timeout=2)
+            rc_msg = mav.recv_match(type='RC_CHANNELS', blocking=True, timeout=2)
+            if rc_msg and rc_msg.chancount > 0:
+                ch3 = rc_msg.chan3_raw  # throttle
+                if ch3 > 900:
+                    print(f"  [+] RC Transmitter          {rc_msg.chancount}ch, throttle={ch3}")
+                else:
+                    print(f"  [?] RC Transmitter          {rc_msg.chancount}ch but throttle={ch3} (RC off?)")
+            else:
+                print(f"  [?] RC Transmitter          No RC data (RC off or not bound)")
+            mav.close()
+        except Exception:
+            print(f"  [?] RC Transmitter          Could not check")
+
+    print(f"  [?] Telemetry radio         Check from laptop: connect Mission Planner")
+    print(f"                              via COM port (not TCP) for direct radio link")
 
     # Summary
     total = len(results)
