@@ -46,7 +46,7 @@ def _detect_connection():
 # "SIMULATION": Uses map.jpg and mouse clicks for setup.
 # "REAL": Uses Real Camera and assumes waypoints are loaded/generated elsewhere.
 # Override with: export DRONE_MODE=REAL
-MODE = os.environ.get("DRONE_MODE", "REAL")
+MODE = os.environ.get("DRONE_MODE", "SIMULATION")
 
 # --- FLIGHT CONNECTION ---
 # Auto-detects: Pi->serial, WSL->gateway IP, Windows->localhost
@@ -76,6 +76,14 @@ FOCAL_LENGTH_MM = 6.0
 IMAGE_W = 640
 IMAGE_H = 480
 REAL_CAMERA_INDEX = 0 # Usually 0 for Pi Cam
+
+# --- CAMERA WHITE BALANCE (Pi only) ---
+# "auto", "daylight", "cloudy", "indoor", or "manual"
+# Use "daylight" or "cloudy" for outdoor flights to fix blue tint
+CAMERA_AWB_MODE = "daylight"
+# Manual colour gains (red, blue) — only used when AWB_MODE = "manual"
+# Increase red / decrease blue to fix blue tint. Default: (1.5, 1.2)
+CAMERA_COLOUR_GAINS = (1.5, 1.2)
 
 # --- SPEED SETTINGS ---
 TRANSIT_SPEED_MPS = 15.0  

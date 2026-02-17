@@ -161,6 +161,51 @@ except Exception as e:
     cube_s.error = str(e)[:60]
     print(f"  FAIL  Cube: {e}")
 
+# --- Baud rate + mavproxy detection ---
+baud_rate = 921600
+try:
+    baud_rate = config.BAUD_RATE
+except Exception:
+    pass
+
+mavproxy_info = {
+    "running": False,
+    "master": "",
+    "outputs": [],
+    "streamrate": "",
+    "baud": "",
+}
+
+def detect_mavproxy():
+    """Find running mavproxy process and parse its flags."""
+    try:
+        import subprocess
+        result = subprocess.run(['ps', 'aux'], capture_output=True,
+                                text=True, timeout=3)
+        for line in result.stdout.split('\n'):
+            if 'mavproxy' in line.lower() and 'grep' not in line:
+                mavproxy_info["running"] = True
+                for part in line.split():
+                    if part.startswith('--master='):
+                        mavproxy_info["master"] = part.split('=', 1)[1]
+                    elif part.startswith('--out='):
+                        mavproxy_info["outputs"].append(part.split('=', 1)[1])
+                    elif part.startswith('--baudrate='):
+                        mavproxy_info["baud"] = part.split('=', 1)[1]
+                    elif part.startswith('--streamrate='):
+                        mavproxy_info["streamrate"] = part.split('=', 1)[1]
+                break
+    except Exception:
+        pass
+
+print("[3b/5] Detecting mavproxy process...")
+detect_mavproxy()
+if mavproxy_info["running"]:
+    print(f"  OK  mavproxy running, master={mavproxy_info['master']}, "
+          f"outputs={mavproxy_info['outputs']}")
+else:
+    print(f"  INFO  mavproxy process not detected (may be on different host)")
+
 # --- GPS ---
 if cube_s.ok:
     gps_s.text = "WAITING..."
@@ -168,19 +213,10 @@ else:
     gps_s.text = "NO CUBE"
 
 # --- Ground Station ---
-print("[4/5] Checking GS forwarding port...")
+print("[4/5] Checking GS forwarding...")
 def check_gs_port():
     global pi_ip
-    try:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(1)
-        result = sock.connect_ex(('127.0.0.1', 5762))
-        sock.close()
-        gs_s.ok = result == 0
-        gs_s.text = "PORT OPEN" if result == 0 else "PORT CLOSED"
-    except Exception:
-        gs_s.ok = False
-        gs_s.text = "CHECK FAILED"
+    # Get Pi IP
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.connect(("8.8.8.8", 80))
@@ -188,6 +224,37 @@ def check_gs_port():
         s.close()
     except Exception:
         pass
+
+    # Check TCP port 5762
+    port_open = False
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(1)
+        result = sock.connect_ex(('127.0.0.1', 5762))
+        sock.close()
+        port_open = result == 0
+    except Exception:
+        pass
+
+    # Determine GS status using all available info
+    has_tcp_out = any('tcpin' in o or 'tcp' in o
+                      for o in mavproxy_info["outputs"])
+
+    if port_open:
+        gs_s.ok = True
+        gs_s.text = "TCP 5762 LISTENING"
+    elif mavproxy_info["running"] and has_tcp_out:
+        # Port refused our connection — likely MP is already connected!
+        gs_s.ok = True
+        gs_s.text = "MP CONNECTED"
+    elif mavproxy_info["running"] and not has_tcp_out:
+        gs_s.ok = False
+        gs_s.text = "NO TCP OUTPUT"
+        gs_s.error = "Add --out=tcpin:0.0.0.0:5762"
+    else:
+        gs_s.ok = False
+        gs_s.text = "NOT DETECTED"
+        gs_s.error = "mavproxy not found"
 
 check_gs_port()
 status_msg = f"TCP 5762 open (Pi IP: {pi_ip})" if gs_s.ok else gs_s.text
@@ -250,7 +317,7 @@ BG     = (25, 25, 25)
 PI_CLR = (120, 60, 0)
 
 CANVAS_W = 960
-CANVAS_H = 720
+CANVAS_H = 780
 
 # ============================================================
 #  VIEW 1: Connectivity Diagram
@@ -291,11 +358,11 @@ def draw_view_diagram():
 
     # Box positions
     pi_x, pi_y, pi_w, pi_h = 355, 225, 250, 200
-    cb_x, cb_y, cb_w, cb_h = 20, 235, 200, 180
+    cb_x, cb_y, cb_w, cb_h = 20, 225, 210, 210
     gp_x, gp_y, gp_w, gp_h = 40, 50, 175, 120
     ca_x, ca_y, ca_w, ca_h = 720, 185, 215, 130
     ai_x, ai_y, ai_w, ai_h = 720, 370, 215, 115
-    gs_x, gs_y, gs_w, gs_h = 355, 530, 250, 110
+    gs_x, gs_y, gs_w, gs_h = 340, 510, 280, 150
 
     # --- Connection lines (behind boxes) ---
     gps_bot  = (gp_x + gp_w // 2, gp_y + gp_h)
@@ -306,8 +373,11 @@ def draw_view_diagram():
     cube_r = (cb_x + cb_w, cb_y + cb_h // 2)
     pi_l   = (pi_x, pi_y + pi_h // 2)
     draw_arrow(img, cube_r, pi_l, cube_s.ok)
+    serial_port = mavproxy_info["master"] or "/dev/ttyAMA0"
+    baud_label = mavproxy_info["baud"] or str(baud_rate)
     draw_link_label(img, cube_r, pi_l,
-                    ["Serial /dev/ttyAMA0", "-> mavproxy", "-> UDP:14550"])
+                    [f"Serial {serial_port}", f"@ {baud_label} baud",
+                     "-> mavproxy -> UDP"])
 
     cam_l = (ca_x, ca_y + ca_h // 2)
     pi_r1 = (pi_x + pi_w, pi_y + 60)
@@ -323,8 +393,10 @@ def draw_view_diagram():
     pi_b  = (pi_x + pi_w // 2, pi_y + pi_h)
     gs_t  = (gs_x + gs_w // 2, gs_y)
     draw_arrow(img, pi_b, gs_t, gs_s.ok)
+    _tcp_outs = [o for o in mavproxy_info["outputs"] if 'tcp' in o.lower()]
+    tcp_label = _tcp_outs[0] if _tcp_outs else "tcpin:0.0.0.0:5762"
     draw_link_label(img, pi_b, gs_t,
-                    ["mavproxy TCP:5762", "-> WiFi ->", "Mission Planner"])
+                    [f"mavproxy {tcp_label}", f"-> WiFi -> MP"])
 
     # --- Boxes ---
     # GPS
@@ -347,9 +419,14 @@ def draw_view_diagram():
 
     # Cube
     total_rate = sum(msg_rates.values())
+    serial_port = mavproxy_info["master"] or "/dev/ttyAMA0"
+    baud_label = mavproxy_info["baud"] or str(baud_rate)
+    sr_label = mavproxy_info["streamrate"] or "?"
     cube_lines = [
         (f"System ID: {cube_sysid}", WHITE),
-        (f"Via: {conn_str}", WHITE),
+        (f"Serial: {serial_port}", WHITE),
+        (f"Baud: {baud_label}  Stream: {sr_label}Hz", WHITE),
+        (f"UDP: {conn_str}", WHITE),
         (f"Total: {total_rate:.0f} msgs/sec", GREEN if total_rate > 5 else YELLOW),
     ]
     for mt, short in [('ATTITUDE', 'ATT'), ('GLOBAL_POSITION_INT', 'POS'),
@@ -373,15 +450,15 @@ def draw_view_diagram():
                 cv2.FONT_HERSHEY_SIMPLEX, 0.55, WHITE, 2)
     cv2.rectangle(img, (pi_x, pi_y), (pi_x + pi_w, pi_y + pi_h), pi_border, 2)
     ok_count = sum(1 for s in [cam_s, ai_s, cube_s, gps_s, gs_s] if s.ok)
+    mp_running = mavproxy_info["running"]
     pi_lines = [
-        (f"IP: {pi_ip}", WHITE),
-        (f"mavproxy: {'Running' if cube_s.ok else 'Not detected'}",
-         GREEN if cube_s.ok else RED),
+        (f"IP: {pi_ip}", CYAN),
+        (f"mavproxy: {'Running' if mp_running else 'Not found'}",
+         GREEN if mp_running else RED),
         (f"Camera: {cam_source} {cam_res}", GREEN if cam_s.ok else RED),
         (f"AI: {ai_backend or 'None'}", GREEN if ai_s.ok else RED),
         ("", WHITE),
-        (f"Raw FPS: {raw_fps:.1f}", WHITE),
-        (f"AI inference: {last_inference_ms:.0f}ms", WHITE),
+        (f"Raw FPS: {raw_fps:.1f}  AI: {last_inference_ms:.0f}ms", WHITE),
         (f"Systems: {ok_count}/5 OK",
          GREEN if ok_count == 5 else YELLOW),
     ]
@@ -410,14 +487,23 @@ def draw_view_diagram():
                 [(f"{ai_s.text}", RED), (f"{ai_s.error[:28]}", RED)])
     draw_box(img, ai_x, ai_y, ai_w, ai_h, "AI MODEL", ai_s.ok, ai_lines)
 
-    # GS
-    gs_lines = ([(f"TCP 5762: OPEN", GREEN),
-                 (f"Pi IP: {pi_ip}", WHITE),
-                 (f"In MP: connect to {pi_ip}:5762", CYAN)]
-                if gs_s.ok else
-                [(f"TCP 5762: {gs_s.text}", RED),
-                 (f"Add to mavproxy:", YELLOW),
-                 (f"  --out=tcpin:0.0.0.0:5762", YELLOW)])
+    # GS — show connection details regardless of status
+    gs_lines = [
+        (f"Status: {gs_s.text}", GREEN if gs_s.ok else YELLOW),
+        (f"Pi IP: {pi_ip}", CYAN),
+    ]
+    # Show mavproxy TCP outputs
+    tcp_outs = [o for o in mavproxy_info["outputs"] if 'tcp' in o.lower()]
+    if tcp_outs:
+        for out in tcp_outs:
+            gs_lines.append((f"mavproxy --out={out}", WHITE))
+    else:
+        gs_lines.append(("No TCP output configured", YELLOW))
+    # Connection instructions
+    if gs_s.ok:
+        gs_lines.append((f"MP: connect TCP to {pi_ip}:5762", GREEN))
+    else:
+        gs_lines.append((f"Need: --out=tcpin:0.0.0.0:5762", YELLOW))
     draw_box(img, gs_x, gs_y, gs_w, gs_h, "MISSION PLANNER (GS)", gs_s.ok, gs_lines)
 
     # Telemetry strip
@@ -621,12 +707,23 @@ def draw_view_telemetry():
     y2 += 15
 
     # CONNECTION
-    y2 = section(col2_x, y2, "CONNECTION", [
+    serial_port = mavproxy_info["master"] or "/dev/ttyAMA0"
+    baud_label = mavproxy_info["baud"] or str(baud_rate)
+    sr_label = mavproxy_info["streamrate"] or "?"
+    conn_items = [
         ("System ID", cube_sysid, WHITE),
-        ("Link", conn_str, WHITE),
+        ("Serial", serial_port, WHITE),
+        ("Baud rate", baud_label, WHITE),
+        ("Stream rate", f"{sr_label} Hz", WHITE),
+        ("UDP link", conn_str, WHITE),
+        ("Pi IP", pi_ip, CYAN),
         ("Total rate", f"{sum(msg_rates.values()):.0f} msgs/sec",
          GREEN if sum(msg_rates.values()) > 5 else YELLOW),
-    ])
+    ]
+    # Show mavproxy outputs
+    for out in mavproxy_info["outputs"]:
+        conn_items.append(("Output", out, WHITE))
+    y2 = section(col2_x, y2, "CONNECTION", conn_items)
 
     y2 += 15
 

@@ -63,6 +63,36 @@ class VisionSystem:
                     ))
                     self._picam.start()
                     import time; time.sleep(1)
+
+                    # Apply white balance to fix blue tint
+                    try:
+                        import config as _cfg
+                        awb_mode = getattr(_cfg, "CAMERA_AWB_MODE", "daylight")
+                        if awb_mode == "manual":
+                            gains = getattr(_cfg, "CAMERA_COLOUR_GAINS", (1.5, 1.2))
+                            self._picam.set_controls({
+                                "AwbEnable": False,
+                                "ColourGains": gains
+                            })
+                            print(f"[VISION] AWB: manual gains R={gains[0]} B={gains[1]}")
+                        elif awb_mode != "auto":
+                            from libcamera import controls
+                            awb_map = {
+                                "daylight": controls.AwbModeEnum.Daylight,
+                                "cloudy": controls.AwbModeEnum.Cloudy,
+                                "indoor": controls.AwbModeEnum.Indoor,
+                                "tungsten": controls.AwbModeEnum.Tungsten,
+                                "fluorescent": controls.AwbModeEnum.Fluorescent,
+                            }
+                            mode = awb_map.get(awb_mode, controls.AwbModeEnum.Daylight)
+                            self._picam.set_controls({"AwbMode": mode})
+                            print(f"[VISION] AWB: {awb_mode}")
+                        else:
+                            print("[VISION] AWB: auto")
+                        time.sleep(0.5)  # let AWB settle
+                    except Exception as e:
+                        print(f"[VISION] AWB setup skipped: {e}")
+
                     print("[VISION] Camera opened via picamera2")
                 except Exception as e:
                     print(f"[VISION] No camera available: {e}")
