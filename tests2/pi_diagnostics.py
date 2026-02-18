@@ -258,9 +258,9 @@ def check_gs_port():
         gs_s.ok = True
         gs_s.text = "MP CONNECTED"
     elif port_listening:
-        gs_s.ok = True
-        gs_s.text = "TCP 5762 WAITING"
-        gs_s.error = ""
+        gs_s.ok = False
+        gs_s.text = "WAITING FOR MP"
+        gs_s.error = f"Connect MP to {pi_ip}:5762"
     elif mavproxy_info["running"] and not has_tcp_out:
         gs_s.ok = False
         gs_s.text = "NO TCP OUTPUT"
