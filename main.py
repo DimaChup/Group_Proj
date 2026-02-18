@@ -8,6 +8,8 @@ import csv
 from datetime import datetime
 import sys
 import os
+import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
 
 # --- Import Config with Safety Check ---
 try:
@@ -30,6 +32,73 @@ from vision import VisionSystem
 # Conditional Import for Simulation
 if config.MODE == "SIMULATION":
     from simulation import SimulationEnvironment
+
+# --- GS Camera Stream (MJPEG over HTTP) ---
+STREAM_PORT = 8090
+STREAM_W, STREAM_H = 320, 240
+STREAM_FPS = 5
+STREAM_QUALITY = 50
+_stream_frame = None
+_stream_lock = threading.Lock()
+
+class _StreamHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        if self.path == '/stream':
+            self.send_response(200)
+            self.send_header('Content-Type', 'multipart/x-mixed-replace; boundary=frame')
+            self.end_headers()
+            while True:
+                with _stream_lock:
+                    f = _stream_frame
+                if f is None:
+                    time.sleep(0.1)
+                    continue
+                small = cv2.resize(f, (STREAM_W, STREAM_H))
+                _, jpeg = cv2.imencode('.jpg', small, [cv2.IMWRITE_JPEG_QUALITY, STREAM_QUALITY])
+                data = jpeg.tobytes()
+                try:
+                    self.wfile.write(b'--frame\r\n')
+                    self.wfile.write(b'Content-Type: image/jpeg\r\n')
+                    self.wfile.write(f'Content-Length: {len(data)}\r\n\r\n'.encode())
+                    self.wfile.write(data)
+                    self.wfile.write(b'\r\n')
+                except (BrokenPipeError, ConnectionResetError):
+                    break
+                time.sleep(1.0 / STREAM_FPS)
+        elif self.path == '/':
+            html = '<html><body style="background:#111;text-align:center">'
+            html += '<h2 style="color:#fff;font-family:monospace">SAR Drone Mission Feed</h2>'
+            html += '<img src="/stream" style="max-width:100%;border:2px solid #0f0"/></body></html>'
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/html')
+            self.end_headers()
+            self.wfile.write(html.encode())
+        else:
+            self.send_response(404)
+            self.end_headers()
+    def log_message(self, format, *args):
+        pass
+
+def _start_stream_server():
+    """Start MJPEG server in background thread."""
+    try:
+        server = HTTPServer(('0.0.0.0', STREAM_PORT), _StreamHandler)
+        server_thread = threading.Thread(target=server.serve_forever, daemon=True)
+        server_thread.start()
+        # Get IP for display
+        pi_ip = "localhost"
+        try:
+            import subprocess
+            result = subprocess.run(['hostname', '-I'], capture_output=True, text=True, timeout=3)
+            pi_ip = result.stdout.strip().split()[0]
+        except Exception:
+            pass
+        print(f"[STREAM] Live feed: http://{pi_ip}:{STREAM_PORT}/")
+        return server
+    except Exception as e:
+        print(f"[STREAM] Failed to start: {e}")
+        return None
+
 
 class VisualFlightMission:
     def __init__(self):
@@ -270,6 +339,11 @@ class VisualFlightMission:
              god_resized = cv2.resize(god_frame, (int(god_frame.shape[1]*h_scale), frame.shape[0]))
              final_display = np.hstack((god_resized, frame))
 
+        # Update stream for ground station (frame with HUD, before composite)
+        global _stream_frame
+        with _stream_lock:
+            _stream_frame = frame
+
         cv2.imshow("Mission Dashboard", final_display)
         return found, u, v
 
@@ -301,6 +375,7 @@ class VisualFlightMission:
 
     def run(self):
         print("Starting Mission Loop...")
+        _start_stream_server()
         cv2.namedWindow("Mission Dashboard")
         if config.MODE == "SIMULATION":
             cv2.setMouseCallback("Mission Dashboard", self.on_dashboard_mouse)
