@@ -24,11 +24,22 @@ Stream options (use with --stream):
   --stream-fps 5        Target FPS (default 5)
   --stream-quality 50   JPEG quality 1-100 (default 50)
 
+Frame capture (use with --save-frames):
+  --save-frames         Save every AI frame to disk (for blur/smear review)
+  --save-every N        Save every Nth frame instead of all (default 1 = all)
+  --save-dir DIR        Output folder (default: flight_frames/)
+
+  Saved files:  DET_0.83_alt12.4_spd3.2_001234.jpg   (detection hit)
+                MISS_alt12.4_spd3.2_001235.jpg        (no detection)
+  Review after flight to see blur at different speeds and which frames detected.
+
 Usage:
     python tests2/pi_passive_flight.py                    # with screen
     python tests2/pi_passive_flight.py --headless         # terminal only (SSH)
     python tests2/pi_passive_flight.py --headless --stream # SSH + stream to laptop
     python tests2/pi_passive_flight.py --stream --stream-res 640x480 --stream-quality 70
+    python tests2/pi_passive_flight.py --headless --save-frames              # save all AI frames
+    python tests2/pi_passive_flight.py --headless --save-frames --save-every 4  # save every 4th frame
 """
 
 import sys
@@ -49,10 +60,13 @@ import config
 
 HEADLESS = "--headless" in sys.argv
 STREAM = "--stream" in sys.argv
+SAVE_FRAMES = "--save-frames" in sys.argv
 STREAM_PORT = 8090
 STREAM_W, STREAM_H = 320, 240
 STREAM_FPS = 5
 STREAM_QUALITY = 50
+SAVE_EVERY = 1
+SAVE_DIR = os.path.join(project_root, "flight_frames")
 
 for _i, _arg in enumerate(sys.argv):
     if _arg == "--stream-port" and _i + 1 < len(sys.argv):
@@ -64,6 +78,10 @@ for _i, _arg in enumerate(sys.argv):
         STREAM_FPS = int(sys.argv[_i + 1])
     elif _arg == "--stream-quality" and _i + 1 < len(sys.argv):
         STREAM_QUALITY = int(sys.argv[_i + 1])
+    elif _arg == "--save-every" and _i + 1 < len(sys.argv):
+        SAVE_EVERY = int(sys.argv[_i + 1])
+    elif _arg == "--save-dir" and _i + 1 < len(sys.argv):
+        SAVE_DIR = sys.argv[_i + 1]
 
 # --- Stream globals ---
 _stream_frame = None
@@ -249,6 +267,14 @@ def main():
             "guidance", "dummy_expected_px", "battery_v", "battery_pct"
         ])
 
+    # Frame capture setup
+    saved_frame_count = 0
+    if SAVE_FRAMES:
+        os.makedirs(SAVE_DIR, exist_ok=True)
+        print(f"[FRAMES] Saving AI frames to: {SAVE_DIR}/")
+        print(f"[FRAMES] Save every {SAVE_EVERY} frame(s)")
+        print(f"[FRAMES] Format: DET_<conf>_alt<m>_spd<m/s>_<frame#>.jpg  or  MISS_alt<m>_spd<m/s>_<frame#>.jpg")
+
     if not HEADLESS:
         cv2.namedWindow("Passive Flight", cv2.WINDOW_NORMAL)
 
@@ -380,6 +406,16 @@ def main():
                 ])
                 log_file.flush()
                 last_log_time = now
+
+            # ── Save AI frame to disk ──
+            if SAVE_FRAMES and eyes.using_ai and frame_count % SAVE_EVERY == 0:
+                spd = telem["groundspeed"]
+                if found:
+                    fname = f"DET_{conf:.2f}_alt{alt:.1f}_spd{spd:.1f}_{frame_count:06d}.jpg"
+                else:
+                    fname = f"MISS_alt{alt:.1f}_spd{spd:.1f}_{frame_count:06d}.jpg"
+                cv2.imwrite(os.path.join(SAVE_DIR, fname), frame)
+                saved_frame_count += 1
 
             # ── Update stream ──
             if STREAM:
@@ -515,6 +551,8 @@ def main():
     if frame_count > 0:
         print(f"  Detection rate: {100 * detect_count / frame_count:.1f}%")
     print(f"  Log saved:    {log_path}")
+    if SAVE_FRAMES:
+        print(f"  Frames saved: {saved_frame_count} images in {SAVE_DIR}/")
     print("=" * 55)
 
 
