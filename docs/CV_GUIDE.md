@@ -4,6 +4,142 @@ How the vision system works, how to improve it, and how to swap models — witho
 
 ---
 
+## PRIORITY CHECKLIST — Things To Do Before Flight Day
+
+This is the CV to-do list. Work through it top to bottom.
+
+### 1. Get a Good Model
+
+Current model (`best.tflite`) was trained on **synthetic composites** — map.jpg with dummy.png pasted on top. This is okay for proving the pipeline works but will likely struggle with:
+- Real grass / real lighting / real shadows
+- Different dummy poses (lying, sitting, fetal position)
+- Different clothing colors (current training is one outfit)
+- Partially occluded targets (arm behind bush, half in shadow)
+- Similar-looking objects (bags, logs, clothing on ground)
+
+**Options to improve:**
+
+```
+[ ] OPTION A: Retrain on real images (HIGHEST IMPACT)
+    - Collect real photos of dummy on grass from Pi camera
+    - Different poses: lying flat, curled up, arms out, face down
+    - Different clothes: bright, dark, camo, high-vis
+    - Different backgrounds: short grass, long grass, dirt, path edge
+    - Different heights: take photos from 5m, 10m, 15m, 20m, 25m, 30m
+    - Different lighting: sunny, overcast, morning, afternoon
+    - Label with Roboflow (roboflow.com) or CVAT (cvat.ai)
+    - Retrain: yolo detect train model=yolov8n.pt data=dataset.yaml epochs=100
+    - Export: yolo export model=best.pt format=tflite
+    - Benchmark old vs new on Pi: pi_3_benchmark.py
+
+[ ] OPTION B: Use a pre-trained person/human detector
+    - YOLO COCO models already detect "person" class (class 0)
+    - Download: yolov8n.pt (already trained on 80 classes including person)
+    - Export to TFLite: yolo export model=yolov8n.pt format=tflite
+    - Pros: detects real humans immediately, no training needed
+    - Cons: also detects people who aren't the target, may be less
+      sensitive to a "dummy" that doesn't look exactly like a real person
+    - Could use as a SECOND model alongside custom dummy model
+    - Test: load both, if either detects → flag it
+
+[ ] OPTION C: Try a bigger model if nano struggles at altitude
+    - YOLOv8s (small) — bigger, slower, more accurate
+    - YOLOv8m (medium) — even bigger
+    - Benchmark on Pi to check speed is acceptable (< 300ms)
+    - See "Model Size" section below for comparison
+
+[ ] OPTION D: Data augmentation in training pipeline
+    - generate_dataset.py already creates synthetic composites
+    - Add: brightness variation, contrast, blur, rotation
+    - Add: scale variation (simulate different altitudes)
+    - Add: noise (simulate real camera)
+    - This improves model robustness without collecting real data
+```
+
+### 2. Calibrate Flight Parameters for Detection
+
+These must be determined by real testing. No way to know from simulation.
+
+```
+[ ] Max detection altitude — at what height does the model stop detecting?
+    - Run pi_passive_flight.py during manual RC flight
+    - Hover at 5m, 10m, 15m, 20m, 25m, 30m over dummy
+    - Record: detected Y/N, confidence, at each altitude
+    - Result → update TARGET_ALT in config.py
+
+[ ] Max flight speed for detection — how fast before smear kills detection?
+    - Run pi_passive_flight.py during manual flight
+    - Fly over dummy at 2, 3, 5, 7, 10 m/s
+    - Check /ai-snapshot or /stream-ai on pi_camera_stream_fast.py for blur
+    - Record: detected Y/N, confidence, blur level at each speed
+    - Result → update SEARCH_SPEED_MPS in config.py
+
+[ ] Optimal confidence threshold — balance false positives vs missed targets
+    - Currently 0.4 in vision.py (lines 174 and 197)
+    - After passive flight: review logs
+    - Too many false positives? → raise to 0.5 or 0.6
+    - Missing real targets? → lower to 0.3
+    - Result → update threshold in vision.py
+
+[ ] FOV calibration — so GPS offset math is accurate
+    - Run fov_calibrate.py on bench with known object at known distance
+    - Result → update SENSOR_WIDTH_MM and FOCAL_LENGTH_MM in config.py
+
+[ ] FPS vs speed calculation
+    - AI processes ~4 fps on Pi
+    - At 5 m/s: drone moves 1.25m between frames
+    - At 3 m/s: drone moves 0.75m between frames
+    - Ground coverage at 30m alt ≈ 25m wide → good overlap at 3-5 m/s
+    - If detection unreliable → slow down or lower altitude
+```
+
+### 3. GPS Coordinate Fallback (Skip CV, Test Flight Sequence)
+
+For testing the flight/landing sequence even if CV fails:
+
+```
+[ ] Add --target-gps flag to main.py or create test script
+    - Give it dummy GPS coordinates directly: --target-gps 51.4545,-2.6030
+    - Drone takes off, flies to those coordinates, descends, lands
+    - No camera needed, no detection needed
+    - Proves: takeoff, navigation, descent, landing all work
+    - Use pi_waypoint_test.py for basic version (already exists)
+    - Could extend pi_auto_detect.py with --force-target 51.4545,-2.6030
+
+[ ] This lets you test the full landing sequence without relying on CV
+    - Useful if outdoor CV testing shows model can't detect from altitude
+    - Still demonstrates autonomous navigation for the project
+```
+
+### 4. Multi-Frame Confirmation
+
+Avoid acting on a single false positive:
+
+```
+[x] pi_auto_detect.py already requires --min-detections consecutive detections
+    - Default: 2 consecutive detections before switching to GUIDED
+    - Adjustable: --min-detections 3 or 4 for more safety
+[ ] Consider adding same logic to main.py SEARCH → CENTERING transition
+    - Currently triggers on single detection (risky for false positives)
+```
+
+---
+
+## Current State
+
+| What | Status | Notes |
+|------|--------|-------|
+| Model loads on Pi | WORKING | TFLite backend, ~250ms inference |
+| Detection on bench | WORKING | 0.966 confidence on printed dummy |
+| Camera color fix | DONE | BGR passthrough, no cvtColor needed |
+| Detection with corrected colors | NOT TESTED | Need to push code + test on Pi |
+| Detection from real altitude | NOT TESTED | Passive flight test needed |
+| Detection at flight speed | NOT TESTED | Motion blur unknown |
+| Pre-trained person model | NOT TESTED | Could be a quick win |
+| Model retrained on real images | NOT DONE | Need real aerial images first |
+
+---
+
 ## The Journey: Basic → Working → Optimised
 
 Get it working first with defaults. Then measure. Then improve. Don't skip ahead.
@@ -13,33 +149,25 @@ Get it working first with defaults. Then measure. Then improve. Don't skip ahead
 Goal: AI detects a dummy held in front of the camera. Nothing fancy.
 
 ```
-[ ] Pi set up, venv activated, dependencies installed (PI_SETUP.md)
-[ ] Camera gives frames                        → pi_1_camera.py
-[ ] AI loads and detects dummy on bench         → pi_2_detect.py --headless
-[ ] Note inference speed (just observe for now) → pi_3_benchmark.py
+[x] Pi set up, venv activated, dependencies installed (PI_SETUP.md)
+[x] Camera gives frames                        → pi_1_camera.py
+[x] AI loads and detects dummy on bench         → pi_2_detect.py --headless
+[x] Note inference speed (just observe for now) → pi_3_benchmark.py
+    Result: 256ms avg, 3.9 FPS, 50/50 detection, 0.966 confidence
 ```
-
-At this point you have: camera works, AI works, detection works. Don't tune anything yet.
 
 ### Stage 2: Measure Everything (Before First Flight)
 
 Goal: know your numbers so you can make informed decisions.
 
 ```
-[ ] Inference speed: ___ms per frame            → pi_3_benchmark.py
 [ ] Best resolution that still detects          → pi_9_resolution_test.py
     Result: ___x___ at ___ms
 [ ] Camera FPS vs pipeline FPS                  → pi_8_camera_test.py
     Camera: ___fps, Pipeline: ___fps
-[ ] Bench FOV check (camera over ruler)         → pi_6_fov_test.py
+[ ] Bench FOV check (camera over ruler)         → fov_calibrate.py
     Measured FOV matches config? Y/N
     If N → update SENSOR_WIDTH_MM or FOCAL_LENGTH_MM in config.py
-```
-
-Update config.py with findings:
-```python
-IMAGE_W = ___    # best resolution from pi_9
-IMAGE_H = ___
 ```
 
 ### Stage 3: First Flight Data Collection
@@ -48,8 +176,10 @@ Goal: find out what simulation couldn't tell you.
 
 ```
 [ ] Manual flight (pilot on RC, Pi logging passively)
-[ ] Save frames at 5m, 10m, 15m, 20m, 25m, 30m  → pi_2_detect.py during flight
+    → pi_passive_flight.py --headless
+[ ] Save frames at 5m, 10m, 15m, 20m, 25m, 30m
 [ ] At what altitude does detection first fail?    → ___m
+[ ] At what speed does motion blur kill detection? → ___m/s
 [ ] Any false positives? What triggered them?      → note: ___
 [ ] Real FOV at altitude                           → pi_7_alt_test.py
 ```
@@ -58,6 +188,7 @@ Update config.py with findings:
 ```python
 TARGET_ALT = ___     # highest altitude where detection works reliably
 VERIFY_ALT = ___     # lower altitude for close-up confirmation
+SEARCH_SPEED_MPS = ___  # fastest speed with reliable detection
 ```
 
 ### Stage 4: Optimise (Iterate After Each Flight)
@@ -74,25 +205,27 @@ OPTION A — Better training data (biggest impact):
   [ ] Benchmark old vs new: pi_3_benchmark.py
   [ ] Keep whichever is better
 
-OPTION B — Try a bigger model (if nano struggles at altitude):
+OPTION B — Try pre-trained COCO person detector:
+  [ ] Export yolov8n.pt (COCO) to TFLite
+  [ ] Test on Pi — does it detect people from altitude?
+  [ ] Compare: custom dummy model vs COCO person model
+  [ ] Consider running both
+
+OPTION C — Try a bigger model (if nano struggles at altitude):
   [ ] Train YOLOv8s instead of YOLOv8n
   [ ] Export to tflite, benchmark on Pi
-  [ ] Is it fast enough? (< 200ms target)
+  [ ] Is it fast enough? (< 300ms target)
   [ ] If yes and detects better → keep it
 
-OPTION C — Tune confidence threshold:
+OPTION D — Tune confidence threshold:
   [ ] Too many false positives? → raise threshold (0.4 → 0.5 or 0.6)
   [ ] Missing real targets? → lower threshold (0.4 → 0.3)
-  [ ] Change in vision.py lines 117 and 140
+  [ ] Change in vision.py lines 174 and 197
 
-OPTION D — Tune flight parameters:
+OPTION E — Tune flight parameters:
   [ ] AI too slow for flight speed? → lower SEARCH_SPEED_MPS in config.py
   [ ] Detection only works close? → lower TARGET_ALT
-  [ ] Blur killing detection? → lower speed or try global shutter camera
-
-OPTION E — Frame skipping (if camera outpaces AI):
-  [ ] If camera gives 30fps but AI does 5fps → skip frames
-  [ ] Already handled by vision.py (processes latest frame, drops old ones)
+  [ ] Blur killing detection? → lower speed or increase shutter speed
 ```
 
 The loop: **fly → measure → adjust one thing → fly again → repeat**
@@ -154,67 +287,221 @@ As long as this interface stays the same, you can change the model, the preproce
 | Property | Value |
 |----------|-------|
 | File | `best.tflite` |
-| Architecture | YOLOv8 (likely nano) |
+| Architecture | YOLOv8n (nano) |
 | Input | 640x640x3 RGB, float32, normalised 0-1 |
 | Output | [1, 5+nclass, num_detections] — YOLOv8 format |
 | Confidence threshold | 0.4 (hardcoded in vision.py) |
-| Backend on Pi | TFLite runtime |
+| Backend on Pi | TFLite runtime (ai-edge-litert on Python 3.13) |
 | Backend on laptop | Ultralytics YOLO |
+| Training data | Synthetic composites (map.jpg + dummy.png) |
+| Pi inference speed | ~250ms per frame (~4 FPS) |
+
+### Model Size Comparison
+
+| Model | .tflite size | Pi speed (approx) | Accuracy |
+|-------|-------------|-------------------|----------|
+| YOLOv8n (nano) | ~6 MB | ~250ms | Good for close range |
+| YOLOv8s (small) | ~22 MB | ~400-600ms | Better at distance |
+| YOLOv8m (medium) | ~50 MB | ~800ms+ | Best accuracy |
+| COCO yolov8n (pre-trained) | ~6 MB | ~250ms | Detects "person" class |
+
+### Speed vs Flight Coverage
+
+| AI FPS | Drone speed | Distance between frames | Coverage gap? |
+|--------|------------|------------------------|--------------|
+| 4 fps | 3 m/s | 0.75m | No — good overlap |
+| 4 fps | 5 m/s | 1.25m | Marginal — might miss |
+| 4 fps | 7 m/s | 1.75m | Risky — could miss target |
+| 4 fps | 10 m/s | 2.5m | Likely to miss |
+
+At 30m altitude the camera sees ~25m of ground width, so even at 5 m/s each frame overlaps significantly. But the dummy is small (~46px tall at 30m) so you want multiple frames looking at it.
+
+**Recommendation**: Start with 3 m/s search speed. Increase after testing.
+
+### CRITICAL: Model Architecture = FPS
+
+**The model architecture (nano/small/medium) determines your FPS. This cannot be changed
+without changing the model.** Training a nano model on better data gives you the same ~4 fps
+but better detection. Switching to small gives better accuracy but halves your FPS.
+
+| What you change | Effect on FPS | Effect on accuracy |
+|----------------|--------------|-------------------|
+| Better training data (same nano) | NO CHANGE (~4 fps) | BETTER |
+| Different confidence threshold | NO CHANGE (~4 fps) | Trades FP vs FN |
+| Lower camera resolution | Slight improvement | Possibly worse |
+| Switch to YOLOv8s (small) | HALVED (~2 fps) | Better at distance |
+| Switch to YOLOv8m (medium) | QUARTERED (~1 fps) | Best accuracy |
+| INT8 quantization | ~2x faster (~8 fps) | Slightly worse |
+
+**Best strategy: stick with nano, train on better data. Only switch to small if nano
+genuinely can't detect at your target altitude.**
+
+---
+
+## How to Systematically Test Models
+
+This is the procedure for comparing models on real hardware. Follow it every time you
+want to evaluate a new model.
+
+### Step 1: Bench Test (indoors, no flight)
+
+For each model you want to test:
+
+```bash
+# Copy model to Pi
+scp new_model.tflite pi@<IP>:~/dima/Group_Proj/
+
+# SSH to Pi
+ssh pi@<IP>
+cd ~/dima/Group_Proj
+source pienv/bin/activate
+
+# A) Speed benchmark — how fast is inference?
+#    Place printed dummy in front of camera
+python tests/pi_3_benchmark.py
+# Record: avg_ms, fps, detection_rate, avg_confidence
+
+# B) Live detection test — does it detect reliably?
+python tests/pi_2_detect.py --headless
+# Observe: does it detect? At what distance? False positives?
+
+# C) Stream test — watch what AI sees in real-time
+python tests2/pi_camera_stream_fast.py --with-detection --headless
+# Open http://<PI_IP>:8090/ on laptop
+# Open http://<PI_IP>:8090/stream-ai to see AI input frames
+# Move dummy around — does it track? At what range does it lose it?
+```
+
+**Record results in this table:**
+
+```
+| Model | File | Size | Avg ms | FPS | Det rate | Avg conf | Notes |
+|-------|------|------|--------|-----|----------|----------|-------|
+| Current (custom nano) | best.tflite | 6MB | 250ms | 4.0 | 100% | 0.966 | bench, printed dummy |
+| COCO nano | yolov8n.tflite | 6MB | ___ms | ___ | ___% | _____ | |
+| Custom small | best_s.tflite | 22MB | ___ms | ___ | ___% | _____ | |
+| Retrained nano | best_v2.tflite | 6MB | ___ms | ___ | ___% | _____ | |
+```
+
+### Step 2: Static Altitude Test (outdoor, no flight)
+
+Hold the Pi camera above the dummy at known heights. This tells you max detection
+altitude before you fly.
+
+```bash
+# Run detection with stream so you can see results on laptop
+python tests2/pi_camera_stream_fast.py --with-detection --headless
+```
+
+**Procedure:**
+1. Place dummy on ground (grass, realistic surface)
+2. Hold Pi + camera at 2m above dummy → record: detected Y/N, confidence
+3. Repeat at 3m, 5m, 7m, 10m (use a ladder or balcony)
+4. Note the height where detection fails
+
+**Record results:**
+
+```
+| Model | 2m | 3m | 5m | 7m | 10m | Max reliable height |
+|-------|-----|-----|-----|-----|------|-------------------|
+| Current nano | Y/0.96 | Y/___ | Y/___ | ?/___ | ?/___ | ___m |
+| COCO nano | Y/___ | Y/___ | ?/___ | ?/___ | ?/___ | ___m |
+```
+
+### Step 3: Passive Flight Test (outdoor, real flight)
+
+This is the real test. Pilot flies manually, Pi logs detections.
+
+```bash
+# Start mavproxy first (Terminal 1)
+sudo /opt/mavlink/mavlink-venv/bin/mavproxy.py \
+  --master=/dev/ttyAMA0 --baudrate=921600 --streamrate=10 \
+  --out=udpout:127.0.0.1:14550 --out=tcpin:0.0.0.0:5762
+
+# Run passive flight (Terminal 2)
+python tests2/pi_passive_flight.py --headless
+```
+
+**Procedure:**
+1. Place dummy on ground in open area
+2. Pilot takes off, hovers at 10m directly above dummy
+3. Hold for 30 seconds → record detection rate + confidence
+4. Climb to 15m → hold 30 seconds → record
+5. Climb to 20m, 25m, 30m → same
+6. Fly over dummy at 3 m/s at 15m → record (tests motion blur)
+7. Fly over at 5 m/s → record
+8. Fly over at 7 m/s → record
+
+**Record results:**
+
+```
+| Model | Hover 10m | Hover 15m | Hover 20m | Hover 25m | Hover 30m |
+|-------|-----------|-----------|-----------|-----------|-----------|
+| Current | ___% | ___% | ___% | ___% | ___% |
+
+| Model | 3 m/s @15m | 5 m/s @15m | 7 m/s @15m |
+|-------|------------|------------|------------|
+| Current | ___% | ___% | ___% |
+```
+
+**After the flight:**
+- Review `passive_flight_log.csv` — all detections with GPS, altitude, confidence
+- Press 's' during flight to save snapshots → use for retraining
+- Check /ai-snapshot frames for motion blur
+
+### Step 4: Compare and Decide
+
+After testing multiple models with the same procedure:
+
+```
+DECISION MATRIX:
+                    | Speed | Hover det | Moving det | False pos |
+Current custom nano | 4 fps | ___% @20m | ___% @5m/s | ___/min   |
+COCO nano           | 4 fps | ___% @20m | ___% @5m/s | ___/min   |
+Retrained nano      | 4 fps | ___% @20m | ___% @5m/s | ___/min   |
+Custom small        | 2 fps | ___% @20m | ___% @5m/s | ___/min   |
+
+WINNER: __________ (best hover detection + acceptable speed + low false pos)
+```
+
+Then:
+```bash
+# Make the winner the active model
+cp winning_model.tflite best.tflite
+git add best.tflite && git commit -m "swap to better model"
+git push  # then pull on Pi
+```
+
+### Step 5: Iterate
+
+After each flight day:
+1. Collect saved frames (snapshots from passive flight)
+2. Label in Roboflow (draw bounding boxes)
+3. Add to training dataset
+4. Retrain nano model
+5. Go back to Step 1
+
+Each iteration makes the model better because it's trained on **real data from your
+actual camera at your actual flight altitudes**.
 
 ---
 
 ## Settings: Preliminary → Calibrated
 
-Everything starts with preliminary defaults that work. After real testing, you calibrate to optimal values.
+Everything starts with preliminary defaults. After real testing, calibrate to optimal values.
 
-### Preliminary Settings (what we start with)
+### Preliminary Settings (current)
 
-These are in `config.py` right now — sensible guesses, good enough to get running:
-
-| Setting | Default | Where |
-|---------|---------|-------|
-| Camera resolution | 640x480 | `config.py` IMAGE_W/IMAGE_H |
-| Camera FPS | 30 | `vision.py` line 41 |
-| Model | best.tflite (YOLOv8n) | `vision.py` constructor |
-| Confidence threshold | 0.4 | `vision.py` lines 117, 140 |
-| Sensor width | 5.02mm | `config.py` SENSOR_WIDTH_MM |
-| Focal length | 6.0mm | `config.py` FOCAL_LENGTH_MM |
-| Search altitude | 30m | `config.py` TARGET_ALT |
-| Verify altitude | 15m | `config.py` VERIFY_ALT |
-
-### Calibration Scripts (find the real optimal values)
-
-| What to calibrate | Script | When to run | What it changes |
-|-------------------|--------|-------------|-----------------|
-| Resolution vs speed vs detection | `pi_9_resolution_test.py` | Bench (Phase 1) | `IMAGE_W`, `IMAGE_H` |
-| Pipeline FPS + blur impact | `pi_8_camera_test.py` | Bench (Phase 1) | Camera settings, flight speed |
-| Bench FOV check | `pi_6_fov_test.py` | Bench (Phase 1) | `SENSOR_WIDTH_MM` or `FOCAL_LENGTH_MM` |
-| Real FOV at altitude | `pi_7_alt_test.py` | Flight Day 1 | `SENSOR_WIDTH_MM` or `FOCAL_LENGTH_MM` |
-| Max detection altitude | `pi_2_detect.py --headless` | Flight Day 1 | `TARGET_ALT`, `VERIFY_ALT` |
-| Confidence threshold | Manual (from flight data) | After Flight Day 1 | Threshold in `vision.py` |
-| Model choice (n/s/m) | `pi_3_benchmark.py` | After retraining | `best.tflite` file |
-
-### Calibration Flow
-
-```
-PHASE 1 — BENCH (preliminary → good enough):
-  pi_9  →  find best resolution         →  update IMAGE_W/IMAGE_H
-  pi_8  →  measure FPS + blur           →  note: is blur a problem?
-  pi_6  →  bench FOV check              →  rough SENSOR_WIDTH/FOCAL_LENGTH check
-  pi_3  →  benchmark speed              →  is it < 200ms? If not, lower resolution
-
-PHASE 2 — FLIGHT DAY 1 (good enough → calibrated):
-  hover at 5m-30m  →  find max detection altitude  →  update TARGET_ALT, VERIFY_ALT
-  hover at 2 heights  →  measure real footprint    →  update SENSOR_WIDTH or FOCAL_LENGTH
-  fly over dummy  →  check false positives/negatives  →  tune confidence threshold
-
-PHASE 3 — ITERATE (calibrated → optimised):
-  collect aerial frames  →  retrain model  →  new best.tflite
-  benchmark new vs old   →  keep the better one
-  repeat until detection is reliable at needed altitude
-```
-
-Each phase makes the settings more accurate. You never need to touch code — just update `config.py` values and swap `best.tflite`.
+| Setting | Default | Where | Calibrate with |
+|---------|---------|-------|---------------|
+| Camera resolution | 640x480 | `config.py` IMAGE_W/IMAGE_H | pi_9_resolution_test.py |
+| Model | best.tflite (YOLOv8n) | vision.py constructor | pi_3_benchmark.py |
+| Confidence threshold | 0.4 | vision.py lines 174, 197 | Passive flight data |
+| Sensor width | 5.02mm | `config.py` SENSOR_WIDTH_MM | fov_calibrate.py |
+| Focal length | 6.0mm | `config.py` FOCAL_LENGTH_MM | fov_calibrate.py |
+| Search altitude | 30m | `config.py` TARGET_ALT | Passive flight data |
+| Verify altitude | 15m | `config.py` VERIFY_ALT | Passive flight data |
+| Search speed | 5 m/s | `config.py` SEARCH_SPEED_MPS | Passive flight data |
 
 ---
 
@@ -227,139 +514,67 @@ Just replace `best.tflite`:
 yolo export model=runs/detect/train/weights/best.pt format=tflite
 
 # Copy to Pi
-scp best.tflite pi@<IP>:~/sar-drone/
+scp best.tflite pi@<IP>:~/dima/Group_Proj/
 
 # Test it
-python tests/pi_3_benchmark.py   # speed + detection
+python tests2/pi_3_benchmark.py   # speed + detection
 ```
 
 No code changes needed. The model file name is set in one place — when `VisionSystem` is constructed.
 
+### To try a COCO person detector:
+
+```bash
+# On laptop
+pip install ultralytics
+yolo export model=yolov8n.pt format=tflite
+# This exports the standard COCO model (80 classes including "person")
+
+# Copy to Pi as a separate file
+scp yolov8n.tflite pi@<IP>:~/dima/Group_Proj/
+
+# Test with benchmark
+python tests2/pi_3_benchmark.py  # point at real person or dummy
+```
+
+Note: COCO model outputs 80 classes. Person is class 0. You'd need to modify vision.py to filter for class 0 only if using COCO model, or just take the highest confidence detection regardless of class.
+
 ---
 
-## What to Improve (in order of impact)
+## Training Data: What Makes a Good Dataset
 
-### 1. Training Data (biggest impact)
+### What to collect
 
-The model is only as good as what it was trained on.
+| Category | Examples | Why it matters |
+|----------|----------|---------------|
+| **Poses** | Lying flat, curled up, face down, arms out, sitting | Dummy might land in any position |
+| **Clothing** | Bright, dark, camo, high-vis, mixed | Can't assume one color |
+| **Backgrounds** | Short grass, tall grass, dirt, path, concrete | Avoid model only learning "green = target" |
+| **Altitudes** | 5m, 10m, 15m, 20m, 25m, 30m | Different apparent sizes |
+| **Lighting** | Sunny, overcast, shadowed, morning, afternoon | Real conditions vary |
+| **Angles** | Directly above, slight tilt, edge of frame | Drone won't always be perfectly overhead |
+| **Negatives** | Empty grass, bags, logs, clothing piles | Teach model what is NOT a target |
 
-**What helps most:**
-- Real aerial images from the Pi camera at different altitudes
-- Different lighting: sun, shadow, overcast, morning, afternoon
-- Different backgrounds: grass, concrete, dirt, mixed
-- Different angles: directly above, slightly off-centre
-- Partially occluded dummy (edge of frame, partial cover)
+### How many images?
 
-**How to collect:**
-- During bench testing: save frames from pi_2_detect.py
-- During flight day 1: save frames at each altitude (step 8)
-- Any time you run the camera: save interesting frames
+- **Minimum**: 100 labeled images (50 positive, 50 negative)
+- **Good**: 300-500 labeled images
+- **Best**: 1000+ with good variety
 
-**How to label:**
-- Use [Roboflow](https://roboflow.com) (free tier) or [CVAT](https://cvat.ai) (open source)
-- Draw bounding box around the dummy in each image
-- Export in YOLO format (Roboflow does this automatically)
+### Quick dataset from passive flight
 
-**How to retrain:**
-```bash
-# On laptop (needs ultralytics installed)
-yolo detect train model=yolov8n.pt data=dataset.yaml epochs=100 imgsz=640
+During `pi_passive_flight.py`, press 's' to save snapshots. After the flight, label them in Roboflow. This gives you real aerial training data with zero extra effort.
 
-# Export to TFLite
-yolo export model=runs/detect/train/weights/best.pt format=tflite
+---
 
-# Compare old vs new
-python tests/pi_3_benchmark.py old_model.tflite
-python tests/pi_3_benchmark.py best.tflite
-```
-
-### 2. Model Size (speed vs accuracy trade-off)
-
-| Model | .tflite size | Pi speed (approx) | Accuracy |
-|-------|-------------|-------------------|----------|
-| YOLOv8n (nano) | ~6 MB | ~80-150ms | Good for close range |
-| YOLOv8s (small) | ~22 MB | ~200-400ms | Better at distance |
-| YOLOv8m (medium) | ~50 MB | ~500ms+ | Best accuracy |
-
-Start with nano. If detection fails at needed altitudes but speed is fine, try small.
-
-**To train a different size:**
-```bash
-yolo detect train model=yolov8s.pt data=dataset.yaml epochs=100 imgsz=640
-```
-
-### 3. Camera Resolution (config.py)
-
-Lower resolution = faster pipeline but potentially worse detection.
-
-```python
-# config.py
-IMAGE_W = 640   # try 480 or 320
-IMAGE_H = 480   # try 360 or 240
-```
-
-Use `tests/pi_9_resolution_test.py` to find the sweet spot.
-
-### 4. Confidence Threshold
-
-Currently hardcoded at 0.4 in vision.py (lines 117 and 140).
-
-- **Lower (0.3)**: catches more, but more false positives
-- **Higher (0.6)**: fewer false positives, but might miss targets at distance
-
-After flight testing, tune based on your false positive vs false negative rates.
-
-### 5. Camera Settings (hardware level)
-
-- **Shutter speed**: faster = less motion blur, but darker image
-- **Gain/ISO**: higher = brighter but more noise
-- **Global shutter camera**: eliminates rolling shutter blur entirely (Pi GS Camera)
-
-Use `tests/pi_8_camera_test.py` to measure blur impact on detection.
-
-### IMPORTANT: IMX296 Global Shutter Camera Color Fix
+## IMPORTANT: IMX296 Global Shutter Camera Color Fix
 
 The IMX296 sensor outputs **BGR data** despite picamera2 labeling the format as RGB888.
 This means `cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)` **must NOT be used** — it double-swaps
 the channels, causing a blue tint on all images.
 
-**Symptoms if you add cvtColor**: Skin appears blue, reds and blues are swapped.
-
-**Root cause**: The IMX296 ISP pipeline outputs data in BGR order. The RGB888 label in
-picamera2 refers to the buffer format (3 bytes per pixel), not the actual channel ordering.
-
-**Fix**: Use frames directly from `picam.capture_array()` without any color conversion.
-The data is already in OpenCV's native BGR format.
-
-This was discovered by testing all 6 permutations of channel ordering (RGB, RBG, GRB, GBR,
-BRG, BGR). Only "no conversion" (BGR passthrough) produced correct colors.
-
 **If you add a new test script with picamera2**: Do NOT add color conversion. Just use the
 raw frame. See `vision.py` get_frame() for the reference implementation.
-
----
-
-## Testing Workflow
-
-After any CV change, run this sequence:
-
-```bash
-# 1. Does it still detect?
-python tests/pi_2_detect.py --headless
-
-# 2. Speed ok?
-python tests/pi_3_benchmark.py
-
-# 3. Full pipeline (if Cube connected)
-python tests/pi_4_detect_and_log.py
-```
-
-For comparing two models side by side:
-```bash
-python tests/pi_3_benchmark.py old_best.tflite
-python tests/pi_3_benchmark.py best.tflite
-# Compare: speed, detection rate, avg confidence, avg position
-```
 
 ---
 
@@ -373,6 +588,10 @@ python tests/pi_3_benchmark.py best.tflite
 | `pi_8_camera_test.py` | FPS, pipeline bottleneck, blur | After changing camera settings |
 | `pi_9_resolution_test.py` | Resolution vs speed vs detection | Finding optimal resolution |
 | `pi_6_fov_test.py` | FOV on bench (camera over ruler) | After changing lens/camera |
+| `fov_calibrate.py` | FOV calibration | Before flight |
+| `pi_camera_stream_fast.py` | Stream + /ai-snapshot for blur check | Check what AI sees in real-time |
+| `pi_passive_flight.py` | Full passive detection during flight | Calibrate altitude + speed |
+| `pi_auto_detect.py` | AUTO waypoints + detect & hover | Test detection → action link |
 | `debug_tflite.py` | Raw TFLite output inspection | Debugging model output format |
 
 ---
@@ -387,45 +606,16 @@ detect_in_image()    →       Returns (found, x, y, conf)
                              │
                              ├── main.py uses x,y to calculate GPS offset
                              ├── main.py uses conf to decide: detect or ignore
-                             ├── pi_4 uses x,y for LEFT/RIGHT/CENTRED guidance
+                             ├── pi_passive_flight uses x,y for guidance overlay
+                             ├── pi_auto_detect uses x,y for GPS + centering
                              ├── pi_3 uses timing for benchmark
                              └── last_bbox_w/h used for FOV calibration
 
 config.py
 ─────────
 IMAGE_W, IMAGE_H     →      Camera resolution
-SENSOR_WIDTH_MM      →      FOV calculation (not used by vision.py directly)
-FOCAL_LENGTH_MM      →      FOV calculation (not used by vision.py directly)
+SENSOR_WIDTH_MM      →      FOV calculation (GPS offset math in main.py)
+FOCAL_LENGTH_MM      →      FOV calculation (GPS offset math in main.py)
 ```
 
 Vision doesn't know about GPS, altitudes, search patterns, or the Cube. It just says "I see something at pixel (x, y) with confidence c." The rest of the system decides what to do with that.
-
----
-
-## Improvement Checklist
-
-```
-BEFORE FIRST FLIGHT:
-  [ ] Current model detects dummy on bench (pi_2)
-  [ ] Speed < 200ms (pi_3)
-  [ ] Best resolution found (pi_9)
-
-AFTER FIRST FLIGHT:
-  [ ] Save frames from different altitudes
-  [ ] Note: at what altitude did detection fail?
-  [ ] Note: any false positives? What triggered them?
-
-IMPROVE CYCLE:
-  [ ] Collect + label new aerial images
-  [ ] Retrain: yolo detect train ...
-  [ ] Export: yolo export ... format=tflite
-  [ ] Copy new best.tflite to Pi
-  [ ] Benchmark: pi_3 — compare speed + detection vs old model
-  [ ] If better → keep. If worse → revert.
-
-ADVANCED (later):
-  [ ] Try YOLOv8s if nano struggles at altitude
-  [ ] Tune confidence threshold based on flight data
-  [ ] Try global shutter camera if blur is a problem
-  [ ] Consider multi-frame confirmation (detect on N consecutive frames)
-```

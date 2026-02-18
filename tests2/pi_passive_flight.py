@@ -17,9 +17,18 @@ Controls:
   'q' / ESC — quit
   's' — save current frame as snapshot.
 
+Stream options (use with --stream):
+  --stream              Enable MJPEG stream to ground station
+  --stream-port 8090    HTTP port (default 8090)
+  --stream-res 320x240  Stream resolution (default 320x240)
+  --stream-fps 5        Target FPS (default 5)
+  --stream-quality 50   JPEG quality 1-100 (default 50)
+
 Usage:
-    python tests/pi_passive_flight.py                    # with screen
-    python tests/pi_passive_flight.py --headless         # terminal only (SSH)
+    python tests2/pi_passive_flight.py                    # with screen
+    python tests2/pi_passive_flight.py --headless         # terminal only (SSH)
+    python tests2/pi_passive_flight.py --headless --stream # SSH + stream to laptop
+    python tests2/pi_passive_flight.py --stream --stream-res 640x480 --stream-quality 70
 """
 
 import sys
@@ -27,6 +36,8 @@ import os
 import csv
 import time
 import math
+import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.dirname(script_dir)
@@ -37,6 +48,68 @@ import numpy as np
 import config
 
 HEADLESS = "--headless" in sys.argv
+STREAM = "--stream" in sys.argv
+STREAM_PORT = 8090
+STREAM_W, STREAM_H = 320, 240
+STREAM_FPS = 5
+STREAM_QUALITY = 50
+
+for _i, _arg in enumerate(sys.argv):
+    if _arg == "--stream-port" and _i + 1 < len(sys.argv):
+        STREAM_PORT = int(sys.argv[_i + 1])
+    elif _arg == "--stream-res" and _i + 1 < len(sys.argv):
+        _parts = sys.argv[_i + 1].split("x")
+        STREAM_W, STREAM_H = int(_parts[0]), int(_parts[1])
+    elif _arg == "--stream-fps" and _i + 1 < len(sys.argv):
+        STREAM_FPS = int(sys.argv[_i + 1])
+    elif _arg == "--stream-quality" and _i + 1 < len(sys.argv):
+        STREAM_QUALITY = int(sys.argv[_i + 1])
+
+# --- Stream globals ---
+_stream_frame = None
+_stream_lock = threading.Lock()
+
+
+class _StreamHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        if self.path == '/stream':
+            self.send_response(200)
+            self.send_header('Content-Type', 'multipart/x-mixed-replace; boundary=frame')
+            self.end_headers()
+            while True:
+                with _stream_lock:
+                    f = _stream_frame
+                if f is None:
+                    time.sleep(0.1)
+                    continue
+                small = cv2.resize(f, (STREAM_W, STREAM_H))
+                _, jpeg = cv2.imencode('.jpg', small, [cv2.IMWRITE_JPEG_QUALITY, STREAM_QUALITY])
+                data = jpeg.tobytes()
+                try:
+                    self.wfile.write(b'--frame\r\n')
+                    self.wfile.write(b'Content-Type: image/jpeg\r\n')
+                    self.wfile.write(f'Content-Length: {len(data)}\r\n\r\n'.encode())
+                    self.wfile.write(data)
+                    self.wfile.write(b'\r\n')
+                except (BrokenPipeError, ConnectionResetError):
+                    break
+                time.sleep(1.0 / STREAM_FPS)
+        elif self.path == '/':
+            html = f'<html><body style="background:#111;text-align:center;font-family:monospace">'
+            html += f'<h2 style="color:#fff">Passive Flight — Live Feed</h2>'
+            html += f'<img src="/stream" style="max-width:100%;border:2px solid #0f0"/>'
+            html += f'<p style="color:#aaa">{STREAM_W}x{STREAM_H} | {STREAM_FPS} fps | Quality {STREAM_QUALITY}%</p>'
+            html += f'</body></html>'
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/html')
+            self.end_headers()
+            self.wfile.write(html.encode())
+        else:
+            self.send_response(404)
+            self.end_headers()
+
+    def log_message(self, format, *args):
+        pass
 
 
 # ── Altitude / FOV math (same as simulation.py) ─────────────────────────
@@ -179,6 +252,23 @@ def main():
     if not HEADLESS:
         cv2.namedWindow("Passive Flight", cv2.WINDOW_NORMAL)
 
+    # Start stream server if requested
+    if STREAM:
+        try:
+            server = HTTPServer(('0.0.0.0', STREAM_PORT), _StreamHandler)
+            threading.Thread(target=server.serve_forever, daemon=True).start()
+            pi_ip = "???"
+            try:
+                import subprocess
+                result = subprocess.run(['hostname', '-I'], capture_output=True, text=True, timeout=3)
+                pi_ip = result.stdout.strip().split()[0]
+            except Exception:
+                pass
+            print(f"[STREAM] Live feed: http://{pi_ip}:{STREAM_PORT}/")
+            print(f"[STREAM] Settings: {STREAM_W}x{STREAM_H} @ {STREAM_FPS}fps, quality {STREAM_QUALITY}%")
+        except Exception as e:
+            print(f"[STREAM] Failed to start: {e}")
+
     print(f"\n[READY] Logging to: {log_path}")
     print("[READY] Pilot can take off. Press Ctrl+C or 'q' to stop.\n")
 
@@ -290,6 +380,12 @@ def main():
                 ])
                 log_file.flush()
                 last_log_time = now
+
+            # ── Update stream ──
+            if STREAM:
+                global _stream_frame
+                with _stream_lock:
+                    _stream_frame = frame
 
             # ── Display ──
             if HEADLESS:
