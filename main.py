@@ -34,10 +34,23 @@ if config.MODE == "SIMULATION":
     from simulation import SimulationEnvironment
 
 # --- GS Camera Stream (MJPEG over HTTP) ---
+# Override with flags: --stream-port 8090 --stream-res 320x240 --stream-fps 5 --stream-quality 50
 STREAM_PORT = 8090
 STREAM_W, STREAM_H = 320, 240
 STREAM_FPS = 5
 STREAM_QUALITY = 50
+
+for _i, _arg in enumerate(sys.argv):
+    if _arg == "--stream-port" and _i + 1 < len(sys.argv):
+        STREAM_PORT = int(sys.argv[_i + 1])
+    elif _arg == "--stream-res" and _i + 1 < len(sys.argv):
+        _parts = sys.argv[_i + 1].split("x")
+        STREAM_W, STREAM_H = int(_parts[0]), int(_parts[1])
+    elif _arg == "--stream-fps" and _i + 1 < len(sys.argv):
+        STREAM_FPS = int(sys.argv[_i + 1])
+    elif _arg == "--stream-quality" and _i + 1 < len(sys.argv):
+        STREAM_QUALITY = int(sys.argv[_i + 1])
+
 _stream_frame = None
 _stream_lock = threading.Lock()
 
@@ -66,9 +79,11 @@ class _StreamHandler(BaseHTTPRequestHandler):
                     break
                 time.sleep(1.0 / STREAM_FPS)
         elif self.path == '/':
-            html = '<html><body style="background:#111;text-align:center">'
-            html += '<h2 style="color:#fff;font-family:monospace">SAR Drone Mission Feed</h2>'
-            html += '<img src="/stream" style="max-width:100%;border:2px solid #0f0"/></body></html>'
+            html = f'<html><body style="background:#111;text-align:center;font-family:monospace">'
+            html += f'<h2 style="color:#fff">SAR Drone Mission Feed</h2>'
+            html += f'<img src="/stream" style="max-width:100%;border:2px solid #0f0"/>'
+            html += f'<p style="color:#aaa">{STREAM_W}x{STREAM_H} | {STREAM_FPS} fps | Quality {STREAM_QUALITY}%</p>'
+            html += f'</body></html>'
             self.send_response(200)
             self.send_header('Content-Type', 'text/html')
             self.end_headers()
@@ -94,6 +109,7 @@ def _start_stream_server():
         except Exception:
             pass
         print(f"[STREAM] Live feed: http://{pi_ip}:{STREAM_PORT}/")
+        print(f"[STREAM] Settings: {STREAM_W}x{STREAM_H} @ {STREAM_FPS}fps, quality {STREAM_QUALITY}%")
         return server
     except Exception as e:
         print(f"[STREAM] Failed to start: {e}")
