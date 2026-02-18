@@ -594,6 +594,26 @@ Track what was done each session so context is never lost.
   4. Outdoor GPS fix test
   5. Full autonomous flight prep
 
+### Session: 2026-02-18 — GPS diagnostics, Cube wiring, diagnostics GS fix
+- **GPS diagnostics on Pi**: ran tests2/gps_test.py — GPS hardware confirmed connected (GPS_RAW_INT arrives, fix_type=1) but 0 satellites indoors (expected, need outdoor test)
+- **ArduCopter 4.6+ parameter naming**: GPS_TYPE renamed to GPS1_TYPE, GPS_GNSS_MODE to GPS1_GNSS_MODE — gps_test.py updated to try both old and new names
+- **CAN port checks**: Added CAN_P2_DRIVER and CAN_D2_PROTOCOL checks (Here 3+ GPS connected to CAN2)
+- **Wiring confirmed**:
+  - Here 3+ GPS → CubeOrange+ CAN2 (4-pin CAN cable, gets power from Cube)
+  - CubeOrange+ TELEM2 → Pi GPIO UART (TX→RX, RX→TX, GND) at 921600 baud
+- **Diagnostics GS/Mission Planner detection fix** (tests2/pi_diagnostics.py):
+  - **Problem**: GS check used socket connect_ex which couldn't distinguish "MP connected" from "port listening"
+  - **Fix**: Replaced with `ss -tna` command to check actual TCP connection state on port 5762
+    - `ESTAB` on :5762 → "MP CONNECTED" (green)
+    - `LISTEN` on :5762 → "WAITING FOR MP" (yellow/wait, not green)
+    - No :5762 → "NO TCP OUTPUT" or "NOT DETECTED" (red)
+  - Also added periodic `detect_mavproxy()` re-detection (was only running once at startup)
+  - Falls back to socket connect on non-Linux (Windows)
+- **tests2/ directory**: Clean test directory with only essential scripts:
+  - pi_diagnostics.py, cube_commands.py, gps_test.py, cube_monitor.py
+  - passive_flight.py, pi_passive_flight.py, feedback_test.py
+- **Next: Outdoor GPS fix test, then manual flight with passive detection**
+
 ---
 
 **INSTRUCTIONS FOR LLM**: When starting a new session, read this file first. Then read
