@@ -138,13 +138,15 @@ class StreamHandler(BaseHTTPRequestHandler):
 
 
 def camera_loop(eyes):
-    """Capture frames and optionally run detection."""
+    """Capture frames and optionally run detection (same approach as passive_flight)."""
     global latest_frame
     frame_count = 0
     det_count = 0
     start = time.time()
 
     print("  Camera loop running...")
+    if WITH_DETECTION and not eyes.using_ai:
+        print("  [WARN] AI model not loaded — detection disabled")
 
     while True:
         frame = eyes.get_frame()
@@ -153,22 +155,21 @@ def camera_loop(eyes):
             continue
 
         frame_count += 1
-        display = frame.copy()
 
-        h, w = display.shape[:2]
+        h, w = frame.shape[:2]
         cx, cy = w // 2, h // 2
 
-        if WITH_DETECTION:
+        # Run detection on frame directly (detect_in_image draws bbox on frame)
+        found = False
+        if WITH_DETECTION and eyes.using_ai:
             found, px, py, conf = eyes.detect_in_image(frame)
             if found:
                 det_count += 1
-                # Detection marker + confidence
-                cv2.circle(display, (px, py), 15, (0, 255, 0), 2)
-                cv2.putText(display, f"{conf:.2f}", (px + 10, py - 10),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+                # Additional marker (circle around target centre)
+                cv2.circle(frame, (px, py), 15, (0, 255, 0), 2)
 
                 # Guidance line from centre to target
-                cv2.line(display, (cx, cy), (px, py), (0, 255, 0), 2)
+                cv2.line(frame, (cx, cy), (px, py), (0, 255, 0), 2)
 
                 # Direction guidance (same as passive_flight)
                 margin = w // 6
@@ -186,30 +187,30 @@ def camera_loop(eyes):
                     direction = "CENTRED"
 
                 color = (0, 255, 0) if direction == "CENTRED" else (0, 255, 255)
-                cv2.putText(display, direction, (cx - 60, h - 20),
+                cv2.putText(frame, direction, (cx - 60, h - 20),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
-                cv2.putText(display, f"TARGET conf={conf:.2f}", (10, 30),
+                cv2.putText(frame, f"TARGET conf={conf:.2f}", (10, 30),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
             else:
-                cv2.putText(display, "NO TARGET", (10, 30),
+                cv2.putText(frame, "NO TARGET", (10, 30),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
 
         # Crosshair
-        cv2.drawMarker(display, (cx, cy), (0, 255, 255),
+        cv2.drawMarker(frame, (cx, cy), (0, 255, 255),
                         cv2.MARKER_CROSS, 20, 1)
 
         # Stats overlay
         elapsed = time.time() - start
         fps = frame_count / elapsed if elapsed > 0 else 0
         det_rate = det_count / frame_count * 100 if frame_count > 0 else 0
-        cv2.putText(display, f"FPS:{fps:.1f} Det:{det_rate:.0f}%",
+        cv2.putText(frame, f"FPS:{fps:.1f} Det:{det_rate:.0f}%",
                      (5, h - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (200, 200, 200), 1)
 
         with frame_lock:
-            latest_frame = display
+            latest_frame = frame
 
         if not HEADLESS:
-            cv2.imshow("Pi Camera", display)
+            cv2.imshow("Pi Camera", frame)
             key = cv2.waitKey(1) & 0xFF
             if key == ord('q') or key == 27:
                 break
