@@ -24,15 +24,15 @@ def connect():
     import config
     conn_str = config.CONNECTION_STR
     print(f"  Connecting: {conn_str}")
-    master = mavutil.mavlink_connection(conn_str)
+    master = mavutil.mavlink_connection(conn_str, source_system=255)
 
     print("  Waiting for heartbeat...")
-    msg = master.recv_match(type='HEARTBEAT', blocking=True, timeout=10)
-    if not msg:
+    master.wait_heartbeat(timeout=10)
+    if master.target_system == 0:
         print("  [FAIL] No heartbeat. Is mavproxy running?")
         sys.exit(1)
 
-    print(f"  [OK] Heartbeat from system {msg.get_srcSystem()}")
+    print(f"  [OK] Heartbeat from system {master.target_system}")
     # Request data streams so we get mode/status updates
     master.mav.request_data_stream_send(
         master.target_system, master.target_component,
@@ -42,11 +42,17 @@ def connect():
 
 
 def get_mode(master):
-    """Get current flight mode name."""
-    hb = master.recv_match(type='HEARTBEAT', blocking=True, timeout=3)
-    if hb:
-        mode = mavutil.mode_string_v10(hb)
-        return mode
+    """Get current flight mode name — drain stale messages first."""
+    # Drain old messages
+    while True:
+        msg = master.recv_msg()
+        if msg is None:
+            break
+    # Read fresh heartbeat from autopilot
+    for _ in range(10):
+        hb = master.recv_match(type='HEARTBEAT', blocking=True, timeout=3)
+        if hb and hb.get_srcSystem() == master.target_system:
+            return mavutil.mode_string_v10(hb)
     return "UNKNOWN"
 
 

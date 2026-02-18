@@ -39,11 +39,11 @@ TRY_ARM = "--with-arm" in sys.argv
 def connect():
     conn_str = config.CONNECTION_STR
     print(f"  Connecting: {conn_str}")
-    mav = mavutil.mavlink_connection(conn_str)
+    mav = mavutil.mavlink_connection(conn_str, source_system=255)
     print("  Waiting for heartbeat...")
-    hb = mav.recv_match(type='HEARTBEAT', blocking=True, timeout=10)
-    if not hb:
-        print("  [FAIL] No heartbeat")
+    mav.wait_heartbeat(timeout=10)
+    if mav.target_system == 0:
+        print("  [FAIL] No heartbeat from autopilot")
         sys.exit(1)
     print(f"  [OK] Connected to system {mav.target_system}")
     mav.mav.request_data_stream_send(
@@ -53,22 +53,40 @@ def connect():
     return mav
 
 
+def drain_messages(mav):
+    """Drain all queued messages so next read is fresh."""
+    while True:
+        msg = mav.recv_msg()
+        if msg is None:
+            break
+
+
 def get_mode(mav):
-    hb = mav.recv_match(type='HEARTBEAT', blocking=True, timeout=3)
-    if hb:
-        return mavutil.mode_string_v10(hb)
+    """Get current mode — drain stale messages first, then read fresh heartbeat."""
+    drain_messages(mav)
+    # Wait for a fresh heartbeat from the autopilot (not mavproxy)
+    for _ in range(10):
+        hb = mav.recv_match(type='HEARTBEAT', blocking=True, timeout=3)
+        if hb and hb.get_srcSystem() == mav.target_system:
+            return mavutil.mode_string_v10(hb)
     return "UNKNOWN"
 
 
 def set_mode(mav, mode_name, mode_num):
     """Try to set flight mode and verify."""
     print(f"\n  >>> Setting mode: {mode_name} (#{mode_num})...")
+
+    # Drain old messages before sending
+    drain_messages(mav)
+
     mav.mav.command_long_send(
         mav.target_system, mav.target_component,
         mavutil.mavlink.MAV_CMD_DO_SET_MODE, 0,
         mavutil.mavlink.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED,
         mode_num, 0, 0, 0, 0, 0)
-    time.sleep(1)
+
+    # Wait for mode to take effect, then read fresh heartbeat
+    time.sleep(1.5)
     actual = get_mode(mav)
     if actual == mode_name:
         print(f"  [OK] Mode is now {actual}")
