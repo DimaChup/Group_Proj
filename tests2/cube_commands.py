@@ -18,6 +18,15 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from pymavlink import mavutil
 
+# ArduCopter mode numbers → names (pymavlink's mode_string_v10 is unreliable via mavproxy)
+COPTER_MODES = {
+    0: "STABILIZE", 1: "ACRO", 2: "ALT_HOLD", 3: "AUTO",
+    4: "GUIDED", 5: "LOITER", 6: "RTL", 7: "CIRCLE",
+    9: "LAND", 11: "DRIFT", 13: "SPORT", 14: "FLIP",
+    15: "AUTOTUNE", 16: "POSHOLD", 17: "BRAKE", 18: "THROW",
+    19: "AVOID_ADSB", 20: "GUIDED_NOGPS", 21: "SMART_RTL",
+}
+
 
 def connect():
     """Connect to Cube via config settings."""
@@ -62,7 +71,7 @@ def get_mode(master):
     for _ in range(10):
         hb = master.recv_match(type='HEARTBEAT', blocking=True, timeout=3)
         if hb and hb.type != mavutil.mavlink.MAV_TYPE_GCS:
-            return mavutil.mode_string_v10(hb)
+            return COPTER_MODES.get(hb.custom_mode, f"MODE_{hb.custom_mode}")
     return "UNKNOWN"
 
 
