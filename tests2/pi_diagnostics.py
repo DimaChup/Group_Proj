@@ -241,34 +241,30 @@ def check_gs_port():
     has_tcp_out = any('tcpin' in o or 'tcp' in o
                       for o in mavproxy_info["outputs"])
 
-    # Fallback: if Cube is connected via UDP, mavproxy MUST be running
+    # If Cube is connected via UDP, mavproxy MUST be running
     # even if ps detection failed (sudo/permissions issue)
-    cube_via_udp = cube_s.ok and 'udp' in config.CONNECTION_STR.lower()
+    cube_via_udp = cube_s.ok and 'udp' in conn_str.lower()
 
-    if mavproxy_info["running"] and has_tcp_out:
-        # mavproxy detected with TCP output configured
-        if port_open:
-            gs_s.ok = True
-            gs_s.text = "TCP 5762 LISTENING"
-        else:
-            gs_s.ok = True
-            gs_s.text = "MP CONNECTED"
+    # If Cube works via UDP, we know mavproxy is running even if ps missed it
+    if cube_via_udp and not mavproxy_info["running"]:
+        mavproxy_info["running"] = True
+
+    if port_open:
+        # Port accepting connections = mavproxy listening, MP not yet connected
+        gs_s.ok = True
+        gs_s.text = "TCP 5762 LISTENING"
+    elif cube_via_udp:
+        # Cube works via UDP = mavproxy IS running.
+        # Port refused = MP already grabbed it
+        gs_s.ok = True
+        gs_s.text = "MP CONNECTED"
+    elif mavproxy_info["running"] and has_tcp_out:
+        gs_s.ok = True
+        gs_s.text = "GS AVAILABLE"
     elif mavproxy_info["running"] and not has_tcp_out:
         gs_s.ok = False
         gs_s.text = "NO TCP OUTPUT"
         gs_s.error = "Add --out=tcpin:0.0.0.0:5762"
-    elif port_open:
-        gs_s.ok = True
-        gs_s.text = "TCP 5762 LISTENING"
-    elif cube_via_udp and not port_open:
-        # Cube works via UDP = mavproxy IS running.
-        # Port refused = MP already took it = success!
-        gs_s.ok = True
-        gs_s.text = "MP CONNECTED"
-    elif cube_via_udp:
-        # mavproxy running (Cube works) but port not checked yet
-        gs_s.ok = True
-        gs_s.text = "GS AVAILABLE"
     else:
         gs_s.ok = False
         gs_s.text = "NOT DETECTED"
@@ -932,6 +928,7 @@ try:
 
         # --- Recheck GS periodically ---
         if time.time() - last_gs_check > 10.0:
+            detect_mavproxy()  # re-detect in case mavproxy started later
             check_gs_port()
             last_gs_check = time.time()
 
