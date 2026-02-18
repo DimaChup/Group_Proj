@@ -11,6 +11,15 @@ How it works:
   - Serves MJPEG over HTTP — works in any browser, no plugins needed
   - Bandwidth: ~0.3-0.8 Mbps at 320x240, 5fps — fine over WiFi
 
+Why MJPEG over FFmpeg/H.264:
+  - MJPEG: ~0.5 Mbps at 320x240 5fps — trivial over WiFi
+  - H.264 (ffmpeg): ~0.05-0.1 Mbps — 5-10x smaller but adds complexity
+  - MJPEG needs zero dependencies, works in any browser via <img> tag
+  - H.264 needs ffmpeg on Pi + VLC or HLS player on GS + adds latency
+  - For drone ops, low latency > compression. MJPEG gives near-realtime.
+  - H.264 would only matter for cellular/4G or 720p+ resolution.
+  - Decision: MJPEG is good enough. Revisit if bandwidth is an issue.
+
 Ground station:
   Open browser to http://<PI_IP>:8090/stream
   e.g. http://192.168.1.121:8090/stream
