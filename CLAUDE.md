@@ -52,6 +52,12 @@ communication (Python 3.13 + pyserial serial reads are broken).
 - [ ] Outdoor GPS fix test
 - [ ] Manual flight with passive detection (pi_passive_flight.py)
 - [ ] Full autonomous bench test (main.py, no props)
+- [ ] **BEFORE FLIGHT DAY: Prepare alternative CV models on laptop**
+  - [ ] Export COCO person detector: `yolo export model=yolov8n.pt format=tflite`
+  - [ ] Export INT8 quantized: `yolo export model=best.pt format=tflite int8=True`
+  - [ ] Optionally retrain on better data (real photos of dummy)
+  - [ ] Copy all .tflite files to `models/` folder, ready to swap on Pi
+  - [ ] On flight day: swap models between tests (`cp models/X.tflite best.tflite`)
 
 ### Flight Testing Steps (follow in order)
 Each step builds trust before adding risk. **Never skip a step.**

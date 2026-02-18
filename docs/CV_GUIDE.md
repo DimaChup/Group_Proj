@@ -336,6 +336,62 @@ but better detection. Switching to small gives better accuracy but halves your F
 **Best strategy: stick with nano, train on better data. Only switch to small if nano
 genuinely can't detect at your target altitude.**
 
+### Resolution, FPS, and Inference Pipeline — How It All Fits Together
+
+Understanding this prevents wasting time on the wrong optimisation.
+
+**The pipeline:**
+```
+Camera (640x480 BGR) → vision.py resizes to 640x640 RGB → TFLite inference (~250ms) → result
+```
+
+**Key insight: camera resolution does NOT affect inference speed.** The model always processes
+a 640x640 image regardless of what the camera captures. Changing camera resolution only changes
+the resize step (< 1ms), not the inference step (250ms).
+
+| Camera resolution | What happens | Inference time | Detection quality |
+|-------------------|-------------|----------------|-------------------|
+| 320x240 | Upscaled to 640x640 | ~250ms (same) | Worse — less detail fed in |
+| 640x480 | Slight stretch to 640x640 | ~250ms (same) | Good — close to model input |
+| 1280x960 | Downscaled to 640x640 | ~250ms (same) | Same — extra detail lost in resize |
+
+**Current choice: 640x480.** Closest to model input (640x640) with minimal wasted computation.
+No benefit to going higher because the model discards the extra resolution. Going lower loses
+detail that the model could use for small/distant targets.
+
+**Where the time goes (per frame):**
+```
+Camera capture:     ~33ms  (30fps capable)
+Resize to 640x640:   <1ms
+BGR→RGB conversion:  <1ms
+TFLite inference:  ~250ms  ← THIS IS THE BOTTLENECK
+Post-processing:     <1ms
+─────────────────────────
+Total:             ~255ms  → ~4 fps
+```
+
+**Ways to speed up inference (if 4fps isn't enough):**
+
+| Approach | Expected gain | Effort | Trade-off |
+|----------|--------------|--------|-----------|
+| INT8 quantization | ~2x (~8fps) | Low — re-export model | Slight accuracy loss |
+| NCNN runtime | ~1.5-2x | Medium — new dependency | Untested on Pi 5 |
+| Smaller input (320x320 model) | ~4x (~16fps) | High — retrain model | Much worse at altitude |
+| GPU/NPU delegate | ~2-3x | Medium | Pi 5 has no NPU; GPU delegate experimental |
+| Multithreaded inference | 0x (no gain) | N/A | TFLite already uses XNNPACK threads |
+
+**Current decision: 640x480 camera, 640x640 model input, ~4fps is acceptable.**
+At 3 m/s search speed, the drone moves 0.75m between frames — plenty of overlap for a target
+that's in view for ~25m of ground width. Revisit if flight testing shows detection is unreliable
+at target speed/altitude.
+
+**Future experiment ideas:**
+- [ ] INT8 quantized model — easiest speed win, export with `yolo export format=tflite int8=True`
+- [ ] NCNN runtime — ARM-optimised, may beat TFLite on Pi 5
+- [ ] 320x320 model — only if we need >10fps AND altitude is low (large target in frame)
+- [ ] Tiling strategy — capture 1280x960, split into 4x 640x480 tiles, run inference on each.
+  4x slower but detects smaller targets. Only useful if nano can't see dummy at altitude.
+
 ---
 
 ## How to Systematically Test Models
