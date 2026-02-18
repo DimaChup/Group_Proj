@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Camera Stream — send live camera feed to ground station.
+Cccamera Stream — send live camera feed to ground station.
 
 Runs a lightweight MJPEG server on the Pi. Open in any browser on the
 ground station laptop to see what the drone sees.
