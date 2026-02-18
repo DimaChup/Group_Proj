@@ -18,30 +18,23 @@ Why MJPEG over FFmpeg/H.264:
   - H.264 needs ffmpeg on Pi + VLC or HLS player on GS + adds latency
   - For drone ops, low latency > compression. MJPEG gives near-realtime.
   - H.264 would only matter for cellular/4G or 720p+ resolution.
-  - Decision: MJPEG is good enough.. Revisit if bandwidth is an issue.
+  - Decision: MJPEG is good enough. Revisit if bandwidth is an issue.
 
 Ground station:
-  Open browser to http://<PI_IP>:8090/
-  e.g. http://192.168.1.121:8090/
-
-Endpoints:
-  /               Dashboard — both streams side by side + controls
-  /stream-raw     Raw camera feed (fast, no AI overhead)
-  /stream-cv      Camera + AI detection overlay (slower, ~4 FPS on Pi)
-  /stream         Same as /stream-cv when detection is on, else /stream-raw
-  /snapshot       Single JPEG frame
+  Open browser to http://<PI_IP>:8090/stream
+  e.g. http://192.168.1.121:8090/stream
 
 Options:
   --port 8090         HTTP port (default 8090)
   --res 320x240       Stream resolution (default 320x240)
   --fps 5             Target FPS (default 5)
   --quality 50        JPEG quality 1-100 (default 50)
-  --with-detection    Enable AI detection (adds /stream-cv endpoint)
+  --with-detection    Run AI detection and overlay boxes on stream
   --headless          No local display
 
 Usage:
     python tests2/pi_camera_stream.py                          # basic stream
-    python tests2/pi_camera_stream.py --with-detection         # dual streams
+    python tests2/pi_camera_stream.py --with-detection         # stream + AI overlay
     python tests2/pi_camera_stream.py --res 160x120 --fps 3   # low bandwidth
 """
 import sys
@@ -76,71 +69,53 @@ for i, arg in enumerate(sys.argv):
     elif arg == "--quality" and i + 1 < len(sys.argv):
         JPEG_QUALITY = int(sys.argv[i + 1])
 
-# --- Globals (two separate frames: raw + CV overlay) ---
-latest_raw_frame = None    # clean camera frame (no overlays)
-latest_cv_frame = None     # frame with AI detection + guidance overlays
+# --- Globals ---
+latest_frame = None
 frame_lock = threading.Lock()
 
 
-def serve_mjpeg(handler, frame_type):
-    """Send MJPEG stream. frame_type is 'raw' or 'cv'."""
-    handler.send_response(200)
-    handler.send_header('Content-Type', 'multipart/x-mixed-replace; boundary=frame')
-    handler.end_headers()
-
-    while True:
-        with frame_lock:
-            if frame_type == 'cv' and latest_cv_frame is not None:
-                frame = latest_cv_frame
-            elif latest_raw_frame is not None:
-                frame = latest_raw_frame
-            else:
-                frame = None
-
-        if frame is None:
-            time.sleep(0.1)
-            continue
-
-        small = cv2.resize(frame, (STREAM_W, STREAM_H))
-        _, jpeg = cv2.imencode('.jpg', small, [cv2.IMWRITE_JPEG_QUALITY, JPEG_QUALITY])
-        data = jpeg.tobytes()
-
-        try:
-            handler.wfile.write(b'--frame\r\n')
-            handler.wfile.write(b'Content-Type: image/jpeg\r\n')
-            handler.wfile.write(f'Content-Length: {len(data)}\r\n\r\n'.encode())
-            handler.wfile.write(data)
-            handler.wfile.write(b'\r\n')
-        except (BrokenPipeError, ConnectionResetError):
-            break
-
-        time.sleep(1.0 / TARGET_FPS)
-
-
 class StreamHandler(BaseHTTPRequestHandler):
-    """HTTP handler that serves dual MJPEG streams."""
+    """HTTP handler that serves MJPEG stream."""
 
     def do_GET(self):
-        if self.path == '/stream-raw':
-            serve_mjpeg(self, 'raw')
+        if self.path == '/stream':
+            self.send_response(200)
+            self.send_header('Content-Type', 'multipart/x-mixed-replace; boundary=frame')
+            self.end_headers()
 
-        elif self.path == '/stream-cv':
-            if WITH_DETECTION:
-                serve_mjpeg(self, 'cv')
-            else:
-                serve_mjpeg(self, 'raw')
+            while True:
+                with frame_lock:
+                    frame = latest_frame
 
-        elif self.path == '/stream':
-            # Default: CV if detection on, otherwise raw
-            serve_mjpeg(self, 'cv' if WITH_DETECTION else 'raw')
+                if frame is None:
+                    time.sleep(0.1)
+                    continue
+
+                # Downscale for streaming
+                small = cv2.resize(frame, (STREAM_W, STREAM_H))
+                _, jpeg = cv2.imencode('.jpg', small, [cv2.IMWRITE_JPEG_QUALITY, JPEG_QUALITY])
+                data = jpeg.tobytes()
+
+                try:
+                    self.wfile.write(b'--frame\r\n')
+                    self.wfile.write(b'Content-Type: image/jpeg\r\n')
+                    self.wfile.write(f'Content-Length: {len(data)}\r\n\r\n'.encode())
+                    self.wfile.write(data)
+                    self.wfile.write(b'\r\n')
+                except (BrokenPipeError, ConnectionResetError):
+                    break
+
+                time.sleep(1.0 / TARGET_FPS)
 
         elif self.path == '/snapshot':
+            # Single JPEG frame
             with frame_lock:
-                frame = latest_cv_frame if WITH_DETECTION else latest_raw_frame
+                frame = latest_frame
             if frame is None:
                 self.send_response(503)
                 self.end_headers()
                 return
+
             small = cv2.resize(frame, (STREAM_W, STREAM_H))
             _, jpeg = cv2.imencode('.jpg', small, [cv2.IMWRITE_JPEG_QUALITY, JPEG_QUALITY])
             self.send_response(200)
@@ -150,67 +125,34 @@ class StreamHandler(BaseHTTPRequestHandler):
             self.wfile.write(jpeg.tobytes())
 
         elif self.path == '/':
-            self._send_dashboard()
+            # Simple HTML page with embedded stream
+            html = f"""<html><head><title>Drone Camera</title></head>
+<body style="background:#111;color:#fff;text-align:center;font-family:monospace">
+<h2>SAR Drone Camera Feed</h2>
+<img src="/stream" style="max-width:100%;border:2px solid #0f0"/>
+<p>Resolution: {STREAM_W}x{STREAM_H} | FPS: {TARGET_FPS} | Quality: {JPEG_QUALITY}%</p>
+<p>Detection: {'ON' if WITH_DETECTION else 'OFF'}</p>
+</body></html>"""
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/html')
+            self.end_headers()
+            self.wfile.write(html.encode())
         else:
             self.send_response(404)
             self.end_headers()
 
-    def _send_dashboard(self):
-        """HTML dashboard with stream controls."""
-        if WITH_DETECTION:
-            streams_html = """
-<div style="display:flex;gap:20px;justify-content:center;flex-wrap:wrap">
-  <div>
-    <h3 style="color:#0f0">Raw Camera (fast)</h3>
-    <img src="/stream-raw" style="width:480px;border:2px solid #0f0"/>
-  </div>
-  <div>
-    <h3 style="color:#ff0">AI Detection (slower)</h3>
-    <img src="/stream-cv" style="width:480px;border:2px solid #ff0"/>
-  </div>
-</div>"""
-        else:
-            streams_html = """
-<div style="text-align:center">
-  <h3 style="color:#0f0">Camera Feed</h3>
-  <img src="/stream" style="max-width:90%;border:2px solid #0f0"/>
-</div>"""
-
-        html = f"""<html><head><title>Drone Camera</title>
-<meta http-equiv="refresh" content="0; url=/" hidden>
-</head>
-<body style="background:#111;color:#fff;text-align:center;font-family:monospace;padding:20px">
-<h2>SAR Drone Camera Feed</h2>
-{streams_html}
-<br>
-<table style="margin:auto;color:#aaa;border-collapse:collapse">
-<tr><td style="padding:4px 12px;text-align:right">Resolution:</td><td style="text-align:left">{STREAM_W}x{STREAM_H}</td></tr>
-<tr><td style="padding:4px 12px;text-align:right">FPS:</td><td style="text-align:left">{TARGET_FPS}</td></tr>
-<tr><td style="padding:4px 12px;text-align:right">Quality:</td><td style="text-align:left">{JPEG_QUALITY}%</td></tr>
-<tr><td style="padding:4px 12px;text-align:right">Detection:</td><td style="text-align:left">{'ON' if WITH_DETECTION else 'OFF'}</td></tr>
-</table>
-<p style="color:#666;font-size:12px;margin-top:20px">
-Endpoints: <a href="/stream-raw" style="color:#0f0">/stream-raw</a>
-| <a href="/stream-cv" style="color:#ff0">/stream-cv</a>
-| <a href="/snapshot" style="color:#88f">/snapshot</a>
-</p>
-</body></html>"""
-        self.send_response(200)
-        self.send_header('Content-Type', 'text/html')
-        self.end_headers()
-        self.wfile.write(html.encode())
-
     def log_message(self, format, *args):
-        pass
+        pass  # Suppress per-request logging
 
 
-# ── Camera setup (same approach as diagnostics) ──
+# ── Camera setup (same approach as diagnostics — open camera separately) ──
 
 def setup_camera():
     """Open camera directly, same as diagnostics does."""
     cap = None
     picam = None
 
+    # Try OpenCV first
     cap = cv2.VideoCapture(0)
     if cap.isOpened():
         ret, test = cap.read()
@@ -224,6 +166,7 @@ def setup_camera():
     else:
         cap = None
 
+    # Fallback: picamera2
     if cap is None:
         try:
             from picamera2 import Picamera2
@@ -251,13 +194,14 @@ def get_frame(cap, picam):
         return f if ret else None
     if picam:
         f = picam.capture_array()
+        # IMX296 sensor outputs BGR despite RGB888 label — no conversion needed
         return f
     return None
 
 
 def camera_loop(cap, picam, eyes):
-    """Capture frames, store raw + CV versions for dual streaming."""
-    global latest_raw_frame, latest_cv_frame
+    """Capture frames and run detection — same approach as passive_flight."""
+    global latest_frame
     frame_count = 0
     det_count = 0
     start = time.time()
@@ -275,23 +219,22 @@ def camera_loop(cap, picam, eyes):
         h, w = frame.shape[:2]
         cx, cy = w // 2, h // 2
 
-        # Store raw frame (crosshair only — no AI overlay)
-        raw = frame.copy()
-        cv2.drawMarker(raw, (cx, cy), (0, 255, 255), cv2.MARKER_CROSS, 20, 1)
-
-        # --- Detection on separate copy (same as passive_flight) ---
+        # --- Detection (same as passive_flight) ---
         found = False
         conf = 0.0
         px, py = 0, 0
         if can_detect:
-            # detect_in_image draws bbox on frame in-place
+            # detect_in_image draws bbox on frame in-place (same as passive_flight)
             found, px, py, conf = eyes.detect_in_image(frame)
 
         if found:
             det_count += 1
+
+            # Circle around target + guidance line (like passive_flight)
             cv2.circle(frame, (int(px), int(py)), 15, (0, 255, 0), 2)
             cv2.line(frame, (cx, cy), (int(px), int(py)), (0, 255, 0), 2)
 
+            # Direction guidance
             margin = w // 6
             direction = ""
             if px < cx - margin:
@@ -310,24 +253,27 @@ def camera_loop(cap, picam, eyes):
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
             cv2.putText(frame, f"TARGET conf={conf:.2f}", (10, 30),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+
+            # Print to terminal on detection
             print(f"  ** DETECTED ** conf={conf:.2f} at ({px},{py}) -> {direction}")
 
         elif can_detect:
             cv2.putText(frame, "NO TARGET", (10, 30),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
 
-        # Crosshair + stats on CV frame
-        cv2.drawMarker(frame, (cx, cy), (0, 255, 255), cv2.MARKER_CROSS, 20, 1)
+        # Crosshair
+        cv2.drawMarker(frame, (cx, cy), (0, 255, 255),
+                        cv2.MARKER_CROSS, 20, 1)
+
+        # Stats overlay
         elapsed = time.time() - start
         fps = frame_count / elapsed if elapsed > 0 else 0
         det_rate = det_count / frame_count * 100 if frame_count > 0 else 0
         cv2.putText(frame, f"FPS:{fps:.1f} Det:{det_rate:.0f}%",
                      (5, h - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (200, 200, 200), 1)
 
-        # Update both frames atomically
         with frame_lock:
-            latest_raw_frame = raw
-            latest_cv_frame = frame
+            latest_frame = frame
 
         if not HEADLESS:
             cv2.imshow("Pi Camera", frame)
@@ -335,6 +281,7 @@ def camera_loop(cap, picam, eyes):
             if key == ord('q') or key == 27:
                 break
 
+        # Print stats every 30 frames
         if frame_count % 30 == 0:
             print(f"  #{frame_count} FPS:{fps:.1f} Det:{det_count}/{frame_count} ({det_rate:.0f}%)")
 
@@ -359,6 +306,7 @@ def main():
         print("  [FAIL] No camera available — exiting")
         return
 
+    # Test frame
     test_frame = get_frame(cap, picam)
     if test_frame is not None:
         print(f"  Test frame: {test_frame.shape} dtype={test_frame.dtype}")
@@ -380,6 +328,7 @@ def main():
             backend = "TFLite" if eyes._use_tflite_direct else "Ultralytics"
             print(f"  AI backend: {backend}")
 
+            # Warmup inference (same as diagnostics)
             print("  Running warmup inference...")
             t0 = time.time()
             dummy_frame = np.zeros((480, 640, 3), dtype=np.uint8)
@@ -387,6 +336,7 @@ def main():
             warmup_ms = (time.time() - t0) * 1000
             print(f"  Warmup: {warmup_ms:.0f}ms")
 
+            # Test with real frame
             if test_frame is not None:
                 print("  Testing detection on real frame...")
                 test_copy = test_frame.copy()
@@ -395,7 +345,7 @@ def main():
         else:
             print("  [WARN] AI model NOT loaded — streaming without detection")
 
-    # Get Pi IP
+    # Get Pi IP for display
     pi_ip = "???"
     try:
         import subprocess
@@ -406,13 +356,11 @@ def main():
 
     print(f"\n  Open in browser on ground station:")
     print(f"    http://{pi_ip}:{PORT}/")
-    if WITH_DETECTION:
-        print(f"    http://{pi_ip}:{PORT}/stream-raw  (fast, no AI)")
-        print(f"    http://{pi_ip}:{PORT}/stream-cv   (with AI overlay)")
-    print(f"    http://{pi_ip}:{PORT}/snapshot    (single frame)")
+    print(f"    http://{pi_ip}:{PORT}/stream    (raw MJPEG)")
+    print(f"    http://{pi_ip}:{PORT}/snapshot  (single frame)")
     print()
 
-    # Start HTTP server
+    # Start HTTP server in background thread
     server = HTTPServer(('0.0.0.0', PORT), StreamHandler)
     server_thread = threading.Thread(target=server.serve_forever, daemon=True)
     server_thread.start()
