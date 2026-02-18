@@ -39,10 +39,10 @@ TRY_ARM = "--with-arm" in sys.argv
 def connect():
     conn_str = config.CONNECTION_STR
     print(f"  Connecting: {conn_str}")
-    mav = mavutil.mavlink_connection(conn_str, source_system=255)
+    mav = mavutil.mavlink_connection(conn_str)
     print("  Waiting for heartbeat...")
-    mav.wait_heartbeat(timeout=10)
-    if mav.target_system == 0:
+    msg = mav.recv_match(type='HEARTBEAT', blocking=True, timeout=10)
+    if not msg:
         print("  [FAIL] No heartbeat from autopilot")
         sys.exit(1)
     print(f"  [OK] Connected to system {mav.target_system}")

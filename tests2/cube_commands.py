@@ -24,11 +24,11 @@ def connect():
     import config
     conn_str = config.CONNECTION_STR
     print(f"  Connecting: {conn_str}")
-    master = mavutil.mavlink_connection(conn_str, source_system=255)
+    master = mavutil.mavlink_connection(conn_str)
 
     print("  Waiting for heartbeat...")
-    master.wait_heartbeat(timeout=10)
-    if master.target_system == 0:
+    msg = master.recv_match(type='HEARTBEAT', blocking=True, timeout=10)
+    if not msg:
         print("  [FAIL] No heartbeat. Is mavproxy running?")
         sys.exit(1)
 
