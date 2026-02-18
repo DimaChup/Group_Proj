@@ -18,7 +18,7 @@ Why MJPEG over FFmpeg/H.264:
   - H.264 needs ffmpeg on Pi + VLC or HLS player on GS + adds latency
   - For drone ops, low latency > compression. MJPEG gives near-realtime.
   - H.264 would only matter for cellular/4G or 720p+ resolution.
-  - Decision: MJPEG is good enough. Revisit if bandwidth is an issue.
+  - Decision: MJPEG is good enough.. Revisit if bandwidth is an issue.
 
 Ground station:
   Open browser to http://<PI_IP>:8090/stream
