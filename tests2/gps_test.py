@@ -47,20 +47,49 @@ for pname in params_to_check:
     else:
         print(f"    {pname.decode():<20} = (no response)")
 
+# ── Check for GPS hardware status messages ──
+print(f"\n  Checking GPS hardware...")
+# Drain any STATUSTEXT messages — Cube reports "GPS: detected" on boot
+gps_status_msgs = []
+drain_start = time.time()
+while time.time() - drain_start < 3.0:
+    stxt = mav.recv_match(type='STATUSTEXT', blocking=True, timeout=0.5)
+    if stxt:
+        text = stxt.text
+        gps_status_msgs.append(text)
+        if 'gps' in text.lower() or 'GPS' in text:
+            print(f"    Cube says: \"{text}\"")
+    else:
+        break
+
 # ── Check if GPS_RAW_INT arrives at all ──
-print(f"\n  Checking if GPS data arrives...")
+# This is THE definitive hardware check:
+# If GPS_RAW_INT arrives → GPS module is physically connected and talking
+# If it doesn't → module is disconnected or GPS_TYPE=0
+print(f"\n  Checking if GPS data arrives (5 sec)...")
 gps_msg = mav.recv_match(type='GPS_RAW_INT', blocking=True, timeout=5)
 if gps_msg is None:
-    print(f"  \033[91m[FAIL] No GPS_RAW_INT messages at all!\033[0m")
-    print(f"  This means:")
-    print(f"    - GPS module might not be connected")
-    print(f"    - GPS_TYPE parameter might be wrong (should be 1 for u-blox/Here3+)")
-    print(f"    - Try: in Mission Planner, check GPS_TYPE = 1")
+    print(f"  \033[91m[FAIL] No GPS_RAW_INT messages — GPS hardware NOT talking\033[0m")
+    print(f"")
+    print(f"  Physical checks:")
+    print(f"    1. Is the Here 3+ GPS module plugged into Cube CAN port?")
+    print(f"    2. Is the cable fully seated on both ends?")
+    print(f"    3. Does the Here 3+ LED light up? (should blink)")
+    print(f"    4. Try unplugging and replugging the GPS cable")
+    print(f"")
+    print(f"  Software checks:")
+    print(f"    5. GPS_TYPE must = 9 (DroneCAN) for Here 3+ via CAN")
+    print(f"       OR GPS_TYPE = 1 if connected via serial")
+    print(f"    6. Check in Mission Planner: Config > Full Parameter Tree > GPS_TYPE")
+    print(f"    7. After changing GPS_TYPE, reboot the Cube")
     sys.exit(1)
 else:
     sats = gps_msg.satellites_visible
     fix = gps_msg.fix_type
-    print(f"  [OK] GPS data flowing — fix={fix}, sats={sats}")
+    print(f"  \033[92m[OK] GPS hardware connected and talking\033[0m")
+    print(f"       fix_type={fix}, satellites={sats}")
+    if sats == 0 and fix <= 1:
+        print(f"       (sees no satellites yet — are you indoors?)")
 
 fix_names = {0: "No GPS", 1: "No Fix", 2: "2D Fix", 3: "3D Fix",
              4: "DGPS", 5: "RTK Float", 6: "RTK Fixed"}
