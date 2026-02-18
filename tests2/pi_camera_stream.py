@@ -23,7 +23,7 @@ Options:
   --with-detection    Run AI detection and overlay boxes on stream
   --headless          No local display
 
-Usage:.
+Usage:
     python tests2/pi_camera_stream.py                          # basic stream
     python tests2/pi_camera_stream.py --with-detection         # stream + AI overlay
     python tests2/pi_camera_stream.py --res 160x120 --fps 3   # low bandwidth
@@ -34,11 +34,12 @@ import time
 import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+script_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(script_dir)
+sys.path.insert(0, project_root)
 
 import cv2
 import numpy as np
-from vision import VisionSystem
 
 # --- Parse args ---
 PORT = 8090
@@ -62,8 +63,6 @@ for i, arg in enumerate(sys.argv):
 # --- Globals ---
 latest_frame = None
 frame_lock = threading.Lock()
-project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-model_path = os.path.join(project_root, "best.tflite")
 
 
 class StreamHandler(BaseHTTPRequestHandler):
@@ -137,63 +136,121 @@ class StreamHandler(BaseHTTPRequestHandler):
         pass  # Suppress per-request logging
 
 
-def camera_loop(eyes):
-    """Capture frames and optionally run detection (same approach as passive_flight)."""
+# ── Camera setup (same approach as diagnostics — open camera separately) ──
+
+def setup_camera():
+    """Open camera directly, same as diagnostics does."""
+    cap = None
+    picam = None
+
+    # Try OpenCV first
+    cap = cv2.VideoCapture(0)
+    if cap.isOpened():
+        ret, test = cap.read()
+        if ret:
+            h, w = test.shape[:2]
+            print(f"  Camera: OpenCV ({w}x{h})")
+            return cap, None
+        else:
+            cap.release()
+            cap = None
+    else:
+        cap = None
+
+    # Fallback: picamera2
+    if cap is None:
+        try:
+            from picamera2 import Picamera2
+            picam = Picamera2()
+            picam.configure(picam.create_preview_configuration(
+                main={"size": (640, 480), "format": "RGB888"}
+            ))
+            picam.start()
+            time.sleep(1)
+            test = picam.capture_array()
+            h, w = test.shape[:2]
+            print(f"  Camera: picamera2 ({w}x{h})")
+            return None, picam
+        except Exception as e:
+            print(f"  [FAIL] No camera: {e}")
+            return None, None
+
+    return None, None
+
+
+def get_frame(cap, picam):
+    """Grab a frame — same as diagnostics get_frame()."""
+    if cap:
+        ret, f = cap.read()
+        return f if ret else None
+    if picam:
+        f = picam.capture_array()
+        # IMX296 sensor outputs BGR despite RGB888 label — no conversion needed
+        return f
+    return None
+
+
+def camera_loop(cap, picam, eyes):
+    """Capture frames and run detection — same approach as passive_flight."""
     global latest_frame
     frame_count = 0
     det_count = 0
     start = time.time()
 
-    print("  Camera loop running...")
-    if WITH_DETECTION and not eyes.using_ai:
-        print("  [WARN] AI model not loaded — detection disabled")
+    can_detect = WITH_DETECTION and eyes is not None and eyes.using_ai
+    print(f"  Camera loop running... (detection={'ON' if can_detect else 'OFF'})")
 
     while True:
-        frame = eyes.get_frame()
+        frame = get_frame(cap, picam)
         if frame is None:
             time.sleep(0.05)
             continue
 
         frame_count += 1
-
         h, w = frame.shape[:2]
         cx, cy = w // 2, h // 2
 
-        # Run detection on frame directly (detect_in_image draws bbox on frame)
+        # --- Detection (same as passive_flight) ---
         found = False
-        if WITH_DETECTION and eyes.using_ai:
+        conf = 0.0
+        px, py = 0, 0
+        if can_detect:
+            # detect_in_image draws bbox on frame in-place (same as passive_flight)
             found, px, py, conf = eyes.detect_in_image(frame)
-            if found:
-                det_count += 1
-                # Additional marker (circle around target centre)
-                cv2.circle(frame, (px, py), 15, (0, 255, 0), 2)
 
-                # Guidance line from centre to target
-                cv2.line(frame, (cx, cy), (px, py), (0, 255, 0), 2)
+        if found:
+            det_count += 1
 
-                # Direction guidance (same as passive_flight)
-                margin = w // 6
-                if px < cx - margin:
-                    direction = "LEFT"
-                elif px > cx + margin:
-                    direction = "RIGHT"
-                else:
-                    direction = ""
-                if py < cy - margin:
-                    direction = ("FORWARD " + direction).strip()
-                elif py > cy + margin:
-                    direction = ("BACK " + direction).strip()
-                if not direction:
-                    direction = "CENTRED"
+            # Circle around target + guidance line (like passive_flight)
+            cv2.circle(frame, (int(px), int(py)), 15, (0, 255, 0), 2)
+            cv2.line(frame, (cx, cy), (int(px), int(py)), (0, 255, 0), 2)
 
-                color = (0, 255, 0) if direction == "CENTRED" else (0, 255, 255)
-                cv2.putText(frame, direction, (cx - 60, h - 20),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
-                cv2.putText(frame, f"TARGET conf={conf:.2f}", (10, 30),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-            else:
-                cv2.putText(frame, "NO TARGET", (10, 30),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+            # Direction guidance
+            margin = w // 6
+            direction = ""
+            if px < cx - margin:
+                direction = "LEFT"
+            elif px > cx + margin:
+                direction = "RIGHT"
+            if py < cy - margin:
+                direction = ("FORWARD " + direction).strip()
+            elif py > cy + margin:
+                direction = ("BACK " + direction).strip()
+            if not direction:
+                direction = "CENTRED"
+
+            color = (0, 255, 0) if direction == "CENTRED" else (0, 255, 255)
+            cv2.putText(frame, direction, (cx - 60, h - 20),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
+            cv2.putText(frame, f"TARGET conf={conf:.2f}", (10, 30),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+
+            # Print to terminal on detection
+            print(f"  ** DETECTED ** conf={conf:.2f} at ({px},{py}) -> {direction}")
+
+        elif can_detect:
+            cv2.putText(frame, "NO TARGET", (10, 30),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
 
         # Crosshair
         cv2.drawMarker(frame, (cx, cy), (0, 255, 255),
@@ -217,8 +274,7 @@ def camera_loop(eyes):
 
         # Print stats every 30 frames
         if frame_count % 30 == 0:
-            det_rate = det_count / frame_count * 100 if frame_count > 0 else 0
-            print(f"  #{frame_count} FPS:{fps:.1f} Det:{det_rate:.0f}%")
+            print(f"  #{frame_count} FPS:{fps:.1f} Det:{det_count}/{frame_count} ({det_rate:.0f}%)")
 
 
 def main():
@@ -234,14 +290,51 @@ def main():
     print(f"  Headless:   {HEADLESS}")
     print()
 
-    # Initialize camera
-    if WITH_DETECTION:
-        print(f"  Loading AI model: {model_path}")
-        eyes = VisionSystem(camera_index=0, model_path=model_path)
-        if not eyes.using_ai:
-            print("  [WARN] AI model not loaded — streaming without detection")
+    # ── Open camera directly (same as diagnostics) ──
+    print("[1] Opening camera...")
+    cap, picam = setup_camera()
+    if cap is None and picam is None:
+        print("  [FAIL] No camera available — exiting")
+        return
+
+    # Test frame
+    test_frame = get_frame(cap, picam)
+    if test_frame is not None:
+        print(f"  Test frame: {test_frame.shape} dtype={test_frame.dtype}")
     else:
-        eyes = VisionSystem(camera_index=0, model_path="__none__")
+        print("  [WARN] Test frame failed")
+
+    # ── Load AI model separately (same as diagnostics) ──
+    eyes = None
+    if WITH_DETECTION:
+        print("\n[2] Loading AI model...")
+        model_path = os.path.join(project_root, "best.tflite")
+        print(f"  Model path: {model_path}")
+        print(f"  File exists: {os.path.exists(model_path)}")
+
+        from vision import VisionSystem
+        eyes = VisionSystem(camera_index=None, model_path=model_path)
+
+        if eyes.using_ai:
+            backend = "TFLite" if eyes._use_tflite_direct else "Ultralytics"
+            print(f"  AI backend: {backend}")
+
+            # Warmup inference (same as diagnostics)
+            print("  Running warmup inference...")
+            t0 = time.time()
+            dummy_frame = np.zeros((480, 640, 3), dtype=np.uint8)
+            eyes.detect_in_image(dummy_frame)
+            warmup_ms = (time.time() - t0) * 1000
+            print(f"  Warmup: {warmup_ms:.0f}ms")
+
+            # Test with real frame
+            if test_frame is not None:
+                print("  Testing detection on real frame...")
+                test_copy = test_frame.copy()
+                found, tx, ty, tc = eyes.detect_in_image(test_copy)
+                print(f"  Real frame test: found={found} conf={tc:.3f} at ({tx},{ty})")
+        else:
+            print("  [WARN] AI model NOT loaded — streaming without detection")
 
     # Get Pi IP for display
     pi_ip = "???"
@@ -266,13 +359,19 @@ def main():
 
     # Run camera loop (main thread)
     try:
-        camera_loop(eyes)
+        camera_loop(cap, picam, eyes)
     except KeyboardInterrupt:
         pass
 
     if not HEADLESS:
         cv2.destroyAllWindows()
-    eyes.release()
+    if cap:
+        cap.release()
+    if picam:
+        try:
+            picam.stop()
+        except Exception:
+            pass
     server.shutdown()
     print("\n  Stream stopped.")
 
