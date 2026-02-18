@@ -394,6 +394,61 @@ thresholds) based on real test data.
 
 ---
 
+## Ground Station Camera Stream
+
+The Pi streams live camera feed to the ground station laptop so the operator can
+see what the drone sees during flight.
+
+### Approach: MJPEG over HTTP (chosen)
+
+Script: `tests2/pi_camera_stream.py`
+
+```
+Pi Camera → Python (640x480) → AI detection overlay → downscale 320x240
+                                                          → JPEG compress
+                                                          → HTTP multipart
+                                                          → browser <img> tag
+```
+
+- Pure Python, zero dependencies (http.server + cv2.imencode)
+- Works in any browser — just open `http://<PI_IP>:8090/`
+- Near-realtime latency (~100ms)
+- Bandwidth: ~0.5 Mbps at 320x240, 5fps, quality 50%
+- Supports `--with-detection` to overlay AI bounding boxes and guidance
+
+### Alternative: H.264/HLS via FFmpeg (tested, not used)
+
+Script: `tests2/pi_camera_stream_h264.py`
+
+```
+Pi Camera → Python → pipe raw frames → ffmpeg (H.264 encode)
+                                           → HLS segments (.ts + .m3u8)
+                                           → HTTP server
+                                           → browser + hls.js
+```
+
+- 5-10x better compression (~0.05 Mbps vs ~0.5 Mbps)
+- Requires ffmpeg installed on Pi (`sudo apt install ffmpeg`)
+- Requires hls.js in browser (loaded from CDN)
+- **2-4 second latency** (HLS needs to buffer at least one segment)
+
+### Why MJPEG wins for this project
+
+| Factor | MJPEG | H.264/HLS |
+|--------|-------|-----------|
+| Latency | ~100ms | 2-4 seconds |
+| Bandwidth | ~0.5 Mbps | ~0.05 Mbps |
+| Dependencies | None | ffmpeg + hls.js |
+| Browser support | Any (native `<img>`) | Needs JavaScript |
+| Complexity | Simple | More moving parts |
+
+**Decision: MJPEG.** For drone operations, low latency matters more than compression.
+At 320x240 @ 5fps, 0.5 Mbps is trivial over WiFi. The operator needs to see what's
+happening NOW, not 3 seconds ago. Revisit if streaming over cellular/4G or at higher
+resolution (720p+).
+
+---
+
 ## The Mission State Machine
 
 This is the core logic in main.py. It's identical in simulation and real mode.

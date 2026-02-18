@@ -674,6 +674,32 @@ Track what was done each session so context is never lost.
 4. main.py with CV logging only (no descent) — needs log-only flag
 5. Full autonomous mission — main.py ready after steps 1-4
 
+### Session: 2026-02-18 (part 3) — Camera stream detection fix, H.264 alternative
+
+**Camera stream detection fix:**
+- `pi_camera_stream.py --with-detection` was not detecting targets (det 0%)
+- Root cause: camera + model bundled in one VisionSystem call, no warmup inference
+- Fix: separated camera opening from model loading (same approach as diagnostics)
+  - Camera opened directly (OpenCV or picamera2) — not through VisionSystem
+  - Model loaded with `VisionSystem(camera_index=None, ...)` — model only
+  - Added warmup inference before main loop
+  - Added real frame test at startup for immediate feedback
+  - Added terminal debug output (model status, backend type, detection hits)
+- Detection now works correctly in the stream
+
+**Streaming approach decision (documented in ARCHITECTURE.md):**
+- **Chosen: MJPEG** (`pi_camera_stream.py`, port 8090)
+  - Pure Python, zero dependencies, any browser
+  - Near-realtime latency (~100ms)
+  - ~0.5 Mbps at 320x240, 5fps
+- **Alternative tested: H.264/HLS** (`pi_camera_stream_h264.py`, port 8091)
+  - Uses ffmpeg (needs `sudo apt install ffmpeg`)
+  - 5-10x better compression (~0.05 Mbps)
+  - 2-4 second latency (HLS segment buffering)
+  - Browser needs hls.js (loaded from CDN)
+- **Decision: MJPEG wins** — for drone ops, low latency > compression.
+  0.5 Mbps is trivial over WiFi. Revisit only if bandwidth becomes an issue.
+
 **Next: Push to git, pull on Pi, outdoor GPS test, then Step 1 (Mission Planner AUTO waypoints)**
 
 ---
