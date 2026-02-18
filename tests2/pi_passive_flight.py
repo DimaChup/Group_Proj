@@ -15,7 +15,7 @@ What it shows:
 
 Controls:
   'q' / ESC — quit
-  's' — save current frame as snapshot
+  's' — save current frame as snapshot.
 
 Usage:
     python tests/pi_passive_flight.py                    # with screen
