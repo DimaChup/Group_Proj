@@ -46,7 +46,7 @@ def _detect_connection():
 # "SIMULATION": Uses map.jpg and mouse clicks for setup.
 # "REAL": Uses Real Camera and assumes waypoints are loaded/generated elsewhere.
 # Override with: export DRONE_MODE=REAL
-MODE = os.environ.get("DRONE_MODE", "SIMULATION")
+MODE = os.environ.get("DRONE_MODE", "REAL")
 
 # --- FLIGHT CONNECTION ---
 # Auto-detects: Pi->serial, WSL->gateway IP, Windows->localhost
