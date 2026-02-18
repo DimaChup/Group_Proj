@@ -7,4 +7,7 @@ runs/
 nul
 .claude/
 flight_log.csv
+passive_flight_log.csv
+detection_log.csv
+snapshot_*.jpg
 test_env
