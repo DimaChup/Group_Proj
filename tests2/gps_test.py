@@ -43,8 +43,10 @@ params_to_check = [
     (b'GPS1_TYPE',       b'GPS_TYPE',        "GPS type (9=DroneCAN, 1=serial)"),
     (b'GPS_AUTO_CONFIG', b'GPS_AUTO_CONFIG',  "Auto configure"),
     (b'GPS1_GNSS_MODE',  b'GPS_GNSS_MODE',   "GNSS mode"),
-    (b'CAN_D1_PROTOCOL', None,               "CAN driver 1 protocol (1=DroneCAN)"),
     (b'CAN_P1_DRIVER',   None,               "CAN port 1 driver (1=enabled)"),
+    (b'CAN_D1_PROTOCOL', None,               "CAN1 protocol (1=DroneCAN)"),
+    (b'CAN_P2_DRIVER',   None,               "CAN port 2 driver (1=enabled)"),
+    (b'CAN_D2_PROTOCOL', None,               "CAN2 protocol (1=DroneCAN)"),
 ]
 for new_name, old_name, desc in params_to_check:
     # Try new name first, then old name
