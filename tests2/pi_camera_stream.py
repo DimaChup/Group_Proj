@@ -23,7 +23,7 @@ Options:
   --with-detection    Run AI detection and overlay boxes on stream
   --headless          No local display
 
-Usage:
+Usage:.
     python tests2/pi_camera_stream.py                          # basic stream
     python tests2/pi_camera_stream.py --with-detection         # stream + AI overlay
     python tests2/pi_camera_stream.py --res 160x120 --fps 3   # low bandwidth
@@ -155,25 +155,55 @@ def camera_loop(eyes):
         frame_count += 1
         display = frame.copy()
 
+        h, w = display.shape[:2]
+        cx, cy = w // 2, h // 2
+
         if WITH_DETECTION:
             found, px, py, conf = eyes.detect_in_image(frame)
             if found:
                 det_count += 1
-                # Draw detection on the frame that gets streamed
+                # Detection marker + confidence
                 cv2.circle(display, (px, py), 15, (0, 255, 0), 2)
                 cv2.putText(display, f"{conf:.2f}", (px + 10, py - 10),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
+                # Guidance line from centre to target
+                cv2.line(display, (cx, cy), (px, py), (0, 255, 0), 2)
+
+                # Direction guidance (same as passive_flight)
+                margin = w // 6
+                if px < cx - margin:
+                    direction = "LEFT"
+                elif px > cx + margin:
+                    direction = "RIGHT"
+                else:
+                    direction = ""
+                if py < cy - margin:
+                    direction = ("FORWARD " + direction).strip()
+                elif py > cy + margin:
+                    direction = ("BACK " + direction).strip()
+                if not direction:
+                    direction = "CENTRED"
+
+                color = (0, 255, 0) if direction == "CENTRED" else (0, 255, 255)
+                cv2.putText(display, direction, (cx - 60, h - 20),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
+                cv2.putText(display, f"TARGET conf={conf:.2f}", (10, 30),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+            else:
+                cv2.putText(display, "NO TARGET", (10, 30),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+
         # Crosshair
-        h, w = display.shape[:2]
-        cv2.drawMarker(display, (w // 2, h // 2), (0, 255, 255),
+        cv2.drawMarker(display, (cx, cy), (0, 255, 255),
                         cv2.MARKER_CROSS, 20, 1)
 
         # Stats overlay
         elapsed = time.time() - start
         fps = frame_count / elapsed if elapsed > 0 else 0
-        cv2.putText(display, f"FPS:{fps:.1f} Det:{det_count}/{frame_count}",
-                     (5, 15), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (200, 200, 200), 1)
+        det_rate = det_count / frame_count * 100 if frame_count > 0 else 0
+        cv2.putText(display, f"FPS:{fps:.1f} Det:{det_rate:.0f}%",
+                     (5, h - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (200, 200, 200), 1)
 
         with frame_lock:
             latest_frame = display
