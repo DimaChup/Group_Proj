@@ -175,7 +175,14 @@ class VisualFlightMission:
             elif msg.get_type() == 'ATTITUDE':
                 self.roll = msg.roll; self.pitch = msg.pitch; self.yaw = msg.yaw
             elif msg.get_type() == 'HEARTBEAT':
-                self.last_heartbeat = time.time()
+                # Only accept heartbeats from autopilot, not mavproxy GCS
+                if msg.type != mavutil.mavlink.MAV_TYPE_GCS:
+                    self.last_heartbeat = time.time()
+                    # Set target system from first autopilot heartbeat
+                    if self.master.target_system == 0:
+                        self.master.target_system = msg.get_srcSystem()
+                        self.master.target_component = msg.get_srcComponent()
+                        print(f"[LINK] Autopilot found: system {self.master.target_system}")
 
     def calculate_target_gps(self, u, v):
         Cx = config.IMAGE_W / 2; Cy = config.IMAGE_H / 2
@@ -360,9 +367,12 @@ class VisualFlightMission:
                         mavutil.mavlink.MAV_CMD_NAV_TAKEOFF, 0, 0, 0, 0, 0, 0, 0, config.TARGET_ALT)
                     self.state = State.TAKEOFF
                 elif time.time() - self.last_req > 2.0:
-                    self.master.mav.set_mode_send(
-                        self.master.target_system, mavutil.mavlink.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, 
-                        self.master.mode_mapping()['GUIDED'])
+                    # Set GUIDED mode (4) — use command_long which works reliably via mavproxy
+                    self.master.mav.command_long_send(
+                        self.master.target_system, self.master.target_component,
+                        mavutil.mavlink.MAV_CMD_DO_SET_MODE, 0,
+                        mavutil.mavlink.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED,
+                        4, 0, 0, 0, 0, 0)  # 4 = GUIDED
                     self.master.mav.command_long_send(
                         self.master.target_system, self.master.target_component,
                         mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0, 1, 0, 0, 0, 0, 0, 0)
