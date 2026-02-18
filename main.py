@@ -35,6 +35,8 @@ if config.MODE == "SIMULATION":
 
 # --- GS Camera Stream (MJPEG over HTTP) ---
 # Override with flags: --stream-port 8090 --stream-res 320x240 --stream-fps 5 --stream-quality 50
+# Disable with: --no-stream
+STREAM_ENABLED = "--no-stream" not in sys.argv
 STREAM_PORT = 8090
 STREAM_W, STREAM_H = 320, 240
 STREAM_FPS = 5
@@ -96,6 +98,9 @@ class _StreamHandler(BaseHTTPRequestHandler):
 
 def _start_stream_server():
     """Start MJPEG server in background thread."""
+    if not STREAM_ENABLED:
+        print("[STREAM] Disabled (--no-stream)")
+        return None
     try:
         server = HTTPServer(('0.0.0.0', STREAM_PORT), _StreamHandler)
         server_thread = threading.Thread(target=server.serve_forever, daemon=True)
@@ -356,9 +361,10 @@ class VisualFlightMission:
              final_display = np.hstack((god_resized, frame))
 
         # Update stream for ground station (frame with HUD, before composite)
-        global _stream_frame
-        with _stream_lock:
-            _stream_frame = frame
+        if STREAM_ENABLED:
+            global _stream_frame
+            with _stream_lock:
+                _stream_frame = frame
 
         cv2.imshow("Mission Dashboard", final_display)
         return found, u, v
