@@ -614,6 +614,68 @@ Track what was done each session so context is never lost.
   - passive_flight.py, pi_passive_flight.py, feedback_test.py
 - **Next: Outdoor GPS fix test, then manual flight with passive detection**
 
+### Session: 2026-02-18 (part 2) — Cube command testing, mavproxy fixes, flight prep
+
+**Cube command testing (bench, no props):**
+- Created `tests2/cube_commands.py`: tests Pi→Cube command path (mode changes, arm, params, buzzer)
+- Created `tests2/bench_mission.py`: walks Cube through full mission sequence (GUIDED, waypoints, LAND)
+- Both scripts initially showed `system 0` (mavproxy) instead of Cube (`system 1`)
+- Mode names showed as `Mode(0x00000004)` instead of "GUIDED"
+
+**Three mavproxy issues found and fixed across all scripts:**
+1. **Heartbeat filtering**: mavproxy sends GCS heartbeats (type=6) alongside Cube heartbeats (type=2).
+   Fix: filter `msg.type != MAV_TYPE_GCS` to skip mavproxy's heartbeats.
+2. **target_system extraction**: `recv_match` doesn't set target_system (stays 0). `wait_heartbeat()`
+   with `source_system=255` broke connection entirely.
+   Fix: manually set `mav.target_system = hb.get_srcSystem()` from first autopilot heartbeat.
+3. **Mode name mapping**: `mavutil.mode_string_v10()` unreliable via mavproxy (returns raw hex).
+   Fix: custom `COPTER_MODES` dict mapping custom_mode numbers to ArduCopter mode names.
+4. **ARMING mode change**: `mode_mapping()['GUIDED']` unreliable via mavproxy, can crash.
+   Fix: use `command_long_send(MAV_CMD_DO_SET_MODE, ..., 4)` with hardcoded mode number.
+
+**Files fixed:**
+- `tests2/cube_commands.py`: all 3 fixes applied
+- `tests2/bench_mission.py`: all 3 fixes applied + drain_messages() for stale heartbeat verification
+- `main.py`: all 3 fixes applied (heartbeat filter, target_system extraction, mode change command)
+
+**Bench test results (system 1, correct mode names):**
+- GUIDED mode: works (autonomous, no RC needed)
+- STABILIZE: fails without RC (expected — manual mode needs RC input)
+- LOITER: fails without GPS (expected)
+- LAND: works (autonomous mode)
+- ARM: rejected "RC not found" (expected — command DID reach Cube)
+- Waypoints: ACK'd with result=4 FAILED (no GPS — expected)
+- Parameters: read correctly (ARMING_CHECK = 29182)
+- Conclusion: all commands reach Cube and are processed. Failures are from missing RC/GPS, not code bugs.
+
+**New test scripts created:**
+- `tests2/gps_health.py`: step-by-step GPS verification (CAN bus, GPS type, hardware data, satellite tracking)
+- `tests2/pi_waypoint_test.py`: Step 2 flight test — fly 4 GPS waypoints in GUIDED mode, no CV
+  - `--dry-run` flag: verify commands without arming
+  - `--alt N`: set altitude (default 10m)
+  - Ctrl+C triggers RTL (Return To Launch)
+  - 20m square pattern at 3 m/s
+- `tests2/pi_camera_stream.py`: MJPEG stream to ground station
+  - Serves on http://<PI_IP>:8090/stream
+  - Downscales to 320x240 for bandwidth (~0.5 Mbps)
+  - `--with-detection`: overlay AI detection boxes
+  - `--res`, `--fps`, `--quality` flags for tuning
+
+**Here 3+ GPS LED reference:**
+- Flashing BLUE = disarmed, no GPS lock (normal indoors)
+- Flashing GREEN = disarmed, GPS lock acquired (ready to arm!)
+- Double YELLOW = pre-arm checks failing
+- Flashing YELLOW = RC failsafe
+
+**Progressive flight testing steps (all documented in CLAUDE.md):**
+1. Mission Planner AUTO waypoints (no custom code) — not done
+2. pi_waypoint_test.py (your code, no CV) — script ready, not tested
+3. pi_passive_flight.py (manual flight, CV logging) — script exists
+4. main.py with CV logging only (no descent) — needs log-only flag
+5. Full autonomous mission — main.py ready after steps 1-4
+
+**Next: Push to git, pull on Pi, outdoor GPS test, then Step 1 (Mission Planner AUTO waypoints)**
+
 ---
 
 **INSTRUCTIONS FOR LLM**: When starting a new session, read this file first. Then read
