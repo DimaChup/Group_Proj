@@ -53,7 +53,7 @@ Current model (`best.tflite`) was trained on **synthetic composites** — map.jp
     - Add: brightness variation, contrast, blur, rotation
     - Add: scale variation (simulate different altitudes)
     - Add: noise (simulate real camera)
-    - This improves model robustness without collecting real data
+    - This improves model robustness without collecting real data k
 ```
 
 ### 2. Calibrate Flight Parameters for Detection
