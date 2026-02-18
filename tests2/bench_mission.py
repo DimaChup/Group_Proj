@@ -41,10 +41,20 @@ def connect():
     print(f"  Connecting: {conn_str}")
     mav = mavutil.mavlink_connection(conn_str)
     print("  Waiting for heartbeat...")
-    msg = mav.recv_match(type='HEARTBEAT', blocking=True, timeout=10)
-    if not msg:
+    # Wait for heartbeat from the actual autopilot (not mavproxy GCS)
+    # mavproxy sends type=GCS(6), Cube sends type=QUADROTOR(2)
+    autopilot_hb = None
+    start = time.time()
+    while time.time() - start < 10:
+        hb = mav.recv_match(type='HEARTBEAT', blocking=True, timeout=2)
+        if hb and hb.type != mavutil.mavlink.MAV_TYPE_GCS:
+            autopilot_hb = hb
+            break
+    if autopilot_hb is None:
         print("  [FAIL] No heartbeat from autopilot")
         sys.exit(1)
+    mav.target_system = autopilot_hb.get_srcSystem()
+    mav.target_component = autopilot_hb.get_srcComponent()
     print(f"  [OK] Connected to system {mav.target_system}")
     mav.mav.request_data_stream_send(
         mav.target_system, mav.target_component,
@@ -64,10 +74,10 @@ def drain_messages(mav):
 def get_mode(mav):
     """Get current mode — drain stale messages first, then read fresh heartbeat."""
     drain_messages(mav)
-    # Wait for a fresh heartbeat from the autopilot (not mavproxy)
+    # Wait for a fresh heartbeat from the autopilot (skip mavproxy GCS heartbeats)
     for _ in range(10):
         hb = mav.recv_match(type='HEARTBEAT', blocking=True, timeout=3)
-        if hb and hb.get_srcSystem() == mav.target_system:
+        if hb and hb.type != mavutil.mavlink.MAV_TYPE_GCS:
             return mavutil.mode_string_v10(hb)
     return "UNKNOWN"
 

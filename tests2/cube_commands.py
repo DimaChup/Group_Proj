@@ -27,11 +27,21 @@ def connect():
     master = mavutil.mavlink_connection(conn_str)
 
     print("  Waiting for heartbeat...")
-    msg = master.recv_match(type='HEARTBEAT', blocking=True, timeout=10)
-    if not msg:
+    # Wait for heartbeat from the actual autopilot (not mavproxy GCS)
+    # mavproxy sends type=GCS(6), Cube sends type=QUADROTOR(2)
+    autopilot_hb = None
+    start = time.time()
+    while time.time() - start < 10:
+        hb = master.recv_match(type='HEARTBEAT', blocking=True, timeout=2)
+        if hb and hb.type != mavutil.mavlink.MAV_TYPE_GCS:
+            autopilot_hb = hb
+            break
+    if autopilot_hb is None:
         print("  [FAIL] No heartbeat. Is mavproxy running?")
         sys.exit(1)
 
+    master.target_system = autopilot_hb.get_srcSystem()
+    master.target_component = autopilot_hb.get_srcComponent()
     print(f"  [OK] Heartbeat from system {master.target_system}")
     # Request data streams so we get mode/status updates
     master.mav.request_data_stream_send(
@@ -48,10 +58,10 @@ def get_mode(master):
         msg = master.recv_msg()
         if msg is None:
             break
-    # Read fresh heartbeat from autopilot
+    # Read fresh heartbeat from autopilot (skip mavproxy GCS heartbeats)
     for _ in range(10):
         hb = master.recv_match(type='HEARTBEAT', blocking=True, timeout=3)
-        if hb and hb.get_srcSystem() == master.target_system:
+        if hb and hb.type != mavutil.mavlink.MAV_TYPE_GCS:
             return mavutil.mode_string_v10(hb)
     return "UNKNOWN"
 
