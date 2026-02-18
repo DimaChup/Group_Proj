@@ -36,16 +36,31 @@ mav.mav.request_data_stream_send(
 time.sleep(0.3)
 
 # ── Check GPS parameters ──
+# ArduCopter 4.6+ renamed GPS_TYPE → GPS1_TYPE etc.
 print(f"\n  Checking GPS parameters...")
-params_to_check = [b'GPS_TYPE', b'GPS_AUTO_CONFIG', b'GPS_GNSS_MODE']
-for pname in params_to_check:
-    mav.mav.param_request_read_send(
-        mav.target_system, mav.target_component, pname, -1)
-    msg = mav.recv_match(type='PARAM_VALUE', blocking=True, timeout=2)
-    if msg:
-        print(f"    {msg.param_id.rstrip(chr(0)):<20} = {int(msg.param_value)}")
-    else:
-        print(f"    {pname.decode():<20} = (no response)")
+params_to_check = [
+    # (new name, old name, description)
+    (b'GPS1_TYPE',       b'GPS_TYPE',        "GPS type (9=DroneCAN, 1=serial)"),
+    (b'GPS_AUTO_CONFIG', b'GPS_AUTO_CONFIG',  "Auto configure"),
+    (b'GPS1_GNSS_MODE',  b'GPS_GNSS_MODE',   "GNSS mode"),
+    (b'CAN_D1_PROTOCOL', None,               "CAN driver 1 protocol (1=DroneCAN)"),
+    (b'CAN_P1_DRIVER',   None,               "CAN port 1 driver (1=enabled)"),
+]
+for new_name, old_name, desc in params_to_check:
+    # Try new name first, then old name
+    found = False
+    for pname in [new_name] + ([old_name] if old_name and old_name != new_name else []):
+        mav.mav.param_request_read_send(
+            mav.target_system, mav.target_component, pname, -1)
+        msg = mav.recv_match(type='PARAM_VALUE', blocking=True, timeout=1)
+        if msg:
+            val = int(msg.param_value)
+            name = msg.param_id.rstrip(chr(0))
+            print(f"    {name:<20} = {val:<6}  ({desc})")
+            found = True
+            break
+    if not found:
+        print(f"    {new_name.decode():<20} = ???    ({desc})")
 
 # ── Check for GPS hardware status messages ──
 print(f"\n  Checking GPS hardware...")
