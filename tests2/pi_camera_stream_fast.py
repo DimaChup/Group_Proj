@@ -81,6 +81,10 @@ det_result = {
     "inf_fps": 0.0,
 }
 
+# The exact frame being fed to AI (for smear/blur inspection)
+ai_frame = None
+ai_frame_lock = threading.Lock()
+
 
 class StreamHandler(BaseHTTPRequestHandler):
     """HTTP handler that serves MJPEG stream."""
@@ -130,14 +134,66 @@ class StreamHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(jpeg.tobytes())
 
+        elif self.path == '/ai-snapshot':
+            # The exact frame the AI model last processed (check for smear/blur)
+            with ai_frame_lock:
+                frame = ai_frame
+            if frame is None:
+                self.send_response(503)
+                self.end_headers()
+                return
+
+            # Full resolution, high quality — so you can inspect blur properly
+            _, jpeg = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 95])
+            self.send_response(200)
+            self.send_header('Content-Type', 'image/jpeg')
+            self.send_header('Content-Length', str(len(jpeg)))
+            self.end_headers()
+            self.wfile.write(jpeg.tobytes())
+
+        elif self.path == '/stream-ai':
+            # Live stream of only the frames AI is processing (~4fps)
+            self.send_response(200)
+            self.send_header('Content-Type', 'multipart/x-mixed-replace; boundary=frame')
+            self.end_headers()
+
+            last_count = -1
+            while True:
+                with det_lock:
+                    count = det_result["det_count"] + det_result.get("_inf_total", 0)
+                with ai_frame_lock:
+                    frame = ai_frame
+
+                if frame is None or count == last_count:
+                    time.sleep(0.05)
+                    continue
+                last_count = count
+
+                _, jpeg = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 90])
+                data = jpeg.tobytes()
+                try:
+                    self.wfile.write(b'--frame\r\n')
+                    self.wfile.write(b'Content-Type: image/jpeg\r\n')
+                    self.wfile.write(f'Content-Length: {len(data)}\r\n\r\n'.encode())
+                    self.wfile.write(data)
+                    self.wfile.write(b'\r\n')
+                except (BrokenPipeError, ConnectionResetError):
+                    break
+
         elif self.path == '/':
             det_mode = "THREADED" if WITH_DETECTION else "OFF"
+            ai_links = ""
+            if WITH_DETECTION:
+                ai_links = """<p><a href="/stream-ai" style="color:#0ff">AI Input Stream (~4fps)</a> |
+<a href="/ai-snapshot" style="color:#0ff">AI Snapshot</a>
+— see exactly what the model sees (check for blur/smear)</p>"""
             html = f"""<html><head><title>Drone Camera (Fast)</title></head>
 <body style="background:#111;color:#fff;text-align:center;font-family:monospace">
 <h2>SAR Drone Camera Feed (Fast Stream)</h2>
 <img src="/stream" style="max-width:100%;border:2px solid #0f0"/>
 <p>Resolution: {STREAM_W}x{STREAM_H} | FPS: {TARGET_FPS} | Quality: {JPEG_QUALITY}%</p>
 <p>Detection: {det_mode}</p>
+{ai_links}
 </body></html>"""
             self.send_response(200)
             self.send_header('Content-Type', 'text/html')
@@ -153,7 +209,7 @@ class StreamHandler(BaseHTTPRequestHandler):
 
 def detection_thread(eyes):
     """Background thread: runs AI detection on latest frame continuously."""
-    global det_result
+    global det_result, ai_frame
     inf_count = 0
     inf_start = time.time()
 
@@ -165,6 +221,10 @@ def detection_thread(eyes):
         if frame is None:
             time.sleep(0.05)
             continue
+
+        # Save the exact frame being fed to AI (for blur inspection)
+        with ai_frame_lock:
+            ai_frame = frame.copy()
 
         # Run AI inference (this is the slow part: ~250ms)
         found, px, py, conf = eyes.detect_in_image(frame)
@@ -201,6 +261,7 @@ def detection_thread(eyes):
                 "direction": direction,
                 "det_count": old_count + (1 if found else 0),
                 "inf_fps": inf_fps,
+                "_inf_total": inf_count,
             }
 
         if found:
@@ -272,8 +333,11 @@ def main():
 
     print(f"\n  Open in browser on ground station:")
     print(f"    http://{pi_ip}:{PORT}/")
-    print(f"    http://{pi_ip}:{PORT}/stream    (raw MJPEG)")
-    print(f"    http://{pi_ip}:{PORT}/snapshot  (single frame)")
+    print(f"    http://{pi_ip}:{PORT}/stream       (live MJPEG)")
+    print(f"    http://{pi_ip}:{PORT}/snapshot     (single frame)")
+    if WITH_DETECTION:
+        print(f"    http://{pi_ip}:{PORT}/stream-ai    (AI input frames ~4fps)")
+        print(f"    http://{pi_ip}:{PORT}/ai-snapshot  (last frame fed to AI)")
     print()
 
     # Start HTTP server in background thread
