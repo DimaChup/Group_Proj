@@ -40,6 +40,10 @@ communication (Python 3.13 + pyserial serial reads are broken).
 - ai-edge-litert replaces tflite-runtime on Python 3.13
 - Mission Planner connects to Cube via mavproxy TCP bridge (tcpin:0.0.0.0:5762)
 - Passive flight script ready (pi_passive_flight.py — pilot flies RC, Pi detects + buzzer)
+- **simple_simulator.py**: interactive MVP — keyboard flight + CV + GPS estimation + offset landing
+  - GPS centering (C), visual servo (V), GPS lock (G), 7.5m offset landing (L), data recording (B)
+  - Simulates GPS drift, camera shake, CV throttle, TFLite backend
+  - End-to-end mission tested: flyover → centre → lock → land 7.5m away
 
 ### What's Not Done Yet
 - [x] Pi setup (OS, venv, dependencies)
@@ -118,6 +122,9 @@ v3/
 │                                 Interface: detect_in_image(frame) → (found, x, y, conf)
 ├── planning.py                ← Lawnmower search pattern generator [INDEPENDENT MODULE]
 ├── main.py                    ← Mission orchestrator — the state machine, ties everything
+├── simple_simulator.py         ← Interactive MVP: keyboard flight + CV + GPS estimation + landing
+│                                 Keys: SPACE=arm WASD=fly C=gps V=vision G=lock B=rec L=land
+│                                 Flags: --fps 4 --tflite --gps-drift 3 --shake 5
 ├── simulation.py              ← Laptop-only sim: map.jpg + simulated drone camera view
 ├── preflight.py               ← Standalone connectivity checker (camera, Cube, AI model)
 │
@@ -181,6 +188,7 @@ utils.py .............. Geo math (GPS <-> pixels)
 vision.py ............. Camera + AI detection [INDEPENDENT — dual backend]
 planning.py ........... Lawnmower search pattern [INDEPENDENT]
 main.py ............... Mission orchestrator (state machine, ties everything together)
+simple_simulator.py ... Interactive MVP (keyboard flight + CV + GPS est + landing)
 simulation.py ......... Laptop-only simulation (map + simulated drone view)
 preflight.py .......... Connectivity checker (standalone tool)
 tests/ ................ All test scripts (pi_1 through pi_9, test_cube, etc.)
@@ -707,6 +715,88 @@ Track what was done each session so context is never lost.
   0.5 Mbps is trivial over WiFi. Revisit only if bandwidth becomes an issue.
 
 **Next: Push to git, pull on Pi, outdoor GPS test, then Step 1 (Mission Planner AUTO waypoints)**
+
+### Session: 2026-02-19 — simple_simulator.py (interactive MVP)
+
+**Created `simple_simulator.py`** — interactive flight simulator for testing GPS estimation
+and landing approach before real flights. Connects to SITL, you fly with keyboard (like an
+RC controller), CV runs live and estimates target GPS position.
+
+**Features built across two sub-sessions:**
+- **Keyboard RC**: SPACE=arm, WASD=fly, QE=yaw, RF=altitude
+- **C mode (GPS centering)**: press C → drone auto-flies to best GPS estimate of dummy
+- **V mode (visual servo)**: press V → drone centres on dummy using pixel offset (proportional control)
+  - EMA smoothing on detection position (alpha=0.3) to reduce shake noise
+  - Falls back to GPS estimate when target lost
+  - Centre-snap: when target within 30px of centre, drone GPS = dummy GPS (weight 10)
+- **B key (recording)**: manual toggle to record GPS estimates during C or V mode
+  - Three data buckets: C GPS EST, V GPS EST (improved by centre-snaps), V drone GPS (raw proxy)
+- **G key (GPS lock)**: starts 30s automatic averaging while V mode keeps drone centred
+  - Only collects samples when centre-snap active (target confirmed at centre)
+  - Shows Avg GPS error and GPS EST error at end
+- **L key (7.5m offset landing)**: after G lock, calculates coordinate 7.5m north of estimated dummy
+  - Flies to that coordinate, auto-lands when within 3m and slow
+  - Shows full landing report: estimate error, landing GPS error, distance to dummy
+- **End-of-flight charts (ESC)**: scatter plot of estimated positions + error histogram
+- **Camera shake simulation (--shake N)**: altitude-dependent angular jitter
+  - Shake is in camera pixels (fixed angular displacement), converted to map pixels using altitude
+  - HUD shows ground distance equivalent: `SHAKE: 5px = 20cm on ground`
+- **GPS drift simulation (--gps-drift N)**: Ornstein-Uhlenbeck random walk on GPS readings
+- **CV throttle (--fps N)**: limit inference rate to match Pi speed
+- **TFLite backend (--tflite)**: force TFLite instead of Ultralytics
+
+**HUD layout:**
+- DUMMY section: ACTUAL position (ground truth), GPS EST (weighted avg), LATEST (single detection), errors
+- DRONE section: GPS POS, TRUE POS (with drift), GPS drift magnitude, DRONE→DUMMY distance
+- LOCKING indicator (30s countdown, sample count)
+- LOCKED result (Avg GPS + GPS EST with errors)
+- Landing status (flying to / descending / landed with distance)
+
+**Key findings from simulation testing:**
+- GPS-only centering (C mode): ~1-3m estimate error depending on altitude and drift
+- Vision centering (V mode): significantly improves estimate — centre-snap observations dominate weighted avg
+- G lock (30s averaging while centred): ~0.5m estimate error in simulation
+- 7.5m offset landing: SITL lands perfectly at target coordinate (zero navigation error)
+  - Real Cube would add ~2.5m navigation error → expect 5-10m actual landing distance
+- Estimate error direction matters: perpendicular to offset direction barely affects total distance
+  (0.48m error on 7.5m offset ≈ 7.515m actual — geometry makes it nearly invisible)
+
+**Safety constraint identified (not yet implemented):**
+- Drone should NOT hover directly above casualty (propwash, crash risk)
+- Current V mode centres directly above — need offset approach
+- **Planned Z mode**: centre target on right half of camera view instead of dead centre
+  - Drone stays offset to one side, never directly over dummy
+  - Use pixel-to-GPS conversion from offset position for G lock (not drone GPS)
+  - At 15m altitude with half-frame offset ≈ 3m horizontal separation (safe)
+  - **Deferred to future session** — V mode at high altitude (15-20m) is safe enough for now
+- **Alternative**: use V at high altitude only (15-20m) where propwash is negligible, then G lock
+  from height. Less precise but safe and simpler.
+
+**Mission sequence tested end-to-end in simulation:**
+1. Manual flight → detect dummy during flyover → GPS observations accumulate
+2. C → GPS centering brings drone roughly above dummy (~1-3m error)
+3. Descend to 10m → V → vision servo centres precisely above dummy
+4. G → 30s averaging while centred → locked GPS estimate (~0.5m error)
+5. L → fly to 7.5m north of estimate → auto-land → landed ~7.5m from dummy
+
+**Files created/modified:**
+- `simple_simulator.py` — new file, ~1135 lines, full interactive MVP
+- No changes to existing project files (config.py, vision.py, etc.)
+
+**Command line:**
+```bash
+# Basic (no simulated errors):
+set DRONE_MODE=SIMULATION && python simple_simulator.py
+
+# With Pi-like conditions:
+set DRONE_MODE=SIMULATION && python simple_simulator.py --fps 4 --tflite --gps-drift 3 --shake 5
+```
+
+**Next steps:**
+- [ ] Implement Z mode (offset centering) for safety — keep target in right half of frame
+- [ ] Add GPS navigation error to SITL send_to_gps() for more realistic landing simulation
+- [ ] Test in REAL mode (webcam + SITL)
+- [ ] Push to git, outdoor GPS test, manual flight with passive detection
 
 ---
 

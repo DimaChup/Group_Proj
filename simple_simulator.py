@@ -22,6 +22,7 @@
 #   --tflite        Force TFLite backend instead of Ultralytics
 #   --gps-drift 3   Simulate +/-3m GPS wander (default: off)
 #   --shake 5       Simulate camera shake from motor vibration (default: off)
+#   --cluster-dist 15  Min distance between separate clusters (default: 30m)
 #
 # Stepping stone to main.py — same MAVLink, same CV, same GPS math.
 #
@@ -42,7 +43,8 @@ if config.MODE == "SIMULATION":
 
 
 class SimpleMission:
-    def __init__(self, fps_limit=0, force_tflite=False, gps_drift=0.0, shake=0):
+    def __init__(self, fps_limit=0, force_tflite=False, gps_drift=0.0, shake=0,
+                 alt_noise=0.0, yaw_noise=0.0, fov_error=0.0, cluster_dist=30.0):
         print(f"=== SIMPLE SIMULATOR ({config.MODE} MODE) ===")
         print("Manual flight + CV detection + GPS estimation")
         if fps_limit > 0:
@@ -53,6 +55,14 @@ class SimpleMission:
             print(f"  GPS drift: +/-{gps_drift:.1f}m (simulated)")
         if shake > 0:
             print(f"  Camera shake: {shake}px (motor vibration)")
+        if alt_noise > 0:
+            print(f"  Altitude noise: +/-{alt_noise:.1f}m (baro/GPS alt jitter)")
+        if yaw_noise > 0:
+            print(f"  Yaw noise: +/-{yaw_noise:.1f}deg (compass jitter)")
+        if fov_error != 0:
+            print(f"  FOV calibration error: {fov_error:+.0f}% (systematic bias)")
+        if cluster_dist != 30.0:
+            print(f"  Cluster distance: {cluster_dist:.0f}m (detections within this = same item)")
         print()
 
         # Force TFLite: hide ultralytics AND ensure TFLite interpreter is loaded
@@ -88,15 +98,20 @@ class SimpleMission:
             self.geo = GeoTransformer(map_w_px=self.sim.map_w)
             self.sim.geo = self.geo
 
-            # Interactive setup: place dummy + draw search area
-            self.target_px, self.tgt_type, self.search_poly = self.sim.setup_on_map()
+            # Interactive setup: place dummies + draw search area
+            targets_list, self.tgt_type, self.search_poly = self.sim.setup_on_map()
 
             self.eyes = VisionSystem(camera_index=None, model_path="best.tflite")
-            self.eyes.using_ai = (self.tgt_type == "dummy")
+            self.eyes.using_ai = True  # always use AI when dummies are placed
 
-            # Store actual target GPS for accuracy comparison
-            self.actual_gps = self.geo.pixels_to_gps(self.target_px[0], self.target_px[1])
-            print(f"Target actual GPS: {self.actual_gps[0]:.6f}, {self.actual_gps[1]:.6f}")
+            # Multi-target: first target = real dummy (ground truth for landing accuracy)
+            self.target_px = targets_list[0] if targets_list else None
+            self.all_targets_px = targets_list
+            self.actual_gps = self.geo.pixels_to_gps(self.target_px[0], self.target_px[1]) if self.target_px else None
+            self.all_target_gps = [self.geo.pixels_to_gps(t[0], t[1]) for t in targets_list]
+            if self.actual_gps:
+                print(f"Real dummy GPS: {self.actual_gps[0]:.6f}, {self.actual_gps[1]:.6f}")
+            print(f"Total targets placed: {len(targets_list)}")
         else:
             self.sim = None
             self.geo = GeoTransformer(map_w_px=4800)
@@ -136,17 +151,31 @@ class SimpleMission:
 
         # --- Detection/GPS estimation ---
         self.estimated_gps = None       # latest single estimate
-        self.best_gps = None            # best estimate (weighted average)
+        self.best_gps = None            # best estimate (active cluster's weighted avg)
         self.best_gps_error_m = None    # error of best estimate
         self.gps_error_m = None         # error of latest estimate
         self.detection_count = 0
         self.frame_count = 0
         self.current_conf = 0.0
 
-        # Multi-observation averaging
-        self.gps_observations = []      # list of (lat, lon, weight)
+        # Spatial clustering: separate detection groups
+        self.detection_clusters = []    # list of cluster dicts (see _new_cluster)
+        self.active_cluster_idx = None  # index into detection_clusters (most recently updated)
+        self.CLUSTER_THRESHOLD_M = cluster_dist  # observations within Nm are same cluster
+        self.gps_observations = []      # flat list for backward compat (scatter plot etc)
         self.centre_snap = False        # True when target is dead centre
         self.CENTRE_THRESHOLD_PX = 30   # pixels from centre to snap
+
+        # --- Debug: intermediate values from last calculate_target_gps call ---
+        self.dbg = {
+            'u': 0, 'v': 0, 'dx_px': 0, 'dy_px': 0, 'dist_from_centre': 0,
+            'true_alt': 0, 'noisy_alt': 0, 'true_yaw_deg': 0, 'noisy_yaw_deg': 0,
+            'gsd_true': 0, 'gsd_noisy': 0, 'fwd_m': 0, 'right_m': 0,
+            'offset_n': 0, 'offset_e': 0, 'weight': 0,
+            'est_lat': 0, 'est_lon': 0, 'est_err': 0,
+            'avg_lat': 0, 'avg_lon': 0, 'avg_err': 0,
+            'snap': False, 'n_obs': 0,
+        }
 
         # CV throttle (0 = unlimited, use --fps to limit)
         self.cv_interval = (1.0 / fps_limit) if fps_limit > 0 else 0
@@ -160,6 +189,23 @@ class SimpleMission:
 
         # Camera shake simulation (motor vibration, random pixel jitter)
         self.shake_px = shake  # max shake in pixels (0 = off)
+
+        # Pixel-to-GPS error sources (affect calculate_target_gps accuracy)
+        self.alt_noise = alt_noise        # ±metres noise on altitude reading (baro jitter)
+        self.yaw_noise = yaw_noise        # ±degrees noise on heading (compass jitter)
+        self.fov_error_pct = fov_error    # % systematic FOV miscalibration (fixed bias)
+        # Pre-compute FOV bias (fixed per session — represents miscalibrated camera)
+        self.fov_scale = 1.0 + (fov_error / 100.0)  # e.g. 5% error → 1.05x
+
+        # Resolution simulation — lower res = harder to detect + less precise pixel coords
+        # 0=640x480 (full), 1=320x240 (half), 2=160x120 (quarter)
+        self.resolution_idx = 0
+        self.resolution_presets = [
+            (config.IMAGE_W, config.IMAGE_H, "640x480"),
+            (config.IMAGE_W // 2, config.IMAGE_H // 2, "320x240"),
+            (config.IMAGE_W // 4, config.IMAGE_H // 4, "160x120"),
+        ]
+        self.show_cv_view = False  # toggle with T — show pixelated CV model view
 
         # --- Flight data recording (press B to start/stop) ---
         # Three buckets, all recording (lat, lon) of estimated dummy position:
@@ -184,16 +230,43 @@ class SimpleMission:
         self.locked_error_gps = None  # metres from true (averaged GPS)
         self.locked_error_est = None  # metres from true (GPS EST)
 
+        # --- Investigate mode (press N — fly 5m from estimate, descend to 15m) ---
+        self.investigating = False
+        self.investigate_target = None   # (lat, lon) — 5m offset from estimate
+        self.investigate_phase = None    # None, "approaching", "descending", "observing"
+        self.investigate_alt = 15.0      # target altitude for observation
+        self.investigate_offset_m = 5.0  # stay 5m away from dummy estimate
+        self.investigate_obs_start = 0   # observations count at start of investigate
+        self.investigate_est_at_start = None  # EST error when N was pressed
+        self.investigate_cluster_idx = None   # which cluster we're investigating
+
+        # --- Pilot classification (Y/I/F during investigate observing) ---
+        self.logged_items = []             # [{"type": "interest"/"false_pos", "gps": (lat,lon)}, ...]
+        self.detection_cluster_count = 0   # total detections in current cluster (resets on classify)
+
         # --- Offset landing (press L after G lock) ---
         self.landing_offset_m = 7.5   # metres away from dummy to land
         self.landing_target = None     # (lat, lon) — calculated landing coordinate
         self.landing_phase = None      # None, "flying_to", "descending", "landed"
         self.landed_pos = None         # (true_lat, true_lon) — where we actually touched down
+        self.landing_est_source = None # "G LOCK" or "GPS EST" — which estimate was used
+        self.landing_est_pos = None    # (lat, lon) — the estimated dummy position used for landing
 
         # --- Display ---
         self.view_w_px = 100
         self.view_h_px = 100
         self.zoom_level = 1.0
+        self.show_landing_zone = False  # toggle with trackbar — shows 5-10m donut on scatter
+        self.scatter_zoom = 1.0        # scroll zoom for scatter plot (1.0 = default)
+        self.scatter_pan_x = 0.0      # pan offset in metres (east)
+        self.scatter_pan_y = 0.0      # pan offset in metres (north)
+        self.scatter_ref_idx = 0      # which dummy the scatter is centred on (Tab to cycle)
+        self._scatter_dragging = False
+        self._scatter_drag_start = (0, 0)  # mouse pixel at drag start
+        self._scatter_pan_start = (0.0, 0.0)  # pan offset at drag start
+        self.scatter_px_per_m = 1.0       # updated each frame by draw_scatter()
+        self.grid_split_x = 0         # x boundary between left/right panels (for mouse)
+        self.grid_split_y = 0         # y boundary between top/bottom panels (for mouse)
 
         # --- Keyboard flight ---
         self.armed = False
@@ -264,6 +337,73 @@ class SimpleMission:
             self.lat = self.true_lat + (self.drift_north / R) * (180 / math.pi)
             self.lon = self.true_lon + (self.drift_east / (R * math.cos(math.radians(self.true_lat)))) * (180 / math.pi)
 
+    def _new_cluster(self):
+        """Create a fresh detection cluster."""
+        self._next_cluster_id = getattr(self, '_next_cluster_id', 0) + 1
+        return {
+            "id": self._next_cluster_id,  # permanent label (never changes)
+            "observations": [],   # [(lat, lon, weight), ...]
+            "best_gps": None,     # (lat, lon) weighted average
+            "detection_count": 0, # number of detections in this cluster
+            "error_m": None,      # error vs actual dummy (sim only)
+        }
+
+    def _cluster_label(self, cluster_or_idx):
+        """Get permanent display label for a cluster (e.g. '#3')."""
+        if isinstance(cluster_or_idx, dict):
+            return f"#{cluster_or_idx.get('id', '?')}"
+        if isinstance(cluster_or_idx, int) and cluster_or_idx < len(self.detection_clusters):
+            return f"#{self.detection_clusters[cluster_or_idx].get('id', '?')}"
+        return "#?"
+
+    def _route_to_cluster(self, est_lat, est_lon, weight):
+        """Add observation to nearest cluster or create a new one.
+        Returns the cluster index that was updated."""
+        # Find nearest existing cluster
+        best_idx = None
+        best_dist = float('inf')
+        for i, c in enumerate(self.detection_clusters):
+            if c["best_gps"]:
+                d = self._gps_distance(est_lat, est_lon,
+                                       c["best_gps"][0], c["best_gps"][1])
+                if d < best_dist:
+                    best_dist = d
+                    best_idx = i
+
+        # If nearest cluster is within threshold, add to it; else new cluster
+        if best_idx is not None and best_dist < self.CLUSTER_THRESHOLD_M:
+            cluster = self.detection_clusters[best_idx]
+            idx = best_idx
+        else:
+            cluster = self._new_cluster()
+            self.detection_clusters.append(cluster)
+            idx = len(self.detection_clusters) - 1
+            cid = cluster["id"]
+            if best_idx is not None:
+                print(f"[CLUSTER] New item #{cid} detected! (nearest was {best_dist:.0f}m away, threshold={self.CLUSTER_THRESHOLD_M}m)")
+            else:
+                print(f"[CLUSTER] First item #{cid} detected!")
+
+        # Add observation
+        cluster["observations"].append((est_lat, est_lon, weight))
+        if len(cluster["observations"]) > 50:
+            cluster["observations"] = cluster["observations"][-50:]
+        cluster["detection_count"] += 1
+
+        # Update cluster's weighted average
+        obs = cluster["observations"]
+        total_w = sum(w for _, _, w in obs)
+        avg_lat = sum(lat * w for lat, _, w in obs) / total_w
+        avg_lon = sum(lon * w for _, lon, w in obs) / total_w
+        cluster["best_gps"] = (avg_lat, avg_lon)
+
+        # Error vs actual dummy (sim only)
+        if self.actual_gps:
+            cluster["error_m"] = self._gps_distance(
+                avg_lat, avg_lon, self.actual_gps[0], self.actual_gps[1])
+
+        return idx
+
     def calculate_target_gps(self, u, v):
         """Convert pixel detection (u,v) to estimated GPS.
         Uses centre-snap when target is near image centre,
@@ -280,15 +420,37 @@ class SimpleMission:
             est_lon = self.lon
             weight = 10.0  # highest confidence
             self.centre_snap = True
+            # Store debug values for dashboard
+            self.dbg.update({
+                'u': u, 'v': v, 'dx_px': u - Cx, 'dy_px': v - Cy,
+                'dist_from_centre': dist_from_centre, 'snap': True, 'weight': weight,
+                'true_alt': self.alt, 'noisy_alt': self.alt,
+                'true_yaw_deg': math.degrees(self.yaw), 'noisy_yaw_deg': math.degrees(self.yaw),
+                'gsd_true': 0, 'gsd_noisy': 0,
+                'fwd_m': 0, 'right_m': 0, 'offset_n': 0, 'offset_e': 0,
+            })
         else:
             # Standard pixel-to-GPS math
-            gsd_m = (config.SENSOR_WIDTH_MM * self.alt) / (config.FOCAL_LENGTH_MM * config.IMAGE_W)
+            # Apply simulated sensor noise (only affects this calculation, not flight)
+            import random
+            noisy_alt = self.alt
+            if self.alt_noise > 0:
+                noisy_alt = self.alt + random.gauss(0, self.alt_noise * 0.5)
+                noisy_alt = max(0.5, noisy_alt)  # can't go negative
+            noisy_yaw = self.yaw
+            if self.yaw_noise > 0:
+                noisy_yaw = self.yaw + math.radians(random.gauss(0, self.yaw_noise * 0.5))
+            # FOV error: systematic bias in sensor/focal length calibration
+            effective_sensor_w = config.SENSOR_WIDTH_MM * self.fov_scale
+
+            gsd_m = (effective_sensor_w * noisy_alt) / (config.FOCAL_LENGTH_MM * config.IMAGE_W)
+            gsd_true = (config.SENSOR_WIDTH_MM * self.alt) / (config.FOCAL_LENGTH_MM * config.IMAGE_W)
             delta_x_px = u - Cx
             delta_y_px = v - Cy
             fwd_m = -delta_y_px * gsd_m
             right_m = delta_x_px * gsd_m
-            offset_n = fwd_m * math.cos(self.yaw) - right_m * math.sin(self.yaw)
-            offset_e = fwd_m * math.sin(self.yaw) + right_m * math.cos(self.yaw)
+            offset_n = fwd_m * math.cos(noisy_yaw) - right_m * math.sin(noisy_yaw)
+            offset_e = fwd_m * math.sin(noisy_yaw) + right_m * math.cos(noisy_yaw)
             R_EARTH = 6378137.0
             dLat = (offset_n / R_EARTH) * (180 / math.pi)
             dLon = (offset_e / (R_EARTH * math.cos(math.radians(self.lat)))) * (180 / math.pi)
@@ -298,28 +460,98 @@ class SimpleMission:
             max_dist = math.sqrt(Cx**2 + Cy**2)
             weight = 1.0 + 4.0 * (1.0 - dist_from_centre / max_dist)
             self.centre_snap = False
+            # Store debug values for dashboard
+            self.dbg.update({
+                'u': u, 'v': v, 'dx_px': delta_x_px, 'dy_px': delta_y_px,
+                'dist_from_centre': dist_from_centre, 'snap': False, 'weight': weight,
+                'true_alt': self.alt, 'noisy_alt': noisy_alt,
+                'true_yaw_deg': math.degrees(self.yaw),
+                'noisy_yaw_deg': math.degrees(noisy_yaw),
+                'gsd_true': gsd_true, 'gsd_noisy': gsd_m,
+                'fwd_m': fwd_m, 'right_m': right_m,
+                'offset_n': offset_n, 'offset_e': offset_e,
+            })
 
         self.estimated_gps = (est_lat, est_lon)
 
-        # Add to observations (keep last 50)
+        # During investigate: force observations to the investigated cluster
+        # (skip distance routing — we KNOW which item we're looking at)
+        if (self.investigating and self.investigate_cluster_idx is not None
+                and self.investigate_cluster_idx < len(self.detection_clusters)):
+            idx = self.investigate_cluster_idx
+            cluster = self.detection_clusters[idx]
+            cluster["observations"].append((est_lat, est_lon, weight))
+            if len(cluster["observations"]) > 50:
+                cluster["observations"] = cluster["observations"][-50:]
+            cluster["detection_count"] += 1
+            obs = cluster["observations"]
+            total_w = sum(w for _, _, w in obs)
+            avg_lat = sum(lat * w for lat, _, w in obs) / total_w
+            avg_lon = sum(lon * w for _, lon, w in obs) / total_w
+            cluster["best_gps"] = (avg_lat, avg_lon)
+            if self.actual_gps:
+                cluster["error_m"] = self._gps_distance(
+                    avg_lat, avg_lon, self.actual_gps[0], self.actual_gps[1])
+        else:
+            # Normal flight: route to nearest cluster or create new
+            idx = self._route_to_cluster(est_lat, est_lon, weight)
+        self.active_cluster_idx = idx
+        cluster = self.detection_clusters[idx]
+
+        # Keep flat list for scatter backward compat
         self.gps_observations.append((est_lat, est_lon, weight))
         if len(self.gps_observations) > 50:
             self.gps_observations = self.gps_observations[-50:]
 
-        # Weighted average of all observations = best estimate
-        total_w = sum(w for _, _, w in self.gps_observations)
-        avg_lat = sum(lat * w for lat, _, w in self.gps_observations) / total_w
-        avg_lon = sum(lon * w for _, lon, w in self.gps_observations) / total_w
-        self.best_gps = (avg_lat, avg_lon)
+        # best_gps = active cluster's weighted average
+        avg_lat, avg_lon = cluster["best_gps"]
+        self.best_gps = cluster["best_gps"]
+        self.best_gps_error_m = cluster.get("error_m")
 
         # Calculate errors if we know ground truth
         if self.actual_gps:
             self.gps_error_m = self._gps_distance(
                 est_lat, est_lon, self.actual_gps[0], self.actual_gps[1])
-            self.best_gps_error_m = self._gps_distance(
-                avg_lat, avg_lon, self.actual_gps[0], self.actual_gps[1])
+
+        # Store final debug values
+        self.dbg.update({
+            'est_lat': est_lat, 'est_lon': est_lon,
+            'est_err': self.gps_error_m or 0,
+            'avg_lat': avg_lat, 'avg_lon': avg_lon,
+            'avg_err': self.best_gps_error_m or 0,
+            'n_obs': len(self.gps_observations),
+        })
 
         return est_lat, est_lon
+
+    def _start_investigate(self, cluster_idx):
+        """Start investigating a specific cluster by index."""
+        cluster = self.detection_clusters[cluster_idx]
+        if not cluster["best_gps"]:
+            print(f"[INVESTIGATE] Cluster {self._cluster_label(cluster_idx)} has no position yet")
+            return
+        self._start_investigate_gps(cluster["best_gps"], cluster_idx)
+
+    def _start_investigate_gps(self, gps, cluster_idx=None):
+        """Start investigation at a GPS position."""
+        est_lat, est_lon = gps
+        self.investigating = True
+        self.investigate_target = (est_lat, est_lon)
+        self.investigate_phase = "approaching"
+        self.investigate_obs_start = len(self.gps_observations)
+        self.investigate_est_at_start = self.best_gps_error_m
+        self.investigate_cluster_idx = cluster_idx
+        self.centering = False
+        self.visual_servo = False
+        # Set best_gps to this cluster's estimate
+        if cluster_idx is not None:
+            self.active_cluster_idx = cluster_idx
+            self.best_gps = self.detection_clusters[cluster_idx]["best_gps"]
+        label = f"item {self._cluster_label(cluster_idx)}" if cluster_idx is not None else "estimate"
+        n_det = self.detection_clusters[cluster_idx]["detection_count"] if cluster_idx is not None else "?"
+        print(f"\n[INVESTIGATE] Flying to {label} ({n_det} detections)")
+        print(f"[INVESTIGATE] Descend to {self.investigate_alt:.0f}m for closer look")
+        print(f"[INVESTIGATE] N to cancel, WASD to override, 1-9 to switch item")
 
     def _gps_distance(self, lat1, lon1, lat2, lon2):
         """Haversine distance in metres."""
@@ -427,7 +659,38 @@ class SimpleMission:
                 return frame, False, 0, 0, 0.0
             self.last_cv_time = now
 
-        found, u, v, conf = self.eyes.process_frame_manually(frame)
+        # Resolution simulation: downscale frame before vision model
+        # Lower res = fewer pixels for model to work with = harder to detect from altitude
+        # Toggle T to see pixelated CV model view vs crisp full-res view
+        res_w, res_h = config.IMAGE_W, config.IMAGE_H
+        if self.resolution_idx > 0 and self.resolution_idx < len(self.resolution_presets):
+            res_w, res_h, _ = self.resolution_presets[self.resolution_idx]
+            det_frame = cv2.resize(frame, (res_w, res_h))
+        else:
+            det_frame = frame
+
+        found, u, v, conf = self.eyes.process_frame_manually(det_frame)
+
+        # Scale detection coords back to full-res for HUD
+        if res_w != config.IMAGE_W:
+            scale_x = config.IMAGE_W / res_w
+            scale_y = config.IMAGE_H / res_h
+            u = int(u * scale_x)
+            v = int(v * scale_y)
+            # T toggle: show pixelated CV view or crisp original
+            if self.show_cv_view:
+                frame = cv2.resize(det_frame, (config.IMAGE_W, config.IMAGE_H),
+                                   interpolation=cv2.INTER_NEAREST)
+            # Re-draw bounding box on display frame (model drew on det_frame which we discard)
+            if found and hasattr(self.eyes, 'last_bbox_w'):
+                bw = int(self.eyes.last_bbox_w * scale_x)
+                bh = int(self.eyes.last_bbox_h * scale_y)
+                x1, y1 = u - bw // 2, v - bh // 2
+                x2, y2 = u + bw // 2, v + bh // 2
+                cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                cv2.putText(frame, f"AI {conf:.2f}", (x1, y1 - 10),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+
         self.current_conf = conf
         self._last_detection = (found, u, v, conf)
         return frame, found, u, v, conf
@@ -440,12 +703,66 @@ class SimpleMission:
         cv2.line(frame, (cx - 20, cy), (cx + 20, cy), (0, 255, 255), 2)
         cv2.line(frame, (cx, cy - 20), (cx, cy + 20), (0, 255, 255), 2)
 
-        # Detection marker
+        # Detection marker (current frame detection — green)
         if found:
             cv2.circle(frame, (u, v), 15, (0, 255, 0), 2)
             cv2.line(frame, (u, v), (cx, cy), (0, 255, 0), 2)
             cv2.putText(frame, f"TGT {conf:.2f}", (u + 10, v),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 3)
+
+        # Projected GPS estimate marker on camera view (magenta diamond)
+        # Shows where the system THINKS the dummy is, projected into camera space
+        if self.best_gps and self.alt > 0.5 and config.MODE == "SIMULATION":
+            # GPS estimate → map pixels
+            est_mx, est_my = self.geo.gps_to_pixels(self.best_gps[0], self.best_gps[1])
+            # Drone TRUE position → map pixels
+            drn_mx, drn_my = self.geo.gps_to_pixels(self.true_lat, self.true_lon)
+            # Offset in map pixels
+            dx_map = est_mx - drn_mx
+            dy_map = est_my - drn_my
+            # Rotate by -yaw (camera is rotated relative to map)
+            cos_y = math.cos(-self.yaw)
+            sin_y = math.sin(-self.yaw)
+            dx_rot = dx_map * cos_y - dy_map * sin_y
+            dy_rot = dx_map * sin_y + dy_map * cos_y
+            # Scale: map pixels → camera pixels
+            fov = 2 * math.atan(config.SENSOR_WIDTH_MM / (2 * config.FOCAL_LENGTH_MM))
+            ground_w = 2 * self.alt * math.tan(fov / 2)
+            view_w_map = ground_w * self.geo.pix_per_m
+            scale = config.IMAGE_W / view_w_map if view_w_map > 0 else 1
+            cam_x = int(cx + dx_rot * scale)
+            cam_y = int(cy + dy_rot * scale)
+            # Draw if within frame (with margin)
+            if -50 < cam_x < config.IMAGE_W + 50 and -50 < cam_y < config.IMAGE_H + 50:
+                # Diamond shape
+                sz = 10
+                pts = np.array([(cam_x, cam_y - sz), (cam_x + sz, cam_y),
+                                (cam_x, cam_y + sz), (cam_x - sz, cam_y)], np.int32)
+                cv2.polylines(frame, [pts], True, (255, 0, 255), 2)
+                cv2.putText(frame, "EST", (cam_x + 12, cam_y - 5),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 0, 255), 2)
+
+        # Projected ACTUAL dummy position on camera view (orange dot — sim only)
+        if self.actual_gps and self.alt > 0.5 and config.MODE == "SIMULATION":
+            act_mx, act_my = self.geo.gps_to_pixels(self.actual_gps[0], self.actual_gps[1])
+            drn_mx2, drn_my2 = self.geo.gps_to_pixels(self.true_lat, self.true_lon)
+            dx_map = act_mx - drn_mx2
+            dy_map = act_my - drn_my2
+            cos_y = math.cos(-self.yaw)
+            sin_y = math.sin(-self.yaw)
+            dx_rot = dx_map * cos_y - dy_map * sin_y
+            dy_rot = dx_map * sin_y + dy_map * cos_y
+            fov = 2 * math.atan(config.SENSOR_WIDTH_MM / (2 * config.FOCAL_LENGTH_MM))
+            ground_w = 2 * self.alt * math.tan(fov / 2)
+            view_w_map = ground_w * self.geo.pix_per_m
+            scale = config.IMAGE_W / view_w_map if view_w_map > 0 else 1
+            act_cx = int(cx + dx_rot * scale)
+            act_cy = int(cy + dy_rot * scale)
+            if -50 < act_cx < config.IMAGE_W + 50 and -50 < act_cy < config.IMAGE_H + 50:
+                cv2.circle(frame, (act_cx, act_cy), 8, (0, 128, 255), -1)  # filled orange
+                cv2.circle(frame, (act_cx, act_cy), 12, (0, 128, 255), 2)  # orange ring
+                cv2.putText(frame, "ACTUAL", (act_cx + 14, act_cy - 5),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 128, 255), 2)
 
         # Info panel
         armed_str = "ARMED" if self.armed else "DISARMED"
@@ -456,8 +773,27 @@ class SimpleMission:
                     cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 3)
         cv2.putText(frame, f"ALT: {self.alt:.1f}m  SPD: {self.groundspeed:.1f}m/s  YAW: {math.degrees(self.yaw):.0f}",
                     (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (255, 255, 0), 2)
-        cv2.putText(frame, f"Detections: {self.detection_count}/{self.frame_count}",
+        n_clusters = len(self.detection_clusters)
+        det_txt = f"Detections: {self.detection_count}/{self.frame_count}"
+        if n_clusters > 0:
+            det_txt += f"  Items: {n_clusters}"
+            if self.active_cluster_idx is not None and self.active_cluster_idx < n_clusters:
+                ac = self.detection_clusters[self.active_cluster_idx]
+                det_txt += f"  ({self._cluster_label(self.active_cluster_idx)}: {ac['detection_count']}hits)"
+        cv2.putText(frame, det_txt,
                     (10, 75), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (255, 255, 255), 2)
+        # Show cluster list hint when multiple items detected
+        if n_clusters > 1 and not self.investigating:
+            ids = [str(cl.get("id", i+1)) for i, cl in enumerate(self.detection_clusters[:9])]
+            hint = "Items " + ",".join(ids) + " | Keys 1-" + str(min(n_clusters, 9)) + " to investigate"
+            cv2.putText(frame, hint, (10, 95),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.4, (200, 200, 200), 1)
+
+        # CV model view indicator
+        if self.show_cv_view and self.resolution_idx > 0:
+            rw, rh, rn = self.resolution_presets[self.resolution_idx]
+            cv2.putText(frame, f"CV VIEW [{rn}]", (config.IMAGE_W // 2 - 80, 25),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
 
         # Centering / visual servo indicator
         if self.visual_servo:
@@ -470,6 +806,20 @@ class SimpleMission:
         elif self.centering:
             cv2.putText(frame, "GPS CENTRE", (config.IMAGE_W - 170, 50),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 3)
+        elif self.investigating:
+            phase_str = self.investigate_phase.upper() if self.investigate_phase else "?"
+            ci = self.investigate_cluster_idx
+            ci_label = self._cluster_label(ci) if ci is not None else ""
+            new_obs = len(self.gps_observations) - self.investigate_obs_start
+            ci_det = self.detection_clusters[ci]["detection_count"] if ci is not None and ci < len(self.detection_clusters) else 0
+            cv2.putText(frame, f"INVESTIGATE {ci_label}: {phase_str}", (config.IMAGE_W - 320, 50),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 200, 255), 3)
+            cv2.putText(frame, f"+{new_obs} obs  {ci_det} hits",
+                        (config.IMAGE_W - 200, 75),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 200, 255), 2)
+            if self.investigate_phase == "observing":
+                cv2.putText(frame, "Y=dummy  I=interest  X=false pos", (10, config.IMAGE_H - 15),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 255, 255), 2)
 
         # Centre-snap indicator
         if self.centre_snap:
@@ -487,8 +837,18 @@ class SimpleMission:
             if int(time.time() * 2) % 2:
                 cv2.circle(frame, (config.IMAGE_W - 170, 75), 6, (0, 0, 255), -1)
 
+        # Logged items summary
+        if self.logged_items:
+            n_ioi = sum(1 for x in self.logged_items if x["type"] == "interest")
+            n_fp = sum(1 for x in self.logged_items if x["type"] == "false_pos")
+            parts = []
+            if n_ioi: parts.append(f"{n_ioi} IOI")
+            if n_fp: parts.append(f"{n_fp} FP")
+            cv2.putText(frame, f"Logged: {', '.join(parts)}", (10, config.IMAGE_H - 30),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 255, 0), 2)
+
         # Controls hint at bottom
-        cv2.putText(frame, "SPC:arm WASD:fly QE:yaw RF:alt C:gps V:vision G:lock B:rec L:land",
+        cv2.putText(frame, "SPC:arm WASD:fly QE:yaw RF:alt N:investigate C:gps V:vis L:land T:cv-view",
                     (10, config.IMAGE_H - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (180, 180, 180), 2)
 
         # ========== DUMMY POSITION PANEL (left side) ==========
@@ -505,10 +865,10 @@ class SimpleMission:
                         (10, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 128, 255), 2)
             y += 20
 
-        # GPS-only estimate (weighted avg from flyover detections — cyan)
+        # GPS-only estimate (weighted avg from flyover detections — magenta, matches EST diamond)
         if self.best_gps:
             cv2.putText(frame, f"GPS EST:   {self.best_gps[0]:.6f}, {self.best_gps[1]:.6f}",
-                        (10, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 2)
+                        (10, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 255), 2)
             y += 18
             if self.actual_gps and self.best_gps_error_m is not None:
                 err_color = ((0, 255, 0) if self.best_gps_error_m < 3
@@ -593,36 +953,494 @@ class SimpleMission:
         if self.landing_phase:
             y += 3
             if self.landing_phase == "flying_to":
-                cv2.putText(frame, "LANDING: Flying to 7.5m offset...",
+                src = getattr(self, 'landing_est_source', '?')
+                cv2.putText(frame, f"LANDING [{src}]: Flying to 7.5m offset...",
                             (10, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 200, 255), 2)
             elif self.landing_phase == "descending":
                 cv2.putText(frame, "LANDING: Descending...",
                             (10, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 200, 255), 2)
             elif self.landing_phase == "landed" and self.landed_pos and self.actual_gps:
+                src = getattr(self, 'landing_est_source', '?')
+                # 1. Actual dummy vs estimated dummy
+                est_pos = getattr(self, 'landing_est_pos', None)
+                est_err = 0
+                if est_pos:
+                    est_err = self._gps_distance(est_pos[0], est_pos[1],
+                                                  self.actual_gps[0], self.actual_gps[1])
+                # 2. Landing target vs where we actually landed
+                nav_err = 0
+                if self.landing_target:
+                    nav_err = self._gps_distance(self.landed_pos[0], self.landed_pos[1],
+                                                  self.landing_target[0], self.landing_target[1])
+                # 3. Where we landed vs actual dummy
                 landed_to_dummy = self._gps_distance(
                     self.landed_pos[0], self.landed_pos[1],
                     self.actual_gps[0], self.actual_gps[1])
-                cv2.putText(frame, f"LANDED {landed_to_dummy:.1f}m from dummy (wanted {self.landing_offset_m}m)",
-                            (10, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+                cv2.putText(frame, f"--- LANDED [{src}] ---", (10, y),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+                y += 18
+                # Estimate error
+                e_col = (0, 255, 0) if est_err < 3 else (0, 128, 255) if est_err < 5 else (0, 0, 255)
+                cv2.putText(frame, f"Est vs Actual dummy: {est_err:.2f}m",
+                            (10, y), cv2.FONT_HERSHEY_SIMPLEX, 0.45, e_col, 2)
+                y += 16
+                # Navigation error
+                n_col = (0, 255, 0) if nav_err < 2 else (0, 128, 255) if nav_err < 4 else (0, 0, 255)
+                cv2.putText(frame, f"Target vs Actual landing: {nav_err:.2f}m",
+                            (10, y), cv2.FONT_HERSHEY_SIMPLEX, 0.45, n_col, 2)
+                y += 16
+                # Final distance
+                in_zone = 5 <= landed_to_dummy <= 10
+                d_col = (0, 255, 0) if in_zone else (0, 0, 255)
+                cv2.putText(frame, f"Landed {landed_to_dummy:.1f}m from dummy (target: {self.landing_offset_m}m)",
+                            (10, y), cv2.FONT_HERSHEY_SIMPLEX, 0.45, d_col, 2)
             y += 20
 
         # ========== SIM FLAGS (left side) ==========
+        flags_y = y
         if self.shake_px > 0:
             fov = 2 * math.atan(config.SENSOR_WIDTH_MM / (2 * config.FOCAL_LENGTH_MM))
             safe_alt = max(1.0, self.alt)
             gsd = (2 * safe_alt * math.tan(fov / 2)) / config.IMAGE_W
             ground_cm = self.shake_px * gsd * 100
             cv2.putText(frame, f"SHAKE: {self.shake_px}px = {ground_cm:.0f}cm on ground",
-                        (10, y), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 255), 2)
+                        (10, flags_y), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 255), 2)
+            flags_y += 18
+        if self.alt_noise > 0:
+            cv2.putText(frame, f"ALT NOISE: +/-{self.alt_noise:.1f}m",
+                        (10, flags_y), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 255), 2)
+            flags_y += 18
+        if self.yaw_noise > 0:
+            cv2.putText(frame, f"YAW NOISE: +/-{self.yaw_noise:.1f}deg",
+                        (10, flags_y), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 255), 2)
+            flags_y += 18
+        if self.fov_error_pct != 0:
+            cv2.putText(frame, f"FOV ERROR: {self.fov_error_pct:+.0f}%",
+                        (10, flags_y), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 255), 2)
+            flags_y += 18
+        if self.resolution_idx > 0:
+            res_w, res_h, res_name = self.resolution_presets[self.resolution_idx]
+            cv2.putText(frame, f"RES: {res_name} (model sees {res_w}x{res_h})",
+                        (10, flags_y), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 255), 2)
 
         return frame
+
+    def draw_dashboard(self):
+        """Draw the error analysis dashboard — shows pixel-to-GPS pipeline with live values."""
+        W, H = 700, 480
+        dash = np.zeros((H, W, 3), dtype=np.uint8)
+        d = self.dbg
+        white = (255, 255, 255)
+        grey = (150, 150, 150)
+        green = (0, 255, 0)
+        red = (0, 0, 255)
+        cyan = (255, 255, 0)
+        magenta = (255, 0, 255)
+        orange = (0, 128, 255)
+        y = 25
+
+        def txt(text, x, yy, color=white, scale=0.45, thick=1):
+            cv2.putText(dash, text, (x, yy), cv2.FONT_HERSHEY_SIMPLEX, scale, color, thick)
+
+        def line():
+            nonlocal y
+            y += 3
+            cv2.line(dash, (10, y), (W - 10, y), (60, 60, 60), 1)
+            y += 12
+
+        # Title
+        txt("PIXEL-TO-GPS ESTIMATION PIPELINE", 10, y, cyan, 0.55, 2)
+        y += 25
+
+        # Step 1: CV detection
+        txt("1. CV DETECTION", 10, y, green, 0.45, 2)
+        if self.resolution_idx > 0:
+            rw, rh, rn = self.resolution_presets[self.resolution_idx]
+            txt(f"[{rn}]", 200, y, red, 0.4)
+        y += 20
+        txt(f"   pixel: ({d['u']}, {d['v']})   offset: ({d['dx_px']:.0f}, {d['dy_px']:.0f}) px", 10, y)
+        y += 18
+        txt(f"   dist from centre: {d['dist_from_centre']:.0f} px", 10, y)
+        if d['snap']:
+            txt("SNAP — using drone GPS directly", 250, y, cyan, 0.4)
+        y += 5
+        line()
+
+        # Step 2: Altitude
+        txt("2. ALTITUDE", 10, y, green, 0.45, 2)
+        y += 20
+        alt_diff = abs(d['noisy_alt'] - d['true_alt'])
+        alt_color = red if alt_diff > 0.3 else white
+        txt(f"   true: {d['true_alt']:.1f}m", 10, y)
+        txt(f"   used: {d['noisy_alt']:.1f}m", 200, y, alt_color)
+        if alt_diff > 0.01:
+            txt(f"(+/-{alt_diff:.1f}m noise)", 350, y, red, 0.35)
+        y += 5
+        line()
+
+        # Step 3: GSD
+        txt("3. GSD (ground sample distance)", 10, y, green, 0.45, 2)
+        y += 20
+        txt(f"   GSD = sensor_w x alt / (focal x W)", 10, y, grey, 0.38)
+        y += 18
+        if not d['snap']:
+            gsd_diff = abs(d['gsd_noisy'] - d['gsd_true'])
+            gsd_color = red if gsd_diff > 0.001 else white
+            txt(f"   true: {d['gsd_true']*100:.2f} cm/px", 10, y)
+            txt(f"   used: {d['gsd_noisy']*100:.2f} cm/px", 200, y, gsd_color)
+            if self.fov_error_pct != 0:
+                txt(f"(FOV {self.fov_error_pct:+.0f}%)", 380, y, red, 0.35)
+        else:
+            txt("   (skipped — centre snap)", 10, y, cyan)
+        y += 5
+        line()
+
+        # Step 4: Ground offset
+        txt("4. GROUND OFFSET (metres)", 10, y, green, 0.45, 2)
+        y += 20
+        if not d['snap']:
+            txt(f"   fwd:  {d['fwd_m']:+.2f}m   right: {d['right_m']:+.2f}m", 10, y)
+        else:
+            txt("   (skipped — centre snap)", 10, y, cyan)
+        y += 5
+        line()
+
+        # Step 5: Yaw rotation
+        txt("5. YAW ROTATION", 10, y, green, 0.45, 2)
+        y += 20
+        yaw_diff = abs(d['noisy_yaw_deg'] - d['true_yaw_deg'])
+        yaw_color = red if yaw_diff > 0.5 else white
+        txt(f"   true: {d['true_yaw_deg']:.1f}deg", 10, y)
+        txt(f"   used: {d['noisy_yaw_deg']:.1f}deg", 200, y, yaw_color)
+        if yaw_diff > 0.01:
+            txt(f"(+/-{yaw_diff:.1f}deg noise)", 350, y, red, 0.35)
+        y += 18
+        if not d['snap']:
+            txt(f"   north: {d['offset_n']:+.2f}m   east: {d['offset_e']:+.2f}m", 10, y)
+        y += 5
+        line()
+
+        # Step 6: Drone GPS
+        txt("6. DRONE GPS (reference point)", 10, y, green, 0.45, 2)
+        y += 20
+        txt(f"   {self.lat:.6f}, {self.lon:.6f}", 10, y)
+        if self.gps_drift_max > 0:
+            drift_m = math.sqrt(self.drift_north**2 + self.drift_east**2)
+            txt(f"drift: {drift_m:.1f}m", 300, y, red, 0.4)
+        y += 5
+        line()
+
+        # Step 7: This estimate
+        txt("7. THIS ESTIMATE (single observation)", 10, y, orange, 0.45, 2)
+        y += 20
+        err_color = green if d['est_err'] < 2 else (orange if d['est_err'] < 5 else red)
+        txt(f"   {d['est_lat']:.6f}, {d['est_lon']:.6f}", 10, y)
+        txt(f"err: {d['est_err']:.2f}m", 300, y, err_color)
+        txt(f"wt: {d['weight']:.0f}", 420, y, grey, 0.35)
+        y += 5
+        line()
+
+        # Step 8: Averaged estimate
+        txt("8. AVERAGED (weighted, last 50 obs)", 10, y, magenta, 0.45, 2)
+        y += 20
+        avg_color = green if d['avg_err'] < 2 else (orange if d['avg_err'] < 5 else red)
+        txt(f"   {d['avg_lat']:.6f}, {d['avg_lon']:.6f}", 10, y)
+        txt(f"err: {d['avg_err']:.2f}m", 300, y, avg_color)
+        txt(f"({d['n_obs']} obs)", 420, y, grey, 0.35)
+        y += 20
+
+        # Improvement indicator
+        if d['est_err'] > 0 and d['avg_err'] > 0:
+            improvement = d['est_err'] - d['avg_err']
+            if improvement > 0:
+                txt(f"   Averaging reduces error by {improvement:.2f}m", 10, y, green, 0.4)
+            else:
+                txt(f"   Averaging adds {-improvement:.2f}m (old obs pulling avg)", 10, y, red, 0.4)
+        y += 25
+
+        # Slider values display
+        cv2.line(dash, (10, y - 5), (W - 10, y - 5), (100, 100, 100), 1)
+        txt("INTERACTIVE ERROR CONTROLS (use sliders above)", 10, y + 5, cyan, 0.4, 1)
+
+        return dash
+
+    def draw_scatter(self):
+        """Draw live zoomed scatter: EST positions orbiting around ACTUAL (orange = origin).
+        Optionally shows landing donut (5-10m zone, 7.5m target).
+        Scroll to zoom in/out (when mouse is over scatter panel)."""
+        S = 400  # square size
+        scat = np.zeros((S, S, 3), dtype=np.uint8)
+        cx, cy = S // 2, S // 2
+        # Base scale: wider when landing zone visible, then apply scroll zoom
+        base_scale = 12.0 if self.show_landing_zone else 5.0
+        scale_m = base_scale / self.scatter_zoom  # zoom in = smaller scale = more detail
+        px_per_m = (S / 2) / scale_m
+        self.scatter_px_per_m = px_per_m  # store for mouse drag → metres conversion
+
+        # Pan offset: shift the view centre (metres from ACTUAL dummy)
+        pan_east = self.scatter_pan_x   # metres east of dummy = view centre
+        pan_north = self.scatter_pan_y  # metres north of dummy = view centre
+
+        # Helper: convert metres-from-dummy to scatter pixel
+        def m_to_px(east_m, north_m):
+            sx = int(cx + (east_m - pan_east) * px_per_m)
+            sy = int(cy - (north_m - pan_north) * px_per_m)
+            return sx, sy
+
+        # Origin = ACTUAL dummy position — grid is anchored here
+        ox, oy = m_to_px(0, 0)
+
+        # Grid lines — centred on actual dummy, adaptive spacing based on zoom
+        if scale_m <= 3:
+            grid_step = 0.5
+        elif scale_m <= 8:
+            grid_step = 1
+        else:
+            grid_step = 2
+        r = grid_step
+        while r <= scale_m * 2:  # draw wider so grid visible when panned
+            rpx = int(r * px_per_m)
+            cv2.circle(scat, (ox, oy), rpx, (40, 40, 40), 1)
+            r += grid_step
+        cv2.line(scat, (ox, 0), (ox, S), (40, 40, 40), 1)
+        cv2.line(scat, (0, oy), (S, oy), (40, 40, 40), 1)
+
+        # Scale labels — anchored to origin
+        label_vals = []
+        r = grid_step
+        while r <= scale_m * 2:
+            label_vals.append(r)
+            r += grid_step
+        for r in label_vals[-4:]:  # show last 4 labels to avoid clutter
+            rpx = int(r * px_per_m)
+            label = f"{r:.0f}m" if r == int(r) else f"{r:.1f}m"
+            cv2.putText(scat, label, (ox + 3, oy - rpx + 12),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.3, (80, 80, 80), 1)
+
+        # Origin marker (orange dot + label showing which dummy)
+        if 0 <= ox < S and 0 <= oy < S:
+            cv2.circle(scat, (ox, oy), 6, (0, 128, 255), -1)
+            n_dummies = len(self.all_target_gps) if hasattr(self, 'all_target_gps') else 1
+            ref_idx = min(self.scatter_ref_idx, n_dummies - 1) if n_dummies > 1 else 0
+            ref_label = f"DUMMY #{ref_idx+1}/{n_dummies}" if n_dummies > 1 else "ACTUAL"
+            cv2.putText(scat, ref_label, (ox + 10, oy - 8),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 128, 255), 1)
+
+        # Landing donut: 5-10m zone with 7.5m target (centred on ACTUAL)
+        if self.show_landing_zone:
+            r_inner = int(5.0 * px_per_m)
+            r_outer = int(10.0 * px_per_m)
+            r_target = int(7.5 * px_per_m)
+            if r_inner < S * 2:
+                overlay = scat.copy()
+                cv2.circle(overlay, (ox, oy), r_outer, (0, 40, 0), -1)
+                cv2.circle(overlay, (ox, oy), r_inner, (0, 0, 0), -1)
+                cv2.addWeighted(overlay, 0.4, scat, 0.6, 0, scat)
+                self._draw_dashed_circle(scat, (ox, oy), r_inner, (100, 100, 100), 1)
+                cv2.putText(scat, "5m min", (ox + r_inner + 3, oy - 5),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.3, (100, 100, 100), 1)
+                self._draw_dashed_circle(scat, (ox, oy), r_outer, (100, 100, 100), 1)
+                cv2.putText(scat, "10m max", (ox + r_outer + 3, oy - 5),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.3, (100, 100, 100), 1)
+                self._draw_dashed_circle(scat, (ox, oy), r_target, (255, 255, 0), 2)
+                cv2.putText(scat, "7.5m target", (ox + r_target + 3, oy + 12),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.35, (255, 255, 0), 1)
+
+        # Reference dummy: cycle with Tab key (scatter_ref_idx)
+        ref_gps = None
+        if hasattr(self, 'all_target_gps') and self.all_target_gps:
+            idx = min(self.scatter_ref_idx, len(self.all_target_gps) - 1)
+            ref_gps = self.all_target_gps[idx]
+        elif self.actual_gps:
+            ref_gps = self.actual_gps
+
+        if not ref_gps:
+            return scat
+
+        R = 6371000
+        true_lat, true_lon = ref_gps
+
+        def gps_to_scatter(lat, lon):
+            north = (lat - true_lat) * (math.pi / 180) * R
+            east = (lon - true_lon) * (math.pi / 180) * R * math.cos(math.radians(true_lat))
+            return m_to_px(east, north)
+
+        # Plot ALL dummy positions (small markers — shows spatial layout)
+        if hasattr(self, 'all_target_gps') and len(self.all_target_gps) > 1:
+            for di, dgps in enumerate(self.all_target_gps):
+                dx, dy = gps_to_scatter(dgps[0], dgps[1])
+                if 0 <= dx < S and 0 <= dy < S:
+                    is_ref = (di == min(self.scatter_ref_idx, len(self.all_target_gps) - 1))
+                    if not is_ref:  # ref already drawn as origin
+                        cv2.circle(scat, (dx, dy), 4, (0, 80, 160), -1)
+                        cv2.putText(scat, f"D{di+1}", (dx + 6, dy - 3),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.3, (0, 80, 160), 1)
+
+        # Plot recent individual observations (small dots, fade with age)
+        # Green = flyby (weight 1-5), Cyan = centre-snap (weight 10)
+        n = len(self.gps_observations)
+        for i, (lat, lon, w) in enumerate(self.gps_observations):
+            age = (n - i) / max(n, 1)
+            alpha = int(80 + 175 * (1 - age))  # newer = brighter
+            sx, sy = gps_to_scatter(lat, lon)
+            if 0 <= sx < S and 0 <= sy < S:
+                if w >= 10:
+                    color = (alpha, alpha, 0)  # cyan = centre-snap (high weight)
+                else:
+                    color = (0, alpha, 0)      # green = flyby observation
+                cv2.circle(scat, (sx, sy), 2, color, -1)
+
+        # Plot cluster estimates (numbered diamonds)
+        cluster_colors = [(255, 0, 255), (0, 200, 255), (255, 200, 0),
+                          (0, 255, 200), (200, 0, 255), (255, 100, 100)]
+        for ci, cl in enumerate(self.detection_clusters):
+            if cl["best_gps"]:
+                ex, ey = gps_to_scatter(cl["best_gps"][0], cl["best_gps"][1])
+                if 0 <= ex < S and 0 <= ey < S:
+                    sz = 8
+                    color = cluster_colors[ci % len(cluster_colors)]
+                    pts = np.array([(ex, ey - sz), (ex + sz, ey),
+                                    (ex, ey + sz), (ex - sz, ey)], np.int32)
+                    cv2.fillPoly(scat, [pts], color)
+                    cid = cl.get("id", ci+1)
+                    label = f"#{cid} ({cl['detection_count']})"
+                    cv2.putText(scat, label, (ex + 10, ey - 3),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.35, color, 1)
+
+        # Plot G LOCK estimate (yellow star — 30s averaged GPS, most precise)
+        if self.locked_gps:
+            gx, gy = gps_to_scatter(self.locked_gps[0], self.locked_gps[1])
+            if 0 <= gx < S and 0 <= gy < S:
+                # Star shape
+                sz = 10
+                for angle_deg in range(0, 360, 72):
+                    a1 = math.radians(angle_deg - 90)
+                    a2 = math.radians(angle_deg - 90 + 36)
+                    p1 = (int(gx + sz * math.cos(a1)), int(gy + sz * math.sin(a1)))
+                    p2 = (int(gx + sz * 0.4 * math.cos(a2)), int(gy + sz * 0.4 * math.sin(a2)))
+                    cv2.line(scat, p1, p2, (0, 255, 255), 2)
+                cv2.putText(scat, "G LOCK", (gx + 12, gy - 5),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 255), 1)
+                if self.locked_error_gps is not None:
+                    cv2.putText(scat, f"{self.locked_error_gps:.2f}m", (gx + 12, gy + 10),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.3, (0, 255, 255), 1)
+
+        # Plot drone position (blue)
+        dsx, dsy = gps_to_scatter(self.true_lat, self.true_lon)
+        if 0 <= dsx < S and 0 <= dsy < S:
+            cv2.circle(scat, (dsx, dsy), 4, (255, 0, 0), -1)
+
+        # Landing preview — where L WOULD land based on current best estimate
+        # Shows as a hollow pink circle (preview) when not yet pressed L
+        # Shows as solid pink X when L has been pressed (landing_target set)
+        if self.landing_target:
+            # L was pressed — show actual landing target (solid pink X)
+            lx, ly = gps_to_scatter(self.landing_target[0], self.landing_target[1])
+            if 0 <= lx < S and 0 <= ly < S:
+                sz = 6
+                cv2.line(scat, (lx - sz, ly - sz), (lx + sz, ly + sz), (180, 0, 255), 2)
+                cv2.line(scat, (lx - sz, ly + sz), (lx + sz, ly - sz), (180, 0, 255), 2)
+                cv2.putText(scat, "LAND", (lx + 8, ly - 3),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.35, (180, 0, 255), 1)
+        elif self.show_landing_zone and self.landing_phase is None:
+            # Preview: where L would land (7.5m north of best estimate)
+            est = self.locked_gps or self.best_gps
+            if est:
+                preview_lat = est[0] + (self.landing_offset_m / R) * (180 / math.pi)
+                preview_lon = est[1]
+                px, py = gps_to_scatter(preview_lat, preview_lon)
+                if 0 <= px < S and 0 <= py < S:
+                    # Hollow circle with crosshair — "preview" style
+                    cv2.circle(scat, (px, py), 7, (180, 0, 255), 1)
+                    cv2.line(scat, (px - 4, py), (px + 4, py), (180, 0, 255), 1)
+                    cv2.line(scat, (px, py - 4), (px, py + 4), (180, 0, 255), 1)
+                    cv2.putText(scat, "L preview", (px + 10, py - 3),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.3, (180, 0, 255), 1)
+                    # Distance from preview landing to actual dummy
+                    preview_to_actual = self._gps_distance(preview_lat, preview_lon,
+                                                           true_lat, true_lon)
+                    cv2.putText(scat, f"{preview_to_actual:.1f}m from dummy",
+                                (px + 10, py + 10),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.3, (180, 0, 255), 1)
+
+        # Plot actual landed position (white square) + metrics when landed
+        if self.landing_phase == "landed" and self.landed_pos:
+            ax, ay = gps_to_scatter(self.landed_pos[0], self.landed_pos[1])
+            if 0 <= ax < S and 0 <= ay < S:
+                cv2.rectangle(scat, (ax - 5, ay - 5), (ax + 5, ay + 5), (255, 255, 255), 2)
+                cv2.putText(scat, "LANDED", (ax + 8, ay - 5),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.35, (255, 255, 255), 1)
+                # Distance from landed to actual dummy
+                landed_dist = self._gps_distance(self.landed_pos[0], self.landed_pos[1],
+                                                  true_lat, true_lon)
+                cv2.putText(scat, f"{landed_dist:.1f}m", (ax + 8, ay + 8),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 255, 255), 1)
+
+        # Logged items (IOI = cyan diamond, FP = red X)
+        for item in self.logged_items:
+            gps = item.get("gps")
+            if gps:
+                ix, iy = gps_to_scatter(gps[0], gps[1])
+                if 0 <= ix < S and 0 <= iy < S:
+                    if item["type"] == "interest":
+                        pts = np.array([(ix, iy-6), (ix+5, iy), (ix, iy+6), (ix-5, iy)], np.int32)
+                        cv2.fillPoly(scat, [pts], (255, 255, 0))
+                        cv2.putText(scat, "IOI", (ix + 8, iy + 4),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 255, 0), 1)
+                    else:
+                        cv2.line(scat, (ix-4, iy-4), (ix+4, iy+4), (0, 0, 255), 2)
+                        cv2.line(scat, (ix-4, iy+4), (ix+4, iy-4), (0, 0, 255), 2)
+
+        # Title and error
+        zone_str = " [LANDING ZONE]" if self.show_landing_zone else ""
+        zoom_str = f" x{self.scatter_zoom:.1f}" if self.scatter_zoom != 1.0 else ""
+        n_dummies = len(self.all_target_gps) if hasattr(self, 'all_target_gps') else 1
+        ref_str = f" [D#{min(self.scatter_ref_idx, n_dummies-1)+1}/{n_dummies} Tab]" if n_dummies > 1 else ""
+        cv2.putText(scat, f"SCATTER +/-{scale_m:.0f}m{ref_str}{zone_str}{zoom_str}", (10, 18),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 0), 1)
+        # Show error for each cluster relative to the scatter reference dummy
+        if self.best_gps and ref_gps:
+            err = self._gps_distance(self.best_gps[0], self.best_gps[1],
+                                     true_lat, true_lon)
+            cv2.putText(scat, f"Active EST err: {err:.2f}m  ({n} obs)",
+                        (10, S - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 0, 255), 1)
+
+        return scat
+
+    def _draw_dashed_circle(self, img, center, radius, color, thickness=1, dash_len=12):
+        """Draw a dashed circle using small arc segments."""
+        if radius < 1:
+            return
+        circumference = 2 * math.pi * radius
+        n_dashes = max(4, int(circumference / dash_len))
+        for i in range(0, n_dashes, 2):
+            start_angle = int(i * 360 / n_dashes)
+            end_angle = int((i + 1) * 360 / n_dashes)
+            cv2.ellipse(img, center, (radius, radius), 0, start_angle, end_angle, color, thickness)
+
+    def _on_trackbar(self, val):
+        """Callback for trackbar changes — reads all sliders and updates error params."""
+        pass  # Values read directly in run loop
 
     def run(self):
         """Main loop — state machine: INIT → CONNECTING → FLYING.
         YOU arm and take off manually (RC / Mission Planner).
         Script just reads telemetry + runs CV + estimates GPS."""
         print("Starting mission loop...")
-        cv2.namedWindow("Simple Simulator")
+        cv2.namedWindow("Simple Simulator", cv2.WINDOW_NORMAL)
+        cv2.resizeWindow("Simple Simulator", 1280, 720)  # default — drag edges to resize
+
+        # --- Error control sliders (separate small window) ---
+        cv2.namedWindow("Error Controls", cv2.WINDOW_NORMAL)
+        cv2.createTrackbar("GPS Drift (x0.1m)", "Error Controls", int(self.gps_drift_max * 10), 50, self._on_trackbar)
+        cv2.createTrackbar("Alt Noise (x0.1m)", "Error Controls", int(self.alt_noise * 10), 30, self._on_trackbar)
+        cv2.createTrackbar("Yaw Noise (x0.1deg)", "Error Controls", int(self.yaw_noise * 10), 100, self._on_trackbar)
+        cv2.createTrackbar("FOV Error (%-10 to +10)", "Error Controls", int(self.fov_error_pct + 10), 20, self._on_trackbar)
+        cv2.createTrackbar("Shake (px)", "Error Controls", self.shake_px, 20, self._on_trackbar)
+        cv2.createTrackbar("Landing Zone", "Error Controls", 0, 1, self._on_trackbar)
+        cv2.createTrackbar("Resolution (0=640 1=320 2=160)", "Error Controls", 0, 2, self._on_trackbar)
+        # Show a tiny placeholder so the window appears with sliders
+        cv2.imshow("Error Controls", np.zeros((1, 400, 3), dtype=np.uint8))
 
         if config.MODE == "SIMULATION":
             cv2.setMouseCallback("Simple Simulator", self._mouse_cb)
@@ -639,6 +1457,7 @@ class SimpleMission:
                 frame, found, u, v, conf = self.get_frame_and_detect()
                 if found:
                     self.detection_count += 1
+                    self.detection_cluster_count += 1
                     self.calculate_target_gps(u, v)
                     snap_str = " SNAP!" if self.centre_snap else ""
                     best_str = (f" best:{self.best_gps_error_m:.2f}m"
@@ -697,15 +1516,18 @@ class SimpleMission:
                 # --- Offset landing sequence ---
                 if self.landing_phase == "flying_to" and self.landing_target and self.master:
                     self.send_to_gps(self.landing_target[0], self.landing_target[1])
-                    # Check if close enough to start descending
+                    # Check if close enough to start descending (real GPS gets within ~1-2m)
                     dist_to_land = self._gps_distance(
                         self.true_lat, self.true_lon,
                         self.landing_target[0], self.landing_target[1])
-                    if dist_to_land < 3.0 and self.groundspeed < 1.0:
+                    if dist_to_land < 1.5 and self.groundspeed < 0.5:
                         self.landing_phase = "descending"
                         print(f"[LAND] Arrived at landing point ({dist_to_land:.1f}m). Descending...")
                         self.send_land()
                 elif self.landing_phase == "descending":
+                    # Keep commanding target position during descent to hold over landing point
+                    if self.landing_target and self.master:
+                        self.send_to_gps(self.landing_target[0], self.landing_target[1])
                     if self.alt < 0.5:
                         self.landing_phase = "landed"
                         self.landed_pos = (self.true_lat, self.true_lon)
@@ -716,19 +1538,75 @@ class SimpleMission:
                         landed_to_target = self._gps_distance(
                             self.landed_pos[0], self.landed_pos[1],
                             self.landing_target[0], self.landing_target[1])
-                        est_to_actual = self.locked_error_gps if self.locked_error_gps else 0
+                        # Get estimate info (source + position used for landing calc)
+                        src = getattr(self, 'landing_est_source', 'unknown')
+                        est_pos = getattr(self, 'landing_est_pos', self.locked_gps or self.best_gps)
+                        est_to_actual = 0
+                        if est_pos and self.actual_gps:
+                            est_to_actual = self._gps_distance(
+                                est_pos[0], est_pos[1], self.actual_gps[0], self.actual_gps[1])
                         print(f"\n{'='*50}")
-                        print(f"  LANDING REPORT")
+                        print(f"  LANDING REPORT  (estimate source: {src})")
                         print(f"{'='*50}")
                         print(f"  Dummy (actual):     {self.actual_gps[0]:.6f}, {self.actual_gps[1]:.6f}")
-                        print(f"  Dummy (estimate):   {self.locked_gps[0]:.6f}, {self.locked_gps[1]:.6f}  (err: {est_to_actual:.2f}m)")
+                        if est_pos:
+                            print(f"  Dummy (estimate):   {est_pos[0]:.6f}, {est_pos[1]:.6f}  (err: {est_to_actual:.2f}m)")
                         print(f"  Landing target:     {self.landing_target[0]:.6f}, {self.landing_target[1]:.6f}  ({self.landing_offset_m}m north of estimate)")
                         print(f"  Actual landed at:   {self.landed_pos[0]:.6f}, {self.landed_pos[1]:.6f}")
                         print(f"  ---")
+                        print(f"  Estimate error:     {est_to_actual:.2f}m  (how far estimate was from real dummy)")
                         print(f"  Landing GPS error:  {landed_to_target:.2f}m  (how far from target coordinate)")
                         print(f"  Distance to dummy:  {landed_to_dummy:.2f}m  (wanted {self.landing_offset_m}m)")
                         print(f"  Off by:             {abs(landed_to_dummy - self.landing_offset_m):.2f}m  from intended {self.landing_offset_m}m")
                         print(f"{'='*50}")
+
+                # --- Investigate mode (N key): fly 5m from estimate, descend to 15m ---
+                if self.investigating and self.master:
+                    if self.investigate_phase == "approaching":
+                        self.send_to_gps(self.investigate_target[0], self.investigate_target[1])
+                        dist_to_inv = self._gps_distance(
+                            self.true_lat, self.true_lon,
+                            self.investigate_target[0], self.investigate_target[1])
+                        if dist_to_inv < 3.0 and self.groundspeed < 1.0:
+                            self.investigate_phase = "descending"
+                            print(f"[INVESTIGATE] Arrived nearby ({dist_to_inv:.1f}m). Descending to {self.investigate_alt:.0f}m...")
+                            # Descend by sending position at lower altitude
+                            self.master.mav.set_position_target_global_int_send(
+                                0, self.master.target_system, self.master.target_component,
+                                mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT_INT,
+                                0b110111111000,
+                                int(self.investigate_target[0] * 1e7),
+                                int(self.investigate_target[1] * 1e7),
+                                self.investigate_alt,
+                                0, 0, 0, 0, 0, 0, 0, 0)
+                    elif self.investigate_phase == "descending":
+                        # Hold position and descend
+                        self.master.mav.set_position_target_global_int_send(
+                            0, self.master.target_system, self.master.target_component,
+                            mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT_INT,
+                            0b110111111000,
+                            int(self.investigate_target[0] * 1e7),
+                            int(self.investigate_target[1] * 1e7),
+                            self.investigate_alt,
+                            0, 0, 0, 0, 0, 0, 0, 0)
+                        if abs(self.alt - self.investigate_alt) < 1.5:
+                            self.investigate_phase = "observing"
+                            new_obs = len(self.gps_observations) - self.investigate_obs_start
+                            print(f"[INVESTIGATE] At {self.alt:.1f}m — OBSERVING. "
+                                  f"({new_obs} new detections so far). "
+                                  f"Fly around with WASD or press N to cancel.")
+                    elif self.investigate_phase == "observing":
+                        # Hold position — estimate improves in background, drone stays put
+                        self.send_to_gps(self.investigate_target[0], self.investigate_target[1])
+                        # Print periodic updates
+                        new_obs = len(self.gps_observations) - self.investigate_obs_start
+                        if new_obs > 0 and new_obs % 10 == 0 and self.best_gps_error_m is not None:
+                            est_err_start = self.investigate_est_at_start or 0
+                            improvement = est_err_start - self.best_gps_error_m
+                            print(f"[INVESTIGATE] {new_obs} new obs, "
+                                  f"EST err: {self.best_gps_error_m:.2f}m "
+                                  f"({'improved' if improvement > 0 else 'same'} "
+                                  f"by {abs(improvement):.2f}m)")
 
                 # --- G lock: collect GPS samples for 30s then auto-lock ---
                 # ONLY collect when centre-snap is active (target confirmed at centre)
@@ -794,21 +1672,75 @@ class SimpleMission:
                 cv2.putText(frame, f"SPC=arm  R=throttle up  WASD=fly  L=land", (10, 140),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200, 200, 200), 1)
 
-            # Composite with god view (simulation only)
+            # --- Read slider values and update error parameters ---
+            try:
+                self.gps_drift_max = cv2.getTrackbarPos("GPS Drift (x0.1m)", "Error Controls") / 10.0
+                self.alt_noise = cv2.getTrackbarPos("Alt Noise (x0.1m)", "Error Controls") / 10.0
+                self.yaw_noise = cv2.getTrackbarPos("Yaw Noise (x0.1deg)", "Error Controls") / 10.0
+                fov_raw = cv2.getTrackbarPos("FOV Error (%-10 to +10)", "Error Controls")
+                self.fov_error_pct = fov_raw - 10
+                self.fov_scale = 1.0 + (self.fov_error_pct / 100.0)
+                self.shake_px = cv2.getTrackbarPos("Shake (px)", "Error Controls")
+                self.show_landing_zone = cv2.getTrackbarPos("Landing Zone", "Error Controls") == 1
+                self.resolution_idx = cv2.getTrackbarPos("Resolution (0=640 1=320 2=160)", "Error Controls")
+            except cv2.error:
+                pass  # window not ready yet
+
+            # --- Build 2x2 grid (simulation only, else just camera) ---
             if config.MODE == "SIMULATION" and self.sim:
-                # God view uses TRUE position (where drone physically is on the map)
+                PANEL_H = 480  # height of each panel in the grid
+
+                # Top-left: God view
                 px, py = self.geo.gps_to_pixels(self.true_lat, self.true_lon)
-                # Show best estimate on god view (or latest if no average yet)
-                show_gps = self.best_gps if self.best_gps else (
-                    self.estimated_gps if self.estimated_gps else (0, 0))
+                show_gps = (0, 0)  # clusters handle EST display now
+                show_landing = self.landing_target if self.landing_target else (0, 0)
                 god_frame = self.sim.get_god_view(
                     px, py, self.yaw, self.view_w_px, self.view_h_px,
                     self.zoom_level, np.array([], np.int32), self.search_poly,
-                    show_gps, (0, 0), self.geo)
-                h_scale = frame.shape[0] / god_frame.shape[0]
-                god_resized = cv2.resize(god_frame,
-                    (int(god_frame.shape[1] * h_scale), frame.shape[0]))
-                final = np.hstack((god_resized, frame))
+                    show_gps, show_landing, self.geo,
+                    logged_items=self.logged_items,
+                    detection_clusters=self.detection_clusters,
+                    active_cluster_idx=self.active_cluster_idx)
+                # Resize god view to PANEL_H height, keep aspect
+                gh, gw = god_frame.shape[:2]
+                god_w = int(gw * PANEL_H / gh)
+                god_resized = cv2.resize(god_frame, (god_w, PANEL_H))
+
+                # Top-right: Camera view (already PANEL_H if IMAGE_H == 480)
+                cam = cv2.resize(frame, (config.IMAGE_W, PANEL_H))
+
+                # Bottom-left: Scatter plot
+                scatter = self.draw_scatter()
+                scat_w = int(scatter.shape[1] * PANEL_H / scatter.shape[0])
+                scatter_resized = cv2.resize(scatter, (scat_w, PANEL_H))
+
+                # Bottom-right: Dashboard
+                dashboard = self.draw_dashboard()
+                dash_w = int(dashboard.shape[1] * PANEL_H / dashboard.shape[0])
+                dash_resized = cv2.resize(dashboard, (dash_w, PANEL_H))
+
+                # Match widths per row with padding
+                top_w = god_w + config.IMAGE_W
+                bot_w = scat_w + dash_w
+                target_w = max(top_w, bot_w)
+
+                # Pad rows to same width
+                def pad_row(row, target_width):
+                    h, w = row.shape[:2]
+                    if w < target_width:
+                        pad = np.zeros((h, target_width - w, 3), dtype=np.uint8)
+                        return np.hstack((row, pad))
+                    return row
+
+                top_row = np.hstack((god_resized, cam))
+                bot_row = np.hstack((scatter_resized, dash_resized))
+                top_row = pad_row(top_row, target_w)
+                bot_row = pad_row(bot_row, target_w)
+                final = np.vstack((top_row, bot_row))
+
+                # Store grid boundaries for mouse callback (scroll zoom routing)
+                self.grid_split_x = scat_w  # left/right boundary in bottom row
+                self.grid_split_y = PANEL_H  # top/bottom boundary
             else:
                 final = frame
 
@@ -853,25 +1785,60 @@ class SimpleMission:
             elif key == ord(' '):  # SPACE = arm/disarm toggle
                 self.armed = not self.armed
                 self.send_arm(self.armed)
+            elif key == ord('t') or key == ord('T'):  # toggle CV model view
+                self.show_cv_view = not self.show_cv_view
+                state = "ON — showing what CV model sees" if self.show_cv_view else "OFF — full resolution"
+                print(f"[CV VIEW] {state}")
+            elif key == 9:  # Tab = cycle scatter reference dummy
+                if hasattr(self, 'all_target_gps') and len(self.all_target_gps) > 1:
+                    self.scatter_ref_idx = (self.scatter_ref_idx + 1) % len(self.all_target_gps)
+                    self.scatter_pan_x = 0.0  # reset pan when switching
+                    self.scatter_pan_y = 0.0
+                    print(f"[SCATTER] Reference: dummy #{self.scatter_ref_idx + 1} of {len(self.all_target_gps)}")
             elif key == ord('l') or key == ord('L'):
-                if self.locked_gps and self.landing_phase is None:
-                    # Calculate landing point 7.5m north of estimated dummy position
+                # Pick best available estimate: G lock > GPS EST
+                # NEVER uses actual dummy position — only what we've estimated
+                est_source = None
+                est_pos = None
+                if self.locked_gps:
+                    est_pos = self.locked_gps
+                    est_source = "G LOCK"
+                elif self.best_gps:
+                    est_pos = self.best_gps
+                    est_source = "GPS EST"
+
+                if est_pos and self.landing_phase is None:
                     R = 6371000
-                    est_lat, est_lon = self.locked_gps
+                    est_lat, est_lon = est_pos
                     offset_lat = self.landing_offset_m / R * (180 / math.pi)
                     land_lat = est_lat + offset_lat
                     land_lon = est_lon
                     self.landing_target = (land_lat, land_lon)
                     self.landing_phase = "flying_to"
+                    self.landing_est_source = est_source
+                    self.landing_est_pos = est_pos
                     self.centering = False
                     self.visual_servo = False
-                    print(f"\n[LAND] Landing {self.landing_offset_m}m north of estimated dummy")
+                    # Cancel investigate if active
+                    if self.investigating:
+                        self.investigating = False
+                        self.investigate_phase = None
+                        print("[INVESTIGATE] Cancelled — landing takes priority")
+                    # Show estimate error if we know ground truth (sim only)
+                    est_err_str = ""
+                    if self.actual_gps:
+                        est_err = self._gps_distance(est_lat, est_lon, self.actual_gps[0], self.actual_gps[1])
+                        est_err_str = f"  (estimate error: {est_err:.2f}m)"
+                    print(f"\n[LAND] Using {est_source} estimate: {est_lat:.6f}, {est_lon:.6f}{est_err_str}")
+                    print(f"[LAND] Landing {self.landing_offset_m}m north of estimated dummy")
                     print(f"[LAND] Target: {land_lat:.6f}, {land_lon:.6f}")
                     print(f"[LAND] Flying to landing point...")
                 elif self.landing_phase == "landed":
                     print("[LAND] Already landed.")
+                elif not est_pos:
+                    print("[LAND] No dummy estimate yet — detect target first (fly over, use C or V)")
                 else:
-                    self.send_land()  # emergency land (no G lock)
+                    self.send_land()  # emergency land during landing sequence
             elif key == ord('b') or key == ord('B'):  # toggle recording
                 self.recording = not self.recording
                 if self.recording:
@@ -895,6 +1862,109 @@ class SimpleMission:
                     print(f"[LOCK] Averaging for {self.lock_duration}s... keep V mode on")
                 else:
                     print("[LOCK] Centre on dummy with V mode first, then press G to lock")
+            elif key == ord('n') or key == ord('N'):  # investigate — fly near estimate
+                if self.investigating:
+                    # Cancel investigation
+                    self.investigating = False
+                    self.investigate_phase = None
+                    self.investigate_target = None
+                    self.investigate_cluster_idx = None
+                    print("[INVESTIGATE] Cancelled — manual control")
+                elif self.active_cluster_idx is not None and self.master:
+                    # Investigate the most recently active cluster
+                    self._start_investigate(self.active_cluster_idx)
+                elif self.best_gps and self.master:
+                    # Fallback: investigate current best GPS
+                    self._start_investigate_gps(self.best_gps)
+                else:
+                    print("[INVESTIGATE] No target detected yet — fly around first")
+            elif ord('1') <= key <= ord('9'):
+                # Number keys: investigate specific cluster
+                cluster_num = key - ord('1')  # 0-indexed
+                if cluster_num < len(self.detection_clusters):
+                    if self.investigating:
+                        self.investigating = False
+                        self.investigate_phase = None
+                        print(f"[INVESTIGATE] Switching to item {self._cluster_label(cluster_num)}")
+                    self._start_investigate(cluster_num)
+                else:
+                    print(f"[INVESTIGATE] No item at position {cluster_num + 1} — only {len(self.detection_clusters)} in list")
+            elif key == ord('y') or key == ord('Y'):
+                # Confirm: this is the real dummy
+                if self.investigating and self.investigate_phase == "observing":
+                    ci = self.investigate_cluster_idx
+                    n_det = self.detection_clusters[ci]["detection_count"] if ci is not None and ci < len(self.detection_clusters) else "?"
+                    print(f"\n[CONFIRM] Pilot confirms: REAL DUMMY (item {self._cluster_label(ci)}, {n_det} detections)")
+                    print(f"[CONFIRM] Estimate: {self.best_gps[0]:.6f}, {self.best_gps[1]:.6f}" if self.best_gps else "")
+                    print("[CONFIRM] Press L to land 7.5m away")
+                    # Remove other clusters (keep only confirmed one)
+                    if ci is not None and ci < len(self.detection_clusters):
+                        confirmed = self.detection_clusters[ci]
+                        self.detection_clusters = [confirmed]
+                        self.active_cluster_idx = 0
+                        self.best_gps = confirmed["best_gps"]
+                    self.investigating = False
+                    self.investigate_phase = None
+                    self.investigate_target = None
+                    self.investigate_cluster_idx = None
+            elif key == ord('i') or key == ord('I'):
+                # Item of interest — log position and resume search
+                if self.investigating and self.investigate_phase == "observing":
+                    ci = self.investigate_cluster_idx
+                    cluster = self.detection_clusters[ci] if ci is not None and ci < len(self.detection_clusters) else None
+                    gps = cluster["best_gps"] if cluster else self.best_gps
+                    n_det = cluster["detection_count"] if cluster else 0
+                    if gps:
+                        item = {"type": "interest", "gps": gps, "detections": n_det}
+                        self.logged_items.append(item)
+                        print(f"\n[LOG] Item {self._cluster_label(ci)} logged as INTEREST at {gps[0]:.6f}, {gps[1]:.6f}"
+                              f" ({n_det} detections)")
+                        # Remove classified cluster
+                        if ci is not None and ci < len(self.detection_clusters):
+                            self.detection_clusters.pop(ci)
+                            self.active_cluster_idx = None
+                        n_ioi = sum(1 for x in self.logged_items if x["type"] == "interest")
+                        print(f"[LOG] Total: {n_ioi} IOI, {len(self.detection_clusters)} items remaining")
+                    # Cancel investigate
+                    self.investigating = False
+                    self.investigate_phase = None
+                    self.investigate_target = None
+                    self.investigate_cluster_idx = None
+                    # Update best_gps to next available cluster
+                    if self.detection_clusters:
+                        self.active_cluster_idx = 0
+                        self.best_gps = self.detection_clusters[0]["best_gps"]
+                    else:
+                        self.best_gps = None
+                        self.best_gps_error_m = None
+            elif key == ord('x') or key == ord('X'):
+                # False positive — discard and resume search (X not F, F=throttle down)
+                if self.investigating and self.investigate_phase == "observing":
+                    ci = self.investigate_cluster_idx
+                    cluster = self.detection_clusters[ci] if ci is not None and ci < len(self.detection_clusters) else None
+                    gps = cluster["best_gps"] if cluster else self.best_gps
+                    n_det = cluster["detection_count"] if cluster else 0
+                    # Log as false positive (for display on map)
+                    if gps:
+                        self.logged_items.append({"type": "false_pos", "gps": gps, "detections": n_det})
+                    print(f"\n[DISCARD] Item {self._cluster_label(ci)} discarded as FALSE POSITIVE ({n_det} detections)")
+                    # Remove classified cluster
+                    if ci is not None and ci < len(self.detection_clusters):
+                        self.detection_clusters.pop(ci)
+                        self.active_cluster_idx = None
+                    # Cancel investigate
+                    self.investigating = False
+                    self.investigate_phase = None
+                    self.investigate_target = None
+                    self.investigate_cluster_idx = None
+                    # Update best_gps to next available cluster
+                    if self.detection_clusters:
+                        self.active_cluster_idx = 0
+                        self.best_gps = self.detection_clusters[0]["best_gps"]
+                    else:
+                        self.best_gps = None
+                        self.best_gps_error_m = None
+                    print(f"[DISCARD] {len(self.detection_clusters)} items remaining")
             elif self.state == "FLYING" and self.master:
                 if key == ord('c') or key == ord('C'):  # toggle GPS centering
                     if self.best_gps:
@@ -917,10 +1987,14 @@ class SimpleMission:
                         print("[VSERVO] Visual servo OFF — manual control")
                 elif key in (ord('w'), ord('s'), ord('a'), ord('d'),
                              ord('q'), ord('e'), ord('r'), ord('f')):
-                    # Any manual input cancels centering / visual servo
-                    if self.centering or self.visual_servo:
+                    # Any manual input cancels centering / visual servo / investigate
+                    if self.centering or self.visual_servo or self.investigating:
                         self.centering = False
                         self.visual_servo = False
+                        if self.investigating:
+                            self.investigating = False
+                            self.investigate_phase = None
+                            print("[INVESTIGATE] Cancelled — manual override")
                         print("[MANUAL] Override — auto modes cancelled")
                     # RC stick commands via velocity
                     if key == ord('w'):
@@ -1112,12 +2186,38 @@ class SimpleMission:
         plt.show()
 
     def _mouse_cb(self, event, x, y, flags, param):
-        """Zoom on scroll (simulation only)."""
+        """Zoom on scroll, drag to pan — god view (top-left) or scatter (bottom-left)."""
+        in_scatter = y > self.grid_split_y and x < self.grid_split_x
+
         if event == cv2.EVENT_MOUSEWHEEL:
-            if flags > 0:
-                self.zoom_level = min(self.zoom_level * 1.2, 20.0)
+            if in_scatter:
+                # Scroll over scatter plot — zoom scatter
+                if flags > 0:
+                    self.scatter_zoom = min(self.scatter_zoom * 1.2, 10.0)
+                else:
+                    self.scatter_zoom = max(self.scatter_zoom / 1.2, 0.3)
             else:
-                self.zoom_level = max(self.zoom_level / 1.2, 1.0)
+                # Scroll over god view (or anywhere else) — zoom map
+                if flags > 0:
+                    self.zoom_level = min(self.zoom_level * 1.2, 20.0)
+                else:
+                    self.zoom_level = max(self.zoom_level / 1.2, 1.0)
+
+        # Drag to pan scatter plot
+        elif event == cv2.EVENT_LBUTTONDOWN and in_scatter:
+            self._scatter_dragging = True
+            self._scatter_drag_start = (x, y)
+            self._scatter_pan_start = (self.scatter_pan_x, self.scatter_pan_y)
+
+        elif event == cv2.EVENT_MOUSEMOVE and self._scatter_dragging:
+            dx_px = x - self._scatter_drag_start[0]
+            dy_px = y - self._scatter_drag_start[1]
+            ppm = self.scatter_px_per_m if self.scatter_px_per_m > 0 else 1.0
+            self.scatter_pan_x = self._scatter_pan_start[0] - dx_px / ppm
+            self.scatter_pan_y = self._scatter_pan_start[1] + dy_px / ppm
+
+        elif event == cv2.EVENT_LBUTTONUP:
+            self._scatter_dragging = False
 
 
 if __name__ == "__main__":
@@ -1130,6 +2230,16 @@ if __name__ == "__main__":
                         help="Simulate GPS drift (e.g. --gps-drift 3 for +/-3m wander). Default: off")
     parser.add_argument("--shake", type=int, default=0, metavar="PIXELS",
                         help="Simulate camera shake from motor vibration (e.g. --shake 5). Default: off")
+    parser.add_argument("--alt-noise", type=float, default=0, metavar="METRES",
+                        help="Altitude reading noise (e.g. --alt-noise 1 for +/-1m jitter). Default: off")
+    parser.add_argument("--yaw-noise", type=float, default=0, metavar="DEGREES",
+                        help="Heading/compass noise (e.g. --yaw-noise 3 for +/-3deg jitter). Default: off")
+    parser.add_argument("--fov-error", type=float, default=0, metavar="PERCENT",
+                        help="FOV calibration error (e.g. --fov-error 5 for 5%% systematic bias). Default: off")
+    parser.add_argument("--cluster-dist", type=float, default=30.0, metavar="METRES",
+                        help="Min distance between separate detection clusters (default: 30m)")
     args = parser.parse_args()
-    mission = SimpleMission(fps_limit=args.fps, force_tflite=args.tflite, gps_drift=args.gps_drift, shake=args.shake)
+    mission = SimpleMission(fps_limit=args.fps, force_tflite=args.tflite, gps_drift=args.gps_drift,
+                            shake=args.shake, alt_noise=args.alt_noise, yaw_noise=args.yaw_noise,
+                            fov_error=args.fov_error, cluster_dist=args.cluster_dist)
     mission.run()
