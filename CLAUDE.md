@@ -42,8 +42,15 @@ communication (Python 3.13 + pyserial serial reads are broken).
 - Passive flight script ready (pi_passive_flight.py — pilot flies RC, Pi detects + buzzer)
 - **simple_simulator.py**: interactive MVP — keyboard flight + CV + GPS estimation + offset landing
   - GPS centering (C), visual servo (V), GPS lock (G), 7.5m offset landing (L), data recording (B)
+  - Multi-target support, spatial clustering, inverse variance weighting, Kalman filter
+  - Pilot classification: Y=dummy, I=interest, X=false positive
   - Simulates GPS drift, camera shake, CV throttle, TFLite backend
   - End-to-end mission tested: flyover → centre → lock → land 7.5m away
+- **pi_flight.py**: web-based ground station for real flights (browser dashboard)
+  - MJPEG video stream, 2D GPS grid, detection clusters, command buttons (N/Y/I/X/L)
+  - Works headless (no cv2.imshow) — all UI through browser at http://PI_IP:8090
+  - Same GPS estimation math as simple_simulator.py
+  - Tested in SIMULATION on laptop, ready for REAL mode on Pi
 
 ### What's Not Done Yet
 - [x] Pi setup (OS, venv, dependencies)
@@ -125,10 +132,15 @@ v3/
 ├── simple_simulator.py         ← Interactive MVP: keyboard flight + CV + GPS estimation + landing
 │                                 Keys: SPACE=arm WASD=fly C=gps V=vision G=lock B=rec L=land
 │                                 Flags: --fps 4 --tflite --gps-drift 3 --shake 5
+├── pi_flight.py               ← Web ground station: browser dashboard + MJPEG stream + commands
+│                                 Works headless (Pi) or laptop. http://localhost:8090
+│                                 Keys in browser: N=investigate Y=confirm I=interest X=FP L=land
 ├── simulation.py              ← Laptop-only sim: map.jpg + simulated drone camera view
 ├── preflight.py               ← Standalone connectivity checker (camera, Cube, AI model)
 │
 ├── best.tflite                ← AI model file (~6MB, YOLOv8n exported to TFLite)
+├── models/                    ← Alternative TFLite models for flight day testing
+│   └── custom_yolov8n.tflite  ← Copy of best.tflite (baseline)
 ├── map.jpg                    ← Satellite image for simulation (~12MB)
 ├── dummy.png                  ← Dummy/casualty image for dataset generation + bench test
 ├── generate_dataset.py        ← Creates synthetic training data from map.jpg + dummy.png
@@ -146,6 +158,7 @@ v3/
 │   ├── CONNECTIVITY.md        ← Connection debugging guide
 │   ├── PREFLIGHT_CHECKLIST.md ← Pre-flight safety checks
 │   ├── TEAM_PLAN.md           ← Team workstreams and responsibilities
+│   ├── FLIGHT_DAY_CHECKLIST.md ← Printable flight day checklist (single document, follow top to bottom)
 │   └── ROADMAP.md             ← Full 10-phase development history
 │
 └── tests/
@@ -797,6 +810,195 @@ set DRONE_MODE=SIMULATION && python simple_simulator.py --fps 4 --tflite --gps-d
 - [ ] Add GPS navigation error to SITL send_to_gps() for more realistic landing simulation
 - [ ] Test in REAL mode (webcam + SITL)
 - [ ] Push to git, outdoor GPS test, manual flight with passive detection
+
+### Session: 2026-02-20 — Multi-target, clustering, estimation improvements, first flight doc
+
+**Continued from 2026-02-19 session (ran out of context, continued in new session).**
+
+**Multi-target support (simulation.py + simple_simulator.py):**
+- Multiple dummies placed on map during setup (left-click to place, right-click when done)
+- All render identically as dummy images (CV can't distinguish)
+- Pilot classification: Y=dummy, I=item of interest, X=false positive
+- Items of interest logged with GPS position; false positives discarded
+
+**Spatial clustering:**
+- Observations grouped into clusters by GPS distance (`--cluster-dist N`, default 30m)
+- Each cluster has permanent ID (never shifts when others are classified/removed)
+- Each cluster maintains independent rolling 50, total average, and Kalman filter
+- Cluster markers on god view: numbered, color-coded, active cluster highlighted
+
+**Estimation improvements:**
+- **Running total average** added — weighted average of ALL observations ever (most stable)
+- **Kalman filter** added — 2D Bayesian filter with varying measurement noise (needs tuning)
+- **Inverse variance weighting** — weight ∝ 1/altitude² (10m observations 9x more valuable than 30m)
+- Centre-snap observations get 10x bonus weight (target at frame centre = minimal projection error)
+- Three markers on god view: circle (rolling 50), square "T" (total avg), triangle "K" (Kalman)
+
+**Altitude test (H key):**
+- Automatically steps through 30/25/20/15/10m altitude, hovers 10s each
+- Prints comparison table of all three estimators at each altitude
+- Confirmed: lower altitude = better estimate (fewer metres per pixel)
+
+**Investigate mode fixes:**
+- During investigate, observations forced to investigated cluster (skip distance routing)
+- N key uses total average position (not rolling 50) for consistency
+- Simple "park and hold" — fly to initial estimate, hover, don't chase updates
+- L key prefers total average from active cluster for landing estimate
+
+**Key changes:**
+- F key → X key for false positive (F was conflicting with throttle down)
+- Tab key cycles scatter plot reference through all placed dummies
+- Permanent cluster IDs (pop() no longer shifts numbering)
+- `--cluster-dist` CLI flag (default 30m)
+
+**Documentation added:**
+- `docs/CV_GUIDE.md` — new section: "GPS Estimation: Error Sources, Compensation, and Best Practices"
+  - Error source table (random vs systematic)
+  - FOV calibration explained as only systematic error
+  - Inverse variance weighting explanation
+  - Altitude test results
+  - Simulation vs reality comparison
+  - Operational flow for first flight
+  - SAR industry best practices (confirmed by research)
+- `docs/FIRST_FLIGHT.md` — new file: first flight plan with progressive steps
+  - Step 1: Mission Planner AUTO waypoints (no code)
+  - Step 2: pi_passive_flight.py (passive CV, zero commands)
+  - Step 3: Manual flight with N/Y/I/X/L controls (future)
+  - Step 4: Full autonomous main.py (future)
+  - Pre-flight checklist, measurement plan, Pi setup reminder
+
+**Pi compatibility assessment:**
+- simple_simulator.py is laptop-only (needs cv2.imshow, map.jpg, simulation.py)
+- For first real flight: use pi_passive_flight.py (passive, proven on Pi)
+- Pi venv may need recreating if code is re-uploaded (requirements_pi.txt + ai-edge-litert)
+
+**Files modified:**
+- `simple_simulator.py` — clustering, permanent IDs, total average, Kalman filter, altitude test,
+  inverse variance weighting, Tab key, H key, X key, investigate fixes
+- `simulation.py` — cluster rendering in god view (numbered markers, total avg squares, Kalman triangles)
+- `docs/CV_GUIDE.md` — GPS estimation error sources section added
+- `docs/FIRST_FLIGHT.md` — new file, first flight plan
+
+**Next steps:**
+- [ ] Push to git, pull on Pi
+- [ ] Test detection with corrected colors on Pi (BGR fix from 2026-02-17)
+- [ ] Outdoor GPS fix test
+- [ ] Step 1: Mission Planner AUTO waypoints
+- [ ] Step 2: pi_passive_flight.py during manual RC flight
+- [ ] FOV calibration on bench (pi_6_fov_test.py)
+
+### Session: 2026-02-20 (part 2) — pi_flight.py web ground station + flight day prep
+
+**Continued from part 1 (ran out of context, continued in new session).**
+
+**Created `pi_flight.py`** — web-based ground station for real flights (~1016 lines):
+- Serves dashboard at `http://localhost:8090` (or Pi IP on same WiFi)
+- Works in both SIMULATION (laptop + SITL) and REAL (Pi + Cube) modes
+- **No `cv2.imshow`** — fully headless, all UI through browser
+- Key components:
+  - MJPEG video stream with detection overlay (green boxes + confidence)
+  - 2D GPS grid showing drone position (arrow), detection clusters (color-coded), logged items
+  - Command buttons: ARM, TAKEOFF, N (investigate), Y (confirm), I (interest), X (false pos), L (land), M (resume)
+  - Status bar: flight mode, drone mode, GPS, altitude, detection count, battery
+  - Detection alerts (orange flash when new detection)
+  - Cluster info panel (click cluster to select for investigation)
+  - Keyboard shortcuts in browser (N/Y/I/X/L/M keys)
+- Terminal keyboard control (WASD flight) for simulation testing
+- Same GPS estimation math as simple_simulator.py:
+  - Pixel-to-GPS projection, centre-snap, inverse variance weighting
+  - Spatial clustering with permanent IDs
+  - Rolling 50 + running total average
+- Investigate flow: approaching → descending to 15m → observing (captures snapshot)
+- Landing flow: 7.5m north offset → fly to → descend → landed
+- ThreadingMixIn HTTP server for concurrent stream + API requests
+- `request_data_stream_send()` after MAVLink connect (required for SITL to send GPS/attitude)
+
+**Tested in SIMULATION on laptop:**
+- Dashboard loads in browser, grid renders, buttons visible
+- Fixed layout: buttons were cut off (flex:1.5 → flex:1, better height calc)
+- Fixed static video: SITL requires explicit data stream request — added to `_connect_mavlink()`
+- Status bar shows: MANUAL [GUIDED], BAT: 12.6V, GPS coordinates
+
+**Ground station architecture confirmed:**
+```
+Cube → Pi UART → mavproxy
+                    ├── udpout:127.0.0.1:14550  → pi_flight.py (commands + telemetry)
+                    └── tcpin:0.0.0.0:5762       → Mission Planner (monitoring, read-only)
+```
+- Browser dashboard: operator interface (camera, detections, commands)
+- Mission Planner: safety monitor (map, instruments, failsafe)
+- RC controller: always has override priority (STABILIZE kill switch)
+
+**Flight day plan confirmed:**
+1. **pi_passive_flight.py** first — fly over dummy, measure CV (zero commands, zero risk)
+2. **pi_flight.py** second — full dashboard with N/Y/I/X/L commands
+
+**Model preparation started (not completed):**
+- Created `models/` directory
+- Copied `best.tflite` → `models/custom_yolov8n.tflite` as baseline
+- COCO yolov8n export attempted but missing ONNX dependencies
+- Installed onnx, onnxslim, onnxruntime in venv
+- Remaining exports deferred to next session (onnx2tf dependency issues)
+- **TODO for next session**: Export COCO person detector, INT8 quantized, yolov8s models
+- **TODO**: Consider using pretrained YOLO person detection (COCO class 0) as fallback
+- **TODO**: Retrain custom model with more diverse dummy images (different positions, angles, lighting)
+
+**Added FAKE DET button to pi_flight.py:**
+- Browser button that creates a fake detection at drone's current GPS or custom coordinates
+- Allows testing full investigate → classify → land sequence without CV working
+- Useful on flight day if model doesn't detect from altitude
+
+**Created `docs/FLIGHT_DAY_CHECKLIST.md`:**
+- Single printable document for flight day — follow top to bottom
+- Phase 0: push code, charge, pack
+- Phase 1: Pi setup, mavproxy, diagnostics, MP connection
+- Phase 2: GPS lock (wait for green LED)
+- Phase 3: RC setup, kill switch test
+- Phase 4: FOV calibration (camera + ruler → update FOCAL_LENGTH_MM)
+- Phase 5: inference benchmark (measure FPS on Pi)
+- Phase 6: dummy placement, note GPS
+- Step 1: MP AUTO waypoints (no code)
+- Step 2: passive CV (pi_passive_flight.py — zero commands)
+- Step 3: full dashboard (pi_flight.py — N/Y/I/X/L commands)
+- After-flight recording template (results, config updates needed)
+- Quick reference: all commands, model swap instructions
+
+**Audited flight readiness:**
+- All core scripts compile and are ready
+- Some pi_1 through pi_9 scripts only exist on Pi (not in git), but tests2/ has equivalent or better versions
+- FOV calibration scripts exist in both tests/ and tests2/
+- Confidence threshold is 0.4 in vision.py (lines 174 and 197)
+
+**Files created:**
+- `pi_flight.py` — web ground station (~1030 lines, with FAKE DET)
+- `models/custom_yolov8n.tflite` — copy of current best.tflite
+- `docs/FIRST_FLIGHT.md` — first flight plan (created in part 1)
+- `docs/FLIGHT_DAY_CHECKLIST.md` — single printable flight day document
+- `docs/CV_GUIDE.md` — GPS estimation section (added in part 1)
+
+**Files modified:**
+- `CLAUDE.md` — session log, file structure, current state updated
+
+**Installed in venv (partial — for model export):**
+- onnx, onnxslim, onnxruntime (installed OK)
+- onnx2tf, sng4onnx, onnx_graphsurgeon (failed — dependency issues on Windows)
+
+**Known issues / future work:**
+- Model export pipeline needs ONNX → TF SavedModel → TFLite chain (onnx2tf install failed on Windows)
+- May need to export models on Linux/WSL instead of Windows
+- Custom dummy model trained on synthetic composites only — need real photos for better accuracy
+- COCO "person" class may work as fallback (dummy is human-shaped)
+- pi_flight.py not yet tested on Pi hardware (tested in SIMULATION only)
+- Some pi_1-pi_9 test scripts missing from git (exist on Pi only) — tests2/ covers same functionality
+
+**Next steps (before flight day):**
+- [ ] Push all code to git, pull on Pi
+- [ ] Recreate pienv on Pi if needed (requirements_pi.txt + ai-edge-litert)
+- [ ] Export alternative TFLite models (COCO person, INT8, yolov8s) — try on WSL if Windows fails
+- [ ] Retrain custom model with diverse dummy images (different positions, angles, lighting)
+- [ ] Test pi_flight.py in SIMULATION (verify video stream fix works)
+- [ ] Configure RC controller (kill switch = STABILIZE, failsafe = RTL)
+- [ ] Follow FLIGHT_DAY_CHECKLIST.md on flight day
 
 ---
 

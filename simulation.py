@@ -224,6 +224,15 @@ class SimulationEnvironment:
                     label = f"#{cid} ({cl['detection_count']})"
                     cv2.putText(display_map, label, (clx + 18, cly + 5),
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+                    # Total average marker (small square, same color)
+                    if cl.get("total_gps"):
+                        tx, ty = geo_tool.gps_to_pixels(cl["total_gps"][0], cl["total_gps"][1])
+                        cv2.rectangle(display_map, (tx-5, ty-5), (tx+5, ty+5), color, 2)
+                    # Kalman filter marker (triangle, same color)
+                    if cl.get("kalman_gps"):
+                        kx, ky = geo_tool.gps_to_pixels(cl["kalman_gps"][0], cl["kalman_gps"][1])
+                        tri = np.array([(kx, ky-7), (kx+6, ky+5), (kx-6, ky+5)], np.int32)
+                        cv2.fillPoly(display_map, [tri], color)
         elif target_gps[0] != 0:
             # Fallback: single green EST if no clusters provided
             tx, ty = geo_tool.gps_to_pixels(target_gps[0], target_gps[1])

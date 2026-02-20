@@ -675,3 +675,187 @@ FOCAL_LENGTH_MM      →      FOV calculation (GPS offset math in main.py)
 ```
 
 Vision doesn't know about GPS, altitudes, search patterns, or the Cube. It just says "I see something at pixel (x, y) with confidence c." The rest of the system decides what to do with that.
+
+---
+
+## GPS Estimation: Error Sources, Compensation, and Best Practices
+
+This section documents how the simulator estimates the dummy's GPS position from CV
+detections, what errors affect the estimate, and what to watch out for in real flights.
+
+### How Position Estimation Works
+
+Every time CV detects the dummy in a frame, the system calculates its GPS position:
+
+```
+1. CV reports pixel coordinates (x, y) of dummy centre in the 640x480 frame
+2. Pixel offset from frame centre = (x - 320, y - 240)
+3. Ground Sample Distance (GSD) = (altitude * sensor_width) / (focal_length * image_width)
+   GSD tells us how many metres each pixel represents on the ground
+4. Ground offset in metres = pixel_offset * GSD
+5. Rotate by drone yaw to get north/east offset
+6. Add to drone GPS position → estimated dummy GPS
+```
+
+Each detection produces one GPS estimate. We collect many of these and average them
+(weighted by quality) to get the best estimate.
+
+### Three Estimation Methods (implemented in simple_simulator.py)
+
+| Method | How it works | Marker | Best for |
+|--------|-------------|--------|----------|
+| **Rolling 50** | Weighted average of last 50 observations | Green circle | Quick convergence, forgets old data |
+| **Running total** | Weighted average of ALL observations ever | Square "T" | Long-term accuracy, most stable |
+| **Kalman filter** | Bayesian filter with uncertainty tracking | Triangle "K" | Optimal filtering (needs tuning) |
+
+**Running total average is recommended as the primary estimate.** It's the simplest, most
+stable, and performs best with many observations. The rolling 50 is useful early on (before
+50 observations) and the Kalman filter is kept for comparison/experimentation.
+
+### Error Sources
+
+| Error source | Magnitude | Type | Averages out? | Compensation |
+|-------------|-----------|------|---------------|-------------|
+| **GPS drift** | ±2-3m | Random | YES | More observations → drift cancels out |
+| **Altitude noise** | ±1m | Random | YES | Many readings average to true altitude |
+| **Yaw noise** | ±3° | Random | YES | Offset rotations cancel over many frames |
+| **Camera shake/vibration** | ±5-20px | Random | YES | EMA smoothing + many observations |
+| **Motion blur** | Shifts centre ±px | Random | YES | Slower flight speed helps, still averages |
+| **CV bounding box jitter** | ±5-10px | Random | YES | Inherent noise in detection, averages out |
+| **FOV calibration** | Scales ALL estimates | **SYSTEMATIC** | **NO** | Must calibrate SENSOR_WIDTH_MM and FOCAL_LENGTH_MM |
+
+**Key insight**: All random errors average out with enough observations. The ONLY error that
+doesn't average out is **FOV calibration error** — if your sensor width or focal length is
+wrong, every single estimate is biased in the same direction. This is the one thing you MUST
+get right.
+
+### FOV Calibration (Critical)
+
+If FOV is miscalibrated, GSD is wrong, and every pixel-to-GPS conversion has a systematic
+bias. For example:
+- FOV 5% too wide → all estimates are 5% further from drone than reality
+- FOV 5% too narrow → all estimates are 5% closer than reality
+
+**How to calibrate:**
+1. Run `pi_6_fov_test.py` or `fov_calibrate.py` on bench
+2. Place object at known distance, measure pixel size
+3. Calculate true SENSOR_WIDTH_MM and FOCAL_LENGTH_MM
+4. Update `config.py`
+
+**Simulation flag**: `--fov-error 5` introduces ±5% random FOV error to test sensitivity.
+
+### Inverse Variance Weighting (Altitude-Dependent)
+
+Lower altitude = better estimate. Position error is proportional to altitude (larger GSD =
+each pixel covers more ground = more error per pixel of jitter). We weight observations by
+inverse variance:
+
+```
+weight_factor = (30 / altitude)²
+```
+
+| Altitude | Weight factor | Meaning |
+|----------|--------------|---------|
+| 30m | 1x | Baseline weight |
+| 20m | 2.25x | 2.25x more trusted than 30m |
+| 15m | 4x | 4x more trusted |
+| 10m | 9x | 9x more trusted |
+
+This means a few observations at 10m altitude are worth many observations at 30m. When
+investigating (hovering at 15m), the estimate converges much faster than during a high-altitude
+flyby.
+
+Additionally, centre-snap observations (target confirmed at frame centre, pixel offset ≈ 0)
+get a 10x bonus weight because there's no pixel-to-ground conversion error — the target is
+directly below the drone.
+
+### Altitude Test Results (Simulation)
+
+Run with `H` key in simple_simulator.py. Hovers at each altitude for 10 seconds:
+
+```
+Altitude | Rolling 50 error | Total avg error | Kalman error
+---------|-------------------|-----------------|-------------
+  30m    |    ~2-4m          |    ~2-4m        |   ~3-5m
+  25m    |    ~1.5-3m        |    ~1.5-3m      |   ~2-4m
+  20m    |    ~1-2m          |    ~1-2m        |   ~1.5-3m
+  15m    |    ~0.5-1.5m      |    ~0.5-1m      |   ~1-2m
+  10m    |    ~0.3-0.8m      |    ~0.3-0.6m    |   ~0.5-1m
+```
+
+**Lower altitude = better estimate.** This is expected — fewer metres per pixel, less error
+amplification. The investigate hover at 15m typically produces sub-metre estimates.
+
+### Simulation vs Reality
+
+The simulation has a known limitation: at low altitude, the drone camera view is created by
+cropping a small region of map.jpg and upscaling to 640x480. This means low-altitude images
+are pixelated (few source pixels stretched). In reality, the camera always captures fresh
+640x480 regardless of altitude — the image quality at low altitude is actually BETTER than
+the simulation shows. **Simulation results are therefore conservative** — real flights should
+produce equal or better estimates.
+
+### Spatial Clustering
+
+When multiple targets exist on the ground, observations are grouped into clusters by GPS
+distance. Observations within `CLUSTER_THRESHOLD_M` (default 30m, configurable with
+`--cluster-dist`) of an existing cluster get added to it. Otherwise, a new cluster is created.
+
+Each cluster maintains its own rolling 50, total average, and Kalman filter independently.
+Clusters get permanent IDs (never shift when others are classified/removed).
+
+### Operational Flow (First Flight)
+
+```
+1. Fly search pattern manually at 20-30m
+2. CV detects something → observations accumulate → cluster estimate appears
+3. Press N → drone flies to cluster's total average position, descends to 15m
+4. Hover and observe:
+   - Estimate refines (lower altitude = higher-weight observations)
+   - Detection counter shows consistency: "Detections: 14 in cluster"
+   - Camera feed shows what drone sees
+5. Classify:
+   - Y = real dummy → press L to land 7.5m away
+   - I = item of interest → logged, estimate reset, resume flying
+   - X = false positive → discarded, estimate reset, resume flying
+6. If Y → L → drone flies to 7.5m north of estimate → auto-lands
+```
+
+### What to Watch Out For
+
+1. **FOV calibration**: The one thing that MUST be right. Calibrate before flight.
+2. **Wind**: Causes position oscillation. More observations help, but strong wind means
+   the drone's reported GPS is noisier. ArduCopter's EKF handles this internally.
+3. **Altitude reading**: Baro can drift. If altitude is wrong, GSD is wrong, estimate is
+   wrong. Check altitude matches reality.
+4. **Magnetic interference**: Bad compass → bad yaw → rotated estimates. Calibrate compass.
+5. **Low detection rate at altitude**: If dummy is only detected in 10% of frames, estimates
+   are sparse and noisy. Lower altitude or improve model.
+6. **Sun glare / shadows**: Can cause false positives or missed detections. Test in actual
+   flight conditions.
+
+### Simulation Flags for Testing
+
+```bash
+python simple_simulator.py \
+  --fps 4           \  # Limit CV to 4fps (match Pi speed)
+  --tflite           \  # Use TFLite backend (match Pi)
+  --gps-drift 2.5    \  # ±2.5m GPS random walk
+  --alt-noise 1      \  # ±1m altitude noise
+  --yaw-noise 3      \  # ±3° yaw noise
+  --fov-error 5      \  # ±5% FOV calibration error
+  --shake 5          \  # ±5px camera shake
+  --cluster-dist 15  \  # 15m cluster grouping threshold
+```
+
+### SAR Industry Best Practice (Confirmed by Research)
+
+The pixel-to-GPS projection with weighted averaging approach used here is the **standard
+method** in commercial SAR drone systems. Key findings:
+- 5-10m accuracy is considered "good enough" for SAR (guides ground teams to area)
+- 1-3m is excellent (direct approach possible)
+- Sub-metre is overkill for SAR operations
+- Multiple observations from different positions/altitudes improve accuracy
+- Lower altitude observations are more valuable (smaller GSD)
+- FOV calibration is the primary source of systematic error
+- ArduCopter's EKF provides ±1-2m navigation accuracy with standard GPS

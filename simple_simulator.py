@@ -252,6 +252,16 @@ class SimpleMission:
         self.landing_est_source = None # "G LOCK" or "GPS EST" — which estimate was used
         self.landing_est_pos = None    # (lat, lon) — the estimated dummy position used for landing
 
+        # --- Altitude test (press H — hover at different altitudes, compare estimates) ---
+        self.alt_test_active = False
+        self.alt_test_altitudes = [30, 25, 20, 15, 10]  # metres
+        self.alt_test_duration = 10  # seconds per altitude
+        self.alt_test_step = 0
+        self.alt_test_start_time = 0
+        self.alt_test_results = []  # [{"alt": m, "n_obs": N, "rolling_err": m, "total_err": m, "kalman_err": m}, ...]
+        self.alt_test_obs_start = 0
+        self.alt_test_cluster_backup = None  # save cluster state before test
+
         # --- Display ---
         self.view_w_px = 100
         self.view_h_px = 100
@@ -342,10 +352,18 @@ class SimpleMission:
         self._next_cluster_id = getattr(self, '_next_cluster_id', 0) + 1
         return {
             "id": self._next_cluster_id,  # permanent label (never changes)
-            "observations": [],   # [(lat, lon, weight), ...]
-            "best_gps": None,     # (lat, lon) weighted average
+            "observations": [],   # [(lat, lon, weight), ...] last 50
+            "best_gps": None,     # (lat, lon) rolling weighted average (last 50)
+            "total_gps": None,    # (lat, lon) running total weighted average (all time)
+            "total_wlat": 0.0,   # running sum: lat * weight
+            "total_wlon": 0.0,   # running sum: lon * weight
+            "total_w": 0.0,      # running sum: weight
+            "kalman_gps": None,   # (lat, lon) Kalman filter estimate
+            "kalman_P": None,     # 2x2 covariance matrix (uncertainty)
             "detection_count": 0, # number of detections in this cluster
             "error_m": None,      # error vs actual dummy (sim only)
+            "total_error_m": None, # error of total average vs actual (sim only)
+            "kalman_error_m": None, # error of Kalman estimate vs actual (sim only)
         }
 
     def _cluster_label(self, cluster_or_idx):
@@ -390,17 +408,56 @@ class SimpleMission:
             cluster["observations"] = cluster["observations"][-50:]
         cluster["detection_count"] += 1
 
-        # Update cluster's weighted average
+        # Rolling average (last 50 observations)
         obs = cluster["observations"]
         total_w = sum(w for _, _, w in obs)
         avg_lat = sum(lat * w for lat, _, w in obs) / total_w
         avg_lon = sum(lon * w for _, lon, w in obs) / total_w
         cluster["best_gps"] = (avg_lat, avg_lon)
 
+        # Running total average (all observations ever)
+        cluster["total_wlat"] += est_lat * weight
+        cluster["total_wlon"] += est_lon * weight
+        cluster["total_w"] += weight
+        cluster["total_gps"] = (cluster["total_wlat"] / cluster["total_w"],
+                                cluster["total_wlon"] / cluster["total_w"])
+
+        # Kalman filter update (static target, varying measurement noise)
+        # Measurement noise: high weight = low noise, low weight = high noise
+        # R = measurement variance (metres^2, converted to degrees^2)
+        R_m2 = (3.0 / max(weight, 0.1)) ** 2  # weight 10 → 0.09m², weight 1 → 9m²
+        R_EARTH = 6378137.0
+        R_deg2 = (R_m2 / R_EARTH ** 2) * (180 / math.pi) ** 2  # convert m² to deg²
+        z = np.array([est_lat, est_lon])  # measurement
+        if cluster["kalman_P"] is None:
+            # First observation: initialize state to measurement
+            cluster["kalman_gps"] = (est_lat, est_lon)
+            cluster["kalman_P"] = np.eye(2) * R_deg2 * 4  # start with high uncertainty
+        else:
+            # Predict: state doesn't change (static target), P grows slightly
+            Q_deg2 = (0.1 / R_EARTH) ** 2 * (180 / math.pi) ** 2  # tiny process noise
+            x = np.array(cluster["kalman_gps"])
+            P = cluster["kalman_P"] + np.eye(2) * Q_deg2
+            # Update
+            R_mat = np.eye(2) * R_deg2
+            S = P + R_mat                     # innovation covariance
+            K = P @ np.linalg.inv(S)          # Kalman gain
+            x = x + K @ (z - x)              # updated state
+            P = (np.eye(2) - K) @ P           # updated covariance
+            cluster["kalman_gps"] = (float(x[0]), float(x[1]))
+            cluster["kalman_P"] = P
+
         # Error vs actual dummy (sim only)
         if self.actual_gps:
             cluster["error_m"] = self._gps_distance(
                 avg_lat, avg_lon, self.actual_gps[0], self.actual_gps[1])
+            cluster["total_error_m"] = self._gps_distance(
+                cluster["total_gps"][0], cluster["total_gps"][1],
+                self.actual_gps[0], self.actual_gps[1])
+            if cluster["kalman_gps"]:
+                cluster["kalman_error_m"] = self._gps_distance(
+                    cluster["kalman_gps"][0], cluster["kalman_gps"][1],
+                    self.actual_gps[0], self.actual_gps[1])
 
         return idx
 
@@ -418,7 +475,9 @@ class SimpleMission:
         if dist_from_centre < self.CENTRE_THRESHOLD_PX:
             est_lat = self.lat
             est_lon = self.lon
-            weight = 10.0  # highest confidence
+            # Inverse variance weighting: error ∝ alt, variance ∝ alt², weight ∝ 1/alt²
+            alt_factor = (30.0 / max(self.alt, 1.0)) ** 2  # 30m=1x, 15m=4x, 10m=9x
+            weight = 10.0 * alt_factor  # centre-snap at 10m → weight 90
             self.centre_snap = True
             # Store debug values for dashboard
             self.dbg.update({
@@ -458,7 +517,10 @@ class SimpleMission:
             est_lon = self.lon + dLon
             # Weight: closer to centre = higher weight (max 5 at centre, min 1 at edge)
             max_dist = math.sqrt(Cx**2 + Cy**2)
-            weight = 1.0 + 4.0 * (1.0 - dist_from_centre / max_dist)
+            centre_weight = 1.0 + 4.0 * (1.0 - dist_from_centre / max_dist)
+            # Inverse variance weighting: error ∝ alt, variance ∝ alt², weight ∝ 1/alt²
+            alt_factor = (30.0 / max(self.alt, 1.0)) ** 2  # 30m=1x, 15m=4x, 10m=9x
+            weight = centre_weight * alt_factor
             self.centre_snap = False
             # Store debug values for dashboard
             self.dbg.update({
@@ -484,14 +546,47 @@ class SimpleMission:
             if len(cluster["observations"]) > 50:
                 cluster["observations"] = cluster["observations"][-50:]
             cluster["detection_count"] += 1
+            # Rolling average (last 50)
             obs = cluster["observations"]
             total_w = sum(w for _, _, w in obs)
             avg_lat = sum(lat * w for lat, _, w in obs) / total_w
             avg_lon = sum(lon * w for _, lon, w in obs) / total_w
             cluster["best_gps"] = (avg_lat, avg_lon)
+            # Running total average (all time)
+            cluster["total_wlat"] += est_lat * weight
+            cluster["total_wlon"] += est_lon * weight
+            cluster["total_w"] += weight
+            cluster["total_gps"] = (cluster["total_wlat"] / cluster["total_w"],
+                                    cluster["total_wlon"] / cluster["total_w"])
+            # Kalman filter update
+            R_m2 = (3.0 / max(weight, 0.1)) ** 2
+            R_EARTH = 6378137.0
+            R_deg2 = (R_m2 / R_EARTH ** 2) * (180 / math.pi) ** 2
+            z = np.array([est_lat, est_lon])
+            if cluster["kalman_P"] is None:
+                cluster["kalman_gps"] = (est_lat, est_lon)
+                cluster["kalman_P"] = np.eye(2) * R_deg2 * 4
+            else:
+                Q_deg2 = (0.1 / R_EARTH) ** 2 * (180 / math.pi) ** 2
+                x = np.array(cluster["kalman_gps"])
+                P = cluster["kalman_P"] + np.eye(2) * Q_deg2
+                R_mat = np.eye(2) * R_deg2
+                S = P + R_mat
+                K = P @ np.linalg.inv(S)
+                x = x + K @ (z - x)
+                P = (np.eye(2) - K) @ P
+                cluster["kalman_gps"] = (float(x[0]), float(x[1]))
+                cluster["kalman_P"] = P
             if self.actual_gps:
                 cluster["error_m"] = self._gps_distance(
                     avg_lat, avg_lon, self.actual_gps[0], self.actual_gps[1])
+                cluster["total_error_m"] = self._gps_distance(
+                    cluster["total_gps"][0], cluster["total_gps"][1],
+                    self.actual_gps[0], self.actual_gps[1])
+                if cluster["kalman_gps"]:
+                    cluster["kalman_error_m"] = self._gps_distance(
+                        cluster["kalman_gps"][0], cluster["kalman_gps"][1],
+                        self.actual_gps[0], self.actual_gps[1])
         else:
             # Normal flight: route to nearest cluster or create new
             idx = self._route_to_cluster(est_lat, est_lon, weight)
@@ -527,10 +622,12 @@ class SimpleMission:
     def _start_investigate(self, cluster_idx):
         """Start investigating a specific cluster by index."""
         cluster = self.detection_clusters[cluster_idx]
-        if not cluster["best_gps"]:
+        # Use total average (best estimate), fall back to rolling 50
+        target = cluster.get("total_gps") or cluster.get("best_gps")
+        if not target:
             print(f"[INVESTIGATE] Cluster {self._cluster_label(cluster_idx)} has no position yet")
             return
-        self._start_investigate_gps(cluster["best_gps"], cluster_idx)
+        self._start_investigate_gps(target, cluster_idx)
 
     def _start_investigate_gps(self, gps, cluster_idx=None):
         """Start investigation at a GPS position."""
@@ -1306,6 +1403,23 @@ class SimpleMission:
                     label = f"#{cid} ({cl['detection_count']})"
                     cv2.putText(scat, label, (ex + 10, ey - 3),
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.35, color, 1)
+                # Total average (small square, same color)
+                if cl.get("total_gps"):
+                    tx, ty = gps_to_scatter(cl["total_gps"][0], cl["total_gps"][1])
+                    if 0 <= tx < S and 0 <= ty < S:
+                        color = cluster_colors[ci % len(cluster_colors)]
+                        cv2.rectangle(scat, (tx-4, ty-4), (tx+4, ty+4), color, 2)
+                        cv2.putText(scat, "T", (tx + 6, ty + 4),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.3, color, 1)
+                # Kalman filter (triangle, same color)
+                if cl.get("kalman_gps"):
+                    kx, ky = gps_to_scatter(cl["kalman_gps"][0], cl["kalman_gps"][1])
+                    if 0 <= kx < S and 0 <= ky < S:
+                        color = cluster_colors[ci % len(cluster_colors)]
+                        tri = np.array([(kx, ky-5), (kx+4, ky+3), (kx-4, ky+3)], np.int32)
+                        cv2.fillPoly(scat, [tri], color)
+                        cv2.putText(scat, "K", (kx + 6, ky + 3),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.3, color, 1)
 
         # Plot G LOCK estimate (yellow star — 30s averaged GPS, most precise)
         if self.locked_gps:
@@ -1344,7 +1458,14 @@ class SimpleMission:
                             cv2.FONT_HERSHEY_SIMPLEX, 0.35, (180, 0, 255), 1)
         elif self.show_landing_zone and self.landing_phase is None:
             # Preview: where L would land (7.5m north of best estimate)
-            est = self.locked_gps or self.best_gps
+            # Use total average from active cluster for landing preview
+            est = self.locked_gps
+            if not est:
+                ci = self.active_cluster_idx
+                if ci is not None and ci < len(self.detection_clusters):
+                    est = self.detection_clusters[ci].get("total_gps")
+            if not est:
+                est = self.best_gps
             if est:
                 preview_lat = est[0] + (self.landing_offset_m / R) * (180 / math.pi)
                 preview_lon = est[1]
@@ -1608,6 +1729,67 @@ class SimpleMission:
                                   f"({'improved' if improvement > 0 else 'same'} "
                                   f"by {abs(improvement):.2f}m)")
 
+                        # --- Altitude test: auto-step through altitudes ---
+                        if self.alt_test_active:
+                            if self.alt_test_start_time == 0:
+                                # Just arrived at this altitude
+                                self.alt_test_start_time = time.time()
+                                self.alt_test_obs_start = len(self.gps_observations)
+                                # Reset cluster for clean measurement
+                                self.detection_clusters = [self._new_cluster()]
+                                self.active_cluster_idx = 0
+                                self.investigate_cluster_idx = 0
+                                alt = self.alt_test_altitudes[self.alt_test_step]
+                                print(f"[ALT TEST] Hovering at {alt}m — collecting for {self.alt_test_duration}s...")
+
+                            elapsed = time.time() - self.alt_test_start_time
+                            if elapsed >= self.alt_test_duration:
+                                # Record results for this altitude
+                                alt = self.alt_test_altitudes[self.alt_test_step]
+                                cl = self.detection_clusters[0] if self.detection_clusters else {}
+                                n_obs = cl.get("detection_count", 0)
+                                result = {
+                                    "alt": alt,
+                                    "n_obs": n_obs,
+                                    "rolling_err": cl.get("error_m"),
+                                    "total_err": cl.get("total_error_m"),
+                                    "kalman_err": cl.get("kalman_error_m"),
+                                }
+                                self.alt_test_results.append(result)
+                                e_r = f"{result['rolling_err']:.2f}m" if result['rolling_err'] else "N/A"
+                                e_t = f"{result['total_err']:.2f}m" if result['total_err'] else "N/A"
+                                e_k = f"{result['kalman_err']:.2f}m" if result['kalman_err'] else "N/A"
+                                print(f"[ALT TEST] {alt}m: {n_obs} obs | R50={e_r} Total={e_t} Kalman={e_k}")
+
+                                # Next altitude or finish
+                                self.alt_test_step += 1
+                                if self.alt_test_step < len(self.alt_test_altitudes):
+                                    next_alt = self.alt_test_altitudes[self.alt_test_step]
+                                    self.investigate_alt = next_alt
+                                    self.investigate_phase = "descending"
+                                    self.alt_test_start_time = 0
+                                    print(f"[ALT TEST] Moving to {next_alt}m...")
+                                else:
+                                    # Done — print summary
+                                    self.alt_test_active = False
+                                    self.investigating = False
+                                    self.investigate_phase = None
+                                    print(f"\n{'='*60}")
+                                    print(f"  ALTITUDE TEST RESULTS")
+                                    print(f"{'='*60}")
+                                    print(f"  {'ALT':>5}  {'OBS':>5}  {'ROLLING':>8}  {'TOTAL':>8}  {'KALMAN':>8}")
+                                    print(f"  {'-'*5}  {'-'*5}  {'-'*8}  {'-'*8}  {'-'*8}")
+                                    for r in self.alt_test_results:
+                                        e_r = f"{r['rolling_err']:.2f}m" if r['rolling_err'] else "N/A"
+                                        e_t = f"{r['total_err']:.2f}m" if r['total_err'] else "N/A"
+                                        e_k = f"{r['kalman_err']:.2f}m" if r['kalman_err'] else "N/A"
+                                        print(f"  {r['alt']:>4}m  {r['n_obs']:>5}  {e_r:>8}  {e_t:>8}  {e_k:>8}")
+                                    print(f"{'='*60}")
+                                    # Restore original clusters
+                                    if hasattr(self, 'alt_test_saved_clusters'):
+                                        self.detection_clusters = self.alt_test_saved_clusters
+                                        self.active_cluster_idx = 0 if self.detection_clusters else None
+
                 # --- G lock: collect GPS samples for 30s then auto-lock ---
                 # ONLY collect when centre-snap is active (target confirmed at centre)
                 if self.locking and self.visual_servo:
@@ -1803,9 +1985,17 @@ class SimpleMission:
                 if self.locked_gps:
                     est_pos = self.locked_gps
                     est_source = "G LOCK"
-                elif self.best_gps:
-                    est_pos = self.best_gps
-                    est_source = "GPS EST"
+                else:
+                    # Use running total average from active cluster
+                    ci = self.active_cluster_idx
+                    if ci is not None and ci < len(self.detection_clusters):
+                        cl = self.detection_clusters[ci]
+                        if cl.get("total_gps"):
+                            est_pos = cl["total_gps"]
+                            est_source = "TOTAL AVG"
+                    if not est_pos and self.best_gps:
+                        est_pos = self.best_gps
+                        est_source = "ROLLING 50"
 
                 if est_pos and self.landing_phase is None:
                     R = 6371000
@@ -1862,6 +2052,43 @@ class SimpleMission:
                     print(f"[LOCK] Averaging for {self.lock_duration}s... keep V mode on")
                 else:
                     print("[LOCK] Centre on dummy with V mode first, then press G to lock")
+            elif key == ord('h') or key == ord('H'):  # altitude test
+                if self.alt_test_active:
+                    self.alt_test_active = False
+                    print("[ALT TEST] Cancelled")
+                elif self.master and self.armed and self.alt > 2:
+                    # Need a target position — use active cluster total avg
+                    ci = self.active_cluster_idx
+                    target = None
+                    if ci is not None and ci < len(self.detection_clusters):
+                        cl = self.detection_clusters[ci]
+                        target = cl.get("total_gps") or cl.get("best_gps")
+                    if not target and self.best_gps:
+                        target = self.best_gps
+                    if target:
+                        self.alt_test_active = True
+                        self.alt_test_step = 0
+                        self.alt_test_results = []
+                        self.alt_test_target = target
+                        # Reset cluster for clean per-altitude comparison
+                        self.alt_test_saved_clusters = [dict(c) for c in self.detection_clusters]
+                        alt = self.alt_test_altitudes[0]
+                        print(f"\n[ALT TEST] Starting altitude comparison test")
+                        print(f"[ALT TEST] Altitudes: {self.alt_test_altitudes}m, {self.alt_test_duration}s each")
+                        print(f"[ALT TEST] Flying to target at {alt}m...")
+                        # Create fresh test cluster
+                        self.detection_clusters = [self._new_cluster()]
+                        self.active_cluster_idx = 0
+                        self.investigate_cluster_idx = 0
+                        self.investigating = True
+                        self.investigate_phase = "approaching"
+                        self.investigate_target = target
+                        self.investigate_alt = alt
+                        self.alt_test_start_time = 0  # set when we reach altitude
+                    else:
+                        print("[ALT TEST] No target detected yet — fly past dummy first")
+                else:
+                    print("[ALT TEST] Need to be armed and airborne first")
             elif key == ord('n') or key == ord('N'):  # investigate — fly near estimate
                 if self.investigating:
                     # Cancel investigation
