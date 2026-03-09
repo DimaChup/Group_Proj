@@ -29,6 +29,10 @@ Frame capture (use with --save-frames):
   --save-every N        Save every Nth frame instead of all (default 1 = all)
   --save-dir DIR        Output folder (default: flight_frames/)
 
+Detection image capture (use with --save-detections):
+  --save-detections     Save frames with detections (bbox drawn, GPS in filename)
+  --det-dir DIR         Output folder (default: detections/)
+
   Saved files:  DET_0.83_alt12.4_spd3.2_001234.jpg   (detection hit)
                 MISS_alt12.4_spd3.2_001235.jpg        (no detection)
   Review after flight to see blur at different speeds and which frames detected.
@@ -61,12 +65,14 @@ import config
 HEADLESS = "--headless" in sys.argv
 STREAM = "--stream" in sys.argv
 SAVE_FRAMES = "--save-frames" in sys.argv
+SAVE_DETECTIONS = "--save-detections" in sys.argv
 STREAM_PORT = 8090
 STREAM_W, STREAM_H = 320, 240
 STREAM_FPS = 5
 STREAM_QUALITY = 50
 SAVE_EVERY = 1
 SAVE_DIR = os.path.join(project_root, "flight_frames")
+DET_DIR = os.path.join(project_root, "detections")
 
 for _i, _arg in enumerate(sys.argv):
     if _arg == "--stream-port" and _i + 1 < len(sys.argv):
@@ -82,6 +88,8 @@ for _i, _arg in enumerate(sys.argv):
         SAVE_EVERY = int(sys.argv[_i + 1])
     elif _arg == "--save-dir" and _i + 1 < len(sys.argv):
         SAVE_DIR = sys.argv[_i + 1]
+    elif _arg == "--det-dir" and _i + 1 < len(sys.argv):
+        DET_DIR = sys.argv[_i + 1]
 
 # --- Stream globals ---
 _stream_frame = None
@@ -275,6 +283,13 @@ def main():
         print(f"[FRAMES] Save every {SAVE_EVERY} frame(s)")
         print(f"[FRAMES] Format: DET_<conf>_alt<m>_spd<m/s>_<frame#>.jpg  or  MISS_alt<m>_spd<m/s>_<frame#>.jpg")
 
+    # Detection image capture setup
+    saved_det_count = 0
+    if SAVE_DETECTIONS:
+        os.makedirs(DET_DIR, exist_ok=True)
+        print(f"[DETECTIONS] Saving detection images to: {DET_DIR}/")
+        print(f"[DETECTIONS] Format: YYYYMMDD_HHMMSS_lat_lon_conf.jpg (with bbox drawn)")
+
     if not HEADLESS:
         cv2.namedWindow("Passive Flight", cv2.WINDOW_NORMAL)
 
@@ -384,6 +399,29 @@ def main():
                 ))
                 if len(event_log) > MAX_EVENTS:
                     event_log.pop(0)
+
+                # Save detection image with bbox and GPS in filename
+                if SAVE_DETECTIONS:
+                    det_frame = frame.copy()
+                    # Draw bounding box (approximate from center point)
+                    box_size = max(30, dummy_px // 2) if dummy_px > 0 else 40
+                    x1 = max(0, int(px) - box_size)
+                    y1 = max(0, int(py) - box_size)
+                    x2 = min(frame.shape[1], int(px) + box_size)
+                    y2 = min(frame.shape[0], int(py) + box_size)
+                    cv2.rectangle(det_frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                    cv2.putText(det_frame, f"conf={conf:.2f}", (x1, y1 - 8),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+                    # GPS + altitude overlay
+                    cv2.putText(det_frame, f"alt={alt:.1f}m  GPS=({telem['lat']:.6f},{telem['lon']:.6f})",
+                                (10, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+                    # Save with GPS in filename
+                    ts_file = time.strftime("%Y%m%d_%H%M%S")
+                    lat_s = f"{telem['lat']:.6f}".replace('-', 'n')
+                    lon_s = f"{telem['lon']:.6f}".replace('-', 'n')
+                    det_fname = f"{ts_file}_{lat_s}_{lon_s}_{conf:.2f}.jpg"
+                    cv2.imwrite(os.path.join(DET_DIR, det_fname), det_frame)
+                    saved_det_count += 1
 
                 # Buzzer (max once per 2 seconds)
                 if mav and now - last_beep_time > 2.0:
@@ -553,6 +591,8 @@ def main():
     print(f"  Log saved:    {log_path}")
     if SAVE_FRAMES:
         print(f"  Frames saved: {saved_frame_count} images in {SAVE_DIR}/")
+    if SAVE_DETECTIONS:
+        print(f"  Detection imgs: {saved_det_count} images in {DET_DIR}/")
     print("=" * 55)
 
 

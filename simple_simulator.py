@@ -44,7 +44,8 @@ if config.MODE == "SIMULATION":
 
 class SimpleMission:
     def __init__(self, fps_limit=0, force_tflite=False, gps_drift=0.0, shake=0,
-                 alt_noise=0.0, yaw_noise=0.0, fov_error=0.0, cluster_dist=30.0):
+                 alt_noise=0.0, yaw_noise=0.0, fov_error=0.0, cluster_dist=30.0,
+                 save_detections=False, det_dir="detections"):
         print(f"=== SIMPLE SIMULATOR ({config.MODE} MODE) ===")
         print("Manual flight + CV detection + GPS estimation")
         if fps_limit > 0:
@@ -63,6 +64,13 @@ class SimpleMission:
             print(f"  FOV calibration error: {fov_error:+.0f}% (systematic bias)")
         if cluster_dist != 30.0:
             print(f"  Cluster distance: {cluster_dist:.0f}m (detections within this = same item)")
+        self.save_detections = save_detections
+        self.det_dir = det_dir
+        self.saved_det_count = 0
+        if save_detections:
+            import os
+            os.makedirs(det_dir, exist_ok=True)
+            print(f"  Saving detections to: {det_dir}/")
         print()
 
         # Force TFLite: hide ultralytics AND ensure TFLite interpreter is loaded
@@ -1589,6 +1597,27 @@ class SimpleMission:
                           if self.gps_error_m else
                           f"[CV] #{self.detection_count}: ({u},{v}) conf {conf:.2f}")
 
+                    # Save detection image with bbox + GPS in filename
+                    if self.save_detections and frame is not None:
+                        import os
+                        det_frame = frame.copy()
+                        box_size = 40
+                        x1 = max(0, int(u) - box_size)
+                        y1 = max(0, int(v) - box_size)
+                        x2 = min(det_frame.shape[1], int(u) + box_size)
+                        y2 = min(det_frame.shape[0], int(v) + box_size)
+                        cv2.rectangle(det_frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                        cv2.putText(det_frame, f"conf={conf:.2f}", (x1, y1 - 8),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+                        cv2.putText(det_frame, f"alt={self.alt:.1f}m  GPS=({self.lat:.6f},{self.lon:.6f})",
+                                    (10, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+                        ts_file = time.strftime("%Y%m%d_%H%M%S")
+                        lat_s = f"{self.lat:.6f}".replace('-', 'n')
+                        lon_s = f"{self.lon:.6f}".replace('-', 'n')
+                        det_fname = f"{ts_file}_{lat_s}_{lon_s}_{conf:.2f}.jpg"
+                        cv2.imwrite(os.path.join(self.det_dir, det_fname), det_frame)
+                        self.saved_det_count += 1
+
                 # Auto-centering: fly toward best estimate (GPS-based)
                 if self.centering and self.best_gps and self.master:
                     if found:
@@ -2254,6 +2283,8 @@ class SimpleMission:
         print("=== SESSION SUMMARY ===")
         print(f"  Frames processed: {self.frame_count}")
         print(f"  Detections: {self.detection_count}")
+        if self.save_detections:
+            print(f"  Detection images saved: {self.saved_det_count} in {self.det_dir}/")
         n_obs = len(self.gps_observations)
         if self.best_gps:
             print(f"  GPS observations: {n_obs}")
@@ -2465,8 +2496,13 @@ if __name__ == "__main__":
                         help="FOV calibration error (e.g. --fov-error 5 for 5%% systematic bias). Default: off")
     parser.add_argument("--cluster-dist", type=float, default=30.0, metavar="METRES",
                         help="Min distance between separate detection clusters (default: 30m)")
+    parser.add_argument("--save-detections", action="store_true",
+                        help="Save detection frames with bbox + GPS to detections/ folder")
+    parser.add_argument("--det-dir", type=str, default="detections",
+                        help="Output folder for detection images (default: detections/)")
     args = parser.parse_args()
     mission = SimpleMission(fps_limit=args.fps, force_tflite=args.tflite, gps_drift=args.gps_drift,
                             shake=args.shake, alt_noise=args.alt_noise, yaw_noise=args.yaw_noise,
-                            fov_error=args.fov_error, cluster_dist=args.cluster_dist)
+                            fov_error=args.fov_error, cluster_dist=args.cluster_dist,
+                            save_detections=args.save_detections, det_dir=args.det_dir)
     mission.run()
