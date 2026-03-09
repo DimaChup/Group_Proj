@@ -150,6 +150,13 @@ v3/
 ├── requirements_linux.txt     ← WSL/Linux laptop: full pip freeze (no Windows-specific packages)
 ├── requirements_pi.txt        ← Pi: pymavlink, opencv-headless, numpy<2, tflite-runtime
 │
+├── dashboard/                 ← Standalone React web app — project tracker + SE visualization
+│   ├── CLAUDE.md              ← Dashboard-specific docs (how to run, file map, data editing)
+│   ├── package.json           ← npm install && npm run dev → http://localhost:5050
+│   └── src/pages/             ← GP v2 snapshot + Mission WBS (copied from Orgnaiser)
+│                                 Edit wbs-data.ts to update task progress
+│                                 Edit group-project-v2-data.ts for team/SE/approaches
+│
 ├── docs/
 │   ├── ARCHITECTURE.md        ← System overview, evolving diagrams, hardware checklist
 │   ├── PI_SETUP.md            ← Step-by-step Pi setup and testing guide

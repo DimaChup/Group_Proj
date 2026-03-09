@@ -11,3 +11,5 @@ passive_flight_log.csv
 detection_log.csv
 snapshot_*.jpg
 test_env
+dashboard/node_modules/
+dashboard/dist/
