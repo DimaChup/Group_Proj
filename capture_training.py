@@ -232,10 +232,15 @@ def main():
     video_writer = None
     last_auto = 0
 
+    vid_frame_count = 0
     if recording:
         vpath = os.path.join(video_dir, f"flight_{datetime.now().strftime('%Y%m%d_%H%M%S')}.avi")
         video_writer = cv2.VideoWriter(vpath, cv2.VideoWriter_fourcc(*'MJPG'), args.fps, (cam_w, cam_h))
-        print(f"[REC] Recording to {vpath}")
+        if not video_writer.isOpened():
+            print(f"[REC] ERROR: VideoWriter failed to open!")
+            recording = False
+        else:
+            print(f"[REC] Recording to {vpath} ({cam_w}x{cam_h} @{args.fps}fps)")
 
     try:
         while True:
@@ -252,6 +257,7 @@ def main():
             # Write video
             if recording and video_writer:
                 video_writer.write(frame)
+                vid_frame_count += 1
 
             now = time.time()
 
@@ -285,7 +291,8 @@ def main():
                             if video_writer:
                                 video_writer.release()
                                 video_writer = None
-                            print("  [REC] Stopped recording")
+                            print(f"  [REC] Stopped recording ({vid_frame_count} frames written)")
+                            vid_frame_count = 0
                         else:
                             recording = True
                             vpath = os.path.join(video_dir,
