@@ -30,7 +30,14 @@ if YOLO is None:
                 pass
 
 class VisionSystem:
-    def __init__(self, camera_index=0, model_path="best.tflite"):
+    def __init__(self, camera_index=0, model_path=None):
+        # Default: read from config.py, fallback to best.tflite
+        if model_path is None:
+            try:
+                import config as _cfg
+                model_path = getattr(_cfg, "MODEL_PATH", "best.tflite")
+            except ImportError:
+                model_path = "best.tflite"
         self.cap = None
         self._picam = None
         if camera_index is not None:
