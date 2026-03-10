@@ -38,11 +38,22 @@ import signal
 # Ensure Ctrl+C works even with threads
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
-# Force headless OpenCV when no display
+# Force headless OpenCV when no display (SSH/PuTTY)
 if not os.environ.get('DISPLAY'):
-    os.environ['QT_QPA_PLATFORM'] = 'minimal'
+    # Prevent cv2 from trying to open any GUI windows
+    os.environ.pop('QT_QPA_PLATFORM', None)
+    os.environ['OPENCV_VIDEOIO_PRIORITY_BACKEND'] = '0'
 
 import cv2
+
+# Disable GUI if no display
+if not os.environ.get('DISPLAY'):
+    cv2_imshow_orig = cv2.imshow
+    cv2.imshow = lambda *a, **k: None
+    cv2.namedWindow = lambda *a, **k: None
+    cv2.setMouseCallback = lambda *a, **k: None
+    cv2.waitKey = lambda *a, **k: -1
+    cv2.destroyAllWindows = lambda *a, **k: None
 import numpy as np
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from socketserver import ThreadingMixIn
