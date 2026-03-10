@@ -445,6 +445,20 @@ def draw_overlay(frame, last_det):
         fov_text = (f"FOV:{FOV['hfov_deg']:.0f}deg | "
                     f"Ground:{gw:.1f}x{gh:.1f}m @{alt_val:.0f}m | "
                     f"Cal@1m:{cal_w*100:.0f}x{cal_h*100:.0f}cm")
+        # Draw ground coverage dimensions on frame edges
+        dim_color = (180, 140, 0)  # amber
+        # Width label (top centre)
+        w_label = f"{gw:.1f}m"
+        cv2.arrowedLine(display, (w // 4, 55), (10, 55), dim_color, 1, tipLength=0.15)
+        cv2.arrowedLine(display, (3 * w // 4, 55), (w - 10, 55), dim_color, 1, tipLength=0.15)
+        cv2.putText(display, w_label, (w // 2 - 20, 52),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.4, dim_color, 1)
+        # Height label (left side, vertical)
+        h_label = f"{gh:.1f}m"
+        cv2.arrowedLine(display, (12, h // 4), (12, 45), dim_color, 1, tipLength=0.15)
+        cv2.arrowedLine(display, (12, 3 * h // 4), (12, h - 80), dim_color, 1, tipLength=0.15)
+        cv2.putText(display, h_label, (3, h // 2 + 5),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.4, dim_color, 1)
     else:
         fov_text = (f"FOV:{FOV['hfov_deg']:.0f}deg  f={FOV['focal_mm']}mm  "
                     f"sens={FOV['sensor_w']}mm | Cal@1m:{cal_w*100:.0f}x{cal_h*100:.0f}cm")

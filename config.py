@@ -72,6 +72,8 @@ DUMMY_HEIGHT_M = 1.8
 # --- CAMERA SPECS ---
 # Update these for the Raspberry Pi Global Shutter Camera
 SENSOR_WIDTH_MM = 5.02
+# Calibrate: hold camera 1m above tape measure, read visible width in mm
+# FOCAL_LENGTH_MM = 5020 / measured_width_mm
 FOCAL_LENGTH_MM = 7.0
 IMAGE_W = 640
 IMAGE_H = 480
