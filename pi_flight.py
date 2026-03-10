@@ -381,6 +381,8 @@ class PiFlight:
         except Exception:
             pass
         print(f"=== SAR GROUND STATION ({config.MODE} MODE) ===")
+        if args.passive:
+            print("*** PASSIVE MODE — ZERO COMMANDS WILL BE SENT ***")
         print(f"Dashboard: http://{pi_ip}:{args.port}")
         print(f"Stream:    http://{pi_ip}:{args.port}/stream")
         print()
@@ -635,8 +637,15 @@ class PiFlight:
         return est_lat, est_lon
 
     # --- MAVLink commands ---
+    def _passive_block(self, cmd_name):
+        """Block commands in passive mode"""
+        if self.args.passive:
+            print(f"[PASSIVE] Blocked: {cmd_name} (passive mode, zero commands)")
+            return True
+        return False
+
     def send_arm(self):
-        if not self.master:
+        if not self.master or self._passive_block("ARM"):
             return
         self.master.mav.command_long_send(
             self.master.target_system, self.master.target_component,
@@ -651,7 +660,7 @@ class PiFlight:
         print("[CMD] ARM sent (GUIDED mode)")
 
     def send_takeoff(self, alt=20):
-        if not self.master:
+        if not self.master or self._passive_block("TAKEOFF"):
             return
         self.master.mav.command_long_send(
             self.master.target_system, self.master.target_component,
@@ -660,7 +669,7 @@ class PiFlight:
         print(f"[CMD] TAKEOFF to {alt}m sent")
 
     def send_to_gps(self, target_lat, target_lon, target_alt=None):
-        if not self.master:
+        if not self.master or self._passive_block("GOTO"):
             return
         alt = target_alt if target_alt is not None else self.alt
         self.master.mav.set_position_target_global_int_send(
@@ -671,7 +680,7 @@ class PiFlight:
             0, 0, 0, 0, 0, 0, 0, 0)
 
     def send_velocity(self, vx, vy, vz, yaw_rate=0):
-        if not self.master:
+        if not self.master or self._passive_block("VELOCITY"):
             return
         cos_yaw = math.cos(self.yaw)
         sin_yaw = math.sin(self.yaw)
@@ -685,7 +694,7 @@ class PiFlight:
             0, 0, 0, 0, math.radians(yaw_rate))
 
     def send_land(self):
-        if not self.master:
+        if not self.master or self._passive_block("LAND"):
             return
         self.master.mav.command_long_send(
             self.master.target_system, self.master.target_component,
@@ -1064,6 +1073,7 @@ def main():
     parser.add_argument('--fps', type=float, default=4, help='CV inference rate limit (0=unlimited)')
     parser.add_argument('--cluster-dist', type=float, default=30, help='Cluster grouping distance (m)')
     parser.add_argument('--takeoff-alt', type=float, default=20, help='Takeoff altitude (m)')
+    parser.add_argument('--passive', action='store_true', help='Passive mode: camera+detection+stream only, ZERO commands sent to Cube')
     args = parser.parse_args()
 
     flight = PiFlight(args)
