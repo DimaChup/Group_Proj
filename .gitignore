@@ -1,15 +1,29 @@
 __pycache__/
 *.pyc
 venv/
+test_env/
 project_data/
 runs/
 *.pt
 nul
 .claude/
+
+# Runtime artifacts
 flight_log.csv
 passive_flight_log.csv
 detection_log.csv
 snapshot_*.jpg
-test_env
+detections/
+flight_frames/
+
+# Archive (old/junk files, not deleted)
+_archive/
+
+# Image dumps (screenshots with UUID names)
+GP2/
+GroupPJ/
+follow_mode/
+
+# Dashboard
 dashboard/node_modules/
 dashboard/dist/

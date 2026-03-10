@@ -33,9 +33,13 @@ from vision import VisionSystem
 if config.MODE == "SIMULATION":
     from simulation import SimulationEnvironment
 
-# --- GS Camera Stream (MJPEG over HTTP) ---
-# Override with flags: --stream-port 8090 --stream-res 320x240 --stream-fps 5 --stream-quality 50
-# Disable with: --no-stream
+# --- CLI FLAGS ---
+# Model:      --model models/best2.tflite   (default: best.tflite)
+# Dry-run:    --dry-run                      (skip GPS/arm, show pattern, print commands)
+# Stream:     --stream-port 8090 --stream-res 320x240 --stream-fps 5 --stream-quality 50
+# No stream:  --no-stream
+DRY_RUN = "--dry-run" in sys.argv
+MODEL_PATH = "best.tflite"
 STREAM_ENABLED = "--no-stream" not in sys.argv
 STREAM_PORT = 8090
 STREAM_W, STREAM_H = 320, 240
@@ -43,7 +47,9 @@ STREAM_FPS = 5
 STREAM_QUALITY = 50
 
 for _i, _arg in enumerate(sys.argv):
-    if _arg == "--stream-port" and _i + 1 < len(sys.argv):
+    if _arg == "--model" and _i + 1 < len(sys.argv):
+        MODEL_PATH = sys.argv[_i + 1]
+    elif _arg == "--stream-port" and _i + 1 < len(sys.argv):
         STREAM_PORT = int(sys.argv[_i + 1])
     elif _arg == "--stream-res" and _i + 1 < len(sys.argv):
         _parts = sys.argv[_i + 1].split("x")
@@ -52,6 +58,12 @@ for _i, _arg in enumerate(sys.argv):
         STREAM_FPS = int(sys.argv[_i + 1])
     elif _arg == "--stream-quality" and _i + 1 < len(sys.argv):
         STREAM_QUALITY = int(sys.argv[_i + 1])
+
+if DRY_RUN:
+    print("=" * 60)
+    print("  DRY-RUN MODE — No arming, no flying, no GPS needed")
+    print("  Shows lawnmower pattern, prints commands, tests pipeline")
+    print("=" * 60)
 
 _stream_frame = None
 _stream_lock = threading.Lock()
@@ -133,17 +145,18 @@ class VisualFlightMission:
             # Returns only Target and Search Poly
             self.target_px, self.tgt_type, self.search_poly = self.sim.setup_on_map()
             
-            self.eyes = VisionSystem(camera_index=None, model_path="best.tflite")
+            self.eyes = VisionSystem(camera_index=None, model_path=MODEL_PATH)
             if self.tgt_type == "dummy": self.eyes.using_ai = True
             else: self.eyes.using_ai = False
-            
+
         else: # REAL MODE
             self.sim = None
 
             # Try to show map for interactive polygon drawing
             self.search_poly = self._setup_real_search_area()
 
-            self.eyes = VisionSystem(camera_index=config.REAL_CAMERA_INDEX, model_path="best.tflite")
+            cam_idx = None if DRY_RUN else config.REAL_CAMERA_INDEX
+            self.eyes = VisionSystem(camera_index=cam_idx, model_path=MODEL_PATH)
             self.eyes.using_ai = True
             print("Vision System: Real Camera Initialized")
 
@@ -154,10 +167,19 @@ class VisualFlightMission:
         self.master = None
         self.last_req = 0
         self.last_heartbeat = 0
-        
+
         # 4. State & Telemetry
         self.state = State.INIT
         self.previous_state = State.HOVER
+        self.state_start_time = time.time()  # FIX 5: track time in current state
+        self.connect_start_time = 0          # FIX 4: heartbeat timeout tracking
+        self.gps_fix_ok = False              # FIX 1: GPS lock validated before arming
+        self._last_gps_status_print = 0      # FIX 1: throttle GPS status prints
+        self._last_mode_warn = -1            # FIX 6: RC failsafe mode change detection
+        self._arming_timeout_warned = False   # FIX 5: warn once per entry
+        self._takeoff_timeout_warned = False
+        self._centering_timeout_warned = False
+        self._descending_timeout_warned = False
         self.lat = config.REF_LAT
         self.lon = config.REF_LON
         self.alt = 0.0
@@ -273,6 +295,17 @@ class VisualFlightMission:
                         self.master.target_system = msg.get_srcSystem()
                         self.master.target_component = msg.get_srcComponent()
                         print(f"[LINK] Autopilot found: system {self.master.target_system}")
+                    # FIX 6: RC failsafe / unexpected mode change detection
+                    if hasattr(msg, 'custom_mode'):
+                        current_mode = msg.custom_mode
+                        COPTER_MODES = {0:'STABILIZE',2:'ALT_HOLD',3:'AUTO',4:'GUIDED',
+                                        5:'LOITER',6:'RTL',9:'LAND',16:'POSHOLD'}
+                        if self.state not in (State.MANUAL, State.DONE, State.INIT, State.CONNECTING):
+                            if current_mode != 4:  # Not GUIDED
+                                mode_name = COPTER_MODES.get(current_mode, f"MODE_{current_mode}")
+                                if self._last_mode_warn != current_mode:
+                                    print(f"WARNING: Cube switched to {mode_name} (not GUIDED). RC override or failsafe?")
+                                    self._last_mode_warn = current_mode
 
     def calculate_target_gps(self, u, v):
         Cx = config.IMAGE_W / 2; Cy = config.IMAGE_H / 2
@@ -415,12 +448,12 @@ class VisualFlightMission:
             if key == ord('m') or key == ord('M'):
                 if self.state != State.MANUAL:
                     print("!!! MANUAL CONTROL OVERRIDE !!!")
-                    self.previous_state = self.state 
-                    self.state = State.MANUAL
+                    self.previous_state = self.state
+                    self._set_state(State.MANUAL)
                 else:
                     print("Resuming Automation...")
-                    if target_found: self.state = State.CENTERING
-                    else: self.state = self.previous_state
+                    if target_found: self._set_state(State.CENTERING)
+                    else: self._set_state(self.previous_state)
             
             if self.state == State.VERIFY:
                 if self.selecting_landing_side:
@@ -428,7 +461,7 @@ class VisualFlightMission:
                         self.calculate_landing_spot(chr(key).lower())
                         self.selecting_landing_side = False
                         self.waiting_for_confirmation = False
-                        self.state = State.APPROACH
+                        self._set_state(State.APPROACH)
                 else:
                     if key == ord('y') or key == ord('Y'):
                         print("USER CONFIRMED TARGET. SELECT LANDING SIDE (N/E/W/S).")
@@ -436,7 +469,7 @@ class VisualFlightMission:
                     elif key == ord('n') or key == ord('N'):
                         print("USER REJECTED TARGET. RESUMING SEARCH.")
                         self.waiting_for_confirmation = False
-                        self.state = State.SEARCH
+                        self._set_state(State.SEARCH)
 
             # --- STATE MACHINE ---
             if self.state == State.INIT:
@@ -444,25 +477,57 @@ class VisualFlightMission:
                     try:
                         print(f"Connecting to {config.CONNECTION_STR}...")
                         self.master = mavutil.mavlink_connection(config.CONNECTION_STR)
-                        self.state = State.CONNECTING
+                        self.connect_start_time = time.time()  # FIX 4: start heartbeat timeout
+                        self._set_state(State.CONNECTING)
                     except Exception as e: print(f"Connection fail: {e}")
                     self.last_req = time.time()
 
             elif self.state == State.CONNECTING:
+                # FIX 4: Heartbeat timeout warning
+                if self.connect_start_time > 0 and self.last_heartbeat == 0:
+                    elapsed = time.time() - self.connect_start_time
+                    if elapsed > 15 and int(elapsed) % 15 == 0 and time.time() - self.last_req > 5:
+                        print(f"ERROR: No heartbeat from Cube in {int(elapsed)}s. Is mavproxy running?")
+                        self.last_req = time.time()
                 if self.last_heartbeat > 0:
                     print("Heartbeat. Requesting Data Stream...")
                     self.master.mav.request_data_stream_send(
                         self.master.target_system, self.master.target_component,
                         mavutil.mavlink.MAV_DATA_STREAM_ALL, 10, 1)
-                    self.state = State.ARMING
+                    self._set_state(State.ARMING)
 
             elif self.state == State.ARMING:
-                if self.master.motors_armed():
+                # FIX 5: Arming timeout warning
+                arming_elapsed = time.time() - self.state_start_time
+                if arming_elapsed > 120 and not self._arming_timeout_warned:
+                    print("ARMING TIMEOUT: Pre-arm checks may be failing. Check Mission Planner for details.")
+                    self._arming_timeout_warned = True
+
+                # FIX 1: Wait for GPS fix before attempting to arm
+                if not self.gps_fix_ok:
+                    gps_msg = self.master.recv_match(type='GPS_RAW_INT', blocking=False)
+                    if gps_msg:
+                        fix_type = gps_msg.fix_type
+                        sats = gps_msg.satellites_visible
+                        if fix_type >= 3 and sats >= 6:
+                            self.gps_fix_ok = True
+                            # FIX 2: Update position from real GPS (replaces config REF_LAT/REF_LON)
+                            self.lat = gps_msg.lat / 1e7
+                            self.lon = gps_msg.lon / 1e7
+                            print(f"GPS FIX OK — fix_type={fix_type}, sats={sats}, lat={self.lat:.6f}, lon={self.lon:.6f}")
+                        elif time.time() - self._last_gps_status_print > 5.0:
+                            print(f"Waiting for GPS fix... (fix_type={fix_type}, sats={sats})")
+                            self._last_gps_status_print = time.time()
+                    elif time.time() - self._last_gps_status_print > 5.0:
+                        print("Waiting for GPS fix... (no GPS_RAW_INT yet)")
+                        self._last_gps_status_print = time.time()
+                    # Don't proceed to arm until GPS fix is acquired
+                elif self.master.motors_armed():
                     print("Armed! Taking Off...")
                     self.master.mav.command_long_send(
                         self.master.target_system, self.master.target_component,
                         mavutil.mavlink.MAV_CMD_NAV_TAKEOFF, 0, 0, 0, 0, 0, 0, 0, config.TARGET_ALT)
-                    self.state = State.TAKEOFF
+                    self._set_state(State.TAKEOFF)
                 elif time.time() - self.last_req > 2.0:
                     # Set GUIDED mode (4) — use command_long which works reliably via mavproxy
                     self.master.mav.command_long_send(
@@ -470,12 +535,30 @@ class VisualFlightMission:
                         mavutil.mavlink.MAV_CMD_DO_SET_MODE, 0,
                         mavutil.mavlink.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED,
                         4, 0, 0, 0, 0, 0)  # 4 = GUIDED
+                    # FIX 3: Check SET_MODE acknowledgement
+                    mode_ack = self.master.recv_match(type='COMMAND_ACK', blocking=True, timeout=3)
+                    if mode_ack:
+                        if mode_ack.result != 0:
+                            print(f"SET_MODE REJECTED: result={mode_ack.result}")
+                        else:
+                            print("SET_MODE (GUIDED) accepted")
                     self.master.mav.command_long_send(
                         self.master.target_system, self.master.target_component,
                         mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0, 1, 0, 0, 0, 0, 0, 0)
+                    # FIX 3: Check ARM acknowledgement
+                    arm_ack = self.master.recv_match(type='COMMAND_ACK', blocking=True, timeout=3)
+                    if arm_ack:
+                        if arm_ack.result != 0:
+                            print(f"ARM REJECTED: result={arm_ack.result}")
+                        else:
+                            print("ARM command accepted")
                     self.last_req = time.time()
 
             elif self.state == State.TAKEOFF:
+                # FIX 5: Takeoff timeout warning
+                if time.time() - self.state_start_time > 60 and not self._takeoff_timeout_warned:
+                    print("TAKEOFF TIMEOUT: Drone may not be climbing. Check motors and GPS.")
+                    self._takeoff_timeout_warned = True
                 if self.alt >= config.TARGET_ALT * 0.90:
                     print("Target Altitude Reached.")
 
@@ -490,11 +573,11 @@ class VisualFlightMission:
                     if self.waypoints:
                         # NEW LOGIC: Go to TRANSIT first, then SEARCH
                         print(f"Path generated. Transiting to start point: {self.waypoints[0]}")
-                        self.state = State.TRANSIT_TO_SEARCH
-                        self.last_speed_req = 0 
+                        self._set_state(State.TRANSIT_TO_SEARCH)
+                        self.last_speed_req = 0
                     else:
                         print("No Waypoints generated.")
-                        self.state = State.HOVER
+                        self._set_state(State.HOVER)
 
             elif self.state == State.TRANSIT_TO_SEARCH:
                 # Fly to the first waypoint of the search grid (Optimal Entry Point)
@@ -508,7 +591,7 @@ class VisualFlightMission:
                 # Check arrival
                 if self.get_dist_to_point(target[0], target[1]) < 2.0:
                     print("Reached Search Start Point. Beginning Pattern.")
-                    self.state = State.SEARCH
+                    self._set_state(State.SEARCH)
                     self.wp_index = 0 # Start from index 0
 
             elif self.state == State.SEARCH:
@@ -516,7 +599,7 @@ class VisualFlightMission:
                 if target_found:
                     print("TARGET DETECTED!")
                     self.calculate_target_gps(px_u, px_v)
-                    self.state = State.CENTERING
+                    self._set_state(State.CENTERING)
                 elif self.wp_index < len(self.waypoints):
                     target = self.waypoints[self.wp_index]
                     if time.time() - self.last_req > 2.0:
@@ -525,23 +608,32 @@ class VisualFlightMission:
                     if self.get_dist_to_point(target[0], target[1]) < 2.0:
                         self.wp_index += 1
                 else:
-                    self.state = State.DONE
+                    self._set_state(State.DONE)
 
             elif self.state == State.CENTERING:
+                 # FIX 5: Centering timeout — go back to SEARCH
+                 if time.time() - self.state_start_time > 60 and not self._centering_timeout_warned:
+                     print("CENTERING TIMEOUT: Lost target or can't converge. Resuming search.")
+                     self._centering_timeout_warned = True
+                     self._set_state(State.SEARCH)
                  if target_found: self.calculate_target_gps(px_u, px_v)
                  if time.time() - self.last_req > 0.2:
                      self.send_global_target(self.target_lat, self.target_lon, config.TARGET_ALT)
                      self.last_req = time.time()
                  if self.get_dist_to_target() < 1.0:
-                     self.state = State.DESCENDING
+                     self._set_state(State.DESCENDING)
 
             elif self.state == State.DESCENDING:
+                 # FIX 5: Descending timeout warning
+                 if time.time() - self.state_start_time > 60 and not self._descending_timeout_warned:
+                     print("DESCENDING TIMEOUT: Drone may not be descending. Check altitude hold.")
+                     self._descending_timeout_warned = True
                  if target_found: self.calculate_target_gps(px_u, px_v)
                  if time.time() - self.last_req > 0.5:
                      self.send_global_target(self.target_lat, self.target_lon, config.VERIFY_ALT)
                      self.last_req = time.time()
                  if self.alt <= config.VERIFY_ALT + 1.0:
-                     self.state = State.VERIFY
+                     self._set_state(State.VERIFY)
 
             elif self.state == State.VERIFY:
                 self.waiting_for_confirmation = True
@@ -550,7 +642,7 @@ class VisualFlightMission:
             elif self.state == State.APPROACH:
                 self.send_global_target(self.landing_lat, self.landing_lon, config.VERIFY_ALT)
                 if self.get_dist_to_point(self.landing_lat, self.landing_lon) < 1.0:
-                    self.state = State.LANDING
+                    self._set_state(State.LANDING)
 
             elif self.state == State.LANDING:
                 if self.alt < 0.3:
@@ -564,7 +656,7 @@ class VisualFlightMission:
                     final_error = math.sqrt(((self.lat-self.target_lat)*lat_scale)**2 + ((self.lon-self.target_lon)*lat_scale*0.62)**2)
                     self.final_dist = final_error
                     print(f"MISSION COMPLETE. Final Error: {self.final_dist:.2f} m")
-                    self.state = State.DONE
+                    self._set_state(State.DONE)
                 else:
                     self.send_global_target(self.landing_lat, self.landing_lon, 0) 
 
@@ -576,6 +668,16 @@ class VisualFlightMission:
             if flags > 0: self.zoom_level = min(self.zoom_level * 1.2, 20.0)
             else: self.zoom_level = max(self.zoom_level / 1.2, 1.0)
             
+    def _set_state(self, new_state):
+        """Change state and reset state timer (FIX 5: state timeouts)."""
+        self.state = new_state
+        self.state_start_time = time.time()
+        # Reset per-state timeout warnings
+        self._arming_timeout_warned = False
+        self._takeoff_timeout_warned = False
+        self._centering_timeout_warned = False
+        self._descending_timeout_warned = False
+
     def send_global_target(self, lat, lon, alt):
         self.master.mav.set_position_target_global_int_send(
              0, self.master.target_system, self.master.target_component,
@@ -587,6 +689,138 @@ class VisualFlightMission:
         lat_scale = 111132.0 
         return math.sqrt(((self.lat-t_lat)*lat_scale)**2 + ((self.lon-t_lon)*lat_scale*0.62)**2)
 
+def _dry_run(mission):
+    """Dry-run mode: generate lawnmower pattern from SEARCH_AREA_GPS, display it, exit.
+    No Cube connection, no GPS, no arming. Tests the planning pipeline only."""
+    print()
+    print("=" * 60)
+    print("  DRY-RUN: Generating lawnmower search pattern")
+    print("=" * 60)
+
+    # Use SEARCH_AREA_GPS coordinates
+    if not mission.search_poly or len(mission.search_poly) < 3:
+        print("  ERROR: No search polygon defined!")
+        print("  Set SEARCH_AREA_GPS in config.py with at least 3 GPS corners.")
+        return
+
+    # Show search area GPS corners
+    print(f"\n  Search area ({len(mission.search_poly)} corners):")
+    for i, pt in enumerate(mission.search_poly):
+        gps = mission.geo.pixels_to_gps(pt[0], pt[1]) if hasattr(pt, '__len__') else (0, 0)
+        print(f"    Corner {i+1}: pixel=({pt[0]:.0f}, {pt[1]:.0f})  GPS=({gps[0]:.6f}, {gps[1]:.6f})")
+
+    # Generate pattern from current position (use REF_LAT/LON as "drone position")
+    drone_gps = (config.REF_LAT, config.REF_LON)
+    print(f"\n  Drone start position (config REF): ({drone_gps[0]:.6f}, {drone_gps[1]:.6f})")
+    print(f"  Target altitude: {config.TARGET_ALT}m")
+    print(f"  Search speed: {config.SEARCH_SPEED_MPS} m/s")
+    print(f"  Transit speed: {config.TRANSIT_SPEED_MPS} m/s")
+    print(f"  Model: {MODEL_PATH}")
+
+    canvas_w, canvas_h = 4800, 4800
+    waypoints = mission.planner.generate_search_pattern(canvas_w, canvas_h, drone_gps)
+
+    if not waypoints:
+        print("\n  ERROR: No waypoints generated! Check search polygon.")
+        return
+
+    print(f"\n  Generated {len(waypoints)} waypoints:")
+    total_dist = 0
+    for i, wp in enumerate(waypoints):
+        if i > 0:
+            prev = waypoints[i - 1]
+            d = 111320 * math.sqrt(
+                (wp[0] - prev[0]) ** 2 +
+                ((wp[1] - prev[1]) * math.cos(math.radians(wp[0]))) ** 2)
+            total_dist += d
+        marker = " ← START" if i == 0 else (" ← END" if i == len(waypoints) - 1 else "")
+        print(f"    WP {i+1:3d}: ({wp[0]:.6f}, {wp[1]:.6f}){marker}")
+
+    # Distance from drone to first waypoint
+    wp0 = waypoints[0]
+    transit_dist = 111320 * math.sqrt(
+        (wp0[0] - drone_gps[0]) ** 2 +
+        ((wp0[1] - drone_gps[1]) * math.cos(math.radians(drone_gps[0]))) ** 2)
+
+    print(f"\n  Transit to start: {transit_dist:.0f}m ({transit_dist/config.TRANSIT_SPEED_MPS:.0f}s at {config.TRANSIT_SPEED_MPS} m/s)")
+    print(f"  Search path length: {total_dist:.0f}m ({total_dist/config.SEARCH_SPEED_MPS:.0f}s at {config.SEARCH_SPEED_MPS} m/s)")
+    total_time = transit_dist / config.TRANSIT_SPEED_MPS + total_dist / config.SEARCH_SPEED_MPS
+    print(f"  Estimated flight time: {total_time:.0f}s ({total_time/60:.1f} min)")
+
+    # Simulate the state machine transitions (print only)
+    print(f"\n  State machine walkthrough:")
+    print(f"    INIT → connect to {config.CONNECTION_STR}")
+    print(f"    CONNECTING → wait for heartbeat")
+    print(f"    ARMING → wait for GPS fix (fix_type>=3, sats>=6)")
+    print(f"    ARMING → set GUIDED mode")
+    print(f"    ARMING → arm motors")
+    print(f"    TAKEOFF → climb to {config.TARGET_ALT}m")
+    print(f"    TRANSIT_TO_SEARCH → fly to WP 1 ({waypoints[0][0]:.6f}, {waypoints[0][1]:.6f})")
+    print(f"    SEARCH → fly {len(waypoints)} waypoints in lawnmower pattern")
+    print(f"    (on detection) CENTERING → center target in camera frame")
+    print(f"    DESCENDING → descend to {config.VERIFY_ALT}m")
+    print(f"    VERIFY → operator confirms Y/N")
+    print(f"    APPROACH → fly to landing point")
+    print(f"    LANDING → land and disarm")
+
+    # Try to visualize on map if available
+    map_img = cv2.imread(config.MAP_FILE)
+    if map_img is not None:
+        vis = map_img.copy()
+        # Draw search polygon
+        poly_pts = np.array(mission.search_poly, np.int32)
+        cv2.polylines(vis, [poly_pts], True, (0, 255, 0), 2)
+
+        # Draw waypoints
+        for i, wp in enumerate(waypoints):
+            px = mission.geo.gps_to_pixels(wp[0], wp[1])
+            pt = (int(px[0]), int(px[1]))
+            color = (0, 0, 255) if i == 0 else ((255, 0, 0) if i == len(waypoints) - 1 else (255, 255, 0))
+            cv2.circle(vis, pt, 4, color, -1)
+            if i > 0:
+                prev_px = mission.geo.gps_to_pixels(waypoints[i-1][0], waypoints[i-1][1])
+                cv2.line(vis, (int(prev_px[0]), int(prev_px[1])), pt, (255, 255, 0), 1)
+
+        # Draw drone start
+        drone_px = mission.geo.gps_to_pixels(drone_gps[0], drone_gps[1])
+        cv2.drawMarker(vis, (int(drone_px[0]), int(drone_px[1])), (0, 255, 255),
+                        cv2.MARKER_DIAMOND, 15, 2)
+
+        # Labels
+        cv2.putText(vis, "DRY-RUN: Lawnmower Pattern", (10, 30),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+        cv2.putText(vis, f"{len(waypoints)} WPs, {total_dist:.0f}m, ~{total_time/60:.1f}min",
+                    (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
+        cv2.putText(vis, "Green=polygon  Yellow=path  Red=start  Blue=end  Diamond=drone",
+                    (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200, 200, 200), 1)
+
+        # Scale for display
+        max_h = 900
+        scale = min(1.0, max_h / vis.shape[0])
+        if scale < 1.0:
+            vis = cv2.resize(vis, (int(vis.shape[1] * scale), int(vis.shape[0] * scale)))
+
+        cv2.imshow("Dry-Run: Search Pattern", vis)
+        print(f"\n  Map visualization shown. Press any key to close.")
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
+        # Save image
+        out_path = "dry_run_pattern.jpg"
+        cv2.imwrite(out_path, vis)
+        print(f"  Pattern saved to: {out_path}")
+    else:
+        print(f"\n  (No map.jpg found — skipping visualization)")
+
+    print()
+    print("  DRY-RUN COMPLETE. No commands were sent.")
+    print("  To fly for real: python main.py (without --dry-run)")
+    print("=" * 60)
+
+
 if __name__ == "__main__":
     mission = VisualFlightMission()
-    mission.run()
+    if DRY_RUN:
+        _dry_run(mission)
+    else:
+        mission.run()

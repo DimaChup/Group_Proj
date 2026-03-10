@@ -4,7 +4,11 @@
       "Bash(python:*)",
       "Bash(\"c:/Users/Bristol/Desktop/AI for Robotics/v3/venv/Scripts/python.exe\" -c \":*)",
       "Bash(\"c:/Users/Bristol/Desktop/AI for Robotics/v3/venv/Scripts/python.exe\" -m pip install onnx onnxslim onnxruntime onnx2tf sng4onnx onnx_graphsurgeon tf_keras ai-edge-litert)",
-      "Bash(\"c:/Users/Bristol/Desktop/AI for Robotics/v3/venv/Scripts/python.exe\" -m pip install sng4onnx onnx_graphsurgeon onnx2tf)"
+      "Bash(\"c:/Users/Bristol/Desktop/AI for Robotics/v3/venv/Scripts/python.exe\" -m pip install sng4onnx onnx_graphsurgeon onnx2tf)",
+      "Read(//c/Users/Bristol/Desktop/AI for Robotics/Organiser-SaaS/client/src/pages/**)",
+      "Read(//c/Users/Bristol/Desktop/AI for Robotics/Optimisaition/client/src/**)",
+      "Read(//c/Users/Bristol/Desktop/AI for Robotics/v3/tests2/**)",
+      "Read(//c/Users/Bristol/Desktop/AI for Robotics/v3/**)"
     ]
   }
 }

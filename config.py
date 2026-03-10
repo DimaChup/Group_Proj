@@ -62,7 +62,7 @@ VERIFY_ALT = 15.0 # Descent Altitude for Verification
 MAP_FILE = "map.jpg"
 DUMMY_FILE = "dummy.png"
 MAP_WIDTH_METERS = 480.0  
-REF_LAT = 51.425106  
+REF_LAT = 51.425106
 REF_LON = -2.672257
 
 # --- TARGET SPECS ---
@@ -87,22 +87,100 @@ CAMERA_COLOUR_GAINS = (1.5, 1.2)
 CAMERA_COLOR_CORRECTION = False
 CAMERA_FLIP_180 = True   # Camera mounted inverted on drone — flip image 180°
 
+# --- CV DETECTION ---
+CONFIDENCE_THRESHOLD = 0.4  # Min detection confidence (tune on flight day: lower=more detections+more false positives)
+
 # --- SPEED SETTINGS ---
 TRANSIT_SPEED_MPS = 15.0  
 SEARCH_SPEED_MPS = 10.0   
 
 # --- REAL MODE SEARCH AREA ---
-# Define your search area as GPS coordinates (lat, lon corners)
-# Measure these on Google Maps or Mission Planner before flight day
-# The same lawnmower planner from simulation will generate the pattern
+# --- SEARCH AREA ---
+# Load from AENGM0074.kml at runtime (see load_kml_zones() below)
+# Fallback: define manually if KML not found
 SEARCH_AREA_GPS = [
     # (lat, lon) - polygon corners, at least 3 points
-    # Example: a rectangle near Bristol (REPLACE with your real area)
+    # These are overwritten by load_kml_zones() if AENGM0074.kml exists
     (51.42530, -2.67260),
     (51.42530, -2.67180),
     (51.42480, -2.67180),
     (51.42480, -2.67260),
 ]
+
+# These get populated by load_kml_zones()
+FLIGHT_AREA_GPS = []
+SSSI_GPS = []
+TAKEOFF_GPS = None
+FOCUS_AREA_GPS = []
+
+def load_kml_zones(kml_path="AENGM0074.kml"):
+    """Parse KML file and populate GPS zone variables."""
+    global SEARCH_AREA_GPS, FLIGHT_AREA_GPS, SSSI_GPS, TAKEOFF_GPS, FOCUS_AREA_GPS, REF_LAT, REF_LON
+    import xml.etree.ElementTree as ET
+
+    if not os.path.exists(kml_path):
+        print(f"[CONFIG] KML not found: {kml_path} — using fallback SEARCH_AREA_GPS")
+        return False
+
+    ns = {"kml": "http://www.opengis.net/kml/2.2"}
+    tree = ET.parse(kml_path)
+    root = tree.getroot()
+
+    def parse_coords(coord_text):
+        """Parse KML coordinate string (lon,lat,alt) → list of (lat, lon)."""
+        pts = []
+        for token in coord_text.strip().split():
+            parts = token.split(",")
+            if len(parts) >= 2:
+                lon, lat = float(parts[0]), float(parts[1])
+                pts.append((lat, lon))
+        # Remove closing point if it duplicates the first
+        if len(pts) > 1 and pts[0] == pts[-1]:
+            pts = pts[:-1]
+        return pts
+
+    for pm in root.iter("{http://www.opengis.net/kml/2.2}Placemark"):
+        name_el = pm.find("kml:name", ns)
+        if name_el is None:
+            continue
+        name = name_el.text.strip()
+
+        # Point placemark (Take-Off)
+        point = pm.find(".//kml:Point/kml:coordinates", ns)
+        if point is not None:
+            parts = point.text.strip().split(",")
+            if len(parts) >= 2:
+                lon, lat = float(parts[0]), float(parts[1])
+                if "take" in name.lower() or "off" in name.lower():
+                    TAKEOFF_GPS = (lat, lon)
+                    REF_LAT = lat
+                    REF_LON = lon
+
+        # Polygon placemarks
+        coords = pm.find(".//kml:Polygon/kml:outerBoundaryIs/kml:LinearRing/kml:coordinates", ns)
+        if coords is not None:
+            pts = parse_coords(coords.text)
+            lower = name.lower()
+            if "survey" in lower:
+                SEARCH_AREA_GPS = pts
+            elif "flight" in lower:
+                FLIGHT_AREA_GPS = pts
+            elif "sssi" in lower:
+                SSSI_GPS = pts
+            elif "focus" in lower:
+                FOCUS_AREA_GPS = pts
+
+    print(f"[CONFIG] Loaded KML: {kml_path}")
+    print(f"  Take-Off:     {TAKEOFF_GPS}")
+    print(f"  Survey Area:  {len(SEARCH_AREA_GPS)} corners")
+    print(f"  Flight Area:  {len(FLIGHT_AREA_GPS)} corners")
+    print(f"  SSSI:         {len(SSSI_GPS)} corners")
+    return True
+
+# Call load_kml_zones() explicitly when needed:
+#   import config
+#   config.load_kml_zones()         # default: AENGM0074.kml
+#   config.load_kml_zones("path/to/other.kml")
 
 # --- LOGGING ---
 LOG_FILE = "flight_log.csv"

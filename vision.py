@@ -144,6 +144,13 @@ class VisionSystem:
         if frame is None: return False, 0, 0, 0.0
         if not self.using_ai: return False, 0, 0, 0.0
 
+        # Confidence threshold from config (fallback to 0.4)
+        try:
+            import config as _cfg
+            _conf_thresh = getattr(_cfg, "CONFIDENCE_THRESHOLD", 0.4)
+        except Exception:
+            _conf_thresh = 0.4
+
         # --- Direct TFLite inference (Pi fallback) ---
         if self._use_tflite_direct:
             h, w = frame.shape[:2]
@@ -171,7 +178,7 @@ class VisionSystem:
             best_det = None
             for det in preds:
                 conf = float(np.max(det[4:]))  # best class confidence
-                if conf > 0.4 and conf > best_conf:
+                if conf > _conf_thresh and conf > best_conf:
                     best_conf = conf
                     best_det = det
 
@@ -194,7 +201,7 @@ class VisionSystem:
             return False, 0, 0, 0.0
 
         # --- Ultralytics YOLO inference (primary) ---
-        results = self.model(frame, conf=0.4, verbose=False)
+        results = self.model(frame, conf=_conf_thresh, verbose=False)
         if results[0].boxes:
             best_box = max(results[0].boxes, key=lambda x: x.conf[0])
             x, y, w, h = best_box.xywh[0].cpu().numpy()

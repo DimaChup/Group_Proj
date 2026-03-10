@@ -68,7 +68,9 @@ communication (Python 3.13 + pyserial serial reads are broken).
   - [ ] Export INT8 quantized: `yolo export model=best.pt format=tflite int8=True`
   - [ ] Optionally retrain on better data (real photos of dummy)
   - [ ] Copy all .tflite files to `models/` folder, ready to swap on Pi
-  - [ ] On flight day: swap models between tests (`cp models/X.tflite best.tflite`)
+  - [ ] On flight day: swap models with `--model` flag or `cp models/X.tflite best.tflite`
+  - [x] `models/best2.tflite` placeholder created (replace with retrained model)
+  - [x] `--model` and `--dry-run` flags added to main.py
 
 ### Flight Testing Steps (follow in order)
 Each step builds trust before adding risk. **Never skip a step.**
@@ -79,13 +81,13 @@ Each step builds trust before adding risk. **Never skip a step.**
    - Proves: Cube, GPS, motors, RTL all work. Your code not involved.
    - Kill switch: RC mode switch to STABILIZE/LOITER at any time
 
-2. **[ ] Waypoint test script (no CV)** — `tests/pi_waypoint_test.py` (to be written)
+2. **[ ] Waypoint test script (no CV)** — `tests/flight/2_waypoint_test.py`
    - Your code arms, takes off to 10m, flies 3-4 GPS waypoints in GUIDED mode, lands
    - No camera, no detection, no decision-making
    - Proves: your mavlink commands (arm, takeoff, goto, land) work on real hardware
    - Kill switch: RC override always active
 
-3. **[ ] Manual flight + passive CV** — `tests/pi_passive_flight.py`
+3. **[ ] Manual flight + passive CV** — `tests/flight/1_passive_flight.py`
    - Pilot flies manually on RC
    - Pi runs camera + AI, logs detections, buzzer beeps — sends ZERO commands
    - Review log after: did it detect the dummy? At what altitude/distance?
@@ -140,12 +142,11 @@ v3/
 │
 ├── best.tflite                ← AI model file (~6MB, YOLOv8n exported to TFLite)
 ├── models/                    ← Alternative TFLite models for flight day testing
-│   └── custom_yolov8n.tflite  ← Copy of best.tflite (baseline)
+│   ├── custom_yolov8n.tflite  ← Copy of best.tflite (baseline)
+│   └── best2.tflite           ← Placeholder (replace with retrained model)
 ├── map.jpg                    ← Satellite image for simulation (~12MB)
 ├── dummy.png                  ← Dummy/casualty image for dataset generation + bench test
 ├── generate_dataset.py        ← Creates synthetic training data from map.jpg + dummy.png
-├── test_flight10.py           ← Legacy flight test script
-│
 ├── requirements_dev.txt       ← Windows laptop: full pip freeze (~90 packages, exact versions)
 ├── requirements_linux.txt     ← WSL/Linux laptop: full pip freeze (no Windows-specific packages)
 ├── requirements_pi.txt        ← Pi: pymavlink, opencv-headless, numpy<2, tflite-runtime
@@ -166,37 +167,52 @@ v3/
 │   ├── PREFLIGHT_CHECKLIST.md ← Pre-flight safety checks
 │   ├── TEAM_PLAN.md           ← Team workstreams and responsibilities
 │   ├── FLIGHT_DAY_CHECKLIST.md ← Printable flight day checklist (single document, follow top to bottom)
+│   ├── FLIGHT_DAY_TESTS.md    ← Master test reference: all scripts, protocols, troubleshooting
 │   └── ROADMAP.md             ← Full 10-phase development history
 │
-└── tests/
-    ├── pi_1_camera.py         ← Test: camera gives frames (OpenCV or picamera2)
-    ├── pi_2_detect.py         ← Test: live AI detection (--headless for SSH)
-    ├── pi_3_benchmark.py      ← Test: inference speed (50 runs, timing report)
-    ├── pi_3b_buzzer.py        ← Test: standalone buzzer melody test via MAVLink
-    ├── pi_4_detect_and_log.py ← Test: camera + Cube + buzzer + CSV logging
-    ├── pi_4b_detect_buzzer.py ← Test: pi_2 style display + Cube buzzer + guidance + CSV
-    ├── pi_5_guidance.py       ← Test: detection + directional commands (--headless)
-    ├── pi_5b_telemetry.py     ← Test: pi_4b + live Cube telemetry overlay (alt, GPS, yaw)
-    ├── pi_6_fov_test.py       ← Test: FOV calibration on bench (--headless)
-    ├── pi_7_alt_test.py       ← Test: FOV calibration at altitude (--headless)
-    ├── pi_8_camera_test.py    ← Test: FPS + motion blur impact (--headless)
-    ├── pi_9_resolution_test.py← Test: resolution vs speed vs detection quality
-    ├── pi_passive_flight.py   ← Test: passive detection during manual RC flight + buzzer
-    ├── pi_cv_test.py          ← Test: CV detection quality with Pi camera
-    ├── pi_camera_tune.py      ← Test: camera parameter tuning
-    ├── pi_cube_debug.py       ← Diagnostic: MAVLink message types + rates from Cube
-    ├── pi_diagnostics.py      ← Visual dashboard: all subsystem connectivity + live rates
-    ├── pi_gps_test.py         ← GPS lock test: wait for satellite fix, show status
-    ├── pi_color_picker.py     ← Tool: color channel ordering picker (6 options)
-    ├── pi_color_fix.py        ← Tool: computed color correction with grid
-    ├── pi_color_manual.py     ← Tool: manual slider-based color tuning
-    ├── pi_color_calibrate.py  ← Tool: color calibration with reference chart
-    ├── test_tflite_laptop.py  ← Test: TFLite inference on laptop (same path as Pi)
-    ├── test_camera.py         ← Quick camera preview + snapshot
-    ├── test_cube.py           ← Cube heartbeat, GPS, attitude, battery
-    ├── test_cv.py             ← AI model loading + detection test
-    ├── test_all.py            ← Full system connectivity check
-    └── debug_tflite.py        ← Raw TFLite model output inspection
+├── _archive/                  ← Old/junk files (gitignored, not deleted)
+│
+└── tests/                     ← All test scripts, categorized
+    ├── hardware/              ← DOES THIS PART WORK? (individual component checks)
+    │   ├── benchmark.py       ← Inference speed (50 runs, timing report)
+    │   ├── cv_benchmark.py    ← Detection rate, speed, blur simulation
+    │   ├── buzzer_test.py     ← Buzzer melody test via MAVLink
+    │   ├── gps_test.py        ← GPS diagnostics with fix tracking
+    │   └── gps_health.py      ← Step-by-step GPS verification
+    ├── flight/                ← CAN IT FLY? (numbered by progression: bench → autonomous)
+    │   ├── 0a_cube_commands.py   ← Bench: test individual commands (mode, arm)
+    │   ├── 0b_bench_mission.py   ← Bench: full command sequence (no props)
+    │   ├── 0c_feedback_test.py   ← Bench: vision→GPS pipeline (no commands)
+    │   ├── 1_passive_flight.py   ← Manual RC, CV watches (ZERO commands)
+    │   ├── 2_waypoint_test.py    ← Fly GPS waypoints (no CV)
+    │   ├── 3_auto_detect.py      ← AUTO + AI → GUIDED hover
+    │   └── 4_detect_and_center.py ← Autonomous pattern + center
+    ├── diagnostics/           ← IS IT WORKING? (monitoring & debug)
+    │   ├── diagnostics.py     ← Multi-view connectivity + camera + telemetry dashboard
+    │   ├── cube_monitor.py    ← Live Cube telemetry dashboard
+    │   ├── camera_stream.py   ← MJPEG stream to ground station
+    │   ├── camera_stream_fast.py ← Threaded MJPEG stream
+    │   └── camera_stream_h264.py ← H.264/HLS stream (FFmpeg)
+    ├── calibration/           ← ARE THE NUMBERS RIGHT? (FOV, lens, camera)
+    │   ├── fov_calibrate.py   ← Bench FOV calibration with ruler (comprehensive)
+    │   ├── fov_test_simple.py ← Simple FOV test (single measurement)
+    │   ├── alt_test.py        ← FOV calibration at real altitude
+    │   └── lens_calibrate.py  ← Lens distortion calibration (checkerboard → undistort)
+    ├── day_1_experiments/     ← WHAT'S THE DATA? (structured experiments, CSV output)
+    │   ├── altitude_sweep.py  ← Detection rate vs altitude (10-30m buckets)
+    │   ├── speed_sweep.py     ← Detection rate vs speed + blur metric
+    │   ├── gps_accuracy.py    ← GPS estimate error vs known dummy position
+    │   ├── gps_drift.py       ← GPS noise floor (CEP50, CEP95)
+    │   ├── model_compare.py   ← Benchmark all .tflite models
+    │   └── detection_log.py   ← General catch-all flight logger
+    └── laptop/                ← DEVELOPMENT ONLY (laptop-only tests)
+        ├── test_camera.py     ← Camera preview + snapshot
+        ├── test_cv.py         ← AI model loading + detection test
+        ├── test_cube.py       ← Cube heartbeat, GPS, attitude, battery
+        ├── test_all.py        ← Full system connectivity check
+        ├── test_tflite.py     ← TFLite inference on laptop
+        ├── debug_tflite.py    ← Raw TFLite model output inspection
+        └── cv_test_synthetic.py ← Synthetic image CV benchmark
 ```
 
 ## Architecture
@@ -211,7 +227,7 @@ main.py ............... Mission orchestrator (state machine, ties everything tog
 simple_simulator.py ... Interactive MVP (keyboard flight + CV + GPS est + landing)
 simulation.py ......... Laptop-only simulation (map + simulated drone view)
 preflight.py .......... Connectivity checker (standalone tool)
-tests/ ................ All test scripts (pi_1 through pi_9, test_cube, etc.)
+tests/ ................ All test scripts (hardware/, flight/, diagnostics/, calibration/, laptop/)
 ```
 
 ### Key Design Decisions
@@ -242,12 +258,19 @@ tests/ ................ All test scripts (pi_1 through pi_9, test_cube, etc.)
 
 ## How to Run
 
+### Dry-run (no GPS, no Cube, no flying)
+```bash
+python main.py --dry-run                           # verify lawnmower pattern
+python main.py --dry-run --model models/best2.tflite  # verify with alt model
+```
+
 ### Simulation (laptop)
 ```bash
 # Need: SITL running (Mission Planner or mavproxy), venv activated
 set DRONE_MODE=SIMULATION      # Windows (cmd)
 # export DRONE_MODE=SIMULATION  # Linux/WSL
 python main.py
+python main.py --model models/best2.tflite    # with alternate model
 ```
 
 ### Real mode on laptop (webcam + SITL)
@@ -355,9 +378,9 @@ python -c "from tflite_runtime.interpreter import Interpreter; print('TFLite: OK
 python -c "from pymavlink import mavutil; print('pymavlink: OK')"
 
 # 5. Test progressively (see PI_SETUP.md for details)
-python tests/pi_1_camera.py
-python tests/pi_2_detect.py --headless
-python tests/pi_3_benchmark.py
+python tests/laptop/test_camera.py
+python tests/laptop/test_cv.py --camera
+python tests/hardware/benchmark.py
 ```
 
 **If tflite-runtime fails**: `pip install --extra-index-url https://google-coral.github.io/py-repo/ tflite-runtime`
@@ -433,27 +456,44 @@ VERIFY_ALT = 15        # lower altitude for close confirmation
 SEARCH_SPEED_MPS = 5   # lower if AI can't keep up
 IMAGE_W = 640          # change based on pi_9 resolution test
 IMAGE_H = 480          # change based on pi_9 resolution test
-SENSOR_WIDTH_MM = 5.02 # calibrate with pi_6 FOV test
-FOCAL_LENGTH_MM = 6.0  # calibrate with pi_6 FOV test
+SENSOR_WIDTH_MM = 5.02 # calibrate with tests/calibration/fov_calibrate.py
+FOCAL_LENGTH_MM = 6.0  # calibrate with tests/calibration/fov_calibrate.py
 ```
 
-## Test Scripts (run in this order on Pi)
+## Test Scripts (categorized in tests/)
 
 ```
-pi_1_camera.py .......... Camera gives frames?
-pi_2_detect.py .......... AI detects dummy?  (--headless for SSH)
-pi_3_benchmark.py ....... Inference speed?
-pi_3b_buzzer.py ......... Buzzer plays melodies? (needs mavproxy)
-pi_4b_detect_buzzer.py .. Camera + AI + buzzer + guidance? (--headless for SSH)
-pi_4_detect_and_log.py .. Camera + Cube + buzzer + CSV logging
-pi_5_guidance.py ........ Centering commands?  (--headless)
-pi_6_fov_test.py ........ FOV calibration?  (--headless)
-pi_7_alt_test.py ........ FOV at real altitude? (flight day)
-pi_8_camera_test.py ..... FPS + blur impact?  (--headless)
-pi_9_resolution_test.py . Best resolution?
-pi_passive_flight.py .... Passive detection during manual RC flight
-test_cube.py ............ Cube heartbeat + GPS?
-preflight.py ............ All systems go?
+tests/laptop/
+  test_camera.py ............. Camera gives frames?
+  test_cv.py ................. AI detects dummy? (--camera for live)
+  test_cube.py ............... Cube heartbeat + GPS?
+  test_all.py ................ Full system connectivity check
+  test_tflite.py ............. TFLite inference on laptop
+  debug_tflite.py ............ Raw model output inspection
+
+tests/hardware/
+  benchmark.py ............... Inference speed (50 runs)?
+  buzzer_test.py ............. Buzzer melodies? (needs mavproxy)
+  gps_test.py ................ GPS lock + satellite tracking
+  gps_health.py .............. Step-by-step GPS verification
+
+tests/calibration/
+  fov_calibrate.py ........... Bench FOV calibration (comprehensive)
+  fov_test_simple.py ......... Simple single-measurement FOV
+  alt_test.py ................ FOV at real altitude (flight day)
+
+tests/diagnostics/
+  diagnostics.py ............. Multi-view connectivity dashboard
+  cube_monitor.py ............ Live Cube telemetry
+  camera_stream.py ........... MJPEG stream to ground station
+
+tests/flight/
+  passive_flight.py .......... Passive detection during manual flight (ZERO commands)
+  waypoint_test.py ........... Fly GPS waypoints (Step 2 flight test)
+  bench_mission.py ........... Bench mission sequence (no flying)
+  cube_commands.py ........... Test Pi→Cube command path
+  detect_and_center.py ....... Detect & center mission
+  auto_detect.py ............. AUTO waypoints + detect & hover
 ```
 
 ### Camera Note (IMX296 Global Shutter)
@@ -472,6 +512,8 @@ This was discovered by testing all 6 channel permutations. See session log 2026-
 | docs/NEXT_STEPS.md | Phase-by-phase development plan |
 | docs/CONNECTIVITY.md | Connection debugging |
 | docs/PREFLIGHT_CHECKLIST.md | Pre-flight checks |
+| docs/FLIGHT_DAY_CHECKLIST.md | Printable flight day checklist (follow top to bottom) |
+| docs/FLIGHT_DAY_TESTS.md | Master test reference — all scripts, protocols, troubleshooting |
 | docs/TEAM_PLAN.md | Team workstreams |
 | docs/ROADMAP.md | Full development history |
 
@@ -1006,6 +1048,57 @@ Cube → Pi UART → mavproxy
 - [ ] Test pi_flight.py in SIMULATION (verify video stream fix works)
 - [ ] Configure RC controller (kill switch = STABILIZE, failsafe = RTL)
 - [ ] Follow FLIGHT_DAY_CHECKLIST.md on flight day
+
+### Session: 2026-03-09 — Test reorganization, experiment scripts, dry-run mode
+
+**Test directory reorganization:**
+- Moved all test scripts into organized subdirectories:
+  ```
+  tests/
+  ├── calibration/          FOV, lens distortion
+  ├── diagnostics/          System health dashboards, stream tests
+  ├── hardware/             Individual component checks (GPS, camera, buzzer, benchmark)
+  ├── flight/               Progressive flight tests (numbered 0a-4)
+  ├── day_1_experiments/    Structured data collection (CSV output)
+  └── laptop/               Development-only tools
+  ```
+- Numbered flight tests by progression:
+  - `0a_cube_commands.py` → bench: individual commands
+  - `0b_bench_mission.py` → bench: full sequence
+  - `0c_feedback_test.py` → bench: vision→GPS pipeline
+  - `1_passive_flight.py` → manual RC, CV watches (zero commands)
+  - `2_waypoint_test.py` → fly GPS waypoints (no CV)
+  - `3_auto_detect.py` → AUTO + AI → GUIDED hover
+  - `4_detect_and_center.py` → autonomous pattern + center
+
+**Experiment scripts created (all passive, zero commands, CSV output):**
+- `tests/day_1_experiments/altitude_sweep.py` — detection rate vs altitude (10-30m buckets)
+- `tests/day_1_experiments/speed_sweep.py` — detection rate vs speed + blur metric
+- `tests/day_1_experiments/gps_accuracy.py` — GPS estimate error vs known dummy position
+- `tests/day_1_experiments/gps_drift.py` — GPS noise floor (CEP50, CEP95)
+- `tests/day_1_experiments/model_compare.py` — benchmark all .tflite models
+- `tests/day_1_experiments/detection_log.py` — catch-all flight logger
+
+**Calibration scripts:**
+- `tests/calibration/lens_calibrate.py` — checkerboard lens distortion calibration
+
+**main.py new features:**
+- `--dry-run` flag: prints lawnmower waypoints, state machine walkthrough, map visualization
+  - No GPS, no arming, no Cube needed
+  - Uses SEARCH_AREA_GPS from config.py
+  - Saves visualization to `dry_run_pattern.jpg`
+- `--model PATH` flag: switch AI model without copying files (default: best.tflite)
+- Both flags documented in FLIGHT_DAY_CHECKLIST.md and FLIGHT_DAY_TESTS.md
+
+**New files:**
+- `models/best2.tflite` — placeholder copy of best.tflite (swap with retrained model)
+- `docs/FLIGHT_DAY_TESTS.md` — master test reference with all scripts, protocols, troubleshooting
+- `memory/testing-pattern.md` — reusable progressive robotics testing pattern (auto-memory)
+
+**Documentation updates:**
+- FLIGHT_DAY_CHECKLIST.md: added Phase 7 (dry-run verification), Step 3.5 (RC override test with script), model swap with `--model` flag, dry-run section
+- FLIGHT_DAY_TESTS.md: added --dry-run and --model to Step 5, pre-flight bench items 7-8
+- Updated all script paths to numbered names across docs
 
 ---
 

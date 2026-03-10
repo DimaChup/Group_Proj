@@ -12,3 +12,4 @@
 | 6 | Add detection image gallery (from --save-detections) | IDEA | 3 | 3 | 1.0 |
 | 7 | Add timeline/Gantt view of project phases | IDEA | 3 | 4 | 0.75 |
 | 8 | Make WBS data editable in browser (save to localStorage) | IDEA | 3 | 3 | 1.0 |
+| 9 | Cube Orange+ detail overlay — click Cube box to open deep-dive page (schematics, PID tuning, stabilisation, connections, visuals) | IDEA | 4 | 4 | 1.0 |

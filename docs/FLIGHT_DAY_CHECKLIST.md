@@ -2,6 +2,16 @@
 
 **Print this. Follow it step by step. Don't skip steps.**
 
+**Estimated time:** ~2-2.5 hours total
+- Setup (Phase 0-3): ~30 min
+- Calibration (Phase 4-5): ~15 min
+- Step 1 (MP AUTO): ~10 min
+- Step 1.5 (Waypoint test): ~10 min
+- Step 2 (Passive CV): ~20 min (needs 1 battery)
+- Step 3 (Dashboard): ~30 min (needs 1 battery)
+
+**Batteries needed:** Minimum 2, ideally 3 (each gives ~15-20 min flight)
+
 ---
 
 ## PHASE 0: Before Leaving (Laptop, at Home)
@@ -33,7 +43,7 @@ Both Pi and laptop must be on the same WiFi. Options:
 
 ```bash
 cd ~/dima/Group_Proj
-git pull origin MainOne5
+git pull
 ```
 
 ### 1.3 Recreate pienv (only if broken)
@@ -57,7 +67,7 @@ sudo /opt/mavlink/mavlink-venv/bin/mavproxy.py \
 
 ```bash
 cd ~/dima/Group_Proj && source pienv/bin/activate
-python tests2/pi_diagnostics.py
+python tests/diagnostics/diagnostics.py
 ```
 
 Check all green:
@@ -66,6 +76,7 @@ Check all green:
 [ ] AI Model:  OK (best.tflite loaded)
 [ ] Cube:      OK (heartbeat, system 1)
 [ ] GPS:       OK (satellites > 0, wait for fix_type=3)
+[ ] Battery:  ___V (must be >14.4V / 3.6V per cell for safe flight)
 ```
 
 ### 1.6 Connect Mission Planner (Laptop)
@@ -87,7 +98,7 @@ Mission Planner → Connection → TCP → <PI_IP> → port 5762
 
 ```bash
 # On Pi:
-python tests2/gps_test.py
+python tests/hardware/gps_test.py
 ```
 
 ```
@@ -97,6 +108,12 @@ python tests2/gps_test.py
 ```
 
 This can take 1-5 minutes outdoors. Be patient.
+
+**If GPS doesn't lock after 15 minutes:**
+- Move to more open area (away from buildings/trees)
+- Cold start after power cycle can take 10-15 min
+- Check Here 3+ LED: blue=no lock, green=locked, yellow=pre-arm fail
+- Urban canyons and overcast sky slow GPS lock
 
 ---
 
@@ -109,7 +126,12 @@ This can take 1-5 minutes outdoors. Be patient.
 [ ] 3.3  Failsafe set: RC signal loss = RTL
          (Mission Planner → Config → Failsafe → Radio = RTL)
 [ ] 3.4  Test: flip kill switch back and forth, confirm mode changes in MP
-[ ] 3.5  Agree on who is RC pilot, who is spotter, who runs dashboard
+[ ] 3.5  Test RC override WITH a script running:
+         Start: python tests/flight/0a_cube_commands.py (or pi_flight.py)
+         Flip RC to STABILIZE → confirm MP shows STABILIZE (script ignored)
+         Flip back → script can send commands again
+         This proves RC ALWAYS overrides Python, no matter what.
+[ ] 3.6  Agree on who is RC pilot, who is spotter, who runs dashboard
 ```
 
 **Rule: RC pilot's hand is always on the kill switch.**
@@ -122,7 +144,7 @@ This is the most important calibration. Wrong FOV = wrong GPS estimates.
 
 ```bash
 # On Pi (with camera pointing down at a ruler):
-python tests2/fov_calibrate.py --headless
+python tests/calibration/fov_calibrate.py --headless
 ```
 
 Steps:
@@ -153,7 +175,7 @@ IMAGE_H = 480
 ## PHASE 5: Inference Benchmark (Quick — 2 minutes)
 
 ```bash
-python tests/pi_3_benchmark.py
+python tests/hardware/benchmark.py
 ```
 
 ```
@@ -181,6 +203,22 @@ Write these down — they tell you:
 
 ---
 
+## PHASE 7: Dry-Run Verification (No GPS Needed)
+
+```bash
+# On Pi (or laptop):
+python main.py --dry-run
+```
+
+```
+[ ] 7.1  Verify SEARCH_AREA_GPS coordinates in config.py match the field
+[ ] 7.2  Run --dry-run, confirm waypoints cover intended area
+[ ] 7.3  Note: estimated flight time = ____min, waypoints = ____
+[ ] 7.4  If wrong area: update SEARCH_AREA_GPS in config.py, re-run --dry-run
+```
+
+---
+
 ## STEP 1: Mission Planner AUTO Flight (No Custom Code)
 
 **Purpose:** Prove drone flies, GPS works, RTL works. Your code is NOT running.
@@ -204,13 +242,39 @@ Write these down — they tell you:
 
 ---
 
-## STEP 2: Passive CV (pi_passive_flight.py)
+## STEP 1.5: Waypoint Test (Your Code, No CV)
+
+**Purpose:** Prove your MAVLink commands work on real hardware. No camera, no AI — just arm, takeoff, fly 4 waypoints, land.
+
+```bash
+# Terminal 2 on Pi:
+python tests/flight/2_waypoint_test.py --dry-run   # verify commands without arming
+python tests/flight/2_waypoint_test.py --alt 10     # real flight at 10m
+```
+
+```
+[ ] 1.5.1  Dry-run passed (commands print but don't execute)
+[ ] 1.5.2  Drone arms and takes off to 10m
+[ ] 1.5.3  Flies 4 waypoints (20m square)
+[ ] 1.5.4  Lands at launch point
+```
+
+**Pass:** Drone completes waypoints and lands safely.
+**Fail:** Do NOT continue to Step 2. Fix MAVLink commands first.
+
+```
+[ ] STEP 1.5 PASSED
+```
+
+---
+
+## STEP 2: Passive CV (passive_flight.py)
 
 **Purpose:** Measure how well CV detects dummy from altitude. Pi sends ZERO commands.
 
 ```bash
 # Terminal 2 on Pi:
-python tests2/pi_passive_flight.py --headless --stream
+python tests/flight/1_passive_flight.py --headless --stream
 ```
 
 ```
@@ -220,6 +284,8 @@ http://<PI_IP>:8090
 
 Procedure:
 ```
+[ ] 2.0  Start passive_flight.py, open http://PI_IP:8090 in browser
+[ ] 2.0b Confirm video stream shows in browser (even if pointing at ground)
 [ ] 2.1  Pilot takes off, hovers at 10m directly above dummy → hold 30s
 [ ] 2.2  Climb to 15m → hold 30s
 [ ] 2.3  Climb to 20m → hold 30s
@@ -280,6 +346,14 @@ python pi_flight.py --fps 4
 ```
 # On laptop browser:
 http://<PI_IP>:8090
+```
+
+Pre-flight bench check:
+```
+[ ] 3.0  Start pi_flight.py on bench (no flying)
+[ ] 3.0b Open http://PI_IP:8090 in browser, confirm dashboard loads
+[ ] 3.0c Click FAKE DET, verify cluster appears on grid
+[ ] 3.0d Close pi_flight.py (Ctrl+C)
 ```
 
 Flow:
@@ -348,7 +422,7 @@ sudo /opt/mavlink/mavlink-venv/bin/mavproxy.py \
 **Passive flight (Pi Terminal 2):**
 ```bash
 cd ~/dima/Group_Proj && source pienv/bin/activate
-python tests2/pi_passive_flight.py --headless --stream
+python tests/flight/1_passive_flight.py --headless --stream
 ```
 
 **Full dashboard (Pi Terminal 2):**
@@ -388,21 +462,49 @@ Models are in `models/` folder:
 ```bash
 # List available:
 ls models/
+python tests/day_1_experiments/model_compare.py --list
 
-# Swap to a different model:
+# Option A: swap the default model file:
 cp models/OTHER_MODEL.tflite best.tflite
 
-# Restart the script
+# Option B: use --model flag (no copy needed):
+python pi_flight.py --fps 4 --model models/best2.tflite
+python main.py --model models/best2.tflite
+
+# Compare all models on bench:
+python tests/day_1_experiments/model_compare.py --frames 50
 ```
 
 Currently available:
 ```
-models/custom_yolov8n.tflite  — our custom dummy detector (baseline)
+best.tflite                   — primary model (YOLOv8n custom)
+models/custom_yolov8n.tflite  — copy of best.tflite (baseline)
+models/best2.tflite           — placeholder (replace with retrained model)
 ```
 
-TODO (prepare before flight day):
+If all models fail:
+- Lower confidence threshold in vision.py (0.4 → 0.3 → 0.25)
+- Try flying lower (5-10m)
+- Use FAKE DET button to test command flow without CV
+
+---
+
+## Dry-Run (Test Pattern Without Flying)
+
+```bash
+# On Pi or laptop — no GPS, no arming, no Cube needed:
+python main.py --dry-run
+
+# With specific model:
+python main.py --dry-run --model models/best2.tflite
 ```
-models/coco_yolov8n.tflite    — COCO person detector (fallback)
-models/custom_int8.tflite     — INT8 quantized (faster on Pi)
-models/coco_yolov8s.tflite    — larger COCO model (more accurate, slower)
-```
+
+Shows:
+- Search area from SEARCH_AREA_GPS in config.py
+- Generated lawnmower waypoints (GPS coordinates)
+- Transit distance, search path length, estimated flight time
+- State machine walkthrough (every state transition printed)
+- Map visualization (if map.jpg exists) saved to dry_run_pattern.jpg
+
+**Before first real flight:** Run `--dry-run` to verify SEARCH_AREA_GPS coordinates
+cover the intended field. Update config.py if wrong.
