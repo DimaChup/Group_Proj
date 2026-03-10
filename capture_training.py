@@ -258,6 +258,9 @@ def main():
             if frame is None:
                 continue
 
+            # Flip 180° (camera mounted upside down)
+            frame = cv2.flip(frame, -1)
+
             # Update stream
             _, jpg = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
             with frame_lock:
