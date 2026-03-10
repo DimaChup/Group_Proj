@@ -445,19 +445,15 @@ def draw_overlay(frame, last_det):
         fov_text = (f"FOV:{FOV['hfov_deg']:.0f}deg | "
                     f"Ground:{gw:.1f}x{gh:.1f}m @{alt_val:.0f}m | "
                     f"Cal@1m:{cal_w*100:.0f}x{cal_h*100:.0f}cm")
-        # Draw ground coverage dimensions on frame edges
-        dim_color = (180, 140, 0)  # amber
-        # Width label (top centre)
-        w_label = f"{gw:.1f}m"
-        cv2.arrowedLine(display, (w // 4, 55), (10, 55), dim_color, 1, tipLength=0.15)
-        cv2.arrowedLine(display, (3 * w // 4, 55), (w - 10, 55), dim_color, 1, tipLength=0.15)
-        cv2.putText(display, w_label, (w // 2 - 20, 52),
+        # Draw ground coverage dimensions on frame edges (subtle, not overlapping UI)
+        dim_color = (140, 110, 0)  # muted amber
+        # Width: short arrows + label at bottom-left area (above info bars)
+        w_label = f"<-- {gw:.1f}m -->"
+        cv2.putText(display, w_label, (w // 2 - 50, h - 90),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.4, dim_color, 1)
-        # Height label (left side, vertical)
+        # Height: label rotated on left edge
         h_label = f"{gh:.1f}m"
-        cv2.arrowedLine(display, (12, h // 4), (12, 45), dim_color, 1, tipLength=0.15)
-        cv2.arrowedLine(display, (12, 3 * h // 4), (12, h - 80), dim_color, 1, tipLength=0.15)
-        cv2.putText(display, h_label, (3, h // 2 + 5),
+        cv2.putText(display, h_label, (w - 45, h // 2),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.4, dim_color, 1)
     else:
         fov_text = (f"FOV:{FOV['hfov_deg']:.0f}deg  f={FOV['focal_mm']}mm  "
@@ -612,6 +608,7 @@ def main():
                 if not args.no_save:
                     saved_count += 1
                     save_frame = draw_overlay(frame, last_det)
+                    sh, sw = save_frame.shape[:2]
 
                     # Add GPS text on saved image (larger, more prominent)
                     lat, lon = gps_data["lat"], gps_data["lon"]
@@ -623,9 +620,21 @@ def main():
                     else:
                         fname = f"det_{saved_count:04d}_{conf:.2f}_nogps.jpg"
 
-                    # Stamp on image
-                    cv2.putText(save_frame, f"{ts} | conf:{conf:.2f}", (5, 20),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+                    # Stamp: time + conf + drone pos + dummy est (right side, stacked)
+                    stamp_lines = [f"{ts} conf:{conf:.2f}"]
+                    if lat != 0.0 or lon != 0.0:
+                        stamp_lines.append(f"DRONE: {lat:.6f},{lon:.6f} @{alt:.0f}m")
+                    else:
+                        stamp_lines.append("DRONE: NO GPS")
+                    est_snap = dummy_estimator.get_estimate()
+                    if est_snap:
+                        stamp_lines.append(f"DUMMY: {est_snap[0]:.6f},{est_snap[1]:.6f} ({est_snap[2]}obs)")
+                    # Draw with black background for readability
+                    for i, line in enumerate(stamp_lines):
+                        ty = sh // 3 + i * 20
+                        cv2.rectangle(save_frame, (sw - 280, ty - 14), (sw, ty + 4), (0, 0, 0), -1)
+                        cv2.putText(save_frame, line, (sw - 275, ty),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1)
 
                     cv2.imwrite(os.path.join(args.save_dir, fname), save_frame)
 
