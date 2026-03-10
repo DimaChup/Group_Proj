@@ -65,7 +65,7 @@ import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
-project_root = os.path.dirname(script_dir)
+project_root = os.path.dirname(os.path.dirname(script_dir))
 sys.path.insert(0, project_root)
 
 from pymavlink import mavutil

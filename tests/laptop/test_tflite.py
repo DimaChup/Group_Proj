@@ -17,7 +17,7 @@ import cv2
 import numpy as np
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
-project_root = os.path.dirname(script_dir)
+project_root = os.path.dirname(os.path.dirname(script_dir))
 sys.path.insert(0, project_root)
 
 SYNTHETIC = "--synthetic" in sys.argv
