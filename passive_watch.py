@@ -45,6 +45,7 @@ if not os.environ.get('DISPLAY'):
 
 import cv2
 import numpy as np
+import config
 from vision import VisionSystem
 
 # ── Globals for streaming ──
@@ -70,13 +71,17 @@ HTML_PAGE = """<!DOCTYPE html>
   body { background:#111; color:#eee; font-family:monospace; margin:0; padding:20px; }
   h1 { color:#0f0; margin:0 0 10px; }
   .stats { color:#888; margin-bottom:10px; }
-  .gps { color:#0af; margin-bottom:10px; }
+  .gps { color:#0af; margin-bottom:5px; }
+  .est { color:#ff0; margin-bottom:5px; }
+  .fov { color:#b90; margin-bottom:10px; font-size:0.85em; }
   img { max-width:100%; border:1px solid #333; }
 </style>
 </head><body>
 <h1>SAR Passive Watch</h1>
 <div class="stats" id="stats">Starting...</div>
 <div class="gps" id="gps">GPS: waiting...</div>
+<div class="est" id="est">DUMMY EST: waiting...</div>
+<div class="fov" id="fov">FOV: ---</div>
 <img src="/stream" alt="Camera Feed">
 <script>
   setInterval(()=>{
@@ -84,7 +89,12 @@ HTML_PAGE = """<!DOCTYPE html>
       document.getElementById('stats').textContent =
         `CAM: ${d.cam_fps} fps | VISION: ${d.vis_fps} fps | STREAM: ${d.stream_fps} fps | Det: ${d.detections} (${d.det_pct}%) | Saved: ${d.saved}`;
       document.getElementById('gps').textContent =
-        `GPS: ${d.gps_lat}, ${d.gps_lon} | Alt: ${d.alt}m | Sats: ${d.sats} | Mode: ${d.flight_mode}`;
+        `DRONE: ${d.gps_lat}, ${d.gps_lon} | Alt: ${d.alt}m | Sats: ${d.sats} | Mode: ${d.flight_mode}`;
+      document.getElementById('est').textContent = d.est_obs > 0
+        ? `DUMMY EST: ${d.est_lat}, ${d.est_lon} (${d.est_obs} observations)`
+        : `DUMMY EST: waiting for detection...`;
+      document.getElementById('fov').textContent =
+        `FOV: ${d.fov_deg}° | Cal@1m: ${d.cal_1m_w}x${d.cal_1m_h}cm (measure this to calibrate)`;
     });
   }, 1000);
 </script>
@@ -152,7 +162,11 @@ class ThreadedServer(ThreadingMixIn, HTTPServer):
 stats = {
     "frames": 0, "detections": 0, "det_pct": "0", "saved": 0,
     "cam_fps": "0.0", "vis_fps": "0.0", "stream_fps": "0.0",
-    "gps_lat": "---", "gps_lon": "---", "alt": "---", "sats": 0, "flight_mode": "---"
+    "gps_lat": "---", "gps_lon": "---", "alt": "---", "sats": 0, "flight_mode": "---",
+    "est_lat": "---", "est_lon": "---", "est_obs": 0,
+    "fov_deg": f"{get_fov_info()['hfov_deg']:.0f}",
+    "cal_1m_w": f"{ground_coverage(1.0)[0]*100:.0f}",
+    "cal_1m_h": f"{ground_coverage(1.0)[1]*100:.0f}",
 }
 
 # ── Rolling FPS trackers ──
@@ -179,6 +193,128 @@ class RollingFPS:
 cam_fps_tracker = RollingFPS()
 vis_fps_tracker = RollingFPS()
 stream_fps_tracker = RollingFPS()
+
+# ── FOV / Calibration info ──
+def get_fov_info():
+    """Calculate FOV and ground coverage at various altitudes."""
+    sw = config.SENSOR_WIDTH_MM
+    fl = config.FOCAL_LENGTH_MM
+    iw = config.IMAGE_W
+    ih = config.IMAGE_H
+
+    hfov_deg = 2 * math.degrees(math.atan(sw / (2 * fl)))
+    vfov_deg = hfov_deg * ih / iw  # assuming square pixels
+    f_px = fl * iw / sw  # focal length in pixels
+
+    return {
+        "hfov_deg": hfov_deg,
+        "vfov_deg": vfov_deg,
+        "f_px": f_px,
+        "sensor_w": sw,
+        "focal_mm": fl,
+        "img_w": iw,
+        "img_h": ih,
+    }
+
+def ground_coverage(alt_m):
+    """Return (width_m, height_m) of ground visible at given altitude."""
+    sw = config.SENSOR_WIDTH_MM
+    fl = config.FOCAL_LENGTH_MM
+    w = alt_m * sw / fl
+    h = w * config.IMAGE_H / config.IMAGE_W
+    return w, h
+
+FOV = get_fov_info()
+
+
+# ── Dummy position estimator ──
+class DummyEstimator:
+    """Accumulate detection observations → estimate dummy GPS position.
+
+    Uses inverse-variance weighting (lower altitude = more weight).
+    """
+    def __init__(self):
+        self.observations = []  # (lat, lon, weight)
+        self.total_weight = 0.0
+        self.weighted_lat = 0.0
+        self.weighted_lon = 0.0
+        self.count = 0
+
+    def add_observation(self, drone_lat, drone_lon, alt_m, yaw_deg, det_x, det_y):
+        """Estimate dummy GPS from one detection.
+
+        det_x, det_y: normalised detection coords (0-1, center of detection).
+        Returns (est_lat, est_lon) or None if can't estimate.
+        """
+        if alt_m < 1.0:
+            return None  # too low / no altitude data
+
+        # Pixel offset from frame centre
+        dx_px = (det_x - 0.5) * FOV["img_w"]
+        dy_px = (det_y - 0.5) * FOV["img_h"]
+
+        # Metres on ground
+        dx_m = dx_px * alt_m / FOV["f_px"]
+        dy_m = dy_px * alt_m / FOV["f_px"]
+
+        # Rotate by yaw (yaw=0 means North, positive clockwise)
+        # Camera: top of image = drone forward
+        # dx_px positive = target right of centre → East when yaw=0
+        # dy_px positive = target below centre → South when yaw=0 (camera down, +y = forward away = South... no)
+        # Actually: camera facing down, top of image = drone forward
+        # dy_px negative = target above centre = further forward = more North
+        # dy_px positive = target below centre = behind drone = more South
+        yaw_rad = math.radians(yaw_deg)
+        # Forward (negative dy) maps to North, Right (positive dx) maps to East at yaw=0
+        forward_m = -dy_m  # negative dy = forward = North
+        right_m = dx_m     # positive dx = right = East
+
+        # Rotate by yaw
+        north_m = forward_m * math.cos(yaw_rad) - right_m * math.sin(yaw_rad)
+        east_m = forward_m * math.sin(yaw_rad) + right_m * math.cos(yaw_rad)
+
+        # Convert metres to GPS offset
+        lat_m_per_deg = 111132.954 - 559.822 * math.cos(2 * math.radians(drone_lat))
+        lon_m_per_deg = 111132.954 * math.cos(math.radians(drone_lat))
+
+        est_lat = drone_lat + north_m / lat_m_per_deg
+        est_lon = drone_lon + east_m / lon_m_per_deg
+
+        # Weight: inverse altitude squared (10m obs is 9x more valuable than 30m)
+        weight = 1.0 / (alt_m * alt_m)
+
+        # Bonus: detection near frame centre = less projection error
+        dist_from_centre = math.sqrt(dx_px**2 + dy_px**2)
+        max_dist = math.sqrt((FOV["img_w"]/2)**2 + (FOV["img_h"]/2)**2)
+        centre_factor = 1.0 + 4.0 * max(0, 1.0 - dist_from_centre / (max_dist * 0.3))
+        weight *= centre_factor
+
+        self.weighted_lat += est_lat * weight
+        self.weighted_lon += est_lon * weight
+        self.total_weight += weight
+        self.count += 1
+
+        return est_lat, est_lon
+
+    def get_estimate(self):
+        """Return (lat, lon, n_observations) or None."""
+        if self.total_weight <= 0:
+            return None
+        return (
+            self.weighted_lat / self.total_weight,
+            self.weighted_lon / self.total_weight,
+            self.count
+        )
+
+    def reset(self):
+        self.observations = []
+        self.total_weight = 0.0
+        self.weighted_lat = 0.0
+        self.weighted_lon = 0.0
+        self.count = 0
+
+dummy_estimator = DummyEstimator()
+
 
 # ── GPS state (read-only from mavproxy) ──
 gps_data = {
@@ -291,10 +427,44 @@ def draw_overlay(frame, last_det):
                     (0, 255, 0), 2, tipLength=0.4)
 
     # "FRONT" label on the frame edge matching drone forward
-    # Camera down, top of image = drone forward
-    # Arrow shows where the drone nose points relative to North
     cv2.putText(display, "FRONT", (w // 2 - 25, 48),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.35, (100, 100, 100), 1)
+
+    # ── FOV / calibration info bar (second from bottom) ──
+    alt_val = gps_data["alt"]
+    gw, gh = ground_coverage(alt_val) if alt_val > 0.5 else (0, 0)
+    cal_w, cal_h = ground_coverage(1.0)  # at 1m for calibration reference
+
+    fov_y = h - 50  # above the GPS bar
+    cv2.rectangle(display, (0, fov_y), (w, fov_y + 25), (0, 0, 0), -1)
+
+    if alt_val > 0.5:
+        fov_text = (f"FOV:{FOV['hfov_deg']:.0f}deg | "
+                    f"Ground:{gw:.1f}x{gh:.1f}m @{alt_val:.0f}m | "
+                    f"Cal@1m:{cal_w*100:.0f}x{cal_h*100:.0f}cm")
+    else:
+        fov_text = (f"FOV:{FOV['hfov_deg']:.0f}deg  f={FOV['focal_mm']}mm  "
+                    f"sens={FOV['sensor_w']}mm | Cal@1m:{cal_w*100:.0f}x{cal_h*100:.0f}cm")
+    cv2.putText(display, fov_text, (5, fov_y + 16),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.35, (180, 140, 0), 1)
+
+    # ── Estimated dummy position (if we have observations) ──
+    est = dummy_estimator.get_estimate()
+    est_y = h - 75  # above FOV bar
+    cv2.rectangle(display, (0, est_y), (w, est_y + 25), (0, 0, 0), -1)
+
+    if est is not None:
+        e_lat, e_lon, n_obs = est
+        est_text = f"DUMMY EST: {e_lat:.6f}, {e_lon:.6f} ({n_obs} obs)"
+        est_color = (0, 255, 255)  # yellow
+    elif lat == 0.0 and lon == 0.0:
+        est_text = "DUMMY EST: NO GPS — cannot estimate"
+        est_color = (0, 0, 180)  # dark red
+    else:
+        est_text = "DUMMY EST: waiting for detection..."
+        est_color = (100, 100, 100)  # grey
+    cv2.putText(display, est_text, (5, est_y + 16),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.4, est_color, 1)
 
     return display
 
@@ -373,7 +543,8 @@ def main():
         csv_writer = csv.writer(csv_file)
         if os.path.getsize(csv_path) == 0:
             csv_writer.writerow(['timestamp', 'frame', 'confidence', 'px_x', 'px_y',
-                                 'gps_lat', 'gps_lon', 'alt_m', 'sats', 'yaw', 'mode', 'filename'])
+                                 'drone_lat', 'drone_lon', 'alt_m', 'sats', 'yaw', 'mode',
+                                 'est_dummy_lat', 'est_dummy_lon', 'est_n_obs', 'filename'])
 
     # Camera loop
     frame_count = 0
@@ -410,6 +581,16 @@ def main():
                 last_det = (cx, cy, conf, 0.0)
                 last_det_time = now
 
+                # Estimate dummy GPS position
+                est_result = None
+                d_lat, d_lon = gps_data["lat"], gps_data["lon"]
+                d_alt = gps_data["alt"]
+                d_yaw = gps_data["yaw"]
+                if d_lat != 0.0 or d_lon != 0.0:
+                    est_result = dummy_estimator.add_observation(
+                        d_lat, d_lon, d_alt, d_yaw, x, y
+                    )
+
                 # Save snapshot with GPS overlay
                 if not args.no_save:
                     saved_count += 1
@@ -433,11 +614,16 @@ def main():
 
                     # CSV log
                     if csv_writer:
+                        est = dummy_estimator.get_estimate()
                         csv_writer.writerow([
                             datetime.now().isoformat(), frame_count, f"{conf:.3f}",
-                            cx, cy, f"{lat:.7f}", f"{lon:.7f}", f"{alt:.1f}",
+                            cx, cy, f"{d_lat:.7f}", f"{d_lon:.7f}", f"{d_alt:.1f}",
                             gps_data["sats"], f"{gps_data['yaw']:.0f}",
-                            gps_data["mode"], fname
+                            gps_data["mode"],
+                            f"{est[0]:.7f}" if est else "",
+                            f"{est[1]:.7f}" if est else "",
+                            est[2] if est else 0,
+                            fname
                         ])
                         csv_file.flush()
 
@@ -461,6 +647,7 @@ def main():
         c_fps = cam_fps_tracker.fps()
         v_fps = vis_fps_tracker.fps()
         s_fps = stream_fps_tracker.fps()
+        est = dummy_estimator.get_estimate()
         stats.update({
             "frames": frame_count,
             "detections": det_count,
@@ -474,6 +661,9 @@ def main():
             "alt": f"{gps_data['alt']:.1f}" if gps_data['alt'] != 0 else "---",
             "sats": gps_data["sats"],
             "flight_mode": gps_data["mode"],
+            "est_lat": f"{est[0]:.6f}" if est else "---",
+            "est_lon": f"{est[1]:.6f}" if est else "---",
+            "est_obs": est[2] if est else 0,
         })
 
         # Terminal output every 50 frames
