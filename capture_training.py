@@ -150,7 +150,7 @@ def main():
     parser.add_argument('--video', action='store_true', help='Also record continuous video')
     parser.add_argument('--interval', type=float, default=0, help='Auto-capture photo every N seconds (0=manual only)')
     parser.add_argument('--port', type=int, default=8091, help='Stream port (default 8091)')
-    parser.add_argument('--fps', type=int, default=15, help='Video recording FPS (default 15)')
+    parser.add_argument('--fps', type=int, default=30, help='Video recording FPS (default 30)')
     parser.add_argument('--res', default='640x480', help='Camera resolution WxH (default 640x480)')
     parser.add_argument('--no-mavlink', action='store_true', help='Skip mavlink connection')
     args = parser.parse_args()
@@ -246,7 +246,6 @@ def main():
         while True:
             frame = get_frame(cam_info)
             if frame is None:
-                time.sleep(0.05)
                 continue
 
             # Update stream
@@ -303,8 +302,6 @@ def main():
 
                     elif key.lower() == 'q':
                         break
-
-            time.sleep(0.05)
 
     except KeyboardInterrupt:
         pass
