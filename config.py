@@ -90,11 +90,10 @@ CAMERA_COLOR_CORRECTION = False
 CAMERA_FLIP_180 = True   # Camera mounted inverted on drone — flip image 180°
 
 # --- CV DETECTION ---
-# Point to the model you want to use:
-#   models/custom_yolov8n.tflite  — our custom dummy detector (default)
-#   models/human.tflite           — COCO person detector (backup)
-#   models/best2.tflite           — placeholder for retrained model
-MODEL_PATH = "models/custom_yolov8n.tflite"
+# Default: best.tflite in root. To swap model on Pi:
+#   cp models/human.tflite best.tflite      (COCO person detector)
+#   cp models/custom_yolov8n.tflite best.tflite  (back to custom)
+MODEL_PATH = "best.tflite"
 CONFIDENCE_THRESHOLD = 0.4  # Min detection confidence (tune on flight day: lower=more detections+more false positives)
 
 # --- SPEED SETTINGS ---
