@@ -82,8 +82,18 @@ class StreamHandler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header('Content-Type', 'text/html')
             self.end_headers()
-            self.wfile.write(b'''<html><body style="background:#111;margin:0;display:flex;justify-content:center;align-items:center;height:100vh">
-<img src="/stream" style="max-width:100%;max-height:100vh;object-fit:contain">
+            self.wfile.write(b'''<!DOCTYPE html>
+<html><head><title>Training Capture</title>
+<style>
+  body { background:#111; color:#eee; font-family:monospace; margin:0; padding:20px; }
+  h1 { color:#0f0; margin:0 0 10px; }
+  .info { color:#888; margin-bottom:10px; }
+  img { max-width:100%; border:1px solid #333; }
+</style>
+</head><body>
+<h1>Training Data Capture</h1>
+<div class="info">Stream only. Controls in terminal: SPACE=photo V=video Q=quit</div>
+<img src="/stream" alt="Camera Feed">
 </body></html>''')
 
     def log_message(self, *a):
