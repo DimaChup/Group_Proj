@@ -31,6 +31,7 @@ import threading
 import argparse
 import subprocess
 import csv
+import math
 from datetime import datetime
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from socketserver import ThreadingMixIn
@@ -254,7 +255,7 @@ def draw_overlay(frame, last_det):
     cv2.putText(display, gps_text, (5, h - 8),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 170, 255), 1)
 
-    # Top bar: FPS + mode
+    # Top bar: FPS + mode + attitude
     cv2.rectangle(display, (0, 0), (w, 30), (0, 0, 0), -1)
     cam_f = cam_fps_tracker.fps()
     vis_f = vis_fps_tracker.fps()
@@ -262,8 +263,38 @@ def draw_overlay(frame, last_det):
     fps_text = f"CAM:{cam_f:.1f}  VIS:{vis_f:.1f}  STR:{str_f:.1f}"
     cv2.putText(display, fps_text, (5, 18),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 255), 1)
-    cv2.putText(display, mode, (w - 100, 18),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.45, (200, 200, 200), 1)
+
+    yaw_deg = gps_data["yaw"]
+    pitch_deg = gps_data["pitch"]
+    roll_deg = gps_data["roll"]
+    att_text = f"Y:{yaw_deg:.0f} P:{pitch_deg:.1f} R:{roll_deg:.1f}"
+    cv2.putText(display, att_text, (w - 220, 18),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.4, (180, 180, 180), 1)
+    cv2.putText(display, mode, (w - 80, 18),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.4, (200, 200, 200), 1)
+
+    # Compass rose (top-right corner)
+    compass_cx = w - 45
+    compass_cy = 65
+    compass_r = 25
+    cv2.circle(display, (compass_cx, compass_cy), compass_r, (80, 80, 80), 1)
+
+    # N/S/E/W labels
+    cv2.putText(display, "N", (compass_cx - 4, compass_cy - compass_r - 3),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.3, (200, 200, 200), 1)
+
+    # Drone heading arrow (yaw = 0 means North, positive = clockwise)
+    yaw_rad = math.radians(yaw_deg)
+    arrow_x = int(compass_cx + compass_r * 0.8 * math.sin(yaw_rad))
+    arrow_y = int(compass_cy - compass_r * 0.8 * math.cos(yaw_rad))
+    cv2.arrowedLine(display, (compass_cx, compass_cy), (arrow_x, arrow_y),
+                    (0, 255, 0), 2, tipLength=0.4)
+
+    # "FRONT" label on the frame edge matching drone forward
+    # Camera down, top of image = drone forward
+    # Arrow shows where the drone nose points relative to North
+    cv2.putText(display, "FRONT", (w // 2 - 25, 48),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.35, (100, 100, 100), 1)
 
     return display
 
