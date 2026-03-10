@@ -72,7 +72,7 @@ DUMMY_HEIGHT_M = 1.8
 # --- CAMERA SPECS ---
 # Update these for the Raspberry Pi Global Shutter Camera
 SENSOR_WIDTH_MM = 5.02
-FOCAL_LENGTH_MM = 6.0
+FOCAL_LENGTH_MM = 7.0
 IMAGE_W = 640
 IMAGE_H = 480
 REAL_CAMERA_INDEX = 0 # Usually 0 for Pi Cam
