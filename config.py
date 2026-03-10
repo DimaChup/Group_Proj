@@ -94,7 +94,7 @@ CAMERA_FLIP_180 = True   # Camera mounted inverted on drone — flip image 180°
 #   models/custom_yolov8n.tflite  — our custom dummy detector (default)
 #   models/human.tflite           — COCO person detector (backup)
 #   models/best2.tflite           — placeholder for retrained model
-MODEL_PATH = "models/custom_yolov8n.tflite"
+MODEL_PATH = "models/human.tflite"
 CONFIDENCE_THRESHOLD = 0.4  # Min detection confidence (tune on flight day: lower=more detections+more false positives)
 
 # --- SPEED SETTINGS ---
