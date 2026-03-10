@@ -707,7 +707,7 @@ def main():
         display = draw_overlay(frame, last_det)
 
         # Encode for stream
-        _, jpg = cv2.imencode('.jpg', display, [cv2.IMWRITE_JPEG_QUALITY, 60])
+        _, jpg = cv2.imencode('.jpg', display, [cv2.IMWRITE_JPEG_QUALITY, 70])
         with frame_lock:
             latest_jpeg = jpg.tobytes()
         stream_fps_tracker.tick()
