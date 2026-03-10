@@ -82,9 +82,9 @@ class StreamHandler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header('Content-Type', 'text/html')
             self.end_headers()
-            self.wfile.write(b'<html><body style="background:#111;margin:0">')
-            self.wfile.write(b'<img src="/stream" style="width:100%;max-height:100vh">')
-            self.wfile.write(b'</body></html>')
+            self.wfile.write(b'''<html><body style="background:#111;margin:0;display:flex;justify-content:center;align-items:center;height:100vh">
+<img src="/stream" style="max-width:100%;max-height:100vh;object-fit:contain">
+</body></html>''')
 
     def log_message(self, *a):
         pass
