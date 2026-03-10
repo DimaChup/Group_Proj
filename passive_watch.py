@@ -81,7 +81,7 @@ HTML_PAGE = """<!DOCTYPE html>
   setInterval(()=>{
     fetch('/api/status').then(r=>r.json()).then(d=>{
       document.getElementById('stats').textContent =
-        `Frames: ${d.frames} | Detections: ${d.detections} (${d.det_pct}%) | FPS: ${d.fps} | Saved: ${d.saved}`;
+        `CAM: ${d.cam_fps} fps | VISION: ${d.vis_fps} fps | STREAM: ${d.stream_fps} fps | Det: ${d.detections} (${d.det_pct}%) | Saved: ${d.saved}`;
       document.getElementById('gps').textContent =
         `GPS: ${d.gps_lat}, ${d.gps_lon} | Alt: ${d.alt}m | Sats: ${d.sats} | Mode: ${d.flight_mode}`;
     });
@@ -149,9 +149,35 @@ class ThreadedServer(ThreadingMixIn, HTTPServer):
 
 # ── Stats ──
 stats = {
-    "frames": 0, "detections": 0, "det_pct": "0", "fps": "0.0", "saved": 0,
+    "frames": 0, "detections": 0, "det_pct": "0", "saved": 0,
+    "cam_fps": "0.0", "vis_fps": "0.0", "stream_fps": "0.0",
     "gps_lat": "---", "gps_lon": "---", "alt": "---", "sats": 0, "flight_mode": "---"
 }
+
+# ── Rolling FPS trackers ──
+class RollingFPS:
+    """Track FPS over a rolling window."""
+    def __init__(self, window=3.0):
+        self.window = window
+        self.times = []
+
+    def tick(self):
+        now = time.time()
+        self.times.append(now)
+        cutoff = now - self.window
+        self.times = [t for t in self.times if t > cutoff]
+
+    def fps(self):
+        if len(self.times) < 2:
+            return 0.0
+        span = self.times[-1] - self.times[0]
+        if span <= 0:
+            return 0.0
+        return (len(self.times) - 1) / span
+
+cam_fps_tracker = RollingFPS()
+vis_fps_tracker = RollingFPS()
+stream_fps_tracker = RollingFPS()
 
 # ── GPS state (read-only from mavproxy) ──
 gps_data = {
@@ -228,9 +254,16 @@ def draw_overlay(frame, last_det):
     cv2.putText(display, gps_text, (5, h - 8),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 170, 255), 1)
 
-    # Mode in top-right
-    cv2.putText(display, mode, (w - 100, 20),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200, 200, 200), 1)
+    # Top bar: FPS + mode
+    cv2.rectangle(display, (0, 0), (w, 30), (0, 0, 0), -1)
+    cam_f = cam_fps_tracker.fps()
+    vis_f = vis_fps_tracker.fps()
+    str_f = stream_fps_tracker.fps()
+    fps_text = f"CAM:{cam_f:.1f}  VIS:{vis_f:.1f}  STR:{str_f:.1f}"
+    cv2.putText(display, fps_text, (5, 18),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 255), 1)
+    cv2.putText(display, mode, (w - 100, 18),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.45, (200, 200, 200), 1)
 
     return display
 
@@ -332,11 +365,13 @@ def main():
         frame_count += 1
         now = time.time()
         h, w = frame.shape[:2]
+        cam_fps_tracker.tick()
 
         # Run detection (throttled)
         if eyes.using_ai and (now - last_inference) >= min_interval:
             last_inference = now
             found, x, y, conf = eyes.detect_in_image(frame)
+            vis_fps_tracker.tick()
 
             if found and conf >= args.conf:
                 det_count += 1
@@ -387,17 +422,21 @@ def main():
         _, jpg = cv2.imencode('.jpg', display, [cv2.IMWRITE_JPEG_QUALITY, 60])
         with frame_lock:
             latest_jpeg = jpg.tobytes()
+        stream_fps_tracker.tick()
 
         # Update stats
-        elapsed = now - start_time
-        fps_val = frame_count / elapsed if elapsed > 0 else 0
         det_pct = (det_count / frame_count * 100) if frame_count > 0 else 0
         lat, lon = gps_data["lat"], gps_data["lon"]
+        c_fps = cam_fps_tracker.fps()
+        v_fps = vis_fps_tracker.fps()
+        s_fps = stream_fps_tracker.fps()
         stats.update({
             "frames": frame_count,
             "detections": det_count,
             "det_pct": f"{det_pct:.0f}",
-            "fps": f"{fps_val:.1f}",
+            "cam_fps": f"{c_fps:.1f}",
+            "vis_fps": f"{v_fps:.1f}",
+            "stream_fps": f"{s_fps:.1f}",
             "saved": saved_count,
             "gps_lat": f"{lat:.6f}" if lat != 0 else "---",
             "gps_lon": f"{lon:.6f}" if lon != 0 else "---",
@@ -409,7 +448,7 @@ def main():
         # Terminal output every 50 frames
         if frame_count % 50 == 0:
             gps_str = f"GPS:{lat:.5f},{lon:.5f}" if lat != 0 else "GPS:---"
-            print(f"  #{frame_count} FPS:{fps_val:.1f} Det:{det_count} ({det_pct:.0f}%) Saved:{saved_count} {gps_str}")
+            print(f"  #{frame_count} CAM:{c_fps:.1f} VIS:{v_fps:.1f} STR:{s_fps:.1f} Det:{det_count} ({det_pct:.0f}%) Saved:{saved_count} {gps_str}")
 
     if csv_file:
         csv_file.close()
