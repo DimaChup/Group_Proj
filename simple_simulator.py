@@ -109,7 +109,7 @@ class SimpleMission:
             # Interactive setup: place dummies + draw search area
             targets_list, self.tgt_type, self.search_poly = self.sim.setup_on_map()
 
-            self.eyes = VisionSystem(camera_index=None, model_path=config.MODEL_PATH)
+            self.eyes = VisionSystem(camera_index=None, model_path="best.tflite")
             self.eyes.using_ai = True  # always use AI when dummies are placed
 
             # Multi-target: first target = real dummy (ground truth for landing accuracy)
@@ -124,7 +124,7 @@ class SimpleMission:
             self.sim = None
             self.geo = GeoTransformer(map_w_px=4800)
             self.search_poly = []
-            self.eyes = VisionSystem(camera_index=config.REAL_CAMERA_INDEX, model_path=config.MODEL_PATH)
+            self.eyes = VisionSystem(camera_index=config.REAL_CAMERA_INDEX, model_path="best.tflite")
             self.eyes.using_ai = True
             self.actual_gps = None  # no ground truth in real mode
             print("Real mode: no ground truth — GPS estimates only")

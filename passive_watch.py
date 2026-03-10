@@ -544,7 +544,7 @@ def main():
         print("[MAV] Skipped (--no-mavlink)")
 
     # Start camera + AI
-    eyes = VisionSystem(camera_index=0, model_path=config.MODEL_PATH)
+    eyes = VisionSystem(camera_index=0, model_path="best.tflite")
     if not eyes.using_ai:
         print("[WARN] AI model not loaded — stream only, no detection")
     print("[OK] Camera ready. Ctrl+C to stop.\n")
