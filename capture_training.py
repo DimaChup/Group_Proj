@@ -150,6 +150,8 @@ def main():
     parser.add_argument('--video', action='store_true', help='Also record continuous video')
     parser.add_argument('--interval', type=float, default=0, help='Auto-capture photo every N seconds (0=manual only)')
     parser.add_argument('--port', type=int, default=8091, help='Stream port (default 8091)')
+    parser.add_argument('--fps', type=int, default=30, help='Video recording FPS (default 30)')
+    parser.add_argument('--res', default='1456x1088', help='Camera resolution WxH (default 1456x1088 = full sensor)')
     parser.add_argument('--no-mavlink', action='store_true', help='Skip mavlink connection')
     args = parser.parse_args()
 
@@ -192,9 +194,13 @@ def main():
             print(f"[MAV] Failed: {e} — continuing without GPS")
             mav = None
 
+    # Parse resolution
+    res_parts = args.res.split('x')
+    cam_w, cam_h = int(res_parts[0]), int(res_parts[1])
+
     # Open camera
-    print("[CAM] Opening camera...")
-    cam_info = open_camera()
+    print(f"[CAM] Opening camera at {cam_w}x{cam_h}...")
+    cam_info = open_camera(cam_w, cam_h)
     if cam_info is None:
         print("[ERROR] No camera found!")
         return
@@ -228,7 +234,7 @@ def main():
 
     if recording:
         vpath = os.path.join(video_dir, f"flight_{datetime.now().strftime('%Y%m%d_%H%M%S')}.avi")
-        video_writer = cv2.VideoWriter(vpath, cv2.VideoWriter_fourcc(*'MJPG'), 5, (640, 480))
+        video_writer = cv2.VideoWriter(vpath, cv2.VideoWriter_fourcc(*'MJPG'), args.fps, (cam_w, cam_h))
         print(f"[REC] Recording to {vpath}")
 
     try:
