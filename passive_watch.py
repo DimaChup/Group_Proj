@@ -73,7 +73,7 @@ HTML_PAGE = """<!DOCTYPE html>
   h1 { color:#0f0; margin:0 0 10px; }
   .stats { color:#888; margin-bottom:10px; }
   .gps { color:#0af; margin-bottom:5px; }
-  .est { color:#ff0; margin-bottom:5px; }
+  .est { color:#ff00ff; margin-bottom:5px; font-weight:bold; }
   .fov { color:#b90; margin-bottom:10px; font-size:0.85em; }
   img { max-width:100%; border:1px solid #333; }
 </style>
@@ -477,10 +477,10 @@ def draw_overlay(frame, last_det):
     if est is not None:
         e_lat, e_lon, n_obs = est
         est_text = f"DUMMY EST: {e_lat:.6f}, {e_lon:.6f} ({n_obs} obs)"
-        est_color = (0, 255, 255)  # yellow
+        est_color = (255, 0, 255)  # pink/magenta
     elif lat == 0.0 and lon == 0.0:
         est_text = "DUMMY EST: NO GPS — cannot estimate"
-        est_color = (0, 0, 180)  # dark red
+        est_color = (180, 0, 255)  # pink-red
     else:
         est_text = "DUMMY EST: waiting for detection..."
         est_color = (100, 100, 100)  # grey
