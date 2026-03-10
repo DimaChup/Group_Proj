@@ -40,8 +40,12 @@ Usage:
 import sys
 import os
 import time
+import signal
 import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
+
+# Ensure Ctrl+C works even with threads
+signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.dirname(os.path.dirname(script_dir))

@@ -27,8 +27,12 @@ import os
 import time
 import math
 import socket
+import signal
 import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# Ensure Ctrl+C works even with threads
+signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 headless = "--headless" in sys.argv
 
