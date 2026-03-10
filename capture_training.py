@@ -151,7 +151,7 @@ def main():
     parser.add_argument('--interval', type=float, default=0, help='Auto-capture photo every N seconds (0=manual only)')
     parser.add_argument('--port', type=int, default=8091, help='Stream port (default 8091)')
     parser.add_argument('--fps', type=int, default=15, help='Video recording FPS (default 15)')
-    parser.add_argument('--res', default='1280x960', help='Camera resolution WxH (default 1280x960)')
+    parser.add_argument('--res', default='640x480', help='Camera resolution WxH (default 640x480)')
     parser.add_argument('--no-mavlink', action='store_true', help='Skip mavlink connection')
     args = parser.parse_args()
 
@@ -234,7 +234,7 @@ def main():
 
     if recording:
         vpath = os.path.join(video_dir, f"flight_{datetime.now().strftime('%Y%m%d_%H%M%S')}.avi")
-        video_writer = cv2.VideoWriter(vpath, cv2.VideoWriter_fourcc(*'XVID'), args.fps, (cam_w, cam_h))
+        video_writer = cv2.VideoWriter(vpath, cv2.VideoWriter_fourcc(*'MJPG'), args.fps, (cam_w, cam_h))
         print(f"[REC] Recording to {vpath}")
 
     try:
@@ -291,7 +291,7 @@ def main():
                             vpath = os.path.join(video_dir,
                                                  f"flight_{datetime.now().strftime('%Y%m%d_%H%M%S')}.avi")
                             video_writer = cv2.VideoWriter(vpath,
-                                                           cv2.VideoWriter_fourcc(*'XVID'), 5, (640, 480))
+                                                           cv2.VideoWriter_fourcc(*'MJPG'), args.fps, (cam_w, cam_h))
                             print(f"  [REC] Recording to {vpath}")
 
                     elif key.lower() == 'q':
