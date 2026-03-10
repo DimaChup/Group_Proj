@@ -378,6 +378,13 @@ def draw_overlay(frame, last_det):
             cv2.putText(display, f"{conf:.2f}", (cx - box, cy - box - 5),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
 
+    # Centre crosshair (helps pilot align directly over target)
+    cx, cy = w // 2, h // 2
+    cross_color = (100, 100, 100)  # subtle grey
+    cross_len = 15
+    cv2.line(display, (cx - cross_len, cy), (cx + cross_len, cy), cross_color, 1)
+    cv2.line(display, (cx, cy - cross_len), (cx, cy + cross_len), cross_color, 1)
+
     # GPS overlay (bottom of frame)
     lat, lon = gps_data["lat"], gps_data["lon"]
     alt = gps_data["alt"]
