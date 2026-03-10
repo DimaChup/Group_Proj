@@ -440,7 +440,7 @@ class PiFlight:
             targets_list, self.tgt_type, self.search_poly = self.sim.setup_on_map()
             cv2.destroyAllWindows()
 
-            self.eyes = VisionSystem(camera_index=None, model_path="best.tflite")
+            self.eyes = VisionSystem(camera_index=None, model_path=config.MODEL_PATH)
             self.eyes.using_ai = True
 
             # Store target positions (for simulation error display)
@@ -458,7 +458,7 @@ class PiFlight:
             self.sim = None
             self.geo = GeoTransformer(map_w_px=4800)
             self.search_poly_gps = list(config.SEARCH_AREA_GPS)
-            self.eyes = VisionSystem(camera_index=config.REAL_CAMERA_INDEX, model_path="best.tflite")
+            self.eyes = VisionSystem(camera_index=config.REAL_CAMERA_INDEX, model_path=config.MODEL_PATH)
             self.eyes.using_ai = True
             self.actual_gps = None
             self.all_target_gps = []

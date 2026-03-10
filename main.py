@@ -39,7 +39,7 @@ if config.MODE == "SIMULATION":
 # Stream:     --stream-port 8090 --stream-res 320x240 --stream-fps 5 --stream-quality 50
 # No stream:  --no-stream
 DRY_RUN = "--dry-run" in sys.argv
-MODEL_PATH = "best.tflite"
+MODEL_PATH = config.MODEL_PATH
 STREAM_ENABLED = "--no-stream" not in sys.argv
 STREAM_PORT = 8090
 STREAM_W, STREAM_H = 320, 240
