@@ -33,6 +33,14 @@ import io
 import argparse
 import sys
 import os
+import signal
+
+# Ensure Ctrl+C works even with threads
+signal.signal(signal.SIGINT, signal.SIG_DFL)
+
+# Force headless OpenCV when no display
+if not os.environ.get('DISPLAY'):
+    os.environ['QT_QPA_PLATFORM'] = 'minimal'
 
 import cv2
 import numpy as np
@@ -351,8 +359,19 @@ class WebHandler(BaseHTTPRequestHandler):
 # ========================================================================
 class PiFlight:
     def __init__(self, args):
+        # Auto-detect IP
+        pi_ip = "localhost"
+        try:
+            import subprocess
+            result = subprocess.run(['hostname', '-I'], capture_output=True, text=True, timeout=3)
+            ip = result.stdout.strip().split()[0]
+            if ip:
+                pi_ip = ip
+        except Exception:
+            pass
         print(f"=== SAR GROUND STATION ({config.MODE} MODE) ===")
-        print(f"Dashboard: http://localhost:{args.port}")
+        print(f"Dashboard: http://{pi_ip}:{args.port}")
+        print(f"Stream:    http://{pi_ip}:{args.port}/stream")
         print()
 
         self.running = True
