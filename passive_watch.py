@@ -158,15 +158,13 @@ class ThreadedServer(ThreadingMixIn, HTTPServer):
     daemon_threads = True
 
 
-# ── Stats ──
+# ── Stats (FOV fields populated after get_fov_info is defined) ──
 stats = {
     "frames": 0, "detections": 0, "det_pct": "0", "saved": 0,
     "cam_fps": "0.0", "vis_fps": "0.0", "stream_fps": "0.0",
     "gps_lat": "---", "gps_lon": "---", "alt": "---", "sats": 0, "flight_mode": "---",
     "est_lat": "---", "est_lon": "---", "est_obs": 0,
-    "fov_deg": f"{get_fov_info()['hfov_deg']:.0f}",
-    "cal_1m_w": f"{ground_coverage(1.0)[0]*100:.0f}",
-    "cal_1m_h": f"{ground_coverage(1.0)[1]*100:.0f}",
+    "fov_deg": "---", "cal_1m_w": "---", "cal_1m_h": "---",
 }
 
 # ── Rolling FPS trackers ──
@@ -225,6 +223,11 @@ def ground_coverage(alt_m):
     return w, h
 
 FOV = get_fov_info()
+
+# Now populate FOV stats
+stats["fov_deg"] = f"{FOV['hfov_deg']:.0f}"
+stats["cal_1m_w"] = f"{ground_coverage(1.0)[0]*100:.0f}"
+stats["cal_1m_h"] = f"{ground_coverage(1.0)[1]*100:.0f}"
 
 
 # ── Dummy position estimator ──
