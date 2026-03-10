@@ -31,6 +31,7 @@ import threading
 import argparse
 import subprocess
 import csv
+import json
 import math
 from datetime import datetime
 from http.server import HTTPServer, BaseHTTPRequestHandler
@@ -644,6 +645,43 @@ def main():
                                     cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1)
 
                     cv2.imwrite(os.path.join(args.save_dir, fname), save_frame)
+
+                    # JSON sidecar metadata (same name, .json)
+                    g_w, g_h = ground_coverage(d_alt) if d_alt > 0.5 else (0, 0)
+                    meta = {
+                        "timestamp": datetime.now().isoformat(),
+                        "frame": frame_count,
+                        "detection": {
+                            "confidence": round(conf, 3),
+                            "pixel_x": cx, "pixel_y": cy,
+                            "bbox_centre": [cx, cy],
+                        },
+                        "drone": {
+                            "lat": round(d_lat, 7), "lon": round(d_lon, 7),
+                            "alt_m": round(d_alt, 1),
+                            "yaw_deg": round(gps_data["yaw"], 1),
+                            "pitch_deg": round(gps_data["pitch"], 1),
+                            "roll_deg": round(gps_data["roll"], 1),
+                            "sats": gps_data["sats"],
+                            "mode": gps_data["mode"],
+                        },
+                        "fov": {
+                            "focal_mm": FOV["focal_mm"],
+                            "sensor_w_mm": FOV["sensor_w"],
+                            "hfov_deg": round(FOV["hfov_deg"], 1),
+                            "ground_w_m": round(g_w, 2) if d_alt > 0.5 else None,
+                            "ground_h_m": round(g_h, 2) if d_alt > 0.5 else None,
+                        },
+                        "estimate": {
+                            "lat": round(est_snap[0], 7) if est_snap else None,
+                            "lon": round(est_snap[1], 7) if est_snap else None,
+                            "n_observations": est_snap[2] if est_snap else 0,
+                        },
+                        "image": fname,
+                    }
+                    json_fname = fname.replace('.jpg', '.json')
+                    with open(os.path.join(args.save_dir, json_fname), 'w') as jf:
+                        json.dump(meta, jf, indent=2)
 
                     # CSV log
                     if csv_writer:
