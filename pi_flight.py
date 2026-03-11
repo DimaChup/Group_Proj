@@ -100,6 +100,8 @@ body{background:#1a1a2e;color:#e0e0e0;font-family:'Courier New',monospace;overfl
 #stream{width:100%;height:100%;object-fit:contain}
 #det-alert{position:absolute;top:8px;right:8px;background:#ff6600;color:#000;
   padding:6px 12px;border-radius:4px;font-weight:bold;display:none;font-size:14px}
+#link-lost{position:fixed;top:0;left:0;right:0;background:#ff0000;color:#fff;
+  text-align:center;padding:8px;font-size:18px;font-weight:bold;display:none;z-index:999}
 #controls{display:flex;gap:6px;padding:6px;background:#16213e;
   justify-content:center;flex-wrap:wrap;border-top:2px solid #0f3460;height:54px;align-items:center}
 .btn{padding:8px 14px;font-size:12px;font-family:'Courier New',monospace;
@@ -117,6 +119,7 @@ body{background:#1a1a2e;color:#e0e0e0;font-family:'Courier New',monospace;overfl
 #log{position:absolute;bottom:50px;left:8px;right:8px;font-size:11px;color:#0f0;
   background:rgba(0,0,0,.7);padding:4px;border-radius:3px;max-height:80px;overflow-y:auto;display:none}
 </style></head><body>
+<div id="link-lost">LINK LOST — NO HEARTBEAT</div>
 <div id="header">
   <div><span class="mode" id="fmode">CONNECTING...</span>
     <span class="status" id="dmode"></span></div>
@@ -146,6 +149,7 @@ body{background:#1a1a2e;color:#e0e0e0;font-family:'Courier New',monospace;overfl
   <button class="btn fp" onclick="cmd('false_positive')">X: FALSE POS</button>
   <button class="btn land" onclick="cmd('land')">L: LAND</button>
   <button class="btn res" onclick="cmd('resume')">M: RESUME</button>
+  <button class="btn rtl" onclick="if(confirm('Return to launch?'))cmd('rtl')" style="border-color:#ff0000;color:#ff0000;font-weight:bold">RTL</button>
   <button class="btn arm" onclick="fakeDetect()" title="Create fake detection at drone position or custom GPS">FAKE DET</button>
 </div>
 <script>
@@ -179,7 +183,10 @@ function updateUI(){
   document.getElementById('gps').textContent='GPS: '+(S.lat||0).toFixed(6)+', '+(S.lon||0).toFixed(6);
   document.getElementById('alt').textContent='ALT: '+(S.alt||0).toFixed(1)+'m';
   document.getElementById('det').textContent='DET: '+(S.total_detections||0);
-  document.getElementById('bat').textContent='BAT: '+(S.battery||0).toFixed(1)+'V';
+  const bat=S.battery||0;const batEl=document.getElementById('bat');
+  batEl.textContent='BAT: '+bat.toFixed(1)+'V';
+  batEl.style.color=bat>14?'#0f0':bat>13?'#ffaa00':'#ff0000';
+  document.getElementById('link-lost').style.display=(S.heartbeat_age>5)?'block':'none';
   if(S.new_detection)showDetAlert();
   drawGrid();updateClusterInfo();
   document.getElementById('btn-inv').textContent=
@@ -836,6 +843,21 @@ class PiFlight:
             msg = "Resumed manual control"
             print("[RESUME] Manual mode")
 
+        elif action == "rtl":
+            if self.master:
+                self.master.mav.command_long_send(
+                    self.master.target_system, self.master.target_component,
+                    mavutil.mavlink.MAV_CMD_DO_SET_MODE, 0,
+                    mavutil.mavlink.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, 6, 0, 0, 0, 0, 0)
+                self._cancel_investigate()
+                self.landing_phase = None
+                self.landing_target = None
+                self.flight_mode = "RTL"
+                msg = "RTL command sent — returning to launch"
+                print("[RTL] Return to launch")
+            else:
+                msg = "No MAVLink connection"
+
         return {"ok": True, "message": msg}
 
     def _find_cluster_by_id(self, cluster_id):
@@ -932,6 +954,7 @@ class PiFlight:
             "search_poly": self.search_poly_gps,
             "has_snapshot": self.snapshot_jpeg is not None,
             "new_detection": new_det,
+            "heartbeat_age": time.time() - self.last_heartbeat if self.last_heartbeat else 999,
         }
 
     # --- Main loop ---

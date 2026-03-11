@@ -85,7 +85,8 @@ Updated after each session. Items move from Backlog → In Progress → Done.
 | Cost | - | Free |
 
 - **How:** `yolo export model=best.pt format=ncnn` → produces `best_ncnn_model/` folder
-- **Catch:** Requires `ultralytics` on Pi (pulls PyTorch, ~2GB). Python 3.13 untested.
+- **Catch:** Ultralytics v8.4.0+ blocked NCNN on ARM64 in Python API. Workarounds: (a) use older Ultralytics, (b) load NCNN model directly with `pip install ncnn`, (c) use via OpenCV DNN backend.
+- **INT8 + NCNN:** Unlike TFLite (zero speedup), INT8 quantization with NCNN gives 2-3x additional speedup on ARM. Export: `yolo export model=best.pt format=ncnn int8=True`
 - **Alternative:** Standalone `pip install ncnn` bindings (lighter, but write own postprocessing)
 - **Branch:** `ncnn-experiment` created, ready for when we have `best.pt`
 - **Status:** BLOCKED — need original .pt weights (lost/not in git). Retrain on Colab → export both TFLite + NCNN.
@@ -94,8 +95,8 @@ Updated after each session. Items move from Backlog → In Progress → Done.
 | Model | NCNN Speed | mAP (COCO) |
 |-------|:-:|:-:|
 | YOLOv8n (current) | ~83ms | 37.3 |
-| YOLO11n | ~80ms | 39.5 |
-| **YOLO26n** | **~68ms** | **40.1** |
+| YOLO11n | **~56ms** | 39.5 |
+| **YOLO26n** | **~39ms** | **40.6** |
 
 - Same Ultralytics export pipeline, same training workflow
 - Do this when retraining anyway — zero extra effort
@@ -118,9 +119,9 @@ Updated after each session. Items move from Backlog → In Progress → Done.
 - **Recommendation:** Fly first with current setup. Hailo is "next iteration" upgrade.
 - Source: [Raspberry Pi AI HAT+](https://www.raspberrypi.com/products/ai-hat/)
 
-### 3.5 What Does NOT Work
-- **INT8 TFLite:** Zero speedup on Pi 5 ARM CPU (known issue, GitHub #7445)
-- **Coral USB TPU:** Dead product, 1-2 FPS on YOLO (worse than current!), Python 3.13 incompatible, discontinued by Google
+### 3.5 What Does NOT Work (or Has Caveats)
+- **INT8 TFLite:** Zero speedup on Pi 5 ARM CPU (known issue, GitHub #7445). But INT8 + NCNN DOES work — see 3.1.
+- **Coral USB TPU:** ~45fps possible IF drivers work, but Google abandoned the project. Driver compat issues on Pi 5 + Python 3.13. Community workarounds exist but fragile.
 - **Vulkan GPU on Pi 5:** VideoCore VII doesn't benefit DL workloads. CPU + NEON is faster.
 - **RT-DETR (transformers):** Need GPU, too slow on Pi 5 CPU
 

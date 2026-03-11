@@ -722,7 +722,7 @@ class VisualFlightMission:
                     
                     # Calculate final error
                     lat_scale = 111132.0 
-                    final_error = math.sqrt(((self.lat-self.target_lat)*lat_scale)**2 + ((self.lon-self.target_lon)*lat_scale*0.62)**2)
+                    final_error = math.sqrt(((self.lat-self.target_lat)*lat_scale)**2 + ((self.lon-self.target_lon)*lat_scale*math.cos(math.radians(self.lat)))**2)
                     self.final_dist = final_error
                     print(f"MISSION COMPLETE. Final Error: {self.final_dist:.2f} m")
                     self._set_state(State.DONE)
@@ -769,7 +769,7 @@ class VisualFlightMission:
     def get_dist_to_target(self): return self.get_dist_to_point(self.target_lat, self.target_lon)
     def get_dist_to_point(self, t_lat, t_lon):
         lat_scale = 111132.0 
-        return math.sqrt(((self.lat-t_lat)*lat_scale)**2 + ((self.lon-t_lon)*lat_scale*0.62)**2)
+        return math.sqrt(((self.lat-t_lat)*lat_scale)**2 + ((self.lon-t_lon)*lat_scale*math.cos(math.radians(self.lat)))**2)
 
 def _dry_run(mission):
     """Dry-run mode: generate lawnmower pattern from SEARCH_AREA_GPS, display it, exit.

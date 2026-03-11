@@ -63,6 +63,10 @@ class VisionSystem:
                     ))
                     self._picam.start()
                     import time; time.sleep(1)
+                    # Discard first 10 frames (AWB/exposure convergence)
+                    for _ in range(10):
+                        self._picam.capture_array()
+                    print("[VISION] Warmup: discarded 10 frames")
 
                     # Apply white balance to fix blue tint
                     try:
