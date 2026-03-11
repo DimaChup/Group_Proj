@@ -250,8 +250,8 @@ class DummyEstimator:
         det_x, det_y: normalised detection coords (0-1, center of detection).
         Returns (est_lat, est_lon) or None if can't estimate.
         """
-        if alt_m < 1.0:
-            return None  # too low / no altitude data
+        if alt_m < 0.3:
+            alt_m = 0.3  # clamp to min 30cm to avoid division issues
 
         # Pixel offset from frame centre
         dx_px = (det_x - 0.5) * FOV["img_w"]
