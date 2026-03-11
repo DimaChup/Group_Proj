@@ -38,7 +38,7 @@ sys.path.insert(0, project_root)
 
 HEADLESS = "--headless" in sys.argv
 LOAD_ONLY = "--load" in sys.argv
-BOARD_W, BOARD_H = 9, 6  # inner corners
+BOARD_W, BOARD_H = 13, 8  # inner corners (for 14x9 squares calib.io board)
 
 for _i, _a in enumerate(sys.argv):
     if _a == "--board" and _i + 1 < len(sys.argv):
@@ -119,8 +119,14 @@ def calibrate():
             if img_size is None:
                 img_size = gray.shape[::-1]
 
-            # Try to find checkerboard
-            found, corners = cv2.findChessboardCorners(gray, (BOARD_W, BOARD_H), None)
+            # Try to find checkerboard (robust flags for calib.io boards with rounded edges)
+            flags = (cv2.CALIB_CB_ADAPTIVE_THRESH +
+                     cv2.CALIB_CB_NORMALIZE_IMAGE +
+                     cv2.CALIB_CB_FAST_CHECK)
+            found, corners = cv2.findChessboardCorners(gray, (BOARD_W, BOARD_H), flags)
+            # Fallback: try the newer SB detector (handles non-standard boards better)
+            if not found and hasattr(cv2, 'findChessboardCornersSB'):
+                found, corners = cv2.findChessboardCornersSB(gray, (BOARD_W, BOARD_H), None)
 
             display = frame.copy()
             if found:
