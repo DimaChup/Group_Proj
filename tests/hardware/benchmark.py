@@ -10,7 +10,10 @@ Usage: python tests/pi_3_benchmark.py
 import sys
 import os
 import time
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+script_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(os.path.dirname(script_dir))
+sys.path.insert(0, project_root)
+os.chdir(project_root)
 
 import cv2
 import numpy as np
