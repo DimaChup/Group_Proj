@@ -470,9 +470,9 @@ def draw_overlay(frame, last_det):
                 cv2.FONT_HERSHEY_SIMPLEX, 0.35, (180, 140, 0), 1)
 
     # ── Pink dot on detection center ──
-    if last_det.get("found"):
-        det_cx = int(last_det["x"] * w)
-        det_cy = int(last_det["y"] * h)
+    if last_det is not None and last_det[3] < 1.0:  # (cx, cy, conf, age)
+        det_cx = int(last_det[0] * w)
+        det_cy = int(last_det[1] * h)
         cv2.circle(display, (det_cx, det_cy), 12, (255, 0, 255), -1)  # filled pink
         cv2.circle(display, (det_cx, det_cy), 12, (255, 255, 255), 2)  # white border
 
