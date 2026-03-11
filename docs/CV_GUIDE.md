@@ -370,27 +370,28 @@ Post-processing:     <1ms
 Total:             ~255ms  → ~4 fps
 ```
 
-**Ways to speed up inference (if 4fps isn't enough):**
+**Ways to speed up inference (researched 2026-03-11, see Inference Optimization section below):**
 
-| Approach | Expected gain | Effort | Trade-off |
-|----------|--------------|--------|-----------|
-| INT8 quantization | ~2x (~8fps) | Low — re-export model | Slight accuracy loss |
-| NCNN runtime | ~1.5-2x | Medium — new dependency | Untested on Pi 5 |
-| Smaller input (320x320 model) | ~4x (~16fps) | High — retrain model | Much worse at altitude |
-| GPU/NPU delegate | ~2-3x | Medium | Pi 5 has no NPU; GPU delegate experimental |
-| Multithreaded inference | 0x (no gain) | N/A | TFLite already uses XNNPACK threads |
+| Approach | Actual Pi 5 Speed | Speedup | Cost | Trade-off |
+|----------|------------------|---------|------|-----------|
+| **NCNN export (same model)** | **~83ms (12 FPS)** | **3x** | Free | Needs ultralytics on Pi or ncnn bindings |
+| YOLO11n/26n + NCNN | ~68-80ms (15 FPS) | 3.5x | Free | Better accuracy too (+3 mAP) |
+| ONNX Runtime | ~170ms (6 FPS) | 1.5x | Free | Middle ground |
+| INT8 TFLite | ~250ms (4 FPS) | **1x (NO gain)** | Free | Known Pi 5 issue — skip this |
+| Smaller input (320x320) | ~40-50ms est. | ~5x | Free | Risky — small targets lost at altitude |
+| Hailo-8L AI HAT+ | ~16ms (60 FPS) | **15x** | $70 | Hardware purchase + model conversion |
+| Coral USB TPU | Worse than current | 0x | $60 | **Dead product — DO NOT BUY** |
 
-**Current decision: 640x480 camera, 640x640 model input, ~4fps is acceptable.**
+**Current decision: 640x480 camera, 640x640 model input, ~4fps is acceptable for first flight.**
 At 3 m/s search speed, the drone moves 0.75m between frames — plenty of overlap for a target
-that's in view for ~25m of ground width. Revisit if flight testing shows detection is unreliable
-at target speed/altitude.
+that's in view for ~25m of ground width.
 
-**Future experiment ideas:**
-- [ ] INT8 quantized model — easiest speed win, export with `yolo export format=tflite int8=True`
-- [ ] NCNN runtime — ARM-optimised, may beat TFLite on Pi 5
-- [ ] 320x320 model — only if we need >10fps AND altitude is low (large target in frame)
-- [ ] Tiling strategy — capture 1280x960, split into 4x 640x480 tiles, run inference on each.
-  4x slower but detects smaller targets. Only useful if nano can't see dummy at altitude.
+**Upgrade path (priority order):**
+1. [ ] **NCNN export** — 3x speedup for free. `yolo export model=best.pt format=ncnn`
+2. [ ] **YOLO11n or YOLO26n** — newer architecture, faster + more accurate than YOLOv8n
+3. [ ] **Hailo-8L** ($70) — 15x speedup, official Pi product. Post-first-flight upgrade.
+4. [x] ~~INT8 TFLite~~ — confirmed no speedup on Pi 5 ARM CPU. Skip.
+5. [x] ~~Coral USB TPU~~ — discontinued, 1-2 FPS on YOLO, Python 3.13 incompatible. Skip.
 
 ---
 
@@ -848,6 +849,80 @@ python simple_simulator.py \
   --cluster-dist 15  \  # 15m cluster grouping threshold
 ```
 
+---
+
+## Edge vs Offload: On-Board Pi Inference vs Ground Station Laptop
+
+**Decision: On-board inference on Pi is the correct architecture. Do NOT put offloaded
+inference in the flight control loop.**
+
+### Research Summary (2026-03-11)
+
+We investigated whether streaming video from Pi to the laptop and running faster inference
+there (Ultralytics + GPU) would beat running TFLite on Pi. Key findings:
+
+| Approach | End-to-end latency | FPS | WiFi needed? |
+|----------|-------------------|-----|:---:|
+| **Pi TFLite (current)** | **250ms** | 4 | No |
+| Offload via MJPEG → laptop GPU | 200-250ms | 4-5 | Yes |
+| Offload via H.264/GStreamer → laptop | 150-200ms | 10-15 | Yes |
+| Pi + Coral USB TPU | >250ms (1-2 FPS) | 1-2 | Dead product — skip |
+| **Pi + NCNN export** | **~83ms** | **12** | No |
+| Pi + Hailo-8L ($70) | ~16ms | 60 | No |
+
+**Key insight**: the network round-trip (encoding + WiFi + decoding) eats what you save on
+compute. CMU's SteelEagle project (2024) measured this — their optimized offload loop was
+380ms, worse than our on-board 250ms.
+
+### Why On-Board Wins for Active Flight Control
+
+1. **WiFi dropout during centering/landing is catastrophic.** Outdoors with terrain, multipath
+   drops happen even at 50m. On-board inference keeps working regardless.
+2. **4 FPS is adequate for our mission.** At hover (centering/descent), drone barely moves
+   between frames. At 5 m/s search speed, 1.25m per frame — target is in view for ~25m
+   ground width.
+3. **Offload latency ≈ on-board latency.** Adding WiFi dependency for ~zero speed gain.
+
+### Where Offload IS Useful
+
+**Operator monitoring only.** Stream annotated video to laptop for situational awareness.
+This is what `pi_flight.py` already does (MJPEG on port 8090). If WiFi drops, operator loses
+video but drone continues safely. This is a display function, not a control function.
+
+### Hybrid Architecture (Recommended)
+
+```
+Pi (on-board, safety-critical)     Laptop (monitoring, advisory)
+├─ Camera capture                  ├─ Browser dashboard (pi_flight.py)
+├─ TFLite inference (4 FPS)        ├─ MJPEG video stream
+├─ GPS estimation + clustering     ├─ Operator confirms Y/N
+├─ MAVLink flight commands         └─ Mission Planner (map + telemetry)
+└─ Autonomous if WiFi drops
+```
+
+Pi handles all detection and control. Laptop is for the operator to watch and confirm.
+WiFi dropout = operator blind but drone safe (RTL or hold position).
+
+### If You Want Faster On-Board Inference (Future)
+
+| Upgrade | Expected speedup | Effort | Cost |
+|---------|-----------------|--------|------|
+| NCNN export format | ~1.5-2x | Low | Free |
+| INT8 quantization | ~2x | Low | Free |
+| Coral USB TPU | **Dead product — skip** | - | - |
+| Hailo-8L AI HAT+ | ~15x (16ms, 60 FPS) | Medium | $70 |
+
+See "Inference Optimization" section below for details on each approach.
+
+### References
+
+- CMU SteelEagle (2024): drone video stream latency benchmarks
+- CMU OODA Loop of Cloudlet-based Autonomous Drones (2024)
+- CoDrone (2024): hybrid edge/cloud drone navigation
+- DeepBrain (2020): cloud computation offloading for drones evaluation
+
+---
+
 ### SAR Industry Best Practice (Confirmed by Research)
 
 The pixel-to-GPS projection with weighted averaging approach used here is the **standard
@@ -859,3 +934,157 @@ method** in commercial SAR drone systems. Key findings:
 - Lower altitude observations are more valuable (smaller GSD)
 - FOV calibration is the primary source of systematic error
 - ArduCopter's EKF provides ±1-2m navigation accuracy with standard GPS
+
+---
+
+## Inference Optimization — Full Research (2026-03-11)
+
+Comprehensive benchmarks and research into the fastest possible inference on Raspberry Pi 5.
+All numbers verified against published benchmarks and academic papers.
+
+### Master Comparison Table
+
+| Approach | Pi 5 Speed | FPS | mAP | Cost | Effort | Status |
+|----------|-----------|-----|-----|------|--------|--------|
+| **YOLOv8n TFLite FP32 (current)** | **250ms** | **4** | 37.3 | - | - | Working |
+| YOLOv8n TFLite INT8 | 250ms | 4 | ~37 | Free | Low | **No speedup — skip** |
+| YOLOv8n ONNX Runtime | ~170ms | 6 | 37.3 | Free | Medium | Untested on Pi |
+| **YOLOv8n NCNN** | **~83ms** | **12** | **37.3** | **Free** | **Low-Med** | **Best free upgrade** |
+| **YOLO11n NCNN** | **~80ms** | **12** | **39.5** | **Free** | **Low-Med** | **Recommended** |
+| **YOLO26n NCNN** | **~68ms** | **15** | **40.1** | **Free** | **Low-Med** | **Best accuracy+speed** |
+| YOLO26n OpenVINO | ~71ms | 14 | 40.1 | Free | Medium | Alternative to NCNN |
+| EfficientDet Lite0 INT8 | ~78ms | 13 | 25.6 | Free | Medium | Lower accuracy |
+| NanoDet-Plus NCNN | ~30ms | 33 | 30-34 | Free | Medium | Ultra-fast, low accuracy |
+| YOLO-Fastest V2 NCNN | ~25ms | 40 | 19-24 | Free | Hard | Too inaccurate for SAR |
+| SSD MobileNet V1 INT8 | ~40ms | 25 | 21 | Free | Medium | Too inaccurate for SAR |
+| RT-DETR (transformer) | Too slow | <1 | 53+ | Free | - | Needs GPU — skip on Pi |
+| **Hailo-8L AI HAT+** | **~16ms** | **60** | **same** | **$70** | **Medium** | **Best hardware upgrade** |
+| Hailo-8 AI HAT+ (26T) | ~10ms | 100+ | same | $110 | Medium | Overkill |
+| Coral USB TPU | >250ms | 1-2 | - | $60 | High | **Dead — DO NOT BUY** |
+
+### Tier 1: Free Software Optimizations
+
+#### NCNN Export (PRIMARY RECOMMENDATION)
+
+NCNN is Tencent's inference framework, purpose-built for ARM with hand-tuned NEON SIMD kernels.
+It is consistently the fastest CPU-only format on Raspberry Pi across all benchmarks.
+
+**How to export (on laptop):**
+```bash
+yolo export model=best.pt format=ncnn
+# Creates: best_ncnn_model/ folder with .param and .bin files
+```
+
+**How to run (on Pi with ultralytics):**
+```python
+from ultralytics import YOLO
+model = YOLO("best_ncnn_model")
+results = model.predict(source=frame, conf=0.4)
+```
+
+**Practical concerns for our project:**
+- Requires `ultralytics` installed on Pi (pulls PyTorch, ~2GB)
+- Python 3.13 compatibility unverified (tested on 3.11)
+- Alternative: `pip install ncnn` for lightweight bindings (but need custom postprocessing)
+- First inference after load takes ~17s (warmup). Do a dummy inference before mission loop.
+- INT8 quantization does NOT help with NCNN on ARM — use FP32 only.
+
+**Benchmarked numbers (Ultralytics official, Pi 5, 640x640):**
+- YOLO26n NCNN: 68ms | TFLite: 251ms → **3.7x faster**
+- YOLO26s NCNN: 168ms | TFLite: 805ms → **4.8x faster**
+
+#### YOLO11n / YOLO26n (Model Architecture Upgrade)
+
+Newer YOLO architectures are faster AND more accurate than YOLOv8n:
+- YOLO11n: 22% fewer params, 39.5 mAP (vs 37.3), ~80ms NCNN
+- YOLO26n: latest, 40.1 mAP, ~68ms NCNN — **15% faster than YOLO11n**
+
+Same Ultralytics training pipeline. To retrain custom model on newer architecture:
+```bash
+yolo detect train model=yolo11n.pt data=dataset.yaml epochs=100
+yolo export model=runs/detect/train/weights/best.pt format=ncnn
+```
+
+#### Smaller Input Resolution
+
+Reducing from 640x640 to 480x480 or 320x320 gives ~1.5-2x additional speedup.
+**CAUTION**: At 30m altitude, dummy is ~46px tall at 640x640 → ~23px at 320x320.
+Detection becomes unreliable below ~30px. Test carefully before committing.
+
+```bash
+yolo export model=best.pt format=ncnn imgsz=480  # compromise
+```
+
+### Tier 2: Hardware Accelerators
+
+#### Hailo-8L AI HAT+ ($70) — RECOMMENDED FUTURE UPGRADE
+
+The official Raspberry Pi AI accelerator. 13 TOPS via PCIe.
+
+**Real-world Pi 5 numbers:**
+- YOLOv8n: ~60 FPS (~16ms) single stream
+- YOLOv8s: ~80 FPS (~12ms) — more accurate model, STILL faster than current
+- YOLOv8m: ~16 FPS (~62ms) — medium model feasible
+
+**Setup:**
+1. Plug AI HAT+ onto Pi 5 PCIe connector
+2. `sudo apt update && sudo apt full-upgrade`
+3. Enable PCIe Gen3: `sudo raspi-config` → Advanced → PCIe Speed → Yes
+4. Clone hailo-rpi5-examples, run installer
+5. Convert model: ONNX → Hailo DFC → .hef file (pre-converted YOLOv8 available in Model Zoo)
+
+**For custom models:** Export to ONNX, use Hailo Dataflow Compiler (runs on x86 Linux) to
+produce .hef file. Pre-converted YOLOv8n/s/m available in Hailo Model Zoo — no conversion
+needed for COCO person detection.
+
+**vision.py integration:** Would need a third backend (Hailo HEF) alongside TFLite and
+Ultralytics. Same `detect_in_image()` interface.
+
+**Verdict:** Best upgrade path post-first-flight. $70 for 15x speedup. Official Pi product
+with active support. But adds complexity — don't rush before flight day.
+
+#### Coral USB TPU — DO NOT BUY
+
+- Discontinued by Google (July 2025, repo archived)
+- Only 1-2 FPS on YOLO (worse than CPU-only TFLite!)
+- YOLOv8 layers partially fall back to CPU, USB transfer overhead kills it
+- PyCoral only supports Python 3.6-3.9 (your Pi runs 3.13)
+- Software ecosystem is dead, no updates
+
+#### Alternative Ultra-Lightweight Models (Niche Use)
+
+If you ever need 30+ FPS and can tolerate lower accuracy:
+- **NanoDet-Plus NCNN**: ~30ms, 33 FPS, 980KB model, mAP ~30-34
+- **YOLO-Fastest V2 NCNN**: ~25ms, 40 FPS, 666KB model, mAP ~19-24
+
+These are too inaccurate for detecting a small dummy from 15-30m altitude but could work
+for close-range (<10m) or large/distinctive targets. Training pipelines are more complex
+than Ultralytics (NanoDet: PyTorch configs, YOLO-Fastest: Darknet C code).
+
+### Action Plan (Priority Order)
+
+**Before first flight (current TFLite is fine):**
+1. Fly with current 4 FPS setup — it works, it's tested, don't risk changes
+
+**After first flight (optimize based on real data):**
+1. [ ] Export current best.pt to NCNN on laptop: `yolo export model=best.pt format=ncnn`
+2. [ ] Test `pip install ultralytics` on Pi (Python 3.13 compatibility check)
+3. [ ] If ultralytics works: benchmark NCNN vs TFLite on Pi with pi_3_benchmark.py
+4. [ ] If 3x speedup confirmed: add NCNN backend to vision.py
+5. [ ] Train YOLO11n or YOLO26n on your custom data for additional accuracy gain
+6. [ ] Consider Hailo-8L ($70) if project continues and you want 60 FPS
+
+### Sources
+
+- Ultralytics Raspberry Pi Guide (official benchmarks): docs.ultralytics.com/guides/raspberry-pi/
+- Ultralytics NCNN Export Docs: docs.ultralytics.com/integrations/ncnn/
+- Qengineering YoloV8-ncnn-Raspberry-Pi-4 (bare-metal C++): github.com/Qengineering
+- CMU SteelEagle (2024): drone video stream latency benchmarks
+- Benchmarking Deep Learning on Edge Devices (arXiv 2409.16808)
+- Real-Time Object Detection with Quantized YOLO on RPi5 (Research Square)
+- YOLO11 on Raspberry Pi (LearnOpenCV)
+- Jeff Geerling: Testing Pi AI Kit (13 TOPS, $70)
+- Seeed Studio: Pi AI Kit vs Coral comparison
+- Hailo Community: YOLOv8n real performance on Pi 5
+- NanoDet GitHub: RangiLyu/nanodet
+- Google Coral archived: PyCoral Python 3.13 incompatible

@@ -137,12 +137,21 @@ v3/
 ├── pi_flight.py               ← Web ground station: browser dashboard + MJPEG stream + commands
 │                                 Works headless (Pi) or laptop. http://localhost:8090
 │                                 Keys in browser: N=investigate Y=confirm I=interest X=FP L=land
+├── passive_watch.py           ← Passive camera observer: stream + AI detection + GPS estimation
+│                                 ZERO commands. Saves detection photos + JSON metadata
+│                                 http://PI_IP:8090 — use during manual RC flight
+├── capture_training.py        ← Record video + photos for model retraining
+│                                 ZERO commands. SPACE=photo V=video Q=quit
+│                                 http://PI_IP:8091 — training data collection
 ├── simulation.py              ← Laptop-only sim: map.jpg + simulated drone camera view
 ├── preflight.py               ← Standalone connectivity checker (camera, Cube, AI model)
 │
-├── best.tflite                ← AI model file (~6MB, YOLOv8n exported to TFLite)
+├── best.tflite                ← AI model file (~3.3MB, YOLOv8n exported to TFLite)
+│                                 All scripts read this file. Swap model by overwriting:
+│                                 cp models/human.tflite best.tflite
 ├── models/                    ← Alternative TFLite models for flight day testing
-│   ├── custom_yolov8n.tflite  ← Copy of best.tflite (baseline)
+│   ├── custom_yolov8n.tflite  ← Copy of original best.tflite (our custom dummy detector)
+│   ├── human.tflite           ← COCO YOLOv8n person detector (~13MB, 80 classes, backup)
 │   └── best2.tflite           ← Placeholder (replace with retrained model)
 ├── map.jpg                    ← Satellite image for simulation (~12MB)
 ├── dummy.png                  ← Dummy/casualty image for dataset generation + bench test
@@ -168,6 +177,12 @@ v3/
 │   ├── TEAM_PLAN.md           ← Team workstreams and responsibilities
 │   ├── FLIGHT_DAY_CHECKLIST.md ← Printable flight day checklist (single document, follow top to bottom)
 │   ├── FLIGHT_DAY_TESTS.md    ← Master test reference: all scripts, protocols, troubleshooting
+│   ├── FIRST_FLIGHT.md        ← First flight plan with progressive steps
+│   ├── TRAINING_GUIDE.md      ← Model training/dataset guide
+│   ├── DESIGN_DECISIONS.md    ← Design rationale documentation
+│   ├── SIMULATOR.md           ← Simulator documentation
+│   ├── SIMULATOR_GUIDE.md     ← Simulator user guide
+│   ├── GROUP_STATUS.md        ← Group project status
 │   └── ROADMAP.md             ← Full 10-phase development history
 │
 ├── _archive/                  ← Old/junk files (gitignored, not deleted)
@@ -178,7 +193,8 @@ v3/
     │   ├── cv_benchmark.py    ← Detection rate, speed, blur simulation
     │   ├── buzzer_test.py     ← Buzzer melody test via MAVLink
     │   ├── gps_test.py        ← GPS diagnostics with fix tracking
-    │   └── gps_health.py      ← Step-by-step GPS verification
+    │   ├── gps_health.py      ← Step-by-step GPS verification
+    │   └── detection_snapshot_test.py ← Single-frame detection on static image
     ├── flight/                ← CAN IT FLY? (numbered by progression: bench → autonomous)
     │   ├── 0a_cube_commands.py   ← Bench: test individual commands (mode, arm)
     │   ├── 0b_bench_mission.py   ← Bench: full command sequence (no props)
@@ -197,7 +213,8 @@ v3/
     │   ├── fov_calibrate.py   ← Bench FOV calibration with ruler (comprehensive)
     │   ├── fov_test_simple.py ← Simple FOV test (single measurement)
     │   ├── alt_test.py        ← FOV calibration at real altitude
-    │   └── lens_calibrate.py  ← Lens distortion calibration (checkerboard → undistort)
+    │   ├── lens_calibrate.py  ← Lens distortion calibration (checkerboard → undistort)
+    │   └── gps_ground_truth.py ← GPS ground truth calibration (CV estimate vs actual)
     ├── day_1_experiments/     ← WHAT'S THE DATA? (structured experiments, CSV output)
     │   ├── altitude_sweep.py  ← Detection rate vs altitude (10-30m buckets)
     │   ├── speed_sweep.py     ← Detection rate vs speed + blur metric
@@ -225,8 +242,12 @@ vision.py ............. Camera + AI detection [INDEPENDENT — dual backend]
 planning.py ........... Lawnmower search pattern [INDEPENDENT]
 main.py ............... Mission orchestrator (state machine, ties everything together)
 simple_simulator.py ... Interactive MVP (keyboard flight + CV + GPS est + landing)
+pi_flight.py .......... Web ground station (browser dashboard + commands)
+passive_watch.py ...... Passive observer (stream + detection + GPS estimation, ZERO commands)
+capture_training.py ... Training data capture (video + photos, ZERO commands)
 simulation.py ......... Laptop-only simulation (map + simulated drone view)
 preflight.py .......... Connectivity checker (standalone tool)
+generate_dataset.py ... Synthetic training data generator
 tests/ ................ All test scripts (hardware/, flight/, diagnostics/, calibration/, laptop/)
 ```
 
