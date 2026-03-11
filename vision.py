@@ -33,6 +33,7 @@ class VisionSystem:
     def __init__(self, camera_index=0, model_path="best.tflite"):
         self.cap = None
         self._picam = None
+        cam_w, cam_h = 640, 480
         if camera_index is not None:
             try:
                 import config as _cfg
