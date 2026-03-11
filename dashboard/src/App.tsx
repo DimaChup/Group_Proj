@@ -9,18 +9,19 @@ import MissionWBSTab from "./pages/MissionWBSTab";
 import TeamTab from "./pages/TeamTab";
 import NotesTab from "./pages/NotesTab";
 import HardwareTab from "./pages/HardwareTab";
+import PipelineTab from "./pages/PipelineTab";
 import TopBar, { type TopPanel } from "./pages/TopBar";
 import TopPanels from "./pages/TopPanels";
 import LeftSidebar from "./pages/LeftSidebar";
 import RightSidebar from "./pages/RightSidebar";
-import PrepSidebar from "./pages/PrepSidebar";
 
-type Tab = "readme" | "mission" | "hardware" | "levels" | "roadmap" | "hub" | "team" | "notes" | "gp-v2" | "wbs";
+type Tab = "readme" | "mission" | "hardware" | "pipeline" | "levels" | "roadmap" | "hub" | "team" | "notes" | "gp-v2" | "wbs";
 
 const TABS: { id: Tab; label: string; description: string }[] = [
   { id: "readme", label: "README", description: "Complete project overview — share with your team to understand everything" },
   { id: "mission", label: "Mission", description: "The what: scenario, requirements, constraints, deliverables" },
   { id: "hardware", label: "Hardware", description: "All components, connections, setup guides, and links" },
+  { id: "pipeline", label: "Pipeline", description: "Mission stages with all design alternatives — our choices vs what else we could have done" },
   { id: "levels", label: "Levels", description: "The how: 3 product levels — Manual → Semi-Auto → Full Auto" },
   { id: "roadmap", label: "Roadmap", description: "Stepping stones to reach each level" },
   { id: "hub", label: "Hub", description: "Project status, flight testing, architecture" },
@@ -34,8 +35,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>("readme");
   const [activePanel, setActivePanel] = useState<TopPanel>(null);
   const [showLeft, setShowLeft] = useState(false);
-  const [showRight, setShowRight] = useState(false);
-  const [showPrep, setShowPrep] = useState(true);
+  const [showRight, setShowRight] = useState(true);
 
   // Ctrl+L = toggle left sidebar, Ctrl+R = toggle right sidebar
   useEffect(() => {
@@ -79,14 +79,6 @@ export default function App() {
         <span className="text-[9px] text-zinc-600 ml-auto">
           {TABS.find(t => t.id === activeTab)?.description}
         </span>
-        <button
-          onClick={() => setShowPrep(prev => !prev)}
-          className={`ml-2 px-2 py-1 text-[9px] rounded transition-all ${
-            showPrep ? "text-amber-400 bg-amber-500/10" : "text-zinc-600 hover:text-zinc-400"
-          }`}
-        >
-          Prep
-        </button>
       </div>
 
       {/* Main content with optional sidebars */}
@@ -97,6 +89,7 @@ export default function App() {
           {activeTab === "readme" && <ReadmeTab />}
           {activeTab === "mission" && <MissionTab />}
           {activeTab === "hardware" && <HardwareTab />}
+          {activeTab === "pipeline" && <PipelineTab />}
           {activeTab === "levels" && <LevelsTab />}
           {activeTab === "roadmap" && <RoadmapTab />}
           {activeTab === "hub" && <HubPage />}
@@ -107,7 +100,6 @@ export default function App() {
         </div>
 
         {showRight && <RightSidebar />}
-        {showPrep && <PrepSidebar />}
       </div>
     </div>
   );
