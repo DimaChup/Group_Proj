@@ -101,6 +101,23 @@ class VisionSystem:
                 except Exception as e:
                     print(f"[VISION] No camera available: {e}")
 
+        # --- LENS UNDISTORTION (precompute maps once) ---
+        self._undistort_map1 = None
+        self._undistort_map2 = None
+        calib_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "calibration_data.npz")
+        if os.path.exists(calib_path):
+            try:
+                calib = np.load(calib_path)
+                mtx = calib["camera_matrix"]
+                dist = calib["dist_coeffs"]
+                img_w, img_h = cam_w, cam_h
+                new_mtx, _ = cv2.getOptimalNewCameraMatrix(mtx, dist, (img_w, img_h), 0, (img_w, img_h))
+                self._undistort_map1, self._undistort_map2 = cv2.initUndistortRectifyMap(
+                    mtx, dist, None, new_mtx, (img_w, img_h), cv2.CV_16SC2)
+                print(f"[VISION] Lens undistortion loaded (RMS={float(calib['rms_error']):.3f})")
+            except Exception as e:
+                print(f"[VISION] Lens calibration skipped: {e}")
+
         # --- AI MODEL SETUP ---
         self.model = None
         self.using_ai = False
@@ -143,10 +160,17 @@ class VisionSystem:
         else:
             print("[VISION] No AI backend available (install ultralytics or tflite-runtime)")
 
+    def undistort(self, frame):
+        """Apply lens undistortion if calibration is loaded. ~1-2ms at 640x480."""
+        if self._undistort_map1 is not None and frame is not None:
+            return cv2.remap(frame, self._undistort_map1, self._undistort_map2, cv2.INTER_LINEAR)
+        return frame
+
     def detect_in_image(self, frame):
         """ Returns: found (bool), x, y, confidence (float) """
         if frame is None: return False, 0, 0, 0.0
         if not self.using_ai: return False, 0, 0, 0.0
+        frame = self.undistort(frame)
 
         # Confidence threshold from config (fallback to 0.4)
         try:
