@@ -469,6 +469,13 @@ def draw_overlay(frame, last_det):
     cv2.putText(display, fov_text, (5, fov_y + 16),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.35, (180, 140, 0), 1)
 
+    # ── Pink dot on detection center ──
+    if last_det.get("found"):
+        det_cx = int(last_det["x"] * w)
+        det_cy = int(last_det["y"] * h)
+        cv2.circle(display, (det_cx, det_cy), 12, (255, 0, 255), -1)  # filled pink
+        cv2.circle(display, (det_cx, det_cy), 12, (255, 255, 255), 2)  # white border
+
     # ── Estimated dummy position (if we have observations) ──
     est = dummy_estimator.get_estimate()
     est_y = h - 75  # above FOV bar
