@@ -20,7 +20,7 @@ PHASE 5: Autonomous     → Full mission with gradual confidence building
 | Step | What to do | How you know it works |
 |------|-----------|----------------------|
 | 0a | Run `python simulation.py` | See search pattern, click to place dummy, watch drone find it |
-| 0b | Run `python tests/pi_3_benchmark.py` | Model loads, detects on test image, prints speed + position |
+| 0b | Run `python tests/hardware/benchmark.py` | Model loads, detects on test image, prints speed + position |
 | 0c | Read `docs/PI_SETUP.md` | Know exactly what to do when Pi arrives |
 | 0d | Push code to git (including `best.tflite`) | Ready to clone onto Pi |
 
@@ -50,12 +50,12 @@ pip install -r requirements_pi.txt
 
 | Step | Script | What it proves | Pass criteria | Status |
 |------|--------|---------------|--------------|--------|
-| 1 | `python tests/pi_1_camera.py` | Camera gives frames | Prints frame size | PASS |
-| 2 | `python tests/pi_2_detect.py` | AI detects dummy | Bounding box on dummy printout | PASS |
-| 3 | `python tests/pi_3_benchmark.py` | Speed OK | Avg < 200ms | 256ms (acceptable) |
-| 3b | `python tests/pi_8_camera_test.py --headless` | FPS + blur | Reports pipeline FPS, blur impact | -- |
-| 3c | `python tests/pi_9_resolution_test.py --headless` | Best resolution | Recommends optimal resolution | -- |
-| 4 | `python tests/pi_6_fov_test.py --headless` | Bench FOV | Predicted vs actual match | -- |
+| 1 | `python tests/laptop/test_camera.py` | Camera gives frames | Prints frame size | PASS |
+| 2 | `python tests/laptop/test_cv.py` | AI detects dummy | Bounding box on dummy printout | PASS |
+| 3 | `python tests/hardware/benchmark.py` | Speed OK | Avg < 200ms | 256ms (acceptable) |
+| 3b | `python tests/hardware/cv_benchmark.py --headless` | FPS + blur | Reports pipeline FPS, blur impact | -- |
+| 3c | Resolution test (planned) | Best resolution | Recommends optimal resolution | -- |
+| 4 | `python tests/calibration/fov_calibrate.py --headless` | Bench FOV | Predicted vs actual match | -- |
 
 ### Camera Color Note
 The IMX296 Global Shutter Camera outputs BGR data despite picamera2 labeling it RGB888.
@@ -97,11 +97,11 @@ sudo /opt/mavlink/mavlink-venv/bin/mavproxy.py \
 
 | Step | Script | What it proves | Pass criteria | Status |
 |------|--------|---------------|--------------|--------|
-| 5 | `python tests/test_cube.py` | Cube talks to Pi | Heartbeat + yaw/pitch/roll printed | PASS |
-| 6 | `python tests/pi_4b_detect_buzzer.py --headless` | **CV + Cube together** | Buzzer beeps, guidance commands | PASS |
+| 5 | `python tests/laptop/test_cube.py` | Cube talks to Pi | Heartbeat + yaw/pitch/roll printed | PASS |
+| 6 | `python tests/hardware/buzzer_test.py --headless` | **CV + Cube together** | Buzzer beeps, guidance commands | PASS |
 | 7 | `python preflight.py` | All connections OK | All checks pass | -- |
 
-### Bench test results (pi_4b_detect_buzzer.py)
+### Bench test results (buzzer_test.py)
 - 144 detections from 513 frames, 210ms avg inference
 - Guidance commands working (LEFT, RIGHT, FORWARD, BACK, CENTRED)
 - Yaw data flowing from Cube
@@ -117,8 +117,8 @@ sudo /opt/mavlink/mavlink-venv/bin/mavproxy.py \
 
 **Pre-requisites before going to field**:
 1. Push BGR fix code to GitHub, pull on Pi, verify detection works with correct colors
-2. Test GPS fix outdoors (pi_gps_test.py)
-3. Have pi_passive_flight.py ready — this is your main flight day script
+2. Test GPS fix outdoors (tests/hardware/gps_test.py)
+3. Have tests/flight/1_passive_flight.py ready — this is your main flight day script
 
 ### What to bring
 
@@ -144,7 +144,7 @@ sudo /opt/mavlink/mavlink-venv/bin/mavproxy.py \
 Can the drone see the dummy from above?
 
 1. Place dummy flat on ground
-2. SSH: `python tests/pi_2_detect.py --headless`
+2. SSH: `python tests/laptop/test_cv.py --headless`
 3. Pilot hovers directly above dummy
 4. Hold at each altitude ~10 seconds:
 
@@ -169,7 +169,7 @@ Can the drone see the dummy from above?
 How much ground does the camera see at altitude?
 
 1. Lay markers on ground at known distances
-2. SSH: `python tests/pi_7_alt_test.py`
+2. SSH: `python tests/calibration/alt_test.py`
 3. Pilot hovers at ~10m, operator presses SPACE, enters ground width visible
 4. Pilot climbs to ~20m, repeat
 5. Script outputs actual FOV and correction values
@@ -180,7 +180,7 @@ How much ground does the camera see at altitude?
 ### Step 10: (bonus) CV + Cube from the Air
 
 If time allows:
-1. SSH: `python tests/pi_4_detect_and_log.py`
+1. SSH: `python tests/flight/4_detect_and_center.py`
 2. Pilot hovers at ~15m above dummy, flies side to side
 3. Watch: does guidance say LEFT/RIGHT/CENTRED correctly?
 4. Does buzzer beep?
@@ -283,24 +283,24 @@ Each phase adds ONE new thing. If something breaks, you know exactly which layer
 ```bash
 # PHASE 0 — Laptop
 python simulation.py
-python tests/pi_3_benchmark.py
+python tests/hardware/benchmark.py
 
 # PHASE 1 — Pi Vision
-python tests/pi_1_camera.py              # camera
-python tests/pi_2_detect.py              # detection
-python tests/pi_3_benchmark.py           # speed
-python tests/pi_8_camera_test.py --headless   # FPS + blur
-python tests/pi_9_resolution_test.py --headless  # resolution
-python tests/pi_6_fov_test.py --headless      # bench FOV
+python tests/laptop/test_camera.py                # camera
+python tests/laptop/test_cv.py                    # detection
+python tests/hardware/benchmark.py                # speed
+python tests/hardware/cv_benchmark.py --headless  # FPS + blur
+# resolution test (planned)
+python tests/calibration/fov_calibrate.py --headless  # bench FOV
 
 # PHASE 2 — Pi Vision + Cube
-python tests/test_cube.py                # Cube heartbeat
-python tests/pi_4_detect_and_log.py      # CV + Cube together
-python preflight.py                      # all checks
+python tests/laptop/test_cube.py              # Cube heartbeat
+python tests/flight/4_detect_and_center.py    # CV + Cube together
+python preflight.py                           # all checks
 
 # PHASE 3 — First Flight (manual)
-python tests/pi_2_detect.py --headless   # detection at altitude
-python tests/pi_7_alt_test.py            # FOV calibration
+python tests/laptop/test_cv.py --headless     # detection at altitude
+python tests/calibration/alt_test.py          # FOV calibration
 
 # PHASE 4 — Ground Station
 python main.py                           # ground test (no props!)

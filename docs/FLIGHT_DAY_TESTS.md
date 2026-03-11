@@ -34,7 +34,7 @@ tests/
 │   ├── 0b_bench_mission.py   Bench: full command sequence (no props needed)
 │   ├── 0c_feedback_test.py   Bench: vision→GPS pipeline (no commands)
 │   ├── 1_passive_flight.py   Manual RC flight, CV watches (ZERO commands)
-│   ├── 2_waypoint_test.py    Fly 4 GPS waypoints (SENDS COMMANDS, no CV)
+│   ├── 2_waypoints.py    Fly 4 GPS waypoints (SENDS COMMANDS, no CV)
 │   ├── 3_auto_detect.py      MP AUTO + AI → GUIDED hover (SENDS COMMANDS)
 │   └── 4_detect_and_center.py Autonomous pattern + center (SENDS COMMANDS)
 │
@@ -188,8 +188,8 @@ Run in order. Each builds trust before adding risk.
 
 ### Step 1.5: Waypoint Test (your code, no CV)
 ```
-python tests/flight/2_waypoint_test.py --dry-run    # verify first
-python tests/flight/2_waypoint_test.py --alt 10     # real flight
+python tests/flight/2_waypoints.py --dry-run    # verify first
+python tests/flight/2_waypoints.py --alt 10     # real flight
 ```
 - Arms, takes off, flies 4 GPS waypoints, lands
 - Proves: your MAVLink commands work on real hardware

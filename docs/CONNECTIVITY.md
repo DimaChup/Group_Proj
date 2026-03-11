@@ -21,7 +21,7 @@
 ### 1. Camera -> Pi (CSI)
 - **Physical**: Ribbon cable from camera module to Pi CSI port
 - **Software**: OpenCV `cv2.VideoCapture(0)` or `picamera2`
-- **Test**: `python tests/pi_1_camera.py`
+- **Test**: `python tests/laptop/test_camera.py`
 - **Common issues**:
   - Ribbon cable not seated properly
   - Camera not enabled: `sudo raspi-config` -> Interface -> Camera
@@ -88,9 +88,9 @@ Run these in order when setting up new hardware:
 
 ```
 # Phase 1: Pi + Camera
-python tests/pi_1_camera.py      # Camera gives frames?
-python tests/pi_2_detect.py      # Camera + AI detects?
-python tests/pi_3_benchmark.py   # Inference speed ok?
+python tests/laptop/test_camera.py    # Camera gives frames?
+python tests/laptop/test_cv.py       # Camera + AI detects?
+python tests/hardware/benchmark.py   # Inference speed ok?
 
 # Phase 2: Pi + Cube
 python tests/test_cube.py        # Heartbeat + GPS + attitude?
@@ -112,7 +112,7 @@ python main.py                   # Fly
 - Test hardware: `libcamera-hello`
 - Enable camera: `sudo raspi-config` -> Interface -> Camera
 - Check ribbon cable is seated properly
-- If OpenCV fails, pi_1_camera.py auto-tries picamera2
+- If OpenCV fails, test_camera.py auto-tries picamera2
 
 ### TCP connection refused (WSL or Pi to laptop)
 - Is Mission Planner / SITL running?

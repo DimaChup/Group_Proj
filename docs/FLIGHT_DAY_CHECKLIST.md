@@ -248,8 +248,8 @@ python main.py --dry-run
 
 ```bash
 # Terminal 2 on Pi:
-python tests/flight/2_waypoint_test.py --dry-run   # verify commands without arming
-python tests/flight/2_waypoint_test.py --alt 10     # real flight at 10m
+python tests/flight/2_waypoints.py --dry-run   # verify commands without arming
+python tests/flight/2_waypoints.py --alt 10     # real flight at 10m
 ```
 
 ```

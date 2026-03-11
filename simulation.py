@@ -116,7 +116,10 @@ class SimulationEnvironment:
         print("2. Left-click search polygon points, Right-click to close.")
         print("3. Press KEY to start.")
         cv2.waitKey(0)
-        cv2.destroyWindow(window_name)
+        try:
+            cv2.destroyWindow(window_name)
+        except cv2.error:
+            pass
 
         self.sim_targets = targets
         self.sim_target_type = "dummy"

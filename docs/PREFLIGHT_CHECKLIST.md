@@ -45,7 +45,7 @@ export DRONE_MODE=REAL
 
 ### 3.1 Camera
 ```bash
-python tests/pi_1_camera.py
+python tests/laptop/test_camera.py
 ```
 **Expected**: "Camera opened successfully" + frame dimensions printed
 
@@ -57,30 +57,30 @@ python tests/pi_1_camera.py
 
 ### 3.2 AI Detection
 ```bash
-python tests/pi_2_detect.py
+python tests/laptop/test_cv.py
 ```
 **Expected**: Live camera feed with bounding boxes drawn on detected targets, FPS counter shown
 
 **If it fails**:
 - Is `best.tflite` in the project root?
 - Install runtime: `pip install tflite-runtime "numpy<2"`
-- Run benchmark to check: `python tests/pi_3_benchmark.py`
+- Run benchmark to check: `python tests/hardware/benchmark.py`
 
 ### 3.3 Cube Connection
 ```bash
-python tests/test_cube.py
+python tests/laptop/test_cube.py
 ```
 **Expected**: Heartbeat received, GPS fix, attitude data, battery voltage
 
 **If it fails**:
 - Check wiring: TX->RX, RX->TX, GND->GND
-- Try different baud rate: `python tests/test_cube.py /dev/ttyAMA0 921600`
+- Try different baud rate: `python tests/laptop/test_cube.py /dev/ttyAMA0 921600`
 - Enable serial: `sudo raspi-config` -> Interface -> Serial -> Yes
 - Make sure Cube is powered and booted
 
 ### 3.4 Full Connectivity
 ```bash
-python tests/test_all.py
+python tests/laptop/test_all.py
 ```
 **Expected**: Connectivity map showing all links with OK/FAIL status
 
@@ -159,9 +159,9 @@ python preflight.py
 All of these must be true before running `python main.py`:
 
 - [ ] preflight.py shows 0 failures
-- [ ] Camera capturing frames (tested with pi_1_camera.py)
-- [ ] AI model detects target (tested with pi_2_detect.py)
-- [ ] Cube heartbeat confirmed (tested with test_cube.py)
+- [ ] Camera capturing frames (tested with tests/laptop/test_camera.py)
+- [ ] AI model detects target (tested with tests/laptop/test_cv.py)
+- [ ] Cube heartbeat confirmed (tested with tests/laptop/test_cube.py)
 - [ ] Mission Planner connected and showing live data
 - [ ] GPS has 3D fix
 - [ ] Battery fully charged

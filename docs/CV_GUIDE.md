@@ -30,7 +30,7 @@ Current model (`best.tflite`) was trained on **synthetic composites** — map.jp
     - Label with Roboflow (roboflow.com) or CVAT (cvat.ai)
     - Retrain: yolo detect train model=yolov8n.pt data=dataset.yaml epochs=100
     - Export: yolo export model=best.pt format=tflite
-    - Benchmark old vs new on Pi: pi_3_benchmark.py
+    - Benchmark old vs new on Pi: tests/hardware/benchmark.py
 
 [ ] OPTION B: Use a pre-trained person/human detector
     - YOLO COCO models already detect "person" class (class 0)
@@ -62,15 +62,15 @@ These must be determined by real testing. No way to know from simulation.
 
 ```
 [ ] Max detection altitude — at what height does the model stop detecting?
-    - Run pi_passive_flight.py during manual RC flight
+    - Run tests/flight/1_passive_flight.py during manual RC flight
     - Hover at 5m, 10m, 15m, 20m, 25m, 30m over dummy
     - Record: detected Y/N, confidence, at each altitude
     - Result → update TARGET_ALT in config.py
 
 [ ] Max flight speed for detection — how fast before smear kills detection?
-    - Run pi_passive_flight.py during manual flight
+    - Run tests/flight/1_passive_flight.py during manual flight
     - Fly over dummy at 2, 3, 5, 7, 10 m/s
-    - Check /ai-snapshot or /stream-ai on pi_camera_stream_fast.py for blur
+    - Check /ai-snapshot or /stream-ai on tests/diagnostics/camera_stream_fast.py for blur
     - Record: detected Y/N, confidence, blur level at each speed
     - Result → update SEARCH_SPEED_MPS in config.py
 
@@ -103,8 +103,8 @@ For testing the flight/landing sequence even if CV fails:
     - Drone takes off, flies to those coordinates, descends, lands
     - No camera needed, no detection needed
     - Proves: takeoff, navigation, descent, landing all work
-    - Use pi_waypoint_test.py for basic version (already exists)
-    - Could extend pi_auto_detect.py with --force-target 51.4545,-2.6030
+    - Use tests/flight/2_waypoints.py for basic version (already exists)
+    - Could extend tests/flight/3_auto_detect.py with --force-target 51.4545,-2.6030
 
 [ ] This lets you test the full landing sequence without relying on CV
     - Useful if outdoor CV testing shows model can't detect from altitude
@@ -116,7 +116,7 @@ For testing the flight/landing sequence even if CV fails:
 Avoid acting on a single false positive:
 
 ```
-[x] pi_auto_detect.py already requires --min-detections consecutive detections
+[x] tests/flight/3_auto_detect.py already requires --min-detections consecutive detections
     - Default: 2 consecutive detections before switching to GUIDED
     - Adjustable: --min-detections 3 or 4 for more safety
 [ ] Consider adding same logic to main.py SEARCH → CENTERING transition
@@ -150,9 +150,9 @@ Goal: AI detects a dummy held in front of the camera. Nothing fancy.
 
 ```
 [x] Pi set up, venv activated, dependencies installed (PI_SETUP.md)
-[x] Camera gives frames                        → pi_1_camera.py
-[x] AI loads and detects dummy on bench         → pi_2_detect.py --headless
-[x] Note inference speed (just observe for now) → pi_3_benchmark.py
+[x] Camera gives frames                        → tests/laptop/test_camera.py
+[x] AI loads and detects dummy on bench         → tests/laptop/test_cv.py --headless
+[x] Note inference speed (just observe for now) → tests/hardware/benchmark.py
     Result: 256ms avg, 3.9 FPS, 50/50 detection, 0.966 confidence
 ```
 
@@ -161,9 +161,9 @@ Goal: AI detects a dummy held in front of the camera. Nothing fancy.
 Goal: know your numbers so you can make informed decisions.
 
 ```
-[ ] Best resolution that still detects          → pi_9_resolution_test.py
+[ ] Best resolution that still detects          → tests/hardware/cv_benchmark.py (resolution test planned)
     Result: ___x___ at ___ms
-[ ] Camera FPS vs pipeline FPS                  → pi_8_camera_test.py
+[ ] Camera FPS vs pipeline FPS                  → tests/hardware/cv_benchmark.py
     Camera: ___fps, Pipeline: ___fps
 [ ] Bench FOV check (camera over ruler)         → fov_calibrate.py
     Measured FOV matches config? Y/N
@@ -176,12 +176,12 @@ Goal: find out what simulation couldn't tell you.
 
 ```
 [ ] Manual flight (pilot on RC, Pi logging passively)
-    → pi_passive_flight.py --headless
+    → tests/flight/1_passive_flight.py --headless
 [ ] Save frames at 5m, 10m, 15m, 20m, 25m, 30m
 [ ] At what altitude does detection first fail?    → ___m
 [ ] At what speed does motion blur kill detection? → ___m/s
 [ ] Any false positives? What triggered them?      → note: ___
-[ ] Real FOV at altitude                           → pi_7_alt_test.py
+[ ] Real FOV at altitude                           → tests/calibration/alt_test.py
 ```
 
 Update config.py with findings:
@@ -202,7 +202,7 @@ OPTION A — Better training data (biggest impact):
   [ ] Retrain: yolo detect train model=yolov8n.pt data=dataset.yaml epochs=100
   [ ] Export: yolo export model=best.pt format=tflite
   [ ] Copy new best.tflite to Pi
-  [ ] Benchmark old vs new: pi_3_benchmark.py
+  [ ] Benchmark old vs new: tests/hardware/benchmark.py
   [ ] Keep whichever is better
 
 OPTION B — Try pre-trained COCO person detector:
@@ -415,15 +415,15 @@ source pienv/bin/activate
 
 # A) Speed benchmark — how fast is inference?
 #    Place printed dummy in front of camera
-python tests/pi_3_benchmark.py
+python tests/hardware/benchmark.py
 # Record: avg_ms, fps, detection_rate, avg_confidence
 
 # B) Live detection test — does it detect reliably?
-python tests/pi_2_detect.py --headless
+python tests/laptop/test_cv.py --headless
 # Observe: does it detect? At what distance? False positives?
 
 # C) Stream test — watch what AI sees in real-time
-python tests2/pi_camera_stream_fast.py --with-detection --headless
+python tests/diagnostics/camera_stream_fast.py --with-detection --headless
 # Open http://<PI_IP>:8090/ on laptop
 # Open http://<PI_IP>:8090/stream-ai to see AI input frames
 # Move dummy around — does it track? At what range does it lose it?
@@ -447,7 +447,7 @@ altitude before you fly.
 
 ```bash
 # Run detection with stream so you can see results on laptop
-python tests2/pi_camera_stream_fast.py --with-detection --headless
+python tests/diagnostics/camera_stream_fast.py --with-detection --headless
 ```
 
 **Procedure:**
@@ -476,7 +476,7 @@ sudo /opt/mavlink/mavlink-venv/bin/mavproxy.py \
   --out=udpout:127.0.0.1:14550 --out=tcpin:0.0.0.0:5762
 
 # Run passive flight (Terminal 2)
-python tests2/pi_passive_flight.py --headless
+python tests/flight/1_passive_flight.py --headless
 ```
 
 **Procedure:**
@@ -551,8 +551,8 @@ Everything starts with preliminary defaults. After real testing, calibrate to op
 
 | Setting | Default | Where | Calibrate with |
 |---------|---------|-------|---------------|
-| Camera resolution | 640x480 | `config.py` IMAGE_W/IMAGE_H | pi_9_resolution_test.py |
-| Model | best.tflite (YOLOv8n) | vision.py constructor | pi_3_benchmark.py |
+| Camera resolution | 640x480 | `config.py` IMAGE_W/IMAGE_H | tests/hardware/cv_benchmark.py (resolution test planned) |
+| Model | best.tflite (YOLOv8n) | vision.py constructor | tests/hardware/benchmark.py |
 | Confidence threshold | 0.4 | vision.py lines 174, 197 | Passive flight data |
 | Sensor width | 5.02mm | `config.py` SENSOR_WIDTH_MM | fov_calibrate.py |
 | Focal length | 6.0mm | `config.py` FOCAL_LENGTH_MM | fov_calibrate.py |
@@ -574,7 +574,7 @@ yolo export model=runs/detect/train/weights/best.pt format=tflite
 scp best.tflite pi@<IP>:~/dima/Group_Proj/
 
 # Test it
-python tests2/pi_3_benchmark.py   # speed + detection
+python tests/hardware/benchmark.py   # speed + detection
 ```
 
 No code changes needed. The model file name is set in one place — when `VisionSystem` is constructed.
@@ -591,7 +591,7 @@ yolo export model=yolov8n.pt format=tflite
 scp yolov8n.tflite pi@<IP>:~/dima/Group_Proj/
 
 # Test with benchmark
-python tests2/pi_3_benchmark.py  # point at real person or dummy
+python tests/hardware/benchmark.py  # point at real person or dummy
 ```
 
 Note: COCO model outputs 80 classes. Person is class 0. You'd need to modify vision.py to filter for class 0 only if using COCO model, or just take the highest confidence detection regardless of class.
@@ -620,7 +620,7 @@ Note: COCO model outputs 80 classes. Person is class 0. You'd need to modify vis
 
 ### Quick dataset from passive flight
 
-During `pi_passive_flight.py`, press 's' to save snapshots. After the flight, label them in Roboflow. This gives you real aerial training data with zero extra effort.
+During `tests/flight/1_passive_flight.py`, press 's' to save snapshots. After the flight, label them in Roboflow. This gives you real aerial training data with zero extra effort.
 
 ---
 
@@ -639,17 +639,17 @@ raw frame. See `vision.py` get_frame() for the reference implementation.
 
 | Script | What it tests | When to use |
 |--------|--------------|-------------|
-| `pi_1_camera.py` | Camera gives frames | After changing camera/resolution |
-| `pi_2_detect.py` | Live detection with display | Quick visual check |
-| `pi_3_benchmark.py` | Speed + accuracy on static image | After swapping model |
-| `pi_8_camera_test.py` | FPS, pipeline bottleneck, blur | After changing camera settings |
-| `pi_9_resolution_test.py` | Resolution vs speed vs detection | Finding optimal resolution |
-| `pi_6_fov_test.py` | FOV on bench (camera over ruler) | After changing lens/camera |
-| `fov_calibrate.py` | FOV calibration | Before flight |
-| `pi_camera_stream_fast.py` | Stream + /ai-snapshot for blur check | Check what AI sees in real-time |
-| `pi_passive_flight.py` | Full passive detection during flight | Calibrate altitude + speed |
-| `pi_auto_detect.py` | AUTO waypoints + detect & hover | Test detection → action link |
-| `debug_tflite.py` | Raw TFLite output inspection | Debugging model output format |
+| `tests/laptop/test_camera.py` | Camera gives frames | After changing camera/resolution |
+| `tests/laptop/test_cv.py` | Live detection with display | Quick visual check |
+| `tests/hardware/benchmark.py` | Speed + accuracy on static image | After swapping model |
+| `tests/hardware/cv_benchmark.py` | FPS, pipeline bottleneck, blur | After changing camera settings |
+| `tests/hardware/cv_benchmark.py (resolution test planned)` | Resolution vs speed vs detection | Finding optimal resolution |
+| `tests/calibration/fov_calibrate.py` | FOV on bench (camera over ruler) | After changing lens/camera |
+| `tests/calibration/fov_calibrate.py` | FOV calibration | Before flight |
+| `tests/diagnostics/camera_stream_fast.py` | Stream + /ai-snapshot for blur check | Check what AI sees in real-time |
+| `tests/flight/1_passive_flight.py` | Full passive detection during flight | Calibrate altitude + speed |
+| `tests/flight/3_auto_detect.py` | AUTO waypoints + detect & hover | Test detection → action link |
+| `tests/laptop/debug_tflite.py` | Raw TFLite output inspection | Debugging model output format |
 
 ---
 
@@ -663,9 +663,9 @@ detect_in_image()    →       Returns (found, x, y, conf)
                              │
                              ├── main.py uses x,y to calculate GPS offset
                              ├── main.py uses conf to decide: detect or ignore
-                             ├── pi_passive_flight uses x,y for guidance overlay
-                             ├── pi_auto_detect uses x,y for GPS + centering
-                             ├── pi_3 uses timing for benchmark
+                             ├── 1_passive_flight uses x,y for guidance overlay
+                             ├── 3_auto_detect uses x,y for GPS + centering
+                             ├── benchmark.py uses timing for benchmark
                              └── last_bbox_w/h used for FOV calibration
 
 config.py
@@ -738,7 +738,7 @@ bias. For example:
 - FOV 5% too narrow → all estimates are 5% closer than reality
 
 **How to calibrate:**
-1. Run `pi_6_fov_test.py` or `fov_calibrate.py` on bench
+1. Run `tests/calibration/fov_calibrate.py` on bench
 2. Place object at known distance, measure pixel size
 3. Calculate true SENSOR_WIDTH_MM and FOCAL_LENGTH_MM
 4. Update `config.py`
@@ -1069,7 +1069,7 @@ than Ultralytics (NanoDet: PyTorch configs, YOLO-Fastest: Darknet C code).
 **After first flight (optimize based on real data):**
 1. [ ] Export current best.pt to NCNN on laptop: `yolo export model=best.pt format=ncnn`
 2. [ ] Test `pip install ultralytics` on Pi (Python 3.13 compatibility check)
-3. [ ] If ultralytics works: benchmark NCNN vs TFLite on Pi with pi_3_benchmark.py
+3. [ ] If ultralytics works: benchmark NCNN vs TFLite on Pi with tests/hardware/benchmark.py
 4. [ ] If 3x speedup confirmed: add NCNN backend to vision.py
 5. [ ] Train YOLO11n or YOLO26n on your custom data for additional accuracy gain
 6. [ ] Consider Hailo-8L ($70) if project continues and you want 60 FPS

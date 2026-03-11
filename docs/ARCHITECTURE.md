@@ -69,7 +69,7 @@ Pi has camera and AI model. No Cube, no flying.
 │                      v                │
 │           (found, x, y, conf)         │
 │                                       │
-│  Test: pi_1, pi_2, pi_3, pi_8, pi_9  │
+│  Test: test_camera, test_cv, benchmark │
 └──────────────────────────────────────┘
 ```
 
@@ -93,7 +93,7 @@ Add the Cube (wired on the bench). Still no flying.
 │           (found, x, y, conf)         │     │             │
 │                      │                │     │             │
 │                      v                │     │             │
-│              pi_4_detect_and_log.py ──UART──>  reads yaw  │
+│       tests/flight/4_detect_and_center.py ──UART──> reads yaw │
 │              (guidance + buzzer)       │     │  beeps      │
 │                                       │     │             │
 └──────────────────────────────────────┘     └─────────────┘
@@ -119,7 +119,7 @@ Pilot flies with RC controller. Pi runs detection passively. No autonomous comma
 │  Real       │CSI  │ vision.py   │UART │ Flight      │
 │  aerial     ├────>│ (detect)    ├────>│ controller  │
 │  frames     │     │             │<────┤ (GPS, yaw)  │
-│             │     │ pi_2_detect │     │             │
+│             │     │ (logging)   │     │             │
 │             │     │ (logging)   │     │  Telemetry  │
 └─────────────┘     └──────┬──────┘     │  radio      │
                            │            └──────┬──────┘
@@ -237,7 +237,7 @@ preflight.py .......... Connectivity checker (standalone tool)
 | config.py | All settings in one place | -- | -- |
 | states.py | State names (SEARCH, VERIFY...) | -- | -- |
 | utils.py | GPS/pixel conversion | config | -- |
-| vision.py | Camera frames + AI detection | config, model file | YES: pi_1 through pi_9 |
+| vision.py | Camera frames + AI detection | config, model file | YES: tests/laptop/ + tests/hardware/ |
 | planning.py | Lawnmower search pattern | config, utils | YES: simulation.py |
 | main.py | Full mission state machine | everything | Full system test |
 | simulation.py | Simulated drone on map.jpg | config, utils, vision | YES: laptop only |
@@ -252,7 +252,7 @@ VISION (vision.py)               FLIGHT CONTROL (main.py + Cube)
   Camera captures frames           MAVLink connection
   AI model loads + detects          Arm, takeoff, goto, land
   Returns (found, x, y, conf)      State machine logic
-  Test: pi_1 through pi_9          Test: test_cube.py
+  Test: tests/laptop/ + hardware/  Test: test_cube.py
   --> No Cube needed                --> No camera needed
 
 SEARCH PLANNING (planning.py)    GROUND STATION (Mission Planner)
@@ -357,14 +357,14 @@ STATUS    WHAT                          WHY                                    T
 ──────    ────                          ───                                    ────
 [DONE]    Simulation working            Logic, search pattern, detection       main.py SIMULATION mode
 [DONE]    Raspberry Pi set up           Transfer code, install dependencies    SSH in, python --version
-[DONE]    CSI camera on Pi              Real frames instead of simulated       pi_1_camera.py
+[DONE]    CSI camera on Pi              Real frames instead of simulated       tests/laptop/test_camera.py
 [DONE]    Camera color fix              IMX296 BGR/RGB issue resolved          pi_color_picker.py
-[DONE]    best.tflite model on Pi       ai-edge-litert on Python 3.13         pi_2_detect.py
-[DONE]    AI detection on Pi            256ms avg, 3.9 FPS, 0.966 conf        pi_3_benchmark.py
+[DONE]    best.tflite model on Pi       ai-edge-litert on Python 3.13         tests/laptop/test_cv.py
+[DONE]    AI detection on Pi            256ms avg, 3.9 FPS, 0.966 conf        tests/hardware/benchmark.py
 [DONE]    Cube wired to Pi (UART)       Via mavproxy bridge (921600 baud)      test_cube.py
 [DONE]    Mission Planner via Pi        TCP bridge (tcpin:0.0.0.0:5762)        Mission Planner TCP connect
 [ ]       Outdoor GPS fix test          Verify GPS works outside               pi_gps_test.py
-[ ]       Manual flight with detection  Calibrate detection altitude           pi_passive_flight.py
+[ ]       Manual flight with detection  Calibrate detection altitude           tests/flight/1_passive_flight.py
 [ ]       Bench test (no props)         Verify commands in Mission Planner     main.py REAL mode, props OFF
 [ ]       Full autonomous flight        The real mission                       main.py REAL mode, props ON
 ```
@@ -381,7 +381,7 @@ These are the things simulation can't tell you — you find out on real hardware
 
 2. **Inference speed on Pi**: TFLite on Pi CPU will be slower than Ultralytics on your
    laptop GPU. If it's too slow, the drone might fly past a target before detection fires.
-   pi_3 and pi_8 test scripts measure this.
+   tests/hardware/benchmark.py and cv_benchmark.py measure this.
 
 3. **GPS accuracy**: SITL has perfect GPS. Real GPS drifts ~2-3m. The centering and
    landing logic may need tuning based on real GPS behaviour.
@@ -401,7 +401,7 @@ see what the drone sees during flight.
 
 ### Approach: MJPEG over HTTP (chosen)
 
-Script: `tests2/pi_camera_stream.py`
+Script: `tests/diagnostics/camera_stream.py`
 
 ```
 Pi Camera → Python (640x480) → AI detection overlay → downscale 320x240
@@ -418,7 +418,7 @@ Pi Camera → Python (640x480) → AI detection overlay → downscale 320x240
 
 ### Alternative: H.264/HLS via FFmpeg (tested, not used)
 
-Script: `tests2/pi_camera_stream_h264.py`
+Script: `tests/diagnostics/camera_stream_h264.py`
 
 ```
 Pi Camera → Python → pipe raw frames → ffmpeg (H.264 encode)
@@ -507,9 +507,9 @@ export DRONE_BAUD=57600                       # serial baud rate (default 57600)
 Test each layer independently, then combine:
 
 ```
-Layer 1: Vision alone         pi_1, pi_2, pi_3, pi_8, pi_9     No Cube needed
+Layer 1: Vision alone         tests/laptop/ + tests/hardware/   No Cube needed
 Layer 2: Cube alone           test_cube.py                      No camera needed
-Layer 3: Vision + Cube        pi_4_detect_and_log.py            Bench test (carry by hand)
+Layer 3: Vision + Cube        tests/flight/4_detect_and_center  Bench test (carry by hand)
 Layer 4: Full system (bench)  preflight.py + main.py (no props) Real Cube, no flying
 Layer 5: Full system (flight) main.py (with props)              First autonomous flight
 ```

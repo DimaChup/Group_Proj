@@ -95,7 +95,7 @@ body{background:#1a1a2e;color:#e0e0e0;font-family:'Courier New',monospace;overfl
 #grid{width:100%;height:100%}
 #cluster-info{position:absolute;bottom:4px;left:4px;font-size:11px;background:rgba(0,0,0,.8);
   padding:4px 6px;border-radius:3px;max-height:120px;overflow-y:auto}
-#stream-box{flex:1;background:#000;border:1px solid #333;border-radius:4px;
+#stream-box{flex:2;background:#000;border:1px solid #333;border-radius:4px;
   display:flex;flex-direction:column;position:relative;overflow:hidden}
 #stream{width:100%;height:100%;object-fit:contain}
 #det-alert{position:absolute;top:8px;right:8px;background:#ff6600;color:#000;
@@ -408,6 +408,7 @@ class PiFlight:
 
         # --- Flight mode ---
         self.flight_mode = "MANUAL"  # MANUAL, INVESTIGATING, LANDING
+        self.investigating = False
         self.investigate_target = None
         self.investigate_phase = None  # approaching, descending, observing
         self.investigate_cluster_idx = None
@@ -457,7 +458,19 @@ class PiFlight:
         else:
             self.sim = None
             self.geo = GeoTransformer(map_w_px=4800)
-            self.search_poly_gps = list(config.SEARCH_AREA_GPS)
+            # Load search area: search_area.json > config.SEARCH_AREA_GPS
+            sa_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "search_area.json")
+            if os.path.exists(sa_file):
+                import json as _json
+                with open(sa_file, "r") as f:
+                    sa_data = _json.load(f)
+                if sa_data and len(sa_data) >= 3:
+                    self.search_poly_gps = [(pt["lat"], pt["lon"]) for pt in sa_data]
+                    print(f"[REAL] Search area from search_area.json: {len(self.search_poly_gps)} points")
+                else:
+                    self.search_poly_gps = list(config.SEARCH_AREA_GPS)
+            else:
+                self.search_poly_gps = list(config.SEARCH_AREA_GPS)
             self.eyes = VisionSystem(camera_index=config.REAL_CAMERA_INDEX, model_path="best.tflite")
             self.eyes.using_ai = True
             self.actual_gps = None
@@ -967,7 +980,7 @@ class PiFlight:
                                 cv2.putText(frame, f"EST: {self.best_gps[0]:.6f}, {self.best_gps[1]:.6f}",
                                     (10, 65), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 200, 255), 1)
                             # Encode for stream
-                            _, jpeg = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
+                            _, jpeg = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 85])
                             with self._frame_lock:
                                 self._stream_jpeg = jpeg.tobytes()
                     else:
@@ -976,7 +989,7 @@ class PiFlight:
                         if frame is not None:
                             cv2.putText(frame, "ON GROUND", (10, 25),
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
-                            _, jpeg = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
+                            _, jpeg = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 85])
                             with self._frame_lock:
                                 self._stream_jpeg = jpeg.tobytes()
 

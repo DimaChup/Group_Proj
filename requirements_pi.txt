@@ -1,6 +1,16 @@
 # Requirements for Raspberry Pi
 # Install with: pip install -r requirements_pi.txt
+#
+# Python 3.13+: tflite-runtime is broken, use ai-edge-litert instead.
+# The code (vision.py) tries both automatically — install whichever works:
+#   pip install tflite-runtime        # Python <=3.12
+#   pip install ai-edge-litert        # Python 3.13+
+#
+# Pi venv MUST use --system-site-packages (for picamera2):
+#   python3 -m venv --system-site-packages pienv
+
 pymavlink
 opencv-python-headless
 numpy<2
-tflite-runtime
+tflite-runtime; python_version < "3.13"
+ai-edge-litert; python_version >= "3.13"

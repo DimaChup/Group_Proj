@@ -10,6 +10,7 @@ import sys
 import os
 import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
+from socketserver import ThreadingMixIn
 
 # --- Import Config with Safety Check ---
 try:
@@ -68,6 +69,45 @@ if DRY_RUN:
 _stream_frame = None
 _stream_lock = threading.Lock()
 
+# Command queue for headless input (terminal + HTTP)
+import queue as _queue
+_cmd_queue = _queue.Queue()
+
+# Detect if display is available
+HEADLESS = "--headless" in sys.argv
+if not HEADLESS:
+    try:
+        # Test if we can create a window (fails over SSH/PuTTY without X11)
+        _test_ok = os.environ.get('DISPLAY', '') != '' or sys.platform == 'win32'
+        if not _test_ok:
+            HEADLESS = True
+    except Exception:
+        HEADLESS = True
+
+def _terminal_input_thread():
+    """Read keypresses from terminal (works over PuTTY/SSH)."""
+    import select
+    if sys.platform == 'win32':
+        import msvcrt
+        while True:
+            if msvcrt.kbhit():
+                ch = msvcrt.getch()
+                _cmd_queue.put(ch[0])
+            time.sleep(0.05)
+    else:
+        import tty, termios
+        fd = sys.stdin.fileno()
+        old_settings = termios.tcgetattr(fd)
+        try:
+            tty.setcbreak(fd)
+            while True:
+                if select.select([sys.stdin], [], [], 0.05)[0]:
+                    ch = sys.stdin.read(1)
+                    if ch:
+                        _cmd_queue.put(ord(ch))
+        finally:
+            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+
 class _StreamHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == '/stream':
@@ -92,12 +132,56 @@ class _StreamHandler(BaseHTTPRequestHandler):
                 except (BrokenPipeError, ConnectionResetError):
                     break
                 time.sleep(1.0 / STREAM_FPS)
+        elif self.path.startswith('/cmd?key='):
+            key_char = self.path.split('key=')[1][0].lower()
+            valid = {'y', 'n', 'e', 'w', 's', 'm'}
+            if key_char in valid:
+                _cmd_queue.put(ord(key_char))
+                resp = f'{{"ok":true,"key":"{key_char}"}}'
+            else:
+                resp = f'{{"ok":false,"error":"invalid key: {key_char}"}}'
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(resp.encode())
         elif self.path == '/':
-            html = f'<html><body style="background:#111;text-align:center;font-family:monospace">'
-            html += f'<h2 style="color:#fff">SAR Drone Mission Feed</h2>'
-            html += f'<img src="/stream" style="max-width:100%;border:2px solid #0f0"/>'
-            html += f'<p style="color:#aaa">{STREAM_W}x{STREAM_H} | {STREAM_FPS} fps | Quality {STREAM_QUALITY}%</p>'
-            html += f'</body></html>'
+            html = '''<html><head><style>
+body{background:#111;color:#fff;font-family:monospace;text-align:center;margin:0;padding:10px}
+img{max-width:100%;border:2px solid #0f0;margin:10px 0}
+.btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:10px 0}
+.btn{padding:12px 24px;font-size:16px;font-weight:bold;border:none;border-radius:6px;cursor:pointer;
+  font-family:monospace;min-width:80px}
+.btn-y{background:#2ecc71;color:#000}.btn-n{background:#e74c3c;color:#fff}
+.btn-dir{background:#3498db;color:#fff}.btn-m{background:#f39c12;color:#000}
+.info{color:#aaa;font-size:12px}
+#status{color:#0f0;margin:5px 0;min-height:20px}
+</style></head><body>
+<h2>SAR Drone Mission Feed</h2>
+<img src="/stream" alt="Video Stream">
+<div id="status"></div>
+<p class="info">VERIFY: press Y (confirm) or N (reject). Then select landing side: N/E/W/S</p>
+<div class="btns">
+  <button class="btn btn-y" onclick="cmd('y')">Y Confirm</button>
+  <button class="btn btn-n" onclick="cmd('n')">N Reject</button>
+  <button class="btn btn-m" onclick="cmd('m')">M Manual</button>
+</div>
+<p class="info">Landing direction (after Y):</p>
+<div class="btns">
+  <button class="btn btn-dir" onclick="cmd('n')">North</button>
+  <button class="btn btn-dir" onclick="cmd('e')">East</button>
+  <button class="btn btn-dir" onclick="cmd('s')">South</button>
+  <button class="btn btn-dir" onclick="cmd('w')">West</button>
+</div>
+<p class="info">''' + f'{STREAM_W}x{STREAM_H} | {STREAM_FPS} fps | Quality {STREAM_QUALITY}%' + '''</p>
+<script>
+function cmd(k){fetch('/cmd?key='+k).then(r=>r.json()).then(d=>{
+  document.getElementById('status').textContent='Sent: '+k.toUpperCase()+' ('+new Date().toLocaleTimeString()+')';
+}).catch(e=>{document.getElementById('status').textContent='Error: '+e})}
+document.addEventListener('keydown',e=>{
+  if(['y','n','e','w','s','m'].includes(e.key.toLowerCase()))cmd(e.key.toLowerCase());
+});
+</script></body></html>'''
             self.send_response(200)
             self.send_header('Content-Type', 'text/html')
             self.end_headers()
@@ -114,7 +198,9 @@ def _start_stream_server():
         print("[STREAM] Disabled (--no-stream)")
         return None
     try:
-        server = HTTPServer(('0.0.0.0', STREAM_PORT), _StreamHandler)
+        class _ThreadingHTTP(ThreadingMixIn, HTTPServer):
+            daemon_threads = True
+        server = _ThreadingHTTP(('0.0.0.0', STREAM_PORT), _StreamHandler)
         server_thread = threading.Thread(target=server.serve_forever, daemon=True)
         server_thread.start()
         # Get IP for display
@@ -210,68 +296,33 @@ class VisualFlightMission:
         self.logger.writerow(["Timestamp", "State", "Lat", "Lon", "Alt", "Target_Conf"])
 
     def _setup_real_search_area(self):
-        """Interactive polygon drawing for REAL mode. Falls back to config GPS if no map."""
-        # Try loading the map for interactive drawing
-        map_img = cv2.imread(config.MAP_FILE)
-        if map_img is not None:
-            map_h, map_w = map_img.shape[:2]
-            self.geo = GeoTransformer(map_w_px=map_w)
-
-            # Scale for display
-            MAX_H = 800
-            scale = min(1.0, MAX_H / map_h)
-            display = cv2.resize(map_img, (int(map_w * scale), int(map_h * scale)))
-
-            polygon = []
-            closed = False
-
-            def mouse_cb(event, x, y, flags, param):
-                nonlocal closed
-                real_x, real_y = int(x / scale), int(y / scale)
-                if event == cv2.EVENT_LBUTTONDOWN and not closed:
-                    polygon.append((real_x, real_y))
-                elif event == cv2.EVENT_RBUTTONDOWN and len(polygon) >= 3:
-                    closed = True
-
-                # Redraw
-                vis = display.copy()
-                if polygon:
-                    pts = np.array([[int(p[0]*scale), int(p[1]*scale)] for p in polygon], np.int32)
-                    cv2.polylines(vis, [pts], closed, (0, 255, 0), 2)
-                    for p in pts:
-                        cv2.circle(vis, tuple(p), 4, (0, 255, 0), -1)
-                cv2.imshow("Draw Search Area", vis)
-
-            cv2.namedWindow("Draw Search Area")
-            cv2.imshow("Draw Search Area", display)
-            cv2.setMouseCallback("Draw Search Area", mouse_cb)
-            print("--- REAL MODE SEARCH AREA ---")
-            print("Left-Click: add polygon points")
-            print("Right-Click: close polygon")
-            print("Press any key: start mission")
-            print("Press ESC: use SEARCH_AREA_GPS from config.py instead")
-            key = cv2.waitKey(0) & 0xFF
-            cv2.destroyWindow("Draw Search Area")
-
-            if closed and len(polygon) >= 3:
-                # Convert drawn polygon to GPS and print for future config use
-                print(f"[REAL] Search polygon drawn: {len(polygon)} points")
-                gps_coords = [self.geo.pixels_to_gps(p[0], p[1]) for p in polygon]
-                print("[REAL] GPS coordinates (copy to config.py SEARCH_AREA_GPS):")
-                for lat, lon in gps_coords:
-                    print(f"    ({lat:.6f}, {lon:.6f}),")
-                return polygon
-
-            if key == 27:
-                print("[REAL] Skipped drawing — using SEARCH_AREA_GPS from config.py")
-
-        # Fallback: use GPS coordinates from config.py
+        """Load search area from search_area.json, config GPS, or interactive drawing."""
         self.geo = GeoTransformer(map_w_px=4800)
+
+        # Priority 1: search_area.json (created by draw_search_area.py on laptop)
+        sa_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "search_area.json")
+        if os.path.exists(sa_file):
+            import json
+            with open(sa_file, "r") as f:
+                data = json.load(f)
+            if data and len(data) >= 3:
+                gps_coords = [(pt["lat"], pt["lon"]) for pt in data]
+                poly = [self.geo.gps_to_pixels(lat, lon) for lat, lon in gps_coords]
+                print(f"[REAL] Search area loaded from search_area.json: {len(poly)} points")
+                for pt in data:
+                    print(f"    {pt.get('label','')}: ({pt['lat']:.6f}, {pt['lon']:.6f})")
+                return poly
+
+        # Priority 2: SEARCH_AREA_GPS from config.py / KML
         if hasattr(config, 'SEARCH_AREA_GPS') and len(config.SEARCH_AREA_GPS) >= 3:
             poly = [self.geo.gps_to_pixels(lat, lon) for lat, lon in config.SEARCH_AREA_GPS]
             print(f"[REAL] Search area loaded from config: {len(poly)} GPS corners")
             return poly
+
         print("[REAL] No search area defined — no search pattern")
+        print("  Either:")
+        print("    1. Run draw_search_area.py on laptop to create search_area.json")
+        print("    2. Set SEARCH_AREA_GPS in config.py")
         return []
 
     def update_telemetry(self):
@@ -399,7 +450,8 @@ class VisualFlightMission:
             with _stream_lock:
                 _stream_frame = frame
 
-        cv2.imshow("Mission Dashboard", final_display)
+        if not HEADLESS:
+            cv2.imshow("Mission Dashboard", final_display)
         return found, u, v
 
     def set_speed(self, speed_mps):
@@ -431,19 +483,28 @@ class VisualFlightMission:
     def run(self):
         print("Starting Mission Loop...")
         _start_stream_server()
-        cv2.namedWindow("Mission Dashboard")
-        if config.MODE == "SIMULATION":
-            cv2.setMouseCallback("Mission Dashboard", self.on_dashboard_mouse)
-        
-        key = -1 
+
+        # Start terminal input thread (works over PuTTY/SSH)
+        _input_thread = threading.Thread(target=_terminal_input_thread, daemon=True)
+        _input_thread.start()
+
+        if not HEADLESS:
+            cv2.namedWindow("Mission Dashboard")
+            if config.MODE == "SIMULATION":
+                cv2.setMouseCallback("Mission Dashboard", self.on_dashboard_mouse)
+        else:
+            print("[HEADLESS] No display — use browser buttons or terminal keys (Y/N/M/E/W/S)")
+            print(f"[HEADLESS] Browser: http://localhost:{STREAM_PORT}/")
+
+        key = -1
         while True:
             self.update_telemetry()
             target_found, px_u, px_v = self.update_dashboard()
-            
+
             # Log Data
-            if time.time() % 1.0 < 0.1: 
+            if time.time() % 1.0 < 0.1:
                 self.logger.writerow([datetime.now(), self.state, self.lat, self.lon, self.alt, self.current_conf])
-            
+
             # --- KEY INPUTS ---
             if key == ord('m') or key == ord('M'):
                 if self.state != State.MANUAL:
@@ -464,7 +525,9 @@ class VisualFlightMission:
                         self._set_state(State.APPROACH)
                 else:
                     if key == ord('y') or key == ord('Y'):
-                        print("USER CONFIRMED TARGET. SELECT LANDING SIDE (N/E/W/S).")
+                        print()
+                        print("USER CONFIRMED TARGET. SELECT LANDING SIDE:")
+                        print("  N=North  E=East  S=South  W=West")
                         self.selecting_landing_side = True
                     elif key == ord('n') or key == ord('N'):
                         print("USER REJECTED TARGET. RESUMING SEARCH.")
@@ -634,6 +697,12 @@ class VisualFlightMission:
                      self.last_req = time.time()
                  if self.alt <= config.VERIFY_ALT + 1.0:
                      self._set_state(State.VERIFY)
+                     print()
+                     print("=" * 50)
+                     print("  VERIFY: Is this the target?")
+                     print("  Press Y to confirm, N to reject")
+                     print("  (terminal key or browser button)")
+                     print("=" * 50)
 
             elif self.state == State.VERIFY:
                 self.waiting_for_confirmation = True
@@ -660,7 +729,20 @@ class VisualFlightMission:
                 else:
                     self.send_global_target(self.landing_lat, self.landing_lon, 0) 
 
-            key = cv2.waitKey(20) & 0xFF
+            # Read key from cv2 (if display) or command queue (terminal/HTTP)
+            key = -1
+            if not HEADLESS:
+                key = cv2.waitKey(20) & 0xFF
+                if key == 27: break
+            else:
+                time.sleep(0.02)
+            # Drain command queue (from terminal keys or browser buttons)
+            try:
+                while True:
+                    queued_key = _cmd_queue.get_nowait()
+                    key = queued_key  # last one wins this frame
+            except _queue.Empty:
+                pass
             if key == 27: break
 
     def on_dashboard_mouse(self, event, x, y, flags, param):
