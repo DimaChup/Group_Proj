@@ -74,7 +74,7 @@ DUMMY_HEIGHT_M = 1.8
 SENSOR_WIDTH_MM = 5.02
 # Calibrate: hold camera 1m above tape measure, read visible width in mm
 # FOCAL_LENGTH_MM = 5020 / measured_width_mm
-FOCAL_LENGTH_MM = 7.0
+FOCAL_LENGTH_MM = 5.46  # Calibrated: 92cm visible at 1m height (2026-03-11)
 IMAGE_W = 640
 IMAGE_H = 480
 REAL_CAMERA_INDEX = 0 # Usually 0 for Pi Cam
