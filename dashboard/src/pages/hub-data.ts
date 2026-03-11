@@ -91,8 +91,12 @@ export const SUBSYSTEMS: Subsystem[] = [
   { id: "buzzer", name: "Buzzer", status: "done", notes: "MAVLink PLAY_TUNE works. 15 melodies tested.", lastTested: "2026-03-09" },
   { id: "sim-mvp", name: "simple_simulator.py", status: "done", notes: "Full interactive MVP: keyboard flight, CV, GPS estimation, offset landing", lastTested: "2026-02-20" },
   { id: "pi-flight", name: "pi_flight.py (Web GS)", status: "partial", notes: "Tested in SIMULATION on laptop. Not yet tested on Pi.", lastTested: "2026-02-20" },
-  { id: "passive", name: "Passive Flight Script", status: "working", notes: "pi_passive_flight.py ready with --save-detections flag", lastTested: "2026-03-09" },
+  { id: "passive", name: "Passive Flight Script", status: "working", notes: "1_passive_flight.py ready with --save-detections flag", lastTested: "2026-03-09" },
   { id: "flight", name: "Real Flight Test", status: "todo", notes: "Not attempted yet. Follow 5-step progressive testing.", },
+  { id: "sssi", name: "SSSI Geofence", status: "done", notes: "SSSI polygon in config.py (SSSI_GPS). Planner avoids SSSI zone.", lastTested: "2026-02-20" },
+  { id: "plb", name: "PLB Redirect", status: "todo", notes: "Redirect Personal Locator Beacon signal to aid search prioritisation." },
+  { id: "payload", name: "Payload Release", status: "todo", notes: "First aid kit delivery via servo/release mechanism. Hardware TBD." },
+  { id: "rangefinder", name: "Rangefinder / LiDAR", status: "todo", notes: "Altitude sensor for precise AGL during descent. Hardware TBD." },
 ];
 
 // ═══════════════════════════════════════════════════════════
@@ -109,13 +113,13 @@ export const FLIGHT_STEPS: FlightStep[] = [
   {
     id: 2, name: "Waypoint Test Script",
     description: "Your code arms, takes off to 10m, flies 3-4 GPS waypoints in GUIDED mode, lands. No camera, no CV.",
-    status: "ready", script: "tests2/pi_waypoint_test.py",
+    status: "ready", script: "tests/flight/2_waypoint_test.py",
     notes: "Script ready (--dry-run for bench test). Proves: your mavlink commands work on real hardware.",
   },
   {
     id: 3, name: "Manual Flight + Passive CV",
     description: "Pilot flies manually on RC. Pi runs camera + AI, logs detections, buzzer beeps. Sends ZERO commands.",
-    status: "ready", script: "tests2/pi_passive_flight.py",
+    status: "ready", script: "tests/flight/1_passive_flight.py",
     notes: "Script ready with --save-detections. Proves: CV works in real outdoor conditions.",
   },
   {
@@ -126,7 +130,7 @@ export const FLIGHT_STEPS: FlightStep[] = [
   },
   {
     id: 5, name: "Full Autonomous Mission",
-    description: "Everything enabled: search, detect, centre, descend, verify, land. Operator confirms Y/N.",
+    description: "Everything enabled: search, detect, centre, descend, verify, land. Operator classifies: Y=casualty, I=item of interest, X=false positive.",
     status: "todo",
     notes: "The real thing. Only after steps 1-4 pass.",
   },
@@ -140,9 +144,9 @@ export const TEAM: TeamMember[] = [
   {
     id: "dima", name: "Dima", role: "Software / CV / Pi Integration",
     color: "#3b82f6",
-    currentTask: "Pi testing, GPS estimation, simulation, dashboard",
+    currentTask: "Flight day prep, dashboard, documentation. Pi hardware all tested.",
     needsFromYou: undefined,
-    lastUpdate: "2026-03-09",
+    lastUpdate: "2026-03-11",
   },
   {
     id: "robin", name: "Robin Carter", role: "GCS / Detection Images",
@@ -195,14 +199,14 @@ export const DOCS: DocEntry[] = [
   { title: "vision.py", path: "vision.py", description: "Camera + AI detection. Dual backend: Ultralytics/TFLite", category: "config" },
 
   // Test scripts
-  { title: "pi_1: Camera Test", path: "tests/pi_1_camera.py", description: "Does camera give frames?", category: "test" },
-  { title: "pi_2: Detection Test", path: "tests/pi_2_detect.py", description: "Does AI detect dummy? (--headless)", category: "test" },
-  { title: "pi_3: Benchmark", path: "tests/pi_3_benchmark.py", description: "Inference speed (50 runs, timing)", category: "test" },
-  { title: "pi_3b: Buzzer", path: "tests/pi_3b_buzzer.py", description: "Buzzer melodies via MAVLink (15 tunes)", category: "test" },
-  { title: "pi_4b: Detect+Buzzer", path: "tests/pi_4b_detect_buzzer.py", description: "Camera + AI + buzzer + guidance + CSV", category: "test" },
-  { title: "pi_passive_flight", path: "tests2/pi_passive_flight.py", description: "Passive detection during manual RC flight", category: "test" },
-  { title: "pi_diagnostics", path: "tests2/pi_diagnostics.py", description: "Visual dashboard: all subsystem connectivity", category: "test" },
-  { title: "pi_waypoint_test", path: "tests2/pi_waypoint_test.py", description: "Fly 4 GPS waypoints in GUIDED mode (--dry-run)", category: "test" },
+  { title: "Camera Test", path: "tests/laptop/test_camera.py", description: "Does camera give frames?", category: "test" },
+  { title: "Detection Test", path: "tests/laptop/test_cv.py", description: "Does AI detect dummy? (--camera)", category: "test" },
+  { title: "Benchmark", path: "tests/hardware/benchmark.py", description: "Inference speed (50 runs, timing)", category: "test" },
+  { title: "Buzzer Test", path: "tests/hardware/buzzer_test.py", description: "Buzzer melodies via MAVLink (15 tunes)", category: "test" },
+  { title: "CV Benchmark", path: "tests/hardware/cv_benchmark.py", description: "Detection rate + speed with live camera", category: "test" },
+  { title: "Passive Flight", path: "tests/flight/1_passive_flight.py", description: "Passive detection during manual RC flight (zero commands)", category: "test" },
+  { title: "Diagnostics", path: "tests/diagnostics/diagnostics.py", description: "Visual dashboard: all subsystem connectivity", category: "test" },
+  { title: "Waypoint Test", path: "tests/flight/2_waypoint_test.py", description: "Fly 4 GPS waypoints in GUIDED mode (--dry-run)", category: "test" },
 
   // Reference
   { title: "Roadmap", path: "docs/ROADMAP.md", description: "Full 10-phase development history", category: "reference" },

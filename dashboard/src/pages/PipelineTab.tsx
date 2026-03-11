@@ -1,7 +1,7 @@
 import { useState } from "react";
 import {
-  PIPELINE, PHASE_COLORS, STATUS_COLORS, SCORE_LABELS,
-  type Stage, type Approach, type ApproachStatus,
+  PIPELINE, PHASE_COLORS, STATUS_COLORS, SCORE_LABELS, MISSION_GOAL, DESIGN_CHOICES,
+  type Stage, type Approach, type ApproachStatus, type DesignCategory,
 } from "./pipeline-data";
 
 // ── Score bar (5 blocks) ──
@@ -137,7 +137,7 @@ function ApproachCard({ approach, isExpanded, onToggle, phaseColor }: {
           ))}
         </div>
 
-        {/* Expanded: pros/cons */}
+        {/* Expanded: pros/cons/depends */}
         {isExpanded && (
           <div className="space-y-1.5 pt-1 border-t border-zinc-800/50">
             {approach.pros.map((p, i) => (
@@ -148,6 +148,14 @@ function ApproachCard({ approach, isExpanded, onToggle, phaseColor }: {
             ))}
             {approach.notes && (
               <div className="text-[8px] text-zinc-500 leading-tight italic mt-1">{approach.notes}</div>
+            )}
+            {approach.depends && approach.depends.length > 0 && (
+              <div className="mt-1.5 pt-1 border-t border-zinc-800/30">
+                <div className="text-[7px] text-amber-500/70 font-bold tracking-wider mb-0.5">DEPENDS ON</div>
+                {approach.depends.map((d, i) => (
+                  <div key={i} className="text-[8px] text-amber-400/50 leading-tight">⤷ {d}</div>
+                ))}
+              </div>
             )}
           </div>
         )}
@@ -187,6 +195,11 @@ function StageRow({ stage, expandedCard, onToggleCard }: {
           <div className="flex items-center gap-2">
             <span className={`text-[9px] font-bold ${pc.text} opacity-60`}>STAGE {stage.number}</span>
             <span className="text-[12px] font-medium text-zinc-200">{stage.name}</span>
+            {stage.requirements && stage.requirements.map(r => (
+              <span key={r} className="text-[7px] font-mono text-zinc-500 bg-zinc-800/60 px-1 py-0.5 rounded">
+                {r}
+              </span>
+            ))}
           </div>
           <div className="text-[9px] text-zinc-500">{stage.subGoal}</div>
         </div>
@@ -262,15 +275,96 @@ function PipelineSummary() {
   );
 }
 
+// ── Design choice card ──
+function DesignChoiceCard({ choice, isExpanded, onToggle }: {
+  choice: { id: string; name: string; currentValue: string; unit?: string; alternatives?: string[]; tuningNotes: string; configFile: string; configKey?: string };
+  isExpanded: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <div
+      onClick={onToggle}
+      className="rounded-lg border border-zinc-800/60 bg-zinc-900/30 hover:border-zinc-700 cursor-pointer transition-all p-2.5 space-y-1"
+    >
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[10px] font-medium text-zinc-200">{choice.name}</span>
+        <span className="text-[9px] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded shrink-0">
+          {choice.currentValue}{choice.unit ? ` ${choice.unit}` : ""}
+        </span>
+      </div>
+      {isExpanded && (
+        <div className="space-y-1.5 pt-1.5 border-t border-zinc-800/40">
+          <div className="text-[8px] text-zinc-500 leading-tight">{choice.tuningNotes}</div>
+          {choice.alternatives && choice.alternatives.length > 0 && (
+            <div>
+              <div className="text-[7px] text-cyan-500/70 font-bold tracking-wider mb-0.5">ALTERNATIVES</div>
+              {choice.alternatives.map((a, i) => (
+                <div key={i} className="text-[8px] text-cyan-400/50 leading-tight">◦ {a}</div>
+              ))}
+            </div>
+          )}
+          <div className="flex items-center gap-2 pt-0.5">
+            <span className="text-[7px] text-zinc-600">File:</span>
+            <span className="text-[7px] font-mono text-zinc-500">{choice.configFile}</span>
+            {choice.configKey && (
+              <>
+                <span className="text-[7px] text-zinc-700">→</span>
+                <span className="text-[7px] font-mono text-zinc-500">{choice.configKey}</span>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Design choices section ──
+function DesignChoicesSection({ expandedChoice, onToggleChoice }: {
+  expandedChoice: string | null; onToggleChoice: (id: string) => void;
+}) {
+  return (
+    <div className="rounded-xl border border-zinc-700/40 bg-zinc-900/20 p-4 space-y-3">
+      <div>
+        <div className="text-[10px] font-bold tracking-widest text-zinc-400 uppercase">Design Choices & Parameters</div>
+        <div className="text-[8px] text-zinc-600 mt-0.5">Every configurable value. Click to expand for alternatives and tuning notes.</div>
+      </div>
+      {DESIGN_CHOICES.map(cat => (
+        <div key={cat.category} className="space-y-1.5">
+          <div className="flex items-center gap-1.5">
+            <span className="text-sm">{cat.icon}</span>
+            <span className="text-[9px] font-bold text-zinc-400 tracking-wider uppercase">{cat.category}</span>
+            <span className="text-[8px] text-zinc-600">({cat.choices.length})</span>
+          </div>
+          <div className="grid grid-cols-2 gap-1.5 pl-5">
+            {cat.choices.map(c => (
+              <DesignChoiceCard
+                key={c.id}
+                choice={c}
+                isExpanded={expandedChoice === c.id}
+                onToggle={() => onToggleChoice(c.id)}
+              />
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ══════════════════════════════════════════════════════════
 //  MAIN TAB
 // ══════════════════════════════════════════════════════════
 
 export default function PipelineTab() {
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
+  const [expandedChoice, setExpandedChoice] = useState<string | null>(null);
 
   const toggleCard = (id: string) => {
     setExpandedCard(prev => prev === id ? null : id);
+  };
+  const toggleChoice = (id: string) => {
+    setExpandedChoice(prev => prev === id ? null : id);
   };
 
   const phases: { key: string; label: string; stages: Stage[] }[] = [
@@ -281,12 +375,59 @@ export default function PipelineTab() {
 
   return (
     <div className="flex-1 overflow-y-auto p-6 space-y-4">
-      {/* Title */}
+      {/* Mission Goal */}
+      <div className="rounded-xl border border-blue-500/30 bg-blue-500/5 p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-bold tracking-widest text-blue-400 uppercase">Mission Goal</span>
+          <span className="text-[8px] text-zinc-600">{MISSION_GOAL.module} — {MISSION_GOAL.location}</span>
+        </div>
+        <p className="text-[11px] text-zinc-200 leading-relaxed">{MISSION_GOAL.holyGrail}</p>
+
+        {/* Scene description */}
+        <div className="space-y-1 pt-2 border-t border-blue-500/15">
+          <div className="text-[8px] font-bold text-zinc-500 tracking-wider">THE SCENE</div>
+          {MISSION_GOAL.scene.map((s, i) => (
+            <div key={i} className="text-[9px] text-zinc-400 leading-tight">• {s}</div>
+          ))}
+        </div>
+
+        {/* Rules grid */}
+        <div className="pt-2 border-t border-blue-500/15">
+          <div className="text-[8px] font-bold text-zinc-500 tracking-wider mb-1.5">REQUIREMENTS (from brief R2.1)</div>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+            {MISSION_GOAL.rules.map(r => (
+              <div key={r.id} className="flex items-start gap-1.5">
+                <span className={`text-[7px] font-mono font-bold shrink-0 px-1 py-0.5 rounded ${
+                  r.severity === "shall" ? "text-red-400 bg-red-500/10" : "text-amber-400 bg-amber-500/10"
+                }`}>{r.id}</span>
+                <span className="text-[8px] text-zinc-400 leading-tight">{r.text}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Constraints */}
+        <div className="pt-2 border-t border-blue-500/15">
+          <div className="text-[8px] font-bold text-zinc-500 tracking-wider mb-1">KEY CONSTRAINTS</div>
+          <div className="flex flex-wrap gap-1.5">
+            {MISSION_GOAL.constraints.map((c, i) => (
+              <span key={i} className="text-[8px] text-zinc-400 bg-zinc-800/60 px-2 py-0.5 rounded">
+                {c}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Design Choices */}
+      <DesignChoicesSection expandedChoice={expandedChoice} onToggleChoice={toggleChoice} />
+
+      {/* Pipeline title */}
       <div>
         <h1 className="text-[16px] font-semibold text-zinc-100">Mission Pipeline</h1>
         <p className="text-[10px] text-zinc-500 mt-0.5">
           Every stage of the SAR mission with all evaluated approaches. Click any card to expand.
-          Green = our current selection. Blue = planned improvement. Purple = research.
+          Green = selected. Blue = planned. Purple = research. Amber dependencies shown on expand.
         </p>
       </div>
 

@@ -104,7 +104,7 @@ const TIMELINE: TimelinePhase[] = [
     icon: "2",
     summary: "L2 mission with CV integrated. Multiple attempts across 2 missions if needed.",
     items: [
-      { text: "PLB plan + Phase 2 search", detail: "Demonstrate PLB redirect (R05). Phase 2 search pattern.", status: "todo", owner: "Robin", script: "state machine" },
+      { text: "PLB plan + Phase 2 search", detail: "Demonstrate PLB redirect (R06). Phase 2 search pattern.", status: "todo", owner: "Robin", script: "state machine" },
       { text: "Dashboard flight", detail: "Full ground station. N/Y/I/X/L commands with CV integrated.", status: "todo", owner: "Dima", script: "pi_flight.py" },
       { text: "Full L2 semi-auto mission", detail: "Search → detect → confirm → centre → descend → land → payload → RTL.", status: "todo", script: "pi_flight.py + main.py" },
       { text: "Record results for report", detail: "GPS accuracy, detection stats, video recording. T/F for each test.", status: "todo" },

@@ -115,3 +115,61 @@
   - FIRST_FLIGHT.md is redundant/contradicts checklist — should be deprecated
   - Model swap section lists non-existent backup models
   - Two state machine comparison updated: now shows 3 scripts (passive/interactive/autonomous) accurately based on actual code
+
+## 2026-03-11 (part 2) — Pipeline, Levels, Rangefinder
+
+- Pipeline tab: mission goal at top with all rules/constraints from brief, then design choices, then 13-stage pipeline
+- Design choices: exhaustive list of every configurable parameter (camera, model, flight, GPS, safety, comms)
+- Levels: don't replace existing content, ADD stepping stones below
+  - Left column: critical path in sequence (diagnostics → GPS fix → fly waypoints → CV from altitude → geotagging accuracy → autonomous search → detect+centre+classify → SSSI → PLB → offset landing → payload → full L2)
+  - Right column: parallel fine-tuning tasks (calibration, accuracy measurements, parameter tuning, data collection)
+- Rangefinder/lidar: team has one available (model TBD). Key insight:
+  - Barometric altitude = relative to launch point. Ground level varies across field. Could be 2-3m off.
+  - Rangefinder = actual distance to ground. Use for: safe landing on uneven terrain, low hover-drop (~1m AGL)
+  - New approach: instead of landing, descend to ~1m true AGL using rangefinder, release payload, fly away. Avoids terrain risk.
+  - Can deduce terrain elevation: GPS_alt − rangefinder = ground_level. Useful for knowing slopes near casualty.
+  - Added to pipeline: "Rangefinder Low Drop" in payload stage, "Rangefinder-Assisted Landing" in landing stage
+  - Added to design choices: Altitude & Terrain category (altitude source, rangefinder sensor, terrain deduction)
+- Site consistency: all stale script references fixed (last one was pi_9_resolution_test.py in flight-day-tiers.ts)
+- All requirements R01-R12 now match actual AENGM0074 brief across all tabs
+
+### 2026-03-11 (continued) — Enrichment, documentation, cross-reference audit
+
+- **Stepping stone enrichment**: All 14 critical path steps and 20 parallel tasks now have specific scripts, flags (--headless --stream, --dry-run, --model), stream URLs (http://PI_IP:8090/8091), config.py variable names, simulator rehearsal options, bench pre-test scripts, companion experiment scripts
+- **Documentation audit**: LevelsTab has grown to 573 lines (was 279) with no blueprint. Created `docs/levels-tab-blueprint.md` with full component hierarchy, data source map, update instructions. Updated CLAUDE.md line counts and data update table.
+- **Cross-reference audit against flight day docs**: Found critical gap — Mission Planner AUTO test (STEP 1 in FLIGHT_DAY_CHECKLIST.md) was missing from L2_CRITICAL_PATH. Added as cp-2a "Mission Planner AUTO waypoints" (row 3). Also includes RC kill switch safety test. All rows bumped by 1, milestones updated.
+- **Clarification needed**: passive_watch.py vs tests/flight/1_passive_flight.py — which is canonical for cp-3? Both listed as options currently.
+- **Still missing from flight day docs**: cp-6b (geofence standalone test) not in FLIGHT_DAY_CHECKLIST.md; cp-10 (PLB redirect) has no standalone test procedure; servo/payload standalone test not documented
+
+### 2026-03-11 (continued) — Flight Day 1 plan + personal focus areas
+
+- **Flight Day 1 practical plan**: Want clear steps somewhere (not Levels tab):
+  1. Run diagnostics.py (nice UI or headless via PuTTY, with vision model)
+  2. Fly drone via RC only (prove it flies, no scripts)
+  3. Fly with Mission Planner connected + capture_training.py for video stream
+  4. Run waypoint mission + passive script with geotagging + stream
+  5. Test geofence standalone (create separate NFZ area)
+  6. Simulate full mission in SITL (already have working components)
+  7. Hook confirmed SITL simulation to real drone
+- **Personal focus areas** (want in sidebar control or somewhere visible):
+  1. Test standalone NFZ (geofence exclusion in ArduCopter)
+  2. Add NFZ to main.py (integrate geofence into search pattern)
+  3. Improve vision: retraining with real photos, try NCNN backend
+  4. Understand FPS / image resolution / FOV → geotagging accuracy relationship
+- **Model switching**: Want easy switching between models + compare on the field
+- **Passive watch**: Should include geotagging logic + video stream + manual override option
+
+### 2026-03-11 (continued) — Flight Day 1 in sidebar
+
+- Flight Day 1 steps should be built into the dashboard as a visible checklist (right sidebar "Day 1" tab)
+- Sequential on-field steps with scripts, stream URLs, what each step proves, and fallbacks
+- Separate from Prep (day before) and Focus (dev areas) — this is the actual field day sequence
+
+### 2026-03-11 (continued) — Documentation, BOOTSTRAP, Focus additions
+
+- Want detailed documentation of how everything works — all in project directory since it's a group project
+- Will write two reports later using this project as reference — everything needs to be properly documented
+- BOOTSTRAP workflow concern: brain-dump.md should be appended after every user message, plus other workflow steps
+- **New Focus items to add**:
+  - Play around with lidar/rangefinder for distance-above-ground measurements
+  - Servo release mechanism (Tarot) — not sure exactly how it's meant to work, need to understand and test

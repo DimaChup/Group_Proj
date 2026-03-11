@@ -432,7 +432,7 @@ export const TIER_1: FlightTier = {
           detailedSteps: [
             "1. SSH into Pi or check Pi terminal",
             "2. Check disk space: df -h (need >2GB free for flight data)",
-            "3. If pi_passive_flight.py was running: check detections/ folder exists and has files (ls -la detections/)",
+            "3. If 1_passive_flight.py was running: check detections/ folder exists and has files (ls -la detections/)",
             "4. Check flight_frames/ folder (ls -la flight_frames/)",
             "5. Check CSV log: wc -l passive_flight_log.csv (should have rows if detections happened)",
             "6. Check notebook/data sheets: did you write down GPS accuracy, altitude readings?",
@@ -454,7 +454,7 @@ export const TIER_1: FlightTier = {
   contingencies: {
     "GPS never locks": "Wait 15 min. If nothing: check CAN cable, GPS1_TYPE param, gps_health.py. Fall back to bench testing + ground-level CV tests. Still productive — test model on real dummy from ground.",
     "Arming fails": "Read MP Messages for specific failure. Common: compass cal (rotate drone), radio cal (run in MP), GPS (wait). ARMING_CHECK param reduction as LAST resort.",
-    "Wind too strong (>20 km/h)": "Do NOT fly. Do: ground-level vision tests, FOV calibration, inference benchmark, bench_mission.py, stream test. Record all ground data.",
+    "Wind too strong (>20 km/h)": "Do NOT fly. Do: ground-level vision tests, FOV calibration, inference benchmark, 0b_0b_bench_mission.py, stream test. Record all ground data.",
     "RC issues": "Re-bind. Recalibrate in MP. Swap RC batteries. If unfixable today: no flying, but do all ground testing.",
     "Camera ribbon loosens on takeoff": "Land immediately. Reseat + secure with electrical tape. Retry. Bring spare tape.",
   },
@@ -508,7 +508,7 @@ export const TIER_2: FlightTier = {
           notes: "Stream is separate from flight control — camera runs on Pi, flight runs on Cube via mavproxy. Stream uses WiFi bandwidth only (~0.5 Mbps at 640x480). Does NOT affect drone flight at all.",
           duration: "5 min",
           detailedSteps: [
-            "1. Ensure pi_camera_stream.py is still running from Tier 1 (T1-6). If not, SSH into Pi and restart: cd ~/dima/Group_Proj && source pienv/bin/activate && python tests/diagnostics/camera_stream.py --with-detection --res 640x480",
+            "1. Ensure camera_stream.py is still running from Tier 1 (T1-6). If not, SSH into Pi and restart: cd ~/dima/Group_Proj && source pienv/bin/activate && python tests/diagnostics/camera_stream.py --with-detection --res 640x480",
             "2. On laptop browser, open http://192.168.1.121:8090 — confirm live feed is showing",
             "3. Pilot: arm drone and take off to 5m in STABILIZE or LOITER mode",
             "4. GS operator: watch the browser stream — note if feed is smooth or choppy",
@@ -532,7 +532,7 @@ export const TIER_2: FlightTier = {
           ],
           duration: "3 min",
           detailedSteps: [
-            "1. Stop the current stream: Ctrl+C in the Pi terminal running pi_camera_stream.py",
+            "1. Stop the current stream: Ctrl+C in the Pi terminal running camera_stream.py",
             "2. Restart with low resolution: python tests/diagnostics/camera_stream.py --with-detection --res 320x240",
             "3. Refresh browser at http://192.168.1.121:8090",
             "4. Pilot: repeat brief hover at 5-10m. GS operator: compare latency feel to 640x480",
@@ -619,7 +619,7 @@ export const TIER_2: FlightTier = {
         },
         {
           id: "T2-5", task: "GUIDED from Pi — dry run first",
-          command: "python tests/flight/waypoint_test.py --dry-run --alt 15",
+          command: "python tests/flight/2_waypoint_test.py --dry-run --alt 15",
           how: "Before trusting our Python code to fly the drone, we run a dry-run that does everything EXCEPT arm and take off. It connects to the Cube via mavproxy, reads the current GPS position, calculates 3-4 waypoints as a 20m square around that position, sets GUIDED mode, and then stops. This verifies the entire Pi → mavproxy → Cube command path is working without any risk. If the dry run works, the real flight (T2-6) should too.",
           verify: "Script connects to Cube (system 1, not system 0), reads valid GPS position, prints planned waypoints with realistic GPS coordinates, sets GUIDED mode (visible in MP HUD), then exits cleanly without arming.",
           owner: "Robin",
@@ -628,7 +628,7 @@ export const TIER_2: FlightTier = {
           detailedSteps: [
             "1. On Pi (SSH or local terminal): ensure mavproxy is still running in Terminal 1 (check: ps aux | grep mavproxy)",
             "2. In Terminal 2: cd ~/dima/Group_Proj && source pienv/bin/activate",
-            "3. Run: python tests/flight/waypoint_test.py --dry-run --alt 15",
+            "3. Run: python tests/flight/2_waypoint_test.py --dry-run --alt 15",
             "4. Watch terminal output: should show 'Connected to Cube (system 1)', then current GPS coordinates, then 3-4 planned waypoint coordinates",
             "5. Check Mission Planner HUD on laptop: should briefly show GUIDED mode when the script sets it",
             "6. Verify the printed waypoint coordinates form a sensible square around the current GPS position (differences should be ~0.0002 in lat/lon, which is ~20m)",
@@ -639,7 +639,7 @@ export const TIER_2: FlightTier = {
         },
         {
           id: "T2-6", task: "GUIDED from Pi — real flight, 3-4 waypoints",
-          command: "python tests/flight/waypoint_test.py --alt 15",
+          command: "python tests/flight/2_waypoint_test.py --alt 15",
           how: "Now we let our Python code actually fly the drone. The script arms the motors, takes off to 15m, flies 3-4 GPS waypoints in GUIDED mode (20m square pattern), then lands. This proves the exact same MAVLink command pathway that main.py and pi_flight.py will use for autonomous missions. Critically, test the Ctrl+C emergency abort: pressing Ctrl+C in the Pi terminal should trigger RTL (Return To Launch) immediately. The RC kill switch remains the primary safety mechanism at all times.",
           verify: "Drone arms via Pi command, takes off to 15m, flies all waypoints following the planned path visible in MP, and either lands at last waypoint or RTLs on completion. Ctrl+C triggers immediate RTL.",
           owner: "Robin",
@@ -655,8 +655,8 @@ export const TIER_2: FlightTier = {
             "1. PILOT: hand on RC kill switch at ALL TIMES. Ready to flip to STABILIZE instantly",
             "2. SPOTTER: eyes on drone, calling out altitude, drift, and any unexpected behavior aloud",
             "3. GS OPERATOR: watch Mission Planner map — track actual path vs planned waypoints",
-            "4. NOTE: If this is the first GUIDED flight, consider testing with 1 waypoint first (edit pi_waypoint_test.py or add --waypoints 1 if supported). Same progressive logic as T2-3 — prove 1 works before trusting 4",
-            "5. On Pi terminal: python tests/flight/waypoint_test.py --alt 15",
+            "4. NOTE: If this is the first GUIDED flight, consider testing with 1 waypoint first (edit 2_waypoint_test.py or add --waypoints 1 if supported). Same progressive logic as T2-3 — prove 1 works before trusting 4",
+            "5. On Pi terminal: python tests/flight/2_waypoint_test.py --alt 15",
             "6. Terminal prints 'Arming...' → watch motors spin up. Then 'Taking off to 15m...' → drone lifts off",
             "7. Watch MP map: drone should fly to each waypoint in sequence (green track line follows planned path)",
             "8. MID-FLIGHT TEST: at waypoint 2 or 3, press Ctrl+C in the Pi terminal. Drone should immediately switch to RTL and fly home. This tests our emergency abort",
@@ -672,7 +672,7 @@ export const TIER_2: FlightTier = {
       steps: [
         {
           id: "T2-7", task: "Start passive detection with full image capture",
-          command: "python tests/flight/passive_flight.py --headless --stream --save-detections --save-frames --save-every 4",
+          command: "python tests/flight/1_passive_flight.py --headless --stream --save-detections --save-frames --save-every 4",
           how: "This is the most important data-gathering step of the entire flight day. The script runs the YOLOv8n AI model on every camera frame but sends ZERO commands to the drone — it only observes and logs. The pilot flies manually while our AI watches passively. We capture three types of data: (a) geotagged detection images, (b) every 4th raw frame tagged with DET/MISS prefix plus altitude and speed, and (c) a CSV log with every detection's GPS, altitude, confidence, and pixel coordinates. Even if the AI detects nothing, the saved raw frames become training data for a better model. This script stays running through T2-8, T2-9, and T2-10.",
           verify: "Pi terminal shows frame processing with FPS count and detection percentage. Browser stream at http://192.168.1.121:8090 shows live camera feed with green detection boxes. ls detections/ and ls flight_frames/ on Pi show files accumulating.",
           owner: "Dima",
@@ -682,7 +682,7 @@ export const TIER_2: FlightTier = {
             "1. On Pi (SSH or local terminal), ensure mavproxy is still running in Terminal 1",
             "2. In Terminal 2: cd ~/dima/Group_Proj && source pienv/bin/activate",
             "3. Create output directories if they don't exist: mkdir -p detections flight_frames",
-            "4. Run: python tests/flight/passive_flight.py --headless --stream --save-detections --save-frames --save-every 4",
+            "4. Run: python tests/flight/1_passive_flight.py --headless --stream --save-detections --save-frames --save-every 4",
             "5. Wait for startup messages: 'Camera OK', 'Model loaded (TFLite)', 'Stream serving on :8090', 'Connected to Cube (system 1)'",
             "6. Open http://192.168.1.121:8090 on laptop browser — confirm live camera feed appears with detection overlay",
             "7. Quick sanity check: hold the dummy in front of the camera at 1-2m distance. A green detection box should appear on the stream, and the Pi terminal should print 'DET conf=0.XX'",
@@ -707,7 +707,7 @@ export const TIER_2: FlightTier = {
           notes: "THE critical unknown of the project. This directly determines TARGET_ALT for Day 2. Record data even if every altitude fails — that 'failure' is our most valuable measurement. At 30m with 640x480 and 6mm focal length, visible ground area is ~25m x 19m, so the 1.5m dummy may only be 10-15 pixels tall.",
           duration: "8 min",
           detailedSteps: [
-            "1. Ensure pi_passive_flight.py is still running from T2-7 (check Pi terminal for continuous FPS output). Browser stream should be live at :8090",
+            "1. Ensure 1_passive_flight.py is still running from T2-7 (check Pi terminal for continuous FPS output). Browser stream should be live at :8090",
             "2. PILOT: take off and fly directly above the dummy on the ground. Use Mission Planner map to verify the drone is positioned over the dummy's known GPS location",
             "3. ALTITUDE 10m: hover steadily for 30 seconds. GS OPERATOR: watch the browser stream for green detection boxes. Count approximate detections. Check Pi terminal for 'DET conf=X.XX' messages. Record: detected Y/N, average confidence, approximate detection rate",
             "4. ALTITUDE 15m: pilot climbs to 15m, hovers 30 seconds. Repeat observations. Dummy appears noticeably smaller in the frame now",
@@ -734,7 +734,7 @@ export const TIER_2: FlightTier = {
           duration: "5 min",
           detailedSteps: [
             "1. Note the best detection altitude from T2-8 (e.g., if 15m had >50% detection rate, use 15m). All speed tests happen at this altitude",
-            "2. Ensure pi_passive_flight.py is still running from T2-7",
+            "2. Ensure 1_passive_flight.py is still running from T2-7",
             "3. PILOT: position drone ~50m before (upwind of) the dummy, at the chosen altitude",
             "4. SPEED TEST 1 — 3 m/s (slow walking pace): fly directly over the dummy. GS OPERATOR: watch terminal for 'DET' messages as drone passes over. Count how many detections in that single pass",
             "5. PILOT: fly past, turn around, reposition 50m on the other side",
@@ -755,7 +755,7 @@ export const TIER_2: FlightTier = {
           owner: "Pilot + Dima",
           duration: "1 min",
           detailedSteps: [
-            "1. Ensure pi_passive_flight.py is still running from T2-7 (check Pi terminal for continuous FPS output)",
+            "1. Ensure 1_passive_flight.py is still running from T2-7 (check Pi terminal for continuous FPS output)",
             "2. PILOT: fly to the best detection altitude (from T2-8), but position the drone over an area with NO dummy — just open grass or empty ground at least 20m from the dummy",
             "3. Hover for 30 seconds. GS OPERATOR: watch the Pi terminal for any 'DET' messages. Count them.",
             "4. If zero detections: confidence threshold is correctly tuned. The model only fires on real targets. This is a GO for autonomous search.",
@@ -776,7 +776,7 @@ export const TIER_2: FlightTier = {
             "2. Backup the current model: cp best.tflite best_custom_backup.tflite",
             "3. Swap to COCO model: cp models/coco_yolov8n.tflite best.tflite",
             "4. Optionally lower confidence threshold: nano vision.py → Ctrl+W → search for '0.4' → change to 0.25 on both lines 174 and 197 → Ctrl+O to save → Ctrl+X to exit",
-            "5. Restart passive flight: python tests/flight/passive_flight.py --headless --stream --save-detections --save-frames --save-every 4",
+            "5. Restart passive flight: python tests/flight/1_passive_flight.py --headless --stream --save-detections --save-frames --save-every 4",
             "6. Quick ground test: hold dummy 1-2m from camera. COCO model should detect it as 'person'. Check Pi terminal for 'DET conf=X.XX'",
             "7. If ground test passes: PILOT flies abbreviated altitude ladder — just the 2-3 altitudes where custom model struggled (e.g., 15m and 20m only, not full 5-step ladder)",
             "8. Compare results to custom model. Record which is better. When done, restore original if custom was better: cp best_custom_backup.tflite best.tflite",
@@ -815,7 +815,7 @@ export const TIER_2: FlightTier = {
           detailedSteps: [
             "1. This measurement uses data collected DURING the altitude ladder (T2-8) — no separate flight needed",
             "2. Before flying (done in T2-7 step 8): measure and record the dummy's GPS position precisely using phone GPS. Drop a pin in Google Maps, screenshot the coordinates. Write them down on paper as backup",
-            "3. During the altitude ladder hovering: the pi_passive_flight.py CSV log automatically records estimated GPS for every detection event along with drone altitude",
+            "3. During the altitude ladder hovering: the 1_passive_flight.py CSV log automatically records estimated GPS for every detection event along with drone altitude",
             "4. After landing: on the Pi, examine the CSV log: cat passive_flight_log.csv | head -5 to see the column format, then cat passive_flight_log.csv | tail -20 to see the most recent entries",
             "5. For each altitude band (10m, 15m, 20m), find the estimated lat/lon values in the CSV and compare to the known ground truth",
             "6. Calculate error distance: use online calculator (movable-type.co.uk/scripts/latlong.html) or approximate: error_m = 111320 * sqrt((lat1-lat2)^2 + ((lon1-lon2)*cos(lat1))^2)",
@@ -840,7 +840,7 @@ export const TIER_2: FlightTier = {
           ],
           expectedOutput: "$ ls detections/ | wc -l\n47\n\n$ ls flight_frames/ | wc -l\n312\n\n$ wc -l passive_flight_log.csv\n847 passive_flight_log.csv\n\n$ head -2 passive_flight_log.csv\ntimestamp,lat,lon,alt,confidence,px_x,px_y,model\n2026-03-15T10:23:45,51.42341,-2.67142,15.2,0.67,342,281,best.tflite",
           duration: "3 min",
-          contingency: "If CSV is empty: check pi_passive_flight.py was started with --save-detections flag. If detections/ empty: model may not be detecting — check terminal for detection count. If disk full: delete old data, free space, and re-run altitude ladder.",
+          contingency: "If CSV is empty: check 1_passive_flight.py was started with --save-detections flag. If detections/ empty: model may not be detecting — check terminal for detection count. If disk full: delete old data, free space, and re-run altitude ladder.",
         },
       ],
     },
@@ -947,7 +947,7 @@ export const TIER_3: FlightTier = {
             "8. Keyboard shortcuts work in browser: N=investigate, Y=confirm, I=interest, X=false positive, L=land, M=resume search",
           ],
           expectedOutput: "Pi terminal:\nInitializing camera... OK\nLoading model: best.tflite... OK (TFLite, ~250ms)\nConnecting to Cube... Heartbeat (system 1, ArduCopter V4.6.3)\nDashboard serving on http://0.0.0.0:8090\n\nBrowser dashboard shows:\n- Video panel: live camera feed (may show grass/sky depending on camera angle)\n- GPS grid: blue arrow at drone's current position\n- Buttons: ARM (green), TAKEOFF (blue), N/Y/I/X/L/M (various colors)\n- Status: STABILIZE | BAT: 16.2V | GPS: 51.4234, -2.6714 | Alt: 0.0m | Sats: 12",
-          contingency: "Dashboard doesn't load → check Pi terminal for errors. Common: port 8090 already in use (kill previous process: lsof -i :8090, then kill PID). Or pi_camera_stream.py still running on same port — stop it first. Video panel black → camera grabbed by another process. Stop all other camera scripts. Status shows 'NO CUBE' → mavproxy not running. Restart mavproxy in Terminal 1. Buttons don't respond → check browser console (F12) for JavaScript errors. Try refreshing page.",
+          contingency: "Dashboard doesn't load → check Pi terminal for errors. Common: port 8090 already in use (kill previous process: lsof -i :8090, then kill PID). Or camera_stream.py still running on same port — stop it first. Video panel black → camera grabbed by another process. Stop all other camera scripts. Status shows 'NO CUBE' → mavproxy not running. Restart mavproxy in Terminal 1. Buttons don't respond → check browser console (F12) for JavaScript errors. Try refreshing page.",
         },
         {
           id: "T3-3", task: "Fly over dummy → detection alert → investigate",
@@ -1051,7 +1051,7 @@ export const TIER_3: FlightTier = {
             "4. Transfer detection images: scp -r pi@192.168.1.121:~/dima/Group_Proj/detections/ ./flight_day_1_data/detections/",
             "5. Transfer raw frames: scp -r pi@192.168.1.121:~/dima/Group_Proj/flight_frames/ ./flight_day_1_data/flight_frames/",
             "6. In Mission Planner: File → Log → Download Logs. Or find .tlog in MP's log directory (usually Documents/Mission Planner/logs/). Copy to flight_day_1_data/",
-            "7. On Pi: copy any terminal output you want to save. The pi_flight.py and pi_passive_flight.py terminals have useful logs",
+            "7. On Pi: copy any terminal output you want to save. The pi_flight.py and 1_passive_flight.py terminals have useful logs",
             "8. Verify transfers: ls -la flight_day_1_data/ — check file counts and sizes match Pi",
           ],
           expectedOutput: "Laptop terminal:\n$ scp pi@192.168.1.121:~/dima/Group_Proj/passive_flight_log.csv ./flight_day_1_data/\npassive_flight_log.csv     100%  45KB  1.2MB/s  00:00\n\n$ scp -r pi@192.168.1.121:~/dima/Group_Proj/detections/ ./flight_day_1_data/detections/\nDET_20260309_142301_51.4234_-2.6714_0.72.jpg  100%  28KB...\n(multiple files transfer)\n\n$ ls flight_day_1_data/detections/ | wc -l\n47 (example: 47 detection images captured today)",
@@ -1117,7 +1117,7 @@ export const TIER_3: FlightTier = {
   ],
   gate: undefined,
   contingencies: {
-    "Dashboard not loading": "Fall back to pi_passive_flight.py --stream. Commands via terminal.",
+    "Dashboard not loading": "Fall back to 1_passive_flight.py --stream. Commands via terminal.",
     "N command doesn't move drone": "Check pi_flight.py terminal. Verify GUIDED mode. Check target_system. Try FAKE DET.",
     "Landing way off (>15m)": "Record exact error → FOV calibration or GPS estimation needs work. Measure for Day 2.",
     "Search pattern wrong": "Kill switch. Debug offline. Even partial data useful.",
@@ -1161,7 +1161,7 @@ export const TIME_SLOTS: { time: string; activity: string; tier: string }[] = [
 // ═══════════════════════════════════════════════════════════
 
 export const WORST_CASES: { scenario: string; response: string }[] = [
-  { scenario: "Rain / high wind", response: "No flying. Do ALL ground testing: diagnostics, FOV cal, inference benchmark, live stream test, ground-level CV on dummy, bench_mission.py, dry-run scripts. Productive day even without flight." },
+  { scenario: "Rain / high wind", response: "No flying. Do ALL ground testing: diagnostics, FOV cal, inference benchmark, live stream test, ground-level CV on dummy, 0b_bench_mission.py, dry-run scripts. Productive day even without flight." },
   { scenario: "GPS never locks", response: "Can't fly autonomous. Do manual RC hover (if arming works without GPS — unlikely). Main value: ground-level CV tests, camera calibration, stream test, bench diagnostics. Note GPS issues for next attempt." },
   { scenario: "Cube won't arm", response: "Read pre-arm failure in MP Messages. Fix what you can (compass/accel/RC cal). If unfixable: do ALL ground tests. Pi camera + AI testing doesn't need Cube armed." },
   { scenario: "CV detects nothing at any altitude", response: "STILL VALUABLE. Save all frames (flight_frames/). These real aerial photos become retraining data. Try COCO model, lower confidence to 0.15, bigger dummy. The 'failure' data is exactly what we need to improve for Day 2." },
@@ -1220,7 +1220,7 @@ export const MEASUREMENTS: Measurement[] = [
   },
   {
     id: "M3", category: "calibration", metric: "Camera resolution vs FPS tradeoff",
-    how: "python tests/pi_9_resolution_test.py — tests different resolutions",
+    how: "python tests/hardware/benchmark.py --camera — tests different resolutions",
     unit: "px × FPS",
     notes: "640x480 is default. Lower = faster inference. Higher = better detection at altitude.",
   },
@@ -1296,7 +1296,7 @@ export const MEASUREMENTS: Measurement[] = [
 export const LOGGING_REQUIREMENTS: LogRequirement[] = [
   {
     id: "L1", what: "Every detection event",
-    source: "pi_passive_flight.py CSV log",
+    source: "1_passive_flight.py CSV log",
     format: "timestamp, lat, lon, alt, confidence, pixel_x, pixel_y, model_name",
     analysis: "Plot confidence vs altitude. Calculate detection rate per altitude band. Identify false positives.",
   },

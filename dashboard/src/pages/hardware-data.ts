@@ -60,8 +60,8 @@ export const HARDWARE_COMPONENTS: HardwareComponent[] = [
     role: "Flight Controller (Autopilot)",
     description: "The brain of the drone. Runs ArduCopter firmware, handles all flight dynamics (stabilisation, altitude hold, GPS navigation), failsafes, and motor control. All autonomous flight modes (GUIDED, AUTO, LOITER, RTL, LAND) are processed here.",
     status: "verified",
-    connectsTo: ["gps", "pi", "rc-rx", "motors", "payload", "buzzer"],
-    connectionDetails: "GPS via CAN2 port. Pi via TELEM2 (TX/RX/GND). RC receiver via RCIN. Motors via MAIN OUT 1-4. Payload servo via AUX OUT. Buzzer via BUZZER port. Power via power module on POWER1.",
+    connectsTo: ["gps", "pi", "rc-rx", "motors", "payload", "buzzer", "rangefinder"],
+    connectionDetails: "GPS via CAN2 port. Pi via TELEM2 (TX/RX/GND). RC receiver via RCIN. Motors via MAIN OUT 1-4. Payload servo via AUX OUT. Buzzer via BUZZER port. Power via power module on POWER1. Rangefinder via I2C or serial port.",
     setupSteps: [
       "Flash ArduCopter firmware (V4.6.3 or latest stable) via Mission Planner",
       "Set frame type: FRAME_CLASS=1 (Quad), FRAME_TYPE=1 (X)",
@@ -94,8 +94,8 @@ export const HARDWARE_COMPONENTS: HardwareComponent[] = [
       { label: "Baud rate", value: "921600 (TELEM2 to Pi)" },
     ],
     testCommands: [
-      { command: "python tests2/cube_commands.py", expect: "Heartbeat from system 1, mode changes ACK'd" },
-      { command: "python test_cube.py", expect: "Heartbeat, GPS_RAW_INT, ATTITUDE, BATTERY messages" },
+      { command: "python tests/flight/0a_cube_commands.py", expect: "Heartbeat from system 1, mode changes ACK'd" },
+      { command: "python tests/laptop/test_cube.py", expect: "Heartbeat, GPS_RAW_INT, ATTITUDE, BATTERY messages" },
       { command: "Mission Planner > Setup > Mandatory", expect: "Accel, compass, RC calibration screens load" },
     ],
     notes: [
@@ -110,7 +110,7 @@ export const HARDWARE_COMPONENTS: HardwareComponent[] = [
     category: "navigation",
     role: "GNSS Receiver + Compass",
     description: "Multi-constellation GNSS receiver (GPS + GLONASS + BeiDou + Galileo) with built-in compass. Connected via CAN bus to the Cube. Provides position, velocity, and heading data. The compass is used for yaw estimation.",
-    status: "partial",
+    status: "verified",
     connectsTo: ["cube"],
     connectionDetails: "4-pin CAN cable from Here 3+ to Cube CAN2 port. Gets power from Cube through the CAN cable (no separate power needed).",
     setupSteps: [
@@ -137,8 +137,8 @@ export const HARDWARE_COMPONENTS: HardwareComponent[] = [
       { label: "Compass", value: "Built-in magnetometer" },
     ],
     testCommands: [
-      { command: "python tests2/gps_test.py", expect: "GPS_RAW_INT messages, fix_type >= 3 outdoors, sat count" },
-      { command: "python tests2/gps_health.py", expect: "CAN bus check, GPS type, satellite tracking table" },
+      { command: "python tests/hardware/gps_test.py", expect: "GPS_RAW_INT messages, fix_type >= 3 outdoors, sat count" },
+      { command: "python tests/hardware/gps_health.py", expect: "CAN bus check, GPS type, satellite tracking table" },
       { command: "Look at Here 3+ LED", expect: "Flashing blue=no fix, flashing green=GPS lock" },
     ],
     notes: [
@@ -166,9 +166,9 @@ export const HARDWARE_COMPONENTS: HardwareComponent[] = [
       "Create Python venv: python3 -m venv --system-site-packages pienv",
       "Install deps: pip install -r requirements_pi.txt",
       "Install ai-edge-litert (replaces tflite-runtime on Python 3.13)",
-      "Test Cube connection: start mavproxy, run test_cube.py",
-      "Test camera: run pi_1_camera.py",
-      "Test AI: run pi_2_detect.py --headless",
+      "Test Cube connection: start mavproxy, run tests/laptop/test_cube.py",
+      "Test camera: run tests/laptop/test_camera.py",
+      "Test AI: run tests/laptop/test_cv.py --headless",
     ],
     guides: [
       { label: "Pi 5 Getting Started", url: "https://www.raspberrypi.com/documentation/computers/getting-started.html", description: "OS install, first boot, network setup" },
@@ -184,11 +184,11 @@ export const HARDWARE_COMPONENTS: HardwareComponent[] = [
       { label: "IP (local)", value: "192.168.1.121" },
     ],
     testCommands: [
-      { command: "python tests/pi_1_camera.py", expect: "Frame: (480, 640, 3) — camera working" },
-      { command: "python tests/pi_2_detect.py --headless", expect: "Detections with confidence scores" },
-      { command: "python tests/pi_3_benchmark.py", expect: "~250ms avg inference, ~4 FPS" },
-      { command: "python test_cube.py", expect: "Heartbeat + GPS + attitude data flowing" },
-      { command: "python tests2/pi_diagnostics.py", expect: "All subsystem indicators green" },
+      { command: "python tests/laptop/test_camera.py", expect: "Frame: (480, 640, 3) — camera working" },
+      { command: "python tests/laptop/test_cv.py --headless", expect: "Detections with confidence scores" },
+      { command: "python tests/hardware/benchmark.py", expect: "~250ms avg inference, ~4 FPS" },
+      { command: "python tests/laptop/test_cube.py", expect: "Heartbeat + GPS + attitude data flowing" },
+      { command: "python tests/diagnostics/diagnostics.py", expect: "All subsystem indicators green" },
     ],
     notes: [
       "Python 3.13 + pyserial = broken serial reads. Use mavproxy as UDP bridge instead.",
@@ -211,7 +211,7 @@ export const HARDWARE_COMPONENTS: HardwareComponent[] = [
       "Attach 6mm CS-mount lens (screw on, adjust focus by rotating lens barrel)",
       "Enable camera in raspi-config or ensure it auto-detects",
       "Test: rpicam-hello (should show preview)",
-      "Test: python3 pi_1_camera.py (should show 640x480 frames)",
+      "Test: python3 tests/laptop/test_camera.py (should show 640x480 frames)",
       "IMPORTANT: Do NOT add cv2.cvtColor(frame, cv2.COLOR_RGB2BGR) — data is already BGR",
       "Focus adjustment: twist lens ring until image is sharp at target altitude distance",
     ],
@@ -228,9 +228,9 @@ export const HARDWARE_COMPONENTS: HardwareComponent[] = [
       { label: "FPS w/ inference", value: "~3.9 FPS" },
     ],
     testCommands: [
-      { command: "python tests/pi_1_camera.py", expect: "Live preview, correct colors (no blue tint)" },
+      { command: "python tests/laptop/test_camera.py", expect: "Live preview, correct colors (no blue tint)" },
       { command: "rpicam-hello", expect: "Camera preview window on Pi monitor" },
-      { command: "python tests/pi_8_camera_test.py --headless", expect: "FPS count, motion blur assessment" },
+      { command: "python tests/hardware/cv_benchmark.py --headless", expect: "FPS count, motion blur assessment" },
     ],
     notes: [
       "CRITICAL: IMX296 outputs BGR data. Do NOT convert with cvtColor — it double-swaps channels.",
@@ -250,7 +250,7 @@ export const HARDWARE_COMPONENTS: HardwareComponent[] = [
     setupSteps: [
       "Screw lens onto camera body (CS-mount thread)",
       "Adjust focus: point at object at target detection distance, twist until sharp",
-      "Run FOV calibration (pi_6_fov_test.py) to measure actual FOV",
+      "Run FOV calibration (tests/calibration/fov_calibrate.py) to measure actual FOV",
       "Update FOCAL_LENGTH_MM in config.py if measured FOV differs from expected",
     ],
     guides: [],
@@ -261,7 +261,7 @@ export const HARDWARE_COMPONENTS: HardwareComponent[] = [
     ],
     notes: [
       "FOV calibration is essential for accurate GPS estimation — wrong focal length = systematic position error.",
-      "Run pi_6_fov_test.py on bench: measure physical width visible at known distance, calculate actual focal length.",
+      "Run tests/calibration/fov_calibrate.py on bench: measure physical width visible at known distance, calculate actual focal length.",
     ],
   },
   {
@@ -328,8 +328,8 @@ export const HARDWARE_COMPONENTS: HardwareComponent[] = [
       "Model file: best.tflite (~6MB) in project root",
       "Alternative models in models/ directory for flight day swapping",
       "To swap models: cp models/alternative.tflite best.tflite",
-      "Benchmark on Pi: python pi_3_benchmark.py (measure inference speed)",
-      "Test detection: python pi_2_detect.py --headless",
+      "Benchmark on Pi: python tests/hardware/benchmark.py (measure inference speed)",
+      "Test detection: python tests/laptop/test_cv.py --headless",
     ],
     guides: [
       { label: "YOLOv8 Docs", url: "https://docs.ultralytics.com", description: "Model architecture, training, export" },
@@ -344,10 +344,9 @@ export const HARDWARE_COMPONENTS: HardwareComponent[] = [
       { label: "Threshold", value: "0.4 (in vision.py)" },
     ],
     testCommands: [
-      { command: "python tests/pi_2_detect.py --headless", expect: "Detection boxes + confidence on dummy" },
-      { command: "python tests/pi_3_benchmark.py", expect: "50 inference runs, avg time, min/max/std" },
-      { command: "python tests/test_tflite_laptop.py", expect: "TFLite loads and detects on laptop" },
-      { command: "python tests/pi_9_resolution_test.py", expect: "Resolution vs speed vs detection tradeoff" },
+      { command: "python tests/laptop/test_cv.py --headless", expect: "Detection boxes + confidence on dummy" },
+      { command: "python tests/hardware/benchmark.py", expect: "50 inference runs, avg time, min/max/std" },
+      { command: "python tests/laptop/test_tflite.py", expect: "TFLite loads and detects on laptop" },
     ],
     notes: [
       "Trained on synthetic data — may underperform on real outdoor images.",
@@ -369,7 +368,7 @@ export const HARDWARE_COMPONENTS: HardwareComponent[] = [
       "Start command (full):",
       "  sudo mavproxy.py --master=/dev/ttyAMA0 --baudrate=921600 --streamrate=10 --out=udpout:127.0.0.1:14550 --out=tcpin:0.0.0.0:5762",
       "Verify Cube heartbeat appears in mavproxy console",
-      "Verify Pi scripts can connect: python test_cube.py",
+      "Verify Pi scripts can connect: python tests/laptop/test_cube.py",
       "Verify Mission Planner connects via TCP to Pi_IP:5762",
     ],
     guides: [
@@ -385,7 +384,7 @@ export const HARDWARE_COMPONENTS: HardwareComponent[] = [
     ],
     testCommands: [
       { command: "sudo mavproxy.py --master=/dev/ttyAMA0 --baudrate=921600", expect: "Heartbeat from CubeOrangePlus in console" },
-      { command: "python test_cube.py (in another terminal)", expect: "Receives heartbeat via UDP:14550" },
+      { command: "python tests/laptop/test_cube.py (in another terminal)", expect: "Receives heartbeat via UDP:14550" },
       { command: "Mission Planner: TCP > Pi_IP:5762", expect: "MP connects, shows instruments" },
     ],
     notes: [
@@ -439,7 +438,7 @@ export const HARDWARE_COMPONENTS: HardwareComponent[] = [
       "Connect buzzer to Cube BUZZER port (polarity matters)",
       "Set NTF_BUZZ_ENABLE=1 (enable buzzer notifications)",
       "Test: arm drone — should play arming tone",
-      "Test MAVLink tune: run pi_3b_buzzer.py",
+      "Test MAVLink tune: run tests/hardware/buzzer_test.py",
     ],
     guides: [
       { label: "ArduCopter Buzzer", url: "https://ardupilot.org/copter/docs/common-buzzer.html", description: "Buzzer setup and tone meanings" },
@@ -477,6 +476,51 @@ export const HARDWARE_COMPONENTS: HardwareComponent[] = [
       "Shows 0.0V when powered by USB only (normal for bench testing).",
       "Never discharge below 14.0V (3.5V per cell) — damages battery permanently.",
       "Always monitor battery in Mission Planner during flight.",
+    ],
+  },
+  {
+    id: "rangefinder",
+    name: "Rangefinder / Lidar",
+    category: "navigation",
+    role: "AGL Altitude Sensor",
+    description: "Measures true above-ground-level (AGL) altitude using laser time-of-flight. Unlike the barometric altimeter (which measures relative to launch pressure), a rangefinder gives the actual distance to the ground below — critical for accurate descent, landing, and terrain following.",
+    status: "todo",
+    connectsTo: ["cube"],
+    connectionDetails: "I2C or serial (UART) to Cube I2C/serial port. I2C: SDA/SCL/GND/VCC. Serial: TX/RX/GND/VCC to an available SERIAL port.",
+    setupSteps: [
+      "Mount rangefinder on underside of frame, pointing straight down (clear of props and landing gear)",
+      "Connect to Cube via I2C (SDA/SCL/GND/VCC) or serial (TX/RX/GND/VCC)",
+      "Set RNGFND1_TYPE to match sensor (e.g. 20 for Benewake TFmini, 25 for Benewake TF-Luna, 10 for LightWare I2C)",
+      "If serial: set RNGFND1_TYPE and SERIALx_PROTOCOL=9 (Rangefinder) on the port used",
+      "If I2C: set RNGFND1_TYPE and RNGFND1_ADDR to sensor I2C address",
+      "Set RNGFND1_MIN_CM and RNGFND1_MAX_CM to sensor range (e.g. 10–600 for TF-Luna)",
+      "Set RNGFND1_ORIENT=25 (downward facing)",
+      "Reboot Cube after parameter changes",
+      "Verify in Mission Planner: Flight Data > Status tab > sonarrange shows distance",
+      "Test: hold drone at known heights (1m, 2m, 3m), confirm readings match",
+    ],
+    guides: [
+      { label: "ArduCopter Rangefinder Setup", url: "https://ardupilot.org/copter/docs/common-rangefinder-landingpage.html", description: "Supported sensors, wiring, parameter setup" },
+      { label: "Benewake TF-Luna", url: "https://ardupilot.org/copter/docs/common-benewake-tf-luna-lidar.html", description: "TF-Luna setup (popular, cheap, I2C/UART)" },
+      { label: "Benewake TFmini", url: "https://ardupilot.org/copter/docs/common-benewake-tfmini-lidar.html", description: "TFmini setup (UART)" },
+      { label: "LightWare Lidar", url: "https://ardupilot.org/copter/docs/common-lightware-sf10-lidar.html", description: "LightWare SF10/SF11 (long range, I2C/serial)" },
+    ],
+    specs: [
+      { label: "Range (typical)", value: "0.1–8m (TF-Luna) or 0.1–12m (TFmini-S)" },
+      { label: "Interface", value: "I2C or UART serial" },
+      { label: "Update rate", value: "100–250 Hz (sensor dependent)" },
+      { label: "Orientation", value: "Downward (RNGFND1_ORIENT=25)" },
+    ],
+    testCommands: [
+      { command: "Mission Planner > Flight Data > Status > sonarrange", expect: "Shows distance in cm matching actual ground distance" },
+      { command: "Hold drone at 1m above ground", expect: "sonarrange reads ~100 cm" },
+    ],
+    notes: [
+      "Barometric altitude drifts with temperature/pressure and is relative to launch — rangefinder gives true AGL.",
+      "ArduCopter uses rangefinder data automatically in LAND and LOITER modes for precision altitude hold below RNGFND1_MAX_CM.",
+      "Outdoor sunlight can affect some IR-based sensors — laser-based (TF-Luna, TFmini) work well outdoors.",
+      "Mount away from propeller wash turbulence for stable readings.",
+      "Essential for accurate descent and landing near a detected target.",
     ],
   },
   {
@@ -536,4 +580,5 @@ export const CONNECTIONS: { from: string; to: string; label: string }[] = [
   { from: "rc-tx", to: "rc-rx", label: "2.4GHz wireless" },
   { from: "pi", to: "mavproxy", label: "UDP 14550" },
   { from: "mavproxy", to: "cube", label: "/dev/ttyAMA0" },
+  { from: "cube", to: "rangefinder", label: "I2C / serial (RNGFND1)" },
 ];

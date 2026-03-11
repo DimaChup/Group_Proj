@@ -114,28 +114,28 @@ export const WBS_TREE: WBSNode[] = [
     description: "Altitude hold accuracy within 0.5m" },
 
   // 2.2 Camera System
-  { id: "sen-cam", wbs: "2.2", label: "Camera System", parentId: "sensing", assignee: "cv", level: "all", status: "active" },
+  { id: "sen-cam", wbs: "2.2", label: "Camera System", parentId: "sensing", assignee: "cv", level: "all", status: "done" },
   { id: "sen-cam-1", wbs: "2.2.1", label: "FPV camera mount + angle", parentId: "sen-cam", assignee: "cv", level: 1, status: "done",
     description: "Analog FPV camera for pilot view" },
   { id: "sen-cam-2", wbs: "2.2.2", label: "Camera FOV characterization", parentId: "sen-cam", assignee: "cv", level: "all", status: "done",
     description: "Measure actual FOV, calculate ground coverage at altitude" },
-  { id: "sen-cam-3", wbs: "2.2.3", label: "HD camera selection + mount", parentId: "sen-cam", assignee: "cv", level: 2, status: "active",
-    description: "Pi Camera / USB cam for CV pipeline" },
+  { id: "sen-cam-3", wbs: "2.2.3", label: "HD camera selection + mount", parentId: "sen-cam", assignee: "cv", level: 2, status: "done",
+    description: "IMX296 global shutter on Pi 5. 640x480, BGR output, 6mm lens." },
   { id: "sen-cam-4", wbs: "2.2.4", label: "Camera gimbal integration", parentId: "sen-cam", assignee: "cv", level: 3, status: "upcoming",
     description: "2-axis stabilized gimbal for tracking" },
 
   // 2.3 Computer Vision
-  { id: "sen-cv", wbs: "2.3", label: "Computer Vision Pipeline", parentId: "sensing", assignee: "cv", level: 2, status: "upcoming" },
-  { id: "sen-cv-1", wbs: "2.3.1", label: "Training dataset collection", parentId: "sen-cv", assignee: "cv", level: 2, status: "upcoming",
-    description: "Aerial person images from various heights + angles" },
-  { id: "sen-cv-2", wbs: "2.3.2", label: "Person detection model selection", parentId: "sen-cv", assignee: "cv", level: 2, status: "upcoming",
-    description: "YOLOv8-nano vs MobileNet-SSD vs custom" },
-  { id: "sen-cv-3", wbs: "2.3.3", label: "Model optimization for edge", parentId: "sen-cv", assignee: "cv", level: 2, status: "upcoming",
-    description: "Quantization, pruning, TensorRT conversion" },
-  { id: "sen-cv-4", wbs: "2.3.4", label: "Detection pipeline integration", parentId: "sen-cv", assignee: "cv", level: 2, status: "upcoming",
-    description: "Camera → inference → bounding box → GCS overlay" },
-  { id: "sen-cv-5", wbs: "2.3.5", label: "CV-to-planner interface", parentId: "sen-cv", assignee: "cv", level: 3, status: "upcoming",
-    description: "Detection triggers autonomous approach behavior" },
+  { id: "sen-cv", wbs: "2.3", label: "Computer Vision Pipeline", parentId: "sensing", assignee: "cv", level: 2, status: "done" },
+  { id: "sen-cv-1", wbs: "2.3.1", label: "Training dataset collection", parentId: "sen-cv", assignee: "cv", level: 2, status: "done",
+    description: "200 synthetic images (map.jpg + dummy.png composites). Real photos pending." },
+  { id: "sen-cv-2", wbs: "2.3.2", label: "Person detection model selection", parentId: "sen-cv", assignee: "cv", level: 2, status: "done",
+    description: "YOLOv8n selected. COCO person backup in models/human.tflite." },
+  { id: "sen-cv-3", wbs: "2.3.3", label: "Model optimization for edge", parentId: "sen-cv", assignee: "cv", level: 2, status: "done",
+    description: "TFLite export done. ~250ms on Pi 5. NCNN 3x faster (future)." },
+  { id: "sen-cv-4", wbs: "2.3.4", label: "Detection pipeline integration", parentId: "sen-cv", assignee: "cv", level: 2, status: "done",
+    description: "vision.py: camera → TFLite inference → bounding box → GCS overlay via MJPEG" },
+  { id: "sen-cv-5", wbs: "2.3.5", label: "CV-to-planner interface", parentId: "sen-cv", assignee: "cv", level: 3, status: "done",
+    description: "detect_in_image() → state machine triggers centering → descent → verify → land" },
 
   // ══════════════════════════════════════════════════════════
   // 3. COMMUNICATIONS
@@ -167,8 +167,8 @@ export const WBS_TREE: WBSNode[] = [
     description: "Circular polarized, clear of carbon fiber" },
   { id: "com-video-3", wbs: "3.3.3", label: "Video latency measurement", parentId: "com-video", assignee: "gcs", level: "all", status: "active",
     description: "End-to-end: camera → display, target <200ms" },
-  { id: "com-video-4", wbs: "3.3.4", label: "IP video streaming setup", parentId: "com-video", assignee: "gcs", level: 2, status: "upcoming",
-    description: "GStreamer / RTSP for digital HD stream" },
+  { id: "com-video-4", wbs: "3.3.4", label: "IP video streaming setup", parentId: "com-video", assignee: "gcs", level: 2, status: "done",
+    description: "MJPEG stream from Pi camera via HTTP :8090. Works in pi_flight.py + passive_watch.py." },
 
   // ══════════════════════════════════════════════════════════
   // 4. COMPUTE & PROCESSING
@@ -187,13 +187,13 @@ export const WBS_TREE: WBSNode[] = [
     description: "AutoTune or manual refinement in hover" },
 
   // 4.2 Companion Computer
-  { id: "cmp-comp", wbs: "4.2", label: "Companion Computer", parentId: "compute", assignee: "cv", level: 2, status: "upcoming" },
-  { id: "cmp-comp-1", wbs: "4.2.1", label: "RPi / Jetson OS setup", parentId: "cmp-comp", assignee: "cv", level: 2, status: "upcoming",
-    description: "Ubuntu + driver stack" },
-  { id: "cmp-comp-2", wbs: "4.2.2", label: "MAVLink bridge (MAVROS)", parentId: "cmp-comp", assignee: "fd", level: 2, status: "upcoming",
-    description: "Serial connection FC ↔ companion" },
-  { id: "cmp-comp-3", wbs: "4.2.3", label: "Power + thermal management", parentId: "cmp-comp", assignee: "hw", level: 2, status: "upcoming",
-    description: "Heatsink, power draw, brown-out protection" },
+  { id: "cmp-comp", wbs: "4.2", label: "Companion Computer", parentId: "compute", assignee: "cv", level: 2, status: "done" },
+  { id: "cmp-comp-1", wbs: "4.2.1", label: "RPi 5 OS setup", parentId: "cmp-comp", assignee: "cv", level: 2, status: "done",
+    description: "Raspberry Pi OS, Python 3.13, picamera2, ai-edge-litert" },
+  { id: "cmp-comp-2", wbs: "4.2.2", label: "MAVLink bridge (mavproxy)", parentId: "cmp-comp", assignee: "fd", level: 2, status: "done",
+    description: "mavproxy UDP bridge: /dev/ttyAMA0 → UDP 14550 + TCP 5762" },
+  { id: "cmp-comp-3", wbs: "4.2.3", label: "Power + thermal management", parentId: "cmp-comp", assignee: "hw", level: 2, status: "done",
+    description: "Pi 5 powered from BEC, active cooling fan installed" },
   { id: "cmp-comp-4", wbs: "4.2.4", label: "Boot-on-power + watchdog", parentId: "cmp-comp", assignee: "cv", level: 2, status: "upcoming",
     description: "Auto-start services, hardware watchdog timer" },
 
@@ -218,21 +218,21 @@ export const WBS_TREE: WBSNode[] = [
     description: "GPS hold, verify position accuracy" },
   { id: "sw-modes-3", wbs: "5.1.3", label: "RTL (Return to Launch) test", parentId: "sw-modes", assignee: "fd", level: 1, status: "active",
     description: "Verify return altitude, landing accuracy" },
-  { id: "sw-modes-4", wbs: "5.1.4", label: "Auto waypoint mode", parentId: "sw-modes", assignee: "fd", level: 2, status: "upcoming",
-    description: "Follow uploaded mission plan autonomously" },
-  { id: "sw-modes-5", wbs: "5.1.5", label: "Guided mode API control", parentId: "sw-modes", assignee: "fd", level: 2, status: "upcoming",
-    description: "Companion computer sends position commands" },
+  { id: "sw-modes-4", wbs: "5.1.4", label: "Auto waypoint mode", parentId: "sw-modes", assignee: "fd", level: 2, status: "done",
+    description: "Tested in simulation. main.py flies lawnmower pattern in GUIDED mode." },
+  { id: "sw-modes-5", wbs: "5.1.5", label: "Guided mode API control", parentId: "sw-modes", assignee: "fd", level: 2, status: "done",
+    description: "Pi sends GUIDED waypoints via pymavlink. Tested on bench + SITL." },
 
   // 5.2 Path Planning
-  { id: "sw-path", wbs: "5.2", label: "Path Planning", parentId: "software", assignee: "fd", level: 2, status: "upcoming" },
-  { id: "sw-path-1", wbs: "5.2.1", label: "Search pattern generation", parentId: "sw-path", assignee: "fd", level: 2, status: "upcoming",
-    description: "Lawnmower / expanding square for search area" },
-  { id: "sw-path-2", wbs: "5.2.2", label: "NFZ boundary definition", parentId: "sw-path", assignee: "gcs", level: 2, status: "upcoming",
-    description: "Geofence polygons for no-fly zones" },
-  { id: "sw-path-3", wbs: "5.2.3", label: "Dynamic replanning", parentId: "sw-path", assignee: "fd", level: 3, status: "upcoming",
-    description: "Replan path when detection triggers approach" },
-  { id: "sw-path-4", wbs: "5.2.4", label: "Delivery approach path", parentId: "sw-path", assignee: "fd", level: 2, status: "upcoming",
-    description: "Descent profile to target, payload drop sequence" },
+  { id: "sw-path", wbs: "5.2", label: "Path Planning", parentId: "software", assignee: "fd", level: 2, status: "done" },
+  { id: "sw-path-1", wbs: "5.2.1", label: "Search pattern generation", parentId: "sw-path", assignee: "fd", level: 2, status: "done",
+    description: "planning.py: lawnmower pattern from any polygon. Tested in SITL." },
+  { id: "sw-path-2", wbs: "5.2.2", label: "NFZ boundary definition", parentId: "sw-path", assignee: "gcs", level: 2, status: "done",
+    description: "SSSI_GPS + FLIGHT_AREA_GPS in config.py. Geofence active." },
+  { id: "sw-path-3", wbs: "5.2.3", label: "Dynamic replanning", parentId: "sw-path", assignee: "fd", level: 3, status: "done",
+    description: "State machine: detection → CENTERING → DESCENDING → VERIFY → APPROACH → LANDING" },
+  { id: "sw-path-4", wbs: "5.2.4", label: "Delivery approach path", parentId: "sw-path", assignee: "fd", level: 2, status: "done",
+    description: "7.5m offset landing from target (avoid propwash on casualty)" },
 
   // 5.3 Autonomy Stack
   { id: "sw-auto", wbs: "5.3", label: "Autonomy Stack", parentId: "software", assignee: "fd", level: 3, status: "upcoming" },
@@ -269,21 +269,21 @@ export const WBS_TREE: WBSNode[] = [
   { id: "gcs-sw", wbs: "6.1", label: "GCS Software", parentId: "gcs-sys", assignee: "gcs", level: "all", status: "active" },
   { id: "gcs-sw-1", wbs: "6.1.1", label: "Mission Planner / QGC setup", parentId: "gcs-sw", assignee: "gcs", level: 1, status: "done",
     description: "Connect, configure, verify telemetry display" },
-  { id: "gcs-sw-2", wbs: "6.1.2", label: "Custom telemetry dashboard", parentId: "gcs-sw", assignee: "gcs", level: 2, status: "upcoming",
-    description: "Real-time battery, altitude, GPS, signal strength" },
+  { id: "gcs-sw-2", wbs: "6.1.2", label: "Custom telemetry dashboard", parentId: "gcs-sw", assignee: "gcs", level: 2, status: "done",
+    description: "pi_flight.py: browser dashboard with battery, altitude, GPS, MJPEG stream at :8090" },
   { id: "gcs-sw-3", wbs: "6.1.3", label: "Map overlay + NFZ display", parentId: "gcs-sw", assignee: "gcs", level: "all", status: "active",
     description: "Search area, NFZ polygons, drone position on map" },
-  { id: "gcs-sw-4", wbs: "6.1.4", label: "Target marking interface", parentId: "gcs-sw", assignee: "gcs", level: 2, status: "upcoming",
-    description: "Click to mark detected person on map" },
+  { id: "gcs-sw-4", wbs: "6.1.4", label: "Target marking interface", parentId: "gcs-sw", assignee: "gcs", level: 2, status: "done",
+    description: "pi_flight.py: 2D GPS grid with detection clusters, N/Y/I/X classification buttons" },
 
   // 6.2 Mission Planning
-  { id: "gcs-plan", wbs: "6.2", label: "Mission Planning Tools", parentId: "gcs-sys", assignee: "gcs", level: "all", status: "upcoming" },
-  { id: "gcs-plan-1", wbs: "6.2.1", label: "Search area definition tool", parentId: "gcs-plan", assignee: "gcs", level: 2, status: "upcoming",
-    description: "Draw polygon, auto-generate search pattern" },
-  { id: "gcs-plan-2", wbs: "6.2.2", label: "Waypoint upload pipeline", parentId: "gcs-plan", assignee: "gcs", level: 2, status: "upcoming",
-    description: "GCS → MAVLink → FC mission upload" },
-  { id: "gcs-plan-3", wbs: "6.2.3", label: "Pre-flight checklist app", parentId: "gcs-plan", assignee: "pm", level: "all", status: "upcoming",
-    description: "Mandatory checks before arming: GPS, battery, comms" },
+  { id: "gcs-plan", wbs: "6.2", label: "Mission Planning Tools", parentId: "gcs-sys", assignee: "gcs", level: "all", status: "done" },
+  { id: "gcs-plan-1", wbs: "6.2.1", label: "Search area definition tool", parentId: "gcs-plan", assignee: "gcs", level: 2, status: "done",
+    description: "draw_search_area.py → search_area.json → main.py loads polygon" },
+  { id: "gcs-plan-2", wbs: "6.2.2", label: "Waypoint upload pipeline", parentId: "gcs-plan", assignee: "gcs", level: 2, status: "done",
+    description: "planning.py generates lawnmower waypoints → main.py sends via pymavlink GUIDED" },
+  { id: "gcs-plan-3", wbs: "6.2.3", label: "Pre-flight checklist app", parentId: "gcs-plan", assignee: "pm", level: "all", status: "done",
+    description: "preflight.py: camera, AI, Cube, GPS, GS connectivity checker" },
 
   // 6.3 Live Operations
   { id: "gcs-ops", wbs: "6.3", label: "Live Operations", parentId: "gcs-sys", assignee: "gcs", level: "all", status: "active" },
@@ -291,8 +291,8 @@ export const WBS_TREE: WBSNode[] = [
     description: "Video receiver → monitor, low-latency" },
   { id: "gcs-ops-2", wbs: "6.3.2", label: "Telemetry logging", parentId: "gcs-ops", assignee: "gcs", level: "all", status: "active",
     description: "MAVLink .tlog recording for post-flight review" },
-  { id: "gcs-ops-3", wbs: "6.3.3", label: "Mission abort interface", parentId: "gcs-ops", assignee: "gcs", level: "all", status: "upcoming",
-    description: "One-click RTL / land / kill buttons" },
+  { id: "gcs-ops-3", wbs: "6.3.3", label: "Mission abort interface", parentId: "gcs-ops", assignee: "gcs", level: "all", status: "done",
+    description: "pi_flight.py: Land button + RTL. main.py: M key manual override. RC kill switch always active." },
 
   // ══════════════════════════════════════════════════════════
   // 7. INTEGRATION & TESTING

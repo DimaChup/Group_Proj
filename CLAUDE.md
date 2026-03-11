@@ -677,6 +677,65 @@ whichever doc is relevant to the user's current task. Always update the "Current
 section and "Session Log" when work is completed. Keep this document as the single source
 of truth.
 
+### Session: 2026-03-11 (part 2) — FLIGHT DAY (weather cancelled flight, bench testing)
+
+**Field day at site. Pi + Cube + camera assembled. Weather cancelled actual flight.**
+
+**Terminal setup & connectivity (PuTTY + Pi screen):**
+- Established 3-terminal workflow: PuTTY T1 (mavproxy), Pi screen (diagnostics), PuTTY T2 (scripts)
+- Mavproxy with dual UDP outputs: 14550 (scripts) + 14551 (diagnostics) + TCP 5762 (Mission Planner)
+- Resolved camera "in use" conflicts, port binding conflicts, PuTTY/Qt display crashes
+- Pi IP changed to 192.168.1.3
+
+**FOV calibration:**
+- Measured 92cm visible at 1m height → FOCAL_LENGTH_MM = 5.46 (was 7.0)
+- Used capture_training.py stream + tape measure
+
+**passive_watch.py improvements:**
+- GPS estimate now shows at ground level (clamp alt to 0.3m instead of skip <1.0m)
+- Pink dot on detection center in stream overlay
+
+**Lens calibration (checkerboard):**
+- calib.io 14x9 board (13x8 inner corners, 28mm squares)
+- lens_calibrate.py: added robust flags, findChessboardCornersSB fallback
+- calibration_data.npz saved on Pi (RMS = 0.399)
+- **Lens undistortion added to vision.py**: precomputed remap maps at startup, cv2.remap() in detect_in_image()
+- Cost: ~1.5ms per frame (negligible on 208ms inference)
+- All scripts benefit automatically (passive_watch, pi_flight, main.py)
+
+**Benchmark results (Pi 5, TFLite, XNNPACK CPU):**
+- best.tflite (3.2MB YOLOv8n): 206.5ms / 4.8 FPS, 50/50 detection, 0.966 confidence
+- Undistortion cost: +1.5ms (negligible)
+- All 3 models identical (best, best2, custom are copies)
+- Created comprehensive benchmark_full.py: system info, preprocessing, all models, ONNX, threading
+
+**CV speed improvement research:**
+- Deep research on all Pi 5 inference speedup options (NCNN, FP16, threading, resolution, Hailo, etc.)
+- Top picks: FP16 XNNPACK (~10 FPS), threaded pipeline (+20-30%), NCNN (~15 FPS)
+- NOT viable: Coral TPU, Pi GPU, INT8 NCNN
+- Full findings saved to memory/cv-speed-research.md
+
+**New files:**
+- FIELD_QUICK_REF.md — copy-paste ready commands for flight day without internet
+- tests/hardware/benchmark_full.py — comprehensive CV benchmark (6 sections)
+- memory/cv-speed-research.md — ranked CV speed improvement options
+- memory/benchmarks.md — benchmark results tracking
+
+**Commits (10 this part):**
+- 72ea231: Flight readiness fixes (lat scale, camera warmup, RTL button, link lost banner)
+- 12f1c4d: FIELD_QUICK_REF.md
+- 9f773c2: passive_watch GPS estimate clamp
+- 417c9d7: passive_watch pink dot
+- 4404a99: Fix pink dot tuple bug
+- fbc9a99: FOCAL_LENGTH_MM = 5.46
+- 9e3d16e: waypoints.json update
+- 319c69f: lens_calibrate robust detection
+- b13d868: vision.py lens undistortion
+- f22d1c8: Fix cam_w default
+- 4754135: Fix benchmark.py path
+- b7ff98a: benchmark_full.py (basic)
+- da42e96: benchmark_full.py (comprehensive)
+
 **NEW WORKFLOW (from BOOTSTRAP.md):**
 - Read blueprints (`docs/*_blueprint.md`) BEFORE source files — they tell you exactly where to look
 - Append every user message to `brain-dump.md` (cleaned up, all ideas preserved)

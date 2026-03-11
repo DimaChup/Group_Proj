@@ -48,6 +48,7 @@ dashboard/
 │       ├── whats-next.md  ← /whats-next — top priorities from NICE_TO_HAVE
 │       └── wrap-up.md     ← /wrap-up — end-of-session checklist
 ├── docs/                  ← Module blueprints (when files >500 lines)
+│   ├── levels-tab-blueprint.md  ← LevelsTab + mission-data L2 data map
 └── src/
     ├── main.tsx               (10 lines)
     ├── App.tsx                (100 lines) — tab routing, sidebar toggles
@@ -61,7 +62,7 @@ dashboard/
         ├── RoadmapTab.tsx               ← Flight day + full timeline + technical steps (883 lines)
         ├── HardwareTab.tsx              ← Components, connections, guides (227 lines)
         ├── MissionTab.tsx               ← Scenario, requirements, constraints (200 lines)
-        ├── LevelsTab.tsx                ← 3 product levels L1→L2→L3 (279 lines)
+        ├── LevelsTab.tsx                ← 3 product levels + L2 stepping stones (573 lines)
         ├── TeamTab.tsx                  ← Who's doing what, blockers (188 lines)
         ├── NotesTab.tsx                 ← Ideas, wants, plans (140 lines)
         │
@@ -70,7 +71,7 @@ dashboard/
         ├── TopBar.tsx                   ← Icon strip + panel toggles (76 lines)
         ├── TopPanels.tsx                ← Overlay panels from top bar (294 lines)
         ├── LeftSidebar.tsx              ← Left sidebar (83 lines)
-        ├── RightSidebar.tsx             ← Right sidebar (146 lines)
+        ├── RightSidebar.tsx             ← Right sidebar: Team/Prep/Focus/Day1 modes (676 lines)
         │
         │── Shared components (used by GP v2 tab)
         ├── GroupProjectV2Components.tsx ← 11 UI components (586 lines)
@@ -88,7 +89,7 @@ dashboard/
         ├── group-project-v2-data.ts     ← SE layers, team, approaches (1312 lines)
         ├── hardware-data.ts             ← Component specs, connections (539 lines)
         ├── hub-data.ts                  ← Hub navigation cards (361 lines)
-        ├── mission-data.ts              ← Mission levels, roadmap steps (390 lines)
+        ├── mission-data.ts              ← Mission levels, roadmap, L2 stepping stones (800 lines)
         ├── readme-data.ts               ← README tab data: overview, tests, calibration, flight plan
         └── wbs-data.ts                 ← 93 WBS nodes (336 lines)
 ```
@@ -98,7 +99,7 @@ dashboard/
 1. **README** — Complete project overview for the team: what we built, test scripts, calibration, flight day plan, architecture
 2. **Mission** — The what: scenario, requirements, constraints, deliverables
 2. **Hardware** — All components, connections, setup guides, and links
-3. **Levels** — The how: 3 product levels — Manual, Semi-Auto, Full Auto
+3. **Levels** — The how: 3 product levels + L2 stepping stones (14-step critical path, 3 milestones, 20 parallel tasks, IF scenarios)
 4. **Roadmap** — Flight Day 1 prep / Full Timeline / Technical Steps (3 sub-views)
 5. **Hub** — Landing page: project status, flight testing, architecture
 6. **Team** — Who's doing what, level focus, blockers
@@ -117,6 +118,9 @@ dashboard/
 | SE / team / approaches | `group-project-v2-data.ts` | Levels, SE layers, team roles |
 | Hardware inventory | `hardware-data.ts` | Components, connections, specs |
 | Mission levels / roadmap | `mission-data.ts` | Level definitions, roadmap steps |
+| L2 stepping stones | `mission-data.ts` L2_CRITICAL_PATH | 14 steps, status: done/ready/todo/blocked |
+| L2 milestones | `mission-data.ts` L2_MILESTONES | afterRow: 2, 5, 8 |
+| L2 parallel tasks | `mission-data.ts` L2_PARALLEL_TASKS | 20 tasks, status: done/ready/todo |
 | Hub navigation | `hub-data.ts` | Landing page cards and links |
 
 **Team IDs:** hw (Hardware), cv (CV/Optics), fd (Flight Dynamics), gcs (GCS/UI), pm (Project Manager)

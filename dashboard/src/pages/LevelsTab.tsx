@@ -2,7 +2,7 @@
  * LevelsTab — The "How": 3 product levels (L1 Manual, L2 Semi-Auto, L3 Full Auto)
  */
 import { useState } from "react";
-import { LEVELS, type MissionLevel } from "./mission-data";
+import { LEVELS, L2_CRITICAL_PATH, L2_PARALLEL_TASKS, L2_MILESTONES, type MissionLevel, type SteppingStone, type ParallelTask, type IfScenario, type Milestone } from "./mission-data";
 
 export default function LevelsTab() {
   const [expanded, setExpanded] = useState<number>(2); // default to L2 (the target)
@@ -39,15 +39,15 @@ export default function LevelsTab() {
         const isExpanded = expanded === level.id;
         return (
           <div key={level.id}
-            className="rounded-lg border transition-all cursor-pointer"
+            className="rounded-lg border transition-all"
             style={{
               borderColor: isExpanded ? level.color + "40" : "rgba(63,63,70,0.3)",
               background: isExpanded ? level.color + "05" : "rgba(24,24,27,0.5)",
             }}
-            onClick={() => setExpanded(isExpanded ? 0 : level.id)}
           >
-            {/* Header */}
-            <div className="p-4 flex items-center gap-4">
+            {/* Header — only this part toggles expand/collapse */}
+            <div className="p-4 flex items-center gap-4 cursor-pointer"
+              onClick={() => setExpanded(isExpanded ? 0 : level.id)}>
               <div className="w-10 h-10 rounded-lg flex items-center justify-center text-[18px] font-black shrink-0"
                 style={{ background: level.color + "15", color: level.color }}>
                 L{level.id}
@@ -99,8 +99,8 @@ const L2_FOCUS_AREAS = [
       "GPS estimation: clustering + inverse variance weighting",
       "Centre on target using visual servo + GPS lock",
       "7.5m offset landing (avoid propwash on casualty)",
-      "SSSI geofence avoidance (R04) — not yet implemented",
-      "PLB redirect mid-search (R05) — not yet implemented",
+      "SSSI geofence avoidance (R02) — not yet implemented",
+      "PLB redirect mid-search (R06) — not yet implemented",
     ],
     status: "Full flow tested in simulation (SITL)",
   },
@@ -136,11 +136,11 @@ const L2_FOCUS_AREAS = [
     icon: "SF",
     summary: "RC kill switch + failsafes + geofence",
     details: [
-      "RC STABILIZE = instant manual override (R10)",
+      "RC STABILIZE = instant manual override (R09)",
       "Battery failsafe -> RTL",
       "RC loss failsafe -> RTL",
-      "50m altitude limit (R12)",
-      "SSSI geofence exclusion (R04)",
+      "50m altitude limit (R04)",
+      "SSSI geofence exclusion (R02)",
       "VLOS at all times (R09)",
     ],
     status: "Kill switch configured, geofence not yet",
@@ -159,6 +159,297 @@ const L2_FOCUS_AREAS = [
     status: "Hardware available, not yet integrated",
   },
 ];
+
+// ── Status dot ──
+const STATUS_DOT: Record<string, { color: string; icon: string }> = {
+  done:    { color: "#22c55e", icon: "✓" },
+  ready:   { color: "#3b82f6", icon: "●" },
+  todo:    { color: "#6b7280", icon: "○" },
+  blocked: { color: "#ef4444", icon: "✕" },
+};
+
+const CATEGORY_LABELS: Record<string, { label: string; color: string }> = {
+  calibration: { label: "CAL", color: "#f97316" },
+  accuracy:    { label: "ACC", color: "#06b6d4" },
+  tuning:      { label: "TUNE", color: "#8b5cf6" },
+  data:        { label: "DATA", color: "#f59e0b" },
+};
+
+// ── Critical path step card (no timeline, just the card) ──
+function StepCard({ step, isExpanded, onToggle }: {
+  step: SteppingStone; isExpanded: boolean; onToggle: () => void;
+}) {
+  const dot = STATUS_DOT[step.status];
+  return (
+    <div className="rounded-lg border cursor-pointer transition-all hover:brightness-110 p-2.5"
+      onClick={onToggle}
+      style={{
+        borderColor: step.status === "done" ? "#22c55e25" : "#3f3f4630",
+        background: step.status === "done" ? "#22c55e05" : "#18181b80",
+      }}>
+      <div className="flex items-center gap-2 mb-0.5">
+        <span className="text-[10px] font-medium text-zinc-200">{step.name}</span>
+        <span className="text-[7px] font-bold px-1 py-0.5 rounded" style={{ color: dot.color, background: dot.color + "15" }}>
+          {step.status.toUpperCase()}
+        </span>
+      </div>
+      <div className="text-[8px] text-zinc-500 leading-tight">{step.description}</div>
+
+      {isExpanded && (
+        <div className="mt-2 pt-2 border-t border-zinc-800/40 space-y-1.5">
+          <div className="text-[8px]">
+            <span className="text-emerald-500/70 font-bold">PROVES: </span>
+            <span className="text-zinc-400">{step.proves}</span>
+          </div>
+          {step.script && (
+            <div className="text-[8px]">
+              <span className="text-cyan-500/70 font-bold">SCRIPT: </span>
+              <span className="text-cyan-400/60 font-mono">{step.script}</span>
+              {step.scriptArgs && <span className="text-zinc-600"> {step.scriptArgs}</span>}
+            </div>
+          )}
+          {step.output && (
+            <div className="text-[8px]">
+              <span className="text-amber-500/70 font-bold">OUTPUT: </span>
+              <span className="text-zinc-500">{step.output}</span>
+            </div>
+          )}
+          {step.requires && step.requires.length > 0 && (
+            <div className="text-[8px]">
+              <span className="text-zinc-600 font-bold">AFTER: </span>
+              <span className="text-zinc-600">
+                {step.requires.map(r => {
+                  const dep = L2_CRITICAL_PATH.find(s => s.id === r);
+                  return dep ? dep.name : r;
+                }).join(", ")}
+              </span>
+            </div>
+          )}
+          {step.ifScenarios && step.ifScenarios.length > 0 && (
+            <div className="mt-2 pt-2 border-t border-zinc-800/30 space-y-1">
+              <div className="text-[7px] font-bold text-amber-500/70 uppercase tracking-wider">Decision Points</div>
+              {step.ifScenarios.map((scenario, i) => (
+                <div key={i} className="flex gap-1.5 text-[8px]">
+                  <span className="text-amber-500/60 shrink-0 mt-0.5">&#9670;</span>
+                  <div>
+                    <span className="text-amber-400/80 font-medium">{scenario.condition}</span>
+                    <span className="text-zinc-500"> → {scenario.outcome}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Group steps by row, render parallel steps side by side ──
+function CriticalPathRows({ expandedStep, onToggleStep }: {
+  expandedStep: string | null; onToggleStep: (id: string) => void;
+}) {
+  // Group steps by row number
+  const rows: Map<number, SteppingStone[]> = new Map();
+  for (const step of L2_CRITICAL_PATH) {
+    const existing = rows.get(step.row) || [];
+    existing.push(step);
+    rows.set(step.row, existing);
+  }
+  const sortedRows = [...rows.entries()].sort((a, b) => a[0] - b[0]);
+  const totalRows = sortedRows.length;
+
+  return (
+    <div>
+      {sortedRows.map(([rowNum, steps], rowIdx) => {
+        const milestone = L2_MILESTONES.find(m => m.afterRow === rowNum);
+        return (
+          <div key={rowNum}>
+            {/* Row with timeline dot + cards */}
+            <div className="flex gap-3">
+              {/* Timeline dot + line */}
+              <div className="flex flex-col items-center shrink-0">
+                <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold border-2"
+                  style={{
+                    borderColor: steps.every(s => s.status === "done") ? "#22c55e" : "#6b7280",
+                    color: steps.every(s => s.status === "done") ? "#22c55e" : "#6b7280",
+                    background: steps.every(s => s.status === "done") ? "#22c55e15" : "#6b728015",
+                  }}>
+                  {steps.every(s => s.status === "done") ? "\u2713" : rowNum}
+                </div>
+                {(rowIdx < totalRows - 1 || milestone) && (
+                  <div className="w-[2px] flex-1 min-h-[16px] rounded-full"
+                    style={{ background: steps.every(s => s.status === "done") ? "#22c55e40" : "#3f3f4620" }} />
+                )}
+              </div>
+
+              {/* Step cards — side by side if parallel */}
+              <div className={`flex-1 pb-3 min-w-0 ${steps.length > 1 ? "grid grid-cols-2 gap-2" : ""}`}>
+                {steps.map(step => (
+                  <StepCard
+                    key={step.id} step={step}
+                    isExpanded={expandedStep === step.id}
+                    onToggle={() => onToggleStep(step.id)}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Milestone marker after this row */}
+            {milestone && (
+              <div className="flex gap-3 my-1">
+                <div className="flex flex-col items-center shrink-0">
+                  <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold border-2"
+                    style={{ borderColor: "#a855f7", color: "#a855f7", background: "#a855f715" }}>
+                    &#9733;
+                  </div>
+                  {rowIdx < totalRows - 1 && (
+                    <div className="w-[2px] flex-1 min-h-[8px] rounded-full" style={{ background: "#3f3f4620" }} />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0 pb-2">
+                  <div className="flex items-center gap-3">
+                    <div className="h-[2px] flex-1 rounded-full" style={{ background: "linear-gradient(90deg, #a855f7, #a855f740)" }} />
+                    <span className="text-[9px] font-bold text-purple-400 uppercase tracking-wider whitespace-nowrap shrink-0">Milestone</span>
+                    <div className="h-[2px] flex-1 rounded-full" style={{ background: "linear-gradient(90deg, #a855f740, #a855f7)" }} />
+                  </div>
+                  <div className="text-[10px] text-purple-300 font-medium mt-1 text-center">{milestone.label}</div>
+                  <div className="text-[8px] text-zinc-500 mt-0.5 text-center">{milestone.detail}</div>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── Parallel task card ──
+function ParallelTaskCard({ task, isExpanded, onToggle }: {
+  task: ParallelTask; isExpanded: boolean; onToggle: () => void;
+}) {
+  const dot = STATUS_DOT[task.status];
+  const cat = CATEGORY_LABELS[task.category];
+  return (
+    <div className="rounded-lg border cursor-pointer transition-all hover:brightness-110 p-2"
+      onClick={onToggle}
+      style={{
+        borderColor: task.status === "done" ? "#22c55e25" : "#3f3f4630",
+        background: task.status === "done" ? "#22c55e05" : "#18181b80",
+      }}>
+      <div className="flex items-center gap-1.5 mb-0.5">
+        <span className="text-[7px] font-bold px-1 py-0.5 rounded" style={{ color: cat.color, background: cat.color + "15" }}>
+          {cat.label}
+        </span>
+        <span className="text-[9px] font-medium text-zinc-300 flex-1 min-w-0 truncate">{task.name}</span>
+        <span className="text-[9px] shrink-0" style={{ color: dot.color }}>{dot.icon}</span>
+      </div>
+      {isExpanded ? (
+        <div className="space-y-1 mt-1.5">
+          <div className="text-[8px] text-zinc-500 leading-tight">{task.description}</div>
+          {task.script && (
+            <div className="text-[8px]">
+              <span className="text-cyan-500/70 font-bold">SCRIPT: </span>
+              <span className="text-cyan-400/60 font-mono">{task.script}</span>
+            </div>
+          )}
+          {task.output && (
+            <div className="text-[8px]">
+              <span className="text-amber-500/70 font-bold">OUTPUT: </span>
+              <span className="text-zinc-500">{task.output}</span>
+            </div>
+          )}
+          {task.dependsOn && (
+            <div className="text-[8px]">
+              <span className="text-zinc-600 font-bold">AFTER: </span>
+              <span className="text-zinc-600">
+                {L2_PARALLEL_TASKS.find(t => t.id === task.dependsOn)?.name || task.dependsOn}
+              </span>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="text-[8px] text-zinc-600 truncate">{task.description}</div>
+      )}
+    </div>
+  );
+}
+
+// ── L2 Stepping Stones section ──
+function L2SteppingStones() {
+  const [expandedStep, setExpandedStep] = useState<string | null>(null);
+  const [expandedTask, setExpandedTask] = useState<string | null>(null);
+
+  const toggleStep = (id: string) => setExpandedStep(prev => prev === id ? null : id);
+  const toggleTask = (id: string) => setExpandedTask(prev => prev === id ? null : id);
+
+  const doneCount = L2_CRITICAL_PATH.filter(s => s.status === "done").length;
+  const parallelDone = L2_PARALLEL_TASKS.filter(t => t.status === "done").length;
+
+  const categories = ["calibration", "accuracy", "tuning", "data"] as const;
+
+  return (
+    <div className="rounded-lg border border-blue-500/20 bg-blue-500/3 p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="text-[9px] text-blue-400 uppercase tracking-wider font-bold">Stepping Stones to Full L2 Mission</div>
+          <div className="text-[8px] text-zinc-600 mt-0.5">Left: critical path (do in order). Right: benchmarks, calibration &amp; fine-tuning (do alongside).</div>
+        </div>
+        <div className="flex gap-3 text-[8px]">
+          <span className="text-zinc-500">Critical: <span className="text-emerald-400 font-bold">{doneCount}/{L2_CRITICAL_PATH.length}</span></span>
+          <span className="text-zinc-500">Parallel: <span className="text-emerald-400 font-bold">{parallelDone}/{L2_PARALLEL_TASKS.length}</span></span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-[1fr_auto_280px] gap-0">
+        {/* LEFT: Critical path (sequential) */}
+        <div className="pr-4">
+          <div className="text-[8px] font-bold text-zinc-500 tracking-wider uppercase mb-2 flex items-center gap-2">
+            <div className="w-[14px] h-[1px] bg-blue-500/40" />
+            Critical Path — Do In Order
+            <div className="flex-1 h-[1px] bg-zinc-800/40" />
+          </div>
+          <CriticalPathRows expandedStep={expandedStep} onToggleStep={toggleStep} />
+        </div>
+
+        {/* DIVIDER: Vertical orange line */}
+        <div className="w-[2px] rounded-full self-stretch" style={{ background: "linear-gradient(180deg, #f97316, #f9731640, #f9731610)" }} />
+
+        {/* RIGHT: Parallel tasks (grouped by category) */}
+        <div className="pl-4">
+          <div className="text-[8px] font-bold text-zinc-500 tracking-wider uppercase mb-2 flex items-center gap-2">
+            <div className="w-[14px] h-[1px] bg-purple-500/40" />
+            Benchmarks &amp; Fine-Tuning
+            <div className="flex-1 h-[1px] bg-zinc-800/40" />
+          </div>
+          <div className="space-y-3">
+            {categories.map(cat => {
+              const tasks = L2_PARALLEL_TASKS.filter(t => t.category === cat);
+              const catInfo = CATEGORY_LABELS[cat];
+              return (
+                <div key={cat}>
+                  <div className="text-[7px] font-bold tracking-wider uppercase mb-1" style={{ color: catInfo.color + "90" }}>
+                    {catInfo.label === "CAL" ? "Calibration" : catInfo.label === "ACC" ? "Accuracy Measurements" : catInfo.label === "TUNE" ? "Parameter Tuning" : "Data Collection"}
+                  </div>
+                  <div className="space-y-1">
+                    {tasks.map(task => (
+                      <ParallelTaskCard
+                        key={task.id} task={task}
+                        isExpanded={expandedTask === task.id}
+                        onToggle={() => toggleTask(task.id)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function LevelDetail({ level }: { level: MissionLevel }) {
   return (
@@ -199,6 +490,9 @@ function LevelDetail({ level }: { level: MissionLevel }) {
           </div>
         </div>
       )}
+
+      {/* L2 Stepping Stones — below focus areas */}
+      {level.id === 2 && <L2SteppingStones />}
 
       {/* State flow */}
       <div className="px-3 py-2 rounded bg-zinc-900/80 border border-zinc-800/50">

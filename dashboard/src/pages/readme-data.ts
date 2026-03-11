@@ -73,10 +73,12 @@ export const PROJECT_OVERVIEW = {
   course: "University of Bristol MSc — AENGM0074",
   team: "Team of 5",
   summary: [
-    "Autonomous drone that searches a defined area using a lawnmower flight pattern",
-    "Onboard AI (YOLOv8 / TFLite) detects a casualty/dummy from altitude",
-    "Centres on target, descends for operator confirmation (Y/N)",
-    "Lands 7.5m from target (safe offset to avoid propwash on casualty)",
+    "Autonomous drone that searches a defined area using a lawnmower flight pattern, avoiding SSSI no-fly zones",
+    "Onboard AI (YOLOv8 / TFLite) detects a casualty and items of interest (clothing, equipment) from altitude",
+    "Centres on target, descends for operator classification (Y=casualty, I=item of interest, X=false positive)",
+    "Redirects PLB (Personal Locator Beacon) signal to aid search prioritisation",
+    "Delivers first aid kit via payload release mechanism",
+    "Lands within 10m but NOT within 5m of target (R07 safe landing zone, centred at ~7.5m offset)",
   ],
   stateFlow: "INIT → CONNECTING → ARMING → TAKEOFF → SEARCH → CENTERING → DESCENDING → VERIFY → APPROACH → LANDING → DONE",
 };
@@ -111,6 +113,7 @@ export const HARDWARE_SUMMARY = [
   { component: "Camera", model: "IMX296 Global Shutter", detail: "640×480, BGR output (no cvtColor needed), 6mm lens" },
   { component: "AI Model", model: "YOLOv8n → TFLite", detail: "~6MB, ~250ms inference on Pi (~4 FPS)" },
   { component: "Connection", model: "TELEM2 → Pi GPIO UART", detail: "921600 baud, via mavproxy UDP bridge" },
+  { component: "Rangefinder", model: "Lidar / Rangefinder", detail: "Downward-facing, provides precise AGL altitude for landing and low-altitude operations" },
   { component: "RC Controller", model: "Standard RC TX/RX", detail: "Kill switch = STABILIZE mode (hardware-level override)" },
 ];
 
@@ -183,7 +186,7 @@ export const TEST_CATEGORIES = [
       { name: "0b_bench_mission.py", path: "tests/flight/0b_bench_mission.py", purpose: "Bench: walk Cube through full mission sequence (GUIDED, waypoints, LAND). No props, won't fly.", when: "After 0a passes. Proves full command sequence reaches Cube.", flags: [], output: "Terminal: mode changes + ACKs", risk: "none" as const },
       { name: "0c_feedback_test.py", path: "tests/flight/0c_feedback_test.py", purpose: "Bench: vision→GPS pipeline proof. Camera sees dummy → AI detects → GPS estimate updates. No commands sent.", when: "Before flight day. Carry drone over printed dummy on table.", flags: ["--headless"], output: "Terminal: detection coords, GPS estimates", risk: "none" as const },
       { name: "1_passive_flight.py", path: "tests/flight/1_passive_flight.py", purpose: "Manual RC flight — pilot flies, Pi watches with camera + AI. Logs detections, buzzer beeps. Sends ZERO commands to Cube.", when: "First real outdoor test. Fly over dummy at different altitudes.", flags: ["--headless", "--stream", "--save-detections"], output: "CSV log + geotagged detection images + MJPEG stream", risk: "low" as const },
-      { name: "2_waypoint_test.py", path: "tests/flight/2_waypoint_test.py", purpose: "Fly 4 GPS waypoints in GUIDED mode. No camera, no CV — just arm, takeoff, fly, land. Proves MAVLink commands work on real hardware.", when: "After Step 1 (MP AUTO) passes. Tests YOUR code on real Cube.", flags: ["--dry-run", "--alt 10"], output: "Terminal: waypoint progress", risk: "medium" as const },
+      { name: "2_waypoints.py", path: "tests/flight/2_waypoints.py", purpose: "Fly 4 GPS waypoints in GUIDED mode. No camera, no CV — just arm, takeoff, fly, land. Proves MAVLink commands work on real hardware.", when: "After Step 1 (MP AUTO) passes. Tests YOUR code on real Cube.", flags: ["--dry-run", "--alt 10"], output: "Terminal: waypoint progress", risk: "medium" as const },
       { name: "3_auto_detect.py", path: "tests/flight/3_auto_detect.py", purpose: "Fly Mission Planner AUTO waypoints + AI detection. On detection → switch to GUIDED and hover. SENDS COMMANDS.", when: "After passive flight proves CV works outdoors", flags: [], output: "Terminal: detection + mode switch", risk: "medium" as const },
       { name: "4_detect_and_center.py", path: "tests/flight/4_detect_and_center.py", purpose: "Autonomous: fly waypoints + AI → center on target → hover. Intermediate test before full main.py.", when: "After 3_auto_detect works. Operator controls: l=land, r=resume, q=RTL.", flags: ["--alt 15", "--dry-run"], output: "Terminal: centering progress", risk: "high" as const },
     ] as TestScript[],
@@ -227,10 +230,10 @@ export const CALIBRATIONS: CalibrationStep[] = [
 export const FLIGHT_STEPS: FlightStep[] = [
   { id: "0", name: "Setup & Diagnostics", script: "tests/diagnostics/diagnostics.py", risk: "None", purpose: "Verify all systems connected and working at the field.", details: ["Connect Pi + laptop to same WiFi", "Start mavproxy on Pi", "Run diagnostics — all 5 green", "Connect Mission Planner via TCP", "Wait for GPS lock (fix_type=3, sats>=8)"] },
   { id: "1", name: "Mission Planner AUTO (no code)", script: "Mission Planner only", risk: "Low (standard MP flight)", purpose: "Prove drone flies, GPS works, RTL works. YOUR code is NOT running.", details: ["Upload 4 waypoints in MP", "Arm via RC", "Switch to AUTO", "Drone flies pattern and RTLs", "Kill switch: RC → STABILIZE"] },
-  { id: "1.5", name: "Waypoint Test (your code, no CV)", script: "tests/flight/2_waypoint_test.py --alt 10", risk: "Medium (your commands)", purpose: "Prove YOUR MAVLink commands work on real hardware. No camera, no AI.", details: ["Arms, takes off to 10m", "Flies 4 GPS waypoints", "Lands at launch point", "Kill switch: RC override always active"] },
+  { id: "1.5", name: "Waypoint Test (your code, no CV)", script: "tests/flight/2_waypoints.py --alt 10", risk: "Medium (your commands)", purpose: "Prove YOUR MAVLink commands work on real hardware. No camera, no AI.", details: ["Arms, takes off to 10m", "Flies 4 GPS waypoints", "Lands at launch point", "Kill switch: RC override always active"] },
   { id: "2", name: "Passive CV Flight", script: "tests/flight/1_passive_flight.py --headless --stream", risk: "None (zero commands)", purpose: "First real CV test outdoors. Pilot flies RC, Pi watches and logs. ZERO commands sent.", details: ["Pilot hovers above dummy at different altitudes", "Pi detects + buzzer + logs CSV", "Saves geotagged detection images", "Review after: at what altitude does it detect?", "Run altitude_sweep.py simultaneously"] },
-  { id: "3", name: "Full Dashboard (pi_flight.py)", script: "pi_flight.py --fps 4", risk: "High (sends commands)", purpose: "Test complete N→investigate→classify→L→land flow.", details: ["Browser dashboard at http://PI_IP:8090", "Fly over dummy → detection alert", "Press N → drone flies to estimate", "Classify: Y/I/X", "Press L → land 7.5m from target", "FAKE DET button if CV not working"] },
-  { id: "4", name: "Full Autonomous (main.py)", script: "main.py", risk: "High (full auto)", purpose: "The real mission: search → detect → center → descend → verify → land.", details: ["Full state machine runs", "Lawnmower search pattern", "AI detection triggers centering", "Operator confirms Y/N at verify", "Lands 7.5m from target"] },
+  { id: "3", name: "Full Dashboard (pi_flight.py)", script: "pi_flight.py --fps 4", risk: "High (sends commands)", purpose: "Test complete N→investigate→classify→L→land flow.", details: ["Browser dashboard at http://PI_IP:8090", "Fly over dummy → detection alert", "Press N → drone flies to estimate", "Classify: Y=casualty, I=item of interest, X=false positive", "Press L → land within 5-10m of target (R07 safe zone)", "FAKE DET button if CV not working"] },
+  { id: "4", name: "Full Autonomous (main.py)", script: "main.py", risk: "High (full auto)", purpose: "The real mission: search → detect → center → descend → verify → land.", details: ["Full state machine runs", "Lawnmower search pattern", "AI detection triggers centering", "Operator classifies: Y=casualty, I=item of interest, X=false positive", "Lands within 5-10m of target (R07 safe zone, ~7.5m offset)"] },
 ];
 
 // ── GPS estimation (how it works) ────────────────────────────────────
@@ -256,6 +259,7 @@ export const CONNECTIONS = {
     "Pi ← mavproxy bridge → UDP (Pi scripts) + TCP (Mission Planner)",
     "Pi ← picamera2 → Camera (IMX296, 640×480, BGR)",
     "Pi ← WiFi → Laptop browser (http://PI_IP:8090)",
+    "Rangefinder/Lidar → Cube (I2C/serial, precise AGL altitude for descent + landing)",
     "RC Controller → Cube (hardware-level, always overrides software)",
   ],
   mavproxy: "sudo /opt/mavlink/mavlink-venv/bin/mavproxy.py --master=/dev/ttyAMA0 --baudrate=921600 --streamrate=10 --out=udpout:127.0.0.1:14550 --out=tcpin:0.0.0.0:5762",
@@ -278,6 +282,7 @@ export const MODELS = {
   current: [
     { name: "best.tflite", desc: "Primary model (YOLOv8n custom-trained on synthetic dummy images)", size: "~6MB" },
     { name: "models/custom_yolov8n.tflite", desc: "Copy of best.tflite (baseline for comparison)", size: "~6MB" },
+    { name: "models/human.tflite", desc: "COCO YOLOv8n person detector (80 classes, backup if custom model fails)", size: "~13MB" },
     { name: "models/best2.tflite", desc: "Placeholder — replace with retrained model", size: "~6MB" },
   ],
   howToSwap: [
