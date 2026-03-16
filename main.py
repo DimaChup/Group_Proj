@@ -338,6 +338,9 @@ class VisualFlightMission:
         self.rejected_targets = []  # [(lat, lon), ...] — skip detections near these
         self.departure_lat = 0     # where drone left the search path to investigate
         self.departure_lon = 0
+        self.manual_departure_lat = 0  # where manual mode was engaged
+        self.manual_departure_lon = 0
+        self.manual_departure_alt = 0
         # Rescan at lower altitude if nothing found (drop 20% each pass)
         self.max_rescan_passes = 3      # up to 3 rescans before giving up
         self.rescan_pass = 0            # 0 = first pass, 1+ = rescan
@@ -629,11 +632,20 @@ class VisualFlightMission:
                     print("!!! MANUAL CONTROL OVERRIDE !!!")
                     print("  WASD=move  R/F=up/down  Q/E=yaw  M=resume auto")
                     self.previous_state = self.state
+                    self.manual_departure_lat = self.lat
+                    self.manual_departure_lon = self.lon
+                    self.manual_departure_alt = self.alt
                     self._set_state(State.MANUAL)
                 else:
-                    print("Resuming Automation...")
-                    if target_found: self._set_state(State.CENTERING)
-                    else: self._set_state(self.previous_state)
+                    # Check if we've moved away from where manual was engaged
+                    dist_from_departure = self.get_dist_to_point(
+                        self.manual_departure_lat, self.manual_departure_lon)
+                    if dist_from_departure > 5.0:
+                        print(f"Returning to manual departure point ({dist_from_departure:.0f}m away)...")
+                        self._set_state(State.RETURN_FROM_MANUAL)
+                    else:
+                        print("Resuming Automation...")
+                        self._set_state(self.previous_state)
 
             # MANUAL mode — WASD flight controls
             if self.state == State.MANUAL and self.master:
@@ -831,6 +843,18 @@ class VisualFlightMission:
                         print("No search waypoints generated.")
                         self._set_state(State.HOVER)
 
+            elif self.state == State.RETURN_FROM_MANUAL:
+                # Fly back to where manual was engaged, then resume previous state
+                self.set_speed(config.TRANSIT_SPEED_MPS)
+                if time.time() - self.last_req > 2.0:
+                    self.send_global_target(self.manual_departure_lat,
+                                            self.manual_departure_lon,
+                                            self.manual_departure_alt)
+                    self.last_req = time.time()
+                if self.get_dist_to_point(self.manual_departure_lat, self.manual_departure_lon) < 3.0:
+                    print(f"Back at manual departure point. Resuming {self.previous_state}.")
+                    self._set_state(self.previous_state)
+
             elif self.state == State.TRANSIT_TO_SEARCH:
                 # Fly to the first waypoint of the search grid (Optimal Entry Point)
                 self.set_speed(config.TRANSIT_SPEED_MPS)
@@ -954,10 +978,21 @@ class VisualFlightMission:
                     self._set_state(State.HOVER_TARGET)
 
             elif self.state == State.HOVER_TARGET:
-                # Hold at 3m for 15 seconds
+                # Hold at 3m: wait 5s → release servo → wait 10 more s → return
                 self.send_global_target(self.landing_lat, self.landing_lon, 3.0)
                 elapsed = time.time() - self.state_start_time
+                # Release servo at 5 seconds
+                if elapsed >= 5.0 and not getattr(self, '_servo_released', False):
+                    self._servo_released = True
+                    print("  SERVO RELEASE — dropping payload")
+                    if self.master:
+                        # MAV_CMD_DO_SET_SERVO: servo channel 9, PWM 1100 (open)
+                        self.master.mav.command_long_send(
+                            self.master.target_system, self.master.target_component,
+                            mavutil.mavlink.MAV_CMD_DO_SET_SERVO, 0,
+                            9, 1100, 0, 0, 0, 0, 0)
                 if elapsed > 15.0:
+                    self._servo_released = False
                     print(f"Hover complete ({elapsed:.0f}s). Climbing and returning home.")
                     if self.pre_waypoints:
                         # Retrace transit path in reverse
