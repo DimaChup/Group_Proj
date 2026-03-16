@@ -2,113 +2,149 @@
 
 ## Quick Summary
 
-**What we did before:**
-1. `generate_dataset.py` created 200 synthetic images (dummy.png composited on map.jpg)
-2. Uploaded `project_data/` to Google Colab
-3. Ran `train_model.py` on Colab GPU (~50 epochs, ~15 min)
-4. Downloaded `best_float32.tflite` → copied to `best.tflite` in project root
+**Current best model:** `cv_models/sar_v2_1088/best.tflite`
+- Trained on: 300 synthetic + 16 real labelled + 50 negatives, all at 1456x1088
+- Training: imgsz=1088, epochs=150, batch=8, mAP50=0.995
+- Output: float32 TFLite (11.7MB), same input [1,640,640,3] / output [1,5,8400] as original
+- Drop-in replacement: `cp cv_models/sar_v2_1088/best.tflite best.tflite`
 
-**What we need to improve:**
-- More images (1000+, not 200)
-- Train/val split (currently same images for both — inflates accuracy)
-- More diverse backgrounds (currently just one map.jpg)
-- Negative images (10-15% with no dummy)
-- Better augmentation (motion blur, brightness, shadows)
+**Model history:**
+| Version | Location | Dataset | imgsz | mAP50 | Notes |
+|---------|----------|---------|-------|-------|-------|
+| v1 (original) | `best.tflite` (root) | 200 synthetic 640x640 | 640 | ~0.95 | First model, single background |
+| sar_640 | `cv_models/sar_640/` | Improved synthetic | 640 | — | Earlier experiment |
+| sar_1280 | `cv_models/sar_1280/` | Improved synthetic | 1280 | — | Earlier experiment |
+| **sar_v2_1088** | `cv_models/sar_v2_1088/` | **300 syn + 16 real + 50 neg at 1456x1088** | **1088** | **0.995** | **Current best** |
 
 ---
 
-## Step-by-Step: Retrain on Google Colab
+## Complete Retraining Workflow (v2)
 
-### 1. Prepare Dataset Locally
+### Step 1: Collect Real Frames from Flight Video
+
+Extract and label real frames from DJI flight footage:
+
+```bash
+# Label real frames at native resolution (no squishing)
+python tools/label_tool.py --full "RealVideo/DJI_0001_1456x1088_cropped_30fps.mp4"
+```
+
+**How label_tool.py --full works:**
+- Opens each image in the input directory with an interactive OpenCV window
+- LEFT-CLICK on the dummy center to place a bounding box
+- SCROLL WHEEL to adjust box size (bigger/smaller)
+- Press S to save the labelled frame + YOLO label file
+- Press N to skip (no dummy in this frame)
+- Press Q when done
+- Output: `real_{filename}_{index}.jpg` + matching `.txt` YOLO label files in `--output` dir
+- The `--full` flag saves the full frame at native resolution (1456x1088), not cut into tiles
+- Without `--full`, the tool cuts 640x640 tiles — avoid this for training at native resolution
+- Label at multiple altitudes (15m, 25m, 35m, 50m) for best training coverage
+
+**Example:**
+```bash
+# Label preview frames, save to dataset_v2/ at full resolution
+python tools/label_tool.py dataset_v2/preview_50m/ --output dataset_v2 --full
+```
+
+### Step 2: Generate Synthetic + Negative Images
 
 ```bash
 cd "c:\Users\Bristol\Desktop\AI for Robotics\v3"
-python generate_dataset.py    # generates dataset/ with images + labels
+python generate_dataset_v2.py
 ```
 
-**Dataset structure required:**
+**What generate_dataset_v2.py does:**
+1. Loads `dummy.png` (foreground with alpha channel) and DJI video frame backgrounds
+2. Generates 300 synthetic images at 1456x1088:
+   - Random background crops from real flight footage
+   - Dummy scaled based on simulated altitude (correct pixel size for altitude)
+   - Random rotation, brightness, contrast, blur augmentation
+   - YOLO format labels (class x_center y_center width height)
+3. Generates 50 negative images (backgrounds with NO dummy, empty label files)
+4. Copies real labelled frames into the dataset
+5. Creates `dataset.yaml` for YOLO training
+
+**Dataset structure after generation:**
 ```
-project_data/
-├── data.yaml
-└── dataset/
-    ├── images/
-    │   ├── train/     # 80% of images
-    │   └── val/       # 20% of images
-    └── labels/
-        ├── train/     # matching .txt files
-        └── val/       # matching .txt files
-```
-
-**IMPORTANT:** Train and val MUST be different images. Split them:
-```python
-# Quick split script (run once after generating)
-import os, shutil, random
-os.makedirs('dataset/images/train', exist_ok=True)
-os.makedirs('dataset/images/val', exist_ok=True)
-os.makedirs('dataset/labels/train', exist_ok=True)
-os.makedirs('dataset/labels/val', exist_ok=True)
-
-imgs = sorted(os.listdir('dataset/images'))
-imgs = [f for f in imgs if f.endswith('.jpg')]
-random.shuffle(imgs)
-split = int(0.8 * len(imgs))
-
-for f in imgs[:split]:
-    shutil.move(f'dataset/images/{f}', f'dataset/images/train/{f}')
-    shutil.move(f'dataset/labels/{f.replace(".jpg",".txt")}', f'dataset/labels/train/')
-for f in imgs[split:]:
-    shutil.move(f'dataset/images/{f}', f'dataset/images/val/{f}')
-    shutil.move(f'dataset/labels/{f.replace(".jpg",".txt")}', f'dataset/labels/val/')
+dataset_v2/
+├── dataset.yaml        ← YOLO data config (path, train, val, class names)
+├── images/
+│   ├── syn_0000.jpg    ← 300 synthetic images (dummy composited on backgrounds)
+│   ├── ...
+│   ├── real_frame_*.jpg ← 16 real labelled frames
+│   ├── neg_0000.jpg    ← 50 negative images (no dummy)
+│   └── ...
+├── labels/
+│   ├── syn_0000.txt    ← YOLO labels (0 x_center y_center w h)
+│   ├── ...
+│   ├── real_frame_*.txt ← Real frame labels
+│   ├── neg_0000.txt    ← Empty files (no objects)
+│   └── ...
+└── preview_50m/        ← Preview images showing dummy at simulated 50m altitude
 ```
 
-Update `data.yaml`:
-```yaml
-path: /content/project_data/dataset
-train: images/train
-val: images/val
-nc: 1
-names: ['dummy']
+### Step 3: Zip and Upload to Colab
+
+```bash
+# On Windows (PowerShell or cmd)
+# dataset_v2.zip should already exist after running generate_dataset_v2.py
+# If not, zip manually:
+# Right-click dataset_v2 → Send to → Compressed (zipped) folder
 ```
 
-### 2. Zip and Upload to Colab
+Upload `dataset_v2.zip` to Google Drive (root or a known folder).
 
-Zip `project_data/` folder and upload to Google Drive or directly to Colab.
+### Step 4: Train on Google Colab (GPU)
 
-### 3. Colab Notebook Cells
+Open a new Colab notebook with GPU runtime (Runtime → Change runtime type → T4 GPU).
 
-**Cell 1 — Setup:**
+**Cell 1 — Install Ultralytics:**
 ```python
 !pip install ultralytics
 import ultralytics
 ultralytics.checks()
 ```
 
-**Cell 2 — Upload dataset:**
+**Cell 2 — Mount Drive and copy dataset:**
 ```python
-# Option A: From Google Drive
 from google.colab import drive
 drive.mount('/content/drive')
-!cp /content/drive/MyDrive/project_data.zip /content/
-!unzip -q /content/project_data.zip -d /content/
 
-# Option B: Direct upload
-from google.colab import files
-uploaded = files.upload()  # select project_data.zip
-!unzip -q project_data.zip -d /content/
+!cp "/content/drive/MyDrive/dataset_v2.zip" /content/
+!unzip -q /content/dataset_v2.zip -d /content/
 ```
 
-**Cell 3 — Train:**
+**Cell 3 — Fix dataset.yaml path for Colab:**
+```python
+import yaml
+
+with open('/content/dataset_v2/dataset.yaml', 'r') as f:
+    data = yaml.safe_load(f)
+
+data['path'] = '/content/dataset_v2'
+data['train'] = 'images'
+data['val'] = 'images'
+
+with open('/content/dataset_v2/dataset.yaml', 'w') as f:
+    yaml.dump(data, f)
+
+print("Updated dataset.yaml:")
+!cat /content/dataset_v2/dataset.yaml
+```
+
+**Cell 4 — Train:**
 ```python
 from ultralytics import YOLO
 
 model = YOLO('yolov8n.pt')  # pretrained COCO weights
 
 results = model.train(
-    data='/content/project_data/data.yaml',
-    epochs=100,
-    imgsz=640,
-    batch=16,
-    patience=20,         # early stopping
+    data='/content/dataset_v2/dataset.yaml',
+    epochs=150,
+    imgsz=1088,          # native resolution (NOT 640)
+    batch=8,             # fits in T4 GPU memory at 1088
+    patience=30,         # early stopping
     device=0,            # GPU
 
     # Augmentation tuned for aerial drone detection
@@ -124,154 +160,188 @@ results = model.train(
     flipud=0.0,          # no vertical flip
 
     project='runs',
-    name='dummy_detect',
+    name='sar_v2_1088',
 )
 ```
 
-**Cell 4 — Check results:**
+**Cell 5 — Check results:**
 ```python
-# View training curves
 from IPython.display import Image
-Image('runs/dummy_detect/results.png')
+Image('runs/sar_v2_1088/results.png')
 ```
 
 ```python
-# Validate
 metrics = model.val()
 print(f"mAP50: {metrics.box.map50:.3f}")
 print(f"mAP50-95: {metrics.box.map:.3f}")
 ```
 
-**Cell 5 — Export to TFLite:**
+**Cell 6 — Export TFLite + NCNN:**
 ```python
-# Float32 (baseline, ~6MB)
+# TFLite (float32) — drop-in replacement for Pi
 model.export(format='tflite', imgsz=640)
+# Output shape: [1, 640, 640, 3] input, [1, 5, 8400] output
+# NOTE: export imgsz=640 even though trained at 1088 — TFLite runtime always resizes to 640
 
-# INT8 quantized (fastest on Pi, ~2MB)
-model.export(format='tflite', imgsz=640, int8=True,
-             data='/content/project_data/data.yaml')
+# NCNN — faster inference on Pi (~15 FPS expected)
+model.export(format='ncnn', imgsz=640)
 ```
 
-**Cell 6 — Download:**
+**Cell 7 — Download:**
 ```python
 from google.colab import files
+import glob, shutil, os
 
-# The .tflite file is inside the saved_model directory
-import glob
-tflite_files = glob.glob('runs/dummy_detect/weights/*.tflite') + \
-               glob.glob('runs/dummy_detect/weights/**/*.tflite', recursive=True)
-print("TFLite files found:", tflite_files)
+# Create output directory
+os.makedirs('export', exist_ok=True)
 
-# Download
+# Copy weights
+shutil.copy('runs/sar_v2_1088/weights/best.pt', 'export/best.pt')
+
+# Find TFLite
+tflite_files = glob.glob('runs/sar_v2_1088/weights/**/*.tflite', recursive=True)
 for f in tflite_files:
-    files.download(f)
+    shutil.copy(f, f'export/{os.path.basename(f)}')
+    print(f"TFLite: {f} ({os.path.getsize(f)/1e6:.1f} MB)")
 
-# Also download best.pt (full weights, for future fine-tuning)
-files.download('runs/dummy_detect/weights/best.pt')
+# Find NCNN
+ncnn_dir = glob.glob('runs/sar_v2_1088/weights/*_ncnn_model')
+if ncnn_dir:
+    shutil.copytree(ncnn_dir[0], 'export/ncnn', dirs_exist_ok=True)
+    print(f"NCNN dir: {ncnn_dir[0]}")
+
+# Copy results
+for f in ['results.png', 'confusion_matrix.png']:
+    src = f'runs/sar_v2_1088/{f}'
+    if os.path.exists(src):
+        shutil.copy(src, f'export/{f}')
+
+# Zip and download
+shutil.make_archive('sar_v2_1088_export', 'zip', 'export')
+files.download('sar_v2_1088_export.zip')
 ```
 
-### 4. Deploy to Pi
+### Step 5: Save Model Locally
 
 ```bash
-# On laptop: copy downloaded .tflite to project root
-cp ~/Downloads/best_float32.tflite best.tflite
+# Unzip downloaded export
+# Copy to cv_models directory:
+mkdir -p cv_models/sar_v2_1088
+cp export/best.tflite cv_models/sar_v2_1088/
+cp export/best.pt cv_models/sar_v2_1088/
+cp -r export/ncnn cv_models/sar_v2_1088/
+cp export/results.png cv_models/sar_v2_1088/  # optional
+cp export/confusion_matrix.png cv_models/sar_v2_1088/  # optional
+```
 
-# Push to git
-git add best.tflite
-git commit -m "Retrained model v2"
+### Step 6: Test on Laptop with Video
+
+```bash
+# Test new model against DJI flight video
+python tests/laptop/video_test.py "RealVideo/DJI_0001_1456x1088_cropped_30fps.mp4" --model cv_models/sar_v2_1088/best.tflite
+
+# Compare old vs new model side by side
+python tests/laptop/video_test_compare.py "RealVideo/DJI_0001_1456x1088_cropped_30fps.mp4"
+# Press M to switch between models live
+```
+
+### Step 7: Deploy to Pi
+
+```bash
+# Option A: Copy directly to active model slot
+cp cv_models/sar_v2_1088/best.tflite best.tflite
+
+# Option B: Use --model flag (no copy needed)
+python main.py --model cv_models/sar_v2_1088/best.tflite
+
+# Push to git, pull on Pi
+git add best.tflite  # or cv_models/
+git commit -m "Update model to sar_v2_1088"
 git push
 
-# On Pi: pull
-cd ~/dima/Group_Proj && git pull
+# On Pi:
+cd ~/sar-drone && git pull
+# Model is now active — no code changes needed
 ```
 
 ---
 
 ## Dataset Improvement Checklist
 
-### More Images
-- [ ] Generate 1000-1500 images (not 200)
-- [ ] Change `NUM_IMAGES = 1500` in generate_dataset.py
+### What v2 already has (improvements over v1)
+- [x] Native resolution (1456x1088 instead of 640x640)
+- [x] Real labelled frames (16 from DJI flight video at various altitudes)
+- [x] Negative images (50 frames with no dummy — reduces false positives)
+- [x] Altitude-correct scaling (dummy pixel size matches real altitude)
+- [x] Real flight video backgrounds (not just map.jpg)
+- [x] Augmentation (brightness, contrast, blur, rotation, scale)
 
-### Background Diversity (BIGGEST impact)
-- [ ] Collect 20-50 different aerial/grass background images
-- [ ] Google Earth screenshots of the actual flight field
-- [ ] Different grass types (mowed, wild, brown, green)
-- [ ] Different lighting (sunny, overcast, shadows)
-- [ ] Save as `backgrounds/*.jpg` and modify generate_dataset.py to use them
-
-### Negative Images (10-15% of dataset)
-- [ ] Include images with NO dummy (just background)
-- [ ] Create matching empty .txt label files (0 bytes)
-- [ ] Teaches model what "nothing here" looks like → fewer false positives
-
-### Dummy Variations
-- [ ] Multiple dummy images if possible (different angles, poses)
-- [ ] Different clothing/colors on the dummy
+### Still possible improvements
+- [ ] More real labelled frames (currently 16, aim for 50-100)
+- [ ] Multiple flight videos (currently just one flight)
+- [ ] Different dummy poses/clothing
 - [ ] Partially occluded dummy (behind tall grass)
-
-### Additional Augmentations (in generate_dataset.py)
-- [ ] Motion blur (simulates drone movement)
-- [ ] Brightness/contrast variation (sun vs shade)
-- [ ] Gaussian noise (camera sensor noise)
-- [ ] Shadow overlays (tree/building shadows on grass)
+- [ ] Different weather/lighting conditions
+- [ ] INT8 quantized export (faster inference, ~2x speedup on Pi)
+- [ ] Proper train/val split (currently same images for both — inflates metrics)
 
 ---
 
-## Current generate_dataset.py Pipeline
+## Model Architecture Notes
 
-What it does now:
-1. Loads `map.jpg` (background) and `dummy.png` (foreground with alpha)
-2. For each image:
-   - Random 640×640 crop from map.jpg
-   - Scale dummy to 10-40% (simulates altitude)
-   - Random 0-360° rotation
-   - Alpha-blend onto background at random position
-3. Saves image + YOLO label (`0 x_center y_center width height`)
+All models use YOLOv8n (nano) architecture:
+- **Input**: [1, 640, 640, 3] float32 (0.0-1.0 normalized, RGB — vision.py divides by 255)
+- **Output**: [1, 5, 8400] float32 (x, y, w, h, confidence per detection)
+- **Classes**: 1 (dummy)
+- **TFLite size**: 3.3MB (original) to 11.7MB (float32 retrained)
+  - Size difference is due to different export settings, NOT different architecture
 
-Parameters:
-| Setting | Current | Recommended |
-|---------|---------|-------------|
-| NUM_IMAGES | 200 | 1000-1500 |
-| IMG_SIZE | 640 | 640 (keep) |
-| Scale range | 0.1-0.4 | 0.05-0.5 (wider range) |
-| Backgrounds | 1 (map.jpg) | 20-50 different |
-| Negatives | 0% | 10-15% |
+vision.py handles all preprocessing and postprocessing:
+- Resizes input frame to 640x640
+- Runs inference
+- Filters by confidence threshold (0.4 default, configurable)
+- Returns `(found, x, y, conf)` — normalized coordinates
 
----
-
-## Model Variants for Flight Day
-
-Export multiple models, bring all to flight day:
-
-| Model | Size | Pi Speed | Use Case |
-|-------|------|----------|----------|
-| custom_float32.tflite | ~6MB | ~250ms | Default — best accuracy |
-| custom_int8.tflite | ~2MB | ~120ms | Speed mode — search phase |
-| human.tflite | ~13MB | ~300ms | COCO person fallback |
-
-Swap on Pi: `cp models/X.tflite best.tflite` then restart script.
+**Any TFLite model with input [1,640,640,3] and output [1,5,8400] is a drop-in replacement.**
 
 ---
 
 ## Confidence Threshold
 
-Current: 0.4 (in vision.py)
+Current: 0.4 (in vision.py, configurable via config.py CONFIDENCE_THRESHOLD)
 
 | Threshold | Best for |
 |-----------|----------|
 | 0.25 | Search phase (catch everything, accept false positives) |
-| 0.35-0.4 | Balanced |
+| 0.3 | Video analysis default (used in video_test.py) |
+| 0.35-0.4 | Balanced (flight default) |
 | 0.5+ | Verification (high confidence only) |
-
-Can change in `config.py` → `CONFIDENCE_THRESHOLD` without retraining.
 
 ---
 
 ## Common Pitfalls
 
-1. **Same images in train AND val** — metrics are meaningless. Always split.
-2. **Only one background** — model memorizes grass texture, fails on real field.
-3. **No negatives** — model always predicts something → false positives everywhere.
+1. **Same images in train AND val** — metrics are meaningless. Current dataset_v2 uses same split (val=train). For rigorous evaluation, split 80/20.
+2. **Only one background** — v1 had just map.jpg. v2 uses real flight video frames (much better).
+3. **No negatives** — v1 had none. v2 has 50 negative images (reduces false positives).
 4. **Overfitting** — if train loss near 0 but val loss high, reduce epochs or add data.
-5. **Wrong input format** — TFLite expects 0-255 uint8 input, NOT 0-1 float.
+5. **Wrong imgsz for export** — always export TFLite with `imgsz=640` even if trained at 1088. The training resolution just improves feature learning; TFLite runtime uses 640x640.
+6. **6fps video for analysis** — SRT telemetry is at 30fps. Using 6fps video causes altitude/GPS misalignment. Always use 30fps video.
+7. **label_tool.py without --full** — without the flag, frames are squished to 640x640 for labelling. Use `--full` to label at native resolution.
+
+---
+
+## Previous Training (v1, for reference)
+
+**What v1 did:**
+1. `generate_dataset.py` created 200 synthetic images at 640x640 (dummy.png composited on map.jpg)
+2. Uploaded `project_data/` to Google Colab
+3. Trained: imgsz=640, epochs=100, batch=16
+4. Downloaded `best_float32.tflite` → copied to `best.tflite`
+
+**v1 limitations (all fixed in v2):**
+- Only 200 images (v2: 366)
+- Single background (map.jpg) — model memorized texture
+- No real frames — only synthetic composites
+- No negatives — model always predicted something
+- 640x640 resolution — lost detail at altitude
