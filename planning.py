@@ -12,10 +12,10 @@ class PathPlanner:
         self.virtual_polygon = [] 
 
     # --- MAIN GENERATOR (OPTIMIZED) ---
-    def generate_search_pattern(self, map_w, map_h, drone_gps=None):
+    def generate_search_pattern(self, map_w, map_h, drone_gps=None, alt_override=None):
         if len(self.search_polygon) < 3: return []
-
-        print("[PLANNER] Calculating Optimum Path (Full Green Polygon Coverage)")
+        search_alt = alt_override or config.TARGET_ALT
+        print(f"[PLANNER] Calculating Optimum Path (alt={search_alt:.0f}m)")
 
         # 1. GENERATE SEARCH MASK
         mask = np.zeros((map_h, map_w), dtype=np.uint8)
@@ -38,7 +38,7 @@ class PathPlanner:
         rotated_mask = cv2.warpAffine(mask, M, (map_w, map_h))
 
         # Scan Lines
-        ground_width_m = (config.SENSOR_WIDTH_MM * config.TARGET_ALT) / config.FOCAL_LENGTH_MM
+        ground_width_m = (config.SENSOR_WIDTH_MM * search_alt) / config.FOCAL_LENGTH_MM
         overlap = 0.2
         SWATH_M = ground_width_m * (1.0 - overlap)
         step_px = int(SWATH_M * self.pix_per_m)
@@ -136,7 +136,7 @@ class PathPlanner:
         return wps
 
     # --- SPIRAL PATTERN ---
-    def generate_spiral_pattern(self, map_w, map_h, drone_gps=None):
+    def generate_spiral_pattern(self, map_w, map_h, drone_gps=None, alt_override=None):
         """Simple rectangular inward spiral using same rotated-mask approach as lawnmower."""
         if len(self.search_polygon) < 3:
             return []
@@ -158,7 +158,8 @@ class PathPlanner:
         rotated_mask = cv2.warpAffine(mask, M, (map_w, map_h))
 
         # 2. SWATH
-        ground_width_m = (config.SENSOR_WIDTH_MM * config.TARGET_ALT) / config.FOCAL_LENGTH_MM
+        search_alt = alt_override or config.TARGET_ALT
+        ground_width_m = (config.SENSOR_WIDTH_MM * search_alt) / config.FOCAL_LENGTH_MM
         overlap = 0.2
         SWATH_M = ground_width_m * (1.0 - overlap)
         step_px = max(1, int(SWATH_M * self.pix_per_m))

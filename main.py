@@ -338,9 +338,9 @@ class VisualFlightMission:
         self.rejected_targets = []  # [(lat, lon), ...] — skip detections near these
         self.departure_lat = 0     # where drone left the search path to investigate
         self.departure_lon = 0
-        # Rescan at lower altitude if nothing found on first pass
-        self.rescan_altitudes = [20.0]  # altitudes to retry after initial pass
-        self.rescan_pass = 0            # 0 = first pass (TARGET_ALT), 1+ = rescan
+        # Rescan at lower altitude if nothing found (drop 20% each pass)
+        self.max_rescan_passes = 3      # up to 3 rescans before giving up
+        self.rescan_pass = 0            # 0 = first pass, 1+ = rescan
         
         # Pre-planned waypoints (fly before search)
         self.pre_waypoints = []
@@ -683,6 +683,12 @@ class VisualFlightMission:
                     self.master.mav.request_data_stream_send(
                         self.master.target_system, self.master.target_component,
                         mavutil.mavlink.MAV_DATA_STREAM_ALL, 10, 1)
+                    # Set SITL speedup (only affects simulation, ignored by real Cube)
+                    if config.MODE == "SIMULATION":
+                        self.master.mav.param_set_send(
+                            self.master.target_system, self.master.target_component,
+                            b'SIM_SPEEDUP', 10.0, mavutil.mavlink.MAV_PARAM_TYPE_REAL32)
+                        print("  SITL speedup set to 10x")
                     self._set_state(State.ARMING)
 
             elif self.state == State.ARMING:
@@ -855,27 +861,28 @@ class VisualFlightMission:
                             self.last_req = time.time()
                         if self.get_dist_to_point(target[0], target[1]) < 2.0:
                             self.wp_index += 1
-                    elif self.rescan_pass < len(self.rescan_altitudes):
-                        # First pass done, rescan at lower altitude
-                        new_alt = self.rescan_altitudes[self.rescan_pass]
+                    elif self.rescan_pass < self.max_rescan_passes:
+                        # Drop altitude by 20% and rescan from current position
+                        current_alt = self._current_search_alt()
+                        new_alt = current_alt * 0.8
                         self.rescan_pass += 1
+                        self._rescan_alt = new_alt  # store for _current_search_alt
                         print(f"\n{'='*50}")
                         print(f"  SEARCH COMPLETE — nothing confirmed.")
-                        print(f"  RESCANNING at {new_alt:.0f}m (pass {self.rescan_pass + 1})")
+                        print(f"  Dropping from {current_alt:.0f}m to {new_alt:.0f}m (pass {self.rescan_pass + 1})")
                         print(f"{'='*50}")
-                        # Regenerate waypoints for new altitude (swath changes)
+                        # Regenerate lawnmower from current position at new altitude
                         if config.MODE == "SIMULATION":
                             canvas_w, canvas_h = self.sim.map_w, self.sim.map_h
                         else:
                             canvas_w, canvas_h = 4800, 4800
-                        start_ref = self.pre_waypoints[-1] if self.pre_waypoints else (self.lat, self.lon)
-                        if SEARCH_PATTERN == "spiral":
-                            self.waypoints = self.planner.generate_spiral_pattern(canvas_w, canvas_h, start_ref)
-                        else:
-                            self.waypoints = self.planner.generate_search_pattern(canvas_w, canvas_h, start_ref)
+                        # Start from where we are now (end of previous pattern)
+                        self.waypoints = self.planner.generate_search_pattern(
+                            canvas_w, canvas_h, (self.lat, self.lon), alt_override=new_alt)
                         self.wp_index = 0
                         self.rejected_targets.clear()  # fresh eyes at new altitude
-                        self._set_state(State.TRANSIT_TO_SEARCH)
+                        # Stay in SEARCH — just descend and continue (no transit back)
+                        self._set_state(State.SEARCH)
                     else:
                         self._set_state(State.DONE)
 
@@ -1024,10 +1031,7 @@ class VisualFlightMission:
         """Return search altitude for current pass (initial or rescan)."""
         if self.rescan_pass == 0:
             return config.TARGET_ALT
-        idx = self.rescan_pass - 1
-        if idx < len(self.rescan_altitudes):
-            return self.rescan_altitudes[idx]
-        return config.TARGET_ALT
+        return getattr(self, '_rescan_alt', config.TARGET_ALT)
 
     @staticmethod
     def _gps_dist(lat1, lon1, lat2, lon2):
