@@ -55,7 +55,7 @@ def find_srt(video_path):
     return None
 
 
-def estimate_target_gps(drone_lat, drone_lon, alt, yaw, pixel_x, pixel_y, img_w, img_h, fov_h=49.0):
+def estimate_target_gps(drone_lat, drone_lon, alt, yaw, pixel_x, pixel_y, img_w, img_h, fov_h=54.4):
     """Estimate target GPS from drone position + pixel offset. Returns (lat, lon)."""
     fov_h_rad = math.radians(fov_h)
     ground_w = 2 * alt * math.tan(fov_h_rad / 2)
@@ -493,7 +493,7 @@ def main():
                 )
                 lines.append(f"TARGET {t_lat:.6f}, {t_lon:.6f}")
                 # Calculate offset from center in meters
-                fov_h_rad = math.radians(49.0)
+                fov_h_rad = math.radians(54.4)
                 ground_w = 2 * t_data['rel_alt'] * math.tan(fov_h_rad / 2)
                 ground_h = ground_w * vid_h / vid_w
                 dx_px = dets[0][0] - vid_w / 2
@@ -594,14 +594,21 @@ def main():
 
     def on_best_mouse(event, mx, my, flags, param):
         if event == cv2.EVENT_LBUTTONDOWN:
-            measure_pts.append((mx, my))
+            # Correct for window resize
+            if best_snapshot[0] is not None:
+                bs = best_snapshot[0]
+                bs_h_disp = int(bs.shape[0] * disp_w / bs.shape[1])
+                ix, iy = correct_mouse_coords(best_win, mx, my, disp_w, bs_h_disp)
+            else:
+                ix, iy = mx, my
+            measure_pts.append((ix, iy))
             if len(measure_pts) == 2:
                 p1, p2 = measure_pts
                 px_dist = math.sqrt((p2[0]-p1[0])**2 + (p2[1]-p1[1])**2)
                 best_est = min(target_estimates, key=lambda e: e[4]) if target_estimates else None
                 if best_est:
                     b_alt = best_est[5]
-                    fov_h_rad = math.radians(49.0)
+                    fov_h_rad = math.radians(54.4)
                     ground_w = 2 * b_alt * math.tan(fov_h_rad / 2)
                     m_per_disp_px = ground_w / (vid_w * bs_scale) if bs_scale else ground_w / vid_w
                     m_dist = px_dist * m_per_disp_px
@@ -625,19 +632,32 @@ def main():
     vid_measure_result = [None]
     last_alt = [20.0]  # track latest altitude for scale
 
+    def correct_mouse_coords(window_name, mx, my, img_w, img_h):
+        """Convert window mouse coords to image coords (handles resized WINDOW_NORMAL)."""
+        try:
+            _, _, win_w, win_h = cv2.getWindowImageRect(window_name)
+            if win_w > 0 and win_h > 0:
+                return int(mx * img_w / win_w), int(my * img_h / win_h)
+        except cv2.error:
+            pass
+        return mx, my
+
     def on_video_mouse(event, mx, my, flags, param):
+        # Correct for window resize
+        ix, iy = correct_mouse_coords(win, mx, my, disp_w, disp_h)
         if event == cv2.EVENT_RBUTTONDOWN:
-            vid_measure_pts.append((mx, my))
+            vid_measure_pts.append((ix, iy))
             if len(vid_measure_pts) == 2:
                 p1, p2 = vid_measure_pts
                 px_dist = math.sqrt((p2[0]-p1[0])**2 + (p2[1]-p1[1])**2)
+                # Lock altitude at measurement time
                 alt = last_alt[0]
-                fov_h_rad = math.radians(49.0)
+                fov_h_rad = math.radians(54.4)
                 ground_w = 2 * alt * math.tan(fov_h_rad / 2)
                 m_per_disp_px = ground_w / disp_w
                 m_dist = px_dist * m_per_disp_px
                 vid_measure_result[0] = (p1, p2, px_dist, m_dist, alt)
-                print(f"  VIDEO MEASURE: {px_dist:.0f}px = {m_dist:.2f}m (at {alt:.1f}m alt)")
+                print(f"  VIDEO MEASURE: {px_dist:.0f} img-px = {m_dist:.2f}m (at {alt:.1f}m alt, FOV 49 deg)")
                 vid_measure_pts.clear()
             elif len(vid_measure_pts) > 2:
                 vid_measure_pts.clear()
@@ -753,13 +773,20 @@ def main():
                 cv2.imshow("Latest Detection", snap_with_info)
 
             # Update altitude for scale calculations
+            # SRT telemetry may not have every frame — find closest
             t_data_scale = telem.get(frame_num)
+            if not t_data_scale:
+                # Search nearby frames (SRT entries may be sparse)
+                for offset in range(1, 30):
+                    t_data_scale = telem.get(frame_num - offset) or telem.get(frame_num + offset)
+                    if t_data_scale:
+                        break
             if t_data_scale and t_data_scale['rel_alt'] > 1:
                 last_alt[0] = t_data_scale['rel_alt']
 
             # Scale bar (bottom-right) — shows what 1m looks like at current altitude
             alt_now = last_alt[0]
-            fov_h_scale = math.radians(49.0)
+            fov_h_scale = math.radians(54.4)
             ground_w_now = 2 * alt_now * math.tan(fov_h_scale / 2)
             px_per_m = disp_w / ground_w_now if ground_w_now > 0 else 1
             scale_1m = int(px_per_m)
@@ -773,7 +800,7 @@ def main():
                 cv2.putText(disp, f"1m ({alt_now:.0f}m alt)", (sx1, sy1 - 10),
                            cv2.FONT_HERSHEY_SIMPLEX, 0.38, (255, 255, 255), 1)
 
-            # Draw measure line on main video (right-click to place)
+            # Draw measure line on main video — uses altitude locked at click time
             if vid_measure_result[0]:
                 p1, p2, px_d, m_d, m_alt = vid_measure_result[0]
                 cv2.line(disp, p1, p2, (0, 255, 255), 2)
