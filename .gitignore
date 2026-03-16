@@ -33,3 +33,19 @@ follow_mode/
 # Dashboard
 dashboard/node_modules/
 dashboard/dist/
+
+# Large video files (RealVideo — keep .SRT, .csv, .jpg, .png)
+RealVideo/*.mp4
+RealVideo/*.MP4
+
+# Large/regeneratable files
+dataset_v2.zip
+dataset_v2/images/
+dataset_v2/labels/
+dataset_v2/preview_50m/
+calibration_image_sample_data*.npy
+yolov8n.onnx
+best copy.tflite
+
+# Misc
+tests/things to do .txt
