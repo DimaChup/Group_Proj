@@ -36,7 +36,8 @@ class SimulationEnvironment:
         # Backwards compat aliases
         self.sim_target_px = None
 
-    def setup_on_map(self):
+    def setup_on_map(self, preload_polygon_gps=None, preload_transit_gps=None):
+        """Interactive map setup. Preload polygon and/or transit path from GPS coords."""
         h, w = self.full_map.shape[:2]
         MAX_DISPLAY_H = 800
         scale_factor = 1.0
@@ -49,72 +50,156 @@ class SimulationEnvironment:
             display_map = self.full_map.copy()
 
         targets = []           # list of (x, y) — first = real dummy
+        transit_wps = []       # list of (x, y) — pre-search transit waypoints
         search_polygon = []
         polygon_closed = False
-        placing_targets = True # True until first right-click
+        # Phases: "targets" → "transit" → "polygon" (or skip polygon if preloaded)
+        phase = "targets"
+
+        # Pre-load search polygon from GPS coords (skip drawing step)
+        if preload_polygon_gps:
+            for lat, lon in preload_polygon_gps:
+                px = self.geo.gps_to_pixels(lat, lon)
+                search_polygon.append((int(px[0]), int(px[1])))
+            polygon_closed = True
+            print(f"  Search polygon pre-loaded: {len(search_polygon)} points from KML")
+
+        # Pre-load transit path from GPS coords (skip drawing step)
+        if preload_transit_gps:
+            for lat, lon in preload_transit_gps:
+                px = self.geo.gps_to_pixels(lat, lon)
+                transit_wps.append((int(px[0]), int(px[1])))
+            print(f"  Transit path pre-loaded: {len(transit_wps)} waypoints")
 
         window_name = "Select Target"
 
+        def _redraw(temp_vis):
+            """Draw all elements on the display."""
+            map_h_px = config.DUMMY_HEIGHT_M * self.geo.pix_per_m
+            display_h_px = max(20, int(map_h_px * scale_factor))
+            # Targets
+            for i, tgt in enumerate(targets):
+                sx, sy = int(tgt[0]*scale_factor), int(tgt[1]*scale_factor)
+                if self.dummy_img is not None:
+                    overlay_image_alpha(temp_vis, self.dummy_img, sx, sy, 0, display_h_px)
+                else:
+                    vis_radius = max(2, int(self.target_radius_px * scale_factor))
+                    cv2.circle(temp_vis, (sx, sy), vis_radius, (0, 0, 255), -1)
+                color = (0, 128, 255) if i == 0 else (255, 255, 0)
+                cv2.putText(temp_vis, str(i+1), (sx + 10, sy - 10),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+            # Transit waypoints (cyan line + numbered circles)
+            if len(transit_wps) > 0:
+                for i, wp in enumerate(transit_wps):
+                    sx, sy = int(wp[0]*scale_factor), int(wp[1]*scale_factor)
+                    cv2.circle(temp_vis, (sx, sy), 5, (255, 255, 0), -1)
+                    cv2.putText(temp_vis, f"T{i+1}", (sx + 8, sy - 5),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 0), 1)
+                if len(transit_wps) > 1:
+                    line_pts = [(int(w[0]*scale_factor), int(w[1]*scale_factor)) for w in transit_wps]
+                    for j in range(len(line_pts)-1):
+                        cv2.line(temp_vis, line_pts[j], line_pts[j+1], (255, 255, 0), 2)
+            # Search polygon (green)
+            if len(search_polygon) > 0:
+                pts = [np.array([[int(p[0]*scale_factor), int(p[1]*scale_factor)] for p in search_polygon], dtype=np.int32)]
+                cv2.polylines(temp_vis, pts, polygon_closed, (0, 255, 0), 2)
+                for p in pts[0]: cv2.circle(temp_vis, tuple(p), 3, (0, 255, 0), -1)
+
         def mouse_callback(event, x, y, flags, param):
-            nonlocal placing_targets, polygon_closed
+            nonlocal phase, polygon_closed
             real_x = int(x / scale_factor)
             real_y = int(y / scale_factor)
             update = False
 
             if event == cv2.EVENT_LBUTTONDOWN:
-                if placing_targets:
+                if phase == "targets":
                     targets.append((real_x, real_y))
                     n = len(targets)
                     label = "REAL dummy" if n == 1 else f"Dummy #{n}"
                     print(f"  Placed {label} at ({real_x}, {real_y})")
                     if n == 1:
                         print("  Left-click more dummies, or Right-click to finish placing.")
-                elif not polygon_closed:
+                elif phase == "transit":
+                    transit_wps.append((real_x, real_y))
+                    print(f"  Transit WP {len(transit_wps)} at ({real_x}, {real_y})")
+                elif phase == "polygon" and not polygon_closed:
                     search_polygon.append((real_x, real_y))
                 update = True
 
             elif event == cv2.EVENT_RBUTTONDOWN:
-                if placing_targets and len(targets) >= 1:
-                    placing_targets = False
-                    print(f"Step 1 done: {len(targets)} target(s) placed.")
-                    print("Step 2: Left-click search polygon points, Right-click to close.")
-                elif not placing_targets and not polygon_closed and len(search_polygon) >= 3:
+                if phase == "targets" and len(targets) >= 1:
+                    transit_preloaded = preload_transit_gps and len(transit_wps) > 0
+                    if transit_preloaded and polygon_closed:
+                        # Both preloaded — go straight to launch
+                        phase = "done"
+                        print(f"  {len(targets)} target(s) placed. Press KEY to Launch.")
+                    elif transit_preloaded:
+                        # Transit preloaded but need polygon
+                        phase = "polygon"
+                        print(f"  {len(targets)} target(s) placed. Transit pre-loaded ({len(transit_wps)} pts).")
+                        print("Step 2: Left-click search polygon points, Right-click to close.")
+                    else:
+                        phase = "transit"
+                        print(f"  {len(targets)} target(s) placed.")
+                        print("Step 2: Left-click transit waypoints (cyan). Right-click when done (or skip).")
+                elif phase == "transit":
+                    if polygon_closed:
+                        phase = "done"
+                        n = len(transit_wps)
+                        print(f"  {n} transit waypoint(s). Press KEY to Launch.")
+                    else:
+                        phase = "polygon"
+                        n = len(transit_wps)
+                        print(f"  {n} transit waypoint(s).")
+                        print("Step 3: Left-click search polygon points, Right-click to close.")
+                elif phase == "polygon" and not polygon_closed and len(search_polygon) >= 3:
                     polygon_closed = True
-                    print("Step 3: Polygon Closed. Press KEY to Launch.")
+                    phase = "done"
+                    print("Polygon Closed. Press KEY to Launch.")
                 update = True
 
             if update:
                 temp_vis = display_map.copy()
-                map_h_px = config.DUMMY_HEIGHT_M * self.geo.pix_per_m
-                display_h_px = max(20, int(map_h_px * scale_factor))
-                for i, tgt in enumerate(targets):
-                    sx, sy = int(tgt[0]*scale_factor), int(tgt[1]*scale_factor)
-                    if self.dummy_img is not None:
-                        overlay_image_alpha(temp_vis, self.dummy_img, sx, sy, 0, display_h_px)
-                    else:
-                        vis_radius = max(2, int(self.target_radius_px * scale_factor))
-                        cv2.circle(temp_vis, (sx, sy), vis_radius, (0, 0, 255), -1)
-                    # Number label (1 = real)
-                    color = (0, 128, 255) if i == 0 else (255, 255, 0)
-                    cv2.putText(temp_vis, str(i+1), (sx + 10, sy - 10),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
-
-                if len(search_polygon) > 0:
-                    pts = [np.array([[int(p[0]*scale_factor), int(p[1]*scale_factor)] for p in search_polygon], dtype=np.int32)]
-                    cv2.polylines(temp_vis, pts, polygon_closed, (0, 255, 0), 2)
-                    for p in pts[0]: cv2.circle(temp_vis, tuple(p), 3, (0, 255, 0), -1)
-
+                _redraw(temp_vis)
                 cv2.imshow(window_name, temp_vis)
 
         cv2.namedWindow(window_name)
-        cv2.imshow(window_name, display_map)
+        # Draw preloaded elements on initial display
+        temp = display_map.copy()
+        if search_polygon:
+            pts = [np.array([[int(p[0]*scale_factor), int(p[1]*scale_factor)] for p in search_polygon], dtype=np.int32)]
+            cv2.polylines(temp, pts, True, (0, 255, 0), 2)
+            for p in pts[0]:
+                cv2.circle(temp, tuple(p), 3, (0, 255, 0), -1)
+        if transit_wps:
+            for i, wp in enumerate(transit_wps):
+                sx, sy = int(wp[0]*scale_factor), int(wp[1]*scale_factor)
+                cv2.circle(temp, (sx, sy), 6, (255, 255, 0), -1)
+                cv2.putText(temp, f"T{i+1}", (sx + 10, sy - 5),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 0), 1)
+            if len(transit_wps) > 1:
+                for j in range(len(transit_wps)-1):
+                    p1 = (int(transit_wps[j][0]*scale_factor), int(transit_wps[j][1]*scale_factor))
+                    p2 = (int(transit_wps[j+1][0]*scale_factor), int(transit_wps[j+1][1]*scale_factor))
+                    cv2.line(temp, p1, p2, (255, 255, 0), 2)
+        cv2.imshow(window_name, temp)
         cv2.setMouseCallback(window_name, mouse_callback)
         print("--- MISSION SETUP ---")
-        print("1. Left-click to place dummies (first = REAL target).")
-        print("   Add more dummies as items of interest / false positive triggers.")
-        print("   Right-click when done placing targets.")
-        print("2. Left-click search polygon points, Right-click to close.")
-        print("3. Press KEY to start.")
+        transit_preloaded = preload_transit_gps and len(transit_wps) > 0
+        if preload_polygon_gps and transit_preloaded:
+            print("  Search polygon + transit path loaded.")
+            print("1. Left-click to place dummies (first = REAL target). Right-click when done.")
+            print("2. Press KEY to start.")
+        elif preload_polygon_gps:
+            print("  Search polygon loaded from KML.")
+            print("1. Left-click to place dummies (first = REAL target). Right-click when done.")
+            print("2. Left-click transit waypoints (cyan path before search). Right-click when done/skip.")
+            print("3. Press KEY to start.")
+        else:
+            print("1. Left-click to place dummies (first = REAL target). Right-click when done.")
+            print("2. Left-click transit waypoints (cyan). Right-click when done/skip.")
+            print("3. Left-click search polygon points, Right-click to close.")
+            print("4. Press KEY to start.")
         cv2.waitKey(0)
         try:
             cv2.destroyWindow(window_name)
@@ -125,7 +210,7 @@ class SimulationEnvironment:
         self.sim_target_type = "dummy"
         # Backwards compat: first target as sim_target_px
         self.sim_target_px = targets[0] if targets else None
-        return targets, "dummy", search_polygon
+        return targets, "dummy", search_polygon, transit_wps
 
     def get_drone_view(self, cx, cy, alt, yaw):
         fov = 2 * math.atan(config.SENSOR_WIDTH_MM / (2 * config.FOCAL_LENGTH_MM))
@@ -181,7 +266,7 @@ class SimulationEnvironment:
 
         return final_view, view_w_px, view_h_px
 
-    def get_god_view(self, cx, cy, yaw, view_w_px, view_h_px, zoom_level, virtual_poly, search_poly, target_gps, landing_gps, geo_tool, logged_items=None, detection_clusters=None, active_cluster_idx=None):
+    def get_god_view(self, cx, cy, yaw, view_w_px, view_h_px, zoom_level, virtual_poly, search_poly, target_gps, landing_gps, geo_tool, logged_items=None, detection_clusters=None, active_cluster_idx=None, search_wps=None, search_wp_index=0, transit_wps_gps=None, transit_wp_index=0, current_state=None):
         display_map = self.full_map.copy()
         
         # Render ALL targets on god view
@@ -198,10 +283,11 @@ class SimulationEnvironment:
         if len(virtual_poly) > 0:
               cv2.drawContours(display_map, [virtual_poly], -1, (255, 0, 255), 2)
 
-        # Draw Coverage
+        # Draw Coverage (only during SEARCH — transit doesn't count as swept)
         rect = ((cx, cy), (view_w_px, view_h_px), math.degrees(yaw))
         box = np.int32(cv2.boxPoints(rect))
-        cv2.fillPoly(self.coverage_overlay, [box], (255, 255, 0)) 
+        if current_state == "SEARCH":
+            cv2.fillPoly(self.coverage_overlay, [box], (255, 255, 0))
         cv2.addWeighted(self.coverage_overlay, 0.2, display_map, 1.0, 0, display_map)
         
         cv2.circle(display_map, (cx, cy), 8, (255, 0, 0), -1)
@@ -269,6 +355,43 @@ class SimulationEnvironment:
                         cv2.line(display_map, (ix-6, iy+6), (ix+6, iy-6), (0, 0, 255), 2)
                         cv2.putText(display_map, "FP", (ix + 10, iy + 5),
                                     cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 255), 1)
+
+        # Draw search waypoint path (zigzag inside polygon)
+        if search_wps:
+            wp_pts = [geo_tool.gps_to_pixels(lat, lon) for lat, lon in search_wps]
+            for j in range(len(wp_pts)-1):
+                p1 = (int(wp_pts[j][0]), int(wp_pts[j][1]))
+                p2 = (int(wp_pts[j+1][0]), int(wp_pts[j+1][1]))
+                if j < search_wp_index:
+                    cv2.line(display_map, p1, p2, (0, 200, 0), 3)
+                else:
+                    cv2.line(display_map, p1, p2, (255, 255, 255), 2)
+            if wp_pts:
+                sp = (int(wp_pts[0][0]), int(wp_pts[0][1]))
+                ep = (int(wp_pts[-1][0]), int(wp_pts[-1][1]))
+                cv2.circle(display_map, sp, 8, (0, 255, 0), -1)
+                cv2.putText(display_map, "S", (sp[0]+10, sp[1]-5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+                cv2.circle(display_map, ep, 8, (0, 0, 255), -1)
+                cv2.putText(display_map, "E", (ep[0]+10, ep[1]-5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+            if current_state == "SEARCH" and search_wp_index < len(wp_pts):
+                cur = wp_pts[search_wp_index]
+                cv2.circle(display_map, (int(cur[0]), int(cur[1])), 10, (0, 255, 255), 3)
+
+        # Draw transit path (cyan line + dots)
+        if transit_wps_gps:
+            tw_pts = [geo_tool.gps_to_pixels(lat, lon) for lat, lon in transit_wps_gps]
+            for i, pt in enumerate(tw_pts):
+                cv2.circle(display_map, (int(pt[0]), int(pt[1])), 8, (0, 255, 255), -1)
+                cv2.putText(display_map, f"T{i+1}", (int(pt[0])+12, int(pt[1])-8),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
+            if len(tw_pts) > 1:
+                for j in range(len(tw_pts)-1):
+                    p1 = (int(tw_pts[j][0]), int(tw_pts[j][1]))
+                    p2 = (int(tw_pts[j+1][0]), int(tw_pts[j+1][1]))
+                    cv2.line(display_map, p1, p2, (0, 255, 255), 3)
+            if current_state == "PRE_WAYPOINTS" and transit_wp_index < len(tw_pts):
+                cur = tw_pts[transit_wp_index]
+                cv2.circle(display_map, (int(cur[0]), int(cur[1])), 14, (0, 0, 255), 3)
 
         # Apply Zoom
         if zoom_level > 1.0:

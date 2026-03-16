@@ -107,7 +107,7 @@ class SimpleMission:
             self.sim.geo = self.geo
 
             # Interactive setup: place dummies + draw search area
-            targets_list, self.tgt_type, self.search_poly = self.sim.setup_on_map()
+            targets_list, self.tgt_type, self.search_poly, _ = self.sim.setup_on_map()
 
             self.eyes = VisionSystem(camera_index=None, model_path="best.tflite")
             self.eyes.using_ai = True  # always use AI when dummies are placed

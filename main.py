@@ -37,10 +37,15 @@ if config.MODE == "SIMULATION":
 # --- CLI FLAGS ---
 # Model:      --model models/best2.tflite   (default: best.tflite)
 # Dry-run:    --dry-run                      (skip GPS/arm, show pattern, print commands)
+# Pattern:    --pattern spiral               (default: lawnmower)
 # Stream:     --stream-port 8090 --stream-res 320x240 --stream-fps 5 --stream-quality 50
 # No stream:  --no-stream
 DRY_RUN = "--dry-run" in sys.argv
 MODEL_PATH = "best.tflite"
+SEARCH_PATTERN = "lawnmower"
+PRELOAD_SEARCH = "--search-area" in sys.argv  # skip polygon drawing, use KML survey area
+PRE_WAYPOINTS_FILE = None  # --waypoints waypoints.json → fly these BEFORE search pattern
+TRANSIT_FILE = None        # --transit transit.json → pre-drawn transit path (visualized + flown)
 STREAM_ENABLED = "--no-stream" not in sys.argv
 STREAM_PORT = 8090
 STREAM_W, STREAM_H = 320, 240
@@ -50,6 +55,8 @@ STREAM_QUALITY = 50
 for _i, _arg in enumerate(sys.argv):
     if _arg == "--model" and _i + 1 < len(sys.argv):
         MODEL_PATH = sys.argv[_i + 1]
+    elif _arg == "--pattern" and _i + 1 < len(sys.argv):
+        SEARCH_PATTERN = sys.argv[_i + 1]
     elif _arg == "--stream-port" and _i + 1 < len(sys.argv):
         STREAM_PORT = int(sys.argv[_i + 1])
     elif _arg == "--stream-res" and _i + 1 < len(sys.argv):
@@ -59,6 +66,10 @@ for _i, _arg in enumerate(sys.argv):
         STREAM_FPS = int(sys.argv[_i + 1])
     elif _arg == "--stream-quality" and _i + 1 < len(sys.argv):
         STREAM_QUALITY = int(sys.argv[_i + 1])
+    elif _arg == "--waypoints" and _i + 1 < len(sys.argv):
+        PRE_WAYPOINTS_FILE = sys.argv[_i + 1]
+    elif _arg == "--transit" and _i + 1 < len(sys.argv):
+        TRANSIT_FILE = sys.argv[_i + 1]
 
 if DRY_RUN:
     print("=" * 60)
@@ -229,8 +240,39 @@ class VisualFlightMission:
             self.geo = GeoTransformer(map_w_px=self.sim.map_w)
             self.sim.geo = self.geo # Sync geo tool
             # Returns only Target and Search Poly
-            self.target_px, self.tgt_type, self.search_poly = self.sim.setup_on_map()
+            # Pre-load search polygon from KML if --search-area flag used
+            preload_gps = None
+            preload_transit = None
+            if PRELOAD_SEARCH:
+                config.load_kml_zones()  # load real coordinates from AENGM0074.kml
+                preload_gps = config.SEARCH_AREA_GPS
+                print(f"  Pre-loading search polygon from KML: {len(preload_gps)} points")
+            # Load transit path from JSON for preloading onto setup map
+            if TRANSIT_FILE:
+                import json
+                try:
+                    with open(TRANSIT_FILE) as f:
+                        data = json.load(f)
+                    preload_transit = []
+                    for wp in data:
+                        if isinstance(wp, dict):
+                            preload_transit.append((wp["lat"], wp["lon"]))
+                        else:
+                            preload_transit.append((wp[0], wp[1]))
+                    print(f"  Pre-loading transit path: {len(preload_transit)} points from {TRANSIT_FILE}")
+                except Exception as e:
+                    print(f"WARNING: Failed to load transit from {TRANSIT_FILE}: {e}")
+            self.target_px, self.tgt_type, self.search_poly, transit_px = self.sim.setup_on_map(
+                preload_polygon_gps=preload_gps, preload_transit_gps=preload_transit)
             
+            # Store drawn transit waypoints (pixels → GPS, applied after pre_waypoints init)
+            # Only save if NOT preloaded from file (avoid double-adding)
+            if transit_px and not preload_transit:
+                self._drawn_transit_gps = [self.geo.pixels_to_gps(px[0], px[1]) for px in transit_px]
+                print(f"  Transit path drawn: {len(self._drawn_transit_gps)} waypoints")
+            else:
+                self._drawn_transit_gps = []
+
             self.eyes = VisionSystem(camera_index=None, model_path=MODEL_PATH)
             if self.tgt_type == "dummy": self.eyes.using_ai = True
             else: self.eyes.using_ai = False
@@ -249,6 +291,8 @@ class VisualFlightMission:
         # 2. Planner
         self.planner = PathPlanner(self.geo, self.search_poly)
 
+        # Search waypoints generated after pre_waypoints are known (need transit endpoint)
+
         # 3. Connection
         self.master = None
         self.last_req = 0
@@ -266,14 +310,24 @@ class VisualFlightMission:
         self._takeoff_timeout_warned = False
         self._centering_timeout_warned = False
         self._descending_timeout_warned = False
-        self.lat = config.REF_LAT
-        self.lon = config.REF_LON
+        # Start at takeoff point if KML loaded, otherwise map origin
+        if config.TAKEOFF_GPS:
+            self.lat = config.TAKEOFF_GPS[0]
+            self.lon = config.TAKEOFF_GPS[1]
+        else:
+            self.lat = config.REF_LAT
+            self.lon = config.REF_LON
+        # Remember home for return-to-launch
+        self.home_lat = self.lat
+        self.home_lon = self.lon
+        self.return_wp_index = 0
         self.alt = 0.0
         self.vx = 0; self.vy = 0; self.vz = 0
         self.roll = 0; self.pitch = 0; self.yaw = 0
         
         # 5. Mission Data
-        self.waypoints = []
+        if not hasattr(self, 'waypoints'):
+            self.waypoints = []
         self.wp_index = 0
         
         # Target Data
@@ -281,7 +335,62 @@ class VisualFlightMission:
         self.landing_lat = 0; self.landing_lon = 0
         self.current_conf = 0.0
         self.final_dist = 0.0 # Store final accuracy distance
+        self.rejected_targets = []  # [(lat, lon), ...] — skip detections near these
         
+        # Pre-planned waypoints (fly before search)
+        self.pre_waypoints = []
+        self.pre_wp_index = 0
+
+        def _load_waypoints_json(path):
+            """Load waypoints from JSON — supports [{lat,lon},...] and [[lat,lon],...]"""
+            import json
+            wps = []
+            with open(path) as f:
+                data = json.load(f)
+            for wp in data:
+                if isinstance(wp, dict):
+                    wps.append((wp["lat"], wp["lon"]))
+                else:
+                    wps.append((wp[0], wp[1]))
+            return wps
+
+        # Source 1: --waypoints flag
+        if PRE_WAYPOINTS_FILE:
+            try:
+                wps = _load_waypoints_json(PRE_WAYPOINTS_FILE)
+                self.pre_waypoints.extend(wps)
+                print(f"  Pre-waypoints loaded: {len(wps)} from {PRE_WAYPOINTS_FILE}")
+            except Exception as e:
+                print(f"WARNING: Failed to load {PRE_WAYPOINTS_FILE}: {e}")
+        # Source 2: --transit flag
+        if TRANSIT_FILE:
+            try:
+                wps = _load_waypoints_json(TRANSIT_FILE)
+                self.pre_waypoints.extend(wps)
+                print(f"  Transit path loaded: {len(wps)} from {TRANSIT_FILE}")
+            except Exception as e:
+                print(f"WARNING: Failed to load {TRANSIT_FILE}: {e}")
+        # Source 3: drawn on map during setup
+        if hasattr(self, '_drawn_transit_gps') and self._drawn_transit_gps:
+            self.pre_waypoints.extend(self._drawn_transit_gps)
+
+        if self.pre_waypoints:
+            print(f"  Total transit waypoints: {len(self.pre_waypoints)}")
+
+        # Pre-generate search waypoints for visualization
+        # Uses transit endpoint as start reference so search starts where transit ends
+        if self.search_poly and len(self.search_poly) >= 3:
+            if config.MODE == "SIMULATION":
+                canvas_w, canvas_h = self.sim.map_w, self.sim.map_h
+            else:
+                canvas_w, canvas_h = 4800, 4800
+            start_ref = self.pre_waypoints[-1] if self.pre_waypoints else None
+            if SEARCH_PATTERN == "spiral":
+                self.waypoints = self.planner.generate_spiral_pattern(canvas_w, canvas_h, start_ref)
+            else:
+                self.waypoints = self.planner.generate_search_pattern(canvas_w, canvas_h, start_ref)
+            print(f"  Search pattern ({SEARCH_PATTERN}): {len(self.waypoints)} waypoints (start from {'transit endpoint' if start_ref else 'default'})")
+
         # Helper vars
         self.view_w_px = 100
         self.view_h_px = 100
@@ -438,8 +547,12 @@ class VisualFlightMission:
              god_frame = self.sim.get_god_view(
                 px, py, self.yaw, self.view_w_px, self.view_h_px, self.zoom_level,
                 self.planner.virtual_polygon, self.search_poly,
-                (self.target_lat, self.target_lon), (self.landing_lat, self.landing_lon), self.geo
+                (self.target_lat, self.target_lon), (self.landing_lat, self.landing_lon), self.geo,
+                search_wps=self.waypoints, search_wp_index=self.wp_index,
+                transit_wps_gps=self.pre_waypoints, transit_wp_index=self.pre_wp_index,
+                current_state=self.state
             )
+
              h_scale = frame.shape[0] / god_frame.shape[0]
              god_resized = cv2.resize(god_frame, (int(god_frame.shape[1]*h_scale), frame.shape[0]))
              final_display = np.hstack((god_resized, frame))
@@ -530,8 +643,12 @@ class VisualFlightMission:
                         print("  N=North  E=East  S=South  W=West")
                         self.selecting_landing_side = True
                     elif key == ord('n') or key == ord('N'):
-                        print("USER REJECTED TARGET. RESUMING SEARCH.")
+                        self.rejected_targets.append((self.target_lat, self.target_lon))
+                        print(f"USER REJECTED TARGET at ({self.target_lat:.6f}, {self.target_lon:.6f}). RESUMING SEARCH.")
                         self.waiting_for_confirmation = False
+                        self.target_lat = 0; self.target_lon = 0
+                        # Climb back to search altitude and continue pattern
+                        self.last_req = 0  # force immediate waypoint command
                         self._set_state(State.SEARCH)
 
             # --- STATE MACHINE ---
@@ -630,11 +747,26 @@ class VisualFlightMission:
                     else:
                         canvas_w, canvas_h = 4800, 4800  # virtual canvas for planner
 
-                    self.waypoints = self.planner.generate_search_pattern(
-                        canvas_w, canvas_h, (self.lat, self.lon))
+                    # Use transit endpoint as start reference if transit path exists
+                    if self.pre_waypoints:
+                        start_gps = self.pre_waypoints[-1]
+                    else:
+                        start_gps = (self.lat, self.lon)
 
-                    if self.waypoints:
-                        # NEW LOGIC: Go to TRANSIT first, then SEARCH
+                    if SEARCH_PATTERN == "spiral":
+                        self.waypoints = self.planner.generate_spiral_pattern(
+                            canvas_w, canvas_h, start_gps)
+                    else:
+                        self.waypoints = self.planner.generate_search_pattern(
+                            canvas_w, canvas_h, start_gps)
+
+                    # Fly pre-planned waypoints first (if any)
+                    if self.pre_waypoints:
+                        print(f"Flying {len(self.pre_waypoints)} pre-planned waypoints first.")
+                        self.pre_wp_index = 0
+                        self._set_state(State.PRE_WAYPOINTS)
+                        self.last_speed_req = 0
+                    elif self.waypoints:
                         print(f"Path generated. Transiting to start point: {self.waypoints[0]}")
                         self._set_state(State.TRANSIT_TO_SEARCH)
                         self.last_speed_req = 0
@@ -642,10 +774,29 @@ class VisualFlightMission:
                         print("No Waypoints generated.")
                         self._set_state(State.HOVER)
 
+            elif self.state == State.PRE_WAYPOINTS:
+                # Fly pre-planned waypoints before starting search
+                self.set_speed(config.TRANSIT_SPEED_MPS)
+                if self.pre_wp_index < len(self.pre_waypoints):
+                    wp = self.pre_waypoints[self.pre_wp_index]
+                    if time.time() - self.last_req > 2.0:
+                        self.send_global_target(wp[0], wp[1], config.TARGET_ALT)
+                        self.last_req = time.time()
+                    if self.get_dist_to_point(wp[0], wp[1]) < 2.0:
+                        self.pre_wp_index += 1
+                        print(f"Pre-waypoint {self.pre_wp_index}/{len(self.pre_waypoints)} reached.")
+                else:
+                    print("All pre-waypoints complete. Starting search pattern.")
+                    if self.waypoints:
+                        self._set_state(State.TRANSIT_TO_SEARCH)
+                    else:
+                        print("No search waypoints generated.")
+                        self._set_state(State.HOVER)
+
             elif self.state == State.TRANSIT_TO_SEARCH:
                 # Fly to the first waypoint of the search grid (Optimal Entry Point)
                 self.set_speed(config.TRANSIT_SPEED_MPS)
-                
+
                 target = self.waypoints[0]
                 if time.time() - self.last_req > 2.0:
                     self.send_global_target(target[0], target[1], config.TARGET_ALT)
@@ -660,18 +811,28 @@ class VisualFlightMission:
             elif self.state == State.SEARCH:
                 self.set_speed(config.SEARCH_SPEED_MPS)
                 if target_found:
-                    print("TARGET DETECTED!")
                     self.calculate_target_gps(px_u, px_v)
-                    self._set_state(State.CENTERING)
-                elif self.wp_index < len(self.waypoints):
-                    target = self.waypoints[self.wp_index]
-                    if time.time() - self.last_req > 2.0:
-                        self.send_global_target(target[0], target[1], config.TARGET_ALT)
-                        self.last_req = time.time()
-                    if self.get_dist_to_point(target[0], target[1]) < 2.0:
-                        self.wp_index += 1
-                else:
-                    self._set_state(State.DONE)
+                    # Skip if detection is near a previously rejected target (within 20m)
+                    near_rejected = False
+                    for rej_lat, rej_lon in self.rejected_targets:
+                        d = self._gps_dist(self.target_lat, self.target_lon, rej_lat, rej_lon)
+                        if d < 20.0:
+                            near_rejected = True
+                            break
+                    if not near_rejected:
+                        print("TARGET DETECTED!")
+                        self._set_state(State.CENTERING)
+                # Fly to next waypoint (runs when no new target, or target was rejected)
+                if self.state == State.SEARCH:
+                    if self.wp_index < len(self.waypoints):
+                        target = self.waypoints[self.wp_index]
+                        if time.time() - self.last_req > 2.0:
+                            self.send_global_target(target[0], target[1], config.TARGET_ALT)
+                            self.last_req = time.time()
+                        if self.get_dist_to_point(target[0], target[1]) < 2.0:
+                            self.wp_index += 1
+                    else:
+                        self._set_state(State.DONE)
 
             elif self.state == State.CENTERING:
                  # FIX 5: Centering timeout — go back to SEARCH
@@ -709,8 +870,51 @@ class VisualFlightMission:
                 self.send_global_target(self.target_lat, self.target_lon, config.VERIFY_ALT)
 
             elif self.state == State.APPROACH:
-                self.send_global_target(self.landing_lat, self.landing_lon, config.VERIFY_ALT)
-                if self.get_dist_to_point(self.landing_lat, self.landing_lon) < 1.0:
+                # Fly to landing spot and descend to 3m (low enough to see, high enough not to auto-land)
+                if time.time() - self.last_req > 0.5:
+                    self.send_global_target(self.landing_lat, self.landing_lon, 3.0)
+                    self.last_req = time.time()
+                if self.get_dist_to_point(self.landing_lat, self.landing_lon) < 2.0 and self.alt < 4.0:
+                    print("Hovering at 3m above target for 15 seconds...")
+                    self._set_state(State.HOVER_TARGET)
+
+            elif self.state == State.HOVER_TARGET:
+                # Hold at 3m for 15 seconds
+                self.send_global_target(self.landing_lat, self.landing_lon, 3.0)
+                elapsed = time.time() - self.state_start_time
+                if elapsed > 15.0:
+                    print(f"Hover complete ({elapsed:.0f}s). Climbing and returning home.")
+                    if self.pre_waypoints:
+                        # Retrace transit path in reverse
+                        self.return_wp_index = len(self.pre_waypoints) - 1
+                        self._set_state(State.RETURN_TRANSIT)
+                    else:
+                        # No transit path — go straight home
+                        self._set_state(State.RETURN_HOME)
+
+            elif self.state == State.RETURN_TRANSIT:
+                # Fly transit path in reverse at search altitude
+                self.set_speed(config.TRANSIT_SPEED_MPS)
+                if self.return_wp_index >= 0:
+                    wp = self.pre_waypoints[self.return_wp_index]
+                    if time.time() - self.last_req > 2.0:
+                        self.send_global_target(wp[0], wp[1], config.TARGET_ALT)
+                        self.last_req = time.time()
+                    if self.get_dist_to_point(wp[0], wp[1]) < 2.0:
+                        print(f"Return transit WP {len(self.pre_waypoints) - self.return_wp_index}/{len(self.pre_waypoints)} reached.")
+                        self.return_wp_index -= 1
+                else:
+                    print("Transit path retraced. Returning to launch point.")
+                    self._set_state(State.RETURN_HOME)
+
+            elif self.state == State.RETURN_HOME:
+                # Fly back to takeoff/home position
+                self.set_speed(config.TRANSIT_SPEED_MPS)
+                if time.time() - self.last_req > 2.0:
+                    self.send_global_target(self.home_lat, self.home_lon, config.TARGET_ALT)
+                    self.last_req = time.time()
+                if self.get_dist_to_point(self.home_lat, self.home_lon) < 2.0:
+                    print("Home reached. Landing.")
                     self._set_state(State.LANDING)
 
             elif self.state == State.LANDING:
@@ -719,15 +923,15 @@ class VisualFlightMission:
                     self.master.mav.command_long_send(
                         self.master.target_system, self.master.target_component,
                         mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0, 0, 0, 0, 0, 0, 0, 0)
-                    
-                    # Calculate final error
-                    lat_scale = 111132.0 
-                    final_error = math.sqrt(((self.lat-self.target_lat)*lat_scale)**2 + ((self.lon-self.target_lon)*lat_scale*math.cos(math.radians(self.lat)))**2)
+
+                    # Calculate final error from target
+                    lat_scale = 111132.0
+                    final_error = math.sqrt(((self.lat-self.home_lat)*lat_scale)**2 + ((self.lon-self.home_lon)*lat_scale*math.cos(math.radians(self.lat)))**2)
                     self.final_dist = final_error
-                    print(f"MISSION COMPLETE. Final Error: {self.final_dist:.2f} m")
+                    print(f"MISSION COMPLETE. Landed {self.final_dist:.2f}m from home.")
                     self._set_state(State.DONE)
                 else:
-                    self.send_global_target(self.landing_lat, self.landing_lon, 0) 
+                    self.send_global_target(self.home_lat, self.home_lon, 0)
 
             # Read key from cv2 (if display) or command queue (terminal/HTTP)
             key = -1
@@ -768,8 +972,14 @@ class VisualFlightMission:
              
     def get_dist_to_target(self): return self.get_dist_to_point(self.target_lat, self.target_lon)
     def get_dist_to_point(self, t_lat, t_lon):
-        lat_scale = 111132.0 
+        lat_scale = 111132.0
         return math.sqrt(((self.lat-t_lat)*lat_scale)**2 + ((self.lon-t_lon)*lat_scale*math.cos(math.radians(self.lat)))**2)
+
+    @staticmethod
+    def _gps_dist(lat1, lon1, lat2, lon2):
+        """Distance in meters between two GPS points."""
+        s = 111132.0
+        return math.sqrt(((lat1-lat2)*s)**2 + ((lon1-lon2)*s*math.cos(math.radians(lat1)))**2)
 
 def _dry_run(mission):
     """Dry-run mode: generate lawnmower pattern from SEARCH_AREA_GPS, display it, exit.
@@ -800,7 +1010,11 @@ def _dry_run(mission):
     print(f"  Model: {MODEL_PATH}")
 
     canvas_w, canvas_h = 4800, 4800
-    waypoints = mission.planner.generate_search_pattern(canvas_w, canvas_h, drone_gps)
+    print(f"  Search pattern: {SEARCH_PATTERN}")
+    if SEARCH_PATTERN == "spiral":
+        waypoints = mission.planner.generate_spiral_pattern(canvas_w, canvas_h, drone_gps)
+    else:
+        waypoints = mission.planner.generate_search_pattern(canvas_w, canvas_h, drone_gps)
 
     if not waypoints:
         print("\n  ERROR: No waypoints generated! Check search polygon.")

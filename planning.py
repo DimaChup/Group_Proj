@@ -51,15 +51,29 @@ class PathPlanner:
         # Generate ALL possible lines (Strips)
         all_strips = []
         
-        for scan_y in range(y + step_px//2, y + h, step_px):
+        margin = step_px // 2
+        bottom_limit = y + h - margin
+        last_scan_y = -999
+
+        scan_lines = list(range(y + margin, y + h, step_px))
+        # Ensure the last edge line is included (clamped to margin from border)
+        if not scan_lines or scan_lines[-1] < bottom_limit:
+            scan_lines.append(bottom_limit)
+
+        for scan_y in scan_lines:
+            scan_y = min(scan_y, bottom_limit)
+            if scan_y == last_scan_y:
+                continue  # skip duplicate
+            last_scan_y = scan_y
             row = rotated_mask[scan_y, :]
             pixels = np.where(row == 255)[0]
             if len(pixels) > 0:
-                # Find start and end of the scan line in this row
-                x_start = pixels[0]
-                x_end = pixels[-1]
-                # Store as rotated points (x, y)
-                all_strips.append( [ (x_start, scan_y), (x_end, scan_y) ] )
+                # Inset by margin to keep buffer from polygon edge on turns
+                x_start = pixels[0] + margin
+                x_end = pixels[-1] - margin
+                if x_end > x_start:
+                    # Store as rotated points (x, y)
+                    all_strips.append( [ (x_start, scan_y), (x_end, scan_y) ] )
 
         # 3. GLOBAL OPTIMIZATION: CLOSEST START CORNER
         direction = 1 # Default (Left to Right)
@@ -119,4 +133,93 @@ class PathPlanner:
             # ZigZag
             direction *= -1
 
+        return wps
+
+    # --- SPIRAL PATTERN ---
+    def generate_spiral_pattern(self, map_w, map_h, drone_gps=None):
+        """Simple rectangular inward spiral using same rotated-mask approach as lawnmower."""
+        if len(self.search_polygon) < 3:
+            return []
+
+        print("[PLANNER] Calculating Spiral Path")
+
+        # 1. MASK + ROTATION (same as lawnmower)
+        mask = np.zeros((map_h, map_w), dtype=np.uint8)
+        poly_pts = np.array([self.search_polygon], dtype=np.int32)
+        cv2.fillPoly(mask, poly_pts, 255)
+        self.virtual_polygon = poly_pts.reshape(-1, 1, 2)
+
+        rect = cv2.minAreaRect(poly_pts[0])
+        (center, size, angle) = rect
+        scan_angle = angle + 90 if size[0] < size[1] else angle
+
+        M = cv2.getRotationMatrix2D(center, scan_angle, 1.0)
+        M_inv = cv2.invertAffineTransform(M)
+        rotated_mask = cv2.warpAffine(mask, M, (map_w, map_h))
+
+        # 2. SWATH
+        ground_width_m = (config.SENSOR_WIDTH_MM * config.TARGET_ALT) / config.FOCAL_LENGTH_MM
+        overlap = 0.2
+        SWATH_M = ground_width_m * (1.0 - overlap)
+        step_px = max(1, int(SWATH_M * self.pix_per_m))
+
+        points = cv2.findNonZero(rotated_mask)
+        if points is None:
+            return []
+        x, y, w, h = cv2.boundingRect(points)
+
+        # 3. RECTANGULAR SPIRAL (inward)
+        # Walk the edges of the bounding rect, shrinking inward each ring
+        spiral_pts = []
+        top, bottom, left, right = y, y + h, x, x + w
+
+        while top < bottom and left < right:
+            # Top edge: left -> right
+            for sx in range(left + step_px // 2, right, step_px):
+                if rotated_mask[min(top + step_px // 2, map_h - 1), sx] == 255:
+                    spiral_pts.append((sx, top + step_px // 2))
+            top += step_px
+
+            # Right edge: top -> bottom
+            for sy in range(top + step_px // 2, bottom, step_px):
+                if rotated_mask[sy, min(right - step_px // 2, map_w - 1)] == 255:
+                    spiral_pts.append((right - step_px // 2, sy))
+            right -= step_px
+
+            # Bottom edge: right -> left
+            if top < bottom:
+                for sx in range(right - step_px // 2, left, -step_px):
+                    if rotated_mask[min(bottom - step_px // 2, map_h - 1), sx] == 255:
+                        spiral_pts.append((sx, bottom - step_px // 2))
+                bottom -= step_px
+
+            # Left edge: bottom -> top
+            if left < right:
+                for sy in range(bottom - step_px // 2, top, -step_px):
+                    if rotated_mask[sy, max(left + step_px // 2, 0)] == 255:
+                        spiral_pts.append((left + step_px // 2, sy))
+                left += step_px
+
+        # 4. UNROTATE + CONVERT TO GPS
+        if not spiral_pts:
+            return []
+
+        pts_arr = np.array([spiral_pts], dtype=np.float32)
+        pts_orig = cv2.transform(pts_arr, M_inv)[0]
+
+        wps = []
+        for p in pts_orig:
+            gps = self.geo.pixels_to_gps(p[0], p[1])
+            wps.append(gps)
+
+        # 5. START FROM CLOSEST CORNER TO DRONE
+        if drone_gps and wps:
+            drone_px = self.geo.gps_to_pixels(drone_gps[0], drone_gps[1])
+            dists = []
+            for p in pts_orig:
+                dists.append((p[0] - drone_px[0])**2 + (p[1] - drone_px[1])**2)
+            start_idx = dists.index(min(dists))
+            wps = wps[start_idx:] + wps[:start_idx]
+
+        print(f"  Spiral: {len(wps)} waypoints")
         return wps

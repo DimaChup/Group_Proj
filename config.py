@@ -55,7 +55,7 @@ CONNECTION_STR = _detect_connection()
 BAUD_RATE = int(os.environ.get("DRONE_BAUD", 921600))
 
 # --- ALTITUDES ---
-TARGET_ALT = 30.0 # Search Altitude (Meters)
+TARGET_ALT = 50.0 # Search Altitude (Meters) — 50m for wider coverage
 VERIFY_ALT = 15.0 # Descent Altitude for Verification
 
 # --- MAP CONFIGURATION (Simulation Only) ---
@@ -158,8 +158,9 @@ def load_kml_zones(kml_path="AENGM0074.kml"):
                 lon, lat = float(parts[0]), float(parts[1])
                 if "take" in name.lower() or "off" in name.lower():
                     TAKEOFF_GPS = (lat, lon)
-                    REF_LAT = lat
-                    REF_LON = lon
+                    # NOTE: Do NOT overwrite REF_LAT/REF_LON here.
+                    # Those define the map.jpg origin (top-left corner).
+                    # Changing them breaks all GPS↔pixel conversions.
 
         # Polygon placemarks
         coords = pm.find(".//kml:Polygon/kml:outerBoundaryIs/kml:LinearRing/kml:coordinates", ns)
