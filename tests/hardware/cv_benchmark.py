@@ -12,25 +12,25 @@ Tests:
   - Simulated motion blur at different speeds
 
 Usage:
-    python tests2/cv_benchmark.py                  # live camera + AI
-    python tests2/cv_benchmark.py --headless        # no display (SSH)
-    python tests2/cv_benchmark.py --blur            # test motion blur
-    python tests2/cv_benchmark.py --blur --headless
+    python tests/hardware/cv_benchmark.py                  # live camera + AI
+    python tests/hardware/cv_benchmark.py --headless        # no display (SSH)
+    python tests/hardware/cv_benchmark.py --blur            # test motion blur
+    python tests/hardware/cv_benchmark.py --blur --headless
 """
 import sys
 import os
 import time
 import numpy as np
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+script_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(os.path.dirname(script_dir))
+sys.path.insert(0, project_root)
 
 import cv2
 from vision import VisionSystem
 
 HEADLESS = "--headless" in sys.argv
 BLUR_TEST = "--blur" in sys.argv
-
-project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 model_path = os.path.join(project_root, "best.tflite")
 
 

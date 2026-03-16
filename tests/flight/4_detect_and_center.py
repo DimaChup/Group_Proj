@@ -48,13 +48,13 @@ Options:
 Usage:
     # Simulation (laptop + SITL):
     set DRONE_MODE=SIMULATION
-    python tests2/pi_detect_and_center.py
+    python tests/flight/4_detect_and_center.py
 
     # Real (Pi + Cube):
-    python tests2/pi_detect_and_center.py --headless --stream
+    python tests/flight/4_detect_and_center.py --headless --stream
 
     # Dry run (verify everything without flying):
-    python tests2/pi_detect_and_center.py --dry-run
+    python tests/flight/4_detect_and_center.py --dry-run
 """
 import sys
 import os

@@ -71,14 +71,13 @@ while True:
 
     if found and c >= conf:
         det_count += 1
-        # Draw box on frame
-        h, w = frame.shape[:2]
+        # Draw box on frame (x, y are already pixel coordinates from detect_in_image)
         box_size = 40
         cv2.rectangle(frame,
-                      (int(x * w) - box_size, int(y * h) - box_size),
-                      (int(x * w) + box_size, int(y * h) + box_size),
+                      (int(x) - box_size, int(y) - box_size),
+                      (int(x) + box_size, int(y) + box_size),
                       (0, 255, 0), 2)
-        cv2.putText(frame, f"{c:.2f}", (int(x * w) - box_size, int(y * h) - box_size - 5),
+        cv2.putText(frame, f"{c:.2f}", (int(x) - box_size, int(y) - box_size - 5),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
 
         # Save

@@ -15,14 +15,16 @@ Setup:
   6. Script tells you the real FOV and what to put in config.py
 
 Usage:
-    python tests/pi_7_alt_test.py                    # auto-detect
-    python tests/pi_7_alt_test.py /dev/ttyAMA0 57600 # manual
+    python tests/calibration/alt_test.py                    # auto-detect
+    python tests/calibration/alt_test.py /dev/ttyAMA0 57600 # manual
 """
 import sys
 import os
 import math
 import time
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+script_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(os.path.dirname(script_dir))
+sys.path.insert(0, project_root)
 
 import cv2
 import config

@@ -23,14 +23,16 @@ Steps:
     4. Enter those values when prompted
 
 Usage:
-    python tests2/fov_calibrate.py                # with display
-    python tests2/fov_calibrate.py --headless     # terminal only
+    python tests/calibration/fov_calibrate.py                # with display
+    python tests/calibration/fov_calibrate.py --headless     # terminal only
 """
 import sys
 import os
 import time
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+script_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(os.path.dirname(script_dir))
+sys.path.insert(0, project_root)
 
 import cv2
 import numpy as np
@@ -38,8 +40,6 @@ from vision import VisionSystem
 import config
 
 HEADLESS = "--headless" in sys.argv
-
-project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 model_path = os.path.join(project_root, "best.tflite")
 
 
@@ -234,7 +234,7 @@ def main():
     print(f"  BLUR QUICK CHECK")
     print(f"  {'='*55}")
     print(f"  To test motion blur, run:")
-    print(f"    python tests2/cv_benchmark.py --blur")
+    print(f"    python tests/hardware/cv_benchmark.py --blur")
     print(f"  This simulates blur at different drone speeds.")
     print()
 

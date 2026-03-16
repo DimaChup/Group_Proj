@@ -787,12 +787,20 @@ class PiFlight:
             if self.investigate_cluster_idx is not None and self.investigate_cluster_idx < len(self.detection_clusters):
                 ci = self.investigate_cluster_idx
                 cl = self.detection_clusters[ci]
-                self.logged_items.append({"type": "false_positive", "lat": 0, "lon": 0,
+                fp_gps = cl.get("total_gps") or cl.get("best_gps")
+                self.logged_items.append({"type": "false_positive",
+                                          "lat": fp_gps[0] if fp_gps else 0,
+                                          "lon": fp_gps[1] if fp_gps else 0,
                                           "cluster_id": cl["id"]})
                 msg = f"#{cl['id']} discarded as false positive"
                 print(f"[FP] {msg}")
-                # Remove cluster
+                # Remove cluster and fix active_cluster_idx
                 self.detection_clusters.pop(ci)
+                if self.active_cluster_idx is not None:
+                    if self.active_cluster_idx == ci:
+                        self.active_cluster_idx = 0 if self.detection_clusters else None
+                    elif self.active_cluster_idx > ci:
+                        self.active_cluster_idx -= 1
                 self._cancel_investigate()
             else:
                 msg = "Not investigating anything"
@@ -844,6 +852,8 @@ class PiFlight:
             print("[RESUME] Manual mode")
 
         elif action == "rtl":
+            if self._passive_block("RTL"):
+                return {"ok": False, "message": "Blocked (passive mode)"}
             if self.master:
                 self.master.mav.command_long_send(
                     self.master.target_system, self.master.target_component,

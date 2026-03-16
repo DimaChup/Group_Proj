@@ -20,13 +20,15 @@ LED Reference (Here 3+):
   Flashing YELLOW = RC failsafe active
 
 Usage:
-    python tests2/gps_health.py
+    python tests/hardware/gps_health.py
 """
 import sys
 import os
 import time
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+script_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(os.path.dirname(script_dir))
+sys.path.insert(0, project_root)
 
 from pymavlink import mavutil
 import config

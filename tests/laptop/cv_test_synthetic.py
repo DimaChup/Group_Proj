@@ -9,10 +9,10 @@ Uses map.jpg as background and dummy.png as the target (both in git).
 Runs entirely offline — no camera, no Cube, no connection needed.
 
 Usage:
-    python tests/pi_cv_test.py                  # interactive (shows frames)
-    python tests/pi_cv_test.py --headless        # terminal-only output
-    python tests/pi_cv_test.py --save            # save test frames to tests/cv_frames/
-    python tests/pi_cv_test.py --headless --save # both
+    python tests/laptop/cv_test_synthetic.py                  # interactive (shows frames)
+    python tests/laptop/cv_test_synthetic.py --headless        # terminal-only output
+    python tests/laptop/cv_test_synthetic.py --save            # save test frames to tests/cv_frames/
+    python tests/laptop/cv_test_synthetic.py --headless --save # both
 """
 
 import sys

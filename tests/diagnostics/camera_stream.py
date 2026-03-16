@@ -33,9 +33,9 @@ Options:
   --headless          No local display
 
 Usage:
-    python tests2/pi_camera_stream.py                          # basic stream
-    python tests2/pi_camera_stream.py --with-detection         # stream + AI overlay
-    python tests2/pi_camera_stream.py --res 160x120 --fps 3   # low bandwidth
+    python tests/diagnostics/camera_stream.py                          # basic stream
+    python tests/diagnostics/camera_stream.py --with-detection         # stream + AI overlay
+    python tests/diagnostics/camera_stream.py --res 160x120 --fps 3   # low bandwidth
 """
 import sys
 import os

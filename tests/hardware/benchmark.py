@@ -4,8 +4,8 @@ STEP 3: Benchmark and compare backends.
 Runs the SAME test image through detection and reports results.
 Run on Windows (Ultralytics) and Pi/Docker (TFLite) - results should match.
 
-Usage: python tests/pi_3_benchmark.py
-       python tests/pi_3_benchmark.py my_image.jpg
+Usage: python tests/hardware/benchmark.py
+       python tests/hardware/benchmark.py my_image.jpg
 """
 import sys
 import os

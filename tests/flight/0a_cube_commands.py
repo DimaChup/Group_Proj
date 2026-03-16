@@ -8,13 +8,15 @@ This proves Pi → Cube (commands) works.
 Safe to run on bench — no props needed, won't fly.
 
 Usage:
-    python tests2/cube_commands.py
+    python tests/flight/0a_cube_commands.py
 """
 import sys
 import os
 import time
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+script_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(os.path.dirname(script_dir))
+sys.path.insert(0, project_root)
 
 from pymavlink import mavutil
 

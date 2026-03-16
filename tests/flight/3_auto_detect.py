@@ -22,12 +22,12 @@ Safety:
   - Ctrl+C: switches back to AUTO before exiting
 
 Usage:
-    python tests2/pi_auto_detect.py                     # live, with screen
-    python tests2/pi_auto_detect.py --headless           # SSH mode
-    python tests2/pi_auto_detect.py --dry-run            # detect only, no commands
-    python tests2/pi_auto_detect.py --timeout 10         # resume AUTO after 10s hover
-    python tests2/pi_auto_detect.py --min-conf 0.5       # higher confidence needed
-    python tests2/pi_auto_detect.py --min-detections 3   # need 3 consecutive detections
+    python tests/flight/3_auto_detect.py                     # live, with screen
+    python tests/flight/3_auto_detect.py --headless           # SSH mode
+    python tests/flight/3_auto_detect.py --dry-run            # detect only, no commands
+    python tests/flight/3_auto_detect.py --timeout 10         # resume AUTO after 10s hover
+    python tests/flight/3_auto_detect.py --min-conf 0.5       # higher confidence needed
+    python tests/flight/3_auto_detect.py --min-detections 3   # need 3 consecutive detections
 """
 
 import sys

@@ -33,9 +33,9 @@ Options:
   --headless          No local display
 
 Usage:
-  python tests2/pi_camera_stream_h264.py
-  python tests2/pi_camera_stream_h264.py --with-detection
-  python tests2/pi_camera_stream_h264.py --bitrate 500k --fps 10
+  python tests/diagnostics/camera_stream_h264.py
+  python tests/diagnostics/camera_stream_h264.py --with-detection
+  python tests/diagnostics/camera_stream_h264.py --bitrate 500k --fps 10
 """
 import sys
 import os
@@ -389,7 +389,7 @@ def main():
     print(f"\n  Open in browser on ground station:")
     print(f"    http://{pi_ip}:{PORT}/")
     print(f"\n  Note: HLS has ~2-4 sec latency (normal for H.264 segments)")
-    print(f"  MJPEG version (lower latency): python tests2/pi_camera_stream.py")
+    print(f"  MJPEG version (lower latency): python tests/diagnostics/camera_stream.py")
     print()
 
     # Run camera loop

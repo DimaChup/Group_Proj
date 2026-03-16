@@ -15,15 +15,17 @@ Shows:
 Updates continuously. Great for diagnosing GPS issues.
 
 Usage:
-    python tests2/cube_monitor.py
-    python tests2/cube_monitor.py --raw     (show ALL raw messages)
+    python tests/diagnostics/cube_monitor.py
+    python tests/diagnostics/cube_monitor.py --raw     (show ALL raw messages)
 """
 import sys
 import os
 import time
 import math
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+script_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(os.path.dirname(script_dir))
+sys.path.insert(0, project_root)
 
 from pymavlink import mavutil
 import config

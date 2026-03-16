@@ -680,7 +680,11 @@ class VisualFlightMission:
                     # FIX 2: Update position from real GPS (replaces config REF_LAT/REF_LON)
                     self.lat = gps_msg.lat / 1e7
                     self.lon = gps_msg.lon / 1e7
+                    # Update home position to actual takeoff location (not config)
+                    self.home_lat = self.lat
+                    self.home_lon = self.lon
                     print(f"GPS FIX OK — fix_type={fix_type}, sats={sats}, lat={self.lat:.6f}, lon={self.lon:.6f}")
+                    print(f"  Home position set to actual GPS: ({self.home_lat:.6f}, {self.home_lon:.6f})")
                 elif time.time() - self._last_gps_status_print > 5.0:
                     print(f"Waiting for GPS fix... (fix_type={fix_type}, sats={sats})")
                     self._last_gps_status_print = time.time()
@@ -883,6 +887,7 @@ class VisualFlightMission:
              print("CENTERING TIMEOUT: Lost target or can't converge. Resuming search.")
              self._centering_timeout_warned = True
              self._set_state(State.SEARCH)
+             return
          if target_found: self.calculate_target_gps(px_u, px_v)
          if time.time() - self.last_req > 0.2:
              self.send_global_target(self.target_lat, self.target_lon, config.TARGET_ALT)
@@ -991,8 +996,28 @@ class VisualFlightMission:
             self.final_dist = final_error
             print(f"MISSION COMPLETE. Landed {self.final_dist:.2f}m from home.")
             self._set_state(State.DONE)
-        else:
-            self.send_global_target(self.home_lat, self.home_lon, 0)
+        elif not getattr(self, '_land_cmd_sent', False):
+            # Send MAV_CMD_NAV_LAND once — proper controlled descent
+            # ArduCopter handles throttle, ground detection, and auto-disarm
+            self.master.mav.command_long_send(
+                self.master.target_system, self.master.target_component,
+                mavutil.mavlink.MAV_CMD_NAV_LAND, 0,
+                0, 0, 0, 0,
+                int(self.home_lat * 1e7), int(self.home_lon * 1e7), 0)
+            self._land_cmd_sent = True
+            self._land_cmd_time = time.time()
+            print("  MAV_CMD_NAV_LAND sent")
+        elif getattr(self, '_land_cmd_sent', False):
+            # Retry if not descending after 5s (command may have been rejected)
+            elapsed = time.time() - getattr(self, '_land_cmd_time', time.time())
+            if elapsed > 5.0 and self.alt > 1.0:
+                print("  LAND not descending — retrying MAV_CMD_NAV_LAND")
+                self.master.mav.command_long_send(
+                    self.master.target_system, self.master.target_component,
+                    mavutil.mavlink.MAV_CMD_NAV_LAND, 0,
+                    0, 0, 0, 0,
+                    int(self.home_lat * 1e7), int(self.home_lon * 1e7), 0)
+                self._land_cmd_time = time.time()
 
     # ── Key input handling ───────────────────────────────────────────
 
@@ -1170,6 +1195,7 @@ class VisualFlightMission:
         self._takeoff_timeout_warned = False
         self._centering_timeout_warned = False
         self._descending_timeout_warned = False
+        self._land_cmd_sent = False
 
     def send_global_target(self, lat, lon, alt):
         self.master.mav.set_position_target_global_int_send(

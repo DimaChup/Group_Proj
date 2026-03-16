@@ -9,12 +9,14 @@ Shows:
   - Live updating table until you get a fix or Ctrl+C
 
 Usage:
-    python tests2/gps_test.py
+    python tests/hardware/gps_test.py
 """
 import sys
 import os
 import time
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+script_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(os.path.dirname(script_dir))
+sys.path.insert(0, project_root)
 
 from pymavlink import mavutil
 import config

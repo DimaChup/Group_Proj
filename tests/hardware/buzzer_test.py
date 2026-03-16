@@ -5,12 +5,14 @@ Pi Test 3b: Buzzer test - plays melodies on the Cube's buzzer via MAVLink.
 Requires mavproxy running in another terminal.
 
 Usage:
-    python tests/pi_3b_buzzer.py
+    python tests/hardware/buzzer_test.py
 """
 import sys
 import os
 import time
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+script_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(os.path.dirname(script_dir))
+sys.path.insert(0, project_root)
 
 from pymavlink import mavutil
 

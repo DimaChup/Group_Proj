@@ -108,12 +108,12 @@ def benchmark_model(model_path, model_name, camera, n_frames):
     print(f"  Running {n_frames} frames...")
 
     for i in range(n_frames):
-        frame = camera.read() if hasattr(camera, 'read') else None
-        if frame is None:
-            # If camera.read() returns tuple (ret, frame)
-            ret, frame = camera.read() if hasattr(camera, 'read') else (False, None)
+        if hasattr(camera, 'read'):
+            ret, frame = camera.read()
             if not ret or frame is None:
                 frame = dummy_img  # fallback
+        else:
+            frame = dummy_img  # fallback
 
         t0 = time.time()
         found, px, py, conf = eyes.detect_in_image(frame)

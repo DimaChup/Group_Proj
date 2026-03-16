@@ -30,9 +30,9 @@ Options:
   --headless          No local display
 
 Usage:
-    python tests2/pi_camera_stream_fast.py --with-detection
-    python tests2/pi_camera_stream_fast.py --with-detection --fps 20 --quality 70
-    python tests2/pi_camera_stream_fast.py --res 640x480 --fps 10
+    python tests/diagnostics/camera_stream_fast.py --with-detection
+    python tests/diagnostics/camera_stream_fast.py --with-detection --fps 20 --quality 70
+    python tests/diagnostics/camera_stream_fast.py --res 640x480 --fps 10
 """
 import sys
 import os

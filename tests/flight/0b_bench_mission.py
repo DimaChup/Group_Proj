@@ -21,14 +21,16 @@ Safe on bench — no propellers needed. Motors will NOT spin
 (we don't actually arm, we just test commands).
 
 Usage:
-    python tests2/bench_mission.py              # on Pi
-    python tests2/bench_mission.py --with-arm   # also try arming (outdoor only!)
+    python tests/flight/0b_bench_mission.py              # on Pi
+    python tests/flight/0b_bench_mission.py --with-arm   # also try arming (outdoor only!)
 """
 import sys
 import os
 import time
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+script_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(os.path.dirname(script_dir))
+sys.path.insert(0, project_root)
 
 from pymavlink import mavutil
 import config

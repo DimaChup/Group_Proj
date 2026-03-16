@@ -11,8 +11,8 @@ Carry the drone by hand over a dummy printout. This script shows:
 No commands sent. Safe on bench. Proves the full pipeline.
 
 Usage:
-    python tests2/feedback_test.py --headless
-    DISPLAY=:0 python tests2/feedback_test.py
+    python tests/flight/0c_feedback_test.py --headless
+    DISPLAY=:0 python tests/flight/0c_feedback_test.py
 """
 import sys
 import os

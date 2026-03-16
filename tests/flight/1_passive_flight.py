@@ -38,12 +38,12 @@ Detection image capture (use with --save-detections):
   Review after flight to see blur at different speeds and which frames detected.
 
 Usage:
-    python tests2/pi_passive_flight.py                    # with screen
-    python tests2/pi_passive_flight.py --headless         # terminal only (SSH)
-    python tests2/pi_passive_flight.py --headless --stream # SSH + stream to laptop
-    python tests2/pi_passive_flight.py --stream --stream-res 640x480 --stream-quality 70
-    python tests2/pi_passive_flight.py --headless --save-frames              # save all AI frames
-    python tests2/pi_passive_flight.py --headless --save-frames --save-every 4  # save every 4th frame
+    python tests/flight/1_passive_flight.py                    # with screen
+    python tests/flight/1_passive_flight.py --headless         # terminal only (SSH)
+    python tests/flight/1_passive_flight.py --headless --stream # SSH + stream to laptop
+    python tests/flight/1_passive_flight.py --stream --stream-res 640x480 --stream-quality 70
+    python tests/flight/1_passive_flight.py --headless --save-frames              # save all AI frames
+    python tests/flight/1_passive_flight.py --headless --save-frames --save-every 4  # save every 4th frame
 """
 
 import sys

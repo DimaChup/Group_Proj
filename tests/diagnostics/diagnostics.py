@@ -19,8 +19,8 @@ Three switchable views (press 1/2/3):
     All MAVLink message types with their rates in Hz.
 
 Usage:
-    python tests/pi_diagnostics.py             # with display
-    python tests/pi_diagnostics.py --headless   # terminal only (SSH)
+    python tests/diagnostics/diagnostics.py             # with display
+    python tests/diagnostics/diagnostics.py --headless   # terminal only (SSH)
 """
 import sys
 import os

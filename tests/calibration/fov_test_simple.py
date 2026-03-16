@@ -8,14 +8,16 @@ Enter the height and the width you can see on the ground.
 It calculates your actual FOV and compares to config.py values.
 
 Usage:
-    python tests/pi_6_fov_test.py             # with display
-    python tests/pi_6_fov_test.py --headless  # text prompts only
+    python tests/calibration/fov_test_simple.py             # with display
+    python tests/calibration/fov_test_simple.py --headless  # text prompts only
 """
 import sys
 import os
 import math
 import time
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+script_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(os.path.dirname(script_dir))
+sys.path.insert(0, project_root)
 
 headless = "--headless" in sys.argv
 
