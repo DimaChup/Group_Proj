@@ -20,5 +20,4 @@ class State:
     RETURN_HOME = "RETURN_HOME"
     LANDING = "LANDING"
     MANUAL = "MANUAL"
-    SAFETY_HALT = "SAFETY_HALT" 
     DONE = "DONE"
