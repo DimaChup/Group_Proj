@@ -266,7 +266,7 @@ class SimulationEnvironment:
 
         return final_view, view_w_px, view_h_px
 
-    def get_god_view(self, cx, cy, yaw, view_w_px, view_h_px, zoom_level, virtual_poly, search_poly, target_gps, landing_gps, geo_tool, logged_items=None, detection_clusters=None, active_cluster_idx=None, search_wps=None, search_wp_index=0, transit_wps_gps=None, transit_wp_index=0, current_state=None):
+    def get_god_view(self, cx, cy, yaw, view_w_px, view_h_px, zoom_level, virtual_poly, search_poly, target_gps, landing_gps, geo_tool, logged_items=None, detection_clusters=None, active_cluster_idx=None, search_wps=None, search_wp_index=0, transit_wps_gps=None, transit_wp_index=0, current_state=None, rescan_pass=0):
         display_map = self.full_map.copy()
         
         # Render ALL targets on god view
@@ -284,10 +284,13 @@ class SimulationEnvironment:
               cv2.drawContours(display_map, [virtual_poly], -1, (255, 0, 255), 2)
 
         # Draw Coverage (only during SEARCH — transit doesn't count as swept)
+        # Pass 0 = cyan/yellow, pass 1+ = orange (different color per rescan)
+        coverage_colors = [(255, 255, 0), (0, 140, 255), (0, 255, 128)]  # yellow, orange, green
+        cov_color = coverage_colors[min(rescan_pass, len(coverage_colors) - 1)]
         rect = ((cx, cy), (view_w_px, view_h_px), math.degrees(yaw))
         box = np.int32(cv2.boxPoints(rect))
         if current_state == "SEARCH":
-            cv2.fillPoly(self.coverage_overlay, [box], (255, 255, 0))
+            cv2.fillPoly(self.coverage_overlay, [box], cov_color)
         cv2.addWeighted(self.coverage_overlay, 0.2, display_map, 1.0, 0, display_map)
         
         cv2.circle(display_map, (cx, cy), 8, (255, 0, 0), -1)
