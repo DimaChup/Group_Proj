@@ -536,6 +536,28 @@ class VisualFlightMission:
         if self.landing_lat != 0:
             cv2.putText(frame, f"LANDING: {self.landing_lat:.6f}, {self.landing_lon:.6f}", (10, 170), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
 
+        # Hover + servo status
+        if self.state == State.HOVER_TARGET:
+            elapsed = time.time() - self.state_start_time
+            remaining = max(0, 15.0 - elapsed)
+            cv2.putText(frame, f"HOVERING ({remaining:.0f}s)", (cx - 120, cy + 60),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2)
+            if getattr(self, '_servo_released', False):
+                # Flash big red PAYLOAD RELEASED
+                if int(elapsed * 3) % 2 == 0:  # blink
+                    cv2.putText(frame, "PAYLOAD RELEASED", (cx - 180, cy - 30),
+                                cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 0, 255), 3)
+            else:
+                cv2.putText(frame, f"Servo in {max(0, 5.0-elapsed):.0f}s", (cx - 80, cy + 90),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+
+        # Manual mode indicator
+        if self.state == State.MANUAL:
+            cv2.putText(frame, "MANUAL OVERRIDE", (cx - 150, cy - 30),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 165, 255), 3)
+            cv2.putText(frame, "WASD=fly R/F=alt Q/E=yaw M=resume", (cx - 220, cy + 20),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 165, 255), 2)
+
         # Final Result (After Landing)
         if self.state == State.DONE:
              cv2.putText(frame, f"FINAL ERROR: {self.final_dist:.2f} m", (cx - 150, cy), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 3)
@@ -637,15 +659,21 @@ class VisualFlightMission:
                     self.manual_departure_alt = self.alt
                     self._set_state(State.MANUAL)
                 else:
-                    # Check if we've moved away from where manual was engaged
-                    dist_from_departure = self.get_dist_to_point(
-                        self.manual_departure_lat, self.manual_departure_lon)
-                    if dist_from_departure > 5.0:
-                        print(f"Returning to manual departure point ({dist_from_departure:.0f}m away)...")
-                        self._set_state(State.RETURN_FROM_MANUAL)
+                    if target_found:
+                        # Detection during manual — go investigate immediately
+                        print("Target detected during manual flight — investigating!")
+                        self.calculate_target_gps(px_u, px_v)
+                        self._set_state(State.CENTERING)
                     else:
-                        print("Resuming Automation...")
-                        self._set_state(self.previous_state)
+                        # No detection — return to departure point first
+                        dist_from_departure = self.get_dist_to_point(
+                            self.manual_departure_lat, self.manual_departure_lon)
+                        if dist_from_departure > 5.0:
+                            print(f"Returning to manual departure point ({dist_from_departure:.0f}m away)...")
+                            self._set_state(State.RETURN_FROM_MANUAL)
+                        else:
+                            print("Resuming Automation...")
+                            self._set_state(self.previous_state)
 
             # MANUAL mode — WASD flight controls
             if self.state == State.MANUAL and self.master:
@@ -684,13 +712,17 @@ class VisualFlightMission:
                         self.selecting_landing_side = True
                     elif key == ord('n') or key == ord('N'):
                         self.rejected_targets.append((self.target_lat, self.target_lon))
-                        print(f"USER REJECTED TARGET at ({self.target_lat:.6f}, {self.target_lon:.6f}). RESUMING SEARCH.")
+                        print(f"USER REJECTED TARGET at ({self.target_lat:.6f}, {self.target_lon:.6f}). RESUMING.")
                         self.waiting_for_confirmation = False
                         self.target_lat = 0; self.target_lon = 0
                         self.last_req = 0  # force immediate command
-                        # Return to where we left the search path, then resume
-                        if self.departure_lat != 0:
-                            print(f"  Returning to departure point ({self.departure_lat:.6f}, {self.departure_lon:.6f})")
+                        # If we came from manual flight, return to manual departure
+                        if self.manual_departure_lat != 0 and self.previous_state == State.MANUAL:
+                            print(f"  Returning to manual departure point")
+                            self._set_state(State.RETURN_FROM_MANUAL)
+                        # If we came from search, return to search departure
+                        elif self.departure_lat != 0:
+                            print(f"  Returning to search departure point")
                             self._set_state(State.RETURN_TO_SEARCH)
                         else:
                             self._set_state(State.SEARCH)
