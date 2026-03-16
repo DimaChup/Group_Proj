@@ -30,13 +30,22 @@ python tools/label_tool.py --full "RealVideo/DJI_0001_1456x1088_cropped_30fps.mp
 ```
 
 **How label_tool.py --full works:**
-- Scroll through video with A/D keys (or arrow keys)
-- When you see the dummy, click top-left then bottom-right to draw bounding box
-- Press S to save the labelled frame
+- Opens each image in the input directory with an interactive OpenCV window
+- LEFT-CLICK on the dummy center to place a bounding box
+- SCROLL WHEEL to adjust box size (bigger/smaller)
+- Press S to save the labelled frame + YOLO label file
+- Press N to skip (no dummy in this frame)
 - Press Q when done
-- Output: `real_frame_*.jpg` + matching `.txt` YOLO label files
-- The `--full` flag ensures frames are saved at native resolution (1456x1088), not squished to 640x640
+- Output: `real_{filename}_{index}.jpg` + matching `.txt` YOLO label files in `--output` dir
+- The `--full` flag saves the full frame at native resolution (1456x1088), not cut into tiles
+- Without `--full`, the tool cuts 640x640 tiles — avoid this for training at native resolution
 - Label at multiple altitudes (15m, 25m, 35m, 50m) for best training coverage
+
+**Example:**
+```bash
+# Label preview frames, save to dataset_v2/ at full resolution
+python tools/label_tool.py dataset_v2/preview_50m/ --output dataset_v2 --full
+```
 
 ### Step 2: Generate Synthetic + Negative Images
 
@@ -281,7 +290,7 @@ cd ~/sar-drone && git pull
 ## Model Architecture Notes
 
 All models use YOLOv8n (nano) architecture:
-- **Input**: [1, 640, 640, 3] float32 (0-255 range, RGB)
+- **Input**: [1, 640, 640, 3] float32 (0.0-1.0 normalized, RGB — vision.py divides by 255)
 - **Output**: [1, 5, 8400] float32 (x, y, w, h, confidence per detection)
 - **Classes**: 1 (dummy)
 - **TFLite size**: 3.3MB (original) to 11.7MB (float32 retrained)
