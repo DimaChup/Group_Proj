@@ -336,6 +336,8 @@ class VisualFlightMission:
         self.current_conf = 0.0
         self.final_dist = 0.0 # Store final accuracy distance
         self.rejected_targets = []  # [(lat, lon), ...] — skip detections near these
+        self.departure_lat = 0     # where drone left the search path to investigate
+        self.departure_lon = 0
         
         # Pre-planned waypoints (fly before search)
         self.pre_waypoints = []
@@ -647,9 +649,13 @@ class VisualFlightMission:
                         print(f"USER REJECTED TARGET at ({self.target_lat:.6f}, {self.target_lon:.6f}). RESUMING SEARCH.")
                         self.waiting_for_confirmation = False
                         self.target_lat = 0; self.target_lon = 0
-                        # Climb back to search altitude and continue pattern
-                        self.last_req = 0  # force immediate waypoint command
-                        self._set_state(State.SEARCH)
+                        self.last_req = 0  # force immediate command
+                        # Return to where we left the search path, then resume
+                        if self.departure_lat != 0:
+                            print(f"  Returning to departure point ({self.departure_lat:.6f}, {self.departure_lon:.6f})")
+                            self._set_state(State.RETURN_TO_SEARCH)
+                        else:
+                            self._set_state(State.SEARCH)
 
             # --- STATE MACHINE ---
             if self.state == State.INIT:
@@ -808,6 +814,17 @@ class VisualFlightMission:
                     self._set_state(State.SEARCH)
                     self.wp_index = 0 # Start from index 0
 
+            elif self.state == State.RETURN_TO_SEARCH:
+                # Climb to search altitude and fly back to where we departed the search path
+                self.set_speed(config.TRANSIT_SPEED_MPS)
+                if time.time() - self.last_req > 2.0:
+                    self.send_global_target(self.departure_lat, self.departure_lon, config.TARGET_ALT)
+                    self.last_req = time.time()
+                if self.get_dist_to_point(self.departure_lat, self.departure_lon) < 3.0 and self.alt > config.TARGET_ALT * 0.85:
+                    print("Back at departure point. Resuming search pattern.")
+                    self.departure_lat = 0; self.departure_lon = 0
+                    self._set_state(State.SEARCH)
+
             elif self.state == State.SEARCH:
                 self.set_speed(config.SEARCH_SPEED_MPS)
                 if target_found:
@@ -821,6 +838,9 @@ class VisualFlightMission:
                             break
                     if not near_rejected:
                         print("TARGET DETECTED!")
+                        # Remember where we left the search path
+                        self.departure_lat = self.lat
+                        self.departure_lon = self.lon
                         self._set_state(State.CENTERING)
                 # Fly to next waypoint (runs when no new target, or target was rejected)
                 if self.state == State.SEARCH:
