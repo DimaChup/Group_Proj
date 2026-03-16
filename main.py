@@ -817,10 +817,14 @@ class VisualFlightMission:
                     self.last_req = time.time()
 
             elif self.state == State.TAKEOFF:
-                # If drone disarmed itself, go back to ARMING
+                # If drone disarmed itself, retry in SIMULATION only (unsafe for real hardware)
                 if self.master and not self.master.motors_armed():
-                    print("Drone disarmed during takeoff — retrying arm sequence...")
-                    self._set_state(State.ARMING)
+                    if config.MODE == "SIMULATION":
+                        print("Drone disarmed during takeoff — retrying arm sequence...")
+                        self._set_state(State.ARMING)
+                    else:
+                        print("DRONE DISARMED — safety stop. Re-arm manually via RC.")
+                        self._set_state(State.DONE)
                 # FIX 5: Takeoff timeout warning
                 elif time.time() - self.state_start_time > 60 and not self._takeoff_timeout_warned:
                     print("TAKEOFF TIMEOUT: Drone may not be climbing. Check motors and GPS.")
