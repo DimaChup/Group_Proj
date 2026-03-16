@@ -120,18 +120,18 @@ export const WBS_TREE: WBSNode[] = [
   { id: "sen-cam-2", wbs: "2.2.2", label: "Camera FOV characterization", parentId: "sen-cam", assignee: "cv", level: "all", status: "done",
     description: "Measure actual FOV, calculate ground coverage at altitude" },
   { id: "sen-cam-3", wbs: "2.2.3", label: "HD camera selection + mount", parentId: "sen-cam", assignee: "cv", level: 2, status: "done",
-    description: "IMX296 global shutter on Pi 5. 640x480, BGR output, 6mm lens." },
+    description: "IMX296 global shutter on Pi 5. 1456x1088 native, BGR output, 6mm lens." },
   { id: "sen-cam-4", wbs: "2.2.4", label: "Camera gimbal integration", parentId: "sen-cam", assignee: "cv", level: 3, status: "upcoming",
     description: "2-axis stabilized gimbal for tracking" },
 
   // 2.3 Computer Vision
   { id: "sen-cv", wbs: "2.3", label: "Computer Vision Pipeline", parentId: "sensing", assignee: "cv", level: 2, status: "done" },
   { id: "sen-cv-1", wbs: "2.3.1", label: "Training dataset collection", parentId: "sen-cv", assignee: "cv", level: 2, status: "done",
-    description: "200 synthetic images (map.jpg + dummy.png composites). Real photos pending." },
+    description: "366 images at 1456x1088 (300 synthetic + 16 real labelled + 50 negatives). Retrained v2 model: mAP50=0.995." },
   { id: "sen-cv-2", wbs: "2.3.2", label: "Person detection model selection", parentId: "sen-cv", assignee: "cv", level: 2, status: "done",
     description: "YOLOv8n selected. COCO person backup in models/human.tflite." },
   { id: "sen-cv-3", wbs: "2.3.3", label: "Model optimization for edge", parentId: "sen-cv", assignee: "cv", level: 2, status: "done",
-    description: "TFLite export done. ~250ms on Pi 5. NCNN 3x faster (future)." },
+    description: "TFLite export done. ~207ms on Pi 5 (4.8 FPS). NCNN export available (future ~15 FPS)." },
   { id: "sen-cv-4", wbs: "2.3.4", label: "Detection pipeline integration", parentId: "sen-cv", assignee: "cv", level: 2, status: "done",
     description: "vision.py: camera → TFLite inference → bounding box → GCS overlay via MJPEG" },
   { id: "sen-cv-5", wbs: "2.3.5", label: "CV-to-planner interface", parentId: "sen-cv", assignee: "cv", level: 3, status: "done",
@@ -271,8 +271,8 @@ export const WBS_TREE: WBSNode[] = [
     description: "Connect, configure, verify telemetry display" },
   { id: "gcs-sw-2", wbs: "6.1.2", label: "Custom telemetry dashboard", parentId: "gcs-sw", assignee: "gcs", level: 2, status: "done",
     description: "pi_flight.py: browser dashboard with battery, altitude, GPS, MJPEG stream at :8090" },
-  { id: "gcs-sw-3", wbs: "6.1.3", label: "Map overlay + NFZ display", parentId: "gcs-sw", assignee: "gcs", level: "all", status: "active",
-    description: "Search area, NFZ polygons, drone position on map" },
+  { id: "gcs-sw-3", wbs: "6.1.3", label: "Map overlay + NFZ display", parentId: "gcs-sw", assignee: "gcs", level: "all", status: "done",
+    description: "pi_flight.py: 2D GPS grid with detection clusters, search area overlay, drone position." },
   { id: "gcs-sw-4", wbs: "6.1.4", label: "Target marking interface", parentId: "gcs-sw", assignee: "gcs", level: 2, status: "done",
     description: "pi_flight.py: 2D GPS grid with detection clusters, N/Y/I/X classification buttons" },
 
@@ -307,8 +307,8 @@ export const WBS_TREE: WBSNode[] = [
     description: "GPS, IMU, baro all feeding EKF correctly" },
   { id: "int-comp-3", wbs: "7.1.3", label: "Comms range integration test", parentId: "int-comp", assignee: "pm", level: "all", status: "active",
     description: "RC + telemetry + video all working at range" },
-  { id: "int-comp-4", wbs: "7.1.4", label: "Camera-compute pipeline test", parentId: "int-comp", assignee: "cv", level: 2, status: "upcoming",
-    description: "Camera → companion → inference → GCS display" },
+  { id: "int-comp-4", wbs: "7.1.4", label: "Camera-compute pipeline test", parentId: "int-comp", assignee: "cv", level: 2, status: "done",
+    description: "Camera → companion → inference → GCS display. Working in passive_watch.py + pi_flight.py." },
 
   // 7.2 System Testing
   { id: "int-sys", wbs: "7.2", label: "System Testing", parentId: "integration", assignee: "pm", level: "all", status: "upcoming" },

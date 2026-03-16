@@ -77,12 +77,12 @@ export const HARDWARE = [
   { name: "Here 3+ GPS", role: "Navigation", details: "GNSS receiver connected to Cube CAN2. Multi-constellation (GPS+GLONASS+BeiDou). Needs outdoor clear sky.", status: "partial" as const, specUrl: "https://docs.cubepilot.org/user-guides/here-3/here-3+" },
   { name: "FrSky TW-Mini", role: "RC Receiver", details: "Receiver paired with FrSky Twin X14 transmitter. 2.4GHz, telemetry capable.", status: "verified" as const, specUrl: "" },
   { name: "Raspberry Pi 5", role: "Companion Computer", details: "Python 3.13, runs CV pipeline, communicates with Cube via mavproxy UDP bridge (921600 baud).", status: "verified" as const, specUrl: "https://www.raspberrypi.com/products/raspberry-pi-5/" },
-  { name: "Global Shutter Camera", role: "Vision Sensor", details: "IMX296 sensor, 640x480, BGR output. Global shutter = no rolling shutter artifacts. ~4 FPS with TFLite.", status: "verified" as const, specUrl: "" },
+  { name: "Global Shutter Camera", role: "Vision Sensor", details: "IMX296 sensor, 1456x1088, BGR output. Global shutter = no rolling shutter artifacts. ~4.8 FPS with TFLite.", status: "verified" as const, specUrl: "" },
   { name: "6mm CS-Mount Lens", role: "Optics", details: "6mm focal length lens for the global shutter camera. FOV suitable for 15-30m search altitude.", status: "verified" as const, specUrl: "" },
   { name: "FrSky Twin X14", role: "RC Transmitter", details: "Pilot's controller. Kill switch mapped to mode channel (STABILIZE). Always has override priority.", status: "verified" as const, specUrl: "" },
   { name: "Tarot Payload Release", role: "Delivery Mechanism", details: "Servo-actuated payload release for first aid kit delivery (R07). Triggered via MAVLink servo command.", status: "todo" as const, specUrl: "" },
   { name: "SanDisk MicroSD", role: "Storage", details: "For flight logs, detection images, mission data. Pi and Cube both have SD cards.", status: "verified" as const, specUrl: "" },
-  { name: "YOLOv8n TFLite", role: "AI Model", details: "Custom trained on synthetic dummy images. ~256ms inference on Pi. 0.966 confidence on bench test.", status: "verified" as const, specUrl: "" },
+  { name: "YOLOv8n TFLite", role: "AI Model", details: "Retrained on 366 real+synthetic images (mAP50=0.995). ~207ms inference on Pi (4.8 FPS). 0.966 confidence on bench test.", status: "verified" as const, specUrl: "" },
   { name: "mavproxy", role: "MAVLink Router", details: "Bridges Cube serial (TELEM2) to UDP (Pi scripts) + TCP (Mission Planner). Runs as service on Pi.", status: "verified" as const, specUrl: "https://ardupilot.org/mavproxy/" },
   { name: "Rangefinder / LiDAR", role: "AGL Altitude Sensor", details: "Measures true Above Ground Level altitude via laser or ultrasonic pulse. Provides accurate height data independent of barometer or GPS altitude, critical for precision landing in the 5-10m offset zone.", status: "todo" as const, specUrl: "" },
 ];
@@ -147,7 +147,7 @@ export const LEVELS: MissionLevel[] = [
       { name: "tests/diagnostics/camera_stream.py", purpose: "MJPEG video stream to browser (optional)" },
     ],
     whatsWorking: [
-      "Camera + AI detection on Pi (tested, 3.9 FPS)",
+      "Camera + AI detection on Pi (tested, 4.8 FPS)",
       "Buzzer alerts via MAVLink",
       "--save-detections flag saves geotagged images",
       "Cube connection verified, all subsystems OK",
@@ -699,10 +699,10 @@ export const L2_PARALLEL_TASKS: ParallelTask[] = [
   // Tuning
   {
     id: "pt-pi-fps", name: "Pi inference FPS benchmark",
-    description: "Run TFLite model on Pi with real camera frames. Bench result: ~4 FPS with TFLite. Done for TFLite — can revisit with NCNN backend (3x faster expected) or different resolution.",
+    description: "Run TFLite model on Pi with real camera frames. Bench result: 207ms / 4.8 FPS with TFLite. Done for TFLite — can revisit with NCNN backend (3x faster expected) or different resolution.",
     script: "tests/hardware/benchmark.py",
     status: "done", category: "tuning",
-    output: "~4 FPS TFLite on Pi 5. Next: try NCNN (~12 FPS expected) or reduce resolution.",
+    output: "207ms / 4.8 FPS TFLite on Pi 5. Next: try NCNN (~12 FPS expected) or reduce resolution.",
   },
   {
     id: "pt-altitude-sweep", name: "Detection rate vs altitude",
@@ -736,10 +736,10 @@ export const L2_PARALLEL_TASKS: ParallelTask[] = [
   // Data collection
   {
     id: "pt-training-data", name: "Capture real training images",
-    description: "Fly over dummy at various altitudes/angles. Save frames for model retraining. Current model trained on synthetic data only (generate_dataset.py) — real photos should improve accuracy significantly. Use capture_training.py (http://PI_IP:8091): SPACE=save photo, V=start video, Q=quit. Sends ZERO commands — safe alongside any flight. Can piggyback on cp-3 (manual flight) to save battery. Training guide: docs/TRAINING_GUIDE.md.",
+    description: "16 real frames labelled from DJI video + 300 synthetic + 50 negatives at 1456x1088 (dataset_v2/)",
     script: "capture_training.py",
-    status: "todo", category: "data",
-    output: "100+ real aerial photos of dummy for retraining on Colab.",
+    status: "done", category: "data",
+    output: "dataset_v2/ with 366 images (300 syn + 16 real + 50 neg) at 1456x1088. Ready for Colab.",
   },
   {
     id: "pt-stream-latency", name: "Test video stream latency",
@@ -788,10 +788,10 @@ export const L2_PARALLEL_TASKS: ParallelTask[] = [
   },
   {
     id: "pt-retrain-model", name: "Retrain model on real aerial photos",
-    description: "After capturing training images (pt-training-data), upload to Google Colab, retrain YOLOv8n on real aerial photos of dummy. Export to TFLite (and NCNN if available). Should significantly improve detection vs current synthetic-only model. Full guide: docs/TRAINING_GUIDE.md. Previous training: 200 synthetic images (generate_dataset.py). Save new model as models/best2.tflite, swap with: cp models/best2.tflite best.tflite.",
-    script: "generate_dataset.py → Colab → export",
-    status: "todo", category: "data",
+    description: "Retrained YOLOv8n on 366 images at 1088, mAP50=0.995. Stored in cv_models/sar_v2_1088/",
+    script: "generate_dataset_v2.py → Colab → export",
+    status: "done", category: "data",
     dependsOn: "pt-training-data",
-    output: "New best.tflite trained on real data. Compare detection rate vs original model.",
+    output: "cv_models/sar_v2_1088/best.tflite (11.7MB float32). Drop-in replacement. Deploy: cp cv_models/sar_v2_1088/best.tflite best.tflite",
   },
 ];

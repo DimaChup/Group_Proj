@@ -82,8 +82,8 @@ export const PROJECT_PHASE = {
 export const SUBSYSTEMS: Subsystem[] = [
   { id: "sim", name: "Simulation (SITL)", status: "done", notes: "Full mission runs on laptop with simulated camera", lastTested: "2026-02-20" },
   { id: "pi-hw", name: "Pi Hardware", status: "done", notes: "Camera, AI detection, Cube connection all verified on Pi 5", lastTested: "2026-02-17" },
-  { id: "camera", name: "Pi Camera (IMX296)", status: "done", notes: "640x480, BGR output (no cvtColor needed), global shutter", lastTested: "2026-02-17" },
-  { id: "ai", name: "AI Detection (TFLite)", status: "done", notes: "~256ms avg, 3.9 FPS, 50/50 detection at 0.966 confidence", lastTested: "2026-02-17" },
+  { id: "camera", name: "Pi Camera (IMX296)", status: "done", notes: "1456x1088, BGR output (no cvtColor needed), global shutter", lastTested: "2026-03-11" },
+  { id: "ai", name: "AI Detection (TFLite)", status: "done", notes: "~207ms avg, 4.8 FPS, 50/50 detection at 0.966 confidence. Recommended model: sar_v2_1088", lastTested: "2026-03-11" },
   { id: "cube", name: "Cube Connection", status: "done", notes: "Via mavproxy UDP bridge (921600 baud). All commands reach Cube.", lastTested: "2026-02-18" },
   { id: "gps", name: "GPS Lock", status: "partial", notes: "Hardware works (fix_type=1 indoors). Needs outdoor test for 3D fix.", lastTested: "2026-02-18" },
   { id: "mp", name: "Mission Planner", status: "done", notes: "Connected to Cube via mavproxy TCP bridge (tcpin:5762)", lastTested: "2026-02-18" },
@@ -219,6 +219,41 @@ export const DOCS: DocEntry[] = [
 
 export const SESSION_LOG: SessionEntry[] = [
   {
+    date: "2026-03-16",
+    summary: "DJI video analysis, model retraining v2, FOV calibration",
+    highlights: [
+      "Built video replay pipeline (video_test.py) with detection overlay, SRT telemetry, GPS estimation, scale bar, measure tool",
+      "A/B model comparison tool (video_test_compare.py) — M key switches models live",
+      "FOV calibrated to 54.4 deg HFOV for cropped DJI video (1456x1088) using tools/fov_calibrate_video.py",
+      "Retrained YOLOv8n on 300 synthetic + 16 real + 50 negatives at 1456x1088 — mAP50=0.995 (sar_v2_1088)",
+      "Created generate_dataset_v2.py + tools/label_tool.py for native resolution training data",
+      "dataset_v2/ with 366 images ready for Colab, cv_models/ with 3 model variants",
+    ],
+  },
+  {
+    date: "2026-03-11 (field day)",
+    summary: "FOV calibration, lens calibration, Pi benchmark — weather cancelled flight",
+    highlights: [
+      "FOV calibration: FOCAL_LENGTH_MM = 5.46 (92cm visible at 1m)",
+      "Lens calibration with checkerboard (RMS 0.399), undistortion added to vision.py (+1.5ms)",
+      "Pi benchmark: best.tflite 207ms avg / 4.8 FPS, 50/50 detection at 0.966 confidence",
+      "passive_watch.py improvements: GPS estimate at ground level, pink dot on detection center",
+      "CV speed research: FP16 XNNPACK (~10 FPS), threaded pipeline, NCNN (~15 FPS)",
+      "Weather cancelled actual flight — bench testing only",
+    ],
+  },
+  {
+    date: "2026-03-11",
+    summary: "BOOTSTRAP.md workflows, headless main.py, blueprints, code review",
+    highlights: [
+      "Applied BOOTSTRAP.md workflows: brain-dump.md, NICE_TO_HAVE.md, .claude/commands/, blueprints for all files >500 lines",
+      "main.py headless support: --headless flag, terminal keyboard input, browser buttons at http://PI_IP:8090",
+      "Thorough code review (6 parallel agents): found 3 bugs, 4 security issues in main.py, fixed pi_flight.py self.investigating bug",
+      "Drawing/flight script separation: draw on laptop → JSON → Pi loads headlessly",
+      "Fixed stale script references across 7+ docs",
+    ],
+  },
+  {
     date: "2026-03-09",
     summary: "Dashboard setup, buzzer tunes, --save-detections flag",
     highlights: [
@@ -323,12 +358,12 @@ export const SESSION_LOG: SessionEntry[] = [
 // ═══════════════════════════════════════════════════════════
 
 export const QUICK_REF: QuickRef[] = [
-  { label: "Pi IP", value: "192.168.1.121", copyable: true },
+  { label: "Pi IP", value: "192.168.1.3", copyable: true },
   { label: "Cube Baud", value: "921600" },
-  { label: "AI Model", value: "best.tflite (YOLOv8n)" },
+  { label: "AI Model", value: "best.tflite (YOLOv8n) — recommended: sar_v2_1088 (mAP50=0.995)" },
   { label: "Confidence", value: "0.4 (vision.py)" },
-  { label: "Pi Inference", value: "~256ms / 3.9 FPS" },
-  { label: "Camera", value: "IMX296 640x480 BGR (no cvtColor)" },
+  { label: "Pi Inference", value: "~207ms / 4.8 FPS" },
+  { label: "Camera", value: "IMX296 1456x1088 BGR (no cvtColor)" },
   { label: "Dashboard", value: "http://localhost:5050", copyable: true },
   { label: "pi_flight.py", value: "http://PI_IP:8090", copyable: true },
   { label: "mavproxy", value: "sudo /opt/mavlink/mavlink-venv/bin/mavproxy.py --master=/dev/ttyAMA0 --baudrate=921600 --streamrate=10 --out=udpout:127.0.0.1:14550 --out=tcpin:0.0.0.0:5762", copyable: true },
