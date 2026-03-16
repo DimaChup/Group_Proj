@@ -627,13 +627,36 @@ class VisualFlightMission:
             if key == ord('m') or key == ord('M'):
                 if self.state != State.MANUAL:
                     print("!!! MANUAL CONTROL OVERRIDE !!!")
+                    print("  WASD=move  R/F=up/down  Q/E=yaw  M=resume auto")
                     self.previous_state = self.state
                     self._set_state(State.MANUAL)
                 else:
                     print("Resuming Automation...")
                     if target_found: self._set_state(State.CENTERING)
                     else: self._set_state(self.previous_state)
-            
+
+            # MANUAL mode — WASD flight controls
+            if self.state == State.MANUAL and self.master:
+                fly_speed = 5.0   # m/s
+                climb_rate = 2.0  # m/s
+                yaw_rate = 30.0   # deg/s
+                if key == ord('w') or key == ord('W'):
+                    self.send_velocity(fly_speed, 0, 0)
+                elif key == ord('s') or key == ord('S'):
+                    self.send_velocity(-fly_speed, 0, 0)
+                elif key == ord('a') or key == ord('A'):
+                    self.send_velocity(0, -fly_speed, 0)
+                elif key == ord('d') or key == ord('D'):
+                    self.send_velocity(0, fly_speed, 0)
+                elif key == ord('r') or key == ord('R'):
+                    self.send_velocity(0, 0, -climb_rate)
+                elif key == ord('f') or key == ord('F'):
+                    self.send_velocity(0, 0, climb_rate)
+                elif key == ord('q') or key == ord('Q'):
+                    self.send_velocity(0, 0, 0, yaw_rate=-yaw_rate)
+                elif key == ord('e') or key == ord('E'):
+                    self.send_velocity(0, 0, 0, yaw_rate=yaw_rate)
+
             if self.state == State.VERIFY:
                 if self.selecting_landing_side:
                     if key in [ord('n'), ord('e'), ord('w'), ord('s'), ord('N'), ord('E'), ord('W'), ord('S')]:
@@ -1032,6 +1055,19 @@ class VisualFlightMission:
         if self.rescan_pass == 0:
             return config.TARGET_ALT
         return getattr(self, '_rescan_alt', config.TARGET_ALT)
+
+    def send_velocity(self, vx, vy, vz, yaw_rate=0):
+        """Send velocity command (body frame). vx=fwd, vy=right, vz=down."""
+        if not self.master: return
+        cos_yaw = math.cos(self.yaw)
+        sin_yaw = math.sin(self.yaw)
+        vx_ned = vx * cos_yaw - vy * sin_yaw
+        vy_ned = vx * sin_yaw + vy * cos_yaw
+        self.master.mav.set_position_target_local_ned_send(
+            0, self.master.target_system, self.master.target_component,
+            mavutil.mavlink.MAV_FRAME_LOCAL_NED,
+            0b010111000111, 0, 0, 0,
+            vx_ned, vy_ned, vz, 0, 0, 0, 0, math.radians(yaw_rate))
 
     @staticmethod
     def _gps_dist(lat1, lon1, lat2, lon2):
