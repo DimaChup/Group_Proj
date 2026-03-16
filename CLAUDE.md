@@ -51,6 +51,25 @@ communication (Python 3.13 + pyserial serial reads are broken).
   - Works headless (no cv2.imshow) — all UI through browser at http://PI_IP:8090
   - Same GPS estimation math as simple_simulator.py
   - Tested in SIMULATION on laptop, ready for REAL mode on Pi
+- **Video analysis tools** (DJI flight video replay + model testing)
+  - `tests/laptop/video_test.py` — replay DJI video with detection overlay, SRT telemetry, GPS estimation, scale bar, measure tool
+  - `tests/laptop/video_test_compare.py` — A/B model comparison (M key switches live)
+  - FOV calibrated to 54.4 deg HFOV for cropped DJI video (1456x1088 from 3840x2160)
+  - See `docs/VIDEO_ANALYSIS.md` for full usage guide
+- **Retrained model (sar_v2_1088)** — YOLOv8n retrained on 300 synthetic + 16 real + 50 negatives at 1456x1088
+  - mAP50=0.995, same input shape [1,640,640,3], same output [1,5,8400], drop-in replacement
+  - Stored in `cv_models/sar_v2_1088/` (best.tflite 11.7MB float32 + NCNN + best.pt)
+  - Pi deployment: `cp cv_models/sar_v2_1088/best.tflite best.tflite` — no code changes
+- **cv_models/ directory** with 3 model variants:
+  - `sar_v2_1088/` — latest retrained model (real+synthetic 1088 data)
+  - `sar_640/` — earlier training at 640x640
+  - `sar_1280/` — earlier training at 1280x1280
+  - Each contains: best.tflite, best.pt, ncnn/, results.png, confusion_matrix.png
+- **Training tools**:
+  - `tools/label_tool.py --full` — label real video frames at native resolution (no squishing)
+  - `tools/fov_calibrate_video.py` — click dummy at different altitudes to calibrate FOV
+  - `generate_dataset_v2.py` — generate synthetic + negative images at 1456x1088
+  - `dataset_v2/` — 366 images (300 syn + 16 real + 50 neg) at 1456x1088, ready for Colab
 
 ### What's Not Done Yet
 - [x] Pi setup (OS, venv, dependencies)
@@ -63,12 +82,12 @@ communication (Python 3.13 + pyserial serial reads are broken).
 - [ ] Outdoor GPS fix test
 - [ ] Manual flight with passive detection (tests/flight/1_passive_flight.py)
 - [ ] Full autonomous bench test (main.py, no props)
-- [ ] **BEFORE FLIGHT DAY: Prepare alternative CV models on laptop**
-  - [ ] Export COCO person detector: `yolo export model=yolov8n.pt format=tflite`
+- [x] **BEFORE FLIGHT DAY: Prepare alternative CV models on laptop**
+  - [x] Export COCO person detector: `yolo export model=yolov8n.pt format=tflite` → `models/human.tflite`
   - [ ] Export INT8 quantized: `yolo export model=best.pt format=tflite int8=True`
-  - [ ] Optionally retrain on better data (real photos of dummy)
-  - [ ] Copy all .tflite files to `models/` folder, ready to swap on Pi
-  - [ ] On flight day: swap models with `--model` flag or `cp models/X.tflite best.tflite`
+  - [x] Retrained on better data (16 real photos + 300 synthetic + 50 negatives) → `cv_models/sar_v2_1088/`
+  - [x] 3 model variants in `cv_models/` (sar_v2_1088, sar_640, sar_1280), ready to swap on Pi
+  - [x] On flight day: swap models with `--model` flag or `cp cv_models/sar_v2_1088/best.tflite best.tflite`
   - [x] `models/best2.tflite` placeholder created (replace with retrained model)
   - [x] `--model` and `--dry-run` flags added to main.py
 
@@ -106,13 +125,15 @@ Each step builds trust before adding risk. **Never skip a step.**
 
 ### CV Optimization (Future Work)
 - [ ] **Lower confidence threshold** — try 0.3 or 0.25 (currently 0.4 in vision.py) to catch more detections at cost of false positives
-- [ ] **Retrain with real camera images** — current model trained on synthetic composites (map.jpg + dummy.png). Capture real photos of dummy in grass at various altitudes and retrain
+- [x] **Retrain with real camera images** — retrained v2 model on 300 synthetic + 16 real labelled + 50 negatives at native 1456x1088 (mAP50=0.995). See `cv_models/sar_v2_1088/`
 - [x] **Camera color fix** — IMX296 outputs BGR despite RGB888 label. Removed incorrect cvtColor conversion. Colors now correct.
-- [ ] **Larger model** — try YOLOv8s instead of YOLOv8n (more accurate, slower). Benchmark on Pi with pi_3_benchmark.py
-- [ ] **Resolution tuning** — run pi_9_resolution_test.py to find best resolution vs speed vs detection tradeoff
+- [ ] **Larger model** — try YOLOv8s instead of YOLOv8n (more accurate, slower). Benchmark on Pi with tests/hardware/benchmark.py
+- [ ] **Resolution tuning** — config.py now set to IMAGE_W=1456, IMAGE_H=1088 (Pi camera native). Test on Pi.
 - [ ] **Motion blur handling** — test detection quality at different drone speeds. Consider shorter exposure / higher shutter speed in picamera2 config
-- [ ] **Altitude calibration** — run pi_cv_test.py on Pi to find max reliable detection altitude, adjust TARGET_ALT in config.py
-- [ ] **Data augmentation** — add brightness, contrast, blur, rotation variations to training pipeline (generate_dataset.py)
+- [ ] **Altitude calibration** — use video_test.py to analyze detection altitude from DJI footage, adjust TARGET_ALT in config.py
+- [x] **Data augmentation** — generate_dataset_v2.py includes brightness, contrast, blur, rotation, scale variations at 1456x1088
+- [x] **FOV calibration** — DJI cropped video FOV calibrated to 54.4 deg HFOV using tools/fov_calibrate_video.py
+- [ ] **NCNN backend** — NCNN export available in cv_models/sar_v2_1088/ncnn/, needs Pi testing (~15 FPS expected)
 
 ## Project File Structure
 
@@ -155,7 +176,28 @@ v3/
 │   └── best2.tflite           ← Placeholder (replace with retrained model)
 ├── map.jpg                    ← Satellite image for simulation (~12MB)
 ├── dummy.png                  ← Dummy/casualty image for dataset generation + bench test
-├── generate_dataset.py        ← Creates synthetic training data from map.jpg + dummy.png
+├── generate_dataset.py        ← Creates synthetic training data from map.jpg + dummy.png (v1, 640x640)
+├── generate_dataset_v2.py     ← Creates synthetic + negatives at 1456x1088 (v2, native resolution)
+├── dataset_v2/                ← Training dataset: 366 images (300 syn + 16 real + 50 neg) at 1456x1088
+│   ├── dataset.yaml           ← YOLO data config (1 class: dummy)
+│   ├── images/                ← syn_*.jpg, real_*.jpg, neg_*.jpg
+│   └── labels/                ← matching .txt YOLO labels (neg labels are empty)
+├── dataset_v2.zip             ← Zipped dataset ready for Colab upload
+├── cv_models/                 ← All trained model variants (TFLite + NCNN + .pt)
+│   ├── sar_v2_1088/           ← Latest: retrained on real+synthetic 1088 data (mAP50=0.995)
+│   │   ├── best.tflite        ← 11.7MB float32, input [1,640,640,3], output [1,5,8400]
+│   │   ├── best.pt            ← Full YOLO weights for future fine-tuning
+│   │   └── ncnn/              ← NCNN export for Pi (~15 FPS expected)
+│   ├── sar_640/               ← Earlier training at 640x640 (+ .onnx, results.png, confusion_matrix)
+│   └── sar_1280/              ← Earlier training at 1280x1280 (+ .onnx, results.png, confusion_matrix)
+├── RealVideo/                 ← DJI flight video recordings + SRT telemetry
+│   ├── DJI_0001_1456x1088_cropped_30fps.mp4  ← USE THIS for analysis (SRT synced)
+│   ├── DJI_20260311172332_0001_V.MP4          ← Original 4K video
+│   ├── DJI_20260311172332_0001_V.SRT          ← GPS/altitude telemetry (30fps entries)
+│   └── ...                    ← Various crops/resolutions (6fps versions are OUT OF SYNC)
+├── tools/                     ← Standalone utility scripts
+│   ├── label_tool.py          ← Label real frames for training (--full for native resolution)
+│   └── fov_calibrate_video.py ← FOV calibration from video (click dummy at multiple altitudes)
 ├── requirements_dev.txt       ← Windows laptop: full pip freeze (~90 packages, exact versions)
 ├── requirements_linux.txt     ← WSL/Linux laptop: full pip freeze (no Windows-specific packages)
 ├── requirements_pi.txt        ← Pi: pymavlink, opencv-headless, numpy<2, tflite-runtime
@@ -229,7 +271,16 @@ v3/
         ├── test_all.py        ← Full system connectivity check
         ├── test_tflite.py     ← TFLite inference on laptop
         ├── debug_tflite.py    ← Raw TFLite model output inspection
-        └── cv_test_synthetic.py ← Synthetic image CV benchmark
+        ├── cv_test_synthetic.py ← Synthetic image CV benchmark
+        ├── video_test.py      ← DJI video replay + detection + GPS + scale bar + measure
+        ├── video_test_compare.py ← A/B model comparison on video (M key switches)
+        ├── zoom_detect.py     ← Zoom-based detection test
+        └── video_tools/       ← Helper modules for video analysis
+            ├── detect_fullres.py     ← Full-resolution single-pass detection
+            ├── detect_tiling.py      ← Tiled detection (640px tiles with overlap)
+            ├── video_tiling.py       ← Video frame tiling utilities
+            ├── video_test_baseline.py ← Baseline detection logic
+            └── zoom_detect_baseline.py ← Zoom-based detection baseline
 ```
 
 ## Architecture
@@ -247,7 +298,9 @@ passive_watch.py ...... Passive observer (stream + detection + GPS estimation, Z
 capture_training.py ... Training data capture (video + photos, ZERO commands)
 simulation.py ......... Laptop-only simulation (map + simulated drone view)
 preflight.py .......... Connectivity checker (standalone tool)
-generate_dataset.py ... Synthetic training data generator
+generate_dataset.py ... Synthetic training data generator (v1, 640x640)
+generate_dataset_v2.py  Synthetic + negatives at 1456x1088 (v2, native resolution)
+tools/ ................ Standalone utilities (label_tool.py, fov_calibrate_video.py)
 tests/ ................ All test scripts (hardware/, flight/, diagnostics/, calibration/, laptop/)
 ```
 
@@ -268,10 +321,14 @@ tests/ ................ All test scripts (hardware/, flight/, diagnostics/, cali
 
 | File | Purpose | Notes |
 |------|---------|-------|
-| best.tflite | AI model (YOLOv8n exported to TFLite) | ~6MB, tracked in git |
-| best.pt | YOLO weights (full, laptop only) | In .gitignore (large) |
+| best.tflite | AI model (YOLOv8n exported to TFLite) | ~3.3MB, active model used by all scripts |
+| cv_models/sar_v2_1088/best.tflite | Retrained v2 model | 11.7MB float32, mAP50=0.995, drop-in replacement |
+| cv_models/sar_v2_1088/best.pt | Full YOLO weights (retrained) | For future fine-tuning or NCNN export |
+| best.pt | YOLO weights (original, laptop only) | In .gitignore (large) |
 | map.jpg | Satellite image for simulation | ~12MB, tracked in git |
 | dummy.png | Test dummy image | For generate_dataset.py and bench testing |
+| dataset_v2/ | Training dataset (366 images at 1456x1088) | 300 syn + 16 real + 50 neg |
+| dataset_v2.zip | Zipped dataset for Colab | Upload to Google Drive |
 | flight_log.csv | Runtime log | In .gitignore (changes every run) |
 | requirements_dev.txt | Windows laptop dependencies | Full pip freeze (~90 packages, exact versions) |
 | requirements_linux.txt | WSL/Linux laptop dependencies | Full pip freeze (Linux-compatible) |
@@ -475,10 +532,10 @@ None require code rewrites — just tuning config.py values after real testing.
 TARGET_ALT = 30        # lower if AI can't detect from 30m
 VERIFY_ALT = 15        # lower altitude for close confirmation
 SEARCH_SPEED_MPS = 5   # lower if AI can't keep up
-IMAGE_W = 640          # change based on pi_9 resolution test
-IMAGE_H = 480          # change based on pi_9 resolution test
+IMAGE_W = 1456         # Pi camera native resolution (updated 2026-03-16)
+IMAGE_H = 1088         # Pi camera native resolution (updated 2026-03-16)
 SENSOR_WIDTH_MM = 5.02 # calibrate with tests/calibration/fov_calibrate.py
-FOCAL_LENGTH_MM = 6.0  # calibrate with tests/calibration/fov_calibrate.py
+FOCAL_LENGTH_MM = 5.46 # calibrated 2026-03-11 (92cm visible at 1m)
 ```
 
 ## Test Scripts (categorized in tests/)
@@ -491,6 +548,9 @@ tests/laptop/
   test_all.py ................ Full system connectivity check
   test_tflite.py ............. TFLite inference on laptop
   debug_tflite.py ............ Raw model output inspection
+  video_test.py .............. DJI video replay + detection + GPS + scale bar + measure
+  video_test_compare.py ...... A/B model comparison on video (M key switches live)
+  zoom_detect.py ............. Zoom-based detection test
 
 tests/hardware/
   benchmark.py ............... Inference speed (50 runs)?
@@ -541,7 +601,8 @@ This was discovered by testing all 6 channel permutations. See session log 2026-
 | docs/SIMULATOR.md | Simulator documentation |
 | docs/SIMULATOR_GUIDE.md | Simulator user guide (keyboard controls, modes) |
 | docs/GROUP_STATUS.md | Group project status, meetings, roles |
-| docs/TRAINING_GUIDE.md | Model retraining workflow (Colab, datasets) |
+| docs/TRAINING_GUIDE.md | Model retraining workflow (Colab, dataset_v2, label_tool, deployment) |
+| docs/VIDEO_ANALYSIS.md | Video analysis tools, FOV calibration, SRT sync, model comparison |
 | docs/FIRST_FLIGHT.md | First flight plan with progressive steps |
 | **Blueprints** (read BEFORE source) | |
 | docs/main_blueprint.md | Line-range map for main.py (908 lines) |
@@ -560,7 +621,7 @@ This was discovered by testing all 6 channel permutations. See session log 2026-
 - Commit after each successful test milestone
 - Never break main — merge only when something works
 - Remote: https://github.com/DimaChup/Group_Proj.git
-- Current working branch: MainOne7
+- Current working branch: MainOne8
 - **Backup**: Push to GitHub after every session. Pull on Pi before flights.
 - **Rollback**: `git log --oneline -20` to find good commit, `git checkout <hash>` to test it
 - **Branch cleanup needed**: ~42 local branches, many dead (Backup*, W*, v*). Delete after flight day.
@@ -742,3 +803,66 @@ of truth.
 - Route improvement ideas to `NICE_TO_HAVE.md` with impact/effort scores
 - After code changes: update relevant blueprint (line ranges shift)
 - At session end: run `.claude/commands/wrap-up.md` checklist
+
+### Session: 2026-03-16 — DJI video analysis, model retraining v2, FOV calibration
+
+**DJI video analysis pipeline built:**
+- `tests/laptop/video_test.py` — full video replay with detection overlay, SRT telemetry, GPS estimation
+  - Separate windows: main video, latest detection, best detection, GPS scatter plots
+  - Scale bar (1m reference), right-click measure tool (distance in meters at current altitude)
+  - Keyboard: SPACE=pause, T=toggle tiling, A/D=skip 5s, +/-=speed, Q=quit
+- `tests/laptop/video_test_compare.py` — A/B model comparison, M key switches models live
+- `tests/laptop/video_tools/` — helper modules (detect_fullres, detect_tiling, video_tiling, etc.)
+
+**CRITICAL: SRT sync issue discovered:**
+- DJI SRT telemetry has 6854 entries (one per 30fps frame)
+- 6fps video (1370 frames) does NOT match — frame N in 6fps maps to wrong SRT entry
+- **MUST use 30fps video** (`DJI_0001_1456x1088_cropped_30fps.mp4`) for correct altitude/GPS
+- 6fps videos in RealVideo/ are for quick preview ONLY, not analysis
+
+**FOV calibrated for cropped DJI video:**
+- `tools/fov_calibrate_video.py` — click top/bottom of dummy at different altitudes
+- Known dummy height: 1.8m, 9 samples across 15-50m altitude
+- Result: focal length 1416 px (+/- 41), **HFOV = 54.4 deg** for 1456x1088 crop
+- Dummy measures 1.7-1.9m consistently at all altitudes (validates calibration)
+
+**Model retraining v2 (sar_v2_1088):**
+- `generate_dataset_v2.py` — generates synthetic + negative images at native 1456x1088
+- `tools/label_tool.py --full` — labels real video frames at native resolution (no squishing to 640)
+- Dataset: `dataset_v2/` — 366 images (300 synthetic + 16 real labelled + 50 negatives)
+  - Synthetic: dummy.png composited on DJI video frame backgrounds, altitude-correct scaling
+  - Real: 16 frames from DJI flight video with manual bounding box labels
+  - Negatives: 50 frames with no dummy (empty label files)
+- Training on Google Colab: `imgsz=1088, epochs=150, batch=8, mAP50=0.995`
+- Exported: TFLite (float32, 11.7MB) + NCNN, saved in `cv_models/sar_v2_1088/`
+- **Drop-in replacement**: same input shape [1,640,640,3], same output [1,5,8400], same inference speed on Pi
+- Pi deployment: just `cp cv_models/sar_v2_1088/best.tflite best.tflite` — no code changes needed
+
+**config.py changes:**
+- `IMAGE_W = 1456`, `IMAGE_H = 1088` (Pi camera native resolution, was 640x480)
+
+**New files created:**
+- `tests/laptop/video_test.py` — video replay + detection + telemetry + measure tool
+- `tests/laptop/video_test_compare.py` — A/B model comparison on video
+- `tests/laptop/video_tools/` — helper modules for video analysis
+- `tests/laptop/zoom_detect.py` — zoom-based detection test
+- `tools/label_tool.py` — label real frames for training
+- `tools/fov_calibrate_video.py` — FOV calibration from video
+- `generate_dataset_v2.py` — v2 dataset generator (1456x1088)
+- `dataset_v2/` — training dataset (366 images)
+- `dataset_v2.zip` — ready for Colab upload
+- `cv_models/sar_v2_1088/` — retrained model (best.tflite + best.pt + ncnn/)
+- `cv_models/sar_640/` — earlier training at 640
+- `cv_models/sar_1280/` — earlier training at 1280
+- `docs/VIDEO_ANALYSIS.md` — video analysis documentation
+
+**Documentation updated:**
+- `docs/VIDEO_ANALYSIS.md` — comprehensive guide (videos, SRT sync, FOV, controls, models)
+- `docs/TRAINING_GUIDE.md` — complete rewrite with v2 workflow (dataset_v2, Colab cells, deployment)
+- `CLAUDE.md` — session log, What Works, file structure, config values, CV optimization status
+
+**GPS timing lag discovered (from video analysis):**
+- GPS receiver has 100-200ms latency → 1m error at 5m/s along flight direction
+- Causes diagonal spread in target estimates (CEP50=2.3m, max=16.5m from DJI video test)
+- Fix: offset GPS by speed*lag in heading direction, or average from multiple passes
+- See `memory/gps-timing-lag.md` for details
