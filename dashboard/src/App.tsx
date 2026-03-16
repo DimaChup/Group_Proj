@@ -10,12 +10,14 @@ import TeamTab from "./pages/TeamTab";
 import NotesTab from "./pages/NotesTab";
 import HardwareTab from "./pages/HardwareTab";
 import PipelineTab from "./pages/PipelineTab";
+import GroupReportTab from "./pages/GroupReportTab";
+import IndividualReportTab from "./pages/IndividualReportTab";
 import TopBar, { type TopPanel } from "./pages/TopBar";
 import TopPanels from "./pages/TopPanels";
 import LeftSidebar from "./pages/LeftSidebar";
 import RightSidebar from "./pages/RightSidebar";
 
-type Tab = "readme" | "mission" | "hardware" | "pipeline" | "levels" | "roadmap" | "hub" | "team" | "notes" | "gp-v2" | "wbs";
+type Tab = "readme" | "mission" | "hardware" | "pipeline" | "levels" | "roadmap" | "hub" | "team" | "notes" | "gp-v2" | "wbs" | "d6-report" | "d7-report";
 
 const TABS: { id: Tab; label: string; description: string }[] = [
   { id: "readme", label: "README", description: "Complete project overview — share with your team to understand everything" },
@@ -29,6 +31,8 @@ const TABS: { id: Tab; label: string; description: string }[] = [
   { id: "notes", label: "Notes", description: "All ideas, wants, and plans" },
   { id: "gp-v2", label: "GP v2 (Snapshot)", description: "SE Strategy, Levels, Approaches, Team" },
   { id: "wbs", label: "Mission WBS", description: "90 tasks, 7 subsystems, bottom-up progress" },
+  { id: "d6-report", label: "D6 Report", description: "Group Company Report — 50%, 15 pages, rubric + outline + evidence" },
+  { id: "d7-report", label: "D7 Report", description: "Individual Reflective Report — 50%, 5 pages, rubric + reflection prompts" },
 ];
 
 export default function App() {
@@ -97,6 +101,8 @@ export default function App() {
           {activeTab === "notes" && <NotesTab />}
           {activeTab === "gp-v2" && <GroupProjectV2Tab />}
           {activeTab === "wbs" && <MissionWBSTab />}
+          {activeTab === "d6-report" && <GroupReportTab />}
+          {activeTab === "d7-report" && <IndividualReportTab />}
         </div>
 
         {showRight && <RightSidebar />}
