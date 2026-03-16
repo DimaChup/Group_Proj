@@ -75,8 +75,8 @@ SENSOR_WIDTH_MM = 5.02
 # Calibrate: hold camera 1m above tape measure, read visible width in mm
 # FOCAL_LENGTH_MM = 5020 / measured_width_mm
 FOCAL_LENGTH_MM = 5.46  # Calibrated: 92cm visible at 1m height (2026-03-11)
-IMAGE_W = 640
-IMAGE_H = 480
+IMAGE_W = 1456  # IMX296 native resolution (was 640x480, upgraded for full detail)
+IMAGE_H = 1088  # vision.py resizes to model input (640x640) for inference
 REAL_CAMERA_INDEX = 0 # Usually 0 for Pi Cam
 
 # --- CAMERA WHITE BALANCE (Pi only) ---
