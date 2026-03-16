@@ -155,7 +155,7 @@ def main():
 
     # Show loading screen immediately
     win = "Video Detection Test"
-    cv2.namedWindow(win, cv2.WINDOW_AUTOSIZE)
+    cv2.namedWindow(win, cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO)
     splash = np.zeros((200, 500, 3), dtype=np.uint8)
     cv2.putText(splash, f"Loading {os.path.basename(args.model)}...", (30, 110),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.9, (200, 200, 200), 2)
@@ -438,7 +438,7 @@ def main():
 
     # Threaded tiling inference
     ai_lock = threading.Lock()
-    ai_result = {"dets": [], "dt": 0, "busy": False, "frame_num": -1, "snapshot": None}
+    ai_result = {"dets": [], "dt": 0, "busy": False, "frame_num": -1, "snapshot": None, "info_lines": []}
     det_count = [0]
     use_tiling = [True]
 
@@ -466,7 +466,10 @@ def main():
             px_dist = math.sqrt((cx - img_cx)**2 + (cy - img_cy)**2)
             cv2.putText(snap, f"{px_dist:.0f}px", (mid_x + 10, mid_y - 10),
                        cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 0, 255), 2)
-        # Track best (most central) snapshot
+        # Save clean version (no text banner) for display
+        snap_clean = snap.copy()
+
+        # Track best (most central) snapshot (clean, no banner)
         if dets:
             t_data = telem.get(fnum)
             if t_data:
@@ -475,7 +478,7 @@ def main():
                 center_dist = math.sqrt(cx_norm**2 + cy_norm**2)
                 if center_dist < best_center_dist[0]:
                     best_center_dist[0] = center_dist
-                    best_snapshot[0] = snap.copy()
+                    best_snapshot[0] = snap_clean.copy()
 
         # Build text lines for bottom banner
         lines = [f"Frame {fnum} | {dt:.0f}ms"]
@@ -528,7 +531,7 @@ def main():
             y_pos = h_snap - banner_h + 40 + i * line_h
             cv2.putText(snap, line, (15, y_pos),
                        cv2.FONT_HERSHEY_SIMPLEX, 1.3, color, 3)
-        return snap
+        return snap_clean, lines
 
     def run_tiled_inference(frame_copy, fnum):
         t0 = time.perf_counter()
@@ -536,12 +539,13 @@ def main():
         dt = (time.perf_counter() - t0) * 1000
         if dets:
             det_count[0] += 1
-        snap = make_snapshot(frame_copy, dets, fnum, dt)
+        snap_clean, info_lines = make_snapshot(frame_copy, dets, fnum, dt)
         with ai_lock:
             ai_result["dets"] = dets
             ai_result["dt"] = dt
             ai_result["frame_num"] = fnum
-            ai_result["snapshot"] = snap
+            ai_result["snapshot"] = snap_clean
+            ai_result["info_lines"] = info_lines
             ai_result["busy"] = False
 
     def run_single_inference(frame_copy, fnum):
@@ -556,12 +560,13 @@ def main():
             bh = vs.last_bbox_h * scale
             dets = [(int(x * scale), int(y * scale), int(bw), int(bh), conf)]
             det_count[0] += 1
-        snap = make_snapshot(frame_copy, dets, fnum, dt)
+        snap_clean, info_lines = make_snapshot(frame_copy, dets, fnum, dt)
         with ai_lock:
             ai_result["dets"] = dets
             ai_result["dt"] = dt
             ai_result["frame_num"] = fnum
-            ai_result["snapshot"] = snap
+            ai_result["snapshot"] = snap_clean
+            ai_result["info_lines"] = info_lines
             ai_result["busy"] = False
 
     paused = False
@@ -614,6 +619,38 @@ def main():
     if not ret:
         print("Cannot read first frame")
         return
+
+    # Measure tool on main video (right-click to place points)
+    vid_measure_pts = []
+    vid_measure_result = [None]
+    last_alt = [20.0]  # track latest altitude for scale
+
+    def on_video_mouse(event, mx, my, flags, param):
+        if event == cv2.EVENT_RBUTTONDOWN:
+            vid_measure_pts.append((mx, my))
+            if len(vid_measure_pts) == 2:
+                p1, p2 = vid_measure_pts
+                px_dist = math.sqrt((p2[0]-p1[0])**2 + (p2[1]-p1[1])**2)
+                alt = last_alt[0]
+                fov_h_rad = math.radians(49.0)
+                ground_w = 2 * alt * math.tan(fov_h_rad / 2)
+                m_per_disp_px = ground_w / disp_w
+                m_dist = px_dist * m_per_disp_px
+                vid_measure_result[0] = (p1, p2, px_dist, m_dist, alt)
+                print(f"  VIDEO MEASURE: {px_dist:.0f}px = {m_dist:.2f}m (at {alt:.1f}m alt)")
+                vid_measure_pts.clear()
+            elif len(vid_measure_pts) > 2:
+                vid_measure_pts.clear()
+        elif event == cv2.EVENT_MBUTTONDOWN:
+            vid_measure_pts.clear()
+            vid_measure_result[0] = None
+
+    cv2.setMouseCallback(win, on_video_mouse)
+
+    # Create resizable windows for all panels
+    cv2.namedWindow("Latest Detection", cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO)
+    cv2.namedWindow("Target GPS Estimates", cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO)
+    cv2.namedWindow(best_win, cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO)
 
     while True:
         if not paused:
@@ -692,16 +729,61 @@ def main():
                     cv2.putText(disp, line, (8, 20 + i * 22),
                                cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 1)
 
-            # Snapshot thumbnail in top-right corner of main video
+            # Latest snapshot in its own window — image + info text below
             if snapshot is not None and dets:
-                thumb_w = disp_w // 4
-                thumb_h = int(snapshot.shape[0] * thumb_w / snapshot.shape[1])
-                thumb = cv2.resize(snapshot, (thumb_w, thumb_h))
-                y1t = 0
-                y2t = min(thumb_h, disp_h)
-                x1t = disp_w - thumb_w
-                disp[y1t:y2t, x1t:disp_w] = thumb[:y2t - y1t]
-                cv2.rectangle(disp, (x1t, y1t), (disp_w - 1, y2t - 1), (0, 255, 255), 2)
+                snap_disp_w = disp_w // 2
+                snap_disp_h = int(snapshot.shape[0] * snap_disp_w / snapshot.shape[1])
+                snap_resized = cv2.resize(snapshot, (snap_disp_w, snap_disp_h))
+                # Build info strip below image
+                info_lines = ai_result.get("info_lines", [])
+                info_h = max(20 * len(info_lines) + 10, 10)
+                info_strip = np.zeros((info_h, snap_disp_w, 3), dtype=np.uint8)
+                for i, line in enumerate(info_lines):
+                    if "TARGET" in line:
+                        color = (0, 255, 0)
+                    elif "DRONE" in line:
+                        color = (200, 200, 200)
+                    elif "OFFSET" in line:
+                        color = (0, 200, 255)
+                    else:
+                        color = (0, 255, 255)
+                    cv2.putText(info_strip, line, (8, 16 + i * 20),
+                               cv2.FONT_HERSHEY_SIMPLEX, 0.42, color, 1)
+                snap_with_info = np.vstack([snap_resized, info_strip])
+                cv2.imshow("Latest Detection", snap_with_info)
+
+            # Update altitude for scale calculations
+            t_data_scale = telem.get(frame_num)
+            if t_data_scale and t_data_scale['rel_alt'] > 1:
+                last_alt[0] = t_data_scale['rel_alt']
+
+            # Scale bar (bottom-right) — shows what 1m looks like at current altitude
+            alt_now = last_alt[0]
+            fov_h_scale = math.radians(49.0)
+            ground_w_now = 2 * alt_now * math.tan(fov_h_scale / 2)
+            px_per_m = disp_w / ground_w_now if ground_w_now > 0 else 1
+            scale_1m = int(px_per_m)
+            if scale_1m > 5:
+                sx1 = disp_w - scale_1m - 20
+                sy1 = disp_h - 55
+                sx2 = disp_w - 20
+                cv2.line(disp, (sx1, sy1), (sx2, sy1), (255, 255, 255), 2)
+                cv2.line(disp, (sx1, sy1 - 5), (sx1, sy1 + 5), (255, 255, 255), 2)
+                cv2.line(disp, (sx2, sy1 - 5), (sx2, sy1 + 5), (255, 255, 255), 2)
+                cv2.putText(disp, f"1m ({alt_now:.0f}m alt)", (sx1, sy1 - 10),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.38, (255, 255, 255), 1)
+
+            # Draw measure line on main video (right-click to place)
+            if vid_measure_result[0]:
+                p1, p2, px_d, m_d, m_alt = vid_measure_result[0]
+                cv2.line(disp, p1, p2, (0, 255, 255), 2)
+                cv2.circle(disp, p1, 4, (0, 255, 255), -1)
+                cv2.circle(disp, p2, 4, (0, 255, 255), -1)
+                mid = ((p1[0]+p2[0])//2, (p1[1]+p2[1])//2)
+                cv2.putText(disp, f"{m_d:.2f}m (at {m_alt:.0f}m)", (mid[0]+8, mid[1]-8),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 255, 255), 2)
+            if len(vid_measure_pts) == 1:
+                cv2.circle(disp, vid_measure_pts[0], 4, (0, 255, 255), -1)
 
             # HUD bar at bottom of video
             bar_y = disp_h - 30
@@ -716,9 +798,13 @@ def main():
                 writer.write(disp)
             cv2.imshow(win, disp)
 
-            # GPS plot window
-            gps_plot = draw_gps_plot_by_center()
-            cv2.imshow("Target GPS Estimates", gps_plot)
+            # GPS plots window (center distance + altitude side by side)
+            plot_center = draw_gps_plot_by_center()
+            plot_alt = draw_gps_plot_by_alt()
+            sep = np.zeros((plot_size, 2, 3), dtype=np.uint8)
+            sep[:] = (60, 60, 60)
+            gps_combined = np.hstack([plot_center, sep, plot_alt])
+            cv2.imshow("Target GPS Estimates", gps_combined)
 
             # Best detection window
             if best_snapshot[0] is not None:
