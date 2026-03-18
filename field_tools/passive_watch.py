@@ -37,6 +37,9 @@ from datetime import datetime
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from socketserver import ThreadingMixIn
 
+# Add project root to path (field_tools/ is one level below root)
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 # Ensure Ctrl+C works
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 

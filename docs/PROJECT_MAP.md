@@ -10,11 +10,8 @@ Quick reference for navigating the SAR Drone codebase.
 |---|---|
 | `main.py` | Full autonomous mission (state machine, search, detect, land) |
 | `pi_flight.py` | Web ground station (browser dashboard + commands) port 8090 |
-| `passive_watch.py` | Passive observer (stream + AI detection + GPS estimation, ZERO commands) port 8090 |
-| `capture_training.py` | Record photos + video for model retraining (ZERO commands) port 8091 |
 | `simple_simulator.py` | Interactive simulator (keyboard flight + CV + GPS estimation, laptop only) |
 | `simulation.py` | Laptop simulation (map.jpg + simulated drone camera view) |
-| `preflight.py` | Standalone connectivity checker (camera, Cube, AI model) |
 | `config.py` | ALL settings (altitudes, speeds, camera, connection, auto-detects hardware) |
 | `states.py` | State enum (20 states: INIT through DONE) |
 | `vision.py` | Camera + AI detection (dual backend: Ultralytics on laptop, TFLite on Pi) |
@@ -173,6 +170,25 @@ See `docs/TRAINING_GUIDE.md` for the full Colab workflow.
 
 ---
 
+## `field_tools/` — Flight Day Operational Tools
+
+Scripts run on Pi during manual flight days. All send ZERO commands — completely safe.
+
+| Script | What |
+|---|---|
+| `passive_watch.py` | Stream + AI detection + GPS estimation during manual RC flight. Port 8090 |
+| `capture_training.py` | Record photos + video for model retraining. Port 8091 |
+| `preflight.py` | Connectivity checker (camera, Cube, AI model) |
+
+**Usage on Pi:**
+```bash
+python field_tools/passive_watch.py --model cv_models/sar_v2_1088/best.tflite
+python field_tools/capture_training.py
+python field_tools/preflight.py
+```
+
+---
+
 ## `tools/` — Standalone Utilities
 
 | Script | What |
@@ -310,6 +326,45 @@ See `dashboard/CLAUDE.md` for details.
 ## `_archive/` — Old/Junk Files
 
 Gitignored. Safe to delete. Contains old scripts, unused model exports, test artifacts.
+
+---
+
+## Virtual Environments
+
+| Env | Platform | What it has | When to use |
+|---|---|---|---|
+| `venv/` | Windows laptop | TensorFlow, PyTorch, OpenCV, numpy | Simulation, main.py, all drone scripts |
+| `test_env/` | Windows laptop | **Ultralytics** + TFLite + PyTorch | Video analysis: `video_test.py`, `video_test_compare.py`, `zoom_detect.py` |
+| `pienv/` | Raspberry Pi | pymavlink, opencv-headless, numpy, ai-edge-litert | Everything on Pi (created with `--system-site-packages` for picamera2) |
+
+**Why two laptop venvs?** `venv` doesn't have Ultralytics. Video analysis scripts need the Ultralytics YOLO API. Could be merged by running `pip install ultralytics` in `venv`.
+
+**Activate:**
+```bash
+# Laptop — drone code / simulation
+venv\Scripts\activate
+
+# Laptop — video analysis
+test_env\Scripts\activate
+
+# Pi
+source pienv/bin/activate
+```
+
+---
+
+## RealVideo/ — Which Video + SRT to Use
+
+**ALWAYS use 30fps video for analysis** — 6fps versions are OUT OF SYNC with SRT telemetry.
+
+| File | Use for | SRT match |
+|---|---|---|
+| `DJI_0001_1456x1088_cropped_30fps.mp4` | **ALL analysis** (video_test.py, video_test_compare.py) | `DJI_20260311172332_0001_V.SRT` (6854 frames match) |
+| `DJI_20260311172332_0001_V.MP4` | Original 4K (if you need full resolution) | `DJI_20260311172332_0001_V.SRT` |
+| `DJI_20260311172721_0002_V.MP4` | Second flight (original 4K) | `DJI_20260311172721_0002_V.SRT` |
+| `*_6fps.mp4` (any) | **DO NOT USE** for analysis — frame count mismatch with SRT | Broken sync |
+
+**Why 6fps is broken:** SRT has 6854 entries (one per 30fps frame). 6fps video has ~1370 frames. Frame N in 6fps ≠ SRT entry N.
 
 ---
 
