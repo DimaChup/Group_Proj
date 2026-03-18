@@ -31,8 +31,12 @@ import cv2
 import numpy as np
 import math
 import sys
+import os
 import time
 import argparse
+
+# Add project root to path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import config
 from utils import GeoTransformer

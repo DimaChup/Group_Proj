@@ -32,7 +32,7 @@ from vision import VisionSystem
 
 # Conditional Import for Simulation
 if config.MODE == "SIMULATION":
-    from simulation import SimulationEnvironment
+    from simulator.simulation import SimulationEnvironment
 
 # --- CLI FLAGS ---
 # Model:      --model models/best2.tflite   (default: best.tflite)

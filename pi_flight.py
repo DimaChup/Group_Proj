@@ -64,7 +64,7 @@ from vision import VisionSystem
 from utils import GeoTransformer
 
 if config.MODE == "SIMULATION":
-    from simulation import SimulationEnvironment
+    from simulator.simulation import SimulationEnvironment
 
 # --- Constants ---
 COPTER_MODES = {
