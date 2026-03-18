@@ -607,8 +607,9 @@ def draw_view_camera(frame):
     img = np.full((canvas_h, canvas_w, 3), 25, dtype=np.uint8)
 
     # Title bar
+    model_label = MODELS[current_model_idx][1].upper()
     draw_title_bar_sized(img, canvas_w,
-                         f"VIEW 2: CAMERA FEED — AI {'ON' if ai_overlay_on else 'OFF'}")
+                         f"VIEW 2: CAMERA — AI {'ON' if ai_overlay_on else 'OFF'} — MODEL: {model_label} (M=swap)")
 
     # Camera frame area
     fy = 45  # below title bar
