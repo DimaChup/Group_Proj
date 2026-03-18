@@ -1,31 +1,53 @@
 #!/usr/bin/env python3
 """
-lens_calibrate.py — Lens Distortion Calibration (Checkerboard)
-================================================================
-Undoes barrel/pincushion distortion using OpenCV's camera calibration.
+Lens Calibrate — Lens distortion calibration using checkerboard pattern.
 
-Protocol:
-  1. Print a checkerboard pattern (e.g. 9x6 inner corners)
-  2. Hold it in front of the camera at different angles (10-20 images)
-  3. Press SPACE to capture each pose
-  4. Script computes camera matrix + distortion coefficients
-  5. Saves calibration to calibration_data.npz
-  6. Shows undistorted vs distorted comparison
+WHAT:    Computes camera matrix and distortion coefficients (k1, k2, p1, p2, k3) using
+         OpenCV's checkerboard calibration. Captures 10-20 images of a printed
+         checkerboard at various angles, then computes the intrinsic parameters.
+         Saves calibration_data.npz which vision.py loads at startup to undistort
+         every frame via precomputed cv2.remap() maps (~1.5ms per frame).
+WHY:     Barrel/pincushion distortion shifts pixel positions near frame edges. Without
+         correction, a dummy detected near the edge will have its GPS position estimated
+         incorrectly (pixels map to wrong ground coordinates). The IMX296 global shutter
+         camera has measurable distortion. Calibration RMS of 0.399 was achieved on Pi.
+WHEN:    Once per camera (results are saved). Re-run if camera or lens changes.
+         Must be done BEFORE flight — vision.py auto-loads calibration_data.npz.
+WHERE:   Both Pi and laptop (auto-detects picamera2 or OpenCV camera).
+ENV:     Any venv with opencv and numpy.
+MODELS:  None (no AI inference, camera geometry only).
+RISK:    None. Camera read-only, no commands sent.
 
-The calibration data can then be loaded in vision.py to undistort
-every frame before running AI detection.
+USAGE:
+    python tests/calibration/lens_calibrate.py                  # interactive calibration
+    python tests/calibration/lens_calibrate.py --headless       # auto-capture mode (Pi/SSH)
+    python tests/calibration/lens_calibrate.py --board 9x6      # custom board size
+    python tests/calibration/lens_calibrate.py --board 13x8     # calib.io 14x9 board
+    python tests/calibration/lens_calibrate.py --load           # load + show undistorted feed
 
-Edge distortion causes pixel→GPS errors at frame edges. If the
-dummy is detected near the edge, the position will be wrong.
-After calibration, cv2.undistort() fixes this.
+FLAGS:
+    --headless    Auto-capture mode (no cv2 display, captures every 3s, stops at 15)
+    --board WxH   Inner corner count of checkerboard (default: 13x8 for calib.io 14x9 board)
+    --load        Load existing calibration_data.npz and show live undistorted feed
 
-Usage:
-    python tests/calibration/lens_calibrate.py
-    python tests/calibration/lens_calibrate.py --headless
-    python tests/calibration/lens_calibrate.py --board 9x6
-    python tests/calibration/lens_calibrate.py --load   # load + test existing calibration
+OUTPUT:
+    - calibration_data.npz (camera_matrix, dist_coeffs, rms_error, image_size)
+    - RMS reprojection error (< 0.5 is good, < 1.0 is acceptable)
+    - Camera matrix (fx, fy, cx, cy) and distortion coefficients
+    - Side-by-side original vs undistorted comparison
 
-Requires: printed checkerboard pattern (9x6 inner corners default)
+BEST PRACTICES:
+    - Print checkerboard on stiff paper/cardboard (no warping)
+    - Use calib.io boards (14x9, 28mm squares) — they have rounded corners for better detection
+    - Capture at different angles, distances, and positions across the frame
+    - Include edge/corner positions (distortion is worst at edges)
+    - 15-20 captures is ideal; minimum 5 required
+    - Script uses findChessboardCornersSB fallback for non-standard boards
+    - On Pi, calibration_data.npz stays on Pi (not in git)
+
+DEPENDENCIES:
+    opencv-python (or opencv-python-headless), numpy
+    Optional: picamera2 (auto-detected on Pi)
 """
 
 import sys, os, time

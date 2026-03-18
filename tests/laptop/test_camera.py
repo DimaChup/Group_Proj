@@ -1,10 +1,41 @@
 #!/usr/bin/env python3
 """
-Test camera connection. Captures a frame and shows a live preview.
-Press 'q' to quit, 's' to save a snapshot.
+test_camera.py — Camera Connection Test
 
-Usage: python tests/test_camera.py
-       python tests/test_camera.py 1        (camera index 1)
+WHAT:    Opens a webcam (or Pi camera via OpenCV), reads properties (resolution,
+         FPS), captures a test frame to verify the connection works, then shows
+         a live preview window with resolution/FPS overlay. Press 's' to save
+         a snapshot, 'q' to quit.
+WHY:     Quick verification that the camera hardware is connected and producing
+         frames. First thing to run when setting up a new machine or debugging
+         camera issues.
+WHEN:    When setting up a new environment. When camera stops working. Before
+         running any CV tests.
+WHERE:   Laptop only (also works on Pi with picamera2 OpenCV backend).
+ENV:     "venv" (needs opencv-python only)
+MODELS:  None (no AI inference).
+RISK:    None — read-only camera access.
+
+USAGE:
+    python tests/laptop/test_camera.py           # default camera (index 0)
+    python tests/laptop/test_camera.py 1         # camera index 1
+
+FLAGS:
+    [camera_index]   Optional positional argument: camera index (default: 0)
+
+OUTPUT:
+    Console: camera properties (resolution, FPS) and OK/FAIL status.
+    Window: live camera preview with overlay text.
+    File: test_snapshot.jpg (when 's' is pressed).
+    Exit code: 0 if camera works, 1 if not.
+
+BEST PRACTICES:
+    - Try different camera indices if default fails (0, 1, 2)
+    - On Pi, use libcamera-hello first to verify hardware
+    - Check that resolution matches expected (640x480 or 1456x1088)
+
+DEPENDENCIES:
+    opencv-python
 """
 import sys
 import os

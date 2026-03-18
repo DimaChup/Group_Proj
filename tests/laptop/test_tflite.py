@@ -1,13 +1,43 @@
 #!/usr/bin/env python3
 """
-Test TFLite inference on laptop — same code path the Pi uses.
-No Ultralytics. Loads best.tflite directly via tflite-runtime.
+test_tflite.py — TFLite Inference Test (Pi Code Path on Laptop)
 
-Modes:
-  python tests/test_tflite_laptop.py              # live webcam
-  python tests/test_tflite_laptop.py --synthetic   # synthetic images from map.jpg + dummy.png
+WHAT:    Tests the TFLite inference pipeline directly on the laptop, bypassing
+         Ultralytics entirely. Loads best.tflite using the same fallback chain
+         as vision.py (tflite-runtime -> ai-edge-litert -> tensorflow.lite).
+         Two modes: live webcam detection, or synthetic altitude sweep using
+         map.jpg + dummy.png to test detection range.
+WHY:     Validates that the TFLite model works correctly before deploying to Pi.
+         The Pi cannot use Ultralytics, so this test exercises the exact same
+         code path the Pi will use, catching issues early on the laptop.
+WHEN:    Before deploying a new model to Pi. After exporting a new .tflite model.
+         When debugging detection differences between laptop and Pi.
+WHERE:   Laptop only (requires display for cv2.imshow).
+ENV:     "venv" (needs tflite-runtime or tensorflow, plus opencv and numpy)
+MODELS:  best.tflite from project root (or any TFLite model — edit MODEL_PATH)
+RISK:    None — read-only inference, no commands sent.
 
-Press 'q' to quit, 's' to save a frame.
+USAGE:
+    python tests/laptop/test_tflite.py               # live webcam
+    python tests/laptop/test_tflite.py --synthetic    # synthetic altitude sweep
+
+FLAGS:
+    --synthetic    Use map.jpg + dummy.png to generate test frames at
+                   altitudes 5-50m instead of live webcam feed.
+
+OUTPUT:
+    Webcam mode: live video window with detection overlay, FPS counter.
+    Synthetic mode: altitude sweep results table (detection Y/N, confidence,
+                    bbox size at each altitude), max detection altitude.
+    Press 's' to save a frame, 'q' to quit.
+
+BEST PRACTICES:
+    - Run synthetic mode first to verify model loads and detects
+    - Compare inference times with Pi benchmark results (~206ms on Pi 5)
+    - If detection fails, check model path and input shape
+
+DEPENDENCIES:
+    tflite-runtime (or ai-edge-litert or tensorflow), opencv-python, numpy
 """
 import sys
 import os

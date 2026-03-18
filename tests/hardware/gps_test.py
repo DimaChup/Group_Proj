@@ -1,15 +1,42 @@
 #!/usr/bin/env python3
 """
-GPS Diagnostics — focused purely on GPS signal.
+GPS Diagnostics — live GPS signal monitoring with parameter checks.
 
-Shows:
-  - GPS fix type, satellite count, HDOP
-  - GPS hardware type (parameter check)
-  - Whether GPS_RAW_INT messages are arriving at all
-  - Live updating table until you get a fix or Ctrl+C
+WHAT:    Connects to the Cube, reads GPS-related parameters (GPS_TYPE, CAN config,
+         GNSS mode), checks if GPS_RAW_INT messages are arriving, then enters a
+         live-updating table showing fix type, satellite count, lat/lon, altitude,
+         HDOP, and VDOP every second until Ctrl+C.
+WHY:     Diagnoses GPS hardware and configuration issues layer by layer. If GPS_RAW_INT
+         never arrives, the GPS module is not talking (wiring or config). If satellites
+         are 0, you are indoors. If fix_type < 3, you need more sky time. Tells you
+         exactly what is wrong and what to check.
+WHEN:    At the field when waiting for GPS lock. After assembling the drone to verify
+         GPS is wired correctly. When debugging "no GPS" pre-arm failures.
+WHERE:   Pi only (needs Cube via mavproxy). Works with SITL on laptop but SITL has
+         instant GPS fix so it is less useful there.
+ENV:     pienv on Pi. Needs pymavlink and mavproxy running.
+MODELS:  none — no AI or camera involved.
+RISK:    none — read-only MAVLink queries, no commands sent to flight controller.
 
-Usage:
+USAGE:
     python tests/hardware/gps_test.py
+
+FLAGS:
+    None
+
+OUTPUT:
+    Terminal: GPS parameters table, hardware check result, then live-updating
+    table (time, fix, sats, lat, lon, alt, HDOP, VDOP). On Ctrl+C, prints
+    summary with pass/fail verdict and troubleshooting tips.
+
+BEST PRACTICES:
+    - Run outdoors with clear sky view for meaningful results
+    - Cold start can take 2-5 minutes for first 3D fix
+    - Check the parameter table first — GPS_TYPE must be 9 for Here 3+ (DroneCAN)
+    - If 0 satellites after 30 seconds outdoors, check physical cable connections
+
+DEPENDENCIES:
+    pymavlink, config.py (for CONNECTION_STR)
 """
 import sys
 import os

@@ -1,15 +1,40 @@
 #!/usr/bin/env python3
 """
-Draw transit path on map and save to transit.json.
+Draw Transit Path — interactively draw the takeoff-to-search-area route on map.jpg.
 
-The transit path is flown BEFORE the search pattern begins.
-Use this to plan the route from takeoff to the search area entry.
+WHAT:    Opens map.jpg with KML zone overlays and lets you draw a transit path (the
+         route flown from takeoff to the search area entry point). Left-click to add
+         transit waypoints, right-click to undo, SPACE/ENTER to save. Outputs
+         transit.json consumed by main.py as the pre-search transit route.
+WHY:     The search area may not start at the takeoff point. This tool lets you plan
+         a safe transit route that avoids the SSSI no-fly zone and stays within the
+         flight boundary. Separates planning (laptop, with display) from execution
+         (Pi, headless).
+WHEN:    Before flights that use main.py with a transit route. Run once on laptop,
+         push transit.json via git.
+WHERE:   Laptop only (requires display for mouse interaction and map.jpg).
+ENV:     Dev venv on laptop (needs opencv-python, numpy). NOT for Pi.
+MODELS:  None (no AI used).
+RISK:    None — pure GUI tool, no drone connection, no commands.
 
-Usage:
+USAGE:
     python tests/flight/draw_transit.py
 
-Then run simulation with:
-    python main.py --search-area --transit transit.json
+FLAGS:
+    None
+
+OUTPUT:
+    transit.json in project root — array of {lat, lon, label} objects defining
+    transit waypoints in order (T1, T2, ...).
+
+BEST PRACTICES:
+    - Plan the route to avoid the SSSI no-fly zone (red outline)
+    - Keep within the flight boundary (green outline)
+    - Start near the takeoff point (red star) and end near the search area entry
+    - After saving, use with: python main.py --search-area --transit transit.json
+
+DEPENDENCIES:
+    opencv-python, numpy, config.py, utils.py (GeoTransformer)
 """
 import sys
 import os

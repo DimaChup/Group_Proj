@@ -124,6 +124,7 @@ class VisionSystem:
         self.using_ai = False
         self._use_tflite_direct = False
         self.last_bbox_w = 0  # last detection bounding box width (pixels)
+        self.last_class_name = ""  # last detected class name (e.g. "person", "dummy")
         self.last_bbox_h = 0  # last detection bounding box height (pixels)
 
         if not os.path.exists(model_path):
@@ -205,11 +206,22 @@ class VisionSystem:
             # Columns: cx, cy, w, h, class_conf...
             best_conf = 0.0
             best_det = None
+            best_cls_id = 0
             for det in preds:
-                conf = float(np.max(det[4:]))  # best class confidence
+                cls_id = int(np.argmax(det[4:]))
+                conf = float(det[4 + cls_id])
                 if conf > _conf_thresh and conf > best_conf:
                     best_conf = conf
                     best_det = det
+                    best_cls_id = cls_id
+
+            # COCO class names for TFLite multi-class models
+            COCO_NAMES = {0:"person",1:"bicycle",2:"car",3:"motorcycle",4:"airplane",5:"bus",
+                6:"train",7:"truck",8:"boat",9:"traffic light",10:"fire hydrant",11:"stop sign",
+                12:"parking meter",13:"bench",14:"bird",15:"cat",16:"dog",17:"horse",18:"sheep",
+                19:"cow",20:"elephant",24:"backpack",25:"umbrella",26:"handbag",27:"tie",
+                28:"suitcase",39:"bottle",56:"chair",57:"couch",58:"potted plant",59:"bed",
+                60:"dining table",62:"tv",63:"laptop",64:"mouse",67:"cell phone"}
 
             if best_det is not None:
                 cx = int(best_det[0] * w)
@@ -218,12 +230,15 @@ class VisionSystem:
                 bh = int(best_det[3] * h)
                 self.last_bbox_w = bw
                 self.last_bbox_h = bh
+                num_classes = len(best_det) - 4
+                self.last_class_name = COCO_NAMES.get(best_cls_id, f"cls{best_cls_id}") if num_classes > 1 else "dummy"
                 x1 = cx - bw // 2
                 y1 = cy - bh // 2
                 x2 = cx + bw // 2
                 y2 = cy + bh // 2
+                label = f"AI {best_conf:.2f} [{self.last_class_name}]"
                 cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                cv2.putText(frame, f"AI {best_conf:.2f}", (x1, y1-10),
+                cv2.putText(frame, label, (x1, y1-10),
                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
                 return True, cx, cy, float(best_conf)
 
@@ -237,9 +252,14 @@ class VisionSystem:
             conf = float(best_box.conf[0])
             self.last_bbox_w = int(w)
             self.last_bbox_h = int(h)
+            # Store class name for display
+            cls_id = int(best_box.cls[0])
+            names = self.model.names if hasattr(self.model, 'names') else {}
+            self.last_class_name = names.get(cls_id, f"cls{cls_id}")
             x1, y1, x2, y2 = best_box.xyxy[0].cpu().numpy()
+            label = f"AI {conf:.2f} [{self.last_class_name}]"
             cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
-            cv2.putText(frame, f"AI {conf:.2f}", (int(x1), int(y1)-10),
+            cv2.putText(frame, label, (int(x1), int(y1)-10),
                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
             return True, int(x), int(y), conf
 

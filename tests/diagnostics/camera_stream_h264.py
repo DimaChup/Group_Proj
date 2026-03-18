@@ -1,41 +1,57 @@
 #!/usr/bin/env python3
 """
-Camera Stream (H.264) — FFmpeg-based stream to ground station.
+Camera Stream H.264 — FFmpeg-based HLS stream to ground station browser.
 
-Alternative to pi_camera_stream.py (MJPEG). Uses FFmpeg to encode
-H.264 video served as HLS — much lower bandwidth but more complex.
+WHAT:    Captures frames from Pi camera or webcam, optionally runs AI detection,
+         then pipes raw BGR frames to an ffmpeg subprocess that encodes H.264 and
+         outputs HLS segments (.ts + .m3u8). A built-in HTTP server serves the HLS
+         playlist and an HTML player page using hls.js. Achieves ~10x lower bandwidth
+         than MJPEG (~0.05 Mbps vs ~0.5 Mbps) at the cost of 2-4 seconds latency.
+WHY:     Alternative to camera_stream.py for situations where WiFi bandwidth is limited
+         (e.g., long range, cellular backhaul, or 720p+ resolution). Uses a different
+         port (8091) so it can run simultaneously with the MJPEG stream for comparison.
+WHEN:    Use when bandwidth is constrained and 2-4s latency is acceptable. For most
+         drone operations, the MJPEG version (camera_stream.py) is preferred because
+         of its near-zero latency.
+WHERE:   Pi (primary) or laptop. Requires ffmpeg installed (sudo apt install ffmpeg).
+ENV:     Pi venv (picamera2, opencv-headless, ai-edge-litert) or laptop venv (opencv, ultralytics).
+         Also requires ffmpeg system package.
+MODELS:  best.tflite from project root (YOLOv8n, ~3.3MB). Only loaded if --with-detection.
+RISK:    none — sends ZERO commands to the drone. Read-only camera + AI.
 
-Comparison:
-  MJPEG (pi_camera_stream.py):  ~0.5 Mbps, zero deps, any browser
-  H.264 (this script):          ~0.05 Mbps, needs ffmpeg, uses hls.js
+USAGE:
+    python tests/diagnostics/camera_stream_h264.py
+    python tests/diagnostics/camera_stream_h264.py --with-detection
+    python tests/diagnostics/camera_stream_h264.py --bitrate 500k --fps 10
+    python tests/diagnostics/camera_stream_h264.py --with-detection --headless
 
-Requirements:
-  Pi:  sudo apt install ffmpeg
-  GS:  just a browser (hls.js loaded from CDN)
+FLAGS:
+    --port PORT         HTTP server port (default: 8091)
+    --fps N             Target FPS (default: 5)
+    --bitrate RATE      H.264 bitrate, e.g. 200k, 500k, 1M (default: 200k)
+    --with-detection    Enable AI detection overlay on frames before encoding
+    --headless          Suppress cv2.imshow window (for SSH/PuTTY)
 
-How it works:
-  1. Python captures frames from camera (OpenCV or picamera2)
-  2. Optionally runs AI detection overlay on each frame
-  3. Pipes raw frames to ffmpeg subprocess
-  4. ffmpeg encodes H.264 → HLS segments (.ts files + .m3u8 playlist)
-  5. Built-in HTTP server serves HLS files + HTML player page
-  6. Browser loads hls.js which plays the .m3u8 stream
+OUTPUT:
+    HTTP endpoints:
+      /          — HTML page with hls.js video player (auto-plays)
+      /status    — plain text "ok" health check
+      /*.m3u8    — HLS playlist (served from temp directory)
+      /*.ts      — HLS video segments
+    Terminal: periodic FPS and detection rate stats
+    Temp directory: HLS segments auto-cleaned on exit
 
-Ground station:
-  Open browser to http://<PI_IP>:8091/
-  (different port from MJPEG so both can run simultaneously)
+BEST PRACTICES:
+    - Install ffmpeg first: sudo apt install ffmpeg
+    - Use default 200k bitrate for WiFi; increase for higher quality
+    - HLS has inherent 2-4s latency — use MJPEG version for real-time needs
+    - Ground station browser needs internet access (hls.js loaded from CDN)
+    - Both MJPEG (port 8090) and H.264 (port 8091) can run simultaneously
 
-Options:
-  --port 8091         HTTP port (default 8091)
-  --fps 5             Target FPS (default 5)
-  --bitrate 200k      H.264 bitrate (default 200k)
-  --with-detection    Run AI detection overlay
-  --headless          No local display
-
-Usage:
-  python tests/diagnostics/camera_stream_h264.py
-  python tests/diagnostics/camera_stream_h264.py --with-detection
-  python tests/diagnostics/camera_stream_h264.py --bitrate 500k --fps 10
+DEPENDENCIES:
+    opencv-python (or opencv-python-headless), numpy, vision.py (project module)
+    System: ffmpeg (sudo apt install ffmpeg)
+    Optional: picamera2 (Pi), ultralytics or ai-edge-litert (AI backend)
 """
 import sys
 import os

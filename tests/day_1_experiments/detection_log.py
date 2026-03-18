@@ -1,28 +1,54 @@
 #!/usr/bin/env python3
 """
-detection_log.py — General-Purpose Detection Logger
-====================================================
-PASSIVE — sends ZERO commands to Cube. Pilot flies manually.
+Detection Log — General-purpose flight detection logger
 
-The "catch-all" logger. Fly anywhere, do anything — this logs every frame
-with full telemetry. Use it when the other experiments are too specific.
+WHAT:    The catch-all logger. Records every AI detection alongside full
+         telemetry (GPS, altitude, speed, yaw, battery, satellite count) for
+         any type of flight. Logs detections immediately and telemetry-only rows
+         every 1 second. Optionally saves annotated detection images with
+         bounding boxes.
+WHY:     Provides a flexible data collection tool when the other experiments
+         (altitude_sweep, speed_sweep, gps_accuracy) are too specific. Use it
+         for general CV performance evaluation, demo flights, false positive
+         debugging, or collecting data for later offline analysis.
+WHEN:    Run during any manual RC flight. Works for any flight profile — no
+         specific altitude or speed protocol required.
+WHERE:   Pi (primary) or laptop (with webcam + SITL)
+ENV:     Pi: pienv venv (pymavlink, opencv-headless, ai-edge-litert).
+         Laptop: dev venv (ultralytics, opencv-python).
+MODELS:  best.tflite from project root (active model, swappable).
+RISK:    none — sends ZERO commands to the Cube. Purely observational.
 
-Good for:
-  - General CV performance evaluation
-  - Collecting data for later analysis
-  - Recording a demo flight
-  - Debugging false positives
-
-Output CSV columns:
-  timestamp, flight_sec, lat, lon, alt, groundspeed, yaw,
-  detection, confidence, pixel_x, pixel_y, expected_dummy_px,
-  battery_v, battery_pct, gps_fix, gps_sats
-
-Also saves detection images with bounding boxes (--save-detections).
-
-Usage:
+USAGE:
     python tests/day_1_experiments/detection_log.py --headless --stream
     python tests/day_1_experiments/detection_log.py --headless --stream --save-detections
+    python tests/day_1_experiments/detection_log.py --stream --det-dir ./my_detections
+
+FLAGS:
+    --headless          No cv2 window (required on Pi / PuTTY)
+    --stream            Enable MJPEG video stream at http://0.0.0.0:8090/
+    --stream-port N     Override stream port (default 8090)
+    --save-detections   Save annotated JPEG for every detection (bounding box +
+                        confidence + altitude overlay)
+    --det-dir PATH      Override detection image directory (default detection_images/)
+
+OUTPUT:
+    - exp_detlog_YYYYMMDD_HHMMSS.csv in project root
+      Columns: timestamp, flight_sec, lat, lon, alt, groundspeed, yaw,
+      detection, confidence, pixel_x, pixel_y, expected_dummy_px,
+      battery_v, battery_pct, gps_fix, gps_sats
+    - Terminal summary: flight time, total frames, detection count and rate
+    - Optional: annotated detection images in detection_images/ directory
+
+BEST PRACTICES:
+    - Use --save-detections to review false positives after the flight
+    - Run alongside passive_watch.py on a different port for redundancy
+    - Check gps_sats and gps_fix columns in CSV to correlate GPS quality
+      with detection accuracy
+    - Good for A/B model testing: run once with each model, compare CSVs
+
+DEPENDENCIES:
+    pymavlink, opencv-python (or opencv-python-headless), numpy, config.py, vision.py
 """
 
 import sys, os, csv, time, math, threading

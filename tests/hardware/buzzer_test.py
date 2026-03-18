@@ -1,11 +1,40 @@
 #!/usr/bin/env python3
 """
-Pi Test 3b: Buzzer test - plays melodies on the Cube's buzzer via MAVLink.
+Buzzer Test — play melodies on the Cube's buzzer via MAVLink PLAY_TUNE.
 
-Requires mavproxy running in another terminal.
+WHAT:    Connects to the Cube via mavproxy and sends 15 different PLAY_TUNE
+         MAVLink messages to test the buzzer hardware. Includes simple beeps,
+         detection alerts, classical music (Fur Elise), game themes (Mario,
+         Tetris), movie themes (Pirates, Imperial March), and pop songs.
+WHY:     Verifies the buzzer hardware works before relying on it for in-flight
+         audio alerts (detection beep, landing confirmation, alarm). Also a
+         morale booster at the field.
+WHEN:    During initial hardware setup, or at the field to confirm buzzer is
+         audible. Run once after assembling the drone.
+WHERE:   Pi only (needs Cube connection via mavproxy). Could work on laptop
+         with SITL but SITL has no physical buzzer.
+ENV:     pienv on Pi. Needs pymavlink and mavproxy running in another terminal.
+MODELS:  none — no AI or camera involved.
+RISK:    none — PLAY_TUNE is a harmless MAVLink command, does not affect flight
+         controller state, arming, or motors.
 
-Usage:
+USAGE:
     python tests/hardware/buzzer_test.py
+
+FLAGS:
+    None
+
+OUTPUT:
+    Terminal log of each melody being played. Listen for buzzer audio.
+    At the end, prints troubleshooting tips if no sound was heard.
+
+BEST PRACTICES:
+    - Start mavproxy first (e.g. with udpout to 14550)
+    - If the built-in buzzer is too quiet, connect an external buzzer to BUZZ port
+    - Some Cube variants have no built-in buzzer — check your hardware
+
+DEPENDENCIES:
+    pymavlink, config.py (for CONNECTION_STR)
 """
 import sys
 import os

@@ -1,26 +1,60 @@
 #!/usr/bin/env python3
 """
-SAR Drone System Diagnostics — Multi-view connectivity dashboard.
+Diagnostics — multi-view system health dashboard (camera + Cube + AI + GS).
 
-Three switchable views (press 1/2/3):
+WHAT:    Comprehensive diagnostics tool with three switchable views rendered via OpenCV.
+         At startup, probes all five subsystems (camera, AI model, Cube, GPS, ground
+         station forwarding) and reports pass/fail. Then enters a live loop with three
+         views: (1) connectivity diagram showing Pi at center with color-coded links to
+         each subsystem, mavproxy routing, and connection details; (2) camera feed with
+         optional AI overlay toggle (press 'a') showing raw FPS vs AI FPS and detection
+         stats; (3) Cube telemetry detail with attitude, GPS, battery, connection info,
+         and per-message rates in Hz. Also detects running mavproxy process and parses
+         its flags to show serial port, baud rate, and UDP/TCP outputs.
+WHY:     Single tool to verify the entire system is working before flight. Replaces
+         running camera_stream + cube_monitor + manual checks separately. The
+         connectivity diagram makes it immediately obvious which link is broken.
+WHEN:    Run as the first diagnostic after powering on and starting mavproxy. Use
+         before any flight test to confirm all subsystems are green. The camera view
+         with AI toggle helps measure inference overhead on the actual hardware.
+WHERE:   Pi (with --headless for SSH) or laptop (with display). Checks all subsystems.
+ENV:     Pi venv (picamera2, opencv-headless, pymavlink, ai-edge-litert) or laptop venv
+         (opencv, pymavlink, ultralytics). Needs both camera and Cube access for full
+         functionality, but degrades gracefully if either is unavailable.
+MODELS:  best.tflite from project root (YOLOv8n). Loaded at startup for health check;
+         AI inference only runs when camera view is active and 'a' toggle is on.
+RISK:    none — sends ZERO commands. Only requests MAVLink data streams (read-only)
+         and reads camera frames.
 
-  VIEW 1 — CONNECTIVITY DIAGRAM
-    Pi in centre, components branching out with labeled connection lines.
-    Shows which subsystems are OK/FAIL and HOW each link works.
+USAGE:
+    python tests/diagnostics/diagnostics.py
+    python tests/diagnostics/diagnostics.py --headless
 
-  VIEW 2 — CAMERA FEED
-    Raw camera feed with FPS counter. Press 'a' to toggle AI overlay.
-    AI off  → see raw camera capability (FPS, resolution)
-    AI on   → see detections, inference time, effective FPS
-    Compare the two to see AI overhead.
+FLAGS:
+    --headless    Terminal-only mode for SSH/PuTTY (prints ANSI dashboard every 3s
+                  instead of OpenCV window). No cv2.imshow, no keyboard interaction.
 
-  VIEW 3 — CUBE TELEMETRY
-    Detailed live readings from Cube: attitude, GPS, battery, altitude.
-    All MAVLink message types with their rates in Hz.
+OUTPUT:
+    With display (default):
+      OpenCV window "SAR Drone Diagnostics" with 3 views (press 1/2/3 to switch)
+      Keys: 1=diagram, 2=camera, 3=telemetry, a=toggle AI, r=recheck GS, s=screenshot, q=quit
+      Screenshots saved as diag_<view>_<timestamp>.png
+    Headless mode:
+      ANSI color terminal dashboard printed every 3 seconds
+    On exit: summary of all 5 subsystems with pass/fail counts
 
-Usage:
-    python tests/diagnostics/diagnostics.py             # with display
-    python tests/diagnostics/diagnostics.py --headless   # terminal only (SSH)
+BEST PRACTICES:
+    - Run with display on laptop for the full visual experience
+    - Use --headless on Pi over SSH
+    - View 1 (diagram) is the quickest way to see overall system health
+    - View 2: toggle AI off first to see raw camera FPS, then on to see AI overhead
+    - If GS shows "WAITING FOR MP", connect Mission Planner to the displayed IP:5762
+    - Press 'r' to recheck ground station connection after connecting Mission Planner
+
+DEPENDENCIES:
+    opencv-python (or opencv-python-headless), numpy, pymavlink,
+    config.py, vision.py (project modules)
+    Optional: picamera2 (Pi camera)
 """
 import sys
 import os

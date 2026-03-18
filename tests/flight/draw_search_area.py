@@ -1,12 +1,39 @@
 #!/usr/bin/env python3
 """
-Draw search area polygon on map and save to search_area.json.
+Draw Search Area — interactively draw a search polygon on map.jpg and save as JSON.
 
-Run this on your laptop, draw the polygon, press SPACE.
-Push search_area.json to git, pull on Pi, then run main.py or pi_flight.py.
+WHAT:    Opens map.jpg with KML zone overlays (survey area, flight boundary, SSSI no-fly
+         zone, takeoff point). Left-click to add polygon corners, right-click to undo,
+         SPACE/ENTER to save. Outputs search_area.json with GPS coordinates for each
+         corner, consumed by main.py and pi_flight.py for lawnmower pattern generation.
+WHY:     Separates the interactive polygon drawing step (requires a screen) from the
+         headless Pi flight scripts. Draw on laptop, push JSON via git, Pi loads it
+         without needing a display.
+WHEN:    Before any flight that uses main.py or pi_flight.py search patterns. Run once
+         on laptop, push search_area.json, reuse across flights.
+WHERE:   Laptop only (requires display for mouse interaction and map.jpg).
+ENV:     Dev venv on laptop (needs opencv-python, numpy). NOT for Pi.
+MODELS:  None (no AI used).
+RISK:    None — pure GUI tool, no drone connection, no commands.
 
-Usage:
+USAGE:
     python tests/flight/draw_search_area.py
+
+FLAGS:
+    None
+
+OUTPUT:
+    search_area.json in project root — array of {lat, lon, label} objects defining
+    the search polygon corners.
+
+BEST PRACTICES:
+    - Draw inside the KML flight area (green outline) and outside the SSSI (red)
+    - Minimum 3 corners required to save
+    - Yellow outline shows the KML survey area for reference
+    - After saving, git push and git pull on Pi before flight
+
+DEPENDENCIES:
+    opencv-python, numpy, config.py, utils.py (GeoTransformer)
 """
 import sys
 import os

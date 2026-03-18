@@ -1,13 +1,39 @@
 #!/usr/bin/env python3
 """
-visualize_paths.py — Generate path planning visualization for 5 random polygons.
+visualize_paths.py — Lawnmower Path Planning Visualization
 
-Standalone script. Shows how the lawnmower search pattern adapts to different
-polygon shapes. Saves a single image with all 5 patterns side by side.
+WHAT:    Generates a single image showing the lawnmower search pattern for 5
+         different polygon shapes: irregular pentagon, narrow corridor, L-shape,
+         triangle, and the actual project survey area from config.py. Each cell
+         shows the polygon, scan lines (cyan), transitions (yellow), start/end
+         markers, and statistics (waypoint count, strip count, total distance).
+         A 6th cell explains the algorithm.
+WHY:     Visual proof that the PathPlanner handles arbitrary polygon shapes
+         correctly. Useful for the project report and for verifying the
+         algorithm before flight day.
+WHEN:    When modifying planning.py, for report figures, or to verify search
+         pattern geometry.
+WHERE:   Laptop only (requires display and project imports).
+ENV:     "venv" (needs opencv-python, numpy, and project modules config/planning/utils)
+MODELS:  None (no AI inference).
+RISK:    None — generates an image, no side effects.
 
-Usage:
+USAGE:
     python tests/laptop/visualize_paths.py
-    # Saves: path_planning_demo.jpg
+
+FLAGS:
+    None.
+
+OUTPUT:
+    path_planning_demo.jpg — 3x2 grid image saved to project root.
+    Also displays the image in a window (press any key to close).
+
+BEST PRACTICES:
+    - Run after any changes to planning.py to verify pattern generation
+    - Check that the project survey area (cell 5) matches expected shape
+
+DEPENDENCIES:
+    opencv-python, numpy, config.py, planning.py, utils.py
 """
 import sys
 import os

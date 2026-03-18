@@ -1,11 +1,44 @@
 #!/usr/bin/env python3
 """
-Test connection to Cube flight controller.
-Checks serial/TCP link, heartbeat, GPS, attitude, and battery.
+test_cube.py — Cube Flight Controller Connection Test
 
-Usage: python tests/test_cube.py
-       python tests/test_cube.py /dev/ttyAMA0 921600
-       python tests/test_cube.py tcp:127.0.0.1:5762
+WHAT:    Connects to the Cube flight controller via serial or TCP (auto-detected
+         from config.py or command-line args). Waits for MAVLink heartbeat, then
+         requests data streams and listens for GPS, attitude, battery, and status
+         messages for 5 seconds. Prints a summary of what telemetry was received.
+WHY:     Verifies the MAVLink communication path works end-to-end before running
+         flight scripts. On laptop, tests TCP to SITL/Mission Planner. On Pi,
+         tests serial to Cube via mavproxy UDP bridge. Catches baud rate
+         mismatches, wiring issues, and firewall blocks.
+WHEN:    After wiring Cube to Pi. After starting SITL. Before any flight test.
+         When MAVLink connection seems broken.
+WHERE:   Laptop only (also works on Pi but primarily a dev tool).
+ENV:     "venv" (needs pymavlink and config.py)
+MODELS:  None (no AI inference).
+RISK:    None — read-only telemetry, no commands sent.
+
+USAGE:
+    python tests/laptop/test_cube.py                          # auto from config.py
+    python tests/laptop/test_cube.py tcp:127.0.0.1:5762       # explicit TCP
+    python tests/laptop/test_cube.py /dev/ttyAMA0 921600      # explicit serial
+
+FLAGS:
+    [connection_string]   Optional: TCP or serial path (default: from config.py)
+    [baud_rate]           Optional: baud rate for serial (default: from config.py)
+
+OUTPUT:
+    Console: connection status, heartbeat, GPS coords, attitude (roll/pitch/yaw),
+    battery voltage/percentage, status text. Summary table of OK/MISSING checks.
+    Exit code: 0 if all telemetry received, 1 if any missing.
+
+BEST PRACTICES:
+    - On laptop: start SITL first (Mission Planner or mavproxy)
+    - On Pi: start mavproxy first, then run this test
+    - If heartbeat fails, check baud rate (57600, 115200, 921600)
+    - GPS missing is normal indoors (no satellite fix)
+
+DEPENDENCIES:
+    pymavlink, config.py
 """
 import sys
 import os

@@ -1,19 +1,49 @@
 #!/usr/bin/env python3
 """
-gps_ground_truth.py — Calibrate CV dummy estimation against GPS ground truth.
+GPS Ground Truth — Calibrate CV position estimates against real GPS ground truth.
 
-Flight day calibration procedure:
-  1. Fly over dummy from various angles, let passive_watch.py build CV estimate
-  2. Fly drone directly over dummy (use stream crosshair to centre it)
-  3. Press T to mark drone GPS as ground truth dummy position
-  4. Script compares ground truth vs CV estimate and shows error
+WHAT:    Reads live GPS from the Cube via mavproxy and lets you mark the drone's
+         position when directly over the dummy (press T). Compares these ground truth
+         marks against a CV-estimated position to quantify estimation error in metres.
+         Also measures GPS spread/drift by recording multiple marks from a hover.
+WHY:     The full pipeline (camera detection -> pixel position -> FOV math -> GPS estimate)
+         accumulates errors from FOV calibration, GPS latency, camera tilt, and altitude
+         inaccuracy. This script measures the END-TO-END error so you know how close the
+         drone will actually land to the target. Essential for validating that FOV
+         calibration, lens correction, and GPS timing lag compensation are working.
+WHEN:    During flight testing, after passive_watch.py has built a CV estimate of the
+         dummy position. Fly directly over the dummy and mark ground truth.
+WHERE:   Pi (with mavproxy running). Also works on laptop with SITL.
+ENV:     Requires pymavlink. No camera or AI needed.
+MODELS:  None (GPS only, no AI inference).
+RISK:    None. ZERO commands sent. Read-only GPS monitoring.
 
-Also useful for measuring GPS drift: hover in one spot and press T repeatedly.
+USAGE:
+    python tests/calibration/gps_ground_truth.py
+    python tests/calibration/gps_ground_truth.py --connect udpin:0.0.0.0:14550
+    python tests/calibration/gps_ground_truth.py --cv-estimate 51.4234 -2.6714
 
-Run on Pi:
-    python3 tests/calibration/gps_ground_truth.py
+FLAGS:
+    --connect STR           MAVLink connection string (default: udpin:0.0.0.0:14550)
+    --cv-estimate LAT LON   CV-estimated dummy position to compare against
 
-Reads GPS from mavproxy (must be running). ZERO commands sent.
+OUTPUT:
+    - Live GPS display (lat, lon, alt, satellites, fix type)
+    - Ground truth marks with spread analysis (max/mean distance from average)
+    - CV estimate vs ground truth error in metres
+    - ground_truth_YYYYMMDD_HHMMSS.txt summary file
+
+BEST PRACTICES:
+    - Use the stream crosshair (passive_watch.py) to centre the dummy before marking
+    - Take 3-5 marks from different passes for a robust ground truth average
+    - A GPS spread > 3m means conditions are poor — wait or take more samples
+    - Hover for 5+ seconds before marking (let GPS settle)
+    - Run alongside passive_watch.py: it estimates, this script validates
+    - On Windows (os.name == 'nt'), keyboard input is not supported — use Pi/Linux
+
+DEPENDENCIES:
+    pymavlink, select (Unix), termios/tty (Unix)
+    Note: Non-blocking keyboard input requires Unix terminal (Pi or WSL)
 """
 import sys
 import os

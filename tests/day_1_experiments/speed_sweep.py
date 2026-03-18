@@ -1,27 +1,55 @@
 #!/usr/bin/env python3
 """
-speed_sweep.py — Experiment: Detection Rate vs Flyover Speed
-=============================================================
-PASSIVE — sends ZERO commands to Cube. Pilot flies manually.
+Speed Sweep — Detection rate vs flyover speed experiment
 
-Protocol:
-  1. Pilot flies over dummy at fixed altitude (~15m recommended)
-  2. First pass: slow (~3 m/s)
-  3. Second pass: medium (~5 m/s)
-  4. Third pass: fast (~7 m/s)
-  5. Repeat if battery allows
+WHAT:    Logs AI detections while the pilot flies over a dummy at different
+         speeds (slow ~3 m/s, medium ~5 m/s, fast ~7 m/s) at a fixed altitude.
+         Auto-bins frames by groundspeed into 2 m/s buckets and measures
+         detection rate, confidence, and Laplacian blur metric per bucket.
+WHY:     Determines the maximum flyover speed at which the AI model still
+         reliably detects the dummy, and quantifies how motion blur degrades
+         detection. Used to set SEARCH_SPEED_MPS in config.py.
+WHEN:    Run during a manual RC flight on Day 1. Fly multiple passes over the
+         dummy at increasing speeds, all at the same altitude.
+WHERE:   Pi (primary) or laptop (with webcam + SITL)
+ENV:     Pi: pienv venv (pymavlink, opencv-headless, ai-edge-litert).
+         Laptop: dev venv (ultralytics, opencv-python).
+MODELS:  best.tflite from project root (active model, swappable).
+RISK:    none — sends ZERO commands to the Cube. Purely observational.
 
-Script auto-bins data by groundspeed (2 m/s buckets) at a fixed
-altitude range. Measures detection rate, confidence, and image blur.
+USAGE:
+    python tests/day_1_experiments/speed_sweep.py --headless --stream
+    python tests/day_1_experiments/speed_sweep.py --headless --alt 15
+    python tests/day_1_experiments/speed_sweep.py --headless --save-frames
+    python tests/day_1_experiments/speed_sweep.py --stream --stream-port 8091
 
-Output CSV columns:
-  timestamp, altitude_m, groundspeed, speed_bucket, detection,
-  confidence, blur_metric, pixel_x, pixel_y, gps_lat, gps_lon
+FLAGS:
+    --headless       No cv2 window (required on Pi / PuTTY)
+    --stream         Enable MJPEG video stream at http://0.0.0.0:8090/
+    --stream-port N  Override stream port (default 8090)
+    --alt N          Target altitude in metres (default 15). Only frames within
+                     +/- 5m of this altitude are counted in speed buckets.
+    --save-frames    Save every 3rd in-range frame as JPEG (tagged DET/MISS)
+    --save-dir PATH  Override frame save directory (default speed_frames/)
 
-Usage:
-    python tests/experiments/speed_sweep.py --headless --stream
-    python tests/experiments/speed_sweep.py --headless --alt 15
-    python tests/experiments/speed_sweep.py --headless --save-frames
+OUTPUT:
+    - exp_speed_YYYYMMDD_HHMMSS.csv in project root
+      Columns: timestamp, flight_sec, altitude_m, groundspeed, speed_bucket,
+      detection, confidence, blur_metric, pixel_x, pixel_y, gps_lat, gps_lon,
+      battery_v
+    - Terminal summary table with per-speed-bucket detection rate, blur stats,
+      and recommendation for max reliable flyover speed
+    - Optional: saved frames in speed_frames/ with filename encoding detection,
+      speed, altitude, and blur
+
+BEST PRACTICES:
+    - Pick a fixed altitude (15m recommended) and hold it across all passes
+    - Make each pass directly over the dummy, not offset
+    - Use --save-frames to visually inspect blur vs detection correlation
+    - After flight, update config.py SEARCH_SPEED_MPS based on recommendation
+
+DEPENDENCIES:
+    pymavlink, opencv-python (or opencv-python-headless), numpy, config.py, vision.py
 """
 
 import sys, os, csv, time, math, threading

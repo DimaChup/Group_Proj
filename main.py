@@ -53,6 +53,8 @@ STREAM_PORT = 8090
 STREAM_W, STREAM_H = 320, 240
 STREAM_FPS = 5
 STREAM_QUALITY = 50
+SIM_SPEED = 1  # SITL speedup multiplier (default 1x real-time, use --speed 5 for faster)
+NO_TURN = "--no-turn" in sys.argv  # Quadcopter strafes between waypoints (no yaw rotation)
 
 for _i, _arg in enumerate(sys.argv):
     if _arg == "--model" and _i + 1 < len(sys.argv):
@@ -72,6 +74,8 @@ for _i, _arg in enumerate(sys.argv):
         PRE_WAYPOINTS_FILE = sys.argv[_i + 1]
     elif _arg == "--transit" and _i + 1 < len(sys.argv):
         TRANSIT_FILE = sys.argv[_i + 1]
+    elif _arg == "--speed" and _i + 1 < len(sys.argv):
+        SIM_SPEED = float(sys.argv[_i + 1])
 
 if DRY_RUN:
     print("=" * 60)
@@ -658,8 +662,8 @@ class VisualFlightMission:
             if config.MODE == "SIMULATION":
                 self.master.mav.param_set_send(
                     self.master.target_system, self.master.target_component,
-                    b'SIM_SPEEDUP', 10.0, mavutil.mavlink.MAV_PARAM_TYPE_REAL32)
-                print("  SITL speedup set to 10x")
+                    b'SIM_SPEEDUP', SIM_SPEED, mavutil.mavlink.MAV_PARAM_TYPE_REAL32)
+                print(f"  SITL speedup set to {SIM_SPEED}x")
             self._set_state(State.ARMING)
 
     def _handle_arming(self, target_found, px_u, px_v, key):
@@ -698,25 +702,26 @@ class VisualFlightMission:
                 self.master.target_system, self.master.target_component,
                 mavutil.mavlink.MAV_CMD_NAV_TAKEOFF, 0, 0, 0, 0, 0, 0, 0, config.TARGET_ALT)
             self._set_state(State.TAKEOFF)
-        elif time.time() - self.last_req > 2.0:
+        elif time.time() - self.last_req > 3.0:
             # Set GUIDED mode (4) — use command_long which works reliably via mavproxy
             self.master.mav.command_long_send(
                 self.master.target_system, self.master.target_component,
                 mavutil.mavlink.MAV_CMD_DO_SET_MODE, 0,
                 mavutil.mavlink.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED,
                 4, 0, 0, 0, 0, 0)  # 4 = GUIDED
-            # FIX 3: Check SET_MODE acknowledgement
-            mode_ack = self.master.recv_match(type='COMMAND_ACK', blocking=True, timeout=3)
+            # Check SET_MODE acknowledgement (short timeout to avoid blocking main loop)
+            mode_ack = self.master.recv_match(type='COMMAND_ACK', blocking=True, timeout=1)
             if mode_ack:
                 if mode_ack.result != 0:
                     print(f"SET_MODE REJECTED: result={mode_ack.result}")
                 else:
                     print("SET_MODE (GUIDED) accepted")
+            # Small delay to let mode switch settle before arming
+            time.sleep(0.5)
             self.master.mav.command_long_send(
                 self.master.target_system, self.master.target_component,
                 mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0, 1, 0, 0, 0, 0, 0, 0)
-            # FIX 3: Check ARM acknowledgement
-            arm_ack = self.master.recv_match(type='COMMAND_ACK', blocking=True, timeout=3)
+            arm_ack = self.master.recv_match(type='COMMAND_ACK', blocking=True, timeout=1)
             if arm_ack:
                 if arm_ack.result != 0:
                     print(f"ARM REJECTED: result={arm_ack.result}")
@@ -801,6 +806,7 @@ class VisualFlightMission:
             self.last_req = time.time()
         if self.get_dist_to_point(self.manual_departure_lat, self.manual_departure_lon) < 3.0:
             print(f"Back at manual departure point. Resuming {self.previous_state}.")
+            self.last_req = 0  # force immediate waypoint send on resume
             self._set_state(self.previous_state)
 
     def _handle_transit_to_search(self, target_found, px_u, px_v, key):
@@ -1030,10 +1036,12 @@ class VisualFlightMission:
             if self.state != State.MANUAL:
                 print("!!! MANUAL CONTROL OVERRIDE !!!")
                 print("  WASD=move  R/F=up/down  Q/E=yaw  M=resume auto")
-                self.previous_state = self.state
-                self.manual_departure_lat = self.lat
-                self.manual_departure_lon = self.lon
-                self.manual_departure_alt = self.alt
+                # Don't overwrite previous_state if we're already returning from manual
+                if self.state != State.RETURN_FROM_MANUAL:
+                    self.previous_state = self.state
+                    self.manual_departure_lat = self.lat
+                    self.manual_departure_lon = self.lon
+                    self.manual_departure_alt = self.alt
                 self._set_state(State.MANUAL)
             else:
                 if target_found:
@@ -1050,6 +1058,7 @@ class VisualFlightMission:
                         self._set_state(State.RETURN_FROM_MANUAL)
                     else:
                         print("Resuming Automation...")
+                        self.last_req = 0  # force immediate waypoint send
                         self._set_state(self.previous_state)
 
         # MANUAL mode — WASD flight controls
@@ -1116,7 +1125,7 @@ class VisualFlightMission:
         _input_thread.start()
 
         if not HEADLESS:
-            cv2.namedWindow("Mission Dashboard")
+            cv2.namedWindow("Mission Dashboard", cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO)
             if config.MODE == "SIMULATION":
                 cv2.setMouseCallback("Mission Dashboard", self.on_dashboard_mouse)
         else:
@@ -1165,6 +1174,14 @@ class VisualFlightMission:
             if handler:
                 handler(target_found, px_u, px_v, key)
 
+            # Exit loop when mission is complete (show final frame for 3s then quit)
+            if self.state == State.DONE:
+                if not HEADLESS:
+                    cv2.waitKey(3000)
+                else:
+                    time.sleep(3.0)
+                break
+
             # Read key from cv2 (if display) or command queue (terminal/HTTP)
             key = -1
             if not HEADLESS:
@@ -1198,10 +1215,20 @@ class VisualFlightMission:
         self._land_cmd_sent = False
 
     def send_global_target(self, lat, lon, alt):
-        self.master.mav.set_position_target_global_int_send(
-             0, self.master.target_system, self.master.target_component,
-             mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT_INT,
-             0b110111111000, int(lat * 1e7), int(lon * 1e7), alt, 0, 0, 0, 0, 0, 0, 0, 0)
+        if NO_TURN:
+            # Hold current yaw — quadcopter strafes to waypoint without rotating
+            # type_mask: bit 10 cleared = yaw field USED, bit 11 set = yaw_rate ignored
+            self.master.mav.set_position_target_global_int_send(
+                 0, self.master.target_system, self.master.target_component,
+                 mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT_INT,
+                 0b100111111000, int(lat * 1e7), int(lon * 1e7), alt,
+                 0, 0, 0, 0, 0, 0, self.yaw, 0)
+        else:
+            # Default: drone rotates to face next waypoint
+            self.master.mav.set_position_target_global_int_send(
+                 0, self.master.target_system, self.master.target_component,
+                 mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT_INT,
+                 0b110111111000, int(lat * 1e7), int(lon * 1e7), alt, 0, 0, 0, 0, 0, 0, 0, 0)
              
     def get_dist_to_target(self): return self.get_dist_to_point(self.target_lat, self.target_lon)
     def get_dist_to_point(self, t_lat, t_lon):
@@ -1371,4 +1398,15 @@ if __name__ == "__main__":
     if DRY_RUN:
         _dry_run(mission)
     else:
-        mission.run()
+        try:
+            mission.run()
+        except (ConnectionResetError, ConnectionAbortedError, BrokenPipeError) as e:
+            print(f"\n[LINK LOST] Connection to Cube dropped: {e}")
+            print("  If SITL: restart Mission Planner simulation")
+            print("  If real: check mavproxy and serial cable")
+        except KeyboardInterrupt:
+            print("\n[USER] Mission aborted by Ctrl+C")
+        finally:
+            if hasattr(mission, 'log_file') and mission.log_file:
+                mission.log_file.close()
+            cv2.destroyAllWindows()

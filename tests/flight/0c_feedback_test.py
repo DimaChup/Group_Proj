@@ -1,18 +1,42 @@
 #!/usr/bin/env python3
 """
-Feedback Loop Test — prove the vision→GPS→command pipeline works.
+Feedback Loop Test — prove the vision-to-GPS-to-command pipeline end-to-end.
 
-Carry the drone by hand over a dummy printout. This script shows:
-  1. Camera detects target (pixel position)
-  2. Converts to GPS estimate (using altitude + yaw from Cube)
-  3. Shows what command main.py WOULD send to the Cube
-  4. Re-detects next frame and updates (the feedback loop)
+WHAT:    Runs camera + AI detection and converts pixel detections to GPS coordinates
+         using the same math as main.py. Displays pixel position, guidance direction,
+         meter offsets, estimated target GPS, and frame-to-frame drift. Sends ZERO
+         commands to the Cube — read-only telemetry for altitude and yaw.
+WHY:     Validates the entire feedback loop (camera -> detect -> pixel-to-GPS -> guidance)
+         without any risk. Proves that the centering logic and GPS estimation work before
+         testing them in flight. Also measures estimate stability (frame drift).
+WHEN:    After 0b_bench_mission.py passes. Before any flight with CV. Carry the drone
+         by hand over a printed dummy to test.
+WHERE:   Pi (with camera + Cube via mavproxy) or laptop (with webcam + SITL).
+ENV:     pienv on Pi (with ai-edge-litert), or dev venv on laptop (with ultralytics).
+MODELS:  best.tflite (YOLOv8n TFLite) — loaded via vision.py dual backend.
+RISK:    None — sends ZERO commands to the Cube. Read-only telemetry. Falls back to
+         fake telemetry (10m altitude) if Cube is not connected.
 
-No commands sent. Safe on bench. Proves the full pipeline.
+USAGE:
+    python tests/flight/0c_feedback_test.py                # with OpenCV window
+    python tests/flight/0c_feedback_test.py --headless     # terminal only (SSH/PuTTY)
 
-Usage:
-    python tests/flight/0c_feedback_test.py --headless
-    DISPLAY=:0 python tests/flight/0c_feedback_test.py
+FLAGS:
+    --headless    Skip cv2.imshow window, output to terminal only (for SSH sessions)
+
+OUTPUT:
+    Terminal table: frame number, pixel coords, guidance direction, meter offsets,
+    target GPS estimate, and frame-to-frame drift in meters. Summary of total
+    detections and what the test proved.
+
+BEST PRACTICES:
+    - Print the dummy image and hold the drone/camera above it at ~1m height
+    - Watch frame drift column — should be < 0.5m when stationary
+    - If drift is large, check FOCAL_LENGTH_MM and SENSOR_WIDTH_MM in config.py
+    - Works without Cube (uses fake 10m altitude) — useful for camera-only testing
+
+DEPENDENCIES:
+    opencv-python, numpy, config.py, vision.py (VisionSystem), pymavlink (optional)
 """
 import sys
 import os

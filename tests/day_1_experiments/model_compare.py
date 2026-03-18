@@ -1,32 +1,56 @@
 #!/usr/bin/env python3
 """
-model_compare.py — Experiment: Compare TFLite Models
-=====================================================
-PASSIVE — sends ZERO commands. Can run on bench (no flight needed).
+Model Compare — Benchmark and compare all TFLite models
 
-Protocol:
-  1. Point camera at dummy (on table, or from altitude)
-  2. Script loads each .tflite model from models/ folder
-  3. Runs N frames with each model
-  4. Prints comparison: inference speed, detection rate, confidence
+WHAT:    Loads every .tflite model found in the project (root best.tflite +
+         models/ directory), runs N camera frames through each one, and prints
+         a comparison table with inference speed, FPS, detection rate, and
+         average confidence. Can also test a single specific model with the
+         --model flag.
+WHY:     Helps pick the best AI model for flight day conditions. Different
+         models trade off speed vs accuracy — this script quantifies that
+         tradeoff on the actual hardware with a live camera feed.
+WHEN:    Run on the bench before flight (point camera at dummy on a table) or
+         during manual flight with --model to test a specific model live. No
+         Cube connection needed for bench mode.
+WHERE:   Pi (primary, benchmarks real hardware speed) or laptop (development).
+         Falls back to blank frames if no camera is available.
+ENV:     Pi: pienv venv (opencv-headless, ai-edge-litert).
+         Laptop: dev venv (ultralytics, opencv-python).
+MODELS:  All .tflite files in project root and models/ directory. Also checks
+         cv_models/ variants. All must have input [1,640,640,3] and output
+         [1,5,8400] to be compatible.
+RISK:    none — sends ZERO commands. Does not connect to the Cube at all.
 
-This helps pick the best model for flight day conditions.
-
-Can also run during flight: use --model flag to test a specific model
-while flying (like a normal passive flight but with a different model).
-
-Usage:
-    # Bench comparison (all models, no flight):
+USAGE:
     python tests/day_1_experiments/model_compare.py
-
-    # Bench with more frames per model:
     python tests/day_1_experiments/model_compare.py --frames 100
-
-    # In-flight with specific model:
-    python tests/day_1_experiments/model_compare.py --model models/yolov8s.tflite --headless --stream
-
-    # List available models:
+    python tests/day_1_experiments/model_compare.py --model models/human.tflite --headless --stream
     python tests/day_1_experiments/model_compare.py --list
+
+FLAGS:
+    --list           List all available .tflite models and exit
+    --frames N       Number of frames per model (default 50)
+    --model PATH     Test only this specific model (path relative to project root
+                     or absolute)
+    --headless       No cv2 window (required on Pi / PuTTY)
+
+OUTPUT:
+    - Terminal comparison table with columns: Model, Size, Avg ms, FPS,
+      Detection%, Detections, Avg Confidence
+    - Recommendation for best detection, best speed, and best balanced model
+    - No CSV output (results are printed only)
+
+BEST PRACTICES:
+    - Point camera at the dummy for realistic detection rates (blank frames
+      will show 0% detection for all models)
+    - Use --frames 100 for more stable timing measurements
+    - On Pi, close other processes to get clean benchmarks
+    - After choosing a model: cp models/CHOSEN.tflite best.tflite
+
+DEPENDENCIES:
+    opencv-python (or opencv-python-headless), numpy, vision.py
+    Optional: picamera2 (Pi camera), pymavlink (not used)
 """
 
 import sys, os, time, math, glob

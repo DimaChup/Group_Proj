@@ -2,25 +2,45 @@
 """
 GPS Health Check — step-by-step verification of Here 3+ GPS.
 
-Goes through each layer in order:
-  Step 1: Cube connected? (heartbeat)
-  Step 2: CAN bus enabled? (parameters)
-  Step 3: GPS type configured? (GPS_TYPE = 9 for DroneCAN)
-  Step 4: GPS hardware talking? (GPS_RAW_INT messages arriving)
-  Step 5: Satellites visible? (fix_type, sat count)
-  Step 6: 3D fix? (live tracking until fix or Ctrl+C)
+WHAT:    Runs a 6-step diagnostic sequence that verifies each layer of the GPS
+         stack in order: (1) Cube heartbeat, (2) CAN bus parameters enabled,
+         (3) GPS_TYPE = 9 (DroneCAN), (4) GPS_RAW_INT messages arriving,
+         (5) satellite count and fix type, (6) live tracking until 3D fix.
+         Each step must pass before the next makes sense. If a step fails, it
+         prints exactly what to check (parameter names, cable connections, etc.).
+WHY:     The Here 3+ GPS connects via CAN, not serial, and requires specific
+         parameters (CAN_P1_DRIVER=1, GPS_TYPE=9). This script catches every
+         common misconfiguration without needing Mission Planner. Also includes
+         LED reference so you can correlate what you see on the GPS module.
+WHEN:    First time assembling the drone. When GPS pre-arm check fails. When
+         debugging "no satellites" issues at the field. Run before gps_test.py
+         if you suspect hardware/config problems.
+WHERE:   Pi only (needs Cube via mavproxy). Works with SITL on laptop but CAN
+         parameters won't exist in simulation.
+ENV:     pienv on Pi. Needs pymavlink and mavproxy running.
+MODELS:  none — no AI or camera involved.
+RISK:    none — read-only parameter queries and message listening, no commands sent.
 
-Each step must pass before the next makes sense.
-If a step fails, it tells you exactly what to check.
-
-LED Reference (Here 3+):
-  Flashing BLUE   = no GPS lock (searching)
-  Flashing GREEN  = GPS lock acquired (ready to arm!)
-  Double YELLOW   = pre-arm checks failing
-  Flashing YELLOW = RC failsafe active
-
-Usage:
+USAGE:
     python tests/hardware/gps_health.py
+
+FLAGS:
+    None
+
+OUTPUT:
+    Terminal: 6-step diagnostic with PASS/FAIL/WARN per step. Live GPS tracking
+    table (time, fix, sats, HDOP, lat, lon, predicted LED color). Final summary
+    with overall health verdict and LED quick reference.
+
+BEST PRACTICES:
+    - Run this BEFORE gps_test.py if GPS is not working at all
+    - Steps 1-4 work indoors (no sky needed) — they test wiring and config
+    - Steps 5-6 need outdoor sky view for meaningful satellite data
+    - If Step 2 fails (CAN not enabled), fix in Mission Planner and reboot Cube
+    - LED reference: flashing BLUE = searching, flashing GREEN = locked (ready!)
+
+DEPENDENCIES:
+    pymavlink, config.py (for CONNECTION_STR)
 """
 import sys
 import os

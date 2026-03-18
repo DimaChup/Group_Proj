@@ -1,60 +1,59 @@
 #!/usr/bin/env python3
 """
-Detect & Center — simplified mission for progressive flight testing.
+Detect and Center — autonomous waypoint flight + AI detection + velocity centering.
 
-This is the INTERMEDIATE step between passive flight and full main.py.
-Fly waypoints → if AI detects target → center above it → hover (→ optionally land).
+WHAT:    Arms, takes off, flies a square GUIDED waypoint pattern while running AI
+         detection on every frame. When the target is detected for N consecutive frames,
+         switches to velocity-based centering (max 1 m/s) to position the drone directly
+         above the target. Once centered, hovers and waits for operator decision:
+         'l' to land, 'r' to resume search, 'q' to RTL. If target is lost during
+         centering, holds position for 5s then resumes waypoints.
+WHY:     The most advanced flight test before using main.py. Tests everything that
+         passive flight does not: autonomous mode switching, velocity-based visual
+         servo centering, target lock-on time, and false positive handling in real
+         flight conditions.
+WHEN:    Step 4 (final progressive test). After 3_auto_detect proves detection works
+         in flight. Before trusting main.py for the real mission.
+WHERE:   Pi (with camera + Cube via mavproxy, outdoors) or laptop (with webcam + SITL).
+ENV:     pienv on Pi (ai-edge-litert, opencv-headless, pymavlink). Dev venv on laptop.
+MODELS:  best.tflite (YOLOv8n TFLite) — loaded via vision.py dual backend.
+RISK:    HIGH — this script arms, takes off, flies waypoints, and can land autonomously.
+         Sends velocity commands during centering. RC kill switch must be ready. Use
+         --dry-run to verify GPS + AI without arming.
 
-How it works:
-  1. Connects to Cube (SITL or real via mavproxy)
-  2. Arms, takes off to TEST_ALT
-  3. Flies waypoints in GUIDED mode (square pattern around home)
-  4. While flying, runs AI detection on every frame
-  5. If AI detects target with confidence > threshold for N consecutive frames:
-     → Switches to CENTERING: sends velocity commands to center target in frame
-     → Once centered: HOVERS and waits for operator decision
-  6. Operator keys (terminal):
-     'l' = land here
-     'r' = resume waypoints (false positive, keep searching)
-     'q' = RTL and quit
-  7. After all waypoints: returns home and lands
+USAGE:
+    python tests/flight/4_detect_and_center.py                        # full mission
+    python tests/flight/4_detect_and_center.py --dry-run              # verify without arming
+    python tests/flight/4_detect_and_center.py --headless --stream    # Pi SSH + browser stream
+    python tests/flight/4_detect_and_center.py --alt 15 --pattern 40  # custom altitude/pattern
 
-What this tests (that passive flight doesn't):
-  - Can the Pi switch modes and take control from AUTO/GUIDED?
-  - Does velocity-based centering actually work?
-  - How quickly does it lock on?
-  - False positive rate in real flight?
+FLAGS:
+    --alt N             Flight altitude in meters (default 15)
+    --pattern N         Square pattern size in meters (default 40)
+    --speed N           Waypoint speed in m/s (default 3)
+    --conf N            Detection confidence threshold (default 0.4)
+    --min-detections N  Consecutive detections before centering (default 3)
+    --dry-run           Connect, verify GPS + AI, run 10s detection test, don't arm
+    --headless          Skip cv2.imshow, terminal only (for SSH/PuTTY)
+    --stream            Enable MJPEG stream at http://PI_IP:8090/
+    --stream-port N     Stream port (default 8090)
 
-Safety:
-  - RC kill switch ALWAYS overrides (flip to STABILIZE/LOITER)
-  - Ctrl+C triggers RTL
-  - --dry-run: connect + GPS + AI, but don't arm
-  - Centering uses slow velocity commands (max 1 m/s)
-  - If target lost during centering, hovers and waits 5s, then resumes
+OUTPUT:
+    - Terminal: real-time state, waypoint progress, centering direction, operator prompts
+    - OpenCV window (unless --headless): live video with state banner, crosshair, detection
+    - Optional MJPEG stream viewable in browser
+    - Summary: frames processed, detections, waypoints reached
 
-Works in both SIMULATION (SITL) and REAL (Pi + Cube via mavproxy).
+BEST PRACTICES:
+    - ALWAYS run --dry-run first to verify GPS fix and AI detection
+    - Start with a small --pattern (20m) and low --alt (10m) for first test
+    - Keep RC transmitter ready — STABILIZE/LOITER overrides at any time
+    - Ctrl+C triggers RTL as emergency fallback
+    - Use --stream on Pi so you can watch the video feed from a laptop browser
+    - If centering oscillates, increase --conf or --min-detections
 
-Options:
-  --alt 15            Flight altitude in meters (default 15)
-  --pattern 40        Square pattern size in meters (default 40)
-  --speed 3           Waypoint speed m/s (default 3)
-  --conf 0.4          Detection confidence threshold (default 0.4)
-  --min-detections 3  Consecutive detections before centering (default 3)
-  --dry-run           Connect + check everything, don't arm
-  --headless          No cv2 window (SSH)
-  --stream            Enable MJPEG stream to ground station
-  --stream-port 8090  Stream port
-
-Usage:
-    # Simulation (laptop + SITL):
-    set DRONE_MODE=SIMULATION
-    python tests/flight/4_detect_and_center.py
-
-    # Real (Pi + Cube):
-    python tests/flight/4_detect_and_center.py --headless --stream
-
-    # Dry run (verify everything without flying):
-    python tests/flight/4_detect_and_center.py --dry-run
+DEPENDENCIES:
+    opencv-python (or opencv-headless), numpy, pymavlink, config.py, vision.py
 """
 import sys
 import os

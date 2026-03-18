@@ -1,25 +1,47 @@
 #!/usr/bin/env python3
 """
-gps_drift.py — Experiment: GPS Drift While Hovering
-=====================================================
-PASSIVE — sends ZERO commands to Cube. Pilot flies manually.
+GPS Drift — GPS noise floor measurement while hovering
 
-Protocol:
-  1. Pilot hovers in place at 10-15m for 60+ seconds
-  2. Script logs GPS position every 0.25s
-  3. After flight, prints drift statistics (std dev, max drift, drift rate)
+WHAT:    Records the drone's GPS position at 4 Hz while the pilot hovers in
+         place. After recording, computes horizontal drift statistics (standard
+         deviation, max drift, CEP50, CEP95) and altitude stability. No camera
+         or AI model is used — this is pure GPS telemetry logging.
+WHY:     Establishes the GPS noise floor: the minimum possible error in any
+         GPS-based estimation. If the GPS drifts 3m while stationary, target
+         position estimates can never be better than 3m. Critical for sizing
+         the offset landing distance.
+WHEN:    Run during a manual RC hover on Day 1. Pilot holds position at
+         10-15m altitude for 60+ seconds (longer is better).
+WHERE:   Pi (primary) or laptop (with SITL)
+ENV:     Pi: pienv venv (pymavlink). Laptop: dev venv (pymavlink).
+         No camera or AI model required.
+MODELS:  none — this script does not use the camera or AI.
+RISK:    none — sends ZERO commands to the Cube. Purely observational.
 
-This tells you the GPS noise floor — the minimum possible error in any
-GPS-based estimation. If GPS drifts 2m, your estimates can't be better than 2m.
-
-Also logs altitude stability (how much altitude varies while "hovering").
-
-Output CSV columns:
-  timestamp, lat, lon, alt, groundspeed, n_sats, hdop
-
-Usage:
+USAGE:
     python tests/day_1_experiments/gps_drift.py --headless
     python tests/day_1_experiments/gps_drift.py --headless --duration 120
+
+FLAGS:
+    --duration N  Recording duration in seconds (default 60). Recording starts
+                  automatically when GPS fix is available and altitude > 2m.
+
+OUTPUT:
+    - exp_drift_YYYYMMDD_HHMMSS.csv in project root
+      Columns: timestamp, elapsed_s, lat, lon, alt, groundspeed, gps_sats,
+      gps_fix
+    - Terminal summary: mean distance from centre, std dev, max drift,
+      CEP50, CEP95, altitude range, and interpretation
+
+BEST PRACTICES:
+    - Hover in place with minimal stick input for cleanest data
+    - Run for 120+ seconds if battery allows (more samples = better stats)
+    - CEP95 < 2m is good; 2-4m is acceptable; > 4m is poor
+    - Compare results with and without RTK if available
+    - Run early in the flight session while satellite geometry is fresh
+
+DEPENDENCIES:
+    pymavlink, config.py
 """
 
 import sys, os, csv, time, math

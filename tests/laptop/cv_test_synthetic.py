@@ -1,18 +1,48 @@
 #!/usr/bin/env python3
 """
-pi_cv_test.py — Synthetic Image CV Model Benchmark
-===================================================
-Tests how well the AI model detects the dummy at various simulated altitudes,
-positions, and rotations — using the same math as the real simulator.
+cv_test_synthetic.py — Synthetic Image CV Model Benchmark
 
-Uses map.jpg as background and dummy.png as the target (both in git).
-Runs entirely offline — no camera, no Cube, no connection needed.
+WHAT:    Comprehensive offline benchmark of the AI model using synthetic images.
+         Generates camera frames as if the drone is at various altitudes (5-50m),
+         positions (centered, offset), and yaw angles (0/45/90 deg) using the
+         same FOV math as simulation.py. Four test phases: (1) altitude sweep,
+         (2) position offsets, (3) yaw rotation, (4) timing benchmark (50 runs).
+         Reports detection rate, confidence, pixel error, and inference timing
+         (avg, median, P90, P99, FPS).
+WHY:     Quantifies model performance across the full operating envelope without
+         needing a camera, Cube, or flight. Answers critical questions: at what
+         altitude does detection fail? Does yaw affect detection? How fast is
+         inference? Runs entirely offline using map.jpg + dummy.png.
+WHEN:    After training a new model. Before flight day to verify detection range.
+         When tuning TARGET_ALT in config.py.
+WHERE:   Laptop only (interactive mode needs display; --headless for terminal-only).
+ENV:     "venv" (needs opencv-python, numpy, vision.py, config.py, utils.py)
+MODELS:  best.tflite from project root (via VisionSystem).
+RISK:    None — offline synthetic benchmark, no commands sent.
 
-Usage:
-    python tests/laptop/cv_test_synthetic.py                  # interactive (shows frames)
-    python tests/laptop/cv_test_synthetic.py --headless        # terminal-only output
-    python tests/laptop/cv_test_synthetic.py --save            # save test frames to tests/cv_frames/
-    python tests/laptop/cv_test_synthetic.py --headless --save # both
+USAGE:
+    python tests/laptop/cv_test_synthetic.py                    # interactive
+    python tests/laptop/cv_test_synthetic.py --headless         # terminal-only
+    python tests/laptop/cv_test_synthetic.py --save             # save frames
+    python tests/laptop/cv_test_synthetic.py --headless --save  # both
+
+FLAGS:
+    --headless    No GUI windows (for SSH or headless environments)
+    --save        Save test frames to tests/laptop/cv_frames/
+
+OUTPUT:
+    Console: per-altitude detection table, offset results, yaw results,
+    timing statistics (50 runs), and summary with recommendations.
+    Files (--save): cv_frames/alt_XXm.jpg, offset_*.jpg, yaw_*.jpg
+
+BEST PRACTICES:
+    - Check that max detection altitude exceeds TARGET_ALT (30m default)
+    - Compare timing with Pi benchmark (~206ms) to estimate Pi performance
+    - If detection fails at high altitudes, consider lowering TARGET_ALT
+    - Run with --save to generate images for the project report
+
+DEPENDENCIES:
+    opencv-python, numpy, vision.py, config.py, utils.py (overlay_image_alpha)
 """
 
 import sys

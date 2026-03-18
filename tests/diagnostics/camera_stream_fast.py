@@ -1,38 +1,56 @@
 #!/usr/bin/env python3
 """
-Camera Stream (Fast) — full FPS stream with threaded AI detection.
+Camera Stream Fast — threaded MJPEG stream with non-blocking AI detection.
 
-The regular pi_camera_stream.py runs detection on every frame, which
-caps FPS at ~4 (because inference takes ~250ms). This version runs
-detection in a background thread so the stream stays smooth.
+WHAT:    Captures frames in the main thread at full camera speed (~25 FPS) and runs
+         AI detection in a separate background thread (~4 FPS). The detection overlay
+         (bounding box, direction, confidence) is drawn on every frame using the latest
+         AI result, so the stream stays smooth while AI updates asynchronously. Also
+         provides an /ai-snapshot endpoint to inspect the exact frame the model sees
+         (useful for checking motion blur).
+WHY:     The basic camera_stream.py runs detection synchronously, capping the entire
+         stream to ~4 FPS. This threaded version decouples capture from inference,
+         giving a smooth ~25 FPS stream with AI overlay updating at inference speed.
+WHEN:    Use whenever you need a live camera feed with AI detection and smooth video.
+         Preferred over camera_stream.py when AI is enabled. Good for manual flights
+         where the pilot needs a responsive video feed with detection indicators.
+WHERE:   Pi (primary) or laptop (webcam fallback). Headless-safe with --headless.
+ENV:     Pi venv (picamera2, opencv-headless, ai-edge-litert) or laptop venv (opencv, ultralytics).
+MODELS:  best.tflite from project root (YOLOv8n, ~3.3MB). Only loaded if --with-detection.
+RISK:    none — sends ZERO commands to the drone. Read-only camera + AI.
 
-How it works:
-  - Main thread grabs frames as fast as possible (~20-30 fps)
-  - Background thread picks up the latest frame, runs AI (~250ms)
-  - Detection overlay (box, direction, confidence) is drawn on every
-    frame using the LATEST detection result — so the stream is smooth
-    and the overlay updates every ~250ms
-
-Result:
-  Without detection:  ~25 fps (same as before)
-  With detection:     ~25 fps stream, AI overlay updates at ~4 fps
-  (vs old approach:   ~4 fps everything)
-
-Ground station:
-  Open browser to http://<PI_IP>:8090/
-
-Options:
-  --port 8090         HTTP port (default 8090)
-  --res 320x240       Stream resolution (default 320x240)
-  --fps 15            Target FPS (default 15)
-  --quality 50        JPEG quality 1-100 (default 50)
-  --with-detection    Run AI detection in background thread
-  --headless          No local display
-
-Usage:
+USAGE:
     python tests/diagnostics/camera_stream_fast.py --with-detection
     python tests/diagnostics/camera_stream_fast.py --with-detection --fps 20 --quality 70
     python tests/diagnostics/camera_stream_fast.py --res 640x480 --fps 10
+    python tests/diagnostics/camera_stream_fast.py --with-detection --headless
+
+FLAGS:
+    --port PORT         HTTP server port (default: 8090)
+    --res WxH           Stream resolution, e.g. 320x240 (default: 320x240)
+    --fps N             Target stream FPS (default: 15)
+    --quality N         JPEG quality 1-100 (default: 50)
+    --with-detection    Enable threaded AI detection overlay
+    --headless          Suppress cv2.imshow window (for SSH/PuTTY)
+
+OUTPUT:
+    HTTP endpoints:
+      /             — HTML page with embedded stream and AI links
+      /stream       — raw MJPEG stream at target FPS
+      /snapshot     — single JPEG frame (downscaled)
+      /stream-ai    — MJPEG stream of only AI-processed frames (~4 FPS)
+      /ai-snapshot  — full-resolution JPEG of last frame fed to AI (blur inspection)
+    Terminal: periodic stream FPS, AI FPS, and detection count
+
+BEST PRACTICES:
+    - Use this instead of camera_stream.py when you need AI + smooth video
+    - Check /ai-snapshot in browser to verify the model sees sharp images
+    - Use --headless on Pi over SSH
+    - Higher --fps increases WiFi bandwidth; 15 FPS is a good default
+
+DEPENDENCIES:
+    opencv-python (or opencv-python-headless), numpy, vision.py (project module)
+    Optional: picamera2 (Pi), ultralytics or ai-edge-litert (AI backend)
 """
 import sys
 import os

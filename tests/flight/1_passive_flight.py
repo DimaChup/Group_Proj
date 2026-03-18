@@ -1,49 +1,61 @@
 #!/usr/bin/env python3
 """
-pi_passive_flight.py — Passive Detection During Manual Flight
-=============================================================
-Pilot flies manually on RC. Pi watches with camera + AI.
-Flags detections on screen + buzzer. Logs everything. Sends ZERO commands.
+Passive Flight — camera + AI detection during manual RC flight, ZERO commands.
 
-What it shows:
-  - Live camera feed with AI overlay
-  - Current altitude from Cube
-  - Expected dummy size at current altitude
-  - Detection alerts (screen flash + buzzer)
-  - GPS position, attitude, battery
-  - Detection log saved to CSV
+WHAT:    Runs camera + AI detection while a pilot flies manually on RC. Shows live
+         video feed with detection overlay, altitude, guidance arrows, GPS, battery,
+         and detection event log. Logs all telemetry and detections to CSV. Beeps the
+         Cube buzzer on detection. Optionally streams MJPEG to a ground station browser
+         and saves frames/detection images to disk for post-flight review.
+WHY:     Calibrates real-world detection performance (altitude, speed, blur, false
+         positive rate) without any autonomous control risk. The pilot has full
+         authority. Post-flight CSV and saved images reveal detection range limits.
+WHEN:    Step 1 of outdoor flight testing. After bench tests (0a-0c) pass. Before
+         any autonomous flight script (2_waypoints, 3_auto_detect, etc.).
+WHERE:   Pi (primary — with IMX296 camera + Cube via mavproxy). Also works on laptop
+         with webcam + SITL for simulation testing.
+ENV:     pienv on Pi (ai-edge-litert, opencv-headless, pymavlink). Dev venv on laptop.
+MODELS:  best.tflite (YOLOv8n TFLite) — loaded via vision.py dual backend.
+RISK:    None — sends ZERO commands to the Cube. Read-only telemetry + buzzer only.
+         Pilot has full RC authority at all times.
 
-Controls:
-  'q' / ESC — quit
-  's' — save current frame as snapshot.
-
-Stream options (use with --stream):
-  --stream              Enable MJPEG stream to ground station
-  --stream-port 8090    HTTP port (default 8090)
-  --stream-res 320x240  Stream resolution (default 320x240)
-  --stream-fps 5        Target FPS (default 5)
-  --stream-quality 50   JPEG quality 1-100 (default 50)
-
-Frame capture (use with --save-frames):
-  --save-frames         Save every AI frame to disk (for blur/smear review)
-  --save-every N        Save every Nth frame instead of all (default 1 = all)
-  --save-dir DIR        Output folder (default: flight_frames/)
-
-Detection image capture (use with --save-detections):
-  --save-detections     Save frames with detections (bbox drawn, GPS in filename)
-  --det-dir DIR         Output folder (default: detections/)
-
-  Saved files:  DET_0.83_alt12.4_spd3.2_001234.jpg   (detection hit)
-                MISS_alt12.4_spd3.2_001235.jpg        (no detection)
-  Review after flight to see blur at different speeds and which frames detected.
-
-Usage:
-    python tests/flight/1_passive_flight.py                    # with screen
-    python tests/flight/1_passive_flight.py --headless         # terminal only (SSH)
-    python tests/flight/1_passive_flight.py --headless --stream # SSH + stream to laptop
+USAGE:
+    python tests/flight/1_passive_flight.py                              # with screen
+    python tests/flight/1_passive_flight.py --headless                   # terminal only (SSH)
+    python tests/flight/1_passive_flight.py --headless --stream          # SSH + browser stream
     python tests/flight/1_passive_flight.py --stream --stream-res 640x480 --stream-quality 70
-    python tests/flight/1_passive_flight.py --headless --save-frames              # save all AI frames
-    python tests/flight/1_passive_flight.py --headless --save-frames --save-every 4  # save every 4th frame
+    python tests/flight/1_passive_flight.py --headless --save-frames     # save all AI frames
+    python tests/flight/1_passive_flight.py --save-frames --save-every 4 # save every 4th frame
+    python tests/flight/1_passive_flight.py --save-detections            # save detection images
+
+FLAGS:
+    --headless          Skip cv2.imshow, output to terminal only (for SSH/PuTTY)
+    --stream            Enable MJPEG stream at http://PI_IP:8090/
+    --stream-port N     HTTP port for stream (default 8090)
+    --stream-res WxH    Stream resolution (default 320x240)
+    --stream-fps N      Target stream FPS (default 5)
+    --stream-quality N  JPEG quality 1-100 (default 50)
+    --save-frames       Save every AI frame to disk (flight_frames/)
+    --save-every N      Save every Nth frame instead of all (default 1)
+    --save-dir DIR      Output folder for saved frames (default flight_frames/)
+    --save-detections   Save detection images with bbox and GPS in filename
+    --det-dir DIR       Output folder for detection images (default detections/)
+
+OUTPUT:
+    - passive_flight_log.csv: timestamped telemetry + detection rows
+    - Terminal: detection alerts with confidence, pixel coords, guidance direction
+    - Optional: flight_frames/ and detections/ directories with saved images
+    - Optional: MJPEG stream viewable at http://PI_IP:8090/
+
+BEST PRACTICES:
+    - Use --save-detections on first flights to review detection quality post-flight
+    - Review CSV to find minimum detection altitude and maximum speed for reliable detection
+    - Use --stream to watch from a laptop while pilot flies
+    - Press 's' (with screen) to snapshot interesting frames
+
+DEPENDENCIES:
+    opencv-python (or opencv-headless on Pi), numpy, pymavlink (optional),
+    config.py, vision.py (VisionSystem)
 """
 
 import sys

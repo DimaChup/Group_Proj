@@ -1,30 +1,45 @@
 #!/usr/bin/env python3
 """
-FOV Calibration — measure real camera field of view.
+FOV Calibrate — Comprehensive bench FOV calibration with multi-height measurement.
 
-Hold camera at a known height above a ruler/tape measure on the floor.
-The script shows what the camera sees and calculates the real FOV,
-then tells you what to put in config.py.
+WHAT:    Measures the camera's real field of view by comparing what the camera sees
+         at known heights against a ruler/tape measure. Supports multi-height
+         measurements for consistency checking. Calculates FOCAL_LENGTH_MM and shows
+         the impact of miscalibration on GPS position estimates at flight altitudes.
+WHY:     Accurate FOV is CRITICAL for pixel-to-GPS conversion. If SENSOR_WIDTH_MM or
+         FOCAL_LENGTH_MM are wrong in config.py, the drone will over/undershoot the
+         target during centering and landing. This script quantifies the error and
+         tells you exactly what to change.
+WHEN:    Before first flight, after changing camera/lens, or if GPS estimates are
+         consistently offset. Run on the bench (no Cube or GPS needed).
+WHERE:   Both Pi and laptop (uses VisionSystem camera abstraction).
+ENV:     Any venv with opencv and numpy. Uses vision.py for camera access.
+MODELS:  None (camera only, no AI inference).
+RISK:    None. Camera read-only, no commands sent.
 
-This is CRITICAL for accurate pixel→GPS conversion. If SENSOR_WIDTH_MM
-or FOCAL_LENGTH_MM are wrong, the drone will over/undershoot the target.
-
-The math:
-    GSD = (SENSOR_WIDTH_MM * altitude) / (FOCAL_LENGTH_MM * IMAGE_W)
-    FOV_width = GSD * IMAGE_W = (SENSOR_WIDTH_MM * altitude) / FOCAL_LENGTH_MM
-
-So if you measure the actual width visible at a known height:
-    FOCAL_LENGTH_MM = (SENSOR_WIDTH_MM * height_mm) / measured_width_mm
-
-Steps:
-    1. Place a ruler/tape measure flat on the floor
-    2. Hold camera pointing straight down at a KNOWN height (e.g., 50cm, 100cm)
-    3. Note how many cm of the ruler are visible edge-to-edge in the frame
-    4. Enter those values when prompted
-
-Usage:
+USAGE:
     python tests/calibration/fov_calibrate.py                # with display
     python tests/calibration/fov_calibrate.py --headless     # terminal only
+
+FLAGS:
+    --headless    Skip cv2 display, terminal-only prompts (for PuTTY/SSH)
+
+OUTPUT:
+    - Calibrated FOCAL_LENGTH_MM value for config.py
+    - Consistency check across multiple heights (spread, std deviation)
+    - FOV comparison table at flight altitudes (10-30m)
+    - Position error estimates if config is wrong
+    - fov_capture.jpg (optional, saved when pressing 'c')
+
+BEST PRACTICES:
+    - Measure at 2-3 different heights (e.g. 50cm, 100cm, 150cm) for verification
+    - Ensure camera points STRAIGHT DOWN (tilt = wrong measurement)
+    - Read ruler edge-to-edge (left edge of frame to right edge)
+    - A spread < 0.3mm in focal length estimates means excellent calibration
+    - Current calibrated value: FOCAL_LENGTH_MM = 5.46 (from 2026-03-11 field day)
+
+DEPENDENCIES:
+    opencv-python (or opencv-python-headless), numpy, vision.py, config.py
 """
 import sys
 import os

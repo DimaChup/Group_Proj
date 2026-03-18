@@ -1,11 +1,40 @@
 #!/usr/bin/env python3
 """
-STEP 3: Benchmark and compare backends.
-Runs the SAME test image through detection and reports results.
-Run on Windows (Ultralytics) and Pi/Docker (TFLite) - results should match.
+Inference Benchmark — measure detection speed and compare backends.
 
-Usage: python tests/hardware/benchmark.py
-       python tests/hardware/benchmark.py my_image.jpg
+WHAT:    Runs 50 inferences on a test image (dummy composited on green background,
+         or a user-supplied image) and reports timing statistics, detection rate,
+         and confidence. Uses vision.py's VisionSystem so it tests the exact same
+         pipeline as main.py.
+WHY:     Lets you compare inference speed between laptop (Ultralytics backend) and
+         Pi (TFLite backend). Results should match in detection position/confidence
+         even if speed differs. Essential for verifying model swap or hardware change.
+WHEN:    After setting up a new environment, after swapping models (cp to best.tflite),
+         or when comparing Pi vs laptop performance.
+WHERE:   Both — runs on Pi (TFLite) and laptop (Ultralytics).
+ENV:     pienv on Pi, dev venv on laptop. Needs opencv and vision.py importable.
+MODELS:  best.tflite (any YOLOv8 TFLite model in project root).
+RISK:    none — no drone commands, no camera required, pure computation.
+
+USAGE:
+    python tests/hardware/benchmark.py
+    python tests/hardware/benchmark.py my_image.jpg
+
+FLAGS:
+    [positional image path]  Optional path to a test image (default: auto-generated
+                             dummy on green background using dummy.png).
+
+OUTPUT:
+    Terminal report: avg/min/max inference time, effective FPS, detection count,
+    average position and confidence, speed/detection verdict.
+
+BEST PRACTICES:
+    - Run on both platforms and compare position + confidence (should be similar)
+    - Use the same test image on both platforms for a fair comparison
+    - Close other heavy processes on Pi before benchmarking for stable numbers
+
+DEPENDENCIES:
+    opencv-python (or opencv-python-headless), numpy, vision.py (project module)
 """
 import sys
 import os

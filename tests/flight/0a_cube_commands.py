@@ -1,14 +1,38 @@
 #!/usr/bin/env python3
 """
-Test sending commands TO the Cube and getting responses.
+Cube Commands Test — verify bidirectional Pi-to-Cube command path.
 
-Previous tests proved Cube → Pi (telemetry) works.
-This proves Pi → Cube (commands) works.
+WHAT:    Sends a series of MAVLink commands to the Cube and checks for responses.
+         Tests mode changes (GUIDED/STABILIZE), arm command, parameter reads, home
+         position request, and buzzer tunes. Reports pass/fail for each test.
+WHY:     Previous tests proved Cube-to-Pi telemetry works. This proves the reverse
+         direction: Pi can command the Cube and receive ACKs. Essential before any
+         flight script.
+WHEN:    First test to run when Pi is wired to Cube. Before 0b_bench_mission.py.
+WHERE:   Pi (with Cube connected via mavproxy) or laptop (with SITL).
+ENV:     pienv on Pi, or any venv with pymavlink on laptop.
+MODELS:  None (no camera or AI used).
+RISK:    None — sends mode changes and arm commands but immediately reverts. Arm will
+         be rejected on bench (no GPS fix). Motors will NOT spin.
 
-Safe to run on bench — no props needed, won't fly.
-
-Usage:
+USAGE:
     python tests/flight/0a_cube_commands.py
+
+FLAGS:
+    None
+
+OUTPUT:
+    Terminal output with pass/fail for 5 tests: mode change, arm command,
+    parameter read, home position, buzzer. Exit code 0 if >= 3 pass.
+
+BEST PRACTICES:
+    - Ensure mavproxy is running before launching this script
+    - On bench without GPS, arm rejection is expected and counts as a pass
+      (proves the command reached the Cube)
+    - Listen for buzzer beeps as audible confirmation of connectivity
+
+DEPENDENCIES:
+    pymavlink, config.py (for CONNECTION_STR)
 """
 import sys
 import os

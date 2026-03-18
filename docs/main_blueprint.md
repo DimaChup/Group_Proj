@@ -112,9 +112,7 @@ main.py
 
 - `run()` is 264 lines — should be split into per-state handler methods
 - Hardcoded 0.62 latitude scale factor (Bristol-specific, should use `cos(lat)`)
-- Floating-point modulo for logging interval (unreliable timing)
 - HTML injection possible in stream page (CLI args not escaped)
-- `SAFETY_HALT` state defined in states.py but never entered in main.py
 - `calculate_target_gps` uses simplified flat-earth projection (adequate for <1km range)
 
 ## Modification Guide

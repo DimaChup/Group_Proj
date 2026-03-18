@@ -1,22 +1,50 @@
 #!/usr/bin/env python3
 """
-Live Cube Monitor — see EVERYTHING the Cube is sending in real-time.
+Cube Monitor — live terminal dashboard of all Cube Orange telemetry.
 
-Shows:
-  - GPS status (fix type, satellites, HDOP, position)
-  - Attitude (roll, pitch, yaw)
-  - Battery (voltage, current, remaining)
-  - RC channels (is transmitter talking?)
-  - System status + mode
-  - Vibration levels
-  - EKF status
-  - All message rates
+WHAT:    Connects to the Cube via MAVLink (through mavproxy UDP bridge on Pi, or
+         SITL on laptop), requests all data streams at 10 Hz, and displays a
+         continuously updating terminal dashboard. Shows GPS (fix, sats, HDOP,
+         position), attitude (roll/pitch/yaw), battery (voltage/current/remaining),
+         RC channels, flight mode, vibration levels, EKF status, and per-message
+         rates in Hz. Uses ANSI escape codes for color-coded status and clears the
+         terminal each refresh.
+WHY:     Essential for diagnosing Cube connectivity, GPS acquisition, and sensor
+         health. Lets you verify that mavproxy is forwarding all expected message
+         types at the correct rates before running any flight scripts. The --raw
+         flag dumps every known message field for deep debugging.
+WHEN:    Run after starting mavproxy, before any flight test. Especially useful for
+         GPS cold start monitoring (watching satellites climb and fix type change).
+         Also useful during bench testing to verify RC transmitter link.
+WHERE:   Pi (via mavproxy UDP 14550) or laptop (via SITL). Terminal-only, no GUI.
+ENV:     Pi venv (pymavlink) or laptop venv (pymavlink). No camera or AI needed.
+MODELS:  none — this script does not use any AI models.
+RISK:    none — read-only MAVLink monitoring. Sends ZERO commands to the Cube
+         (only requests data streams).
 
-Updates continuously. Great for diagnosing GPS issues.
-
-Usage:
+USAGE:
     python tests/diagnostics/cube_monitor.py
-    python tests/diagnostics/cube_monitor.py --raw     (show ALL raw messages)
+    python tests/diagnostics/cube_monitor.py --raw
+
+FLAGS:
+    --raw    Show ALL raw MAVLink message fields (verbose debug dump at bottom
+             of each refresh). Without this flag, only parsed telemetry is shown.
+
+OUTPUT:
+    Terminal dashboard (ANSI color, clears screen every 0.5s) with sections:
+      GPS, ATTITUDE, BATTERY, FLIGHT DATA, RC TRANSMITTER, SYSTEM,
+      VIBRATION, EKF STATUS, MESSAGE RATES
+    On Ctrl+C: prints final GPS summary with troubleshooting tips if no fix
+
+BEST PRACTICES:
+    - Start mavproxy first, then run this script
+    - Wait 1-3 minutes for GPS cold start (watch satellites climb)
+    - Use --raw to verify specific MAVLink messages are arriving
+    - HDOP < 2.0 is good; satellites >= 6 for reliable 3D fix
+    - If "No heartbeat" error: check mavproxy is running and UDP port is correct
+
+DEPENDENCIES:
+    pymavlink, config.py (project module for CONNECTION_STR)
 """
 import sys
 import os

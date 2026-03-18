@@ -1,41 +1,53 @@
 #!/usr/bin/env python3
 """
-Cccamera Stream — send live camera feed to ground station.
+Camera Stream — MJPEG live camera feed to ground station browser.
 
-Runs a lightweight MJPEG server on the Pi. Open in any browser on the
-ground station laptop to see what the drone sees.
+WHAT:    Captures frames from Pi camera (picamera2) or webcam (OpenCV), optionally
+         runs YOLOv8 AI detection on each frame, and serves the result as an MJPEG
+         stream over HTTP. Any browser on the local network can view the feed.
+         Detection runs synchronously on each frame, so FPS is capped by inference
+         speed (~4 FPS with AI on, ~25 FPS without).
+WHY:     Provides a simple, zero-dependency way to see the drone camera from a ground
+         station laptop. MJPEG was chosen over H.264 because it has near-zero latency,
+         works in any browser via an <img> tag, and needs no ffmpeg or HLS player.
+WHEN:    Run during bench testing, manual flights, or any time you need to see what the
+         camera sees from a remote browser. Use camera_stream_fast.py if you need
+         smooth FPS with AI detection (threaded version).
+WHERE:   Pi (primary) or laptop (webcam fallback). Headless-safe with --headless.
+ENV:     Pi venv (picamera2, opencv-headless, ai-edge-litert) or laptop venv (opencv, ultralytics).
+MODELS:  best.tflite from project root (YOLOv8n, ~3.3MB). Only loaded if --with-detection.
+RISK:    none — sends ZERO commands to the drone. Read-only camera + AI.
 
-How it works:
-  - Pi captures full 640x480 for AI detection (unchanged)
-  - Downscales to 320x240 (or custom) for streaming
-  - Serves MJPEG over HTTP — works in any browser, no plugins needed
-  - Bandwidth: ~0.3-0.8 Mbps at 320x240, 5fps — fine over WiFi
+USAGE:
+    python tests/diagnostics/camera_stream.py
+    python tests/diagnostics/camera_stream.py --with-detection
+    python tests/diagnostics/camera_stream.py --res 160x120 --fps 3
+    python tests/diagnostics/camera_stream.py --with-detection --headless
 
-Why MJPEG over FFmpeg/H.264:
-  - MJPEG: ~0.5 Mbps at 320x240 5fps — trivial over WiFi
-  - H.264 (ffmpeg): ~0.05-0.1 Mbps — 5-10x smaller but adds complexity
-  - MJPEG needs zero dependencies, works in any browser via <img> tag
-  - H.264 needs ffmpeg on Pi + VLC or HLS player on GS + adds latency
-  - For drone ops, low latency > compression. MJPEG gives near-realtime.
-  - H.264 would only matter for cellular/4G or 720p+ resolution.
-  - Decision: MJPEG is good enough. Revisit if bandwidth is an issue.
+FLAGS:
+    --port PORT         HTTP server port (default: 8090)
+    --res WxH           Stream resolution, e.g. 320x240 (default: 320x240)
+    --fps N             Target stream FPS (default: 5)
+    --quality N         JPEG quality 1-100 (default: 50)
+    --with-detection    Enable AI detection overlay on every frame
+    --headless          Suppress cv2.imshow window (for SSH/PuTTY)
 
-Ground station:
-  Open browser to http://<PI_IP>:8090/stream
-  e.g. http://192.168.1.121:8090/stream
+OUTPUT:
+    HTTP endpoints:
+      /          — HTML page with embedded stream
+      /stream    — raw MJPEG stream (use in <img> tag)
+      /snapshot  — single JPEG frame
+    Terminal: periodic FPS and detection rate stats
 
-Options:
-  --port 8090         HTTP port (default 8090)
-  --res 320x240       Stream resolution (default 320x240)
-  --fps 5             Target FPS (default 5)
-  --quality 50        JPEG quality 1-100 (default 50)
-  --with-detection    Run AI detection and overlay boxes on stream
-  --headless          No local display
+BEST PRACTICES:
+    - Use --headless on Pi over SSH (no display server)
+    - Start with AI off to verify camera works, then add --with-detection
+    - For smoother FPS with AI, use camera_stream_fast.py instead (threaded)
+    - Lower --res and --fps to reduce WiFi bandwidth
 
-Usage:
-    python tests/diagnostics/camera_stream.py                          # basic stream
-    python tests/diagnostics/camera_stream.py --with-detection         # stream + AI overlay
-    python tests/diagnostics/camera_stream.py --res 160x120 --fps 3   # low bandwidth
+DEPENDENCIES:
+    opencv-python (or opencv-python-headless), numpy, vision.py (project module)
+    Optional: picamera2 (Pi), ultralytics or ai-edge-litert (AI backend)
 """
 import sys
 import os

@@ -1,11 +1,54 @@
 #!/usr/bin/env python3
 """
-Comprehensive CV Benchmark — system info + inference + preprocessing + all models.
-Collects everything needed to plan speed improvements.
+Comprehensive CV Benchmark — full system profiling for inference optimization.
 
-Usage on Pi:
+WHAT:    Runs a 6-section benchmark covering: (1) system info (CPU, RAM, temp,
+         available backends, HW accelerators), (2) preprocessing timing (resize,
+         normalize, undistort at multiple resolutions), (3) camera capture timing
+         (optional, picamera2 or OpenCV), (4) TFLite inference on all .tflite
+         models with/without lens undistortion, (5) ONNX/OpenCV DNN backends
+         if .onnx models exist, (6) threading overhead (direct vs threaded
+         inference). Ends with a results summary table, time budget breakdown,
+         and improvement opportunities.
+WHY:     Collects every datapoint needed to plan CV speed improvements: which
+         model is fastest, how much undistortion costs, whether threading helps,
+         what backends are available, and where the bottleneck is (capture vs
+         preprocessing vs inference). Essential before optimizing for flight.
+WHEN:    After initial Pi setup to establish baseline. After overclocking, model
+         changes, or backend installs (NCNN, ONNX). Before flight to verify
+         performance meets requirements (~5 FPS minimum).
+WHERE:   Primarily Pi (reads /proc/cpuinfo, thermal zones, etc.), but sections
+         1-2 and 4-6 work on laptop too (Linux-specific system info will show
+         "unknown" on Windows).
+ENV:     pienv on Pi, dev venv on laptop. All backends optional — tests whatever
+         is installed (tflite-runtime, ai-edge-litert, ultralytics, onnxruntime, ncnn).
+MODELS:  best.tflite + all .tflite files in models/ directory. Also tests .onnx
+         models if present in project root or models/ directory.
+RISK:    none — pure computation, no drone commands, no MAVLink connection.
+
+USAGE:
     python tests/hardware/benchmark_full.py
-    python tests/hardware/benchmark_full.py --camera   # include live camera capture timing
+    python tests/hardware/benchmark_full.py --camera
+
+FLAGS:
+    --camera    Include camera capture timing (Section 3). Opens picamera2 or
+                OpenCV camera for 30 frame captures. Omit if no camera available.
+
+OUTPUT:
+    Terminal: 6-section report with timing tables, then a summary table comparing
+    all models/configs. Includes time budget breakdown (camera + preproc + inference)
+    and specific improvement recommendations (NCNN, threading, Hailo, resolution).
+
+BEST PRACTICES:
+    - Run with --camera on Pi to get full pipeline timing
+    - Close other processes for stable numbers (especially browser/X11)
+    - Run multiple times and compare — Pi 5 can throttle under sustained load
+    - Check CPU temp in output — throttling starts at 80C on Pi 5
+    - Save output to a file for comparison: python benchmark_full.py | tee bench_results.txt
+
+DEPENDENCIES:
+    opencv-python (or opencv-python-headless), numpy, vision.py (project module).
+    Optional: onnxruntime, ncnn (pyncnn) — tested if installed.
 """
 import sys, os, time, glob, platform, subprocess
 script_dir = os.path.dirname(os.path.abspath(__file__))

@@ -1,26 +1,48 @@
 #!/usr/bin/env python3
 """
-altitude_sweep.py — Experiment: Detection Rate vs Altitude
-==========================================================
-PASSIVE — sends ZERO commands to Cube. Pilot flies manually.
+Altitude Sweep — Detection rate vs altitude experiment
 
-Protocol:
-  1. Pilot hovers directly above dummy at 10m — hold 30s
-  2. Climb to 15m — hold 30s
-  3. Climb to 20m — hold 30s
-  4. Climb to 25m — hold 30s
-  5. Climb to 30m — hold 30s
+WHAT:    Logs AI detections while the pilot hovers above a dummy at increasing
+         altitudes (10m, 15m, 20m, 25m, 30m). Auto-bins every frame into 5m
+         altitude buckets and computes detection rate, average confidence, and
+         expected dummy pixel size per bucket.
+WHY:     Determines the maximum altitude at which the AI model reliably detects
+         the dummy, so TARGET_ALT in config.py can be set to a safe value.
+WHEN:    Run during a manual RC hover flight on Day 1. Hold each altitude for
+         at least 30 seconds.
+WHERE:   Pi (primary) or laptop (with webcam + SITL)
+ENV:     Pi: pienv venv (pymavlink, opencv-headless, ai-edge-litert).
+         Laptop: dev venv (ultralytics, opencv-python).
+MODELS:  best.tflite from project root (active model, swappable).
+RISK:    none — sends ZERO commands to the Cube. Purely observational.
 
-Script auto-bins data by altitude (5m buckets). After flight,
-prints a summary table and saves CSV for later analysis.
+USAGE:
+    python tests/day_1_experiments/altitude_sweep.py --headless --stream
+    python tests/day_1_experiments/altitude_sweep.py --headless
+    python tests/day_1_experiments/altitude_sweep.py --stream --stream-port 8091
 
-Output CSV columns:
-  timestamp, altitude_m, groundspeed, detection, confidence,
-  pixel_x, pixel_y, expected_dummy_px, gps_lat, gps_lon, battery_v
+FLAGS:
+    --headless       No cv2 window (required on Pi / PuTTY)
+    --stream         Enable MJPEG video stream at http://0.0.0.0:8090/
+    --stream-port N  Override stream port (default 8090)
+    --stream-res WxH Override stream resolution (default 320x240)
 
-Usage:
-    python tests/experiments/altitude_sweep.py --headless --stream
-    python tests/experiments/altitude_sweep.py --headless
+OUTPUT:
+    - exp_altitude_YYYYMMDD_HHMMSS.csv in project root
+      Columns: timestamp, flight_sec, altitude_m, alt_bucket, groundspeed,
+      detection, confidence, pixel_x, pixel_y, expected_dummy_px, gps_lat,
+      gps_lon, battery_v
+    - Terminal summary table with per-bucket detection rate and recommendation
+      for max reliable detection altitude
+
+BEST PRACTICES:
+    - Hold each altitude for 30+ seconds to get enough frames per bucket
+    - Hover directly above the dummy, minimal lateral drift
+    - Use --stream to monitor live detection rate from a ground station browser
+    - After flight, update config.py TARGET_ALT based on the recommendation
+
+DEPENDENCIES:
+    pymavlink, opencv-python (or opencv-python-headless), numpy, config.py, vision.py
 """
 
 import sys, os, csv, time, math, threading

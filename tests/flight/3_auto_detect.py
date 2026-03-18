@@ -1,33 +1,56 @@
 #!/usr/bin/env python3
 """
-pi_auto_detect.py — AUTO waypoints + detect & hover
-====================================================
-Safe intermediate step between passive_flight and full main.py.
+Auto Detect — Mission Planner AUTO waypoints + AI detection + GUIDED hover.
 
-How it works:
-  1. You upload waypoints in Mission Planner and fly in AUTO mode
-  2. Pi runs camera + AI detection in the background
-  3. When AI detects the dummy with enough confidence:
-     - Switches Cube from AUTO → GUIDED
-     - Calculates target GPS from pixel position
-     - Sends position commands to center + hover above target
-  4. Holds position (no descent, no landing)
-  5. Press 'r' or wait for --timeout to resume AUTO waypoints
+WHAT:    Monitors camera with AI while the drone flies AUTO waypoints uploaded via
+         Mission Planner. When the AI detects the target with sufficient confidence
+         for N consecutive frames, switches from AUTO to GUIDED mode, calculates
+         target GPS from pixel position, and sends position commands to center and
+         hover above the target. After a timeout (or 'r' key), resumes AUTO waypoints.
+         No descent or landing — hover only.
+WHY:     Safe intermediate step between passive observation (step 1) and full autonomous
+         mission (main.py). Tests the critical AUTO-to-GUIDED mode switch and GPS
+         estimation from pixel detection in real flight, without the risk of descent
+         or landing logic.
+WHEN:    After waypoint flight (step 2) proves navigation works. Before full autonomous
+         detect-and-center (step 4). Requires waypoints uploaded in Mission Planner.
+WHERE:   Pi (with camera + Cube via mavproxy, outdoors). Also works on laptop with
+         webcam + SITL.
+ENV:     pienv on Pi (ai-edge-litert, opencv-headless, pymavlink). Dev venv on laptop.
+MODELS:  best.tflite (YOLOv8n TFLite) — loaded via vision.py dual backend.
+RISK:    Medium — sends mode switch commands (AUTO to GUIDED) and position hold commands
+         when target is detected. Does NOT descend or land autonomously. RC kill switch
+         always overrides. Use --dry-run to test detection without any commands.
 
-Safety:
-  - RC kill switch ALWAYS overrides (switch to STABILIZE/LOITER)
-  - Only switches to GUIDED when detection confidence > threshold
-  - --dry-run flag: logs detections but sends ZERO commands
-  - --timeout: auto-resume AUTO after N seconds of hovering (default 15)
-  - Ctrl+C: switches back to AUTO before exiting
+USAGE:
+    python tests/flight/3_auto_detect.py                       # live with screen
+    python tests/flight/3_auto_detect.py --headless            # SSH mode
+    python tests/flight/3_auto_detect.py --dry-run             # detect only, ZERO commands
+    python tests/flight/3_auto_detect.py --timeout 10          # resume AUTO after 10s hover
+    python tests/flight/3_auto_detect.py --min-conf 0.5        # higher confidence threshold
+    python tests/flight/3_auto_detect.py --min-detections 3    # need 3 consecutive detections
 
-Usage:
-    python tests/flight/3_auto_detect.py                     # live, with screen
-    python tests/flight/3_auto_detect.py --headless           # SSH mode
-    python tests/flight/3_auto_detect.py --dry-run            # detect only, no commands
-    python tests/flight/3_auto_detect.py --timeout 10         # resume AUTO after 10s hover
-    python tests/flight/3_auto_detect.py --min-conf 0.5       # higher confidence needed
-    python tests/flight/3_auto_detect.py --min-detections 3   # need 3 consecutive detections
+FLAGS:
+    --headless          Skip cv2.imshow, terminal output only (for SSH/PuTTY)
+    --dry-run           Log detections but send ZERO commands to the Cube
+    --timeout N         Auto-resume AUTO after N seconds of hovering (default 15)
+    --min-conf N        Minimum detection confidence to trigger (default 0.4)
+    --min-detections N  Consecutive detections required before switching (default 2)
+
+OUTPUT:
+    - auto_detect_log.csv: timestamped state, mode, GPS, detection, target GPS
+    - Terminal: detection events, centering progress, hover countdown
+    - OpenCV window (unless --headless): live video with state banner and overlays
+
+BEST PRACTICES:
+    - Upload simple waypoints in Mission Planner first, verify AUTO flight works
+    - Start with --dry-run to verify detection works in flight before enabling commands
+    - Keep RC transmitter ready — flip to STABILIZE to override at any time
+    - If pilot takes RC control, script detects mode change and returns to WATCHING state
+    - Ctrl+C switches back to AUTO before exiting (safe cleanup)
+
+DEPENDENCIES:
+    opencv-python (or opencv-headless), numpy, pymavlink, config.py, vision.py
 """
 
 import sys

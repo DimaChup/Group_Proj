@@ -1,28 +1,40 @@
 #!/usr/bin/env python3
 """
-Bench Mission Test — exercise the Cube through mission commands WITHOUT flying.
+Bench Mission Test — exercise the full mission command sequence WITHOUT flying.
 
-Sends the same sequence of MAVLink commands that main.py would send during a
-real mission, but with motors disabled. Watch the Cube's response: mode changes,
-acknowledgements, LED changes, buzzer.
+WHAT:    Sends the same sequence of MAVLink commands that main.py sends during a real
+         mission: mode changes (GUIDED/STABILIZE/LOITER/LAND), arm, takeoff, waypoints,
+         and land. Reports ACKs and responses for each phase. Does NOT actually fly.
+WHY:     Proves the Pi can control the Cube through every mission phase before risking
+         a real flight. Catches command pipeline issues (wrong target system, missing
+         ACKs, mode change failures) safely on the bench.
+WHEN:    After 0a_cube_commands.py passes. Before any outdoor flight test.
+WHERE:   Pi (with Cube connected via mavproxy) or laptop (with SITL).
+ENV:     pienv on Pi, or any venv with pymavlink on laptop.
+MODELS:  None (no camera or AI used).
+RISK:    None by default — arm is skipped unless --with-arm is passed. Even with
+         --with-arm, arm will be rejected on bench without GPS. Motors will NOT spin.
 
-This proves: Pi can control the Cube through every mission phase.
+USAGE:
+    python tests/flight/0b_bench_mission.py              # skip arm (safe)
+    python tests/flight/0b_bench_mission.py --with-arm   # also try arming
 
-Steps:
-  1. Connect to Cube
-  2. Switch to GUIDED mode
-  3. Send ARM command (will likely fail on bench — that's OK)
-  4. Send takeoff command
-  5. Send waypoint commands (search pattern)
-  6. Send mode changes (GUIDED → LAND → STABILIZE)
-  7. Show all ACKs and responses
+FLAGS:
+    --with-arm    Also attempt to arm the Cube (will be rejected without GPS fix
+                  on bench, which is expected and counts as success)
 
-Safe on bench — no propellers needed. Motors will NOT spin
-(we don't actually arm, we just test commands).
+OUTPUT:
+    Terminal output with pass/fail/skip for 8 command phases: GUIDED, STABILIZE,
+    LOITER, ARM, TAKEOFF, WAYPOINTS, LAND, return to STABILIZE.
 
-Usage:
-    python tests/flight/0b_bench_mission.py              # on Pi
-    python tests/flight/0b_bench_mission.py --with-arm   # also try arming (outdoor only!)
+BEST PRACTICES:
+    - Run on bench first (no props), then again outdoors before real flight
+    - Without GPS fix, arm/takeoff/waypoint rejections are expected — the commands
+      still reached the Cube, proving the pipeline works
+    - Watch Cube LEDs and listen for buzzer changes during mode switches
+
+DEPENDENCIES:
+    pymavlink, config.py (for CONNECTION_STR)
 """
 import sys
 import os

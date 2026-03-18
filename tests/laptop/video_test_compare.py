@@ -1,12 +1,51 @@
 """
-Video detection test with model comparison.
-Same as video_test.py but with M key to switch between models live.
+video_test_compare.py — A/B Model Comparison on DJI Flight Video
 
-Usage:
+WHAT:    Same as video_test.py (tiled detection, SRT telemetry, GPS estimation,
+         scatter plots, measure tool, CSV logging) but loads TWO models and lets
+         you switch between them live with the M key. The HUD shows which model
+         is active. Useful for comparing detection performance (confidence, miss
+         rate, GPS accuracy) between model variants on identical footage.
+WHY:     Enables direct A/B comparison of different YOLO models on the same
+         flight video. Switch instantly between e.g. the original 640-trained
+         model and the v2 1088-retrained model to see which detects better at
+         various altitudes and positions.
+WHEN:    After training a new model, to compare it against the baseline on real
+         flight footage. When deciding which model to deploy on Pi.
+WHERE:   Laptop only (requires display for multi-window visualization).
+ENV:     "test_env" (needs both ultralytics and tflite for VisionSystem)
+MODELS:  Two models: --model (default best.tflite) and --model2 (default
+         cv_models/sar_v2_1088/best.tflite). Press M to switch live.
+RISK:    None — offline video analysis, no commands sent.
+
+USAGE:
     python tests/laptop/video_test_compare.py "RealVideo/DJI_0001_1456x1088_cropped_30fps.mp4"
     python tests/laptop/video_test_compare.py "RealVideo/DJI_0001_1456x1088_cropped_30fps.mp4" --model best.tflite --model2 cv_models/sar_v2_1088/best.tflite
 
-Controls: SPACE=pause  Q=quit  A/D=skip 5s  +/-=speed  T=toggle tiling  M=switch model
+FLAGS:
+    video               Path to video file (positional, required)
+    --model PATH        Model 1 path (default: best.tflite)
+    --model2 PATH       Model 2 path (default: cv_models/sar_v2_1088/best.tflite)
+    --save PATH         Save output video to file
+    --conf FLOAT        Confidence threshold (default: 0.3)
+    --every N           Run AI every Nth frame (default: 3)
+    --tile-size N       Tile size in pixels (default: 640)
+    --display-width N   Display window width (default: 960)
+    --srt PATH          SRT telemetry file (auto-detected if not set)
+
+OUTPUT:
+    Multi-window display: video + detections, GPS scatter plots, best snapshot.
+    CSV file: <video_name>_detections.csv with per-detection GPS estimates.
+    Console: active model name, detection count, CEP50 on exit.
+
+BEST PRACTICES:
+    - MUST use 30fps video (DJI_0001_1456x1088_cropped_30fps.mp4)
+    - Press M to switch models — note detection differences
+    - GPS estimates accumulate across both models (same CSV)
+    - Compare confidence levels and miss rates between models
+
+DEPENDENCIES:
+    opencv-python, numpy, vision.py (VisionSystem), csv, threading
 """
 import sys, os, time, argparse, threading, csv
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -474,7 +513,9 @@ def main():
 
         for cx, cy, w, h, conf in dets:
             cv2.rectangle(snap, (cx - w // 2, cy - h // 2), (cx + w // 2, cy + h // 2), (0, 255, 0), 4)
-            cv2.putText(snap, f"{conf:.2f}", (cx - w // 2, cy - h // 2 - 15),
+            cls_label = getattr(vs, 'last_class_name', '') or ''
+            det_label = f"{conf:.2f} [{cls_label}]" if cls_label else f"{conf:.2f}"
+            cv2.putText(snap, det_label, (cx - w // 2, cy - h // 2 - 15),
                        cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 3)
             # Pink dot at detection center
             cv2.circle(snap, (cx, cy), 10, (255, 0, 255), -1)
@@ -589,6 +630,107 @@ def main():
             ai_result["snapshot"] = snap_clean
             ai_result["info_lines"] = info_lines
             ai_result["busy"] = False
+
+    # ── Weather / lighting simulation effects ──────────────────────────
+    # Press W to cycle effects, E to increase intensity, R to decrease
+    EFFECTS = [
+        "none",
+        "overcast",      # reduced brightness + contrast
+        "bright_sun",    # high brightness + slight washout
+        "dusk",          # warm orange tint + darkened
+        "fog",           # white haze overlay
+        "rain",          # dark + streaks + slight blur
+        "night",         # very dark + blue tint
+        "shadow",        # patchy dark areas (partial shade)
+        "snow_glare",    # bright + blue-white tint
+    ]
+    active_effect = [0]     # index into EFFECTS
+    effect_intensity = [0.5]  # 0.0-1.0
+    print("Weather:  W=cycle effect  E=increase intensity  R=decrease intensity")
+    print(f"Effects:  {', '.join(EFFECTS)}")
+
+    def apply_weather_effect(img):
+        """Apply weather/lighting effect to frame BEFORE feeding to model."""
+        effect = EFFECTS[active_effect[0]]
+        intensity = effect_intensity[0]
+        if effect == "none":
+            return img
+
+        out = img.astype(np.float32)
+        h, w = out.shape[:2]
+
+        if effect == "overcast":
+            # Reduce brightness and contrast
+            out = out * (1.0 - 0.4 * intensity) + 20 * intensity
+            # Slight desaturation
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            gray3 = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR).astype(np.float32)
+            out = out * (1.0 - 0.3 * intensity) + gray3 * 0.3 * intensity
+
+        elif effect == "bright_sun":
+            # High brightness + slight washout
+            out = out * (1.0 + 0.5 * intensity) + 30 * intensity
+
+        elif effect == "dusk":
+            # Warm orange tint + darkened
+            out *= (1.0 - 0.5 * intensity)
+            out[:, :, 2] += 40 * intensity  # red
+            out[:, :, 1] += 15 * intensity  # slight green
+            out[:, :, 0] -= 20 * intensity  # less blue
+
+        elif effect == "fog":
+            # White haze overlay
+            fog_layer = np.full_like(out, 220)
+            out = out * (1.0 - 0.6 * intensity) + fog_layer * 0.6 * intensity
+            # Slight blur
+            ksize = int(3 + 4 * intensity) | 1  # odd kernel
+            out = cv2.GaussianBlur(out, (ksize, ksize), 0)
+
+        elif effect == "rain":
+            # Darken + motion blur streaks + noise
+            out *= (1.0 - 0.3 * intensity)
+            # Vertical streaks
+            num_streaks = int(200 * intensity)
+            for _ in range(num_streaks):
+                x = np.random.randint(0, w)
+                y = np.random.randint(0, h)
+                length = np.random.randint(10, 40)
+                cv2.line(out, (x, y), (x + np.random.randint(-2, 3), y + length),
+                        (180, 180, 200), 1, cv2.LINE_AA)
+            # Slight blur (wet lens)
+            ksize = int(1 + 2 * intensity) | 1
+            out = cv2.GaussianBlur(out, (ksize, ksize), 0)
+
+        elif effect == "night":
+            # Very dark + blue tint
+            out *= (0.15 + 0.15 * (1 - intensity))
+            out[:, :, 0] += 15 * intensity  # blue tint
+            # Add noise
+            noise = np.random.normal(0, 8 * intensity, out.shape).astype(np.float32)
+            out += noise
+
+        elif effect == "shadow":
+            # Patchy dark areas (partial shade from clouds/trees)
+            shadow_mask = np.ones((h, w), dtype=np.float32)
+            num_shadows = int(3 + 5 * intensity)
+            for _ in range(num_shadows):
+                cx = np.random.randint(0, w)
+                cy = np.random.randint(0, h)
+                rx = np.random.randint(w // 6, w // 3)
+                ry = np.random.randint(h // 6, h // 3)
+                cv2.ellipse(shadow_mask, (cx, cy), (rx, ry), 0, 0, 360,
+                           0.4 + 0.3 * (1 - intensity), -1)
+            shadow_mask = cv2.GaussianBlur(shadow_mask, (51, 51), 0)
+            out *= shadow_mask[:, :, np.newaxis]
+
+        elif effect == "snow_glare":
+            # Bright + blue-white tint
+            out *= (1.0 + 0.3 * intensity)
+            out[:, :, 0] += 30 * intensity  # blue
+            out[:, :, 1] += 20 * intensity  # green
+            out[:, :, 2] += 10 * intensity  # less red
+
+        return np.clip(out, 0, 255).astype(np.uint8)
 
     paused = False
     speed = 1.0
@@ -710,17 +852,21 @@ def main():
         if need_detect[0] and not ai_result["busy"] and frame is not None:
             need_detect[0] = False
             ai_result["busy"] = True
+            # Apply weather effect before feeding to model
+            frame_for_ai = apply_weather_effect(frame.copy())
             if use_tiling[0]:
-                t = threading.Thread(target=run_tiled_inference, args=(frame.copy(), frame_num), daemon=True)
+                t = threading.Thread(target=run_tiled_inference, args=(frame_for_ai, frame_num), daemon=True)
             else:
-                t = threading.Thread(target=run_single_inference, args=(frame.copy(), frame_num), daemon=True)
+                t = threading.Thread(target=run_single_inference, args=(frame_for_ai, frame_num), daemon=True)
             t.start()
 
         timestamp = frame_num / fps if fps > 0 else 0
 
         # === DISPLAY ===
         if frame is not None:
-            disp = cv2.resize(frame, (disp_w, disp_h))
+            # Show the weather-affected frame so user sees what the model sees
+            disp_frame = apply_weather_effect(frame) if EFFECTS[active_effect[0]] != "none" else frame
+            disp = cv2.resize(disp_frame, (disp_w, disp_h))
 
             with ai_lock:
                 dets = ai_result["dets"]
@@ -735,7 +881,9 @@ def main():
                 x2 = int((cx + w / 2) * disp_scale)
                 y2 = int((cy + h / 2) * disp_scale)
                 cv2.rectangle(disp, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                cv2.putText(disp, f"{conf:.2f}", (x1, y1 - 8),
+                cls_label = getattr(vs, 'last_class_name', '') or ''
+                det_text = f"{conf:.2f} [{cls_label}]" if cls_label else f"{conf:.2f}"
+                cv2.putText(disp, det_text, (x1, y1 - 8),
                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
                 dcx = int(cx * disp_scale)
                 dcy = int(cy * disp_scale)
@@ -842,8 +990,18 @@ def main():
             m_name = os.path.basename(os.path.dirname(args.model if active_model[0] == 0 else args.model2)) or "root"
             m_file = os.path.basename(args.model if active_model[0] == 0 else args.model2)
             model_tag = f"{m_name}/{m_file}" if m_name != "root" else m_file
-            info = f"{timestamp:.1f}s / {duration:.1f}s | {dt:.0f}ms | Det: {det_count[0]} | {mode} | {speed:.1f}x | [{model_tag}] M=switch"
+            eff_name = EFFECTS[active_effect[0]].upper()
+            eff_str = f" | WX: {eff_name} {effect_intensity[0]:.0%}" if eff_name != "NONE" else ""
+            info = f"{timestamp:.1f}s / {duration:.1f}s | {dt:.0f}ms | Det: {det_count[0]} | {mode} | {speed:.1f}x | [{model_tag}] M=switch{eff_str}"
             cv2.putText(disp, info, (10, disp_h - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.38, (200, 200, 200), 1)
+
+            # Weather effect badge (top-right)
+            if EFFECTS[active_effect[0]] != "none":
+                badge = f"WX: {eff_name} ({effect_intensity[0]:.0%})"
+                badge_w = len(badge) * 11 + 16
+                cv2.rectangle(disp, (disp_w - badge_w, 0), (disp_w, 28), (0, 0, 120), -1)
+                cv2.putText(disp, badge, (disp_w - badge_w + 8, 20),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 200, 255), 1)
 
             if writer:
                 writer.write(disp)
@@ -907,6 +1065,15 @@ def main():
             speed = min(speed + 0.5, 8.0)
         elif key == ord('-'):
             speed = max(speed - 0.5, 0.5)
+        elif key == ord('w'):
+            active_effect[0] = (active_effect[0] + 1) % len(EFFECTS)
+            print(f"  WEATHER: {EFFECTS[active_effect[0]]} ({effect_intensity[0]:.0%})")
+        elif key == ord('e'):
+            effect_intensity[0] = min(effect_intensity[0] + 0.1, 1.0)
+            print(f"  INTENSITY: {effect_intensity[0]:.0%}")
+        elif key == ord('r'):
+            effect_intensity[0] = max(effect_intensity[0] - 0.1, 0.1)
+            print(f"  INTENSITY: {effect_intensity[0]:.0%}")
 
     cap.release()
     if writer:

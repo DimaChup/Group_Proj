@@ -1,12 +1,39 @@
 #!/usr/bin/env python3
 """
-Draw waypoints on map and save to waypoints.json.
+Draw Waypoints — interactively place flight waypoints on map.jpg and save as JSON.
 
-Run this on your laptop, draw waypoints, press SPACE.
-Push waypoints.json to git, pull on Pi, then run 2_waypoints.py.
+WHAT:    Opens map.jpg with KML zone overlays (survey area, flight boundary, SSSI no-fly
+         zone, takeoff point). Left-click to add waypoints in flight order, right-click
+         to undo, SPACE/ENTER to save. Outputs waypoints.json with GPS coordinates,
+         consumed by 2_waypoints.py for GUIDED waypoint flight.
+WHY:     Separates interactive waypoint placement (requires a screen) from the headless
+         Pi flight scripts. Draw on laptop, push JSON via git, Pi loads it without
+         needing a display. Waypoints are drawn on the actual satellite map with zone
+         overlays for spatial awareness.
+WHEN:    Before running 2_waypoints.py. Run once on laptop, push waypoints.json.
+WHERE:   Laptop only (requires display for mouse interaction and map.jpg).
+ENV:     Dev venv on laptop (needs opencv-python, numpy). NOT for Pi.
+MODELS:  None (no AI used).
+RISK:    None — pure GUI tool, no drone connection, no commands.
 
-Usage:
+USAGE:
     python tests/flight/draw_waypoints.py
+
+FLAGS:
+    None
+
+OUTPUT:
+    waypoints.json in project root — array of {lat, lon, label} objects defining
+    waypoints in flight order (WP1, WP2, ...).
+
+BEST PRACTICES:
+    - Place waypoints inside the KML flight area (green outline)
+    - Avoid the SSSI no-fly zone (red outline)
+    - Start with 2-3 close waypoints for first flights
+    - After saving, git push and git pull on Pi before flight
+
+DEPENDENCIES:
+    opencv-python, numpy, config.py, utils.py (GeoTransformer)
 """
 import sys
 import os

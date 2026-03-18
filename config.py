@@ -61,13 +61,15 @@ VERIFY_ALT = 15.0 # Descent Altitude for Verification
 # --- MAP CONFIGURATION (Simulation Only) ---
 MAP_FILE = "map.jpg"
 DUMMY_FILE = "dummy.png"
-MAP_WIDTH_METERS = 480.0  
+CONE_FILE = "cone.png"
+MAP_WIDTH_METERS = 480.0
 REF_LAT = 51.425106
 REF_LON = -2.672257
 
 # --- TARGET SPECS ---
-TARGET_REAL_RADIUS_M = 0.15 # 15 cm radius 
-DUMMY_HEIGHT_M = 1.8        
+TARGET_REAL_RADIUS_M = 0.15 # 15 cm radius
+DUMMY_HEIGHT_M = 1.8
+CONE_HEIGHT_M = 0.5         # traffic cone ~50cm
 
 # --- CAMERA SPECS ---
 # Update these for the Raspberry Pi Global Shutter Camera

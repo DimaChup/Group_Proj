@@ -1,22 +1,50 @@
 #!/usr/bin/env python3
 """
-STEP 7: FOV Calibration from real drone.
+Alt Test — In-flight FOV calibration using real drone altitude from Cube.
 
-Hover at 2 different altitudes. At each one, measure the ground
-area the camera can see (use markers on the ground). Enter the
-width. Script reads altitude from Cube and calculates your real FOV.
+WHAT:    Calibrates FOV during actual flight by reading altitude from the Cube's
+         barometer/GPS. Hover at 2+ different altitudes, press SPACE to record the
+         altitude, then enter the ground width visible in the camera. The script
+         computes actual FOV and compares to config.py, showing a corrected footprint
+         table for all flight altitudes (5-30m).
+WHY:     Bench calibration (fov_calibrate.py) uses hand-measured heights at <2m.
+         This script validates FOV at REAL flight altitudes (10-30m) where barometric
+         altitude and camera vibration may affect results. It catches errors that
+         bench calibration cannot.
+WHEN:    During flight testing, after bench FOV calibration is done. Requires the
+         drone to be flying and connected via mavproxy. Place ground markers at
+         known distances before takeoff.
+WHERE:   Pi (with Cube connected via mavproxy) or laptop (with SITL).
+ENV:     Requires pymavlink. Camera optional (for live view only, no AI).
+MODELS:  None (no AI inference).
+RISK:    None. Read-only — reads altitude from Cube, sends ZERO commands.
 
-Setup:
-  1. Lay a tape measure or place markers at known distances on the ground
-  2. Fly drone up, hover steady
-  3. Press SPACE - script reads altitude from Cube
-  4. Look at what the camera sees - enter the ground width (metres)
-  5. Climb higher, repeat
-  6. Script tells you the real FOV and what to put in config.py
+USAGE:
+    python tests/calibration/alt_test.py                        # auto-detect connection
+    python tests/calibration/alt_test.py /dev/ttyAMA0 921600    # explicit serial
+    python tests/calibration/alt_test.py tcp:127.0.0.1:5762     # Mission Planner TCP
+    python tests/calibration/alt_test.py --headless              # no display
 
-Usage:
-    python tests/calibration/alt_test.py                    # auto-detect
-    python tests/calibration/alt_test.py /dev/ttyAMA0 57600 # manual
+FLAGS:
+    --headless          Skip cv2 display, terminal-only prompts
+    [connection_str]    First positional arg: MAVLink connection string
+    [baud_rate]         Second positional arg: baud rate (default 57600)
+
+OUTPUT:
+    - Measured FOV at each altitude vs config.py prediction
+    - Consistency check across altitudes (spread in degrees)
+    - Suggested SENSOR_WIDTH_MM or FOCAL_LENGTH_MM correction
+    - Corrected footprint table (5-30m altitudes)
+
+BEST PRACTICES:
+    - Place 2-3 markers on the ground at known distances BEFORE takeoff
+    - Hover steady for 5+ seconds before pressing SPACE (let altitude settle)
+    - Take measurements at 2+ altitudes (e.g. 10m and 20m) for consistency
+    - A spread > 5 degrees between altitudes means re-measure
+    - Uses GLOBAL_POSITION_INT relative_alt (barometric, not GPS altitude)
+
+DEPENDENCIES:
+    pymavlink, opencv-python (optional, for live view), config.py
 """
 import sys
 import os

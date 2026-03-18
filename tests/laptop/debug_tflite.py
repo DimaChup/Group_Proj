@@ -1,6 +1,41 @@
 #!/usr/bin/env python3
 """
-Debug TFLite output to understand the raw values.
+debug_tflite.py — Raw TFLite Model Output Inspector
+
+WHAT:    Loads best.tflite directly and prints raw input/output tensor details
+         (shapes, dtypes, value ranges). Creates a synthetic test image with
+         dummy.png on a green background, runs inference, and displays the top
+         10 detections sorted by confidence. Shows three different coordinate
+         interpretation formulas to help debug bounding box coordinate issues.
+WHY:     When detection coordinates are wrong (bbox in wrong position), this
+         script reveals whether the raw output values are normalized (0-1) or
+         pixel coordinates, and which interpretation formula is correct. Critical
+         for debugging the TFLite parsing code in vision.py.
+WHEN:    When detection bounding boxes appear in wrong positions. After exporting
+         a new TFLite model. When debugging coordinate space mismatches.
+WHERE:   Laptop only.
+ENV:     "venv" (needs tflite-runtime or tensorflow, plus opencv and numpy)
+MODELS:  best.tflite from project root (hardcoded path).
+RISK:    None — diagnostic tool, read-only.
+
+USAGE:
+    python tests/laptop/debug_tflite.py
+
+FLAGS:
+    None.
+
+OUTPUT:
+    Console output: tensor shapes, dtypes, raw output ranges, top detections
+    with cx/cy/w/h values, and coordinate interpretation comparison.
+    Expected: dummy should be detected near center (~320, ~280).
+
+BEST PRACTICES:
+    - Run when detection boxes appear offset or scaled incorrectly
+    - Compare the three coordinate formulas to find the correct one
+    - Check that output shape matches expected [1, 5, 8400] for YOLOv8n
+
+DEPENDENCIES:
+    tflite-runtime (or tensorflow), opencv-python, numpy
 """
 import sys
 import os

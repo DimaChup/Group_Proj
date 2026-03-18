@@ -1,21 +1,46 @@
 #!/usr/bin/env python3
 """
-CV Benchmark — test detection exactly as main.py sees it.
+CV Benchmark — live camera detection rate, speed, and motion blur testing.
 
-Uses vision.py directly (same camera pipeline, same preprocessing,
-same model, same thresholds). Any change in vision.py is reflected here.
+WHAT:    Opens the camera and runs AI detection continuously, measuring real-world
+         FPS, inference time, and detection rate. In blur mode, captures one frame
+         and applies increasing horizontal motion blur (0-120 px kernel) to simulate
+         drone flight at different speeds, reporting at which blur level detection fails.
+WHY:     Tests detection performance under realistic conditions — live camera latency,
+         real lighting, and motion blur. Answers: "Will AI detect the dummy from a
+         moving drone at this speed?" Uses vision.py directly so results match main.py.
+WHEN:    At the field before flight to verify camera+AI pipeline works. After changing
+         camera settings (resolution, exposure). To determine max safe flight speed.
+WHERE:   Both — Pi (with picamera2/TFLite) or laptop (with webcam/Ultralytics).
+ENV:     pienv on Pi, dev venv on laptop. Needs camera access.
+MODELS:  best.tflite (any YOLOv8 TFLite model in project root).
+RISK:    none — read-only camera access, no drone commands.
 
-Tests:
-  - Detection rate and confidence
-  - Inference speed (ms per frame)
-  - Frame rate with and without AI
-  - Simulated motion blur at different speeds
-
-Usage:
-    python tests/hardware/cv_benchmark.py                  # live camera + AI
-    python tests/hardware/cv_benchmark.py --headless        # no display (SSH)
-    python tests/hardware/cv_benchmark.py --blur            # test motion blur
+USAGE:
+    python tests/hardware/cv_benchmark.py
+    python tests/hardware/cv_benchmark.py --headless
+    python tests/hardware/cv_benchmark.py --blur
     python tests/hardware/cv_benchmark.py --blur --headless
+
+FLAGS:
+    --headless    No cv2.imshow display (for SSH/PuTTY sessions). Prints stats
+                  to terminal every 20 frames instead.
+    --blur        Motion blur test mode. Captures one frame, applies 8 blur levels,
+                  reports detection survival at each level.
+
+OUTPUT:
+    Terminal report: FPS, inference time (avg/min/max), detection rate, confidence.
+    In blur mode: table of blur levels vs detection success and confidence.
+    With display: live video window with crosshair, FPS, and detection overlay.
+
+BEST PRACTICES:
+    - Point camera at the dummy/target before starting
+    - Run --blur test to find the maximum drone speed where detection still works
+    - Use --headless when running over SSH (no X11 forwarding needed)
+    - Press Q or Esc to stop the live benchmark (or Ctrl+C in headless mode)
+
+DEPENDENCIES:
+    opencv-python (or opencv-python-headless), numpy, vision.py (project module)
 """
 import sys
 import os

@@ -1,18 +1,47 @@
 #!/usr/bin/env python3
 """
-Live map viewer — watch drone fly on map.jpg in real-time.
+Live Map — real-time drone position and coverage viewer on map.jpg.
 
-Runs on LAPTOP, connects to Pi's mavproxy TCP output.
-Shows drone position, camera footprint, coverage overlay, zones, waypoints.
-Scroll to zoom in/out (centred on drone). Same style as simulation god view.
+WHAT:    Connects to mavproxy TCP output and displays the drone's GPS position on
+         map.jpg in real-time. Shows drone icon with heading arrow, camera footprint
+         rectangle, cumulative coverage overlay (yellow tint), KML zones (survey,
+         flight boundary, SSSI), custom search area, and waypoints from JSON files.
+         Scroll wheel zooms in/out centered on the drone. Same visual style as the
+         simulation god-view.
+WHY:     Provides a ground station map view during real flights without needing Mission
+         Planner. Shows camera coverage progress in real-time, which MP does not.
+         Useful for monitoring waypoint progress and verifying the drone stays within
+         boundaries.
+WHEN:    During any flight — run on laptop alongside the pilot. Works with any flight
+         script (2_waypoints, 3_auto_detect, 4_detect_and_center, main.py) or manual
+         RC flight.
+WHERE:   Laptop only (requires display + map.jpg). Connects to Pi's mavproxy TCP output
+         or local SITL.
+ENV:     Dev venv on laptop (needs opencv-python, numpy, pymavlink). NOT for Pi.
+MODELS:  None (no AI used).
+RISK:    None — read-only telemetry connection. Sends ZERO commands to the drone.
 
-Usage:
-    python tests/flight/live_map.py                          # connect to SITL locally
-    python tests/flight/live_map.py --host 192.168.1.121     # connect to Pi's mavproxy
+USAGE:
+    python tests/flight/live_map.py                          # connect to local SITL
+    python tests/flight/live_map.py --host 192.168.1.3       # connect to Pi's mavproxy
     python tests/flight/live_map.py --port 5763              # different TCP port
 
-Requires: mavproxy running on Pi with --out=tcpin:0.0.0.0:5762
-Multiple clients (Mission Planner + this) can connect simultaneously.
+FLAGS:
+    --host IP    Mavproxy host IP (default 127.0.0.1 for local SITL)
+    --port N     Mavproxy TCP port (default 5762)
+
+OUTPUT:
+    Live OpenCV window showing map with drone position, coverage, zones, and telemetry
+    HUD (altitude, heading, zoom level, coverage percentage, GPS coordinates).
+
+BEST PRACTICES:
+    - Requires mavproxy running with --out=tcpin:0.0.0.0:5762 on Pi
+    - Multiple clients can connect simultaneously (Mission Planner + this script)
+    - Scroll wheel zooms centered on drone — useful for close-up during centering
+    - ESC to quit cleanly
+
+DEPENDENCIES:
+    opencv-python, numpy, pymavlink, config.py, utils.py (GeoTransformer)
 """
 import sys
 import os

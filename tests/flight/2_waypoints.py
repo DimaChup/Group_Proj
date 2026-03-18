@@ -1,34 +1,47 @@
 #!/usr/bin/env python3
 """
-Waypoint Flight Test — fly N GPS waypoints with NO camera/CV.
+Waypoint Flight Test — fly GPS waypoints in GUIDED mode, NO camera or CV.
 
-This is STEP 2 of progressive flight testing.
-Proves: your mavlink commands (arm, takeoff, goto, land) work on real hardware.
+WHAT:    Loads waypoints from waypoints.json (or --wp CLI flags), connects to Cube,
+         waits for GPS fix, arms, takes off, flies each waypoint at cruise altitude
+         with 3s holds, descends to 5m at the last waypoint for a 15s low hover,
+         climbs back, then RTLs home. No camera or AI involved.
+WHY:     Step 2 of progressive flight testing. Proves that Pi MAVLink commands (arm,
+         takeoff, GUIDED waypoint navigation, altitude changes, RTL) work on real
+         hardware before adding CV complexity.
+WHEN:    After passive flight (step 1) confirms basic connectivity. Before any
+         CV-enabled flight (3_auto_detect, 4_detect_and_center).
+WHERE:   Pi (with Cube via mavproxy, outdoors with GPS fix) or laptop (with SITL).
+ENV:     pienv on Pi, or any venv with pymavlink on laptop.
+MODELS:  None (no camera or AI used).
+RISK:    HIGH — this script WILL fly the drone. Arms motors, takes off, navigates
+         waypoints, and lands. Requires props on, clear area, and RC kill switch ready.
 
-Waypoints come from:
-  1. waypoints.json (created by draw_waypoints.py on laptop, pushed to Pi via git)
-  2. --wp CLI flags (for headless/quick use)
-
-What it does:
-  1. Loads waypoints from waypoints.json or --wp flags
-  2. Connects to Cube via mavproxy (or SITL)
-  3. Waits for GPS fix (3D)
-  4. Sets GUIDED mode, arms, takes off to 25m
-  5. Holds 3s, then flies to each waypoint (3s hold at each)
-  6. At last waypoint: descends to 5m, hovers 15 seconds
-  7. Climbs back to 25m, holds 3s
-  8. RTL (Return To Launch)
-
-Safety:
-  - RC override ALWAYS active — flip RC mode switch to STABILIZE/LOITER to take over
-  - Ctrl+C triggers RTL (Return To Launch)
-  - --dry-run flag: print plan without flying
-
-Usage:
-    python tests/flight/2_waypoints.py              # loads waypoints.json
-    python tests/flight/2_waypoints.py --dry-run     # print plan only
-    python tests/flight/2_waypoints.py --alt 20      # fly at 20m instead of 25m
+USAGE:
+    python tests/flight/2_waypoints.py                                          # fly waypoints.json
+    python tests/flight/2_waypoints.py --dry-run                                # print plan only
+    python tests/flight/2_waypoints.py --alt 20                                 # cruise at 20m
     python tests/flight/2_waypoints.py --wp 51.4234,-2.6710 --wp 51.4238,-2.6695  # CLI waypoints
+
+FLAGS:
+    --dry-run       Print flight plan and distances without connecting or flying
+    --alt N         Cruise altitude in meters (default 25)
+    --wp LAT,LON    Specify waypoints via CLI (repeatable, overrides waypoints.json)
+
+OUTPUT:
+    Terminal output with real-time distance and altitude to each waypoint.
+    Summary of waypoints flown, altitudes, and what was proved.
+
+BEST PRACTICES:
+    - ALWAYS run --dry-run first to verify waypoints and distances
+    - Create waypoints.json with draw_waypoints.py on laptop, push via git
+    - Keep RC transmitter in hand — flip to STABILIZE/LOITER to take over instantly
+    - Ctrl+C triggers RTL as emergency fallback
+    - Start with 2-3 close waypoints (< 50m) for the first real flight
+    - Verify GPS fix has 6+ satellites before confirming the arm prompt
+
+DEPENDENCIES:
+    pymavlink, config.py (for CONNECTION_STR)
 """
 import sys
 import os

@@ -1,11 +1,45 @@
 #!/usr/bin/env python3
 """
-Test computer vision pipeline. Loads the AI model and runs detection
-on a test image or live camera feed.
+test_cv.py — Computer Vision Pipeline Test
 
-Usage: python tests/test_cv.py                  (test with dummy.png)
-       python tests/test_cv.py test_image.jpg   (test with specific image)
-       python tests/test_cv.py --camera          (test with live camera)
+WHAT:    Loads the AI model via VisionSystem and tests detection on either a
+         static image or live camera feed. In static mode, generates a test
+         scene (dummy.png composited on green background, or a custom image).
+         In camera mode, runs continuous live detection with FPS counter and
+         detection rate display. Reports inference time and detection coordinates.
+WHY:     Validates the full CV pipeline (model loading, preprocessing, inference,
+         postprocessing) works correctly. Tests both Ultralytics and TFLite
+         backends depending on what is installed. Quick smoke test before
+         running more complex scripts.
+WHEN:    After installing dependencies. After swapping models. When detection
+         seems broken. Before flight day to verify CV works.
+WHERE:   Laptop only (requires display for cv2.imshow).
+ENV:     "venv" (needs opencv-python, numpy, vision.py with Ultralytics or TFLite)
+MODELS:  best.tflite from project root (via VisionSystem).
+RISK:    None — read-only detection, no commands sent.
+
+USAGE:
+    python tests/laptop/test_cv.py                    # test with dummy.png
+    python tests/laptop/test_cv.py test_image.jpg     # test with specific image
+    python tests/laptop/test_cv.py --camera           # live webcam detection
+
+FLAGS:
+    [image_path]    Optional: path to test image (default: dummy.png composite)
+    --camera        Use live webcam instead of static image
+
+OUTPUT:
+    Console: model backend (TFLite/Ultralytics), inference time, detection
+    coordinates and confidence.
+    Window: test image or live video with detection overlay.
+    Exit code: 0 if model loads successfully, 1 if not.
+
+BEST PRACTICES:
+    - Run without args first (uses dummy.png) to verify model loads
+    - Use --camera to test real-world detection with printed dummy
+    - Check reported backend matches expectations (TFLite on Pi, either on laptop)
+
+DEPENDENCIES:
+    opencv-python, numpy, vision.py
 """
 import sys
 import os

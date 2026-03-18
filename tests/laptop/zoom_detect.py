@@ -1,25 +1,46 @@
 """
-Interactive zoom + detect + tiling tool.
-Load a high-res image/video, zoom in/out, test detection at any crop level,
-or run tiling across the full frame.
+zoom_detect.py — Interactive Zoom + Detect + Tiling Tool
 
-Usage:
-    python tests/laptop/zoom_detect.py RealVideo/DJI_20260311172332_0001_V.MP4 --frame 3425
-    python tests/laptop/zoom_detect.py RealVideo/DJI_20260311172332_0001_V.MP4 --frame 2033
+WHAT:    Loads a high-resolution image or video frame and provides an interactive
+         viewer with zoom/pan controls. Run YOLO detection on the current zoomed
+         view (SPACE), or run tiled detection across the entire full-resolution
+         frame (T). Includes a YOLO input preview panel (V key) showing exactly
+         what the 640x640 model sees, with zoom levels up to 8x. Supports NMS
+         for merging overlapping tile detections.
+WHY:     Understanding detection at different zoom/crop levels is critical for
+         tuning tile size and overlap. This tool reveals why YOLO misses targets
+         at full resolution (the target is too small in the 640x640 input) and
+         helps determine optimal tiling parameters.
+WHEN:    When analyzing DJI flight video frames to understand detection behavior.
+         When experimenting with tile sizes (640, 960, 1280) and overlap.
+WHERE:   Laptop only (requires display for interactive zoom/pan).
+ENV:     "test_env" (needs both ultralytics and tflite for VisionSystem)
+MODELS:  best.tflite by default, or specify with --model flag. Any .tflite model.
+RISK:    None — read-only analysis tool, no commands sent.
+
+USAGE:
+    python tests/laptop/zoom_detect.py RealVideo/DJI_0001_1456x1088_cropped_30fps.mp4 --frame 3425
     python tests/laptop/zoom_detect.py RealVideo/test_full_3425.jpg
+    python tests/laptop/zoom_detect.py RealVideo/DJI_0001_1456x1088_cropped_30fps.mp4 --model cv_models/sar_v2_1088/best.tflite
 
-Controls:
-    W / +       = zoom in
-    S / -       = zoom out
-    Click+drag  = pan
-    SPACE       = detect on current view (ZOOM mode)
-    T           = run TILING on full frame (shows all tile detections)
-    1 / 2 / 3   = tile size: 640 / 960 / 1280
-    A / D       = prev/next frame (video, jumps 30 frames)
-    F / G       = prev/next frame (video, jumps 150 frames — fast skip)
-    E           = save current view (filename includes resolution)
-    R           = reset zoom
-    Q           = quit
+FLAGS:
+    source          Image or video file path (positional, required)
+    --frame N       Start at frame number N (video only, default 0)
+    --model PATH    Model path (default: best.tflite)
+    --conf FLOAT    Confidence threshold (overrides config.py)
+
+OUTPUT:
+    Interactive window with zoom/pan/detect. Saved crops via E key.
+    Console prints detection results with coordinates and timing.
+
+BEST PRACTICES:
+    - Use 30fps video (DJI_0001_1456x1088_cropped_30fps.mp4), NOT 6fps
+    - Press V to see what YOLO actually receives — often reveals why misses happen
+    - Try different tile sizes (1/2/3 keys) then press T to compare
+    - SPACE detects on current zoomed crop; T detects on full frame with tiling
+
+DEPENDENCIES:
+    opencv-python, numpy, vision.py (VisionSystem)
 """
 import sys, os, time, argparse, threading
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))

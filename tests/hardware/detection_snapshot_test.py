@@ -1,19 +1,47 @@
 #!/usr/bin/env python3
 """
-Quick test: camera + AI detection + auto-save snapshots on detection.
+Detection Snapshot Test — continuous detection with auto-saved annotated frames.
 
-Runs headless (no display needed). Saves frames with detection boxes
-to detections/ folder. Prints detection info to terminal.
+WHAT:    Opens the camera, runs AI detection on every frame, and saves annotated
+         JPEGs (with bounding box and confidence) to a detections/ folder whenever
+         a detection exceeds the confidence threshold. Prints detection info and
+         periodic FPS updates to terminal. Runs headless — no display window needed.
+WHY:     Provides a quick way to verify that camera + AI detection works on Pi over
+         SSH without needing a display. Saved snapshots can be reviewed after the
+         test to verify detection quality, bounding box accuracy, and confidence
+         levels under real conditions.
+WHEN:    After pushing new code/models to Pi. Before flight to verify camera sees
+         the dummy. When testing detection at different distances or lighting.
+WHERE:   Primarily Pi (designed for headless SSH use), but works on laptop too.
+ENV:     pienv on Pi. Needs camera access (picamera2 or OpenCV camera).
+MODELS:  best.tflite (any YOLOv8 TFLite model in project root).
+RISK:    none — camera only, no drone commands, no MAVLink connection.
 
-Usage (on Pi via SSH):
-    cd ~/dima/Group_Proj
-    PYTHONPATH=. python tests/hardware/detection_snapshot_test.py
+USAGE:
+    python tests/hardware/detection_snapshot_test.py
+    python tests/hardware/detection_snapshot_test.py --conf 0.3
+    python tests/hardware/detection_snapshot_test.py --frames 100
 
-    # With lower confidence threshold:
-    PYTHONPATH=. python tests/hardware/detection_snapshot_test.py --conf 0.3
+FLAGS:
+    --conf <float>    Confidence threshold for saving detections (default: 0.4).
+                      Lower values catch more detections but may include false positives.
+    --frames <int>    Stop after N frames (default: 0 = unlimited, run until Ctrl+C).
 
-    # Limit to N frames then stop:
-    PYTHONPATH=. python tests/hardware/detection_snapshot_test.py --frames 100
+OUTPUT:
+    - Annotated JPEG snapshots saved to detections/ folder (det_0001_0.95.jpg etc.)
+    - Terminal: per-detection log (confidence, position, filename)
+    - Terminal: periodic stats every 50 frames (frame count, detection count, FPS)
+    - Final summary: total frames, detections, detection rate, FPS
+
+BEST PRACTICES:
+    - Point camera at the dummy before starting
+    - Start with default --conf 0.4, lower to 0.25-0.3 if detections are missed
+    - Use --frames 100 for quick tests, unlimited for extended monitoring
+    - Review saved snapshots to check bounding box accuracy and false positives
+    - Delete detections/ folder between test runs to avoid confusion
+
+DEPENDENCIES:
+    opencv-python (or opencv-python-headless), numpy, vision.py (project module)
 """
 import sys
 import os

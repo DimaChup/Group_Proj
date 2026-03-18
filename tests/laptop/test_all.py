@@ -1,9 +1,41 @@
 #!/usr/bin/env python3
 """
-Full system connectivity test. Checks every link and shows
-a connectivity map of what talks to what.
+test_all.py — Full System Connectivity Check
 
-Usage: python tests/test_all.py
+WHAT:    Tests every link in the system and displays a connectivity map. Checks:
+         (1) TCP/serial link to flight controller, (2) MAVLink heartbeat,
+         (3) camera availability (REAL mode only), (4) AI model loading.
+         Auto-detects platform (Windows/WSL/Pi/Linux) and adjusts checks
+         accordingly. Prints a visual ASCII connectivity diagram.
+WHY:     Single command to verify the entire system is connected and working
+         before running main.py. Catches common issues (SITL not running,
+         model file missing, camera disconnected) with clear error messages
+         and troubleshooting tips.
+WHEN:    Before any flight test. After setting up a new environment. When
+         something stops working and you need to isolate the broken link.
+WHERE:   Laptop only (also works on Pi but primarily a dev tool).
+ENV:     "venv" (needs pymavlink, opencv-python, vision.py)
+MODELS:  best.tflite (checks that it loads, does not run inference).
+RISK:    None — read-only checks, no commands sent.
+
+USAGE:
+    python tests/laptop/test_all.py
+
+FLAGS:
+    None.
+
+OUTPUT:
+    Console: connectivity table (OK/FAIL/SKIP per check), ASCII connectivity
+    map, summary with troubleshooting tips for any failures.
+    Exit code: 0 if all checks pass, 1 if any fail.
+
+BEST PRACTICES:
+    - Run before main.py to catch issues early
+    - On WSL, check firewall if TCP link fails
+    - If AI MODEL fails, verify best.tflite exists in project root
+
+DEPENDENCIES:
+    pymavlink, opencv-python, vision.py, config.py
 """
 import sys
 import os

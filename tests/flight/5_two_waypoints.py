@@ -1,26 +1,46 @@
 #!/usr/bin/env python3
 """
-Two-Waypoint Mission — fly to 2 specific GPS coordinates, hover, land.
+Two-Waypoint Mission — fly to 2 hardcoded GPS coordinates, hover, and land.
 
-Simple test to prove GUIDED navigation works on real hardware.
+WHAT:    Connects to Cube, waits for GPS fix, arms in GUIDED mode, takes off, flies
+         to two hardcoded GPS waypoints (WP1 and WP2) with a configurable hover time
+         at each, then lands at WP2. Simple and self-contained — no JSON files needed.
+WHY:     Quick validation of GUIDED waypoint navigation on real hardware with minimal
+         setup. Hardcoded waypoints mean no dependency on draw_waypoints.py or JSON
+         files. Edit WP1/WP2 coordinates at the top of the script before flight day.
+WHEN:    Alternative to 2_waypoints.py when you want a quick 2-point test. Good for
+         first real flight or sanity check after config changes.
+WHERE:   Pi (with Cube via mavproxy, outdoors with GPS fix) or laptop (with SITL).
+ENV:     pienv on Pi, or any venv with pymavlink on laptop.
+MODELS:  None (no camera or AI used).
+RISK:    HIGH — this script WILL fly the drone. Arms motors, takes off, navigates to
+         2 waypoints, and lands. Requires props on, clear area, and RC kill switch ready.
 
-Flow:
-  1. Connect to Cube, wait for GPS fix
-  2. Set GUIDED, arm, takeoff to ALT
-  3. Fly to WP1, hover HOVER_TIME seconds
-  4. Fly to WP2, hover HOVER_TIME seconds
-  5. Land at WP2
+USAGE:
+    python tests/flight/5_two_waypoints.py                  # fly the mission
+    python tests/flight/5_two_waypoints.py --dry-run        # verify GPS + distances only
+    python tests/flight/5_two_waypoints.py --alt 15         # fly at 15m instead of 20m
+    python tests/flight/5_two_waypoints.py --hover 6        # hover 6s at each waypoint
 
-Safety:
-  - RC override ALWAYS active — flip to STABILIZE to take over
-  - Ctrl+C triggers RTL
-  - --dry-run: verify without arming
+FLAGS:
+    --dry-run     Connect, get GPS fix, print distances, but do NOT arm or fly
+    --alt N       Flight altitude in meters (default 20)
+    --hover N     Hover time at each waypoint in seconds (default 4)
 
-Usage:
-    python3 tests/flight/5_two_waypoints.py                    # fly it
-    python3 tests/flight/5_two_waypoints.py --dry-run          # test without arming
-    python3 tests/flight/5_two_waypoints.py --alt 15           # fly at 15m
-    python3 tests/flight/5_two_waypoints.py --hover 6          # hover 6s at each WP
+OUTPUT:
+    Terminal output with real-time distance to each waypoint, altitude during
+    takeoff/landing, and mission complete summary.
+
+BEST PRACTICES:
+    - EDIT WP1 and WP2 coordinates at the top of the script before flight day
+    - Run --dry-run first to verify GPS fix and distances from home to each WP
+    - Keep RC transmitter ready — flip to STABILIZE to take over instantly
+    - Ctrl+C triggers RTL as emergency fallback
+    - Requires 3D GPS fix with 6+ satellites before proceeding
+    - 3-second countdown before arming gives time to abort
+
+DEPENDENCIES:
+    pymavlink, config.py (for CONNECTION_STR, BAUD_RATE)
 """
 import sys
 import os

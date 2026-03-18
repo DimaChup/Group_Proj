@@ -1,11 +1,55 @@
 """
-Run video with tiled YOLO detection overlay.
-Splits each frame into 640px tiles, runs detection on each, merges with NMS.
-Usage:
+video_test.py — DJI Flight Video Replay with Detection + GPS Estimation
+
+WHAT:    Replays DJI flight video with real-time tiled YOLO detection overlay.
+         Parses SRT telemetry (GPS, altitude, yaw) and estimates target GPS
+         coordinates from each detection using pixel offset + FOV math. Shows
+         four windows: main video with HUD, latest detection snapshot, GPS
+         scatter plots (colored by center distance and altitude), and best
+         detection (most central). Includes scale bar, right-click measure tool,
+         and CSV logging of all detections.
+WHY:     Analyzes detection performance on real flight footage without needing
+         to fly again. Quantifies GPS estimation accuracy (CEP50, max spread)
+         and reveals how detection quality varies with altitude and frame
+         position. Essential for calibrating the CV pipeline before autonomous
+         flights.
+WHEN:    After a flight to analyze detection performance. When comparing models.
+         When calibrating FOV or GPS estimation parameters.
+WHERE:   Laptop only (requires display for multi-window visualization).
+ENV:     "test_env" (needs both ultralytics and tflite for VisionSystem)
+MODELS:  best.tflite by default, or specify with --model flag.
+RISK:    None — offline video analysis, no commands sent.
+
+USAGE:
     python tests/laptop/video_test.py RealVideo/DJI_0001_1456x1088_cropped_30fps.mp4
-    python tests/laptop/video_test.py RealVideo/DJI_0001_1456x1088_cropped_30fps.mp4 --model cv_models/sar_640/best.tflite
+    python tests/laptop/video_test.py RealVideo/DJI_0001_1456x1088_cropped_30fps.mp4 --model cv_models/sar_v2_1088/best.tflite
     python tests/laptop/video_test.py RealVideo/DJI_0001_1456x1088_cropped_30fps.mp4 --save output.mp4
-Controls: SPACE=pause  Q=quit  A/D=skip 5s  +/-=speed  T=toggle tiling
+
+FLAGS:
+    video               Path to video file (positional, required)
+    --model PATH        Model path (default: best.tflite)
+    --save PATH         Save output video to file
+    --conf FLOAT        Confidence threshold (default: 0.3)
+    --every N           Run AI every Nth frame (default: 3)
+    --tile-size N       Tile size in pixels (default: 640)
+    --display-width N   Display window width (default: 960)
+    --srt PATH          SRT telemetry file (auto-detected if not set)
+
+OUTPUT:
+    Multi-window display: video + detections, GPS scatter plots, best snapshot.
+    CSV file: <video_name>_detections.csv with per-detection GPS estimates.
+    Console: detection count, CEP50, max spread, mean target GPS.
+
+BEST PRACTICES:
+    - MUST use 30fps video (DJI_0001_1456x1088_cropped_30fps.mp4) — 6fps is
+      OUT OF SYNC with SRT telemetry (frame count mismatch)
+    - FOV is calibrated to 54.4 deg HFOV for 1456x1088 crop
+    - Right-click twice on video to measure distance in meters
+    - Left-click twice on best detection window to measure
+    - Press T to toggle between tiled and single-pass detection
+
+DEPENDENCIES:
+    opencv-python, numpy, vision.py (VisionSystem), csv, threading
 """
 import sys, os, time, argparse, threading, csv
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))

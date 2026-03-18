@@ -1,26 +1,53 @@
 #!/usr/bin/env python3
 """
-gps_accuracy.py — Experiment: GPS Estimation Accuracy
-=====================================================
-PASSIVE — sends ZERO commands to Cube. Pilot flies manually.
+GPS Accuracy — Pixel-to-GPS estimation error experiment
 
-Protocol:
-  1. Before flight: enter known dummy GPS (from Mission Planner or phone)
-  2. Pilot hovers above dummy at various altitudes
-  3. Script estimates dummy GPS using pixel→GPS projection (same math as pi_flight.py)
-  4. Compares estimated vs known GPS, logs error in metres
+WHAT:    Compares the AI-estimated GPS position of a dummy against its known
+         true GPS position. For every detection, converts the pixel coordinates
+         to a GPS estimate using camera geometry (FOV, altitude, yaw) and logs
+         the error in metres. Also computes an inverse-variance-weighted average
+         across all observations.
+WHY:     Quantifies the end-to-end accuracy of the pixel-to-GPS pipeline that
+         pi_flight.py and main.py use for offset landing. If the error is too
+         large, FOV calibration, yaw data, or GPS lag may need fixing.
+WHEN:    Run during a manual RC hover flight on Day 1. Hover above the dummy at
+         various altitudes. Requires the known GPS coordinates of the dummy
+         (measure with phone GPS or Mission Planner before flight).
+WHERE:   Pi (primary) or laptop (with webcam + SITL)
+ENV:     Pi: pienv venv (pymavlink, opencv-headless, ai-edge-litert).
+         Laptop: dev venv (ultralytics, opencv-python).
+MODELS:  best.tflite from project root (active model, swappable).
+RISK:    none — sends ZERO commands to the Cube. Purely observational.
 
-This tells you how accurate the GPS estimation pipeline is in the real world,
-which directly predicts landing accuracy.
+USAGE:
+    python tests/day_1_experiments/gps_accuracy.py --dummy-gps 51.4234,-2.6714 --headless --stream
+    python tests/day_1_experiments/gps_accuracy.py --dummy-gps 51.4234,-2.6714 --headless
+    python tests/day_1_experiments/gps_accuracy.py --headless --stream
 
-Output CSV columns:
-  timestamp, drone_lat, drone_lon, drone_alt, yaw,
-  detection, confidence, pixel_x, pixel_y,
-  est_lat, est_lon, error_m, method
+FLAGS:
+    --dummy-gps LAT,LON  Known dummy GPS position (comma-separated, no space).
+                         If omitted, the script prompts interactively.
+    --headless           No cv2 window (required on Pi / PuTTY)
+    --stream             Enable MJPEG video stream at http://0.0.0.0:8090/
+    --stream-port N      Override stream port (default 8090)
 
-Usage:
-    python tests/experiments/gps_accuracy.py --headless --stream --dummy-gps 51.4234,-2.6714
-    python tests/experiments/gps_accuracy.py --headless --dummy-gps 51.4234,-2.6714
+OUTPUT:
+    - exp_gps_YYYYMMDD_HHMMSS.csv in project root
+      Columns: timestamp, flight_sec, drone_lat, drone_lon, drone_alt, yaw,
+      groundspeed, detection, confidence, pixel_x, pixel_y, est_lat, est_lon,
+      error_m, battery_v
+    - Terminal summary: mean/median/min/max error, error by altitude bucket,
+      weighted average estimate, and interpretation guide
+
+BEST PRACTICES:
+    - Measure dummy GPS precisely before flight (walk to it with phone/MP)
+    - Hover at multiple altitudes (10m, 15m, 20m, 25m) for varied data
+    - Check yaw data quality — bad yaw is the biggest error source
+    - Error < 3m means GPS estimation is good for offset landing
+    - Error > 5m suggests FOV calibration or yaw data needs attention
+
+DEPENDENCIES:
+    pymavlink, opencv-python (or opencv-python-headless), numpy, config.py, vision.py
 """
 
 import sys, os, csv, time, math, threading

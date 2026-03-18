@@ -1,15 +1,44 @@
 #!/usr/bin/env python3
 """
-STEP 6: Bench FOV Calibration. Camera only, no Cube needed.
+FOV Test Simple — Quick single-measurement FOV check.
 
-Hold the camera at a known height above a ruler or measuring tape.
-The script shows the live feed. Press SPACE to take a measurement.
-Enter the height and the width you can see on the ground.
-It calculates your actual FOV and compares to config.py values.
+WHAT:    A lightweight FOV calibration script that shows a live camera feed with
+         edge markers and crosshair. Press SPACE to pause and enter a height/width
+         measurement. Calculates actual FOV in degrees and compares against config.py
+         values. Suggests SENSOR_WIDTH_MM or FOCAL_LENGTH_MM corrections.
+WHY:     Simpler alternative to fov_calibrate.py for quick spot-checks. Useful when
+         you just want to verify the current config is still correct (e.g. after
+         changing resolution or camera mount) without the full multi-height procedure.
+WHEN:    Quick pre-flight sanity check, or when you only have time for one measurement.
+         Use fov_calibrate.py for thorough calibration with consistency checking.
+WHERE:   Both Pi and laptop (auto-detects picamera2 or OpenCV).
+ENV:     Any venv with opencv and numpy. Does NOT use vision.py (opens camera directly).
+MODELS:  None (camera only, no AI inference).
+RISK:    None. Camera read-only, no commands sent.
 
-Usage:
+USAGE:
     python tests/calibration/fov_test_simple.py             # with display
     python tests/calibration/fov_test_simple.py --headless  # text prompts only
+
+FLAGS:
+    --headless    Skip cv2 display, text-only prompts (for PuTTY/SSH)
+
+OUTPUT:
+    - Measured FOV in degrees vs config.py FOV
+    - Predicted vs actual ground width at measured height
+    - Error percentage
+    - Suggested config.py corrections (SENSOR_WIDTH_MM or FOCAL_LENGTH_MM)
+
+BEST PRACTICES:
+    - Use a tape measure flat on the floor for precise width reading
+    - Camera must point STRAIGHT DOWN (even small tilt skews the result)
+    - Take multiple measurements at different heights for confidence
+    - On Pi, the IMX296 outputs BGR despite RGB888 label — no cvtColor needed
+    - If error > 2 degrees, update config.py before flying
+
+DEPENDENCIES:
+    opencv-python (or opencv-python-headless), numpy, config.py
+    Optional: picamera2 (auto-detected on Pi)
 """
 import sys
 import os
