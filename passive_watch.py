@@ -472,8 +472,8 @@ def draw_overlay(frame, last_det):
 
     # ── Pink dot on detection center ──
     if last_det is not None and last_det[3] < 1.0:  # (cx, cy, conf, age)
-        det_cx = int(last_det[0] * w)
-        det_cy = int(last_det[1] * h)
+        det_cx = int(last_det[0])  # already pixel coords from line 609
+        det_cy = int(last_det[1])
         cv2.circle(display, (det_cx, det_cy), 12, (255, 0, 255), -1)  # filled pink
         cv2.circle(display, (det_cx, det_cy), 12, (255, 255, 255), 2)  # white border
 
