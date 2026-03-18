@@ -250,8 +250,8 @@ def main():
     total = 0
 
     # 1. Synthetic composites (only far/small — originals already have close/medium)
-    bg = cv2.imread("map.jpg")
-    fg = cv2.imread("dummy.png", cv2.IMREAD_UNCHANGED)
+    bg = cv2.imread("assets/map.jpg")
+    fg = cv2.imread("assets/dummy.png", cv2.IMREAD_UNCHANGED)
     if bg is not None and fg is not None:
         total += generate_synthetic(bg, fg, args.output, args.size, args.synthetic)
     else:

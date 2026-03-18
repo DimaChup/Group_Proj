@@ -6,16 +6,53 @@ Useful for the final report — shows engineering reasoning, not just results.
 ---
 
 ## DD-01: MJPEG over H.264 for Video Streaming
-**Date:** 2026-03-09
-**Context:** Need to stream live camera feed from Pi to laptop ground station.
-**Options considered:**
-1. **MJPEG over HTTP** — pure Python, any browser, ~100ms latency, ~0.5 Mbps
-2. **H.264/HLS via FFmpeg** — needs ffmpeg install, 5-10x better compression, but 2-4s latency
-3. **VNC/screen sharing** — heavy, laggy, wastes Pi CPU
-4. **SSH X forwarding** — painfully slow for video
+**Date:** 2026-03-09 (updated 2026-03-18 with full comparison)
+**Context:** Need to stream live camera feed from Pi to laptop ground station during flight.
 
-**Decision:** MJPEG
-**Rationale:** For drone ops, low latency matters more than compression. 0.5 Mbps is trivial over WiFi. Zero dependencies — works in any browser via `<img>` tag. H.264 would only matter for cellular/4G or 720p+ resolution.
+**Options considered:**
+
+| Method | Latency | Max FPS | Browser? | Dependencies | Complexity | Reliability |
+|---|---|---|---|---|---|---|
+| **MJPEG/HTTP (chosen)** | ~300ms | 3-5 | Yes | OpenCV only | Low | Very high |
+| H.264/RTP + GStreamer | ~100ms | 30 | No (needs player) | gstreamer, pygobject | High | Medium |
+| H.264/HLS via FFmpeg | 1-2s | 30 | Yes | ffmpeg | Medium | Medium |
+| WebRTC | ~50ms | 30 | Yes | aiortc, STUN/TURN | High | Medium |
+| GStreamer RTSP | ~100ms | 30 | No | gstreamer | Medium | Medium |
+| VNC/screen sharing | ~500ms | 15 | VNC client | VNC server | Low | Medium |
+
+**Decision:** MJPEG over HTTP
+
+**Rationale:**
+- **Most reliable** for field operations — pure HTTP, stateless, each frame independent
+- Works in any browser (laptop, phone, tablet) — no special apps or codecs
+- Zero extra dependencies — just OpenCV `imencode()`
+- Our inference is only 3-5 FPS — low latency streaming doesn't help when AI processes 3 frames/sec
+- Thread-safe with `ThreadingMixIn` — handles multiple browser clients
+- Easy debugging — `/snapshot` endpoint, `/stream` in any browser
+- Battle-tested: passive_watch.py, pi_flight.py, capture_training.py all use it
+
+**Why not H.264/GStreamer (like our GCSScripts project on Desktop):**
+- GCSScripts uses `udpsrc → rtph264depay → h264parse → avdec_h264 → videoconvert → appsink`
+- Needs `pygobject` + `gstreamer` + plugins installed — extra failure points in field
+- Doesn't work in a plain browser — needs Tkinter app or GStreamer player
+- More complex to debug when it breaks during flight
+
+**Why not WebRTC:**
+- Most complex to set up (STUN/TURN servers, signaling)
+- Overkill for passive monitoring at 3 FPS
+
+**Trade-offs accepted:**
+- Higher bandwidth (~2-5 Mbps vs ~0.5 Mbps for H.264)
+- Higher latency (~300ms vs ~100ms) — acceptable since passive watch sends zero commands
+- CPU cost of JPEG re-encoding per frame
+
+**Revisit if:** Need real-time FPV for manual piloting, or inference speed exceeds 15 FPS (NCNN/Hailo).
+
+**Implementation:**
+- `passive_watch.py` — port 8090, JPEG quality 70%
+- `pi_flight.py` — port 8090, JPEG quality 85%
+- `capture_training.py` — port 8091
+- `tests/diagnostics/camera_stream_h264.py` — H.264 alternative (needs FFmpeg, for future use)
 
 ---
 

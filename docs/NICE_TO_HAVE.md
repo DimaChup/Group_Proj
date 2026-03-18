@@ -20,3 +20,18 @@
 | 14 | pi_9 resolution test script | NOT STARTED | 3 | 2 | 1.5 | tests/ |
 | 15 | Handle graceful shutdown on network disconnect | NOT STARTED | 3 | 2 | 1.5 | main.py |
 | 16 | Split handle_command() into per-command methods | NOT STARTED | 2 | 1 | 2.0 | pi_flight.py |
+| 17 | Add hard negatives from flight FP frames to training set | NOT STARTED | 5 | 2 | 2.5 | training |
+| 18 | Raise confidence threshold (0.4 → 0.5 or 0.6) | NOT STARTED | 3 | 1 | 3.0 | vision.py |
+| 19 | Require 2+ consecutive detections before triggering | NOT STARTED | 4 | 2 | 2.0 | main.py |
+| 20 | Add Gaussian blur augmentation to training pipeline | NOT STARTED | 3 | 1 | 3.0 | training |
+| 21 | Add noise augmentation (sensor noise simulation) | NOT STARTED | 3 | 1 | 3.0 | training |
+| 22 | Add color jitter augmentation (weather/lighting) | NOT STARTED | 3 | 1 | 3.0 | training |
+| 23 | Add lens distortion augmentation (match real camera) | NOT STARTED | 3 | 2 | 1.5 | training |
+| 24 | Add more negative images (50 → 200+) to dataset | NOT STARTED | 5 | 2 | 2.5 | training |
+| 25 | Try YOLOv8s (larger model, more accurate, slower) | NOT STARTED | 3 | 2 | 1.5 | models/ |
+| 26 | NCNN backend on Pi (~15 FPS expected) | NOT STARTED | 4 | 3 | 1.3 | vision.py |
+| 27 | FP16 XNNPACK TFLite (~2x speedup on Pi 5) | NOT STARTED | 4 | 2 | 2.0 | models/ |
+| 28 | Collect more real flight photos for retraining | NOT STARTED | 5 | 2 | 2.5 | training |
+| 29 | Random crop/zoom augmentation (altitude variation) | NOT STARTED | 3 | 1 | 3.0 | training |
+| 30 | Motion blur augmentation (simulate drone speed) | NOT STARTED | 4 | 1 | 4.0 | training |
+| 31 | --model flag for passive_watch.py and capture_training.py | NOT STARTED | 3 | 1 | 3.0 | scripts |

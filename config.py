@@ -59,8 +59,8 @@ TARGET_ALT = 50.0 # Search Altitude (Meters) — 50m for wider coverage
 VERIFY_ALT = 15.0 # Descent Altitude for Verification
 
 # --- MAP CONFIGURATION (Simulation Only) ---
-MAP_FILE = "map.jpg"
-DUMMY_FILE = "dummy.png"
+MAP_FILE = "assets/map.jpg"
+DUMMY_FILE = "assets/dummy.png"
 CONE_FILE = "cone.png"
 MAP_WIDTH_METERS = 480.0
 REF_LAT = 51.425106
@@ -93,8 +93,8 @@ CAMERA_FLIP_180 = True   # Camera mounted inverted on drone — flip image 180°
 
 # --- CV DETECTION ---
 # All scripts use best.tflite in root. To swap model on Pi:
-#   cp models/human.tflite best.tflite      (COCO person detector)
-#   cp models/custom_yolov8n.tflite best.tflite  (back to custom)
+#   cp cv_models/sar_v2_1088/best.tflite best.tflite  (retrained v2, recommended)
+#   cp cv_models/sar_640/best.tflite best.tflite       (earlier 640x640 training)
 CONFIDENCE_THRESHOLD = 0.4  # Min detection confidence (tune on flight day: lower=more detections+more false positives)
 
 # --- SPEED SETTINGS ---
@@ -120,7 +120,7 @@ SSSI_GPS = []
 TAKEOFF_GPS = None
 FOCUS_AREA_GPS = []
 
-def load_kml_zones(kml_path="AENGM0074.kml"):
+def load_kml_zones(kml_path="flight_plans/AENGM0074.kml"):
     """Parse KML file and populate GPS zone variables."""
     global SEARCH_AREA_GPS, FLIGHT_AREA_GPS, SSSI_GPS, TAKEOFF_GPS, FOCUS_AREA_GPS, REF_LAT, REF_LON
     import xml.etree.ElementTree as ET
@@ -191,4 +191,4 @@ def load_kml_zones(kml_path="AENGM0074.kml"):
 #   config.load_kml_zones("path/to/other.kml")
 
 # --- LOGGING ---
-LOG_FILE = "flight_log.csv"
+LOG_FILE = "logs/flight_log.csv"

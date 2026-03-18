@@ -304,13 +304,13 @@ python tests/flight/live_map.py
 
 ```bash
 # Draw search polygon → search_area.json
-python tests/flight/draw_search_area.py
+python flight_plans/draw_search_area.py
 
 # Draw transit route → transit.json
-python tests/flight/draw_transit.py
+python flight_plans/draw_transit.py
 
 # Draw waypoints → waypoints.json
-python tests/flight/draw_waypoints.py
+python flight_plans/draw_waypoints.py
 ```
 All output JSON files to project root. Push via git for Pi.
 

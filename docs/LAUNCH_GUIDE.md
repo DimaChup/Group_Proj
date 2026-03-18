@@ -20,10 +20,10 @@ export DRONE_MODE=SIMULATION       # Linux/Pi/WSL
 python main.py
 
 # Full real flight with preloaded paths
-python main.py --search-area --waypoints waypoints.json --transit transit.json
+python main.py --search-area --waypoints flight_plans/waypoints.json --transit flight_plans/transit.json
 
 # Full real with alternate model + headless (Pi over SSH)
-python main.py --search-area --transit transit.json --model cv_models/sar_v2_1088/best.tflite --headless
+python main.py --search-area --transit flight_plans/transit.json --model cv_models/sar_v2_1088/best.tflite --headless
 ```
 
 ---
@@ -73,11 +73,11 @@ If not set, `config.py` auto-detects:
 ```bash
 python main.py --dry-run
 python main.py --dry-run --search-area
-python main.py --dry-run --search-area --transit transit.json --waypoints waypoints.json
+python main.py --dry-run --search-area --transit flight_plans/transit.json --waypoints flight_plans/waypoints.json
 ```
 
 **What happens:**
-1. Loads search polygon (from `search_area.json`, KML, or config.py)
+1. Loads search polygon (from `flight_plans/search_area.json`, KML, or config.py)
 2. Generates lawnmower/spiral waypoints
 3. Prints every waypoint GPS coordinate
 4. Prints state machine walkthrough (INIT → CONNECTING → ... → LANDING)
@@ -122,7 +122,7 @@ python main.py
 
 ```bash
 # On Pi:
-python main.py --search-area --transit transit.json --headless
+python main.py --search-area --transit flight_plans/transit.json --headless
 
 # On laptop with webcam + SITL:
 set DRONE_MODE=REAL
@@ -141,14 +141,14 @@ python main.py --search-area
 
 main.py loads the search polygon using this priority:
 
-### Priority 1: `search_area.json` (recommended)
+### Priority 1: `flight_plans/search_area.json` (recommended)
 
 Created by the drawing tool on laptop, pushed via git, loaded on Pi automatically.
 
 ```bash
 # On laptop — draw polygon on satellite map:
-python tests/flight/draw_search_area.py
-# → Creates search_area.json in project root
+python flight_plans/draw_search_area.py
+# → Creates flight_plans/search_area.json
 # → Push to git, pull on Pi
 ```
 
@@ -161,7 +161,7 @@ python tests/flight/draw_search_area.py
 ]
 ```
 
-main.py detects `search_area.json` in the project root and loads it automatically. No flags needed.
+main.py detects `flight_plans/search_area.json` and loads it automatically. No flags needed.
 
 ### Priority 2: `--search-area` flag (KML)
 
@@ -178,7 +178,7 @@ This calls `config.load_kml_zones()` and uses `config.SEARCH_AREA_GPS`.
 If neither JSON nor `--search-area` flag, opens `map.jpg` for interactive drawing. Only works in SIMULATION mode with a display.
 
 ### Priority in REAL mode:
-1. `search_area.json` exists → use it (no flag needed)
+1. `flight_plans/search_area.json` exists → use it (no flag needed)
 2. `SEARCH_AREA_GPS` in config.py → use it
 3. Neither → error, no search pattern
 
@@ -186,17 +186,17 @@ If neither JSON nor `--search-area` flag, opens `map.jpg` for interactive drawin
 
 ## Transit & Waypoint Setup
 
-### Transit Path (`--transit transit.json`)
+### Transit Path (`--transit flight_plans/transit.json`)
 
 The route from takeoff to the search area entry point. Avoids no-fly zones.
 
 ```bash
 # Draw on laptop:
-python tests/flight/draw_transit.py
-# → Creates transit.json
+python flight_plans/draw_transit.py
+# → Creates flight_plans/transit.json
 
 # Use in flight:
-python main.py --transit transit.json
+python main.py --transit flight_plans/transit.json
 ```
 
 **What it does:**
@@ -204,17 +204,17 @@ python main.py --transit transit.json
 - Search pattern starts from the last transit waypoint (instead of current position)
 - In SIMULATION mode, transit path is also drawn on the setup map
 
-### Pre-Waypoints (`--waypoints waypoints.json`)
+### Pre-Waypoints (`--waypoints flight_plans/waypoints.json`)
 
 Additional waypoints flown BEFORE the search pattern. Can combine with transit.
 
 ```bash
 # Draw on laptop:
-python tests/flight/draw_waypoints.py
-# → Creates waypoints.json
+python flight_plans/draw_waypoints.py
+# → Creates flight_plans/waypoints.json
 
 # Use in flight:
-python main.py --waypoints waypoints.json
+python main.py --waypoints flight_plans/waypoints.json
 ```
 
 ### Combined: Transit + Waypoints
@@ -225,7 +225,7 @@ Both are merged into `pre_waypoints` and flown in order:
 3. Then search pattern begins
 
 ```bash
-python main.py --waypoints waypoints.json --transit transit.json --search-area
+python main.py --waypoints flight_plans/waypoints.json --transit flight_plans/transit.json --search-area
 ```
 
 ### JSON Format (same for all three files)
@@ -254,16 +254,16 @@ Also accepts simple arrays:
 | **Best (v2 retrained)** | `cv_models/sar_v2_1088/best.tflite` | 11.7MB | mAP50=0.995, retrained on real data |
 | Earlier 640 | `cv_models/sar_640/best.tflite` | — | Trained at 640x640 |
 | Earlier 1280 | `cv_models/sar_1280/best.tflite` | — | Trained at 1280x1280 |
-| Original custom | `models/custom_yolov8n.tflite` | 3.2MB | First custom dummy detector |
-| COCO person | `models/human.tflite` | 13MB | YOLOv8n 80-class, detects real humans |
-| Placeholder | `models/best2.tflite` | 3.2MB | Copy, replace with new model |
+| Original custom | `cv_models/custom_yolov8n.tflite` | 3.2MB | First custom dummy detector |
+| COCO person | `cv_models/human.tflite` | 13MB | YOLOv8n 80-class, detects real humans |
+| Placeholder | `cv_models/best2.tflite` | 3.2MB | Copy, replace with new model |
 
 ### How to Select
 
 **Option A: `--model` flag (temporary, per-run)**
 ```bash
 python main.py --model cv_models/sar_v2_1088/best.tflite
-python main.py --model models/human.tflite
+python main.py --model cv_models/human.tflite
 ```
 
 **Option B: Overwrite `best.tflite` (permanent until changed)**
@@ -279,7 +279,7 @@ All models are drop-in compatible: same input `[1,640,640,3]`, same output `[1,5
 | Scenario | Model | Why |
 |----------|-------|-----|
 | Custom dummy on field | `cv_models/sar_v2_1088/best.tflite` | Best accuracy on our dummy |
-| Real human detection | `models/human.tflite` | COCO-trained, detects people |
+| Real human detection | `cv_models/human.tflite` | COCO-trained, detects people |
 | Quick bench test | `best.tflite` (default) | Whatever's currently active |
 | Comparing models | Use `--model` flag | Switch per-run without copying |
 
@@ -342,11 +342,11 @@ python main.py
 
 # Simulation with preloaded everything
 set DRONE_MODE=SIMULATION
-python main.py --search-area --transit transit.json --waypoints waypoints.json
+python main.py --search-area --transit flight_plans/transit.json --waypoints flight_plans/waypoints.json
 
 # Test alternate model in simulation
 set DRONE_MODE=SIMULATION
-python main.py --model models/human.tflite
+python main.py --model cv_models/human.tflite
 ```
 
 ### Pi Flight Day
@@ -362,32 +362,32 @@ source pienv/bin/activate
 cd ~/sar-drone
 
 # Option A: Full autonomous with v2 model
-python main.py --search-area --transit transit.json --model cv_models/sar_v2_1088/best.tflite
+python main.py --search-area --transit flight_plans/transit.json --model cv_models/sar_v2_1088/best.tflite
 
 # Option B: With custom waypoints
-python main.py --search-area --waypoints waypoints.json --transit transit.json
+python main.py --search-area --waypoints flight_plans/waypoints.json --transit flight_plans/transit.json
 
-# Option C: Minimal (search_area.json loaded automatically)
+# Option C: Minimal (flight_plans/search_area.json loaded automatically)
 python main.py
 ```
 
 ### Drawing Paths (laptop only, before flight day)
 
 ```bash
-# 1. Draw search polygon → search_area.json
-python tests/flight/draw_search_area.py
+# 1. Draw search polygon → flight_plans/search_area.json
+python flight_plans/draw_search_area.py
 
-# 2. Draw transit route → transit.json
-python tests/flight/draw_transit.py
+# 2. Draw transit route → flight_plans/transit.json
+python flight_plans/draw_transit.py
 
-# 3. Draw test waypoints → waypoints.json
-python tests/flight/draw_waypoints.py
+# 3. Draw test waypoints → flight_plans/waypoints.json
+python flight_plans/draw_waypoints.py
 
 # 4. Verify with dry-run
-python main.py --dry-run --search-area --transit transit.json
+python main.py --dry-run --search-area --transit flight_plans/transit.json
 
 # 5. Push to git for Pi
-git add search_area.json transit.json waypoints.json
+git add flight_plans/search_area.json flight_plans/transit.json flight_plans/waypoints.json
 git commit -m "Update flight paths"
 git push
 ```
@@ -419,7 +419,7 @@ INIT → CONNECTING → ARMING → TAKEOFF
 |---------|-----|
 | `No module 'pymavlink'` | Activate venv: `venv\Scripts\activate` or `source pienv/bin/activate` |
 | Exits immediately, no output | SITL not running — start Mission Planner SITL first |
-| `No search area defined` | Create `search_area.json` (draw tool) or add `--search-area` flag |
+| `No search area defined` | Create `flight_plans/search_area.json` (draw tool) or add `--search-area` flag |
 | Black camera in REAL mode | Check camera connected, not in use by another script |
 | `Connection timeout` | Check mavproxy is running, correct port (14550 UDP) |
 | Dry-run shows no map | `map.jpg` not found in project root (pattern still prints to console) |

@@ -1,36 +1,37 @@
 #!/usr/bin/env python3
 """
-Draw Search Area — interactively draw a search polygon on map.jpg and save as JSON.
+Draw Transit Path — interactively draw the takeoff-to-search-area route on map.jpg.
 
-WHAT:    Opens map.jpg with KML zone overlays (survey area, flight boundary, SSSI no-fly
-         zone, takeoff point). Left-click to add polygon corners, right-click to undo,
-         SPACE/ENTER to save. Outputs search_area.json with GPS coordinates for each
-         corner, consumed by main.py and pi_flight.py for lawnmower pattern generation.
-WHY:     Separates the interactive polygon drawing step (requires a screen) from the
-         headless Pi flight scripts. Draw on laptop, push JSON via git, Pi loads it
-         without needing a display.
-WHEN:    Before any flight that uses main.py or pi_flight.py search patterns. Run once
-         on laptop, push search_area.json, reuse across flights.
+WHAT:    Opens map.jpg with KML zone overlays and lets you draw a transit path (the
+         route flown from takeoff to the search area entry point). Left-click to add
+         transit waypoints, right-click to undo, SPACE/ENTER to save. Outputs
+         transit.json consumed by main.py as the pre-search transit route.
+WHY:     The search area may not start at the takeoff point. This tool lets you plan
+         a safe transit route that avoids the SSSI no-fly zone and stays within the
+         flight boundary. Separates planning (laptop, with display) from execution
+         (Pi, headless).
+WHEN:    Before flights that use main.py with a transit route. Run once on laptop,
+         push transit.json via git.
 WHERE:   Laptop only (requires display for mouse interaction and map.jpg).
 ENV:     Dev venv on laptop (needs opencv-python, numpy). NOT for Pi.
 MODELS:  None (no AI used).
 RISK:    None — pure GUI tool, no drone connection, no commands.
 
 USAGE:
-    python tests/flight/draw_search_area.py
+    python tests/flight/draw_transit.py
 
 FLAGS:
     None
 
 OUTPUT:
-    search_area.json in project root — array of {lat, lon, label} objects defining
-    the search polygon corners.
+    transit.json in project root — array of {lat, lon, label} objects defining
+    transit waypoints in order (T1, T2, ...).
 
 BEST PRACTICES:
-    - Draw inside the KML flight area (green outline) and outside the SSSI (red)
-    - Minimum 3 corners required to save
-    - Yellow outline shows the KML survey area for reference
-    - After saving, git push and git pull on Pi before flight
+    - Plan the route to avoid the SSSI no-fly zone (red outline)
+    - Keep within the flight boundary (green outline)
+    - Start near the takeoff point (red star) and end near the search area entry
+    - After saving, use with: python main.py --search-area --transit transit.json
 
 DEPENDENCIES:
     opencv-python, numpy, config.py, utils.py (GeoTransformer)
@@ -41,7 +42,7 @@ import json
 import cv2
 import numpy as np
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import config
 from utils import GeoTransformer
@@ -52,8 +53,8 @@ config.load_kml_zones()
 config.REF_LAT, config.REF_LON = _saved_ref_lat, _saved_ref_lon
 
 # Output file (project root)
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-OUT_FILE = os.path.join(PROJECT_ROOT, "search_area.json")
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+OUT_FILE = os.path.join(PROJECT_ROOT, "flight_plans", "transit.json")
 
 map_path = os.path.join(PROJECT_ROOT, config.MAP_FILE)
 if not os.path.exists(map_path):
@@ -69,7 +70,7 @@ max_display = 900
 scale = min(max_display / img_w, max_display / img_h)
 disp_w, disp_h = int(img_w * scale), int(img_h * scale)
 
-polygon = []
+clicked = []
 done = [False]
 
 
@@ -77,23 +78,24 @@ def mouse_cb(event, x, y, flags, param):
     if event == cv2.EVENT_LBUTTONDOWN:
         fx, fy = x / scale, y / scale
         lat, lon = geo.pixels_to_gps(fx, fy)
-        label = f"P{len(polygon) + 1}"
-        polygon.append({"lat": lat, "lon": lon, "label": label})
+        label = f"T{len(clicked) + 1}"
+        clicked.append({"lat": lat, "lon": lon, "label": label})
         print(f"  + {label}: ({lat:.6f}, {lon:.6f})")
     elif event == cv2.EVENT_RBUTTONDOWN:
-        if polygon:
-            removed = polygon.pop()
+        if clicked:
+            removed = clicked.pop()
             print(f"  - Removed {removed['label']}")
 
 
-win = "Draw Search Area (LEFT=add, RIGHT=undo, SPACE=save)"
+win = "Draw Transit Path (LEFT=add, RIGHT=undo, SPACE=save)"
 cv2.namedWindow(win, cv2.WINDOW_AUTOSIZE)
 cv2.setMouseCallback(win, mouse_cb)
 
 print()
-print("  LEFT-CLICK: add polygon corner")
+print("  Draw the transit path (flown BEFORE search pattern)")
+print("  LEFT-CLICK: add transit waypoint")
 print("  RIGHT-CLICK: undo last")
-print("  SPACE/ENTER: save to search_area.json")
+print("  SPACE/ENTER: save to transit.json")
 print("  ESC: cancel")
 print()
 
@@ -125,55 +127,44 @@ while not done[0]:
         cv2.drawMarker(disp, (tx, ty), (0, 0, 255), cv2.MARKER_STAR, 15, 2)
         cv2.putText(disp, "TAKEOFF", (tx + 10, ty - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 255), 1)
 
-    # Draw polygon being built
-    for i, pt in enumerate(polygon):
-        px, py = geo.gps_to_pixels(pt["lat"], pt["lon"])
+    # Draw transit waypoints (cyan)
+    for i, wp in enumerate(clicked):
+        px, py = geo.gps_to_pixels(wp["lat"], wp["lon"])
         px, py = int(px * scale), int(py * scale)
-        color = (0, 255, 0)
-        cv2.circle(disp, (px, py), 6, color, -1)
-        cv2.putText(disp, pt["label"], (px + 10, py - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1)
+        cv2.circle(disp, (px, py), 8, (255, 255, 0), -1)
+        cv2.putText(disp, wp["label"], (px + 12, py - 8), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 2)
         if i > 0:
-            prev = polygon[i - 1]
+            prev = clicked[i - 1]
             ppx, ppy = geo.gps_to_pixels(prev["lat"], prev["lon"])
             ppx, ppy = int(ppx * scale), int(ppy * scale)
-            cv2.line(disp, (ppx, ppy), (px, py), (0, 255, 0), 2)
-    # Close polygon visually
-    if len(polygon) >= 3:
-        first = polygon[0]
-        last = polygon[-1]
-        fpx, fpy = geo.gps_to_pixels(first["lat"], first["lon"])
-        lpx, lpy = geo.gps_to_pixels(last["lat"], last["lon"])
-        fpx, fpy = int(fpx * scale), int(fpy * scale)
-        lpx, lpy = int(lpx * scale), int(lpy * scale)
-        cv2.line(disp, (lpx, lpy), (fpx, fpy), (0, 255, 0), 1)
+            cv2.line(disp, (ppx, ppy), (px, py), (255, 255, 0), 2)
 
     # Legend
     cv2.putText(disp, "LEFT=add  RIGHT=undo  SPACE=save  ESC=cancel",
                 (10, disp_h - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
-    cv2.putText(disp, f"Polygon corners: {len(polygon)}  Yellow=KML survey Green=your polygon Red=SSSI/NFZ",
-                (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 255), 1)
+    cv2.putText(disp, f"Transit: {len(clicked)}  Yellow=survey Green=flight Red=SSSI/NFZ",
+                (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 255, 0), 1)
 
     cv2.imshow(win, disp)
     key = cv2.waitKey(50) & 0xFF
-    if key == 32 and len(polygon) >= 3:  # SPACE
+    if key == 32 and clicked:  # SPACE
         done[0] = True
-    elif key == 13 and len(polygon) >= 3:  # ENTER
+    elif key == 13 and clicked:  # ENTER
         done[0] = True
     elif key == 27:  # ESC
-        polygon.clear()
+        clicked.clear()
         done[0] = True
 
 cv2.destroyAllWindows()
 
-if len(polygon) < 3:
-    print("  Need at least 3 points. Nothing saved.")
+if not clicked:
+    print("  No waypoints. Nothing saved.")
     sys.exit(0)
 
 # Save
 with open(OUT_FILE, "w") as f:
-    json.dump(polygon, f, indent=2)
+    json.dump(clicked, f, indent=2)
 
-print(f"\n  Saved {len(polygon)}-point search area to {OUT_FILE}")
-print(f"  Push to git, pull on Pi, then run:")
-print(f"    python main.py")
-print(f"    python pi_flight.py")
+print(f"\n  Saved {len(clicked)} transit waypoints to {OUT_FILE}")
+print(f"  Use with main.py:")
+print(f"    python main.py --search-area --transit transit.json")

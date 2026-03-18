@@ -118,11 +118,11 @@ def test_cv(image_path=None, use_camera=False):
         if image_path and os.path.exists(image_path):
             frame = cv2.imread(image_path)
             src = image_path
-        elif os.path.exists("dummy.png"):
+        elif os.path.exists("assets/dummy.png"):
             # Create a test scene: green background with dummy placed on it
             bg = np.zeros((480, 640, 3), dtype=np.uint8)
             bg[:] = (34, 139, 34)  # green grass
-            dummy = cv2.imread("dummy.png", cv2.IMREAD_UNCHANGED)
+            dummy = cv2.imread("assets/dummy.png", cv2.IMREAD_UNCHANGED)
             if dummy is not None:
                 h, w = dummy.shape[:2]
                 scale = 200 / h

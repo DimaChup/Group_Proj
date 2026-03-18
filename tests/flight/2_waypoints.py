@@ -76,7 +76,7 @@ for i, arg in enumerate(sys.argv):
 
 # Waypoints file (saved by draw_waypoints.py)
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-WAYPOINTS_FILE = os.path.join(PROJECT_ROOT, "waypoints.json")
+WAYPOINTS_FILE = os.path.join(PROJECT_ROOT, "flight_plans", "waypoints.json")
 
 
 def load_waypoints():

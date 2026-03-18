@@ -13,8 +13,8 @@ RUN pip install --no-cache-dir \
 # Copy project files
 COPY *.py ./
 COPY best.tflite ./
-COPY map.jpg ./
-COPY dummy.png ./
+COPY assets/map.jpg assets/
+COPY assets/dummy.png assets/
 COPY tests/ tests/
 
 

@@ -82,11 +82,11 @@ def find_models():
     if os.path.exists(root_model):
         models.append(("best.tflite (root)", root_model))
     # models/ directory
-    models_dir = os.path.join(project_root, "models")
+    models_dir = os.path.join(project_root, "cv_models")
     if os.path.isdir(models_dir):
         for f in sorted(os.listdir(models_dir)):
             if f.endswith(".tflite"):
-                models.append((f"models/{f}", os.path.join(models_dir, f)))
+                models.append((f"cv_models/{f}", os.path.join(models_dir, f)))
     # cv_models/ subdirectories
     cv_dir = os.path.join(project_root, "cv_models")
     if os.path.isdir(cv_dir):

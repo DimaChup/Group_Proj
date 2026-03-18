@@ -26,10 +26,10 @@ Extract and label real frames from DJI flight footage:
 
 ```bash
 # Label real frames at native resolution (no squishing)
-python tools/label_tool.py --full "RealVideo/DJI_0001_1456x1088_cropped_30fps.mp4"
+python training/label_tool.py --full "RealVideo/DJI_0001_1456x1088_cropped_30fps.mp4"
 ```
 
-**How label_tool.py --full works:**
+**How training/label_tool.py --full works:**
 - Opens each image in the input directory with an interactive OpenCV window
 - LEFT-CLICK on the dummy center to place a bounding box
 - SCROLL WHEEL to adjust box size (bigger/smaller)
@@ -43,18 +43,18 @@ python tools/label_tool.py --full "RealVideo/DJI_0001_1456x1088_cropped_30fps.mp
 
 **Example:**
 ```bash
-# Label preview frames, save to dataset_v2/ at full resolution
-python tools/label_tool.py dataset_v2/preview_50m/ --output dataset_v2 --full
+# Label preview frames, save to training/dataset_v2/ at full resolution
+python training/label_tool.py training/dataset_v2/preview_50m/ --output training/dataset_v2 --full
 ```
 
 ### Step 2: Generate Synthetic + Negative Images
 
 ```bash
 cd "c:\Users\Bristol\Desktop\AI for Robotics\v3"
-python generate_dataset_v2.py
+python training/generate_dataset_v2.py
 ```
 
-**What generate_dataset_v2.py does:**
+**What training/generate_dataset_v2.py does:**
 1. Loads `dummy.png` (foreground with alpha channel) and DJI video frame backgrounds
 2. Generates 300 synthetic images at 1456x1088:
    - Random background crops from real flight footage
@@ -67,7 +67,7 @@ python generate_dataset_v2.py
 
 **Dataset structure after generation:**
 ```
-dataset_v2/
+training/dataset_v2/
 ├── dataset.yaml        ← YOLO data config (path, train, val, class names)
 ├── images/
 │   ├── syn_0000.jpg    ← 300 synthetic images (dummy composited on backgrounds)
@@ -88,12 +88,12 @@ dataset_v2/
 
 ```bash
 # On Windows (PowerShell or cmd)
-# dataset_v2.zip should already exist after running generate_dataset_v2.py
+# training/dataset_v2.zip should already exist after running training/generate_dataset_v2.py
 # If not, zip manually:
-# Right-click dataset_v2 → Send to → Compressed (zipped) folder
+# Right-click training/dataset_v2 → Send to → Compressed (zipped) folder
 ```
 
-Upload `dataset_v2.zip` to Google Drive (root or a known folder).
+Upload `training/dataset_v2.zip` to Google Drive (root or a known folder).
 
 ### Step 4: Train on Google Colab (GPU)
 
@@ -321,13 +321,13 @@ Current: 0.4 (in vision.py, configurable via config.py CONFIDENCE_THRESHOLD)
 
 ## Common Pitfalls
 
-1. **Same images in train AND val** — metrics are meaningless. Current dataset_v2 uses same split (val=train). For rigorous evaluation, split 80/20.
+1. **Same images in train AND val** — metrics are meaningless. Current training/dataset_v2 uses same split (val=train). For rigorous evaluation, split 80/20.
 2. **Only one background** — v1 had just map.jpg. v2 uses real flight video frames (much better).
 3. **No negatives** — v1 had none. v2 has 50 negative images (reduces false positives).
 4. **Overfitting** — if train loss near 0 but val loss high, reduce epochs or add data.
 5. **Wrong imgsz for export** — always export TFLite with `imgsz=640` even if trained at 1088. The training resolution just improves feature learning; TFLite runtime uses 640x640.
 6. **6fps video for analysis** — SRT telemetry is at 30fps. Using 6fps video causes altitude/GPS misalignment. Always use 30fps video.
-7. **label_tool.py without --full** — without the flag, frames are squished to 640x640 for labelling. Use `--full` to label at native resolution.
+7. **training/label_tool.py without --full** — without the flag, frames are squished to 640x640 for labelling. Use `--full` to label at native resolution.
 
 ---
 

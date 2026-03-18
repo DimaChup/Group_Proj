@@ -13,11 +13,15 @@ nul
 
 # Runtime artifacts
 flight_log.csv
+logs/
 passive_flight_log.csv
 detection_log.csv
 snapshot_*.jpg
 detections/
 flight_frames/
+*.tlog
+*.tlog.raw
+mav*.parm
 
 # Archive (old/junk files, not deleted)
 _archive/
@@ -43,9 +47,11 @@ dataset_v2.zip
 dataset_v2/images/
 dataset_v2/labels/
 dataset_v2/preview_50m/
+training/dataset_v2.zip
+training/dataset_v2/images/
+training/dataset_v2/labels/
 calibration_image_sample_data*.npy
-yolov8n.onnx
-best copy.tflite
+*.onnx
 
 # Misc
 tests/things to do .txt

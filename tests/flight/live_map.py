@@ -88,7 +88,7 @@ DISPLAY_H = 700
 
 # Load waypoints.json if exists
 waypoints = []
-wp_file = os.path.join(PROJECT_ROOT, "waypoints.json")
+wp_file = os.path.join(PROJECT_ROOT, "flight_plans", "waypoints.json")
 if os.path.exists(wp_file):
     with open(wp_file, "r") as f:
         wp_data = json.load(f)
@@ -97,7 +97,7 @@ if os.path.exists(wp_file):
 
 # Load search_area.json if exists
 search_area = []
-sa_file = os.path.join(PROJECT_ROOT, "search_area.json")
+sa_file = os.path.join(PROJECT_ROOT, "flight_plans", "search_area.json")
 if os.path.exists(sa_file):
     with open(sa_file, "r") as f:
         sa_data = json.load(f)

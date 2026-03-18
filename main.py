@@ -425,7 +425,7 @@ class VisualFlightMission:
         self.geo = GeoTransformer(map_w_px=REAL_CANVAS_SIZE)
 
         # Priority 1: search_area.json (created by draw_search_area.py on laptop)
-        sa_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "search_area.json")
+        sa_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "flight_plans", "search_area.json")
         if os.path.exists(sa_file):
             import json
             with open(sa_file, "r") as f:

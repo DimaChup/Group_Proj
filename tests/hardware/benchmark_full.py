@@ -383,8 +383,8 @@ def benchmark_camera():
 def create_test_image():
     bg = np.zeros((480, 640, 3), dtype=np.uint8)
     bg[:] = (34, 139, 34)
-    if os.path.exists("dummy.png"):
-        dummy = cv2.imread("dummy.png", cv2.IMREAD_UNCHANGED)
+    if os.path.exists("assets/dummy.png"):
+        dummy = cv2.imread("assets/dummy.png", cv2.IMREAD_UNCHANGED)
         if dummy is not None:
             h, w = dummy.shape[:2]
             scale = 180 / h
@@ -477,7 +477,7 @@ def run_inference(label, model_path, frame, undistort_enabled):
 def benchmark_onnx(frame):
     """Try ONNX runtime if available and .onnx model exists."""
     results = []
-    onnx_models = glob.glob("*.onnx") + glob.glob("models/*.onnx")
+    onnx_models = glob.glob("*.onnx") + glob.glob("cv_models/*.onnx") + glob.glob("cv_models/*/*.onnx")
     if not onnx_models:
         return results
 
@@ -535,7 +535,7 @@ def benchmark_onnx(frame):
 def benchmark_cv_dnn(frame):
     """Try OpenCV DNN with ONNX models."""
     results = []
-    onnx_models = glob.glob("*.onnx") + glob.glob("models/*.onnx")
+    onnx_models = glob.glob("*.onnx") + glob.glob("cv_models/*.onnx") + glob.glob("cv_models/*/*.onnx")
     if not onnx_models:
         return results
 
@@ -650,11 +650,11 @@ def main():
     print("=" * 65)
 
     models = ["best.tflite"]
-    for f in sorted(glob.glob("models/*.tflite")):
+    for f in sorted(glob.glob("cv_models/*.tflite") + glob.glob("cv_models/*/*.tflite")):
         if os.path.basename(f) not in [os.path.basename(m) for m in models]:
             models.append(f)
     # Also check for .onnx
-    onnx_models = glob.glob("*.onnx") + glob.glob("models/*.onnx")
+    onnx_models = glob.glob("*.onnx") + glob.glob("cv_models/*.onnx") + glob.glob("cv_models/*/*.onnx")
 
     has_calib = os.path.exists("calibration_data.npz")
     print(f"  Calibration: {'YES (RMS loaded at init)' if has_calib else 'NO'}")

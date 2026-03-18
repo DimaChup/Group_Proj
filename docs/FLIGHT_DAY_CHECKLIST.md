@@ -327,7 +327,7 @@ cat passive_flight_log.csv
 ```
 
 **If CV doesn't detect at all:**
-- Swap model: `cp models/custom_yolov8n.tflite best.tflite` and retry
+- Swap model: `cp cv_models/sar_v2_1088/best.tflite best.tflite` and retry
 - Lower confidence threshold in vision.py (0.4 → 0.3 → 0.25)
 - Try flying lower (5-10m)
 - Try with larger dummy / brighter colors
@@ -458,18 +458,18 @@ FAKE DET = create fake detection for testing
 
 ## Model Swap (if CV not working)
 
-Models are in `models/` folder:
+Models are in `cv_models/` folder:
 ```bash
 # List available:
-ls models/
+ls cv_models/
 python tests/day_1_experiments/model_compare.py --list
 
 # Option A: swap the default model file:
-cp models/OTHER_MODEL.tflite best.tflite
+cp cv_models/sar_v2_1088/best.tflite best.tflite
 
 # Option B: use --model flag (no copy needed):
-python pi_flight.py --fps 4 --model models/best2.tflite
-python main.py --model models/best2.tflite
+python pi_flight.py --fps 4 --model cv_models/sar_v2_1088/best.tflite
+python main.py --model cv_models/sar_v2_1088/best.tflite
 
 # Compare all models on bench:
 python tests/day_1_experiments/model_compare.py --frames 50
@@ -477,9 +477,11 @@ python tests/day_1_experiments/model_compare.py --frames 50
 
 Currently available:
 ```
-best.tflite                   — primary model (YOLOv8n custom)
-models/custom_yolov8n.tflite  — copy of best.tflite (baseline)
-models/best2.tflite           — placeholder (replace with retrained model)
+best.tflite                          — active model (copy whichever variant you want)
+cv_models/sar_v2_1088/best.tflite    — retrained v2 (real+synthetic 1088, mAP50=0.995) ← BEST
+cv_models/sar_640/best.tflite        — earlier training at 640x640
+cv_models/sar_1280/best.tflite       — earlier training at 1280x1280
+models/human.tflite                  — COCO YOLOv8n person detector (80 classes, backup)
 ```
 
 If all models fail:
@@ -496,7 +498,7 @@ If all models fail:
 python main.py --dry-run
 
 # With specific model:
-python main.py --dry-run --model models/best2.tflite
+python main.py --dry-run --model cv_models/sar_v2_1088/best.tflite
 ```
 
 Shows:

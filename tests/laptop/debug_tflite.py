@@ -75,8 +75,8 @@ for i, od in enumerate(output_details):
 # Create test image with dummy
 bg = np.zeros((480, 640, 3), dtype=np.uint8)
 bg[:] = (34, 139, 34)
-if os.path.exists("dummy.png"):
-    dummy = cv2.imread("dummy.png", cv2.IMREAD_UNCHANGED)
+if os.path.exists("assets/dummy.png"):
+    dummy = cv2.imread("assets/dummy.png", cv2.IMREAD_UNCHANGED)
     if dummy is not None:
         h, w = dummy.shape[:2]
         scale = 180 / h

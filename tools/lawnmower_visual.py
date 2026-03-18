@@ -240,7 +240,7 @@ def main():
     parser.add_argument("--altitude", type=int, default=20, help="Flight altitude (default 20m)")
     parser.add_argument("--compare", action="store_true", help="Show 4 altitudes side by side")
     parser.add_argument("--scale", type=float, default=5.0, help="Pixels per meter (default 5.0)")
-    parser.add_argument("--map", default="map.jpg", help="Background map image (default map.jpg)")
+    parser.add_argument("--map", default="assets/map.jpg", help="Background map image (default map.jpg)")
     parser.add_argument("--map-scale", type=float, default=0, help="Map pixels per meter (auto-detect from config if 0)")
     args = parser.parse_args()
 

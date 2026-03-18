@@ -10,7 +10,7 @@ sudo /opt/mavlink/mavlink-venv/bin/mavproxy.py \
 cd ~/dima/Group_Proj && source pienv/bin/activate
 python capture_training.py
 
-http://192.168.1.14:8091/stream
+http://PI_IP:8091/stream
 
 
 ================================================================================
@@ -18,7 +18,7 @@ http://192.168.1.14:8091/stream
 python passive_watch.py
 
 
-http://192.168.1.14:8090/
+http://PI_IP:8090/
 
 ================================================================================
 
@@ -34,7 +34,7 @@ http://192.168.1.14:8090/
 
 # Field Quick Reference (No Internet Needed)
 
-Pi IP: `192.168.1.3` (check with `hostname -I` on Pi)
+Pi IP: `172.20.10.2` or `192.168.1.3` (depends on network — check with `hostname -I` on Pi)
 
 ## Terminal Setup (after every reboot)
 
@@ -52,11 +52,11 @@ cd ~/dima/Group_Proj && source pienv/bin/activate
 ```
 
 ### Laptop — Mission Planner
-TCP → 192.168.1.3 → port 5762
+TCP → PI_IP → port 5762
 
 ### Laptop — Browser (for camera stream)
-- Scripts on port 8090: `http://192.168.1.3:8090`
-- capture_training on port 8091: `http://192.168.1.3:8091`
+- Scripts on port 8090: `http://PI_IP:8090`
+- capture_training on port 8091: `http://PI_IP:8091`
 
 ## Camera Troubleshooting
 ```bash
@@ -99,7 +99,7 @@ Note FPS and avg ms.
 ```bash
 python capture_training.py
 ```
-Browser: http://192.168.1.3:8091/stream
+Browser: http://PI_IP:8091/stream
 1. Hold camera pointing straight down, exactly 1m above a tape measure
 2. Count how many cm visible left-to-right in the stream
 3. Calculate: `FOCAL_LENGTH_MM = (5.02 × 100) / visible_width_cm`
@@ -122,7 +122,7 @@ Wait for fix_type=3, 8+ sats.
 python tests/flight/2_waypoints.py --dry-run          # check plan
 python tests/flight/2_waypoints.py --alt 10            # real flight
 ```
-Loads waypoints.json (4 waypoints already saved). Arms, flies waypoints, RTL.
+Loads flight_plans/waypoints.json (4 waypoints already saved). Arms, flies waypoints, RTL.
 
 ### 7. Passive CV (pilot flies RC, Pi watches)
 ```bash
@@ -158,10 +158,11 @@ All flight scripts trigger RTL on Ctrl+C.
 
 ## Model Swap (if CV not detecting)
 ```bash
-cp models/custom_yolov8n.tflite best.tflite   # original model
-cp models/human.tflite best.tflite             # COCO person detector
+cp cv_models/sar_v2_1088/best.tflite best.tflite   # retrained v2 model (BEST)
+cp cv_models/sar_640/best.tflite best.tflite        # earlier 640 model
+cp cv_models/sar_1280/best.tflite best.tflite       # earlier 1280 model
 ```
-Or use `--model` flag: `python pi_flight.py --fps 4 --model models/human.tflite`
+Or use `--model` flag: `python pi_flight.py --fps 4 --model cv_models/sar_v2_1088/best.tflite`
 
 ## Lower Confidence (if missing detections)
 Edit vision.py line ~174: change `0.4` to `0.3` or `0.25`

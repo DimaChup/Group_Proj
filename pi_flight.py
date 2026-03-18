@@ -466,7 +466,7 @@ class PiFlight:
             self.sim = None
             self.geo = GeoTransformer(map_w_px=4800)
             # Load search area: search_area.json > config.SEARCH_AREA_GPS
-            sa_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "search_area.json")
+            sa_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "flight_plans", "search_area.json")
             if os.path.exists(sa_file):
                 import json as _json
                 with open(sa_file, "r") as f:
