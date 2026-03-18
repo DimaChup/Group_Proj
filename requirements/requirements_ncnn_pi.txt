@@ -1,0 +1,7 @@
+# NCNN environment for Pi 5 — inference speed testing
+# Create separate venv: python3 -m venv --system-site-packages ncnn_env
+# Activate: source ncnn_env/bin/activate
+# Install: pip install -r requirements/requirements_ncnn_pi.txt
+ncnn
+opencv-python-headless
+numpy<2
