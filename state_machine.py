@@ -10,6 +10,7 @@
 # self.master, etc.) is accessed via self — inherited by VisualFlightMission.
 
 from states import State
+from navigation import NavigationController
 import config
 import time
 import math
@@ -96,6 +97,11 @@ class StateHandlersMixin:
             try:
                 print(f"Connecting to {config.CONNECTION_STR}...")
                 self.master = mavutil.mavlink_connection(config.CONNECTION_STR)
+                g = _get_main_globals()
+                self.nav = NavigationController(
+                    self.master,
+                    no_turn=g['NO_TURN'],
+                    get_yaw=lambda: self.yaw)
                 self.connect_start_time = time.time()  # FIX 4: start heartbeat timeout
                 self._set_state(State.CONNECTING)
             except Exception as e:

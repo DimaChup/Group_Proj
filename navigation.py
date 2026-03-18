@@ -41,8 +41,10 @@ class NavigationController:
         Active pymavlink connection to the autopilot (Cube / SITL).
     """
 
-    def __init__(self, master):
+    def __init__(self, master, no_turn=False, get_yaw=None):
         self.master = master
+        self.no_turn = no_turn      # If True, hold yaw (strafe) on position commands
+        self._get_yaw = get_yaw     # Callable returning current yaw in radians
         # Throttles (callers can read/write these directly)
         self.last_speed_req = 0.0
 
@@ -62,10 +64,15 @@ class NavigationController:
             Target altitude in meters (relative to home).
         yaw : float or None
             If provided, the drone holds this yaw (radians) and strafes to
-            the waypoint without rotating (NO_TURN behaviour).  If None the
-            drone rotates to face the next waypoint (default ArduCopter
-            behaviour).
+            the waypoint without rotating (NO_TURN behaviour).  If None AND
+            self.no_turn is True, the current yaw from self._get_yaw() is
+            used automatically.  If None and no_turn is False the drone
+            rotates to face the next waypoint (default ArduCopter behaviour).
         """
+        # Auto-apply NO_TURN yaw hold when caller doesn't provide explicit yaw
+        if yaw is None and self.no_turn and self._get_yaw is not None:
+            yaw = self._get_yaw()
+
         if yaw is not None:
             # Hold current yaw — quadcopter strafes to waypoint without rotating
             # type_mask: bit 10 cleared = yaw field USED, bit 11 set = yaw_rate ignored
@@ -82,7 +89,7 @@ class NavigationController:
                 0b110111111000, int(lat * 1e7), int(lon * 1e7), alt,
                 0, 0, 0, 0, 0, 0, 0, 0)
 
-    def send_velocity(self, vx, vy, vz, yaw_rate=0, current_yaw=0.0):
+    def send_velocity(self, vx, vy, vz, yaw_rate=0, current_yaw=None):
         """Send a velocity command in the body frame.
 
         Body-frame inputs are rotated into NED using *current_yaw* before
@@ -94,10 +101,15 @@ class NavigationController:
         vy : float   Rightward speed (m/s, positive = starboard).
         vz : float   Downward speed (m/s, positive = descend — NED convention).
         yaw_rate : float  Yaw rate in deg/s (positive = CW).
-        current_yaw : float  Current heading in radians (needed for body→NED rotation).
+        current_yaw : float or None
+            Current heading in radians (needed for body->NED rotation).
+            If None, auto-fetched from self._get_yaw() if available,
+            otherwise defaults to 0.0.
         """
         if not self.master:
             return
+        if current_yaw is None:
+            current_yaw = self._get_yaw() if self._get_yaw is not None else 0.0
         cos_yaw = math.cos(current_yaw)
         sin_yaw = math.sin(current_yaw)
         vx_ned = vx * cos_yaw - vy * sin_yaw
