@@ -149,13 +149,19 @@ def get_frame():
     return None
 
 # --- AI Model ---
+MODELS = [
+    ("best.tflite", "original"),
+    ("cv_models/sar_v2_1088/best.tflite", "v2-1088"),
+]
+current_model_idx = 0
+
 print("[2/5] Checking AI model...")
 eyes = None
 ai_backend = ""
 ai_warmup = 0
 try:
     from vision import VisionSystem
-    eyes = VisionSystem(camera_index=None, model_path="best.tflite")
+    eyes = VisionSystem(camera_index=None, model_path=MODELS[0][0])
     if eyes.using_ai:
         ai_backend = "TFLite" if eyes._use_tflite_direct else "Ultralytics"
         ai_s.ok = True
@@ -536,7 +542,7 @@ def draw_view_diagram():
     # AI
     avg_ms = np.mean(inference_times[-30:]) if inference_times else 0
     ai_lines = ([(f"Backend: {ai_backend}", WHITE),
-                 (f"Model: best.tflite", WHITE),
+                 (f"Model: {MODELS[current_model_idx][1]} (M=swap)", WHITE),
                  (f"Inference: {avg_ms:.0f}ms avg",
                   GREEN if avg_ms < 200 else YELLOW),
                  (f"Warmup: {ai_warmup:.0f}ms", GRAY)]
@@ -1003,6 +1009,22 @@ try:
             elif key == ord('r'):
                 check_gs_port()
                 print(f"  GS recheck: {gs_s.text}")
+            elif key == ord('m'):
+                current_model_idx = (current_model_idx + 1) % len(MODELS)
+                mpath, mname = MODELS[current_model_idx]
+                print(f"  Switching model → {mname} ({mpath})")
+                try:
+                    eyes = VisionSystem(camera_index=None, model_path=mpath)
+                    if eyes.using_ai:
+                        ai_backend = "TFLite" if eyes._use_tflite_direct else "Ultralytics"
+                        ai_s.ok = True
+                        ai_s.text = "LOADED"
+                        print(f"  OK  Model: {mname} ({ai_backend})")
+                    else:
+                        ai_s.text = "NOT LOADED"
+                        print(f"  WARN  Model not loaded")
+                except Exception as e:
+                    print(f"  FAIL  Model switch: {e}")
             elif key == ord('s'):
                 fname = f"diag_{current_view}_{int(time.time())}.png"
                 cv2.imwrite(fname, display)
