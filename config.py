@@ -61,7 +61,7 @@ VERIFY_ALT = 15.0 # Descent Altitude for Verification
 # --- MAP CONFIGURATION (Simulation Only) ---
 MAP_FILE = "assets/map.jpg"
 DUMMY_FILE = "assets/dummy.png"
-CONE_FILE = "cone.png"
+CONE_FILE = "assets/cone.png"
 MAP_WIDTH_METERS = 480.0
 REF_LAT = 51.425106
 REF_LON = -2.672257
