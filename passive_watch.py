@@ -62,6 +62,7 @@ parser.add_argument('--fps', type=float, default=5)
 parser.add_argument('--save-dir', default='detections')
 parser.add_argument('--no-save', action='store_true')
 parser.add_argument('--no-mavlink', action='store_true', help='Skip mavproxy connection (no GPS)')
+parser.add_argument('--model', default='best.tflite', help='Path to .tflite model (default: best.tflite)')
 args = parser.parse_args()
 
 
@@ -551,7 +552,7 @@ def main():
         print("[MAV] Skipped (--no-mavlink)")
 
     # Start camera + AI
-    eyes = VisionSystem(camera_index=0, model_path="best.tflite")
+    eyes = VisionSystem(camera_index=0, model_path=args.model)
     if not eyes.using_ai:
         print("[WARN] AI model not loaded — stream only, no detection")
     print("[OK] Camera ready. Ctrl+C to stop.\n")
