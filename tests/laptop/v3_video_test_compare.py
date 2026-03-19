@@ -178,17 +178,10 @@ def iou_calc(a, b):
 
 
 def main():
-    # Force NCNN backend before argparse
-    _ncnn_injected = False
-    if "--backend" not in sys.argv:
-        sys.argv.extend(["--backend", "ncnn"])
-        _ncnn_injected = True
-
     parser = argparse.ArgumentParser(description="NCNN video detection (v2-1088 model)")
     parser.add_argument("video", nargs="?", default="RealVideo/DJI_0001_1456x1088_cropped_30fps.mp4", help="Video file")
     parser.add_argument("--model", default="cv_models/sar_v2_1088/best.tflite", help="Model 1 (NCNN)")
     parser.add_argument("--model2", default="cv_models/sar_v2_1088/best.tflite", help="Model 2 (NCNN)")
-    parser.add_argument("--backend", default="ncnn", help=argparse.SUPPRESS)  # absorb the injected flag
     parser.add_argument("--save", default=None, help="Save output video to file")
     parser.add_argument("--conf", type=float, default=0.3, help="Confidence threshold (default 0.3)")
     parser.add_argument("--every", type=int, default=3, help="Run AI every Nth frame (default 3)")
@@ -210,7 +203,11 @@ def main():
     cv2.imshow(win, splash)
     cv2.waitKey(1)
 
-    # Load both models
+    # Force NCNN backend for model loading
+    if "--backend" not in sys.argv:
+        sys.argv.extend(["--backend", "ncnn"])
+
+    # Load models (NCNN)
     models = {}
     model_names = {}
     for i, (path, label) in enumerate([(args.model, "Model 1"), (args.model2, "Model 2")]):
