@@ -122,3 +122,65 @@
   alt=80m spd=15m/s blur=1px dummy=15px det=0/3 conf=MISS
   alt=80m spd=20m/s blur=1px dummy=15px det=0/3 conf=MISS
 
+
+================================================================================
+  BLUR+ALT TEST — 2026-03-19 12:35:44
+  Host: MSI, Model: cv_models/sar_v2_1088/best.tflite, Backend: ultralytics
+================================================================================
+  alt=15m spd=0m/s blur=1px dummy=83px det=3/3 conf=0.91
+  alt=15m spd=2m/s blur=1px dummy=83px det=3/3 conf=0.91
+  alt=15m spd=5m/s blur=1px dummy=83px det=3/3 conf=0.91
+  alt=15m spd=8m/s blur=2px dummy=83px det=3/3 conf=0.91
+  alt=15m spd=10m/s blur=3px dummy=83px det=3/3 conf=0.91
+  alt=15m spd=15m/s blur=5px dummy=83px det=3/3 conf=0.91
+  alt=15m spd=20m/s blur=7px dummy=83px det=3/3 conf=0.90
+  alt=20m spd=0m/s blur=1px dummy=62px det=3/3 conf=0.90
+  alt=20m spd=2m/s blur=1px dummy=62px det=3/3 conf=0.90
+  alt=20m spd=5m/s blur=1px dummy=62px det=3/3 conf=0.91
+  alt=20m spd=8m/s blur=2px dummy=62px det=3/3 conf=0.91
+  alt=20m spd=10m/s blur=2px dummy=62px det=3/3 conf=0.91
+  alt=20m spd=15m/s blur=4px dummy=62px det=3/3 conf=0.90
+  alt=20m spd=20m/s blur=5px dummy=62px det=3/3 conf=0.89
+  alt=25m spd=0m/s blur=1px dummy=50px det=3/3 conf=0.92
+  alt=25m spd=2m/s blur=1px dummy=50px det=3/3 conf=0.92
+  alt=25m spd=5m/s blur=1px dummy=50px det=3/3 conf=0.93
+  alt=25m spd=8m/s blur=1px dummy=50px det=3/3 conf=0.92
+  alt=25m spd=10m/s blur=2px dummy=50px det=3/3 conf=0.92
+  alt=25m spd=15m/s blur=3px dummy=50px det=3/3 conf=0.91
+  alt=25m spd=20m/s blur=4px dummy=50px det=3/3 conf=0.92
+  alt=30m spd=0m/s blur=1px dummy=41px det=3/3 conf=0.91
+  alt=30m spd=2m/s blur=1px dummy=41px det=3/3 conf=0.91
+  alt=30m spd=5m/s blur=1px dummy=41px det=3/3 conf=0.92
+  alt=30m spd=8m/s blur=1px dummy=41px det=3/3 conf=0.91
+  alt=30m spd=10m/s blur=1px dummy=41px det=3/3 conf=0.93
+  alt=30m spd=15m/s blur=2px dummy=41px det=3/3 conf=0.92
+  alt=30m spd=20m/s blur=3px dummy=41px det=3/3 conf=0.88
+  alt=40m spd=0m/s blur=1px dummy=31px det=3/3 conf=0.86
+  alt=40m spd=2m/s blur=1px dummy=31px det=3/3 conf=0.87
+  alt=40m spd=5m/s blur=1px dummy=31px det=3/3 conf=0.88
+  alt=40m spd=8m/s blur=1px dummy=31px det=3/3 conf=0.87
+  alt=40m spd=10m/s blur=1px dummy=31px det=3/3 conf=0.89
+  alt=40m spd=15m/s blur=2px dummy=31px det=3/3 conf=0.86
+  alt=40m spd=20m/s blur=2px dummy=31px det=3/3 conf=0.86
+  alt=50m spd=0m/s blur=1px dummy=25px det=3/3 conf=0.84
+  alt=50m spd=2m/s blur=1px dummy=25px det=3/3 conf=0.84
+  alt=50m spd=5m/s blur=1px dummy=25px det=3/3 conf=0.84
+  alt=50m spd=8m/s blur=1px dummy=25px det=3/3 conf=0.82
+  alt=50m spd=10m/s blur=1px dummy=25px det=3/3 conf=0.84
+  alt=50m spd=15m/s blur=1px dummy=25px det=3/3 conf=0.81
+  alt=50m spd=20m/s blur=2px dummy=25px det=3/3 conf=0.84
+  alt=60m spd=0m/s blur=1px dummy=20px det=3/3 conf=0.84
+  alt=60m spd=2m/s blur=1px dummy=20px det=3/3 conf=0.80
+  alt=60m spd=5m/s blur=1px dummy=20px det=3/3 conf=0.83
+  alt=60m spd=8m/s blur=1px dummy=20px det=3/3 conf=0.85
+  alt=60m spd=10m/s blur=1px dummy=20px det=3/3 conf=0.82
+  alt=60m spd=15m/s blur=1px dummy=20px det=3/3 conf=0.81
+  alt=60m spd=20m/s blur=1px dummy=20px det=3/3 conf=0.84
+  alt=80m spd=0m/s blur=1px dummy=15px det=3/3 conf=0.66
+  alt=80m spd=2m/s blur=1px dummy=15px det=1/3 conf=0.66
+  alt=80m spd=5m/s blur=1px dummy=15px det=1/3 conf=0.69
+  alt=80m spd=8m/s blur=1px dummy=15px det=1/3 conf=0.56
+  alt=80m spd=10m/s blur=1px dummy=15px det=0/3 conf=MISS
+  alt=80m spd=15m/s blur=1px dummy=15px det=1/3 conf=0.73
+  alt=80m spd=20m/s blur=1px dummy=15px det=1/3 conf=0.45
+
