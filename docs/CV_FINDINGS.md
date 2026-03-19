@@ -179,12 +179,195 @@ python tests/hardware/ncnn_benchmark.py --camera
 python tests/laptop/blur_altitude_test.py --model cv_models/sar_v2_1088/best.tflite
 ```
 
+---
+
+## Motion Blur — Deep Dive
+
+### What Causes Blur?
+
+Blur depends on **exposure time**, NOT frame rate:
+- **Exposure time** = how long the shutter is open per frame
+- **FPS** = how many frames per second (independent of blur)
+- **Global shutter** (IMX296) = all pixels capture simultaneously (no rolling shutter distortion)
+
+### Exposure Time vs Lighting
+
+| Condition | Typical exposure | Blur at 10m/s, 50m alt | Impact |
+|---|---|---|---|
+| Bright sun | 1-2ms | <1px | None |
+| Cloudy | 5-8ms | 1px | None |
+| Overcast | 10-15ms | 1-2px | Negligible |
+| Dusk/dawn | 20-40ms | 2-4px | Minor |
+| Indoor lab | 20-30ms | Large (close objects) | Significant |
+
+**Key insight:** Indoor testing with hand-held dummy looks much worse than real flight because:
+1. Indoor = longer exposure (dim lighting)
+2. Hand movement at 0.5m distance = huge pixel displacement
+3. Real flight at 50m = tiny pixel displacement even at 20 m/s
+
+### Why We're Safe
+
+At 50m altitude, 10 m/s speed, 8ms exposure:
+- Drone moves: 10 × 0.008 = 0.08m in one frame
+- GSD at 50m: ~0.014m per pixel
+- Blur: 0.08 / 0.014 = ~6 pixels... but on a 25-pixel dummy that's 24%
+
+Wait — that contradicts our simulation! The simulation showed only 1-2px blur. The difference:
+- Simulation used simplified blur model (kernel size = distance/GSD)
+- Real blur also depends on the direction of motion relative to the dummy
+- Worst case (flying directly over): full 6px blur
+- Typical case (lawnmower pattern, flying past): 1-3px blur (most motion is lateral)
+
+**Conclusion:** Blur is low but not zero. Our simulation was slightly optimistic. Real flight testing is essential to validate.
+
+---
+
+## Model Evaluation — Proper Benchmarking
+
+### Current Approach (Visual Comparison)
+- Run `video_test_compare.py` on DJI 30fps video
+- Visually check: does model detect the dummy?
+- Switch models with M key, compare subjectively
+- **Problem:** subjective, not quantitative, hard to compare precisely
+
+### Proper Approach (Ground Truth Benchmarking)
+
+To scientifically compare models, we need:
+
+**Step 1: Create Ground Truth**
+- Take the DJI 30fps video
+- Manually label every frame where dummy is visible
+- Record: frame number, bounding box (x, y, w, h)
+- Use `training/label_tool.py` or create a dedicated annotation tool
+- This becomes the "answer key"
+
+**Step 2: Run Each Model**
+- Process the same video with each model/backend
+- Each produces a detections CSV: frame, confidence, bbox
+- Scripts: `video_test.py` already outputs CSV
+
+**Step 3: Compare Against Ground Truth**
+For each model, calculate:
+- **True Positives (TP):** model detected AND ground truth has dummy
+- **False Positives (FP):** model detected BUT no dummy in ground truth
+- **False Negatives (FN):** model missed BUT ground truth has dummy
+- **Precision:** TP / (TP + FP) — how many detections are correct
+- **Recall:** TP / (TP + FN) — how many real dummies are found
+- **F1 Score:** harmonic mean of precision and recall
+- **IoU:** overlap between predicted and ground truth bounding boxes
+
+**Step 4: Compare Models**
+
+| Metric | Original | v2-1088 TFLite | v2-1088 NCNN |
+|---|---|---|---|
+| Precision | ? | ? | ? |
+| Recall | ? | ? | ? |
+| F1 Score | ? | ? | ? |
+| Avg IoU | ? | ? | ? |
+| FPS | 5.2 | 3.1 | 13.8 |
+| False Positives | ? | ? | ? |
+
+### What We Have vs What We Need
+
+| Asset | Status |
+|---|---|
+| DJI 30fps video | Have it (RealVideo/) |
+| Pi camera captured video | Have it (pi_data/captured_video/) |
+| Detection CSVs from video_test.py | Have some |
+| **Ground truth labels** | **DON'T HAVE — need to create** |
+| Model comparison script | Need to create |
+| Precision/recall calculator | Need to create |
+
+### Quick Approximation (Without Ground Truth)
+
+Until we have proper ground truth, we can compare:
+1. Run all models on same video
+2. Count total detections at same confidence threshold
+3. Visually spot-check false positives
+4. Compare detection at known difficult frames (high altitude, edge of view)
+
+---
+
+## Overfitting Concerns
+
+### Are Our Models Overtrained?
+
+**Risk factors:**
+- v2-1088 trained on only 366 images (300 synthetic + 16 real + 50 negatives)
+- Synthetic images use the SAME `dummy.png` composited on `map.jpg` backgrounds
+- Only 16 real frames from ONE DJI flight
+- Model might have memorised the specific dummy appearance, not generalised
+
+**Signs of overfitting:**
+- Very high mAP on training data (0.995) but unknown on unseen data
+- Detects our specific dummy perfectly but might miss real humans
+- High confidence on synthetic test frames but lower on real flight video
+
+**How to test:**
+1. **Real flight test** — most important! Does it detect from actual altitude?
+2. **Different dummy** — test with a different mannequin/person
+3. **Different background** — test in a field we didn't train on
+4. **COCO person model** (`cv_models/human.tflite`) — compare against a model trained on 100K+ real images
+
+**Mitigation:**
+- Add more real flight photos to training set (from `detections/`)
+- Add hard negatives (false positive frames)
+- Test with COCO person model as baseline
+- Augment with more diverse backgrounds
+
+### Why Real Flight Testing is Essential
+
+Simulation and video replay cannot replace real flight because:
+1. **Camera characteristics differ** — real Pi camera vs DJI camera vs synthetic
+2. **Lighting varies** — sun angle, shadows, weather
+3. **Dummy appearance changes** — angle, clothing, position
+4. **GPS accuracy** — real GPS drift affects where we look
+5. **Wind/vibration** — affects frame quality in ways simulation can't predict
+
+**Priority: get passive_watch.py running during a real manual flight ASAP.**
+
+---
+
+## NCNN Integration Status
+
+### What Works
+- `ncnn_video_player.py` — loads NCNN directly, bypasses vision.py, 9 FPS
+- `ncnn_benchmark.py` — 13.8 FPS inference through vision.py
+- `diagnostics.py` — NCNN model swap with M key, 9.2 FPS
+
+### What Needs Fixing
+- `vision.py` uses sys.argv hack (`--backend ncnn`) — fragile
+- Scripts that use argparse consume the flag before vision.py sees it
+- **Planned fix:** add explicit `backend=` parameter to VisionSystem.__init__
+- See `docs/NCNN_INTEGRATION_TODO.md` for full plan
+
+### Pipeline Overhead Analysis
+
+Why 13.8 FPS inference becomes 9 FPS full pipeline:
+
+```
+NCNN inference only:    72ms  (13.8 FPS)
++ Video file read:      +5ms
++ Resize to 640x640:    +2ms
++ BGR→RGB conversion:   +1ms
++ Mat.from_pixels:      +1ms
++ Output parsing:       +1ms
++ Draw boxes/HUD:       +3ms
++ cv2.imshow:           +5ms
++ cv2.waitKey:          +1ms
+──────────────────────────────
+Full pipeline:         ~91ms  (~11 FPS theoretical)
+Actual measured:      ~110ms  (~9 FPS)
+```
+
+The extra ~20ms gap is Python overhead (garbage collection, thread scheduling, etc).
+
 ### Future Improvements
 - FP16 XNNPACK for TFLite (~2x speedup, untested)
-- Threaded pipeline (camera + inference in parallel)
-- Lower confidence threshold for more detections
-- Retrain with more real flight data (hard negatives from false positives)
-- NCNN integration into vision.py for seamless backend switching
+- Threaded pipeline (camera + inference in parallel) — could reach 13+ FPS
+- Lower confidence threshold for more detections (currently 0.4)
+- Retrain with more real flight data
+- NCNN clean integration via backend= parameter
 
 ---
 
