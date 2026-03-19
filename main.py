@@ -67,6 +67,8 @@ SIM_SPEED = 1  # SITL speedup multiplier (default 1x real-time, use --speed 5 fo
 NO_TURN = "--no-turn" in sys.argv  # Quadcopter strafes between waypoints (no yaw rotation)
 NO_DESCEND = "--no-descend" in sys.argv  # Stay at search altitude, don't descend to verify
 NFZ_REPEL = "--nfz-repel" in sys.argv   # Enable SSSI no-fly zone repulsion (potential field)
+SMOOTH_BEZIER = "--smooth-bezier" in sys.argv  # Bezier curves at turns (smooth arcs)
+SMOOTH_EXTRA = "--smooth-extra" in sys.argv    # Extra waypoints at turns (wider arc)
 
 for _i, _arg in enumerate(sys.argv):
     if _arg == "--model" and _i + 1 < len(sys.argv):
@@ -458,20 +460,29 @@ class VisualFlightMission(StateHandlersMixin):
         if self.landing_lat != 0:
             cv2.putText(frame, f"LANDING: {self.landing_lat:.6f}, {self.landing_lon:.6f}", (10, 170), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
 
-        # Hover + servo status
+        # Hover + two-stage servo release status
         if self.state == State.HOVER_TARGET:
             elapsed = time.time() - self.state_start_time
             remaining = max(0, 15.0 - elapsed)
-            cv2.putText(frame, f"HOVERING ({remaining:.0f}s)", (cx - 120, cy + 60),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2)
-            if self._servo_released:
-                # Flash big red PAYLOAD RELEASED
-                if int(elapsed * 3) % 2 == 0:  # blink
-                    cv2.putText(frame, "PAYLOAD RELEASED", (cx - 180, cy - 30),
+
+            if elapsed < 3.0:
+                # Waiting for stage 1
+                cv2.putText(frame, f"HOVERING — waiting ({3.0-elapsed:.0f}s)", (cx - 200, cy + 60),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2)
+            elif elapsed < 6.0:
+                # Stage 1 done, waiting for stage 2
+                if int(elapsed * 3) % 2 == 0:
+                    cv2.putText(frame, "PHASE 1 RELEASED", (cx - 180, cy - 30),
+                                cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 165, 255), 3)
+                cv2.putText(frame, f"Phase 2 in {6.0-elapsed:.0f}s", (cx - 100, cy + 60),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+            elif elapsed < 15.0:
+                # Both stages done, waiting to depart
+                if int(elapsed * 3) % 2 == 0:
+                    cv2.putText(frame, "PHASE 2 RELEASED", (cx - 180, cy - 30),
                                 cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 0, 255), 3)
-            else:
-                cv2.putText(frame, f"Servo in {max(0, 5.0-elapsed):.0f}s", (cx - 80, cy + 90),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+                cv2.putText(frame, f"Departing in {15.0-elapsed:.0f}s", (cx - 120, cy + 60),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
 
         # Manual mode indicator
         if self.state == State.MANUAL:

@@ -135,6 +135,50 @@ class PathPlanner:
 
         return wps
 
+    @staticmethod
+    def smooth_waypoints(wps, num_arc_points=3):
+        """Add Bezier curve points at sharp turns to smooth the path.
+
+        Takes a lawnmower pattern (alternating strip endpoints) and inserts
+        arc waypoints at each U-turn so the drone follows a smooth curve
+        instead of stopping at each corner.
+
+        Args:
+            wps: list of (lat, lon) waypoints from generate_search_pattern
+            num_arc_points: number of interpolation points per turn (3-5)
+
+        Returns:
+            smoothed list of (lat, lon) waypoints
+        """
+        if len(wps) < 4:
+            return wps
+
+        smoothed = [wps[0]]  # keep first point
+
+        for i in range(1, len(wps) - 1):
+            prev = wps[i - 1]
+            curr = wps[i]
+            nxt = wps[i + 1]
+
+            # Check if this is a turn point (end of strip → start of next strip)
+            # In lawnmower: even indices are strip starts, odd are strip ends
+            # Turn happens at odd→even transitions (end of strip → start of next)
+            if i % 2 == 1:  # end of a strip — this is a turn
+                # Quadratic Bezier: P0=curr, P1=control point, P2=next
+                # Control point is at the corner (curr) pushed outward
+                # For smooth turn, use curr as control point between prev-end and next-start
+                for t_val in range(1, num_arc_points + 1):
+                    t = t_val / (num_arc_points + 1)
+                    # Quadratic Bezier: B(t) = (1-t)²P0 + 2(1-t)tP1 + t²P2
+                    lat = (1 - t) ** 2 * prev[0] + 2 * (1 - t) * t * curr[0] + t ** 2 * nxt[0]
+                    lon = (1 - t) ** 2 * prev[1] + 2 * (1 - t) * t * curr[1] + t ** 2 * nxt[1]
+                    smoothed.append((float(lat), float(lon)))
+            else:
+                smoothed.append(curr)
+
+        smoothed.append(wps[-1])  # keep last point
+        return smoothed
+
     # --- SPIRAL PATTERN ---
     def generate_spiral_pattern(self, map_w, map_h, drone_gps=None, alt_override=None):
         """Simple rectangular inward spiral using same rotated-mask approach as lawnmower."""

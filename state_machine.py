@@ -233,6 +233,16 @@ class StateHandlersMixin:
                 self.waypoints = self.planner.generate_search_pattern(
                     canvas_w, canvas_h, start_gps)
 
+            # Apply path smoothing if requested
+            if "--smooth-bezier" in sys.argv and self.waypoints:
+                orig_count = len(self.waypoints)
+                self.waypoints = self.planner.smooth_waypoints(self.waypoints, num_arc_points=3)
+                print(f"  Smoothed (Bezier): {orig_count} → {len(self.waypoints)} waypoints")
+            elif "--smooth-extra" in sys.argv and self.waypoints:
+                orig_count = len(self.waypoints)
+                self.waypoints = self.planner.smooth_waypoints(self.waypoints, num_arc_points=5)
+                print(f"  Smoothed (extra): {orig_count} → {len(self.waypoints)} waypoints")
+
             # Fly pre-planned waypoints first (if any)
             if self.pre_waypoints:
                 print(f"Flying {len(self.pre_waypoints)} pre-planned waypoints first.")
@@ -370,6 +380,11 @@ class StateHandlersMixin:
                 # Start from where we are now (end of previous pattern)
                 self.waypoints = self.planner.generate_search_pattern(
                     canvas_w, canvas_h, (self.lat, self.lon), alt_override=new_alt)
+                # Apply smoothing to rescan pattern too
+                if "--smooth-bezier" in sys.argv and self.waypoints:
+                    self.waypoints = self.planner.smooth_waypoints(self.waypoints, num_arc_points=3)
+                elif "--smooth-extra" in sys.argv and self.waypoints:
+                    self.waypoints = self.planner.smooth_waypoints(self.waypoints, num_arc_points=5)
                 self.wp_index = 0
                 self.rejected_targets.clear()  # fresh eyes at new altitude
                 # Stay in SEARCH — just descend and continue (no transit back)

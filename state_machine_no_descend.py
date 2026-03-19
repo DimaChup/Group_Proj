@@ -233,6 +233,16 @@ class StateHandlersMixin:
                 self.waypoints = self.planner.generate_search_pattern(
                     canvas_w, canvas_h, start_gps)
 
+            # Apply path smoothing if requested
+            if "--smooth-bezier" in sys.argv and self.waypoints:
+                orig_count = len(self.waypoints)
+                self.waypoints = self.planner.smooth_waypoints(self.waypoints, num_arc_points=3)
+                print(f"  Smoothed (Bezier): {orig_count} → {len(self.waypoints)} waypoints")
+            elif "--smooth-extra" in sys.argv and self.waypoints:
+                orig_count = len(self.waypoints)
+                self.waypoints = self.planner.smooth_waypoints(self.waypoints, num_arc_points=5)
+                print(f"  Smoothed (extra): {orig_count} → {len(self.waypoints)} waypoints")
+
             # Fly pre-planned waypoints first (if any)
             if self.pre_waypoints:
                 print(f"Flying {len(self.pre_waypoints)} pre-planned waypoints first.")
