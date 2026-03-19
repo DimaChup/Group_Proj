@@ -629,6 +629,13 @@ def main():
         return snap_clean, lines
 
     def run_tiled_inference(frame_copy, fnum):
+        if vs is None or active_model[0] == -1:
+            with ai_lock:
+                ai_result["dets"] = []
+                ai_result["dt"] = 0
+                ai_result["frame_num"] = fnum
+                ai_result["busy"] = False
+            return
         t0 = time.perf_counter()
         dets = tile_detect(vs, frame_copy, args.tile_size, overlap=0.25, conf_thresh=args.conf)
         dt = (time.perf_counter() - t0) * 1000
