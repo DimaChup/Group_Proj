@@ -39,3 +39,25 @@
   cv_models/sar_640/best.tflite                  11.7M    325.5      3.1    83%    0.484
   cv_models/sar_v2_1088/best.tflite              11.7M    319.4      3.1     3%    0.432
 
+
+================================================================================
+  NCNN BENCHMARK — 2026-03-19 12:23:15
+  Host: blueteam, Python: 3.13.5, Arch: aarch64
+================================================================================
+  Backend        Avg ms      FPS         Type
+  ------------ -------- -------- ------------
+  NCNN             77.1     13.0    inference
+  TFLite           97.1     10.3    inference
+  TFLite-PIPE     193.7      5.2 full pipeline
+
+
+================================================================================
+  NCNN BENCHMARK — 2026-03-19 12:23:38
+  Host: blueteam, Python: 3.13.5, Arch: aarch64
+================================================================================
+  Backend        Avg ms      FPS         Type
+  ------------ -------- -------- ------------
+  NCNN             73.3     13.6    inference
+  TFLite          127.9      7.8    inference
+  TFLite-PIPE     329.2      3.0 full pipeline
+
