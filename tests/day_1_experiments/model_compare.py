@@ -54,6 +54,7 @@ DEPENDENCIES:
 """
 
 import sys, os, time, math, glob
+from datetime import datetime
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.dirname(os.path.dirname(script_dir))
@@ -303,8 +304,30 @@ def main():
                   f"({balanced['det_rate']:.0f}% @ {balanced['fps']:.1f} FPS)")
 
     print()
-    print("  To use a model: cp models/MODEL.tflite best.tflite")
+    print("  To use a model: cp cv_models/MODEL.tflite best.tflite")
     print("=" * 90)
+
+    # Auto-save results to pi_data/benchmark_results.txt (append with timestamp)
+    save_dir = os.path.join(project_root, "pi_data")
+    os.makedirs(save_dir, exist_ok=True)
+    save_path = os.path.join(save_dir, "benchmark_results.txt")
+    try:
+        import platform
+        import socket
+        with open(save_path, "a") as f:
+            f.write(f"\n{'=' * 80}\n")
+            f.write(f"  BENCHMARK — {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+            f.write(f"  Host: {socket.gethostname()}, Python: {platform.python_version()}, Arch: {platform.machine()}\n")
+            f.write(f"  Frames per model: {args.frames}\n")
+            f.write(f"{'=' * 80}\n")
+            f.write(f"  {'Model':45s} {'Size':>6s} {'Avg ms':>8s} {'FPS':>8s} {'Det%':>6s} {'Conf':>8s}\n")
+            f.write(f"  {'-'*45} {'-'*6} {'-'*8} {'-'*8} {'-'*6} {'-'*8}\n")
+            for r in results:
+                f.write(f"  {r['name']:45s} {r['size_mb']:5.1f}M {r['avg_ms']:8.1f} {r['fps']:8.1f} {r['det_rate']:5.0f}% {r['avg_conf']:8.3f}\n")
+            f.write(f"\n")
+        print(f"\n  Results saved to: {save_path}")
+    except Exception as e:
+        print(f"\n  [!] Could not save results: {e}")
 
 
 if __name__ == "__main__":
