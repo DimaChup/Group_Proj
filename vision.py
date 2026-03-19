@@ -268,16 +268,28 @@ class VisionSystem:
                     best_det = det
 
             if best_det is not None:
-                cx = int(best_det[0] * w)
-                cy = int(best_det[1] * h)
-                bw = int(best_det[2] * w)
-                bh = int(best_det[3] * h)
+                raw_cx, raw_cy = best_det[0], best_det[1]
+                raw_bw, raw_bh = best_det[2], best_det[3]
+                # NCNN output may be in pixel coords (0-640) or normalized (0-1)
+                # If values > 1.5, they're pixel coords relative to 640x640 input
+                if raw_cx > 1.5:
+                    # Pixel coords — scale from 640x640 to actual frame size
+                    cx = int(raw_cx * w / 640)
+                    cy = int(raw_cy * h / 640)
+                    bw = int(raw_bw * w / 640)
+                    bh = int(raw_bh * h / 640)
+                else:
+                    # Normalized coords (0-1) — scale to frame size
+                    cx = int(raw_cx * w)
+                    cy = int(raw_cy * h)
+                    bw = int(raw_bw * w)
+                    bh = int(raw_bh * h)
                 self.last_bbox_w = bw
                 self.last_bbox_h = bh
                 num_classes = len(best_det) - 4
                 self.last_class_name = "dummy" if num_classes == 1 else f"cls{int(np.argmax(best_det[4:]))}"
-                x1, y1 = cx - bw // 2, cy - bh // 2
-                x2, y2 = cx + bw // 2, cy + bh // 2
+                x1, y1 = max(0, cx - bw // 2), max(0, cy - bh // 2)
+                x2, y2 = min(w, cx + bw // 2), min(h, cy + bh // 2)
                 label = f"AI {best_conf:.2f} [{self.last_class_name}]"
                 cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
                 cv2.putText(frame, label, (x1, y1-10),
