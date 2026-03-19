@@ -196,6 +196,15 @@ def main():
                 cv2.rectangle(display, (x1, y1), (x2, y2), (0, 255, 0), 2)
                 cv2.putText(display, f"{conf:.2f}", (x1, y1-10),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+                # Pink dot on detection center
+                cv2.circle(display, (cx, cy), 8, (255, 0, 255), -1)
+                cv2.circle(display, (cx, cy), 8, (255, 255, 255), 2)
+                # Crosshair at frame center
+                fcx, fcy = vid_w // 2, vid_h // 2
+                cv2.line(display, (fcx - 20, fcy), (fcx + 20, fcy), (255, 255, 255), 1)
+                cv2.line(display, (fcx, fcy - 20), (fcx, fcy + 20), (255, 255, 255), 1)
+                # Pink line from center to detection
+                cv2.line(display, (fcx, fcy), (cx, cy), (255, 0, 255), 2)
 
         dt = (time.perf_counter() - t0) * 1000
         inf_times.append(dt)
