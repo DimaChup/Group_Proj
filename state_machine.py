@@ -413,7 +413,7 @@ class StateHandlersMixin:
                 print("=" * 50)
                 print(f"  VERIFY (at {self.alt:.0f}m — no-descend mode)")
                 print("  Is this the target?")
-                print("  Press Y to confirm, N to reject")
+                print("  Y=Confirm  N=Reject  I=Item of Interest")
                 print("  (terminal key or browser button)")
                 print("=" * 50)
             else:
@@ -434,7 +434,7 @@ class StateHandlersMixin:
             print()
             print("=" * 50)
             print("  VERIFY: Is this the target?")
-            print("  Press Y to confirm, N to reject")
+            print("  Y=Confirm  N=Reject  I=Item of Interest")
             print("  (terminal key or browser button)")
             print("=" * 50)
 
@@ -645,6 +645,27 @@ class StateHandlersMixin:
                     print("USER CONFIRMED TARGET. SELECT LANDING SIDE:")
                     print("  N=North  E=East  S=South  W=West")
                     self.selecting_landing_side = True
+                elif key == ord('i') or key == ord('I'):
+                    # Item of interest — log position, mark on map, continue search
+                    if not hasattr(self, 'items_of_interest'):
+                        self.items_of_interest = []
+                    self.items_of_interest.append({
+                        'lat': self.target_lat,
+                        'lon': self.target_lon,
+                        'alt': self.alt,
+                        'time': time.time(),
+                    })
+                    idx = len(self.items_of_interest)
+                    print(f"\n  ITEM OF INTEREST #{idx} logged at ({self.target_lat:.6f}, {self.target_lon:.6f})")
+                    print(f"  Marked on map (blue). Continuing search.\n")
+                    self.waiting_for_confirmation = False
+                    self.target_lat = 0
+                    self.target_lon = 0
+                    self.last_req = 0
+                    if self.departure_lat != 0:
+                        self._set_state(State.RETURN_TO_SEARCH)
+                    else:
+                        self._set_state(State.SEARCH)
                 elif key == ord('n') or key == ord('N'):
                     self.rejected_targets.append((self.target_lat, self.target_lon))
                     print(f"USER REJECTED TARGET at ({self.target_lat:.6f}, {self.target_lon:.6f}). RESUMING.")

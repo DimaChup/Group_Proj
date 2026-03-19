@@ -502,7 +502,7 @@ class VisualFlightMission(StateHandlersMixin):
                  cv2.putText(frame, "N: North | S: South", (cx - 200, cy + 90), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2)
                  cv2.putText(frame, "W: West  | E: East", (cx - 200, cy + 120), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2)
              else:
-                 cv2.putText(frame, "CONFIRM TARGET? (Y/N)", (cx - 150, cy + 80), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 3)
+                 cv2.putText(frame, "Y=Confirm  N=Reject  I=Interest", (cx - 200, cy + 80), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
 
         # 4. COMPOSITE VIEW
         final_display = frame
@@ -515,6 +515,16 @@ class VisualFlightMission(StateHandlersMixin):
                 transit_wps_gps=self.pre_waypoints, transit_wp_index=self.pre_wp_index,
                 current_state=self.state, rescan_pass=self.rescan_pass
             )
+
+             # Draw items of interest on god view (blue markers)
+             if hasattr(self, 'items_of_interest'):
+                 for idx, item in enumerate(self.items_of_interest):
+                     ix, iy = self.geo.gps_to_pixels(item['lat'], item['lon'])
+                     cv2.circle(god_frame, (ix, iy), 12, (255, 100, 0), -1)  # blue filled
+                     cv2.circle(god_frame, (ix, iy), 12, (255, 255, 255), 2)  # white border
+                     label = f"I{idx+1} ({item['lat']:.5f},{item['lon']:.5f})"
+                     cv2.putText(god_frame, label, (ix + 15, iy + 5),
+                                 cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 100, 0), 1)
 
              h_scale = frame.shape[0] / god_frame.shape[0]
              god_resized = cv2.resize(god_frame, (int(god_frame.shape[1]*h_scale), frame.shape[0]))

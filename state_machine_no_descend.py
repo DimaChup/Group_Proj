@@ -390,7 +390,7 @@ class StateHandlersMixin:
             print("=" * 50)
             print(f"  VERIFY (at {self.alt:.0f}m — no-descend mode)")
             print("  Is this the target?")
-            print("  Press Y to confirm, N to reject")
+            print("  Y=Confirm  N=Reject  I=Item of Interest")
             print("  (terminal key or browser button)")
             print("=" * 50)
 
