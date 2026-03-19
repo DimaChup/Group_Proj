@@ -445,21 +445,47 @@ class StateHandlersMixin:
 
     def _handle_hover_target(self, target_found, px_u, px_v, key):
         from pymavlink import mavutil
-        # Hold at 3m: wait 5s -> release servo -> wait 10 more s -> return
+        # Hold at 3m: two-stage servo release, then return
+        # Timeline: 0s=arrive → 3s=stage1 → 6s=stage2 → 15s=depart
         self.nav.send_global_target(self.landing_lat, self.landing_lon, 3.0)
         elapsed = time.time() - self.state_start_time
-        # Release servo at 5 seconds
-        if elapsed >= 5.0 and not self._servo_released:
-            self._servo_released = True
-            print("  SERVO RELEASE — dropping payload")
+
+        # Servo config (confirm channel + PWM on real drone!)
+        SERVO_CHANNEL = 9       # CHECK: Mission Planner → Servo/Relay tab
+        SERVO_CLOSED = 1500     # CHECK: PWM for locked/closed position
+        SERVO_STAGE1 = 1300     # CHECK: PWM for partial release (level 1)
+        SERVO_STAGE2 = 1100     # CHECK: PWM for full release (level 2)
+
+        # Stage 1: partial release at 3 seconds
+        if elapsed >= 3.0 and not hasattr(self, '_servo_stage1_done'):
+            self._servo_stage1_done = True
+            print(f"  SERVO STAGE 1 — partial release (ch{SERVO_CHANNEL}, PWM {SERVO_STAGE1})")
             if self.master:
-                # MAV_CMD_DO_SET_SERVO: servo channel 9, PWM 1100 (open)
                 self.master.mav.command_long_send(
                     self.master.target_system, self.master.target_component,
                     mavutil.mavlink.MAV_CMD_DO_SET_SERVO, 0,
-                    9, 1100, 0, 0, 0, 0, 0)
+                    SERVO_CHANNEL, SERVO_STAGE1, 0, 0, 0, 0, 0)
+
+        # Stage 2: full release at 6 seconds
+        if elapsed >= 6.0 and not self._servo_released:
+            self._servo_released = True
+            print(f"  SERVO STAGE 2 — full release (ch{SERVO_CHANNEL}, PWM {SERVO_STAGE2})")
+            if self.master:
+                self.master.mav.command_long_send(
+                    self.master.target_system, self.master.target_component,
+                    mavutil.mavlink.MAV_CMD_DO_SET_SERVO, 0,
+                    SERVO_CHANNEL, SERVO_STAGE2, 0, 0, 0, 0, 0)
+
         if elapsed > 15.0:
+            # Close servo before departing
+            if self.master:
+                self.master.mav.command_long_send(
+                    self.master.target_system, self.master.target_component,
+                    mavutil.mavlink.MAV_CMD_DO_SET_SERVO, 0,
+                    SERVO_CHANNEL, SERVO_CLOSED, 0, 0, 0, 0, 0)
             self._servo_released = False
+            if hasattr(self, '_servo_stage1_done'):
+                del self._servo_stage1_done
             print(f"Hover complete ({elapsed:.0f}s). Climbing and returning home.")
             if self.pre_waypoints:
                 # Retrace transit path in reverse
