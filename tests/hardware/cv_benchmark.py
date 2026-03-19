@@ -56,7 +56,14 @@ from vision import VisionSystem
 
 HEADLESS = "--headless" in sys.argv
 BLUR_TEST = "--blur" in sys.argv
+
+# Model selection: --model PATH
 model_path = os.path.join(project_root, "best.tflite")
+for _i, _arg in enumerate(sys.argv):
+    if _arg == "--model" and _i + 1 < len(sys.argv):
+        model_path = sys.argv[_i + 1]
+        if not os.path.isabs(model_path):
+            model_path = os.path.join(project_root, model_path)
 
 
 def run_live_benchmark(eyes):
