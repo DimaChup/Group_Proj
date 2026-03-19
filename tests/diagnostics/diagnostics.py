@@ -673,10 +673,44 @@ def draw_view_camera(frame):
         panel_text("AI not available", RED)
         panel_text(f"{ai_s.error[:25]}", RED)
 
-    py += 20
+    # --- Pipeline diagram ---
+    py += 15
+    panel_text("PIPELINE", CYAN, bold=True)
+    py += 5
+    # Camera box
+    cam_fps_val = raw_fps
+    box_x1 = px
+    box_y1 = py
+    cv2.rectangle(img, (box_x1, box_y1), (box_x1 + 80, box_y1 + 30), (80, 80, 80), -1)
+    cv2.rectangle(img, (box_x1, box_y1), (box_x1 + 80, box_y1 + 30), CYAN, 1)
+    cv2.putText(img, "CAMERA", (box_x1 + 8, box_y1 + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.4, CYAN, 1)
+    # Arrow + FPS
+    cv2.putText(img, f"{cam_fps_val:.0f}fps", (box_x1 + 90, box_y1 + 12), cv2.FONT_HERSHEY_SIMPLEX, 0.35, WHITE, 1)
+    cv2.arrowedLine(img, (box_x1 + 85, box_y1 + 20), (box_x1 + 115, box_y1 + 20), WHITE, 1)
+    # Model box
+    box_x2 = box_x1 + 120
+    if ai_overlay_on and ai_s.ok:
+        avg_ms_pipe = np.mean(inference_times[-30:]) if inference_times else 0
+        eff_fps_pipe = 1000.0 / avg_ms_pipe if avg_ms_pipe > 0 else 0
+        model_color = GREEN if eff_fps_pipe > 5 else YELLOW if eff_fps_pipe > 2 else RED
+        cv2.rectangle(img, (box_x2, box_y1), (box_x2 + 80, box_y1 + 30), (80, 80, 80), -1)
+        cv2.rectangle(img, (box_x2, box_y1), (box_x2 + 80, box_y1 + 30), model_color, 1)
+        cv2.putText(img, "MODEL", (box_x2 + 12, box_y1 + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.4, model_color, 1)
+        # Arrow + output FPS
+        cv2.putText(img, f"{eff_fps_pipe:.1f}fps", (box_x2 + 90, box_y1 + 12), cv2.FONT_HERSHEY_SIMPLEX, 0.35, model_color, 1)
+        cv2.arrowedLine(img, (box_x2 + 85, box_y1 + 20), (box_x2 + 115, box_y1 + 20), model_color, 1)
+        # Bottleneck indicator
+        if eff_fps_pipe < cam_fps_val * 0.5:
+            cv2.putText(img, "BOTTLENECK", (box_x2 + 5, box_y1 + 48), cv2.FONT_HERSHEY_SIMPLEX, 0.35, RED, 1)
+    else:
+        cv2.rectangle(img, (box_x2, box_y1), (box_x2 + 80, box_y1 + 30), (50, 50, 50), -1)
+        cv2.putText(img, "AI OFF", (box_x2 + 12, box_y1 + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.4, GRAY, 1)
+
+    py += 60
     panel_text("CONTROLS", CYAN, bold=True)
     py += 5
     panel_text("'a' toggle AI overlay")
+    panel_text("'m' swap model")
     panel_text("'s' save frame")
     panel_text("'1' diagram  '3' telemetry")
     panel_text("'q' quit")
