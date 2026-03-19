@@ -218,20 +218,13 @@ def main():
         else:
             print(f"  {path} not found, skipping")
 
-    # Try loading NCNN version of model2 as model 3
+    # Load NCNN version of model2 as model 3 (clean backend parameter)
     try:
-        ncnn_dir = os.path.join(os.path.dirname(args.model2), "ncnn", "best_ncnn_model")
-        if os.path.exists(ncnn_dir):
-            if "--backend" not in sys.argv:
-                sys.argv.extend(["--backend", "ncnn"])
-            v_ncnn = VisionSystem(camera_index=None, model_path=args.model2)
-            if v_ncnn.using_ai and v_ncnn.backend_name == "ncnn":
-                models[2] = v_ncnn
-                model_names[2] = f"Model 3: {os.path.basename(args.model2)} (NCNN)"
-                print(f"  Loaded {model_names[2]}")
-            if "--backend" in sys.argv:
-                idx_b = sys.argv.index("--backend")
-                sys.argv.pop(idx_b); sys.argv.pop(idx_b)
+        v_ncnn = VisionSystem(camera_index=None, model_path=args.model2, backend="ncnn")
+        if v_ncnn.using_ai and v_ncnn.backend_name == "ncnn":
+            models[2] = v_ncnn
+            model_names[2] = f"Model 3: {os.path.basename(args.model2)} [NCNN]"
+            print(f"  Loaded {model_names[2]}")
     except Exception as e:
         print(f"  NCNN not available: {e}")
 

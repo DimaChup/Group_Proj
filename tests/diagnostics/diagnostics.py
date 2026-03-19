@@ -1049,27 +1049,17 @@ try:
                 current_model_idx = (current_model_idx + 1) % len(MODELS)
                 mpath, mname = MODELS[current_model_idx]
                 print(f"  Switching model → {mname} ({mpath})")
-                # For NCNN models, inject --backend ncnn into sys.argv temporarily
+                # Clean backend selection — no sys.argv hacking
                 is_ncnn = "ncnn" in mname.lower() or os.path.isdir(mpath)
-                if is_ncnn and "--backend" not in sys.argv:
-                    sys.argv.extend(["--backend", "ncnn"])
-                elif not is_ncnn and "--backend" in sys.argv:
-                    try:
-                        idx = sys.argv.index("--backend")
-                        sys.argv.pop(idx)  # remove --backend
-                        sys.argv.pop(idx)  # remove ncnn
-                    except (ValueError, IndexError):
-                        pass
+                backend = "ncnn" if is_ncnn else "auto"
                 try:
-                    # For NCNN, pass the .tflite path (vision.py finds ncnn dir automatically)
                     load_path = mpath
                     if is_ncnn and os.path.isdir(mpath):
-                        # Find matching .tflite for this ncnn model
                         parent = os.path.dirname(os.path.dirname(mpath))
                         tflite = os.path.join(parent, "best.tflite")
                         if os.path.exists(tflite):
                             load_path = tflite
-                    eyes = VisionSystem(camera_index=None, model_path=load_path)
+                    eyes = VisionSystem(camera_index=None, model_path=load_path, backend=backend)
                     if eyes.using_ai:
                         ai_backend = eyes.backend_name.upper()
                         ai_s.ok = True

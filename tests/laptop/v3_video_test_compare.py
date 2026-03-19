@@ -203,16 +203,12 @@ def main():
     cv2.imshow(win, splash)
     cv2.waitKey(1)
 
-    # Force NCNN backend for model loading
-    if "--backend" not in sys.argv:
-        sys.argv.extend(["--backend", "ncnn"])
-
-    # Load models (NCNN)
+    # Load models (NCNN backend — clean parameter, no sys.argv hack)
     models = {}
     model_names = {}
     for i, (path, label) in enumerate([(args.model, "Model 1"), (args.model2, "Model 2")]):
         if os.path.exists(path):
-            v = VisionSystem(camera_index=None, model_path=path)
+            v = VisionSystem(camera_index=None, model_path=path, backend="ncnn")
             if v.using_ai:
                 models[i] = v
                 model_names[i] = f"{label}: {os.path.basename(path)} ({os.path.getsize(path)/1024/1024:.1f}MB)"

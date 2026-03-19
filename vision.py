@@ -38,7 +38,7 @@ except ImportError:
     pass
 
 class VisionSystem:
-    def __init__(self, camera_index=0, model_path="best.tflite"):
+    def __init__(self, camera_index=0, model_path="best.tflite", backend="auto"):
         self.cap = None
         self._picam = None
         cam_w, cam_h = 640, 480
@@ -142,11 +142,10 @@ class VisionSystem:
             print(f"[VISION] Model file not found: {model_path}")
             return
 
-        # Option 0: NCNN (if model path points to ncnn directory or --backend ncnn)
-        ncnn_requested = "--backend" in " ".join(os.sys.argv) and "ncnn" in " ".join(os.sys.argv)
+        # Option 0: NCNN (explicit backend="ncnn" or auto-detect)
+        ncnn_requested = (backend == "ncnn")
         ncnn_model_dir = None
         if model_path.endswith('.tflite'):
-            # Check if matching NCNN model exists alongside
             base_dir = os.path.dirname(model_path)
             ncnn_dir = os.path.join(base_dir, "ncnn", "best_ncnn_model")
             if os.path.exists(ncnn_dir):
@@ -181,7 +180,8 @@ class VisionSystem:
                 print(f"[VISION] NCNN Load Failed: {e}")
 
         # Option 1: Ultralytics YOLO (preferred - handles all output parsing)
-        if not self.using_ai and YOLO is not None:
+        # Option 1: Ultralytics (skip if backend explicitly set to tflite or ncnn)
+        if not self.using_ai and YOLO is not None and backend in ("auto", "ultralytics"):
             try:
                 print(f"[VISION] Loading Model via Ultralytics: {model_path}...")
                 self.model = YOLO(model_path, task='detect')
@@ -193,8 +193,8 @@ class VisionSystem:
                 print(f"[VISION] Ultralytics Load Failed: {e}")
                 self.model = None
 
-        # Option 2: Direct TFLite (lightweight fallback for Pi)
-        elif TFLiteInterpreter is not None and model_path.endswith('.tflite'):
+        # Option 2: Direct TFLite (skip if backend explicitly set to ncnn)
+        if not self.using_ai and TFLiteInterpreter is not None and model_path.endswith('.tflite') and backend in ("auto", "tflite"):
             try:
                 print(f"[VISION] Loading TFLite Model: {model_path}...")
                 self.interpreter = TFLiteInterpreter(model_path=model_path)
