@@ -1,0 +1,40 @@
+  Checking Platform...  Checking Network...  Checking Camera...  Checking AI Model...[VISION] Lens calibration skipped: No data left in file
+[VISION] Loading TFLite Model: /home/flightlab-user/dima/Group_Proj/best.tflite...
+[VISION] TFLite Loaded! Input: [  1 640 640   3] dtype=<class 'numpy.float32'>
+  Checking Cube/MAVLink...  Checking Flight Plans...[CONFIG] Loaded KML: /home/flightlab-user/dima/Group_Proj/flight_plans/AENGM0074.kml
+  Take-Off:     (51.42340640206451, -2.671446029622069)
+  Survey Area:  5 corners
+  Flight Area:  4 corners
+  SSSI:         7 corners
+  Checking Calibration...  Checking HTTP Stream...  Checking Config...  Checking Disk Space...  Checking Models...
+[1m==============================================================================
+  SAR DRONE — SYSTEM READINESS CHECK
+  2026-03-19 13:00:31
+==============================================================================[0m
+
+  [92m[+] PASS[0m  Platform            Python 3.13.5, Raspberry Pi, blueteam, IP: 192.168.1.121, Disk: 98.5GB free
+  [93m[!] WARN[0m  Network             IP: 192.168.1.121, mavproxy UDP active | No internet (OK if in field)
+  [91m[X] FAIL[0m  Camera              Pi camera error: Camera __init__ sequence did not complete.
+  [92m[+] PASS[0m  AI Model            3.2MB, Ultralytics, 218ms (4.6 FPS)
+  [93m[!] WARN[0m  Cube/MAVLink        STABILIZE, GPS: NO_FIX 0sats HDOP=100.0, Batt: 16.1V (11%) LOW BATTERY
+  [92m[+] PASS[0m  Flight Plans        search_area(3pts), waypoints(4pts), transit(3pts), KML(5pts)
+  [93m[!] WARN[0m  Calibration         Calibration load error: No data left in file
+  [92m[+] PASS[0m  HTTP Stream         HTTP stream OK
+  [92m[+] PASS[0m  Config              All values OK (MODE=REAL, ALT=50.0m)
+  [92m[+] PASS[0m  Disk Space          98.5GB free / 114GB total
+  [92m[+] PASS[0m  Models              7 models available
+
+  [1mAvailable Models:[0m
+       3.2MB  best.tflite                                    Active model (root) <- ACTIVE
+       3.2MB  cv_models/original_best.tflite                 Original baseline
+      11.7MB  cv_models/sar_v2_1088/best.tflite              v2-1088 RECOMMENDED
+      11.7MB  cv_models/sar_640/best.tflite                  v1 at 640
+      12.3MB  cv_models/sar_1280/best.tflite                 v1 at 1280
+      12.2MB  cv_models/human.tflite                         COCO person detector
+       3.2MB  cv_models/custom_yolov8n.tflite                Custom YOLOv8n
+
+==============================================================================
+  [91m[1mNO-GO — 1 FAIL(s) detected. Fix before flight.[0m
+  7 PASS, 3 WARN, 1 FAIL, 0 SKIP
+==============================================================================
+
