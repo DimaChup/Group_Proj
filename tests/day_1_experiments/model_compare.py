@@ -318,7 +318,7 @@ def main():
             f.write(f"\n{'=' * 80}\n")
             f.write(f"  BENCHMARK — {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
             f.write(f"  Host: {socket.gethostname()}, Python: {platform.python_version()}, Arch: {platform.machine()}\n")
-            f.write(f"  Frames per model: {args.frames}\n")
+            f.write(f"  Frames per model: {FRAMES_PER_MODEL}\n")
             f.write(f"{'=' * 80}\n")
             f.write(f"  {'Model':45s} {'Size':>6s} {'Avg ms':>8s} {'FPS':>8s} {'Det%':>6s} {'Conf':>8s}\n")
             f.write(f"  {'-'*45} {'-'*6} {'-'*8} {'-'*8} {'-'*6} {'-'*8}\n")
