@@ -29,6 +29,14 @@ if YOLO is None:
             except ImportError:
                 pass
 
+# Priority 3: NCNN (ARM-optimized, fastest on Pi 5)
+ncnn_available = False
+try:
+    import ncnn as _ncnn
+    ncnn_available = True
+except ImportError:
+    pass
+
 class VisionSystem:
     def __init__(self, camera_index=0, model_path="best.tflite"):
         self.cap = None
@@ -123,21 +131,63 @@ class VisionSystem:
         self.model = None
         self.using_ai = False
         self._use_tflite_direct = False
+        self._use_ncnn = False
+        self._ncnn_net = None
         self.last_bbox_w = 0  # last detection bounding box width (pixels)
         self.last_class_name = ""  # last detected class name (e.g. "person", "dummy")
         self.last_bbox_h = 0  # last detection bounding box height (pixels)
+        self.backend_name = "none"  # "ultralytics", "tflite", "ncnn"
 
         if not os.path.exists(model_path):
             print(f"[VISION] Model file not found: {model_path}")
             return
 
+        # Option 0: NCNN (if model path points to ncnn directory or --backend ncnn)
+        ncnn_requested = "--backend" in " ".join(os.sys.argv) and "ncnn" in " ".join(os.sys.argv)
+        ncnn_model_dir = None
+        if model_path.endswith('.tflite'):
+            # Check if matching NCNN model exists alongside
+            base_dir = os.path.dirname(model_path)
+            ncnn_dir = os.path.join(base_dir, "ncnn", "best_ncnn_model")
+            if os.path.exists(ncnn_dir):
+                ncnn_model_dir = ncnn_dir
+        elif os.path.isdir(model_path):
+            ncnn_model_dir = model_path
+
+        if ncnn_available and ncnn_requested and ncnn_model_dir:
+            try:
+                param_path = os.path.join(ncnn_model_dir, "model.ncnn.param")
+                bin_path = os.path.join(ncnn_model_dir, "model.ncnn.bin")
+                if os.path.exists(param_path) and os.path.exists(bin_path):
+                    print(f"[VISION] Loading NCNN model from {ncnn_model_dir}...")
+                    self._ncnn_net = _ncnn.Net()
+                    self._ncnn_net.opt.num_threads = 4
+                    self._ncnn_net.opt.use_vulkan_compute = False
+                    self._ncnn_net.load_param(param_path)
+                    self._ncnn_net.load_model(bin_path)
+                    self._use_ncnn = True
+                    self.using_ai = True
+                    self.model = True
+                    self.backend_name = "ncnn"
+                    # Warmup
+                    mat_in = _ncnn.Mat(640, 640, 3)
+                    ex = self._ncnn_net.create_extractor()
+                    ex.input("in0", mat_in)
+                    ex.extract("out0")
+                    print("[VISION] NCNN loaded! Warmup complete.")
+                else:
+                    print(f"[VISION] NCNN model files not found in {ncnn_model_dir}")
+            except Exception as e:
+                print(f"[VISION] NCNN Load Failed: {e}")
+
         # Option 1: Ultralytics YOLO (preferred - handles all output parsing)
-        if YOLO is not None:
+        if not self.using_ai and YOLO is not None:
             try:
                 print(f"[VISION] Loading Model via Ultralytics: {model_path}...")
                 self.model = YOLO(model_path, task='detect')
                 self.model(np.zeros((100, 100, 3), dtype=np.uint8), verbose=False)
                 self.using_ai = True
+                self.backend_name = "ultralytics"
                 print("[VISION] AI Engine Loaded Successfully (Ultralytics)!")
             except Exception as e:
                 print(f"[VISION] Ultralytics Load Failed: {e}")
@@ -156,6 +206,7 @@ class VisionSystem:
                 self._use_tflite_direct = True
                 self.using_ai = True
                 self.model = True  # flag so model-is-not-None checks pass
+                self.backend_name = "tflite"
                 print(f"[VISION] TFLite Loaded! Input: {self._input_shape} dtype={self._input_dtype}")
             except Exception as e:
                 print(f"[VISION] TFLite Load Failed: {e}")
@@ -180,6 +231,60 @@ class VisionSystem:
             _conf_thresh = getattr(_cfg, "CONFIDENCE_THRESHOLD", 0.4)
         except Exception:
             _conf_thresh = 0.4
+
+        # --- NCNN inference (fastest on Pi 5) ---
+        if self._use_ncnn:
+            h, w = frame.shape[:2]
+            # Preprocess: resize to 640x640, BGR→RGB, normalize
+            img = cv2.resize(frame, (640, 640))
+            img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+            mat_in = _ncnn.Mat.from_pixels(img_rgb, _ncnn.Mat.PixelType.PIXEL_RGB, 640, 640)
+            mean_vals = [0.0, 0.0, 0.0]
+            norm_vals = [1/255.0, 1/255.0, 1/255.0]
+            mat_in.substract_mean_normalize(mean_vals, norm_vals)
+
+            ex = self._ncnn_net.create_extractor()
+            ex.input("in0", mat_in)
+            ret, mat_out = ex.extract("out0")
+
+            # Parse YOLOv8 output: same format as TFLite [1, 5+nclass, num_detections]
+            output = np.array(mat_out)
+            if output.ndim == 2:
+                preds = output
+            else:
+                preds = output.reshape(-1, output.shape[-1]) if output.ndim == 3 else output
+
+            if preds.shape[0] < preds.shape[-1]:
+                preds = preds.T  # -> [num_detections, 5+nclass]
+
+            best_conf = 0.0
+            best_det = None
+            for det in preds:
+                cls_id = int(np.argmax(det[4:]))
+                conf = float(det[4 + cls_id])
+                if conf > _conf_thresh and conf > best_conf:
+                    best_conf = conf
+                    best_det = det
+
+            if best_det is not None:
+                cx = int(best_det[0] * w)
+                cy = int(best_det[1] * h)
+                bw = int(best_det[2] * w)
+                bh = int(best_det[3] * h)
+                self.last_bbox_w = bw
+                self.last_bbox_h = bh
+                num_classes = len(best_det) - 4
+                self.last_class_name = "dummy" if num_classes == 1 else f"cls{int(np.argmax(best_det[4:]))}"
+                x1, y1 = cx - bw // 2, cy - bh // 2
+                x2, y2 = cx + bw // 2, cy + bh // 2
+                label = f"AI {best_conf:.2f} [{self.last_class_name}]"
+                cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                cv2.putText(frame, label, (x1, y1-10),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+                return True, cx, cy, float(best_conf)
+
+            return False, 0, 0, 0.0
 
         # --- Direct TFLite inference (Pi fallback) ---
         if self._use_tflite_direct:
