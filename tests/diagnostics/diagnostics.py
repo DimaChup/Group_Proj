@@ -152,6 +152,7 @@ def get_frame():
 MODELS = [
     ("best.tflite", "original"),
     ("cv_models/sar_v2_1088/best.tflite", "v2-1088"),
+    ("cv_models/sar_v2_1088/ncnn/best_ncnn_model", "v2-1088-NCNN"),
 ]
 current_model_idx = 0
 
@@ -1048,10 +1049,29 @@ try:
                 current_model_idx = (current_model_idx + 1) % len(MODELS)
                 mpath, mname = MODELS[current_model_idx]
                 print(f"  Switching model → {mname} ({mpath})")
+                # For NCNN models, inject --backend ncnn into sys.argv temporarily
+                is_ncnn = "ncnn" in mname.lower() or os.path.isdir(mpath)
+                if is_ncnn and "--backend" not in sys.argv:
+                    sys.argv.extend(["--backend", "ncnn"])
+                elif not is_ncnn and "--backend" in sys.argv:
+                    try:
+                        idx = sys.argv.index("--backend")
+                        sys.argv.pop(idx)  # remove --backend
+                        sys.argv.pop(idx)  # remove ncnn
+                    except (ValueError, IndexError):
+                        pass
                 try:
-                    eyes = VisionSystem(camera_index=None, model_path=mpath)
+                    # For NCNN, pass the .tflite path (vision.py finds ncnn dir automatically)
+                    load_path = mpath
+                    if is_ncnn and os.path.isdir(mpath):
+                        # Find matching .tflite for this ncnn model
+                        parent = os.path.dirname(os.path.dirname(mpath))
+                        tflite = os.path.join(parent, "best.tflite")
+                        if os.path.exists(tflite):
+                            load_path = tflite
+                    eyes = VisionSystem(camera_index=None, model_path=load_path)
                     if eyes.using_ai:
-                        ai_backend = "TFLite" if eyes._use_tflite_direct else "Ultralytics"
+                        ai_backend = eyes.backend_name.upper()
                         ai_s.ok = True
                         ai_s.text = "LOADED"
                         print(f"  OK  Model: {mname} ({ai_backend})")
