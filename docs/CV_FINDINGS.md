@@ -362,12 +362,57 @@ Actual measured:      ~110ms  (~9 FPS)
 
 The extra ~20ms gap is Python overhead (garbage collection, thread scheduling, etc).
 
-### Future Improvements
-- FP16 XNNPACK for TFLite (~2x speedup, untested)
-- Threaded pipeline (camera + inference in parallel) — could reach 13+ FPS
-- Lower confidence threshold for more detections (currently 0.4)
-- Retrain with more real flight data
-- NCNN clean integration via backend= parameter
+---
+
+## Lessons Learned & Optimisation Notes
+
+### Lesson 1: Direct loading beats abstraction layers
+- `ncnn_video_player.py` loads NCNN directly → 9 FPS, works perfectly
+- Going through `vision.py` → sys.argv hacks, flag conflicts, slower
+- **Takeaway:** for performance-critical paths, bypass abstraction layers
+
+### Lesson 2: Single-threaded is simpler but limiting
+- Current pipeline: capture → preprocess → inference → draw → display (sequential)
+- Camera waits for inference to finish before capturing next frame
+- Camera can do 30 FPS but model only does 5-14 FPS
+- **Fix:** threaded pipeline — camera thread captures continuously, inference thread processes latest frame
+- Expected improvement: display at 30 FPS with detections updating at inference rate
+
+### Lesson 3: NCNN works but integration needs care
+- NCNN inference: 72ms (13.8 FPS) — proven fast
+- Through vision.py with sys.argv: works sometimes, breaks in complex scripts
+- **Planned fix:** `VisionSystem(backend="ncnn")` explicit parameter
+- Direct NCNN loading (as in ncnn_video_player.py) is the reliable path
+
+### Lesson 4: Same model weights = same detection accuracy
+- TFLite and NCNN run the same YOLO weights
+- Detection confidence is identical (±0.01) regardless of backend
+- Only speed differs — choose backend based on speed needs
+
+### Lesson 5: Preprocessing matters
+- TFLite pipeline: BGR→RGB → resize → normalize → inference
+- NCNN pipeline: resize → BGR→RGB → Mat.from_pixels → normalize → inference
+- Order of operations differs slightly — shouldn't affect accuracy but worth noting
+- Both resize to 640x640 regardless of input resolution
+
+### Optimisation Roadmap (prioritised)
+
+| # | Optimisation | Expected gain | Effort | Risk |
+|---|---|---|---|---|
+| 1 | Clean NCNN backend in vision.py | 3x FPS (3→9) | Low | Low |
+| 2 | Threaded camera+inference pipeline | +30% FPS | Medium | Medium |
+| 3 | FP16 XNNPACK TFLite | ~2x TFLite speed | Low | Low |
+| 4 | Lower confidence threshold (0.4→0.3) | More detections | Trivial | More FP |
+| 5 | Camera FPS cap to match model speed | Save CPU/power | Trivial | None |
+| 6 | Retrain with real flight data | Better accuracy | High | Overfitting |
+| 7 | Hailo-8L accelerator ($70) | 80+ FPS | High | Hardware cost |
+
+### Portability Notes (Future: Mavic/other drones)
+- Our vision pipeline is camera-agnostic — just feeds frames to the model
+- Could work with any video source: Pi camera, DJI SDK stream, HDMI capture, RTSP
+- The model (YOLOv8n TFLite/NCNN) runs on any ARM or x86 device
+- Key requirement: compute device (Pi/Jetson/laptop) connected to drone video feed
+- DJI Mavic: would need DJI Mobile SDK or HDMI capture card → Pi/laptop
 
 ---
 
