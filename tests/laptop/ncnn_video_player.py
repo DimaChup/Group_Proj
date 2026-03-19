@@ -226,12 +226,23 @@ def main():
             cv2.putText(display, "PAUSED", (vid_w//2 - 80, vid_h//2),
                         cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 255), 3)
 
-        # Resize if too big
-        if vid_w > 1200:
-            scale = 1000 / vid_w
-            display = cv2.resize(display, (int(vid_w*scale), int(vid_h*scale)))
+        # Side by side: raw (left) + detection (right)
+        raw_frame = frame.copy()
+        cv2.putText(raw_frame, "RAW VIDEO (30fps)", (10, 30),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+        cv2.putText(raw_frame, f"{timestamp:.1f}s", (10, 60),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200, 200, 200), 1)
 
-        cv2.imshow("NCNN Video Player", display)
+        # Resize both to fit
+        target_w = min(vid_w, 700)
+        scale = target_w / vid_w
+        raw_small = cv2.resize(raw_frame, (target_w, int(vid_h * scale)))
+        det_small = cv2.resize(display, (target_w, int(vid_h * scale)))
+
+        # Combine side by side
+        combined = np.hstack((raw_small, det_small))
+
+        cv2.imshow("NCNN Video Player — RAW vs DETECTION", combined)
 
         key = cv2.waitKey(1 if not paused else 50) & 0xFF
         if key == ord('q') or key == 27:
@@ -255,3 +266,24 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+# ═══════════════════════════════════════════════════════════════
+# NCNN PIPELINE DIAGRAM
+# ═══════════════════════════════════════════════════════════════
+#
+#   ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐
+#   │  VIDEO   │───>│  RESIZE  │───>│ BGR→RGB  │───>│ NCNN Mat │
+#   │  READ    │    │ 640x640  │    │          │    │from_pixels│
+#   │  ~2ms    │    │  ~2ms    │    │  ~1ms    │    │  ~1ms    │
+#   └──────────┘    └──────────┘    └──────────┘    └──────────┘
+#        │                                               │
+#        │                                               v
+#   ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐
+#   │ DISPLAY  │<───│   DRAW   │<───│  PARSE   │<───│   NCNN   │
+#   │ imshow   │    │  boxes   │    │  output  │    │ extract  │
+#   │  ~1ms    │    │  ~1ms    │    │  ~1ms    │    │  ~72ms   │
+#   └──────────┘    └──────────┘    └──────────┘    └──────────┘
+#
+#   Total: ~81ms per frame = ~12 FPS (Pi 5)
+#   Full pipeline with display: ~110ms = ~9 FPS
+# ═══════════════════════════════════════════════════════════════
