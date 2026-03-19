@@ -59,3 +59,8 @@ tests/things to do .txt
 # Pi data directory IS tracked (pushed from Pi, pulled to laptop)
 # pi_data/ — NOT ignored, always synced via git
 !pi_data/
+# But large video/photo files are too big for git
+pi_data/captured_video/*.avi
+pi_data/captured_video/*.mp4
+pi_data/captured_video/*.h264
+pi_data/captured_photos/*.jpg
