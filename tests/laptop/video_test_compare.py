@@ -203,29 +203,62 @@ def main():
     cv2.imshow(win, splash)
     cv2.waitKey(1)
 
-    # Load both models
+    # Load models: 0=raw, 1=model1, 2=model2, 3=model2 NCNN
     models = {}
     model_names = {}
+
+    # Mode 0: RAW (no AI)
+    models[-1] = None
+    model_names[-1] = "RAW VIDEO (no AI)"
+    print(f"  [{-1}] {model_names[-1]}")
+
+    # Mode 1 & 2: TFLite models
     for i, (path, label) in enumerate([(args.model, "Model 1"), (args.model2, "Model 2")]):
         if os.path.exists(path):
             v = VisionSystem(camera_index=None, model_path=path)
             if v.using_ai:
                 models[i] = v
-                model_names[i] = f"{label}: {os.path.basename(path)} ({os.path.getsize(path)/1024/1024:.1f}MB)"
-                print(f"  Loaded {model_names[i]}")
+                model_names[i] = f"{label}: {os.path.basename(path)} ({os.path.getsize(path)/1024/1024:.1f}MB) [{v.backend_name}]"
+                print(f"  [{i}] Loaded {model_names[i]}")
             else:
                 print(f"  Failed to load {path}")
         else:
             print(f"  {path} not found, skipping")
 
-    if not models:
-        print("No models loaded!")
-        return
+    # Mode 3: NCNN (if available)
+    try:
+        import ncnn as _test_ncnn
+        ncnn_model_dir = os.path.join(os.path.dirname(args.model2), "ncnn", "best_ncnn_model")
+        if os.path.exists(ncnn_model_dir):
+            # Inject --backend ncnn temporarily
+            if "--backend" not in sys.argv:
+                sys.argv.extend(["--backend", "ncnn"])
+            v_ncnn = VisionSystem(camera_index=None, model_path=args.model2)
+            if v_ncnn.using_ai and v_ncnn.backend_name == "ncnn":
+                models[3] = v_ncnn
+                model_names[3] = f"Model 2 NCNN: {os.path.basename(args.model2)} [{v_ncnn.backend_name}]"
+                print(f"  [3] Loaded {model_names[3]}")
+            # Remove injected args
+            if "--backend" in sys.argv:
+                idx_b = sys.argv.index("--backend")
+                sys.argv.pop(idx_b)
+                sys.argv.pop(idx_b)
+        else:
+            print(f"  NCNN model not found at {ncnn_model_dir}")
+    except ImportError:
+        print(f"  NCNN not installed (pip install ncnn)")
 
-    active_model = [0]  # index into models dict
-    vs = models[active_model[0]]
+    if len(models) <= 1:
+        print("No AI models loaded! (raw mode only)")
+
+    active_model = [0]  # start with first TFLite model
+    if 0 in models:
+        vs = models[0]
+    else:
+        active_model[0] = -1
+        vs = None
     print(f"\nActive: {model_names[active_model[0]]}")
-    print(f"Press M to switch models\n")
+    print(f"Press M to cycle: {' → '.join(model_names[k] for k in sorted(models.keys()))}\n")
 
     cap = cv2.VideoCapture(args.video)
     if not cap.isOpened():
@@ -611,6 +644,19 @@ def main():
             ai_result["busy"] = False
 
     def run_single_inference(frame_copy, fnum):
+        # RAW mode — no inference
+        if vs is None or active_model[0] == -1:
+            dets = []
+            snap_clean, info_lines = make_snapshot(frame_copy, dets, fnum, 0)
+            with ai_lock:
+                ai_result["dets"] = dets
+                ai_result["dt"] = 0
+                ai_result["frame_num"] = fnum
+                ai_result["snapshot"] = snap_clean
+                ai_result["info_lines"] = info_lines
+                ai_result["busy"] = False
+            return
+
         infer_frame = cv2.resize(frame_copy, (640, int(vid_h * 640 / vid_w)))
         t0 = time.perf_counter()
         found, x, y, conf = vs.detect_in_image(infer_frame)
@@ -987,9 +1033,14 @@ def main():
             progress = frame_num / total_frames
             cv2.rectangle(disp, (0, bar_y), (int(disp_w * progress), bar_y + 4), (0, 200, 200), -1)
             mode = f"TILE {args.tile_size}px" if use_tiling[0] else "SINGLE 640"
-            m_name = os.path.basename(os.path.dirname(args.model if active_model[0] == 0 else args.model2)) or "root"
-            m_file = os.path.basename(args.model if active_model[0] == 0 else args.model2)
-            model_tag = f"{m_name}/{m_file}" if m_name != "root" else m_file
+            if active_model[0] == -1:
+                model_tag = "RAW (no AI)"
+            else:
+                cur_path = args.model if active_model[0] == 0 else args.model2
+                m_name = os.path.basename(os.path.dirname(cur_path)) or "root"
+                m_file = os.path.basename(cur_path)
+                backend = vs.backend_name.upper() if vs and hasattr(vs, 'backend_name') else "?"
+                model_tag = f"{m_name}/{m_file} [{backend}]" if m_name != "root" else f"{m_file} [{backend}]"
             eff_name = EFFECTS[active_effect[0]].upper()
             eff_str = f" | WX: {eff_name} {effect_intensity[0]:.0%}" if eff_name != "NONE" else ""
             info = f"{timestamp:.1f}s / {duration:.1f}s | {dt:.0f}ms | Det: {det_count[0]} | {mode} | {speed:.1f}x | [{model_tag}] M=switch{eff_str}"
@@ -1046,7 +1097,7 @@ def main():
             use_tiling[0] = not use_tiling[0]
             print(f"  Tiling: {'ON' if use_tiling[0] else 'OFF'}")
         elif key == ord('m'):
-            # Switch model
+            # Cycle through all modes (raw + models)
             available = sorted(models.keys())
             if len(available) > 1:
                 idx = available.index(active_model[0])
@@ -1054,7 +1105,7 @@ def main():
                 vs = models[active_model[0]]
                 print(f"  SWITCHED TO: {model_names[active_model[0]]}")
             else:
-                print("  Only one model loaded")
+                print("  Only one mode available")
         elif key == ord('d') or key == 83:
             new_pos = min(frame_num + int(fps * 5), total_frames - 1)
             cap.set(cv2.CAP_PROP_POS_FRAMES, new_pos)
