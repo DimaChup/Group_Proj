@@ -438,3 +438,147 @@ The extra ~20ms gap is Python overhead (garbage collection, thread scheduling, e
 | `pi_data/blur_altitude_results.txt` | All blur/altitude tests |
 | `pi_data/blur_altitude_chart.png` | Comparison charts |
 | `pi_data/BLUR_ALTITUDE_COMPARISON.md` | Full analysis |
+
+---
+
+## Simulated Ground Truth Benchmark
+
+### Concept
+
+Instead of manually labeling real video (tedious, subjective), we can **generate synthetic benchmark video** where we KNOW exactly where the dummy is in every frame — because we placed it there.
+
+### How It Works
+
+1. **Generate synthetic video:** composite `dummy.png` on `map.jpg` backgrounds
+   - Move dummy across frames (simulating drone flyover)
+   - Vary: altitude (dummy size), speed (motion blur), position (center vs edge)
+   - Include negative frames (no dummy) to test false positive rate
+   - Save ground truth: frame number → (x, y, w, h) or "no dummy"
+
+2. **Run each model on the synthetic video:**
+   - Original TFLite (3.2MB)
+   - v2-1088 TFLite (11.7MB)
+   - v2-1088 NCNN
+   - Each produces: frame → (detected?, x, y, confidence)
+
+3. **Compare against ground truth:**
+   - True Positive (TP): detected AND dummy present
+   - False Positive (FP): detected BUT no dummy
+   - False Negative (FN): missed BUT dummy present
+   - True Negative (TN): correctly no detection, no dummy
+
+4. **Metrics per model:**
+   - Precision = TP / (TP + FP) — "when it detects, is it right?"
+   - Recall = TP / (TP + FN) — "does it find all dummies?"
+   - F1 = 2 × (Precision × Recall) / (Precision + Recall)
+   - IoU = bounding box overlap with ground truth
+   - FPS = processing speed
+
+### Advantages Over Real Video Labeling
+
+| Approach | Pros | Cons |
+|---|---|---|
+| **Simulated (synthetic)** | Perfect ground truth, repeatable, controllable conditions, no manual labeling | May not represent real-world exactly |
+| **Real video (manual labels)** | Real conditions, real camera | Hours of labeling, subjective, one-time |
+
+### Existing Tools
+
+- `blur_altitude_test.py` — already generates synthetic frames at different altitudes/speeds
+- `generate_dataset_v2.py` — generates synthetic training images with ground truth labels
+- Both use `dummy.png` + `map.jpg` — same assets can generate benchmark video
+
+### TODO: Create Benchmark Script
+
+```python
+# tests/laptop/cv_benchmark_synthetic.py
+# 1. Generate 500 frames: 300 with dummy (various altitudes/positions), 200 without
+# 2. Save ground truth CSV: frame, has_dummy, x, y, w, h
+# 3. Run each model on all frames
+# 4. Compare detections vs ground truth
+# 5. Output: precision, recall, F1, avg confidence, false positive rate per model
+```
+
+---
+
+## Training Improvements
+
+### Data Augmentation — What We Have vs What We Could Add
+
+**Currently in generate_dataset_v2.py:**
+- Brightness/contrast variation (±30)
+- Gaussian blur (kernel 3 or 5, 30% chance)
+- Random rotation (0-360°)
+- Scale variation (close/medium/far)
+- Random position in frame
+
+**Should Add:**
+| Augmentation | Why | Effort |
+|---|---|---|
+| **Gaussian noise** | Simulates camera sensor noise | Low |
+| **Color jitter (HSV)** | Different lighting/weather | Low |
+| **Lens distortion** | Matches real Pi camera | Medium |
+| **Motion blur (directional)** | Simulates drone flight direction | Low |
+| **Perspective warp** | Dummy at angles, not just top-down | Medium |
+| **Shadow overlay** | Realistic outdoor shadows | Medium |
+| **Background diversity** | Use multiple satellite images, not just one map.jpg | Medium |
+| **Negative mining** | Add false positive frames from real flights as negatives | High impact |
+
+### Retraining Approach
+
+YOLO has built-in augmentations (`mosaic`, `mixup`, `hsv_h/s/v`, `flipud`, `fliplr`) that activate during training. Adding Gaussian noise and motion blur to the dataset generator covers the main gaps.
+
+### Gaussian Distortion for Robustness
+
+Adding Gaussian noise to training data makes the model more robust to:
+- Camera sensor noise (especially at low light)
+- Compression artifacts (from MJPEG streaming)
+- Slightly out-of-focus images
+
+```python
+# Add to generate_dataset_v2.py
+if random.random() < 0.3:
+    noise = np.random.normal(0, random.uniform(5, 20), background.shape).astype(np.int16)
+    background = np.clip(background.astype(np.int16) + noise, 0, 255).astype(np.uint8)
+```
+
+---
+
+## Items of Interest Detection (Future)
+
+### Current: Single Class (dummy)
+- Model trained on 1 class: "dummy"
+- Detects our specific SAR training dummy from aerial view
+- Works at 15-60m altitude, any speed
+
+### Future: Multi-Class Detection
+
+For a real SAR mission, we'd want to detect:
+| Item | Purpose | Training approach |
+|---|---|---|
+| Person (lying) | Primary casualty | COCO person class + aerial retraining |
+| Person (standing) | Secondary target | COCO person class |
+| Vehicle | Landmark / scene context | COCO car/truck classes |
+| Smoke/fire | Emergency indicator | Custom training needed |
+| Items of interest (backpack, clothing) | Evidence of presence | COCO classes + fine-tuning |
+
+### Approaches
+
+**Option 1: Use COCO person model (`cv_models/human.tflite`)**
+- Already have it — 80 classes including person, car, backpack
+- No retraining needed
+- Slower (358ms vs 192ms) and generic (not aerial-optimized)
+- Good for proof of concept
+
+**Option 2: Fine-tune on aerial data**
+- Start from COCO-pretrained YOLOv8n
+- Add aerial person images (from drones, Google Earth)
+- Keep our synthetic dummy data as one class
+- Multi-class model: "person" + "dummy" + "vehicle"
+
+**Option 3: Two-model approach**
+- Model 1: our fast dummy detector (primary search)
+- Model 2: COCO person detector (verification/backup)
+- Switch models at different mission phases
+
+### For Our Project (MSc)
+Stick with single-class dummy detection — it's what we've trained and tested. The multi-class approach is documented here as future work and shows engineering awareness of real-world requirements.
