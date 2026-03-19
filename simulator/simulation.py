@@ -323,6 +323,21 @@ class SimulationEnvironment:
               cv2.polylines(display_map, [np.array(search_poly, np.int32)], True, (0, 255, 0), 2)
         if len(virtual_poly) > 0:
               cv2.drawContours(display_map, [virtual_poly], -1, (255, 0, 255), 2)
+        # Draw SSSI no-fly zone (red with faint fill)
+        if config.SSSI_GPS:
+            sssi_pts = np.array([geo_tool.gps_to_pixels(lat, lon) for lat, lon in config.SSSI_GPS], np.int32)
+            # Faint red fill
+            overlay = display_map.copy()
+            cv2.fillPoly(overlay, [sssi_pts], (0, 0, 180))
+            cv2.addWeighted(overlay, 0.15, display_map, 0.85, 0, display_map)
+            # Red border
+            cv2.polylines(display_map, [sssi_pts], True, (0, 0, 255), 2)
+            cx_s, cy_s = sssi_pts.mean(axis=0).astype(int)
+            cv2.putText(display_map, "SSSI NFZ", (cx_s - 30, cy_s), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 255), 1)
+        # Draw flight boundary (yellow)
+        if config.FLIGHT_AREA_GPS:
+            flight_pts = np.array([geo_tool.gps_to_pixels(lat, lon) for lat, lon in config.FLIGHT_AREA_GPS], np.int32)
+            cv2.polylines(display_map, [flight_pts], True, (0, 200, 255), 1)
 
         # Draw Coverage (only during SEARCH — transit doesn't count as swept)
         # Pass 0 = cyan/yellow, pass 1+ = orange (different color per rescan)

@@ -310,24 +310,7 @@ class StateHandlersMixin:
     def _handle_search(self, target_found, px_u, px_v, key):
         g = _get_main_globals()
         REAL_CANVAS_SIZE = g['REAL_CANVAS_SIZE']
-
-        # NFZ repulsion check (if enabled)
-        if "--nfz-repel" in sys.argv and config.SSSI_GPS and len(config.SSSI_GPS) >= 3:
-            if not hasattr(self, '_geofence'):
-                from geofence import NFZGeofence
-                self._geofence = NFZGeofence(self.geo)
-            status, speed_factor = self._geofence.check_position(self.lat, self.lon)
-            if status == 'critical':
-                print("[GEOFENCE] CRITICAL: Too close to SSSI! RTL!")
-                self.nav.set_mode('RTL')
-                self._set_state(State.RETURN_HOME)
-                return
-            elif status == 'warning':
-                self.nav.set_speed(config.SEARCH_SPEED_MPS * speed_factor)
-            else:
-                self.nav.set_speed(config.SEARCH_SPEED_MPS)
-        else:
-            self.nav.set_speed(config.SEARCH_SPEED_MPS)
+        self.nav.set_speed(config.SEARCH_SPEED_MPS)
         if target_found:
             self.calculate_target_gps(px_u, px_v)
             # Skip if detection is near a previously rejected target (within 20m)
@@ -378,7 +361,7 @@ class StateHandlersMixin:
                 self._set_state(State.DONE)
 
     def _handle_centering(self, target_found, px_u, px_v, key):
-        # FIX 5: Centering timeout — go back to SEARCH
+        # NO-DESCEND variant: center at current altitude, then verify
         if time.time() - self.state_start_time > 60 and not self._centering_timeout_warned:
             print("CENTERING TIMEOUT: Lost target or can't converge. Resuming search.")
             self._centering_timeout_warned = True
@@ -387,45 +370,29 @@ class StateHandlersMixin:
         if target_found:
             self.calculate_target_gps(px_u, px_v)
         if time.time() - self.last_req > 0.2:
-            self.nav.send_global_target(self.target_lat, self.target_lon, config.TARGET_ALT)
+            # Stay at CURRENT altitude — don't climb or descend
+            self.nav.send_global_target(self.target_lat, self.target_lon, self.alt)
             self.last_req = time.time()
         if self.get_dist_to_target() < 1.0:
-            # --no-descend: skip descent, verify at current altitude
-            no_descend = "--no-descend" in sys.argv
-            if no_descend:
-                self._set_state(State.VERIFY)
-                print()
-                print("=" * 50)
-                print(f"  VERIFY (at {self.alt:.0f}m — no-descend mode)")
-                print("  Is this the target?")
-                print("  Press Y to confirm, N to reject")
-                print("  (terminal key or browser button)")
-                print("=" * 50)
-            else:
-                self._set_state(State.DESCENDING)
-
-    def _handle_descending(self, target_found, px_u, px_v, key):
-        # FIX 5: Descending timeout warning
-        if time.time() - self.state_start_time > 60 and not self._descending_timeout_warned:
-            print("DESCENDING TIMEOUT: Drone may not be descending. Check altitude hold.")
-            self._descending_timeout_warned = True
-        if target_found:
-            self.calculate_target_gps(px_u, px_v)
-        if time.time() - self.last_req > 0.5:
-            self.nav.send_global_target(self.target_lat, self.target_lon, config.VERIFY_ALT)
-            self.last_req = time.time()
-        if self.alt <= config.VERIFY_ALT + 1.0:
+            # Go straight to VERIFY — no DESCENDING state
             self._set_state(State.VERIFY)
             print()
             print("=" * 50)
-            print("  VERIFY: Is this the target?")
+            print(f"  VERIFY (at {self.alt:.0f}m — no-descend mode)")
+            print("  Is this the target?")
             print("  Press Y to confirm, N to reject")
             print("  (terminal key or browser button)")
             print("=" * 50)
 
+    def _handle_descending(self, target_found, px_u, px_v, key):
+        # NO-DESCEND variant: this state should never be reached
+        # but if it is, go straight to VERIFY
+        self._set_state(State.VERIFY)
+
     def _handle_verify(self, target_found, px_u, px_v, key):
         self.waiting_for_confirmation = True
-        self.nav.send_global_target(self.target_lat, self.target_lon, config.VERIFY_ALT)
+        # Stay at CURRENT altitude — hold position, don't climb or descend
+        self.nav.send_global_target(self.target_lat, self.target_lon, self.alt)
 
     def _handle_hover(self, target_found, px_u, px_v, key):
         # HOVER is a fallback when no waypoints exist. Timeout after 60s -> DONE.

@@ -29,7 +29,12 @@ from planning import PathPlanner
 from vision import VisionSystem
 
 # --- Extracted modules ---
-from state_machine import StateHandlersMixin
+# Choose state machine: default or no-descend variant
+if "--no-descend" in sys.argv:
+    from state_machine_no_descend import StateHandlersMixin
+    print("[CONFIG] Using NO-DESCEND state machine (verify at search altitude)")
+else:
+    from state_machine import StateHandlersMixin
 from navigation import NavigationController
 from stream_server import (start_stream_server, set_stream_frame,
                            get_stream_frame, cmd_queue as stream_cmd_queue)
@@ -60,6 +65,8 @@ STREAM_FPS = 5
 STREAM_QUALITY = 50
 SIM_SPEED = 1  # SITL speedup multiplier (default 1x real-time, use --speed 5 for faster)
 NO_TURN = "--no-turn" in sys.argv  # Quadcopter strafes between waypoints (no yaw rotation)
+NO_DESCEND = "--no-descend" in sys.argv  # Stay at search altitude, don't descend to verify
+NFZ_REPEL = "--nfz-repel" in sys.argv   # Enable SSSI no-fly zone repulsion (potential field)
 
 for _i, _arg in enumerate(sys.argv):
     if _arg == "--model" and _i + 1 < len(sys.argv):
@@ -81,6 +88,8 @@ for _i, _arg in enumerate(sys.argv):
         TRANSIT_FILE = sys.argv[_i + 1]
     elif _arg == "--speed" and _i + 1 < len(sys.argv):
         SIM_SPEED = float(sys.argv[_i + 1])
+    elif _arg == "--alt" and _i + 1 < len(sys.argv):
+        config.TARGET_ALT = float(sys.argv[_i + 1])
 
 if DRY_RUN:
     print("=" * 60)
@@ -435,6 +444,8 @@ class VisualFlightMission(StateHandlersMixin):
         cv2.putText(frame, f"MODE: {config.MODE}", (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
         cv2.putText(frame, f"STATE: {self.state}", (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2)
         cv2.putText(frame, f"ALT: {self.alt:.1f}m", (10, 80), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2)
+        model_name = os.path.basename(os.path.dirname(MODEL_PATH)) + "/" + os.path.basename(MODEL_PATH) if "/" in MODEL_PATH or "\\" in MODEL_PATH else os.path.basename(MODEL_PATH)
+        cv2.putText(frame, f"MODEL: {model_name}", (10, 170), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
 
         # Current Position (Always displayed)
         cv2.putText(frame, f"POS: {self.lat:.6f}, {self.lon:.6f}", (10, 110), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
