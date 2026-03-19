@@ -274,27 +274,159 @@ def main():
 
     results = []
 
-    # NCNN benchmark
+    # NCNN benchmark (inference only)
     ncnn_result = benchmark_ncnn(args.model, args.frames, test_frame)
     results.append(ncnn_result)
 
-    # TFLite benchmark
+    # TFLite benchmark (inference only)
     if not args.no_tflite:
         tflite_result = benchmark_tflite(args.tflite, args.frames, test_frame)
         results.append(tflite_result)
 
-    # Print comparison
+    # Print inference-only comparison
     valid = [r for r in results if r is not None]
     if valid:
         print_results(valid)
     else:
         print("\n  [!] No benchmarks completed. Check model paths and dependencies.")
 
-    print("\n  Setup on Pi (new env):")
-    print("    python3 -m venv --system-site-packages ncnn_env")
-    print("    source ncnn_env/bin/activate")
-    print("    pip install -r requirements/requirements_ncnn_pi.txt")
-    print("    python tests/hardware/ncnn_benchmark.py --camera")
+    # ═══════════════════════════════════════════════════════
+    # FULL PIPELINE BENCHMARK (camera capture + preprocess + inference + draw)
+    # ═══════════════════════════════════════════════════════
+    if args.camera:
+        print("\n" + "=" * 70)
+        print("  FULL PIPELINE BENCHMARK (capture + preprocess + inference + draw)")
+        print("=" * 70)
+
+        from vision import VisionSystem
+
+        pipeline_results = []
+
+        # TFLite full pipeline
+        if not args.no_tflite:
+            print(f"\n  --- TFLite full pipeline ({args.tflite}) ---")
+            try:
+                vis_tfl = VisionSystem(camera_index=0, model_path=args.tflite)
+                if vis_tfl.using_ai:
+                    times_tfl = []
+                    for i in range(args.frames):
+                        t0 = time.perf_counter()
+                        frame = vis_tfl.get_frame()
+                        if frame is not None:
+                            found, x, y, conf = vis_tfl.detect_in_image(frame)
+                        elapsed = (time.perf_counter() - t0) * 1000
+                        times_tfl.append(elapsed)
+                        if (i + 1) % 10 == 0:
+                            print(f"    {i+1}/{args.frames}  avg={statistics.mean(times_tfl):.1f}ms")
+                    vis_tfl.release()
+                    avg = statistics.mean(times_tfl)
+                    pipeline_results.append({
+                        'backend': 'TFLite-PIPE',
+                        'avg_ms': avg,
+                        'min_ms': min(times_tfl),
+                        'max_ms': max(times_tfl),
+                        'std_ms': statistics.stdev(times_tfl) if len(times_tfl) > 1 else 0,
+                        'fps': 1000 / avg,
+                        'frames': args.frames,
+                    })
+            except Exception as e:
+                print(f"    [!] TFLite pipeline error: {e}")
+
+        # NCNN full pipeline
+        print(f"\n  --- NCNN full pipeline ({args.model}) ---")
+        try:
+            # Find tflite path for VisionSystem (it auto-finds ncnn dir)
+            parent = os.path.dirname(os.path.dirname(args.model))
+            tflite_for_ncnn = os.path.join(parent, "best.tflite")
+            if not os.path.exists(tflite_for_ncnn):
+                tflite_for_ncnn = args.tflite
+
+            # Inject --backend ncnn
+            if "--backend" not in sys.argv:
+                sys.argv.extend(["--backend", "ncnn"])
+
+            vis_ncnn = VisionSystem(camera_index=0, model_path=tflite_for_ncnn)
+            if vis_ncnn.using_ai and vis_ncnn.backend_name == "ncnn":
+                times_ncnn = []
+                for i in range(args.frames):
+                    t0 = time.perf_counter()
+                    frame = vis_ncnn.get_frame()
+                    if frame is not None:
+                        found, x, y, conf = vis_ncnn.detect_in_image(frame)
+                    elapsed = (time.perf_counter() - t0) * 1000
+                    times_ncnn.append(elapsed)
+                    if (i + 1) % 10 == 0:
+                        print(f"    {i+1}/{args.frames}  avg={statistics.mean(times_ncnn):.1f}ms")
+                vis_ncnn.release()
+                avg = statistics.mean(times_ncnn)
+                pipeline_results.append({
+                    'backend': 'NCNN-PIPE',
+                    'avg_ms': avg,
+                    'min_ms': min(times_ncnn),
+                    'max_ms': max(times_ncnn),
+                    'std_ms': statistics.stdev(times_ncnn) if len(times_ncnn) > 1 else 0,
+                    'fps': 1000 / avg,
+                    'frames': args.frames,
+                })
+            else:
+                print(f"    [!] NCNN backend not loaded (got: {vis_ncnn.backend_name})")
+        except Exception as e:
+            print(f"    [!] NCNN pipeline error: {e}")
+
+        # Remove injected args
+        if "--backend" in sys.argv:
+            try:
+                idx = sys.argv.index("--backend")
+                sys.argv.pop(idx)
+                sys.argv.pop(idx)
+            except (ValueError, IndexError):
+                pass
+
+        # Print full pipeline comparison
+        if pipeline_results:
+            print("\n" + "=" * 70)
+            print("  FULL PIPELINE RESULTS (camera + preprocess + inference + draw)")
+            print("=" * 70)
+            print(f"  {'Backend':12s} {'Avg ms':>8s} {'Min ms':>8s} {'Max ms':>8s} {'Std ms':>8s} {'FPS':>8s}")
+            print(f"  {'-'*12} {'-'*8} {'-'*8} {'-'*8} {'-'*8} {'-'*8}")
+            for r in pipeline_results:
+                print(f"  {r['backend']:12s} {r['avg_ms']:8.1f} {r['min_ms']:8.1f} "
+                      f"{r['max_ms']:8.1f} {r['std_ms']:8.1f} {r['fps']:8.1f}")
+
+            # Compare inference vs pipeline
+            print("\n  INFERENCE vs FULL PIPELINE:")
+            for pr in pipeline_results:
+                base = pr['backend'].replace('-PIPE', '')
+                inf_r = next((r for r in valid if r['backend'] == base), None)
+                if inf_r:
+                    overhead = pr['avg_ms'] - inf_r['avg_ms']
+                    print(f"    {base}: inference {inf_r['avg_ms']:.0f}ms → pipeline {pr['avg_ms']:.0f}ms "
+                          f"(+{overhead:.0f}ms overhead, {overhead/pr['avg_ms']*100:.0f}% of total)")
+            print("=" * 70)
+
+    # Auto-save to pi_data
+    save_dir = os.path.join(project_root, "pi_data")
+    os.makedirs(save_dir, exist_ok=True)
+    save_path = os.path.join(save_dir, "benchmark_results.txt")
+    try:
+        import platform, socket
+        from datetime import datetime
+        with open(save_path, "a") as f:
+            f.write(f"\n{'=' * 80}\n")
+            f.write(f"  NCNN BENCHMARK — {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+            f.write(f"  Host: {socket.gethostname()}, Python: {platform.python_version()}, Arch: {platform.machine()}\n")
+            f.write(f"{'=' * 80}\n")
+            f.write(f"  {'Backend':12s} {'Avg ms':>8s} {'FPS':>8s} {'Type':>12s}\n")
+            f.write(f"  {'-'*12} {'-'*8} {'-'*8} {'-'*12}\n")
+            for r in valid:
+                f.write(f"  {r['backend']:12s} {r['avg_ms']:8.1f} {r['fps']:8.1f} {'inference':>12s}\n")
+            if args.camera and 'pipeline_results' in dir() and pipeline_results:
+                for r in pipeline_results:
+                    f.write(f"  {r['backend']:12s} {r['avg_ms']:8.1f} {r['fps']:8.1f} {'full pipeline':>12s}\n")
+            f.write("\n")
+        print(f"\n  Results saved to: {save_path}")
+    except Exception as e:
+        print(f"\n  [!] Could not save results: {e}")
 
 
 if __name__ == '__main__':
