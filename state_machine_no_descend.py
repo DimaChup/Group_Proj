@@ -323,12 +323,12 @@ class StateHandlersMixin:
         self.nav.set_speed(config.SEARCH_SPEED_MPS)
         if target_found:
             self.calculate_target_gps(px_u, px_v)
-            # Skip if detection is near a previously rejected target (within 20m)
+            # Skip if detection is near a previously rejected target (within 3m)
             # or near an item of interest (within 3m)
             near_rejected = False
             for rej_lat, rej_lon in self.rejected_targets:
                 d = self._gps_dist(self.target_lat, self.target_lon, rej_lat, rej_lon)
-                if d < 20.0:
+                if d < 3.0:
                     near_rejected = True
                     break
             if not near_rejected and hasattr(self, 'items_of_interest'):
