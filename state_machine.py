@@ -205,19 +205,23 @@ class StateHandlersMixin:
         g = _get_main_globals()
         REAL_CANVAS_SIZE = g['REAL_CANVAS_SIZE']
         SEARCH_PATTERN = g['SEARCH_PATTERN']
-        # If drone disarmed itself, retry immediately (matches dima1 behaviour)
-        if self.master and not self.master.motors_armed():
-            if config.MODE == "SIMULATION":
-                print("Drone disarmed during takeoff — retrying arm sequence...")
-                self._set_state(State.ARMING)
-            else:
-                print("DRONE DISARMED — safety stop. Re-arm manually via RC.")
-                self._set_state(State.DONE)
+
+        # In SIMULATION, keep sending position targets to prevent SITL auto-disarm.
+        # Don't check motors_armed() — SITL may briefly report disarmed during
+        # takeoff transition, causing an arm/disarm loop.
+        if config.MODE == "SIMULATION":
+            self.nav.send_global_target(self.lat, self.lon, config.TARGET_ALT)
+        elif self.master and not self.master.motors_armed():
+            # REAL mode only: if drone disarmed itself, safety stop
+            print("DRONE DISARMED — safety stop. Re-arm manually via RC.")
+            self._set_state(State.DONE)
+            return
+
         # FIX 5: Takeoff timeout warning
-        elif time.time() - self.state_start_time > 60 and not self._takeoff_timeout_warned:
+        if time.time() - self.state_start_time > 60 and not self._takeoff_timeout_warned:
             print("TAKEOFF TIMEOUT: Drone may not be climbing. Check motors and GPS.")
             self._takeoff_timeout_warned = True
-        elif self.alt >= config.TARGET_ALT * 0.90:
+        if self.alt >= config.TARGET_ALT * 0.90:
             print("Target Altitude Reached.")
 
             if config.MODE == "SIMULATION":
