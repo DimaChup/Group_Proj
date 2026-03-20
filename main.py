@@ -512,6 +512,89 @@ class VisualFlightMission(StateHandlersMixin):
                 cv2.putText(frame, label, (10, y_off + idx * 30),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 100, 0), 2)
 
+        # Servo release animation during HOVER_TARGET
+        # Synced to actual servo timeline: 0-3s wait, 3s=stage1 fast drop, 6s=stage2 rope gone, 15s=depart
+        if self.state == State.HOVER_TARGET and hasattr(self, '_hover_elapsed'):
+            elapsed = self._hover_elapsed
+            h, w = frame.shape[:2]
+            # Animation panel (bottom-right, 250x180)
+            ax, ay, aw, ah = w - 270, h - 200, 250, 180
+            # Sky + ground
+            cv2.rectangle(frame, (ax, ay), (ax+aw, ay+ah), (180, 130, 80), -1)
+            ground_y = ay + ah - 25
+            cv2.rectangle(frame, (ax, ground_y), (ax+aw, ay+ah), (50, 120, 50), -1)
+            cv2.rectangle(frame, (ax, ay), (ax+aw, ay+ah), (255, 255, 255), 1)
+
+            drone_x = ax + aw // 2
+            drone_y = ay + 35
+
+            def draw_drone(dx, dy):
+                cv2.rectangle(frame, (dx-25, dy-5), (dx+25, dy+5), (200, 200, 200), -1)
+                cv2.line(frame, (dx-30, dy-8), (dx-15, dy-8), (180, 180, 180), 2)
+                cv2.line(frame, (dx+15, dy-8), (dx+30, dy-8), (180, 180, 180), 2)
+
+            def draw_package(px, py):
+                cv2.rectangle(frame, (px-10, py), (px+10, py+14), (0, 0, 220), -1)
+
+            if elapsed < 3.0:
+                # 0-3s: Hovering, package hanging from rope, waiting
+                pkg_y = drone_y + 45
+                draw_drone(drone_x, drone_y)
+                cv2.line(frame, (drone_x, drone_y+5), (drone_x, pkg_y), (150, 150, 150), 2)
+                draw_package(drone_x, pkg_y)
+                cv2.putText(frame, f"HOVERING ({elapsed:.0f}s)", (ax+10, ay+18),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 255, 255), 1)
+            elif elapsed < 4.0:
+                # 3-4s: STAGE 1 — fast drop! Package falls to ground in ~1s
+                progress = (elapsed - 3.0) / 1.0  # 1 second drop
+                pkg_y_start = drone_y + 45
+                pkg_y = int(pkg_y_start + progress * (ground_y - pkg_y_start - 16))
+                draw_drone(drone_x, drone_y)
+                cv2.line(frame, (drone_x, drone_y+5), (drone_x, pkg_y), (150, 150, 150), 2)
+                draw_package(drone_x, pkg_y)
+                cv2.putText(frame, "STAGE 1 — DROP!", (ax+10, ay+18),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 165, 255), 2)
+            elif elapsed < 6.0:
+                # 4-6s: Package on ground, rope still attached
+                draw_drone(drone_x, drone_y)
+                cv2.line(frame, (drone_x, drone_y+5), (drone_x, ground_y-16), (150, 150, 150), 2)
+                draw_package(drone_x, ground_y - 16)
+                cv2.putText(frame, "STAGE 1 — DEPLOYED", (ax+10, ay+18),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 165, 255), 1)
+            elif elapsed < 7.0:
+                # 6-7s: STAGE 2 — rope detaches (disappears)
+                draw_drone(drone_x, drone_y)
+                draw_package(drone_x, ground_y - 16)
+                cv2.putText(frame, "STAGE 2 — DETACHED", (ax+10, ay+18),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 255), 2)
+                cv2.putText(frame, "OK", (drone_x+15, ground_y-5),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0), 2)
+            elif elapsed < 15.0:
+                # 7-15s: Drone hovering, package on ground, waiting
+                draw_drone(drone_x, drone_y)
+                draw_package(drone_x, ground_y - 16)
+                cv2.putText(frame, "OK", (drone_x+15, ground_y-5),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0), 2)
+                cv2.putText(frame, f"COMPLETE ({15-elapsed:.0f}s)", (ax+10, ay+18),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 0), 1)
+            else:
+                # 15s+: Drone flies off
+                fly_progress = min(1.0, (elapsed - 15.0) / 3.0)
+                dy = int(drone_y - fly_progress * 30)
+                dx = int(drone_x + fly_progress * 60)
+                draw_drone(dx, dy)
+                draw_package(drone_x, ground_y - 16)
+                cv2.putText(frame, "OK", (drone_x+15, ground_y-5),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0), 2)
+                cv2.putText(frame, "DEPARTING", (ax+10, ay+18),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 0), 1)
+
+            # Timeline bar with stage markers
+            bar_y = ay + ah - 10
+            cv2.rectangle(frame, (ax+5, bar_y), (ax+aw-5, bar_y+6), (80, 80, 80), -1)
+            progress = min(1.0, elapsed / 15.0)
+            cv2.rectangle(frame, (ax+5, bar_y), (ax+5+int((aw-10)*progress), bar_y+5), (0, 255, 0), -1)
+
         # 4. COMPOSITE VIEW
         final_display = frame
         if config.MODE == "SIMULATION":
@@ -524,19 +607,23 @@ class VisualFlightMission(StateHandlersMixin):
                 current_state=self.state, rescan_pass=self.rescan_pass
             )
 
-             # Draw items of interest on god view (blue dot + 3m exclusion circle)
+             # Draw items of interest on god view (BRIGHT blue dot + 3m exclusion circle)
              if hasattr(self, 'items_of_interest'):
                  for idx, item in enumerate(self.items_of_interest):
                      ix, iy = self.geo.gps_to_pixels(item['lat'], item['lon'])
-                     # 3m exclusion radius circle (translucent blue)
-                     radius_px = max(10, int(3.0 * self.geo.pix_per_m))  # 3m in pixels
-                     cv2.circle(god_frame, (ix, iy), radius_px, (255, 100, 0), 1)  # blue ring
-                     # Blue filled dot at centre
-                     cv2.circle(god_frame, (ix, iy), 8, (255, 100, 0), -1)  # blue filled
-                     cv2.circle(god_frame, (ix, iy), 8, (255, 255, 255), 2)  # white border
-                     label = f"I{idx+1} ({item['lat']:.5f},{item['lon']:.5f})"
-                     cv2.putText(god_frame, label, (ix + 15, iy + 5),
-                                 cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 100, 0), 1)
+                     # 3m exclusion radius circle
+                     radius_px = max(15, int(3.0 * self.geo.pix_per_m))
+                     cv2.circle(god_frame, (ix, iy), radius_px, (255, 50, 50), 2)  # bright blue ring
+                     # Large blue filled dot at centre
+                     cv2.circle(god_frame, (ix, iy), 15, (255, 50, 50), -1)  # bright blue filled
+                     cv2.circle(god_frame, (ix, iy), 15, (255, 255, 255), 3)  # thick white border
+                     # Bold label
+                     label = f"I{idx+1}"
+                     cv2.putText(god_frame, label, (ix + 20, iy + 5),
+                                 cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 50, 50), 2)
+                     coords = f"({item['lat']:.5f},{item['lon']:.5f})"
+                     cv2.putText(god_frame, coords, (ix + 20, iy + 25),
+                                 cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 50, 50), 1)
 
              h_scale = frame.shape[0] / god_frame.shape[0]
              god_resized = cv2.resize(god_frame, (int(god_frame.shape[1]*h_scale), frame.shape[0]))

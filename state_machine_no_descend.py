@@ -433,6 +433,8 @@ class StateHandlersMixin:
         # Timeline: 0s=arrive → 3s=stage1 → 6s=stage2 → 15s=depart
         self.nav.send_global_target(self.landing_lat, self.landing_lon, 3.0)
         elapsed = time.time() - self.state_start_time
+        self._hover_elapsed = elapsed
+        elapsed = time.time() - self.state_start_time
 
         # Servo config (confirm channel + PWM on real drone!)
         SERVO_CHANNEL = 9

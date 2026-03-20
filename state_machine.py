@@ -165,9 +165,14 @@ class StateHandlersMixin:
             # Don't proceed to arm until GPS fix is acquired
         elif self.master.motors_armed():
             print("Armed! Taking Off...")
+            # Send takeoff IMMEDIATELY — don't wait for next loop iteration
+            # SITL auto-disarms after ~5s if no command is received
             self.master.mav.command_long_send(
                 self.master.target_system, self.master.target_component,
                 mavutil.mavlink.MAV_CMD_NAV_TAKEOFF, 0, 0, 0, 0, 0, 0, 0, config.TARGET_ALT)
+            # In simulation, also send a position target right away to prevent disarm
+            if config.MODE == "SIMULATION":
+                self.nav.send_global_target(self.lat, self.lon, config.TARGET_ALT)
             self._set_state(State.TAKEOFF)
         elif time.time() - self.last_req > 3.0:
             # Set GUIDED mode (4) — use command_long which works reliably via mavproxy
@@ -177,18 +182,18 @@ class StateHandlersMixin:
                 mavutil.mavlink.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED,
                 4, 0, 0, 0, 0, 0)  # 4 = GUIDED
             # Check SET_MODE acknowledgement (short timeout to avoid blocking main loop)
-            mode_ack = self.master.recv_match(type='COMMAND_ACK', blocking=True, timeout=1)
+            mode_ack = self.master.recv_match(type='COMMAND_ACK', blocking=True, timeout=0.2)
             if mode_ack:
                 if mode_ack.result != 0:
                     print(f"SET_MODE REJECTED: result={mode_ack.result}")
                 else:
                     print("SET_MODE (GUIDED) accepted")
-            # Small delay to let mode switch settle before arming
-            time.sleep(0.5)
+            # Brief delay to let mode switch settle before arming
+            time.sleep(0.2)
             self.master.mav.command_long_send(
                 self.master.target_system, self.master.target_component,
                 mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0, 1, 0, 0, 0, 0, 0, 0)
-            arm_ack = self.master.recv_match(type='COMMAND_ACK', blocking=True, timeout=1)
+            arm_ack = self.master.recv_match(type='COMMAND_ACK', blocking=True, timeout=0.2)
             if arm_ack:
                 if arm_ack.result != 0:
                     print(f"ARM REJECTED: result={arm_ack.result}")
@@ -200,6 +205,11 @@ class StateHandlersMixin:
         g = _get_main_globals()
         REAL_CANVAS_SIZE = g['REAL_CANVAS_SIZE']
         SEARCH_PATTERN = g['SEARCH_PATTERN']
+        # Keep feeding position targets during takeoff to prevent SITL auto-disarm
+        if self.master and self.master.motors_armed():
+            if time.time() - self.last_req > 1.0:
+                self.nav.send_global_target(self.lat, self.lon, config.TARGET_ALT)
+                self.last_req = time.time()
         # If drone disarmed itself, retry in SIMULATION only (with cooldown)
         if self.master and not self.master.motors_armed():
             # Wait 3 seconds before retrying to avoid arm/disarm loop
@@ -478,6 +488,9 @@ class StateHandlersMixin:
         # Timeline: 0s=arrive → 3s=stage1 → 6s=stage2 → 15s=depart
         self.nav.send_global_target(self.landing_lat, self.landing_lon, 3.0)
         elapsed = time.time() - self.state_start_time
+
+        # Store elapsed for animation rendering in update_dashboard
+        self._hover_elapsed = elapsed
 
         # Servo config (confirm channel + PWM on real drone!)
         SERVO_CHANNEL = 9       # CHECK: Mission Planner → Servo/Relay tab
