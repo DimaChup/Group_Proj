@@ -512,7 +512,7 @@ class VisualFlightMission(StateHandlersMixin):
                 cv2.putText(frame, label, (10, y_off + idx * 30),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 100, 0), 2)
 
-        # Servo release animation during HOVER_TARGET
+        # Servo release animation during HOVER_TARGET only
         # Synced to actual servo timeline: 0-3s wait, 3s=stage1 fast drop, 6s=stage2 rope gone, 15s=depart
         if self.state == State.HOVER_TARGET and hasattr(self, '_hover_elapsed'):
             elapsed = self._hover_elapsed
@@ -578,8 +578,8 @@ class VisualFlightMission(StateHandlersMixin):
                 cv2.putText(frame, f"COMPLETE ({15-elapsed:.0f}s)", (ax+10, ay+18),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 0), 1)
             else:
-                # 15s+: Drone flies off
-                fly_progress = min(1.0, (elapsed - 15.0) / 3.0)
+                # 15s+: Drone flies off (visible for 2s then gone)
+                fly_progress = min(1.0, (elapsed - 15.0) / 2.0)
                 dy = int(drone_y - fly_progress * 30)
                 dx = int(drone_x + fly_progress * 60)
                 draw_drone(dx, dy)
@@ -604,26 +604,11 @@ class VisualFlightMission(StateHandlersMixin):
                 (self.target_lat, self.target_lon), (self.landing_lat, self.landing_lon), self.geo,
                 search_wps=self.waypoints, search_wp_index=self.wp_index,
                 transit_wps_gps=self.pre_waypoints, transit_wp_index=self.pre_wp_index,
-                current_state=self.state, rescan_pass=self.rescan_pass
+                current_state=self.state, rescan_pass=self.rescan_pass,
+                items_of_interest=getattr(self, 'items_of_interest', None),
+                rejected_targets=getattr(self, 'rejected_targets', None)
             )
 
-             # Draw items of interest on god view (BRIGHT blue dot + 3m exclusion circle)
-             if hasattr(self, 'items_of_interest'):
-                 for idx, item in enumerate(self.items_of_interest):
-                     ix, iy = self.geo.gps_to_pixels(item['lat'], item['lon'])
-                     # 3m exclusion radius circle
-                     radius_px = max(15, int(3.0 * self.geo.pix_per_m))
-                     cv2.circle(god_frame, (ix, iy), radius_px, (255, 50, 50), 2)  # bright blue ring
-                     # Large blue filled dot at centre
-                     cv2.circle(god_frame, (ix, iy), 15, (255, 50, 50), -1)  # bright blue filled
-                     cv2.circle(god_frame, (ix, iy), 15, (255, 255, 255), 3)  # thick white border
-                     # Bold label
-                     label = f"I{idx+1}"
-                     cv2.putText(god_frame, label, (ix + 20, iy + 5),
-                                 cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 50, 50), 2)
-                     coords = f"({item['lat']:.5f},{item['lon']:.5f})"
-                     cv2.putText(god_frame, coords, (ix + 20, iy + 25),
-                                 cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 50, 50), 1)
 
              h_scale = frame.shape[0] / god_frame.shape[0]
              god_resized = cv2.resize(god_frame, (int(god_frame.shape[1]*h_scale), frame.shape[0]))

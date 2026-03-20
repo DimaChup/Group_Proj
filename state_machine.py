@@ -182,18 +182,18 @@ class StateHandlersMixin:
                 mavutil.mavlink.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED,
                 4, 0, 0, 0, 0, 0)  # 4 = GUIDED
             # Check SET_MODE acknowledgement (short timeout to avoid blocking main loop)
-            mode_ack = self.master.recv_match(type='COMMAND_ACK', blocking=True, timeout=0.2)
+            mode_ack = self.master.recv_match(type='COMMAND_ACK', blocking=True, timeout=1)
             if mode_ack:
                 if mode_ack.result != 0:
                     print(f"SET_MODE REJECTED: result={mode_ack.result}")
                 else:
                     print("SET_MODE (GUIDED) accepted")
-            # Brief delay to let mode switch settle before arming
-            time.sleep(0.2)
+            # Small delay to let mode switch settle before arming
+            time.sleep(0.5)
             self.master.mav.command_long_send(
                 self.master.target_system, self.master.target_component,
                 mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0, 1, 0, 0, 0, 0, 0, 0)
-            arm_ack = self.master.recv_match(type='COMMAND_ACK', blocking=True, timeout=0.2)
+            arm_ack = self.master.recv_match(type='COMMAND_ACK', blocking=True, timeout=1)
             if arm_ack:
                 if arm_ack.result != 0:
                     print(f"ARM REJECTED: result={arm_ack.result}")
@@ -205,25 +205,13 @@ class StateHandlersMixin:
         g = _get_main_globals()
         REAL_CANVAS_SIZE = g['REAL_CANVAS_SIZE']
         SEARCH_PATTERN = g['SEARCH_PATTERN']
-        # Keep feeding position targets during takeoff to prevent SITL auto-disarm
-        if self.master and self.master.motors_armed():
-            if time.time() - self.last_req > 1.0:
-                self.nav.send_global_target(self.lat, self.lon, config.TARGET_ALT)
-                self.last_req = time.time()
-        # If drone disarmed itself, retry in SIMULATION only (with cooldown)
+        # If drone disarmed itself, retry immediately (matches dima1 behaviour)
         if self.master and not self.master.motors_armed():
-            # Wait 3 seconds before retrying to avoid arm/disarm loop
-            if time.time() - self.state_start_time < 3.0:
-                return  # give SITL time to stabilize
-            if not hasattr(self, '_arm_retries'):
-                self._arm_retries = 0
-            self._arm_retries += 1
-            if config.MODE == "SIMULATION" and self._arm_retries < 5:
-                print(f"Drone disarmed during takeoff — retrying ({self._arm_retries}/5)...")
-                time.sleep(1)  # brief pause before retry
+            if config.MODE == "SIMULATION":
+                print("Drone disarmed during takeoff — retrying arm sequence...")
                 self._set_state(State.ARMING)
             else:
-                print("DRONE DISARMED — too many retries or REAL mode. Stopping.")
+                print("DRONE DISARMED — safety stop. Re-arm manually via RC.")
                 self._set_state(State.DONE)
         # FIX 5: Takeoff timeout warning
         elif time.time() - self.state_start_time > 60 and not self._takeoff_timeout_warned:

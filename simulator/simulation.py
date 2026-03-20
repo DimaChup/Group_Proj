@@ -303,7 +303,7 @@ class SimulationEnvironment:
 
         return final_view, view_w_px, view_h_px
 
-    def get_god_view(self, cx, cy, yaw, view_w_px, view_h_px, zoom_level, virtual_poly, search_poly, target_gps, landing_gps, geo_tool, logged_items=None, detection_clusters=None, active_cluster_idx=None, search_wps=None, search_wp_index=0, transit_wps_gps=None, transit_wp_index=0, current_state=None, rescan_pass=0):
+    def get_god_view(self, cx, cy, yaw, view_w_px, view_h_px, zoom_level, virtual_poly, search_poly, target_gps, landing_gps, geo_tool, logged_items=None, detection_clusters=None, active_cluster_idx=None, search_wps=None, search_wp_index=0, transit_wps_gps=None, transit_wp_index=0, current_state=None, rescan_pass=0, items_of_interest=None, rejected_targets=None):
         display_map = self.full_map.copy()
         
         # Render ALL targets on god view
@@ -451,6 +451,29 @@ class SimulationEnvironment:
             if current_state == "PRE_WAYPOINTS" and transit_wp_index < len(tw_pts):
                 cur = tw_pts[transit_wp_index]
                 cv2.circle(display_map, (int(cur[0]), int(cur[1])), 14, (0, 0, 255), 3)
+
+        # Draw rejected targets (red X) — false positives
+        if rejected_targets:
+            for idx, (rlat, rlon) in enumerate(rejected_targets):
+                rx, ry = geo_tool.gps_to_pixels(rlat, rlon)
+                cv2.circle(display_map, (rx, ry), 10, (0, 0, 255), -1)  # red dot
+                cv2.circle(display_map, (rx, ry), 10, (255, 255, 255), 2)  # white border
+                # X mark
+                cv2.line(display_map, (rx-7, ry-7), (rx+7, ry+7), (255, 255, 255), 2)
+                cv2.line(display_map, (rx+7, ry-7), (rx-7, ry+7), (255, 255, 255), 2)
+                cv2.putText(display_map, f"FP", (rx + 15, ry + 5),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
+
+        # Draw items of interest (blue markers)
+        if items_of_interest:
+            for idx, item in enumerate(items_of_interest):
+                ix, iy = geo_tool.gps_to_pixels(item['lat'], item['lon'])
+                radius_px = max(15, int(3.0 * geo_tool.pix_per_m))
+                cv2.circle(display_map, (ix, iy), radius_px, (255, 50, 50), 2)
+                cv2.circle(display_map, (ix, iy), 12, (255, 50, 50), -1)
+                cv2.circle(display_map, (ix, iy), 12, (255, 255, 255), 2)
+                cv2.putText(display_map, f"I{idx+1}", (ix + 18, iy + 5),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 50, 50), 2)
 
         # Apply Zoom
         if zoom_level > 1.0:
