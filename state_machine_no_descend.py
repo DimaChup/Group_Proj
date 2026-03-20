@@ -324,12 +324,19 @@ class StateHandlersMixin:
         if target_found:
             self.calculate_target_gps(px_u, px_v)
             # Skip if detection is near a previously rejected target (within 20m)
+            # or near an item of interest (within 3m)
             near_rejected = False
             for rej_lat, rej_lon in self.rejected_targets:
                 d = self._gps_dist(self.target_lat, self.target_lon, rej_lat, rej_lon)
                 if d < 20.0:
                     near_rejected = True
                     break
+            if not near_rejected and hasattr(self, 'items_of_interest'):
+                for item in self.items_of_interest:
+                    d = self._gps_dist(self.target_lat, self.target_lon, item['lat'], item['lon'])
+                    if d < 3.0:
+                        near_rejected = True
+                        break
             if not near_rejected:
                 print("TARGET DETECTED!")
                 # Remember where we left the search path

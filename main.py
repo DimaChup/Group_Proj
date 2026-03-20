@@ -504,6 +504,14 @@ class VisualFlightMission(StateHandlersMixin):
              else:
                  cv2.putText(frame, "Y=Confirm  N=Reject  I=Interest", (cx - 200, cy + 80), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
 
+        # Items of interest list on camera HUD
+        if hasattr(self, 'items_of_interest') and self.items_of_interest:
+            y_off = frame.shape[0] - 30 * len(self.items_of_interest) - 10
+            for idx, item in enumerate(self.items_of_interest):
+                label = f"I{idx+1}: ({item['lat']:.5f}, {item['lon']:.5f})"
+                cv2.putText(frame, label, (10, y_off + idx * 30),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 100, 0), 2)
+
         # 4. COMPOSITE VIEW
         final_display = frame
         if config.MODE == "SIMULATION":
@@ -516,12 +524,16 @@ class VisualFlightMission(StateHandlersMixin):
                 current_state=self.state, rescan_pass=self.rescan_pass
             )
 
-             # Draw items of interest on god view (blue markers)
+             # Draw items of interest on god view (blue dot + 3m exclusion circle)
              if hasattr(self, 'items_of_interest'):
                  for idx, item in enumerate(self.items_of_interest):
                      ix, iy = self.geo.gps_to_pixels(item['lat'], item['lon'])
-                     cv2.circle(god_frame, (ix, iy), 12, (255, 100, 0), -1)  # blue filled
-                     cv2.circle(god_frame, (ix, iy), 12, (255, 255, 255), 2)  # white border
+                     # 3m exclusion radius circle (translucent blue)
+                     radius_px = max(10, int(3.0 * self.geo.pix_per_m))  # 3m in pixels
+                     cv2.circle(god_frame, (ix, iy), radius_px, (255, 100, 0), 1)  # blue ring
+                     # Blue filled dot at centre
+                     cv2.circle(god_frame, (ix, iy), 8, (255, 100, 0), -1)  # blue filled
+                     cv2.circle(god_frame, (ix, iy), 8, (255, 255, 255), 2)  # white border
                      label = f"I{idx+1} ({item['lat']:.5f},{item['lon']:.5f})"
                      cv2.putText(god_frame, label, (ix + 15, iy + 5),
                                  cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 100, 0), 1)
