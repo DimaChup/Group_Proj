@@ -165,14 +165,11 @@ class StateHandlersMixin:
             # Don't proceed to arm until GPS fix is acquired
         elif self.master.motors_armed():
             print("Armed! Taking Off...")
-            # Send takeoff IMMEDIATELY — don't wait for next loop iteration
-            # SITL auto-disarms after ~5s if no command is received
+            # Send takeoff command only — do NOT send position targets yet,
+            # as SET_POSITION_TARGET cancels the NAV_TAKEOFF climb sequence
             self.master.mav.command_long_send(
                 self.master.target_system, self.master.target_component,
                 mavutil.mavlink.MAV_CMD_NAV_TAKEOFF, 0, 0, 0, 0, 0, 0, 0, config.TARGET_ALT)
-            # In simulation, also send a position target right away to prevent disarm
-            if config.MODE == "SIMULATION":
-                self.nav.send_global_target(self.lat, self.lon, config.TARGET_ALT)
             self._set_state(State.TAKEOFF)
         elif time.time() - self.last_req > 3.0:
             # Set GUIDED mode (4) — use command_long which works reliably via mavproxy
@@ -206,16 +203,17 @@ class StateHandlersMixin:
         REAL_CANVAS_SIZE = g['REAL_CANVAS_SIZE']
         SEARCH_PATTERN = g['SEARCH_PATTERN']
 
-        # In SIMULATION, keep sending position targets to prevent SITL auto-disarm.
-        # Don't check motors_armed() — SITL may briefly report disarmed during
-        # takeoff transition, causing an arm/disarm loop.
-        if config.MODE == "SIMULATION":
-            self.nav.send_global_target(self.lat, self.lon, config.TARGET_ALT)
-        elif self.master and not self.master.motors_armed():
-            # REAL mode only: if drone disarmed itself, safety stop
-            print("DRONE DISARMED — safety stop. Re-arm manually via RC.")
-            self._set_state(State.DONE)
-            return
+        # Match dima1 behavior: retry arming in SIMULATION if disarmed,
+        # safety stop in REAL mode. Only send position targets once climbing.
+        if self.master and not self.master.motors_armed():
+            if config.MODE == "SIMULATION":
+                print("Drone disarmed during takeoff — retrying arm sequence...")
+                self._set_state(State.ARMING)
+                return
+            else:
+                print("DRONE DISARMED — safety stop. Re-arm manually via RC.")
+                self._set_state(State.DONE)
+                return
 
         # FIX 5: Takeoff timeout warning
         if time.time() - self.state_start_time > 60 and not self._takeoff_timeout_warned:
