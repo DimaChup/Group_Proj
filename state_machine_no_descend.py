@@ -591,11 +591,35 @@ class StateHandlersMixin:
     # ── PLB beacon redirect ────────────────────────────────────────────
 
     def _trigger_beacon_redirect(self):
-        """Simulate PLB signal: switch search to Focus Area polygon."""
+        """Simulate PLB signal: switch search to Focus Area polygon.
+        Priority: 1) focus_area.json on disk (re-read, may be updated mid-flight)
+                  2) drawn polygon (already in config.FOCUS_AREA_GPS)
+                  3) KML Focus Area (loaded at startup)
+        """
         if getattr(self, '_beacon_triggered', False):
             return  # already redirected
+
+        # Try to load/reload from JSON file (allows mid-flight coord updates)
+        import json, os
+        fa_path = "flight_plans/focus_area.json"
+        if os.path.exists(fa_path):
+            try:
+                with open(fa_path, encoding='utf-8') as f:
+                    data = json.load(f)
+                loaded = []
+                for wp in data:
+                    if isinstance(wp, dict):
+                        loaded.append((wp["lat"], wp["lon"]))
+                    else:
+                        loaded.append((wp[0], wp[1]))
+                if len(loaded) >= 3:
+                    config.FOCUS_AREA_GPS = loaded
+                    print(f"[PLB] Loaded focus_area.json: {len(loaded)} points")
+            except Exception as e:
+                print(f"[PLB] Failed to read {fa_path}: {e}")
+
         if not config.FOCUS_AREA_GPS or len(config.FOCUS_AREA_GPS) < 3:
-            print("[PLB] No Focus Area defined in KML — ignoring beacon")
+            print("[PLB] No Focus Area defined — ignoring beacon")
             return
 
         self._beacon_triggered = True

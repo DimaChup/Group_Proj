@@ -175,10 +175,17 @@ class VisualFlightMission(StateHandlersMixin):
             self.target_px, self.tgt_type, self.search_poly, transit_px, focus_px = self.sim.setup_on_map(
                 preload_polygon_gps=preload_gps, preload_transit_gps=preload_transit)
 
-            # Store drawn focus polygon as GPS (PLB beacon area)
+            # Store drawn focus polygon as GPS (PLB beacon area) + save to JSON
             if focus_px and len(focus_px) >= 3:
                 config.FOCUS_AREA_GPS = [self.geo.pixels_to_gps(px[0], px[1]) for px in focus_px]
                 print(f"  Focus Area drawn: {len(config.FOCUS_AREA_GPS)} points (PLB beacon redirect)")
+                # Save to flight_plans/focus_area.json for mid-flight reloading
+                import json
+                fa_data = [{"lat": pt[0], "lon": pt[1], "label": f"F{i+1}"}
+                           for i, pt in enumerate(config.FOCUS_AREA_GPS)]
+                with open("flight_plans/focus_area.json", "w") as f:
+                    json.dump(fa_data, f, indent=2)
+                print(f"  Saved to flight_plans/focus_area.json")
 
             # Store drawn transit waypoints (pixels -> GPS, applied after pre_waypoints init)
             # Only save if NOT preloaded from file (avoid double-adding)
