@@ -83,6 +83,9 @@ class SimulationEnvironment:
 
         window_name = "Select Target"
 
+        focus_polygon = []  # optional Focus Area for PLB beacon redirect
+        focus_closed = False
+
         def _redraw(temp_vis):
             """Draw all elements on the display."""
             dummy_h_px = max(20, int(config.DUMMY_HEIGHT_M * self.geo.pix_per_m * scale_factor))
@@ -122,9 +125,17 @@ class SimulationEnvironment:
                 pts = [np.array([[int(p[0]*scale_factor), int(p[1]*scale_factor)] for p in search_polygon], dtype=np.int32)]
                 cv2.polylines(temp_vis, pts, polygon_closed, (0, 255, 0), 2)
                 for p in pts[0]: cv2.circle(temp_vis, tuple(p), 3, (0, 255, 0), -1)
+            # Focus polygon (magenta — PLB beacon area)
+            if len(focus_polygon) > 0:
+                fpts = [np.array([[int(p[0]*scale_factor), int(p[1]*scale_factor)] for p in focus_polygon], dtype=np.int32)]
+                cv2.polylines(temp_vis, fpts, focus_closed, (255, 0, 255), 2)
+                for p in fpts[0]: cv2.circle(temp_vis, tuple(p), 4, (255, 0, 255), -1)
+                if focus_closed:
+                    cv2.putText(temp_vis, "FOCUS", (fpts[0][0][0]+5, fpts[0][0][1]-8),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 0, 255), 1)
 
         def mouse_callback(event, x, y, flags, param):
-            nonlocal phase, polygon_closed
+            nonlocal phase, polygon_closed, focus_closed
             real_x = int(x / scale_factor)
             real_y = int(y / scale_factor)
             update = False
@@ -142,6 +153,9 @@ class SimulationEnvironment:
                 elif phase == "transit":
                     transit_wps.append((real_x, real_y))
                     print(f"  Transit WP {len(transit_wps)} at ({real_x}, {real_y})")
+                elif phase == "focus" and not focus_closed:
+                    focus_polygon.append((real_x, real_y))
+                    print(f"  Focus point {len(focus_polygon)} at ({real_x}, {real_y})")
                 elif phase == "polygon" and not polygon_closed:
                     search_polygon.append((real_x, real_y))
                 update = True
@@ -150,9 +164,10 @@ class SimulationEnvironment:
                 if phase == "targets" and len(targets) >= 1:
                     transit_preloaded = preload_transit_gps and len(transit_wps) > 0
                     if transit_preloaded and polygon_closed:
-                        # Both preloaded — go straight to launch
-                        phase = "done"
-                        print(f"  {len(targets)} target(s) placed. Press KEY to Launch.")
+                        # Both preloaded — offer focus area drawing
+                        phase = "focus"
+                        print(f"  {len(targets)} target(s) placed.")
+                        print("  Draw Focus Area (magenta) for PLB beacon. Left-click points, Right-click to close (or skip).")
                     elif transit_preloaded:
                         # Transit preloaded but need polygon
                         phase = "polygon"
@@ -164,18 +179,29 @@ class SimulationEnvironment:
                         print("Step 2: Left-click transit waypoints (cyan). Right-click when done (or skip).")
                 elif phase == "transit":
                     if polygon_closed:
-                        phase = "done"
+                        phase = "focus"
                         n = len(transit_wps)
-                        print(f"  {n} transit waypoint(s). Press KEY to Launch.")
+                        print(f"  {n} transit waypoint(s).")
+                        print("  Draw Focus Area (magenta) for PLB beacon. Left-click points, Right-click to close (or skip).")
                     else:
                         phase = "polygon"
                         n = len(transit_wps)
                         print(f"  {n} transit waypoint(s).")
                         print("Step 3: Left-click search polygon points, Right-click to close.")
+                elif phase == "focus" and not focus_closed:
+                    if len(focus_polygon) >= 3:
+                        focus_closed = True
+                        phase = "done"
+                        print(f"  Focus Area closed ({len(focus_polygon)} points). Press KEY to Launch.")
+                    else:
+                        # Skip focus — no points or not enough
+                        phase = "done"
+                        print("  No Focus Area drawn. Press KEY to Launch.")
                 elif phase == "polygon" and not polygon_closed and len(search_polygon) >= 3:
                     polygon_closed = True
-                    phase = "done"
-                    print("Polygon Closed. Press KEY to Launch.")
+                    phase = "focus"
+                    print("Polygon Closed.")
+                    print("  Draw Focus Area (magenta) for PLB beacon. Left-click points, Right-click to close (or skip).")
                 update = True
 
             if update:
@@ -243,7 +269,7 @@ class SimulationEnvironment:
         self.sim_target_type = "dummy"
         # Backwards compat: first target as sim_target_px
         self.sim_target_px = targets[0] if targets else None
-        return targets, "dummy", search_polygon, transit_wps
+        return targets, "dummy", search_polygon, transit_wps, focus_polygon
 
     def get_drone_view(self, cx, cy, alt, yaw):
         fov = 2 * math.atan(config.SENSOR_WIDTH_MM / (2 * config.FOCAL_LENGTH_MM))

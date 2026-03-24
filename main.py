@@ -69,6 +69,7 @@ NO_DESCEND = "--no-descend" in sys.argv  # Stay at search altitude, don't descen
 NFZ_REPEL = "--nfz-repel" in sys.argv   # Enable SSSI no-fly zone repulsion (potential field)
 SMOOTH_BEZIER = "--smooth-bezier" in sys.argv  # Bezier curves at turns (smooth arcs)
 SMOOTH_EXTRA = "--smooth-extra" in sys.argv    # Extra waypoints at turns (wider arc)
+BEACON_DELAY = 0  # --beacon-delay N: simulate PLB signal N seconds after SEARCH begins (0=disabled)
 
 for _i, _arg in enumerate(sys.argv):
     if _arg == "--model" and _i + 1 < len(sys.argv):
@@ -92,6 +93,8 @@ for _i, _arg in enumerate(sys.argv):
         SIM_SPEED = float(sys.argv[_i + 1])
     elif _arg == "--alt" and _i + 1 < len(sys.argv):
         config.TARGET_ALT = float(sys.argv[_i + 1])
+    elif _arg == "--beacon-delay" and _i + 1 < len(sys.argv):
+        BEACON_DELAY = float(sys.argv[_i + 1])
 
 if DRY_RUN:
     print("=" * 60)
@@ -169,8 +172,13 @@ class VisualFlightMission(StateHandlersMixin):
                     print(f"  Pre-loading transit path: {len(preload_transit)} points from {TRANSIT_FILE}")
                 except Exception as e:
                     print(f"WARNING: Failed to load transit from {TRANSIT_FILE}: {e}")
-            self.target_px, self.tgt_type, self.search_poly, transit_px = self.sim.setup_on_map(
+            self.target_px, self.tgt_type, self.search_poly, transit_px, focus_px = self.sim.setup_on_map(
                 preload_polygon_gps=preload_gps, preload_transit_gps=preload_transit)
+
+            # Store drawn focus polygon as GPS (PLB beacon area)
+            if focus_px and len(focus_px) >= 3:
+                config.FOCUS_AREA_GPS = [self.geo.pixels_to_gps(px[0], px[1]) for px in focus_px]
+                print(f"  Focus Area drawn: {len(config.FOCUS_AREA_GPS)} points (PLB beacon redirect)")
 
             # Store drawn transit waypoints (pixels -> GPS, applied after pre_waypoints init)
             # Only save if NOT preloaded from file (avoid double-adding)

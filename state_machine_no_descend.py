@@ -31,6 +31,7 @@ def _get_main_globals():
         'SIM_SPEED': getattr(main, 'SIM_SPEED', 1),
         'NO_TURN': getattr(main, 'NO_TURN', False),
         'SEARCH_PATTERN': getattr(main, 'SEARCH_PATTERN', 'lawnmower'),
+        'BEACON_DELAY': getattr(main, 'BEACON_DELAY', 0),
     }
 
 
@@ -328,6 +329,16 @@ class StateHandlersMixin:
         g = _get_main_globals()
         REAL_CANVAS_SIZE = g['REAL_CANVAS_SIZE']
         self.nav.set_speed(config.SEARCH_SPEED_MPS)
+
+        # Auto-trigger PLB beacon after delay (--beacon-delay N)
+        beacon_delay = g.get('BEACON_DELAY', 0)
+        if beacon_delay > 0 and not getattr(self, '_beacon_triggered', False):
+            # Track when SEARCH first started
+            if not hasattr(self, '_search_first_start'):
+                self._search_first_start = time.time()
+            if time.time() - self._search_first_start >= beacon_delay:
+                self._trigger_beacon_redirect()
+
         if target_found:
             self.calculate_target_gps(px_u, px_v)
             # Skip if detection is near a previously rejected target (within 3m)
@@ -577,6 +588,47 @@ class StateHandlersMixin:
                     int(self.home_lat * 1e7), int(self.home_lon * 1e7), 0)
                 self._land_cmd_time = time.time()
 
+    # ── PLB beacon redirect ────────────────────────────────────────────
+
+    def _trigger_beacon_redirect(self):
+        """Simulate PLB signal: switch search to Focus Area polygon."""
+        if getattr(self, '_beacon_triggered', False):
+            return  # already redirected
+        if not config.FOCUS_AREA_GPS or len(config.FOCUS_AREA_GPS) < 3:
+            print("[PLB] No Focus Area defined in KML — ignoring beacon")
+            return
+
+        self._beacon_triggered = True
+        print()
+        print("=" * 50)
+        print("  [PLB] BEACON SIGNAL RECEIVED!")
+        print(f"  Redirecting to Focus Area ({len(config.FOCUS_AREA_GPS)} points)")
+        print("=" * 50)
+        print()
+
+        # Swap search polygon to focus area
+        g = _get_main_globals()
+        REAL_CANVAS_SIZE = g['REAL_CANVAS_SIZE']
+        focus_poly_px = [self.geo.gps_to_pixels(lat, lon) for lat, lon in config.FOCUS_AREA_GPS]
+        self.planner.search_polygon = focus_poly_px
+        self.search_poly = focus_poly_px
+
+        # Regenerate lawnmower for the smaller area
+        if config.MODE == "SIMULATION":
+            canvas_w, canvas_h = g.get('sim_w', REAL_CANVAS_SIZE), g.get('sim_h', REAL_CANVAS_SIZE)
+            if hasattr(self, 'sim') and self.sim:
+                canvas_w, canvas_h = self.sim.map_w, self.sim.map_h
+        else:
+            canvas_w, canvas_h = REAL_CANVAS_SIZE, REAL_CANVAS_SIZE
+
+        self.waypoints = self.planner.generate_search_pattern(
+            canvas_w, canvas_h, (self.lat, self.lon))
+        self.wp_index = 0
+        self.rescan_pass = 0
+        self.rejected_targets.clear()  # fresh start in new area
+        print(f"  New search pattern: {len(self.waypoints)} waypoints")
+        print(f"  Flying to Focus Area from current position...")
+
     # ── Key input handling ────────────────────────────────────────────
 
     def _handle_keys(self, key, target_found, px_u, px_v):
@@ -612,6 +664,10 @@ class StateHandlersMixin:
                         print("Resuming Automation...")
                         self.last_req = 0  # force immediate waypoint send
                         self._set_state(self.previous_state)
+
+        # B key: simulate PLB beacon signal — redirect to Focus Area
+        if (key == ord('b') or key == ord('B')) and self.state == State.SEARCH:
+            self._trigger_beacon_redirect()
 
         # MANUAL mode — WASD flight controls
         if self.state == State.MANUAL and self.master:
