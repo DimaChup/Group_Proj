@@ -328,11 +328,12 @@ class StateHandlersMixin:
     def _handle_search(self, target_found, px_u, px_v, key):
         g = _get_main_globals()
         REAL_CANVAS_SIZE = g['REAL_CANVAS_SIZE']
-        # Use slower speed in Focus Area after beacon redirect
+        # Speed depends on altitude (slower low = less blur) and focus area
         if getattr(self, '_beacon_triggered', False):
-            self.nav.set_speed(config.FOCUS_SEARCH_SPEED_MPS)
+            search_speed = min(config.FOCUS_SEARCH_SPEED_MPS, config.speed_for_altitude(self.alt))
         else:
-            self.nav.set_speed(config.SEARCH_SPEED_MPS)
+            search_speed = config.speed_for_altitude(self.alt)
+        self.nav.set_speed(search_speed)
 
         # Auto-trigger PLB beacon after delay (--beacon-delay N)
         beacon_delay = g.get('BEACON_DELAY', 0)
@@ -659,6 +660,7 @@ class StateHandlersMixin:
         self.rescan_pass = 0
         self.rejected_targets.clear()  # fresh start in new area
         print(f"  New search pattern: {len(self.waypoints)} waypoints")
+        print(f"  Searching Focus Area at current altitude")
         print(f"  Flying to Focus Area from current position...")
 
     # ── Key input handling ────────────────────────────────────────────

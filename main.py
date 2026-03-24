@@ -474,7 +474,8 @@ class VisualFlightMission(StateHandlersMixin):
         cv2.putText(frame, f"MODEL: {model_name}", (10, 170), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
 
         # Current Position (Always displayed)
-        cv2.putText(frame, f"POS: {self.lat:.6f}, {self.lon:.6f}", (10, 110), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+        ground_speed = math.sqrt(getattr(self, 'vx', 0)**2 + getattr(self, 'vy', 0)**2)
+        cv2.putText(frame, f"POS: {self.lat:.6f}, {self.lon:.6f}  SPD: {ground_speed:.1f}m/s", (10, 110), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
 
         # Target Location (If found/narrowing down)
         if self.target_lat != 0:

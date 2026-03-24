@@ -102,6 +102,21 @@ TRANSIT_SPEED_MPS = 15.0
 SEARCH_SPEED_MPS = 10.0
 FOCUS_SEARCH_SPEED_MPS = 5.0  # Slower in Focus Area (PLB beacon) — more detection time
 
+# Altitude-dependent speed: linear from (20m, 6 m/s) to (50m, 10 m/s)
+SPEED_ALT_LOW = 20.0   # metres — below this, use SPEED_AT_LOW
+SPEED_ALT_HIGH = 50.0  # metres — above this, use SPEED_AT_HIGH
+SPEED_AT_LOW = 6.0     # m/s at low altitude (less blur)
+SPEED_AT_HIGH = 10.0   # m/s at high altitude (faster coverage)
+
+def speed_for_altitude(alt):
+    """Linear interpolation: slower at low alt (less blur), faster at high alt."""
+    if alt <= SPEED_ALT_LOW:
+        return SPEED_AT_LOW
+    if alt >= SPEED_ALT_HIGH:
+        return SPEED_AT_HIGH
+    ratio = (alt - SPEED_ALT_LOW) / (SPEED_ALT_HIGH - SPEED_ALT_LOW)
+    return SPEED_AT_LOW + ratio * (SPEED_AT_HIGH - SPEED_AT_LOW)
+
 # --- REAL MODE SEARCH AREA ---
 # --- SEARCH AREA ---
 # Load from AENGM0074.kml at runtime (see load_kml_zones() below)
