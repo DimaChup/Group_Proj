@@ -362,7 +362,11 @@ class StateHandlersMixin:
             elif self.rescan_pass < self.max_rescan_passes:
                 # Drop altitude by 20% and rescan from current position
                 current_alt = self._current_search_alt()
-                new_alt = current_alt * 0.8
+                new_alt = max(15.0, current_alt * 0.8)
+                if new_alt <= 15.0:
+                    print("WARNING: Rescan altitude hit 15m floor. Ending mission.")
+                    self._set_state(State.DONE)
+                    return
                 self.rescan_pass += 1
                 self._rescan_alt = new_alt  # store for _current_search_alt
                 print(f"\n{'=' * 50}")
@@ -415,6 +419,13 @@ class StateHandlersMixin:
 
     def _handle_verify(self, target_found, px_u, px_v, key):
         self.waiting_for_confirmation = True
+        # Timeout after 120s — operator didn't respond, reject and resume search
+        if time.time() - self.state_start_time > 120:
+            print("WARNING: VERIFY timeout (120s). No operator response — rejecting target.")
+            self.rejected_targets.append((self.target_lat, self.target_lon))
+            self.waiting_for_confirmation = False
+            self._set_state(State.SEARCH)
+            return
         # Stay at CURRENT altitude — hold position, don't climb or descend
         self.nav.send_global_target(self.target_lat, self.target_lon, self.alt)
 
@@ -538,12 +549,22 @@ class StateHandlersMixin:
                 int(self.home_lat * 1e7), int(self.home_lon * 1e7), 0)
             self._land_cmd_sent = True
             self._land_cmd_time = time.time()
+            self._land_retries = 0
             print("  MAV_CMD_NAV_LAND sent")
         elif getattr(self, '_land_cmd_sent', False):
             # Retry if not descending after 5s (command may have been rejected)
             elapsed = time.time() - getattr(self, '_land_cmd_time', time.time())
             if elapsed > 5.0 and self.alt > 1.0:
-                print("  LAND not descending — retrying MAV_CMD_NAV_LAND")
+                self._land_retries = getattr(self, '_land_retries', 0) + 1
+                if self._land_retries >= 5:
+                    print("WARNING: LAND failed after 5 retries. Force disarming.")
+                    self.master.mav.command_long_send(
+                        self.master.target_system, self.master.target_component,
+                        mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0,
+                        0, 21196, 0, 0, 0, 0, 0)  # 21196 = force disarm
+                    self._set_state(State.DONE)
+                    return
+                print(f"  LAND not descending — retrying MAV_CMD_NAV_LAND ({self._land_retries}/5)")
                 self.master.mav.command_long_send(
                     self.master.target_system, self.master.target_component,
                     mavutil.mavlink.MAV_CMD_NAV_LAND, 0,

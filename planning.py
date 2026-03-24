@@ -74,6 +74,10 @@ class PathPlanner:
                 if x_end > x_start:
                     # Store as rotated points (x, y)
                     all_strips.append( [ (x_start, scan_y), (x_end, scan_y) ] )
+                else:
+                    # Narrow strip: margin eliminated all width, use center point
+                    x_mid = (pixels[0] + pixels[-1]) // 2
+                    all_strips.append( [ (x_mid, scan_y), (x_mid, scan_y) ] )
 
         # 3. GLOBAL OPTIMIZATION: CLOSEST START CORNER
         direction = 1 # Default (Left to Right)

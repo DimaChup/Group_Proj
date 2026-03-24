@@ -109,7 +109,14 @@ class StreamHandler(BaseHTTPRequestHandler):
 
     # -- Command endpoint (/cmd?key=y) -----------------------------------
     def _serve_cmd(self):
-        key_char = self.path.split('key=')[1][0].lower()
+        parts = self.path.split('key=')
+        if len(parts) < 2 or not parts[1]:
+            self.send_response(400)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+            self.wfile.write(b'{"ok":false,"error":"missing key parameter"}')
+            return
+        key_char = parts[1][0].lower()
         valid = {'y', 'n', 'e', 'w', 's', 'm'}
         if key_char in valid:
             cmd_queue.put(ord(key_char))

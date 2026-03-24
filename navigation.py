@@ -69,6 +69,17 @@ class NavigationController:
             used automatically.  If None and no_turn is False the drone
             rotates to face the next waypoint (default ArduCopter behaviour).
         """
+        # Validate GPS coordinates and altitude before sending
+        if math.isnan(lat) or math.isnan(lon) or math.isnan(alt):
+            print(f"WARNING: NaN in target position (lat={lat}, lon={lon}, alt={alt}) — skipping")
+            return
+        if lat < -90 or lat > 90 or lon < -180 or lon > 180:
+            print(f"WARNING: GPS out of bounds (lat={lat}, lon={lon}) — skipping")
+            return
+        if alt < 0 or alt > 400:
+            print(f"WARNING: altitude out of range ({alt}m) — skipping")
+            return
+
         # Auto-apply NO_TURN yaw hold when caller doesn't provide explicit yaw
         if yaw is None and self.no_turn and self._get_yaw is not None:
             yaw = self._get_yaw()
@@ -162,6 +173,9 @@ class NavigationController:
         alt : float
             Target takeoff altitude in meters (relative to home).
         """
+        if alt <= 0:
+            print(f"WARNING: invalid takeoff altitude ({alt}m) — must be positive")
+            return
         self.master.mav.command_long_send(
             self.master.target_system, self.master.target_component,
             mavutil.mavlink.MAV_CMD_NAV_TAKEOFF, 0,

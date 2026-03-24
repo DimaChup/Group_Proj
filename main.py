@@ -150,7 +150,8 @@ class VisualFlightMission(StateHandlersMixin):
             preload_gps = None
             preload_transit = None
             if PRELOAD_SEARCH:
-                config.load_kml_zones()  # load real coordinates from AENGM0074.kml
+                if not config.load_kml_zones():
+                    print("[WARN] KML load failed — using fallback SEARCH_AREA_GPS from config.py")
                 preload_gps = config.SEARCH_AREA_GPS
                 print(f"  Pre-loading search polygon from KML: {len(preload_gps)} points")
             # Load transit path from JSON for preloading onto setup map
@@ -687,6 +688,7 @@ class VisualFlightMission(StateHandlersMixin):
             now = time.time()
             if now - self._last_log_time > 1.0:
                 self.logger.writerow([datetime.now(), self.state, self.lat, self.lon, self.alt, self.current_conf])
+                self.log_file.flush()
                 self._last_log_time = now
 
             # Process key/button inputs (manual override, WASD, verify Y/N)
@@ -698,7 +700,7 @@ class VisualFlightMission(StateHandlersMixin):
                 handler(target_found, px_u, px_v, key)
 
             # Geofence: repulsive force AFTER state dispatch (overrides waypoint commands)
-            if self.geofence and self.lat != 0 and self.state not in (
+            if self.geofence and self.master and self.lat != 0 and self.state not in (
                     State.INIT, State.CONNECTING, State.ARMING, State.TAKEOFF,
                     State.LANDING, State.DONE):
                 nfz_dist, nfz_inside = self.geofence.distance_to_boundary(self.lat, self.lon)
@@ -712,7 +714,7 @@ class VisualFlightMission(StateHandlersMixin):
                         urgency = 1.0 - nfz_dist / self.geofence.SOFT_BOUNDARY
                         nudge_speed = 5.0 * urgency
                         mag = abs(off_lat * 111320) + abs(off_lon * 111320 * math.cos(math.radians(self.lat)))
-                        if mag > 0.01:
+                        if mag > 0.01 and self.nav:
                             vn = off_lat * 111320 / mag * nudge_speed
                             ve = off_lon * 111320 * math.cos(math.radians(self.lat)) / mag * nudge_speed
                             self.nav.send_velocity(vn, ve, 0)
