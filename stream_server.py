@@ -71,14 +71,22 @@ class StreamHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header('Content-Type', 'multipart/x-mixed-replace; boundary=frame')
         self.end_headers()
+        _no_frame_count = 0
         while True:
             with _stream_lock:
                 f = _stream_frame
             if f is None:
+                _no_frame_count += 1
+                if _no_frame_count > 300:  # 30 seconds with no frames
+                    break
                 time.sleep(0.1)
                 continue
+            _no_frame_count = 0
             small = cv2.resize(f, (_cfg_stream_w, _cfg_stream_h))
-            _, jpeg = cv2.imencode('.jpg', small, [cv2.IMWRITE_JPEG_QUALITY, _cfg_stream_quality])
+            ret, jpeg = cv2.imencode('.jpg', small, [cv2.IMWRITE_JPEG_QUALITY, _cfg_stream_quality])
+            if not ret or jpeg is None:
+                time.sleep(0.1)
+                continue
             data = jpeg.tobytes()
             try:
                 self.wfile.write(b'--frame\r\n')

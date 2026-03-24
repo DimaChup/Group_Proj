@@ -144,7 +144,7 @@ class NFZGeofence:
             edge = p2 - p1
             edge_len_sq = np.dot(edge, edge)
 
-            if edge_len_sq == 0:
+            if edge_len_sq < 1e-6:
                 dist = np.linalg.norm(np.array([px, py]) - p1)
                 cp = p1
             else:
@@ -156,7 +156,7 @@ class NFZGeofence:
                 min_dist = dist
                 closest_pt = cp
 
-        if closest_pt is None or min_dist == 0:
+        if closest_pt is None or min_dist < 1e-6:
             return 0.0, 0.0
 
         # Push direction: away from closest boundary point
@@ -164,7 +164,7 @@ class NFZGeofence:
         push_dy = py - closest_pt[1]
         push_len = np.sqrt(push_dx**2 + push_dy**2)
 
-        if push_len == 0:
+        if push_len < 1e-6:
             return 0.0, 0.0
 
         # Normalize and scale by inverse distance (stronger when closer)

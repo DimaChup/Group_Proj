@@ -526,7 +526,12 @@ class StateHandlersMixin:
 
     def _handle_landing(self, target_found, px_u, px_v, key):
         from pymavlink import mavutil
+        # Require 3 consecutive frames below 0.3m (barometer noise filter)
         if self.alt < 0.3:
+            self._touchdown_count = getattr(self, '_touchdown_count', 0) + 1
+        else:
+            self._touchdown_count = 0
+        if self._touchdown_count >= 3:
             print("Touchdown. Disarming.")
             self.master.mav.command_long_send(
                 self.master.target_system, self.master.target_component,

@@ -137,6 +137,11 @@ class VisionSystem:
         self.last_class_name = ""  # last detected class name (e.g. "person", "dummy")
         self.last_bbox_h = 0  # last detection bounding box height (pixels)
         self.backend_name = "none"  # "ultralytics", "tflite", "ncnn"
+        try:
+            import config as _cfg
+            self._conf_thresh = getattr(_cfg, "CONFIDENCE_THRESHOLD", 0.4)
+        except Exception:
+            self._conf_thresh = 0.4
 
         if not os.path.exists(model_path):
             print(f"[VISION] Model file not found: {model_path}")
@@ -225,12 +230,7 @@ class VisionSystem:
         if not self.using_ai: return False, 0, 0, 0.0
         frame = self.undistort(frame)
 
-        # Confidence threshold from config (fallback to 0.4)
-        try:
-            import config as _cfg
-            _conf_thresh = getattr(_cfg, "CONFIDENCE_THRESHOLD", 0.4)
-        except Exception:
-            _conf_thresh = 0.4
+        _conf_thresh = self._conf_thresh
 
         # --- NCNN inference (fastest on Pi 5) ---
         if self._use_ncnn:
@@ -349,10 +349,10 @@ class VisionSystem:
                 self.last_bbox_h = bh
                 num_classes = len(best_det) - 4
                 self.last_class_name = COCO_NAMES.get(best_cls_id, f"cls{best_cls_id}") if num_classes > 1 else "dummy"
-                x1 = cx - bw // 2
-                y1 = cy - bh // 2
-                x2 = cx + bw // 2
-                y2 = cy + bh // 2
+                x1 = max(0, cx - bw // 2)
+                y1 = max(0, cy - bh // 2)
+                x2 = min(w, cx + bw // 2)
+                y2 = min(h, cy + bh // 2)
                 label = f"AI {best_conf:.2f} [{self.last_class_name}]"
                 cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
                 cv2.putText(frame, label, (x1, y1-10),
