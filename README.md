@@ -96,11 +96,17 @@ DRONE_MODE=SIMULATION python main.py \
 DRONE_MODE=SIMULATION python main.py --search-area --no-descend --speed 5 --no-turn --transit flight_plans/transit.json
 ```
 
-### Setting 2 — With NFZ Geofence
+### Setting 2 — With NFZ Geofence (repulsive force)
 
 ```bash
 DRONE_MODE=SIMULATION python main.py --search-area --no-descend --speed 5 --no-turn --transit flight_plans/transit.json --nfz-repel
 ```
+
+Adds SSSI no-fly zone protection:
+- **Orange buffer ring** (10m) drawn around SSSI on god-view
+- **Repulsive force** pushes drone away when within 10m of boundary (up to 5 m/s)
+- **Auto-manual** if drone enters NFZ — operator flies out, press M to resume
+- No speed reduction, no RTL (repulsion only)
 
 ### Setting 3 — Dry Run (no SITL needed)
 
