@@ -21,9 +21,9 @@ class NFZGeofence:
         self._sssi_contour = None  # Cached pixel contour
 
         # Buffer distances (meters)
-        self.HARD_BOUNDARY = 10.0    # RTL if closer than this
-        self.SOFT_BOUNDARY = 25.0    # Slow down if closer than this
-        self.WAYPOINT_BUFFER = 30.0  # Skip waypoints within this distance
+        self.HARD_BOUNDARY = 5.0     # RTL if closer than this
+        self.SOFT_BOUNDARY = 10.0    # Repulsive nudge if closer than this
+        self.WAYPOINT_BUFFER = 30.0  # For filter_waypoints() if used
 
     def _get_contour(self):
         """Cache polygon as cv2 contour format."""
@@ -52,10 +52,10 @@ class NFZGeofence:
         point = (float(px), float(py))
 
         # cv2.pointPolygonTest returns:
-        #   positive = outside, negative = inside, 0 = on edge
+        #   positive = inside, negative = outside, 0 = on edge
         signed_dist_px = cv2.pointPolygonTest(contour, point, True)
 
-        is_inside = signed_dist_px < 0
+        is_inside = signed_dist_px > 0
         dist_px = abs(signed_dist_px)
         dist_m = dist_px / self.geo.pix_per_m
 
@@ -177,4 +177,4 @@ class NFZGeofence:
         offset_lat -= config.REF_LAT
         offset_lon -= config.REF_LON
 
-        return offset_lat, offset_lon
+        return -offset_lat, -offset_lon

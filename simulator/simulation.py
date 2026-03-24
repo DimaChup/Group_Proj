@@ -303,7 +303,7 @@ class SimulationEnvironment:
 
         return final_view, view_w_px, view_h_px
 
-    def get_god_view(self, cx, cy, yaw, view_w_px, view_h_px, zoom_level, virtual_poly, search_poly, target_gps, landing_gps, geo_tool, logged_items=None, detection_clusters=None, active_cluster_idx=None, search_wps=None, search_wp_index=0, transit_wps_gps=None, transit_wp_index=0, current_state=None, rescan_pass=0, items_of_interest=None, rejected_targets=None):
+    def get_god_view(self, cx, cy, yaw, view_w_px, view_h_px, zoom_level, virtual_poly, search_poly, target_gps, landing_gps, geo_tool, logged_items=None, detection_clusters=None, active_cluster_idx=None, search_wps=None, search_wp_index=0, transit_wps_gps=None, transit_wp_index=0, current_state=None, rescan_pass=0, items_of_interest=None, rejected_targets=None, nfz_buffer_m=0):
         display_map = self.full_map.copy()
         
         # Render ALL targets on god view
@@ -334,6 +334,18 @@ class SimulationEnvironment:
             cv2.polylines(display_map, [sssi_pts], True, (0, 0, 255), 2)
             cx_s, cy_s = sssi_pts.mean(axis=0).astype(int)
             cv2.putText(display_map, "SSSI NFZ", (cx_s - 30, cy_s), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 255), 1)
+            # Repulsion buffer (orange outline) — only when --nfz-repel active
+            if nfz_buffer_m > 0:
+                if not hasattr(self, '_nfz_buffer_contours'):
+                    buf_px = int(nfz_buffer_m * geo_tool.pix_per_m)
+                    h_map, w_map = self.full_map.shape[:2]
+                    mask = np.zeros((h_map, w_map), dtype=np.uint8)
+                    cv2.fillPoly(mask, [sssi_pts], 255)
+                    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (buf_px * 2 + 1, buf_px * 2 + 1))
+                    self._nfz_buffer_contours, _ = cv2.findContours(
+                        cv2.dilate(mask, kernel), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                if self._nfz_buffer_contours:
+                    cv2.drawContours(display_map, self._nfz_buffer_contours, -1, (0, 140, 255), 2)
         # Draw flight boundary (yellow)
         if config.FLIGHT_AREA_GPS:
             flight_pts = np.array([geo_tool.gps_to_pixels(lat, lon) for lat, lon in config.FLIGHT_AREA_GPS], np.int32)

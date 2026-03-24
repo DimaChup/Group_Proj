@@ -378,7 +378,7 @@ class StateHandlersMixin:
                 self.waypoints = self.planner.generate_search_pattern(
                     canvas_w, canvas_h, (self.lat, self.lon), alt_override=new_alt)
                 self.wp_index = 0
-                self.rejected_targets.clear()  # fresh eyes at new altitude
+                # Keep rejected targets across passes (N = false positive, don't revisit)
                 # Stay in SEARCH — just descend and continue (no transit back)
                 self._set_state(State.SEARCH)
             else:

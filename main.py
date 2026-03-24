@@ -194,7 +194,15 @@ class VisualFlightMission(StateHandlersMixin):
             self.eyes.using_ai = True
             print("Vision System: Real Camera Initialized")
 
-        # 2. Planner
+        # 2. Geofence (only with --nfz-repel flag)
+        self.geofence = None
+        if NFZ_REPEL and config.SSSI_GPS and len(config.SSSI_GPS) >= 3:
+            from geofence import NFZGeofence
+            self.geofence = NFZGeofence(self.geo)
+            print(f"[GEOFENCE] Active — SSSI {len(config.SSSI_GPS)} corners, "
+                  f"hard={self.geofence.HARD_BOUNDARY}m, soft={self.geofence.SOFT_BOUNDARY}m")
+
+        # 3. Planner
         self.planner = PathPlanner(self.geo, self.search_poly)
 
         # Search waypoints generated after pre_waypoints are known (need transit endpoint)
@@ -606,7 +614,8 @@ class VisualFlightMission(StateHandlersMixin):
                 transit_wps_gps=self.pre_waypoints, transit_wp_index=self.pre_wp_index,
                 current_state=self.state, rescan_pass=self.rescan_pass,
                 items_of_interest=getattr(self, 'items_of_interest', None),
-                rejected_targets=getattr(self, 'rejected_targets', None)
+                rejected_targets=getattr(self, 'rejected_targets', None),
+                nfz_buffer_m=self.geofence.SOFT_BOUNDARY if self.geofence else 0
             )
 
 
@@ -687,6 +696,26 @@ class VisualFlightMission(StateHandlersMixin):
             handler = _dispatch.get(self.state)
             if handler:
                 handler(target_found, px_u, px_v, key)
+
+            # Geofence: repulsive force AFTER state dispatch (overrides waypoint commands)
+            if self.geofence and self.lat != 0 and self.state not in (
+                    State.INIT, State.CONNECTING, State.ARMING, State.TAKEOFF,
+                    State.LANDING, State.DONE):
+                nfz_dist, nfz_inside = self.geofence.distance_to_boundary(self.lat, self.lon)
+                if nfz_inside and self.state != State.MANUAL:
+                    print(f"[GEOFENCE] INSIDE NFZ! Switching to MANUAL — fly out!")
+                    self.previous_state = self.state
+                    self._set_state(State.MANUAL)
+                elif not nfz_inside and nfz_dist < self.geofence.SOFT_BOUNDARY:
+                    off_lat, off_lon = self.geofence.repulsive_offset(self.lat, self.lon)
+                    if abs(off_lat) > 1e-8 or abs(off_lon) > 1e-8:
+                        urgency = 1.0 - nfz_dist / self.geofence.SOFT_BOUNDARY
+                        nudge_speed = 5.0 * urgency
+                        mag = abs(off_lat * 111320) + abs(off_lon * 111320 * math.cos(math.radians(self.lat)))
+                        if mag > 0.01:
+                            vn = off_lat * 111320 / mag * nudge_speed
+                            ve = off_lon * 111320 * math.cos(math.radians(self.lat)) / mag * nudge_speed
+                            self.nav.send_velocity(vn, ve, 0)
 
             # Exit loop when mission is complete (show final frame for 3s then quit)
             if self.state == State.DONE:
