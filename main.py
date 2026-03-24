@@ -220,6 +220,7 @@ class VisualFlightMission(StateHandlersMixin):
 
         # 3. Planner
         self.planner = PathPlanner(self.geo, self.search_poly)
+        self.planner._no_turn = NO_TURN
 
         # Search waypoints generated after pre_waypoints are known (need transit endpoint)
 
@@ -632,7 +633,8 @@ class VisualFlightMission(StateHandlersMixin):
                 current_state=self.state, rescan_pass=self.rescan_pass,
                 items_of_interest=getattr(self, 'items_of_interest', None),
                 rejected_targets=getattr(self, 'rejected_targets', None),
-                nfz_buffer_m=self.geofence.SOFT_BOUNDARY if self.geofence else 0
+                nfz_buffer_m=self.geofence.SOFT_BOUNDARY if self.geofence else 0,
+                nfz_repulsion_vec=getattr(self, '_last_repulsion_vec', None)
             )
 
 
@@ -715,7 +717,8 @@ class VisualFlightMission(StateHandlersMixin):
             if handler:
                 handler(target_found, px_u, px_v, key)
 
-            # Geofence: repulsive force AFTER state dispatch (overrides waypoint commands)
+            # Geofence check (runs after state dispatch)
+            self._last_repulsion_vec = None
             if self.geofence and self.master and self.lat != 0 and self.state not in (
                     State.INIT, State.CONNECTING, State.ARMING, State.TAKEOFF,
                     State.LANDING, State.DONE):
@@ -727,13 +730,18 @@ class VisualFlightMission(StateHandlersMixin):
                 elif not nfz_inside and nfz_dist < self.geofence.SOFT_BOUNDARY:
                     off_lat, off_lon = self.geofence.repulsive_offset(self.lat, self.lon)
                     if abs(off_lat) > 1e-8 or abs(off_lon) > 1e-8:
-                        urgency = 1.0 - nfz_dist / self.geofence.SOFT_BOUNDARY
-                        nudge_speed = 5.0 * urgency
-                        mag = abs(off_lat * 111320) + abs(off_lon * 111320 * math.cos(math.radians(self.lat)))
+                        self._last_repulsion_vec = (off_lat, off_lon)
+                        urgency = (1.0 - nfz_dist / self.geofence.SOFT_BOUNDARY) ** 2  # quadratic
+                        nudge_speed = 10.0 * urgency
+                        lat_m = 111320.0
+                        lon_m = 111320.0 * math.cos(math.radians(self.lat))
+                        push_n = -off_lat * lat_m
+                        push_e = -off_lon * lon_m
+                        mag = math.sqrt(push_n**2 + push_e**2)
                         if mag > 0.01 and self.nav:
-                            vn = off_lat * 111320 / mag * nudge_speed
-                            ve = off_lon * 111320 * math.cos(math.radians(self.lat)) / mag * nudge_speed
-                            self.nav.send_velocity(vn, ve, 0)
+                            vn = push_n / mag * nudge_speed
+                            ve = push_e / mag * nudge_speed
+                            self.nav.send_velocity(vn, ve, 0, current_yaw=0.0)
 
             # Exit loop when mission is complete (show final frame for 3s then quit)
             if self.state == State.DONE:

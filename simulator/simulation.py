@@ -329,7 +329,7 @@ class SimulationEnvironment:
 
         return final_view, view_w_px, view_h_px
 
-    def get_god_view(self, cx, cy, yaw, view_w_px, view_h_px, zoom_level, virtual_poly, search_poly, target_gps, landing_gps, geo_tool, logged_items=None, detection_clusters=None, active_cluster_idx=None, search_wps=None, search_wp_index=0, transit_wps_gps=None, transit_wp_index=0, current_state=None, rescan_pass=0, items_of_interest=None, rejected_targets=None, nfz_buffer_m=0):
+    def get_god_view(self, cx, cy, yaw, view_w_px, view_h_px, zoom_level, virtual_poly, search_poly, target_gps, landing_gps, geo_tool, logged_items=None, detection_clusters=None, active_cluster_idx=None, search_wps=None, search_wp_index=0, transit_wps_gps=None, transit_wp_index=0, current_state=None, rescan_pass=0, items_of_interest=None, rejected_targets=None, nfz_buffer_m=0, nfz_repulsion_vec=None):
         display_map = self.full_map.copy()
         
         # Render ALL targets on god view
@@ -372,6 +372,57 @@ class SimulationEnvironment:
                         cv2.dilate(mask, kernel), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
                 if self._nfz_buffer_contours:
                     cv2.drawContours(display_map, self._nfz_buffer_contours, -1, (0, 140, 255), 2)
+            # Vector field around SSSI (cached, only with --nfz-repel)
+            if nfz_buffer_m > 0:
+                if not hasattr(self, '_nfz_vector_field'):
+                    from geofence import NFZGeofence
+                    _fence = NFZGeofence(geo_tool)
+                    self._nfz_vector_field = []
+                    step = 25
+                    h_map, w_map = self.full_map.shape[:2]
+                    for gy in range(step, h_map, step):
+                        for gx in range(step, w_map, step):
+                            lat, lon = geo_tool.pixels_to_gps(gx, gy)
+                            dist, inside = _fence.distance_to_boundary(lat, lon)
+                            if dist > nfz_buffer_m or inside:
+                                continue
+                            off_lat, off_lon = _fence.repulsive_offset(lat, lon)
+                            if abs(off_lat) < 1e-9 and abs(off_lon) < 1e-9:
+                                continue
+                            # Negate for display (repulsive_offset returns inverted signs)
+                            dy_m = -off_lat * 111320
+                            dx_m = -off_lon * 111320 * math.cos(math.radians(lat))
+                            mag = math.sqrt(dx_m**2 + dy_m**2)
+                            if mag < 0.01:
+                                continue
+                            adx = int(dx_m / mag * 18)
+                            ady = int(-dy_m / mag * 18)  # pixel y inverted
+                            col = (0, 0, 200) if dist < 4 else (0, 100, 200) if dist < 7 else (0, 180, 180)
+                            self._nfz_vector_field.append((gx, gy, gx+adx, gy+ady, col))
+                for vf in self._nfz_vector_field:
+                    cv2.arrowedLine(display_map, (vf[0], vf[1]), (vf[2], vf[3]), vf[4], 1, tipLength=0.4)
+
+        # Drone repulsion arrow (bold, on drone position)
+        if nfz_repulsion_vec and (abs(nfz_repulsion_vec[0]) > 1e-8 or abs(nfz_repulsion_vec[1]) > 1e-8):
+            off_lat, off_lon = nfz_repulsion_vec
+            # Negate for display (repulsive_offset returns inverted signs)
+            dy_m = -off_lat * 111320
+            dx_m = -off_lon * 111320 * math.cos(math.radians(51.42))
+            arrow_len = math.sqrt(dx_m**2 + dy_m**2)
+            if arrow_len > 0.01:
+                vis_len = 80
+                dx_px = int(dx_m / arrow_len * vis_len)
+                dy_px = int(-dy_m / arrow_len * vis_len)
+                end_x, end_y = cx + dx_px, cy + dy_px
+                strength = min(1.0, arrow_len * 200)
+                color = (0, 0, 255) if strength > 0.6 else (0, 140, 255) if strength > 0.3 else (0, 255, 0)
+                cv2.arrowedLine(display_map, (cx, cy), (end_x, end_y), (0, 0, 0), 7, tipLength=0.35)
+                cv2.arrowedLine(display_map, (cx, cy), (end_x, end_y), color, 4, tipLength=0.35)
+                cv2.putText(display_map, f"REPEL {arrow_len:.1f}m", (end_x+8, end_y-8),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 3)
+                cv2.putText(display_map, f"REPEL {arrow_len:.1f}m", (end_x+8, end_y-8),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+
         # Draw flight boundary (yellow)
         if config.FLIGHT_AREA_GPS:
             flight_pts = np.array([geo_tool.gps_to_pixels(lat, lon) for lat, lon in config.FLIGHT_AREA_GPS], np.int32)

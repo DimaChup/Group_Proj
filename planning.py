@@ -31,15 +31,23 @@ class PathPlanner:
         rect = cv2.minAreaRect(poly_pts[0])
         (center, size, angle) = rect
         scan_angle = angle + 90 if size[0] < size[1] else angle
-        
+        self.last_scan_angle = scan_angle  # saved for no-turn initial yaw
+
         # Rotate Mask to align with longest edge
         M = cv2.getRotationMatrix2D(center, scan_angle, 1.0)
         M_inv = cv2.invertAffineTransform(M)
         rotated_mask = cv2.warpAffine(mask, M, (map_w, map_h))
 
-        # Scan Lines
+        # Scan Lines — spacing depends on turning mode
         ground_width_m = (config.SENSOR_WIDTH_MM * search_alt) / config.FOCAL_LENGTH_MM
-        overlap = 0.2
+        if getattr(self, '_no_turn', False):
+            # No-turn: use height (perpendicular dim), zero overlap (edge-to-edge)
+            aspect = config.IMAGE_H / config.IMAGE_W
+            ground_width_m = ground_width_m * aspect
+            overlap = 0.0
+        else:
+            # Turning: use width (perpendicular dim), 20% overlap
+            overlap = 0.2
         SWATH_M = ground_width_m * (1.0 - overlap)
         step_px = int(SWATH_M * self.pix_per_m)
         if step_px < 1: step_px = 1

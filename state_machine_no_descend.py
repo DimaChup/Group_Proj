@@ -328,6 +328,40 @@ class StateHandlersMixin:
     def _handle_search(self, target_found, px_u, px_v, key):
         g = _get_main_globals()
         REAL_CANVAS_SIZE = g['REAL_CANVAS_SIZE']
+
+        # No-turn mode: orient drone once along scan direction, wait for completion
+        if g['NO_TURN'] and not getattr(self, '_search_yaw_done', False):
+            if hasattr(self.planner, 'last_scan_angle'):
+                from pymavlink import mavutil
+                if not getattr(self, '_search_yaw_sent', False):
+                    # First scan line direction: from waypoint 0 to waypoint 1
+                    if len(self.waypoints) >= 2:
+                        wp0 = self.waypoints[0]
+                        wp1 = self.waypoints[1]
+                        dlat = wp1[0] - wp0[0]
+                        dlon = wp1[1] - wp0[1]
+                        yaw_deg = math.degrees(math.atan2(dlon * math.cos(math.radians(wp0[0])), dlat)) % 360
+                    else:
+                        yaw_deg = self.planner.last_scan_angle
+                    self.master.mav.command_long_send(
+                        self.master.target_system, self.master.target_component,
+                        mavutil.mavlink.MAV_CMD_CONDITION_YAW, 0,
+                        yaw_deg, 45, 1, 0, 0, 0, 0)  # 45 deg/s, absolute
+                    self._search_yaw_sent = True
+                    self._search_yaw_target = yaw_deg
+                    self._search_yaw_time = time.time()
+                    print(f"[NO-TURN] Orienting to {yaw_deg:.0f} deg (along first scan line)...")
+                    return  # don't fly yet, wait for yaw
+                else:
+                    # Wait for yaw to complete (within 10 deg or 5s timeout)
+                    yaw_error = abs(math.degrees(self.yaw) - self._search_yaw_target) % 360
+                    if yaw_error > 180: yaw_error = 360 - yaw_error
+                    if yaw_error < 10 or time.time() - self._search_yaw_time > 5.0:
+                        self._search_yaw_done = True
+                        print(f"[NO-TURN] Aligned. Starting search pattern.")
+                    else:
+                        return  # still waiting
+
         # Speed depends on altitude (slower low = less blur) and focus area
         if getattr(self, '_beacon_triggered', False):
             search_speed = min(config.FOCUS_SEARCH_SPEED_MPS, config.speed_for_altitude(self.alt))
@@ -632,6 +666,8 @@ class StateHandlersMixin:
             return
 
         self._beacon_triggered = True
+        self._search_yaw_done = False  # re-orient for focus area
+        self._search_yaw_sent = False
         print()
         print("=" * 50)
         print("  [PLB] BEACON SIGNAL RECEIVED!")
@@ -658,7 +694,7 @@ class StateHandlersMixin:
             canvas_w, canvas_h, (self.lat, self.lon))
         self.wp_index = 0
         self.rescan_pass = 0
-        self.rejected_targets.clear()  # fresh start in new area
+        # Keep rejected targets — N-marked items stay rejected across area switch
         print(f"  New search pattern: {len(self.waypoints)} waypoints")
         print(f"  Searching Focus Area at current altitude")
         print(f"  Flying to Focus Area from current position...")

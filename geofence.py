@@ -21,8 +21,8 @@ class NFZGeofence:
         self._sssi_contour = None  # Cached pixel contour
 
         # Buffer distances (meters)
-        self.HARD_BOUNDARY = 5.0     # RTL if closer than this
-        self.SOFT_BOUNDARY = 10.0    # Repulsive nudge if closer than this
+        self.HARD_BOUNDARY = 3.0     # Auto-manual if closer than this
+        self.SOFT_BOUNDARY = 8.0     # Repulsive push if closer (quadratic, 10 m/s max)
         self.WAYPOINT_BUFFER = 30.0  # For filter_waypoints() if used
 
     def _get_contour(self):
