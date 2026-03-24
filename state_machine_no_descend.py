@@ -328,7 +328,11 @@ class StateHandlersMixin:
     def _handle_search(self, target_found, px_u, px_v, key):
         g = _get_main_globals()
         REAL_CANVAS_SIZE = g['REAL_CANVAS_SIZE']
-        self.nav.set_speed(config.SEARCH_SPEED_MPS)
+        # Use slower speed in Focus Area after beacon redirect
+        if getattr(self, '_beacon_triggered', False):
+            self.nav.set_speed(config.FOCUS_SEARCH_SPEED_MPS)
+        else:
+            self.nav.set_speed(config.SEARCH_SPEED_MPS)
 
         # Auto-trigger PLB beacon after delay (--beacon-delay N)
         beacon_delay = g.get('BEACON_DELAY', 0)
@@ -502,6 +506,10 @@ class StateHandlersMixin:
             if hasattr(self, '_servo_stage1_done'):
                 del self._servo_stage1_done
             print(f"Hover complete ({elapsed:.0f}s). Climbing and returning home.")
+            # Climb back to transit altitude before returning
+            if self.master:
+                self.nav.send_global_target(self.lat, self.lon, config.TARGET_ALT)
+                self._climb_start = time.time()
             if self.pre_waypoints:
                 # Retrace transit path in reverse
                 self.return_wp_index = len(self.pre_waypoints) - 1

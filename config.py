@@ -98,8 +98,9 @@ CAMERA_FLIP_180 = True   # Camera mounted inverted on drone — flip image 180°
 CONFIDENCE_THRESHOLD = 0.4  # Min detection confidence (tune on flight day: lower=more detections+more false positives)
 
 # --- SPEED SETTINGS ---
-TRANSIT_SPEED_MPS = 15.0  
-SEARCH_SPEED_MPS = 10.0   
+TRANSIT_SPEED_MPS = 15.0
+SEARCH_SPEED_MPS = 10.0
+FOCUS_SEARCH_SPEED_MPS = 5.0  # Slower in Focus Area (PLB beacon) — more detection time
 
 # --- REAL MODE SEARCH AREA ---
 # --- SEARCH AREA ---
