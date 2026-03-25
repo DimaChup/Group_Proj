@@ -360,6 +360,18 @@ class SimulationEnvironment:
             cv2.polylines(display_map, [sssi_pts], True, (0, 0, 255), 2)
             cx_s, cy_s = sssi_pts.mean(axis=0).astype(int)
             cv2.putText(display_map, "SSSI NFZ", (cx_s - 30, cy_s), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 255), 1)
+            # Inner NFZ polygon (1m inside boundary) — bright pink, bold
+            if nfz_buffer_m > 0:
+                if not hasattr(self, '_nfz_inner_contours'):
+                    inner_px = int(1.0 * geo_tool.pix_per_m)  # 1m erosion
+                    h_map, w_map = self.full_map.shape[:2]
+                    mask_inner = np.zeros((h_map, w_map), dtype=np.uint8)
+                    cv2.fillPoly(mask_inner, [sssi_pts], 255)
+                    kernel_inner = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (inner_px * 2 + 1, inner_px * 2 + 1))
+                    eroded = cv2.erode(mask_inner, kernel_inner)
+                    self._nfz_inner_contours, _ = cv2.findContours(eroded, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                if self._nfz_inner_contours:
+                    cv2.drawContours(display_map, self._nfz_inner_contours, -1, (255, 0, 255), 3)  # bright pink, bold
             # Repulsion buffer (orange outline) — only when --nfz-repel active
             if nfz_buffer_m > 0:
                 if not hasattr(self, '_nfz_buffer_contours'):

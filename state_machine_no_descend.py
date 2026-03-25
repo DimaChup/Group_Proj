@@ -793,8 +793,11 @@ class StateHandlersMixin:
                 if dist < 20.0 and not inside:
                     ratio = dist / 20.0
                     fly_speed = min(fly_speed, 0.3 + ratio * (3.0 - 0.3))
-                # Repulsive push in 1m band around boundary (1m outside to 1m inside)
-                if dist < 1.0:
+                # Inner NFZ polygon repulsion (1m inside boundary, 3m range outward)
+                # dist_to_inner: distance from inner polygon (NFZ shrunk 1m)
+                signed_dist = dist if not inside else -dist
+                dist_to_inner = signed_dist + 1.0  # inner polygon is 1m inside NFZ
+                if dist_to_inner < 3.0:
                     off_lat, off_lon = self.geofence.repulsive_offset(self.lat, self.lon)
                     if abs(off_lat) > 1e-9 or abs(off_lon) > 1e-9:
                         lat_m = 111320.0
@@ -803,7 +806,9 @@ class StateHandlersMixin:
                         push_e = -off_lon * lon_m
                         mag = math.sqrt(push_n**2 + push_e**2)
                         if mag > 0.01:
-                            self.nav.send_velocity(push_n / mag * 3.0, push_e / mag * 3.0, 0)
+                            # Strength: 3 m/s at inner polygon, 0 at 3m away
+                            strength = max(0, (3.0 - max(0, dist_to_inner)) / 3.0) * 3.0
+                            self.nav.send_velocity(push_n / mag * strength, push_e / mag * strength, 0)
                             return  # repulsion overrides WASD this frame
             climb_rate = 2.0  # m/s
             yaw_rate = 30.0   # deg/s
