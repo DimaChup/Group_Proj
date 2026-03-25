@@ -772,8 +772,8 @@ class VisualFlightMission(StateHandlersMixin):
                 # Same mechanism as --nfz-repel, works with --nfz-carrot or --nfz-slow
                 if (NFZ_CARROT or NFZ_SLOW) and self.nav:
                     signed_dist = nfz_dist if not nfz_inside else -nfz_dist
-                    dist_to_inner = signed_dist + 10.0  # inner polygon is 10m inside NFZ
-                    if 0 < dist_to_inner < 13.0:
+                    dist_to_inner = signed_dist + 20.0  # inner polygon is 20m inside NFZ
+                    if 0 < dist_to_inner < 23.0:
                         off_lat, off_lon = self.geofence.repulsive_offset(self.lat, self.lon)
                         if abs(off_lat) > 1e-8 or abs(off_lon) > 1e-8:
                             self._last_repulsion_vec = (off_lat, off_lon)
