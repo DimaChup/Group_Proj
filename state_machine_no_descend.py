@@ -462,7 +462,10 @@ class StateHandlersMixin:
                 self._set_state(State.DONE)
 
     def _handle_centering(self, target_found, px_u, px_v, key):
-        # NO-DESCEND variant: center at current altitude, then VERIFY + GPS averaging
+        # NO-DESCEND variant: center at current altitude, then VERIFY
+        import __main__ as _main
+        center_verify = getattr(_main, 'CENTER_VERIFY', False)
+
         if time.time() - self.state_start_time > 60 and not self._centering_timeout_warned:
             print("CENTERING TIMEOUT: Lost target or can't converge. Resuming search.")
             self._centering_timeout_warned = True
@@ -474,15 +477,21 @@ class StateHandlersMixin:
             self.nav.send_global_target(self.target_lat, self.target_lon, self.alt)
             self.last_req = time.time()
         if self.get_dist_to_target() < 1.0:
-            # Centered — start GPS averaging and go to VERIFY immediately
-            self._gps_avg_start = time.time()
-            self._gps_avg_samples = []
-            self._trig_estimate = (self.target_lat, self.target_lon)
-            self._confirmed_y = False
+            if center_verify:
+                # --center-verify: start GPS averaging + VERIFY immediately
+                self._gps_avg_start = time.time()
+                self._gps_avg_samples = []
+                self._trig_estimate = (self.target_lat, self.target_lon)
+                self._confirmed_y = False
+                print()
+                print(f"[CENTERING] Centered above target — GPS averaging started")
+                print(f"  Trig estimate: ({self.target_lat:.6f}, {self.target_lon:.6f})")
+            else:
+                # Default: no GPS averaging
+                self._gps_avg_start = None
+                self._gps_avg_samples = None
+                self._confirmed_y = False
             self._set_state(State.VERIFY)
-            print()
-            print(f"[CENTERING] Centered above target — GPS averaging started")
-            print(f"  Trig estimate: ({self.target_lat:.6f}, {self.target_lon:.6f})")
             print()
             print("=" * 50)
             print(f"  VERIFY (at {self.alt:.0f}m — no-descend mode)")
@@ -855,15 +864,16 @@ class StateHandlersMixin:
                     self._set_state(State.APPROACH)
             else:
                 if key == ord('y') or key == ord('Y'):
-                    if hasattr(self, '_gps_avg_start') and self._gps_avg_start:
+                    if getattr(self, '_gps_avg_start', None):
+                        # --center-verify: wait for 10s GPS averaging
                         elapsed = time.time() - self._gps_avg_start
                         remaining = max(0, 10.0 - elapsed)
                         self._confirmed_y = True
                         if remaining > 0:
                             print(f"\n  Y confirmed — averaging GPS for {remaining:.0f}s more...")
-                        # If 10s already elapsed, _handle_verify will finalize next frame
+                        # _handle_verify will finalize when 10s elapsed
                     else:
-                        # No GPS averaging (shouldn't happen, but fallback)
+                        # Default: immediate confirm, no averaging
                         print()
                         print("USER CONFIRMED TARGET. SELECT LANDING SIDE:")
                         print("  N=North  E=East  S=South  W=West")
