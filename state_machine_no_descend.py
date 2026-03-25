@@ -755,7 +755,8 @@ class StateHandlersMixin:
         if self.state == State.MANUAL and self.master:
             fly_speed = 5.0   # m/s
             # Geofence speed cap — spatial field applies to manual too
-            if hasattr(self, 'geofence') and self.geofence and (g.get('NFZ_SLOW') or g.get('NFZ_CARROT')):
+            import __main__ as _main
+            if hasattr(self, 'geofence') and self.geofence and (getattr(_main, 'NFZ_SLOW', False) or getattr(_main, 'NFZ_CARROT', False)):
                 dist, inside = self.geofence.distance_to_boundary(self.lat, self.lon)
                 if inside:
                     fly_speed = 0.0  # block movement inside NFZ

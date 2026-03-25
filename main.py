@@ -69,6 +69,7 @@ NO_DESCEND = "--no-descend" in sys.argv  # Stay at search altitude, don't descen
 NFZ_REPEL = "--nfz-repel" in sys.argv   # Enable SSSI no-fly zone repulsion (potential field)
 NFZ_SLOW = "--nfz-slow" in sys.argv     # Velocity toward waypoint at capped speed (20m zone)
 NFZ_CARROT = "--nfz-carrot" in sys.argv  # Carrot-on-stick: nearby position target (20m zone)
+NFZ_ARROWS = "--arrows" in sys.argv      # Draw vector field arrows in NFZ buffer zone
 SMOOTH_BEZIER = "--smooth-bezier" in sys.argv  # Bezier curves at turns (smooth arcs)
 SMOOTH_EXTRA = "--smooth-extra" in sys.argv    # Extra waypoints at turns (wider arc)
 BEACON_DELAY = 0  # --beacon-delay N: simulate PLB signal N seconds after SEARCH begins (0=disabled)
@@ -636,7 +637,8 @@ class VisualFlightMission(StateHandlersMixin):
                 items_of_interest=getattr(self, 'items_of_interest', None),
                 rejected_targets=getattr(self, 'rejected_targets', None),
                 nfz_buffer_m=(20.0 if (NFZ_SLOW or NFZ_CARROT) else self.geofence.SOFT_BOUNDARY) if self.geofence else 0,
-                nfz_repulsion_vec=getattr(self, '_last_repulsion_vec', None)
+                nfz_repulsion_vec=getattr(self, '_last_repulsion_vec', None),
+                nfz_arrows=NFZ_ARROWS
             )
 
 

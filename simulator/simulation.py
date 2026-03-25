@@ -329,7 +329,7 @@ class SimulationEnvironment:
 
         return final_view, view_w_px, view_h_px
 
-    def get_god_view(self, cx, cy, yaw, view_w_px, view_h_px, zoom_level, virtual_poly, search_poly, target_gps, landing_gps, geo_tool, logged_items=None, detection_clusters=None, active_cluster_idx=None, search_wps=None, search_wp_index=0, transit_wps_gps=None, transit_wp_index=0, current_state=None, rescan_pass=0, items_of_interest=None, rejected_targets=None, nfz_buffer_m=0, nfz_repulsion_vec=None):
+    def get_god_view(self, cx, cy, yaw, view_w_px, view_h_px, zoom_level, virtual_poly, search_poly, target_gps, landing_gps, geo_tool, logged_items=None, detection_clusters=None, active_cluster_idx=None, search_wps=None, search_wp_index=0, transit_wps_gps=None, transit_wp_index=0, current_state=None, rescan_pass=0, items_of_interest=None, rejected_targets=None, nfz_buffer_m=0, nfz_repulsion_vec=None, nfz_arrows=False):
         display_map = self.full_map.copy()
         
         # Render ALL targets on god view
@@ -372,8 +372,8 @@ class SimulationEnvironment:
                         cv2.dilate(mask, kernel), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
                 if self._nfz_buffer_contours:
                     cv2.drawContours(display_map, self._nfz_buffer_contours, -1, (0, 140, 255), 2)
-            # Vector field around SSSI (cached, only with --nfz-repel)
-            if nfz_buffer_m > 0:
+            # Vector field around SSSI (only with --arrows flag)
+            if nfz_buffer_m > 0 and nfz_arrows:
                 if not hasattr(self, '_nfz_vector_field'):
                     from geofence import NFZGeofence
                     _fence = NFZGeofence(geo_tool)
