@@ -30,6 +30,8 @@ def _get_main_globals():
         'REAL_CANVAS_SIZE': getattr(main, 'REAL_CANVAS_SIZE', 4800),
         'SIM_SPEED': getattr(main, 'SIM_SPEED', 1),
         'NO_TURN': getattr(main, 'NO_TURN', False),
+        'NO_TURN_REALIGN': getattr(main, 'NO_TURN_REALIGN', False),
+        'NO_TURN_DIAG': getattr(main, 'NO_TURN_DIAG', False),
         'SEARCH_PATTERN': getattr(main, 'SEARCH_PATTERN', 'lawnmower'),
         'BEACON_DELAY': getattr(main, 'BEACON_DELAY', 0),
     }
@@ -343,6 +345,12 @@ class StateHandlersMixin:
                         yaw_deg = math.degrees(math.atan2(dlon * math.cos(math.radians(wp0[0])), dlat)) % 360
                     else:
                         yaw_deg = self.planner.last_scan_angle
+                    # Diagonal mode: offset yaw by atan(W/H) so diagonal is perpendicular to scan
+                    diag_label = ""
+                    if g.get('NO_TURN_DIAG', False):
+                        diag_offset = math.degrees(math.atan2(config.IMAGE_W, config.IMAGE_H))
+                        yaw_deg = (yaw_deg + diag_offset) % 360
+                        diag_label = " [DIAG]"
                     self.master.mav.command_long_send(
                         self.master.target_system, self.master.target_component,
                         mavutil.mavlink.MAV_CMD_CONDITION_YAW, 0,
@@ -350,7 +358,7 @@ class StateHandlersMixin:
                     self._search_yaw_sent = True
                     self._search_yaw_target = yaw_deg
                     self._search_yaw_time = time.time()
-                    print(f"[NO-TURN] Orienting to {yaw_deg:.0f} deg (along first scan line)...")
+                    print(f"[NO-TURN] Orienting to {yaw_deg:.0f} deg{diag_label} (along first scan line)...")
                     return  # don't fly yet, wait for yaw
                 else:
                     # Wait for yaw to complete (within 10 deg or 5s timeout)
@@ -444,6 +452,10 @@ class StateHandlersMixin:
                 self.waypoints = self.planner.generate_search_pattern(
                     canvas_w, canvas_h, (self.lat, self.lon), alt_override=new_alt)
                 self.wp_index = 0
+                # No-turn-realign: re-orient for new pass (new waypoints, possibly different direction)
+                if g.get('NO_TURN_REALIGN', False):
+                    self._search_yaw_done = False
+                    self._search_yaw_sent = False
                 # Keep rejected targets across passes (N = false positive, don't revisit)
                 # Stay in SEARCH — just descend and continue (no transit back)
                 self._set_state(State.SEARCH)
