@@ -767,6 +767,25 @@ class VisualFlightMission(StateHandlersMixin):
                     self.nav.last_speed_req = 0  # bypass 3s throttle
                     self.nav.set_speed(max_speed)
 
+                # Inner NFZ polygon repulsion (3m inside boundary, 6m range outward)
+                # Runs EVERY frame, ANY state — pure velocity push away from boundary
+                # Same mechanism as --nfz-repel, works with --nfz-carrot or --nfz-slow
+                if (NFZ_CARROT or NFZ_SLOW) and self.nav:
+                    signed_dist = nfz_dist if not nfz_inside else -nfz_dist
+                    dist_to_inner = signed_dist + 10.0  # inner polygon is 10m inside NFZ
+                    if 0 < dist_to_inner < 13.0:
+                        off_lat, off_lon = self.geofence.repulsive_offset(self.lat, self.lon)
+                        if abs(off_lat) > 1e-8 or abs(off_lon) > 1e-8:
+                            self._last_repulsion_vec = (off_lat, off_lon)
+                            lat_m = 111320.0
+                            lon_m = 111320.0 * math.cos(math.radians(self.lat))
+                            push_n = -off_lat * lat_m
+                            push_e = -off_lon * lon_m
+                            mag = math.sqrt(push_n**2 + push_e**2)
+                            if mag > 0.01:
+                                strength = (13.0 - dist_to_inner) / 13.0 * 3.0  # 3 m/s at inner, 0 at 13m
+                                self.nav.send_velocity(push_n / mag * strength, push_e / mag * strength, 0, current_yaw=0.0)
+
                 # NFZ_REPEL: push away (8m zone)
                 elif NFZ_REPEL and not nfz_inside and nfz_dist < self.geofence.SOFT_BOUNDARY:
                     off_lat, off_lon = self.geofence.repulsive_offset(self.lat, self.lon)

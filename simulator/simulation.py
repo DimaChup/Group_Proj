@@ -360,10 +360,10 @@ class SimulationEnvironment:
             cv2.polylines(display_map, [sssi_pts], True, (0, 0, 255), 2)
             cx_s, cy_s = sssi_pts.mean(axis=0).astype(int)
             cv2.putText(display_map, "SSSI NFZ", (cx_s - 30, cy_s), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 255), 1)
-            # Inner NFZ polygon (1m inside boundary) — bright pink, bold
+            # Inner NFZ polygon (10m inside boundary) — bright pink, bold
             if nfz_buffer_m > 0:
                 if not hasattr(self, '_nfz_inner_contours'):
-                    inner_px = int(1.0 * geo_tool.pix_per_m)  # 1m erosion
+                    inner_px = int(10.0 * geo_tool.pix_per_m)  # 10m erosion
                     h_map, w_map = self.full_map.shape[:2]
                     mask_inner = np.zeros((h_map, w_map), dtype=np.uint8)
                     cv2.fillPoly(mask_inner, [sssi_pts], 255)

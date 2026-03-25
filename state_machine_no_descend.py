@@ -786,30 +786,6 @@ class StateHandlersMixin:
         # MANUAL mode — WASD flight controls
         if self.state == State.MANUAL and self.master:
             fly_speed = 5.0   # m/s
-            # Geofence speed cap — spatial field applies to manual too
-            import __main__ as _main
-            if hasattr(self, 'geofence') and self.geofence and (getattr(_main, 'NFZ_SLOW', False) or getattr(_main, 'NFZ_CARROT', False)):
-                dist, inside = self.geofence.distance_to_boundary(self.lat, self.lon)
-                if dist < 20.0 and not inside:
-                    ratio = dist / 20.0
-                    fly_speed = min(fly_speed, 0.3 + ratio * (3.0 - 0.3))
-                # Inner NFZ polygon repulsion (1m inside boundary, 3m range outward)
-                # dist_to_inner: distance from inner polygon (NFZ shrunk 1m)
-                signed_dist = dist if not inside else -dist
-                dist_to_inner = signed_dist + 1.0  # inner polygon is 1m inside NFZ
-                if dist_to_inner < 3.0:
-                    off_lat, off_lon = self.geofence.repulsive_offset(self.lat, self.lon)
-                    if abs(off_lat) > 1e-9 or abs(off_lon) > 1e-9:
-                        lat_m = 111320.0
-                        lon_m = 111320.0 * math.cos(math.radians(self.lat))
-                        push_n = -off_lat * lat_m
-                        push_e = -off_lon * lon_m
-                        mag = math.sqrt(push_n**2 + push_e**2)
-                        if mag > 0.01:
-                            # Strength: 3 m/s at inner polygon, 0 at 3m away
-                            strength = max(0, (3.0 - max(0, dist_to_inner)) / 3.0) * 3.0
-                            self.nav.send_velocity(push_n / mag * strength, push_e / mag * strength, 0)
-                            return  # repulsion overrides WASD this frame
             climb_rate = 2.0  # m/s
             yaw_rate = 30.0   # deg/s
             if key == ord('w') or key == ord('W'):
@@ -825,21 +801,19 @@ class StateHandlersMixin:
             elif key == ord('f') or key == ord('F'):
                 self.nav.send_velocity(0, 0, climb_rate)
             elif key == ord('q') or key == ord('Q'):
-                # Yaw left 10 degrees
+                # Yaw left 10 degrees (relative, counterclockwise)
                 from pymavlink import mavutil
-                target_yaw = (math.degrees(self.yaw) - 10) % 360
                 self.master.mav.command_long_send(
                     self.master.target_system, self.master.target_component,
                     mavutil.mavlink.MAV_CMD_CONDITION_YAW, 0,
-                    target_yaw, 30, 1, 0, 0, 0, 0)
+                    10, 30, -1, 1, 0, 0, 0)  # 10deg, 30deg/s, CCW, relative
             elif key == ord('e') or key == ord('E'):
-                # Yaw right 10 degrees
+                # Yaw right 10 degrees (relative, clockwise)
                 from pymavlink import mavutil
-                target_yaw = (math.degrees(self.yaw) + 10) % 360
                 self.master.mav.command_long_send(
                     self.master.target_system, self.master.target_component,
                     mavutil.mavlink.MAV_CMD_CONDITION_YAW, 0,
-                    target_yaw, 30, 1, 0, 0, 0, 0)
+                    10, 30, 1, 1, 0, 0, 0)  # 10deg, 30deg/s, CW, relative
 
         # VERIFY state — Y/N confirmation and landing side selection
         if self.state == State.VERIFY:
