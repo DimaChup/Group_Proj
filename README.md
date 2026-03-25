@@ -109,6 +109,14 @@ Full mission with all safety features:
 - **Auto-manual** if drone enters NFZ — operator flies out, press M to resume
 - Press **B** to trigger PLB beacon redirect to focus area
 
+### Setting 2b — Same as Setting 2 at 35m altitude
+
+```bash
+DRONE_MODE=SIMULATION ./test_env/Scripts/python.exe main.py --search-area --no-descend --speed 5 --no-turn-realign-diag --nfz-carrot --transit flight_plans/transit.json --alt 35
+```
+
+Same as Setting 2 but at 35m — tighter scan lines, better detection, more passes needed.
+
 ### Setting 3 — Dry Run (no SITL needed)
 
 ```bash

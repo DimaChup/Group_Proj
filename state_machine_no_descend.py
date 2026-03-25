@@ -741,6 +741,9 @@ class StateHandlersMixin:
                     self.manual_departure_lon = self.lon
                     self.manual_departure_alt = self.alt
                 self._set_state(State.MANUAL)
+                # Immediately stop — override ArduCopter's last position target
+                if self.nav:
+                    self.nav.send_velocity(0, 0, 0)
             else:
                 if target_found:
                     # Detection during manual — go investigate immediately
@@ -758,6 +761,15 @@ class StateHandlersMixin:
                         print("Resuming Automation...")
                         self.last_req = 0  # force immediate waypoint send
                         self._set_state(self.previous_state)
+
+        # K key: clear rejected/ignored targets (re-enables detection in those areas)
+        if key == ord('k') or key == ord('K'):
+            n_rej = len(self.rejected_targets)
+            n_ioi = len(getattr(self, 'items_of_interest', []))
+            self.rejected_targets.clear()
+            if hasattr(self, 'items_of_interest'):
+                self.items_of_interest.clear()
+            print(f"[RESET] Cleared {n_rej} rejected + {n_ioi} items of interest. All areas re-enabled.")
 
         # B key: simulate PLB beacon signal — redirect to Focus Area
         if (key == ord('b') or key == ord('B')) and self.state == State.SEARCH:
@@ -790,9 +802,21 @@ class StateHandlersMixin:
             elif key == ord('f') or key == ord('F'):
                 self.nav.send_velocity(0, 0, climb_rate)
             elif key == ord('q') or key == ord('Q'):
-                self.nav.send_velocity(0, 0, 0, yaw_rate=-yaw_rate)
+                # Yaw left 10 degrees
+                from pymavlink import mavutil
+                target_yaw = (math.degrees(self.yaw) - 10) % 360
+                self.master.mav.command_long_send(
+                    self.master.target_system, self.master.target_component,
+                    mavutil.mavlink.MAV_CMD_CONDITION_YAW, 0,
+                    target_yaw, 30, 1, 0, 0, 0, 0)
             elif key == ord('e') or key == ord('E'):
-                self.nav.send_velocity(0, 0, 0, yaw_rate=yaw_rate)
+                # Yaw right 10 degrees
+                from pymavlink import mavutil
+                target_yaw = (math.degrees(self.yaw) + 10) % 360
+                self.master.mav.command_long_send(
+                    self.master.target_system, self.master.target_component,
+                    mavutil.mavlink.MAV_CMD_CONDITION_YAW, 0,
+                    target_yaw, 30, 1, 0, 0, 0, 0)
 
         # VERIFY state — Y/N confirmation and landing side selection
         if self.state == State.VERIFY:
