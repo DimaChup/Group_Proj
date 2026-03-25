@@ -106,6 +106,13 @@ class StateHandlersMixin:
                 return True
         return False
 
+    def _is_inside_nfz(self, lat, lon):
+        """Check if position is inside the NFZ — never investigate targets there."""
+        if hasattr(self, 'geofence') and self.geofence:
+            _, inside = self.geofence.distance_to_boundary(lat, lon)
+            return inside
+        return False
+
     # ── Per-state handler methods ─────────────────────────────────────
     # Each method corresponds to one state in the mission state machine.
     # They are called from run() via a dispatch dict. Navigation calls
@@ -410,6 +417,9 @@ class StateHandlersMixin:
             # === DEFAULT path (unchanged) ===
             if target_found:
                 self.calculate_target_gps(px_u, px_v)
+                # Skip if detection is inside NFZ — never investigate there
+                if self._is_inside_nfz(self.target_lat, self.target_lon):
+                    target_found = False
                 # Skip if detection is near a previously rejected target or item of interest
                 near_rejected = False
                 for rej_lat, rej_lon in self.rejected_targets:
@@ -439,7 +449,11 @@ class StateHandlersMixin:
 
             if target_found:
                 self.calculate_target_gps(px_u, px_v)
-                if self._is_near_known(self.target_lat, self.target_lon):
+                # Skip detections inside NFZ
+                if self._is_inside_nfz(self.target_lat, self.target_lon):
+                    target_found = False
+                    self._consecutive_detect_count = 0
+                elif self._is_near_known(self.target_lat, self.target_lon):
                     # Near a known target — skip, reset streak
                     self._consecutive_detect_count = 0
                 else:
