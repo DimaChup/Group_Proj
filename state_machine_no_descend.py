@@ -791,10 +791,10 @@ class StateHandlersMixin:
             if hasattr(self, 'geofence') and self.geofence and (getattr(_main, 'NFZ_SLOW', False) or getattr(_main, 'NFZ_CARROT', False)):
                 dist, inside = self.geofence.distance_to_boundary(self.lat, self.lon)
                 if inside:
-                    fly_speed = 0.0  # block movement inside NFZ
+                    fly_speed = 5.0  # full speed inside NFZ — pilot must escape!
                 elif dist < 20.0:
                     ratio = dist / 20.0
-                    fly_speed = min(fly_speed, 0.3 + ratio * (3.0 - 0.3))
+                    fly_speed = min(fly_speed, max(1.0, 0.3 + ratio * (3.0 - 0.3)))  # min 1 m/s so never stuck
             climb_rate = 2.0  # m/s
             yaw_rate = 30.0   # deg/s
             if key == ord('w') or key == ord('W'):
