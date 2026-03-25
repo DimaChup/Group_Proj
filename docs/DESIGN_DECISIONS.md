@@ -153,4 +153,39 @@ Useful for the final report — shows engineering reasoning, not just results.
 
 ---
 
+## DD-10: NFZ Geofence — Three Avoidance Strategies
+**Date:** 2026-03-25
+**Context:** SSSI no-fly zone near the search area. Drone must avoid entering but still search close to the boundary. Need safe, smooth behaviour in the buffer zone.
+
+**Problem:** ArduCopter has no built-in soft boundary concept — it either respects a hard geofence (RTL/LAND) or ignores it entirely. We need graduated slowdown near the boundary so the drone doesn't overshoot into the NFZ.
+
+**Options implemented (CLI flags):**
+
+| Mode | Flag | Mechanism | Buffer | Smoothness | Notes |
+|---|---|---|---|---|---|
+| **Repulsive** | `--nfz-repel` | Velocity nudge away from NFZ | 8m (soft boundary) | Medium | Quadratic force, can fight waypoint navigation |
+| **Velocity** | `--nfz-slow` | Velocity commands toward waypoint, speed capped | 20m | Medium | Jittery — velocity commands conflict with position targets |
+| **Speed-cap** | `--nfz-carrot` | Normal waypoint nav, only `DO_CHANGE_SPEED` capped | 20m | **Best** | Smooth — same path, just slower |
+
+**Decision:** `--nfz-carrot` (speed-cap) is the recommended mode.
+
+**Speed profile (20m buffer zone):**
+- Linear: `speed = 0.3 + (dist_to_boundary / 20) × (3.0 - 0.3)`
+- At 20m from SSSI: 3.0 m/s (entering buffer)
+- At 10m from SSSI: 1.65 m/s
+- At 0m (boundary): 0.3 m/s (near-stop)
+- Outside 20m: normal altitude-dependent speed (6-10 m/s)
+
+**Why speed-cap wins:**
+1. **No jitter** — doesn't override position targets or send velocity commands; ArduCopter's own path following handles direction
+2. **Same flight path** — drone follows exact same waypoints as without geofence, just slower near SSSI
+3. **`DO_CHANGE_SPEED` only affects GUIDED/AUTO** — has zero effect on manual RC flying (STABILIZE/LOITER/POSHOLD), so pilot can always override at full stick authority
+4. **SEARCH-only** — speed cap only active during SEARCH state; transit, pre-waypoints, return, manual all fly at normal speed
+
+**SSSI inside detection:** If drone enters NFZ (hard boundary), auto-switches to MANUAL mode regardless of which geofence mode is active.
+
+**Visualization:** Orange buffer zone drawn on map at 20m from SSSI boundary (slow/carrot modes) or 8m (repel mode).
+
+---
+
 *Add new decisions as they come up. Format: context → options → decision → rationale.*
