@@ -781,6 +781,10 @@ class VisualFlightMission(StateHandlersMixin):
                             lon_m = 111320.0 * math.cos(math.radians(self.lat))
                             push_n = -off_lat * lat_m
                             push_e = -off_lon * lon_m
+                            # Inside NFZ: repulsive_offset points inward, flip to push OUT
+                            if nfz_inside:
+                                push_n = -push_n
+                                push_e = -push_e
                             mag = math.sqrt(push_n**2 + push_e**2)
                             if mag > 0.01:
                                 strength = 3.0  # constant 3 m/s push within 13m of inner polygon
