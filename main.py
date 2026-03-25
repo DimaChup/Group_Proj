@@ -731,7 +731,12 @@ class VisualFlightMission(StateHandlersMixin):
                 nfz_dist, nfz_inside = self.geofence.distance_to_boundary(self.lat, self.lon)
                 if nfz_inside and self.state != State.MANUAL:
                     print(f"[GEOFENCE] INSIDE NFZ! Switching to MANUAL — fly out!")
-                    self.previous_state = self.state
+                    # Only save previous_state if not already returning from manual
+                    if self.state != State.RETURN_FROM_MANUAL:
+                        self.previous_state = self.state
+                        self.manual_departure_lat = self.lat
+                        self.manual_departure_lon = self.lon
+                        self.manual_departure_alt = self.alt
                     self._set_state(State.MANUAL)
                 # NFZ_SLOW: velocity toward waypoint at capped speed (20m zone, SEARCH only)
                 elif NFZ_SLOW and not nfz_inside and nfz_dist < 20.0 and self.state == State.SEARCH:
