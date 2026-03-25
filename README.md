@@ -1,9 +1,5 @@
 # SAR Drone — Autonomous Search and Rescue
 
-python main.py --search-area --no-descend --speed 5 --no-turn-realign-diag --nfz-carrot --transit flight_plans/transit.json --alt 35
-
-
-
 University of Bristol MSc project (AENGM0074). Autonomous drone that flies a search pattern, detects a casualty using onboard AI (YOLOv8), and delivers a payload to the target location.
 
 ## Quick Start
@@ -14,25 +10,20 @@ University of Bristol MSc project (AENGM0074). Autonomous drone that flies a sea
 2. **Python venv** — `test_env` or `venv` with dependencies installed
 3. **Windows**: use `set DRONE_MODE=SIMULATION` (cmd) or `export DRONE_MODE=SIMULATION` (bash/WSL)
 
-### Recommended Launch (Setting 1)
-
-This is the tested, working combination:
+### Recommended Launch
 
 ```bash
-DRONE_MODE=SIMULATION python main.py \
-  --search-area \
-  --no-descend \
-  --speed 5 \
-  --no-turn \
-  --transit flight_plans/transit.json
+python main.py --search-area --no-descend --speed 5 --no-turn-realign-diag --nfz-carrot --transit flight_plans/transit.json --alt 35
 ```
 
 **What this does:**
 - `--search-area` — Pre-loads the survey polygon from KML (no interactive drawing)
 - `--no-descend` — Stays at search altitude for verification (doesn't descend to 15m)
 - `--speed 5` — 5x SITL time acceleration (faster simulation)
-- `--no-turn` — Drone strafes between waypoints (no yaw rotation)
+- `--no-turn-realign-diag` — Strafe + diagonal footprint (67% overlap bonus), realign each pass
+- `--nfz-carrot` — NFZ speed cap (3→0.3 m/s in 20m buffer) + repulsive push near boundary
 - `--transit flight_plans/transit.json` — Flies a pre-drawn path to/from the search area
+- `--alt 35` — Search altitude 35m
 
 ### Workflow
 
@@ -107,51 +98,31 @@ These flags all relate to the SSSI no-fly zone. Pick one avoidance strategy at a
 
 ## Preset Configurations
 
-### Setting 1 — Full Simulation (recommended)
+### Main Setting — Full Mission at 35m (recommended)
 
 ```bash
-DRONE_MODE=SIMULATION python main.py --search-area --no-descend --speed 5 --no-turn --transit flight_plans/transit.json
-```
-
-### Setting 2 — Full Mission + NFZ Speed Cap + Diagonal Realign
-
-```bash
-DRONE_MODE=SIMULATION python main.py --search-area --no-descend --speed 5 --no-turn-realign-diag --nfz-carrot --transit flight_plans/transit.json --alt 50
+python main.py --search-area --no-descend --speed 5 --no-turn-realign-diag --nfz-carrot --transit flight_plans/transit.json --alt 35
 ```
 
 Full mission with all safety features:
 - **Diagonal realign** — drone rotates 53° so camera diagonal is perpendicular to scan (67% overlap bonus), re-orients at each rescan pass
-- **NFZ speed cap** — smooth speed scalar field: 3.0 m/s at 20m from SSSI → 0.3 m/s at boundary (affects SEARCH + MANUAL WASD)
-- **Orange buffer ring** (20m) drawn around SSSI on god-view
+- **NFZ geofence** — scalar field (speed cap 3→0.3 m/s in 20m buffer) + vector field (3 m/s repulsive push near boundary)
+- **Orange buffer ring** (20m) + **pink inner polygon** (20m inside NFZ) drawn on god-view
 - **Auto-manual** if drone enters NFZ — operator flies out, press M to resume
 - Press **B** to trigger PLB beacon redirect to focus area
 
-### Setting 2b — Same as Setting 2 at 35m altitude
+### Dry Run (no SITL needed)
 
 ```bash
-DRONE_MODE=SIMULATION ./test_env/Scripts/python.exe main.py --search-area --no-descend --speed 5 --no-turn-realign-diag --nfz-carrot --transit flight_plans/transit.json --alt 35
-```
-
-Same as Setting 2 but at 35m — tighter scan lines, better detection, more passes needed.
-
-### Setting 3 — Dry Run (no SITL needed)
-
-```bash
-python main.py --dry-run
+python main.py --dry-run --search-area --no-turn-realign-diag --alt 35
 ```
 
 Shows the lawnmower pattern, tests the pipeline, saves `dry_run_pattern.jpg`. No connection needed.
 
-### Setting 4 — Alternate Model
+### Real Flight on Pi
 
 ```bash
-DRONE_MODE=SIMULATION python main.py --search-area --no-descend --speed 5 --model cv_models/sar_v2_1088/best.tflite
-```
-
-### Setting 5 — Real Flight on Pi
-
-```bash
-python main.py --search-area --transit flight_plans/transit.json
+python main.py --search-area --no-descend --no-turn-realign-diag --nfz-carrot --transit flight_plans/transit.json --alt 35
 ```
 
 No `--speed` (real time), no `DRONE_MODE` (auto-detects Cube on serial port). Requires mavproxy running.
