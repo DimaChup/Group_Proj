@@ -790,11 +790,21 @@ class StateHandlersMixin:
             import __main__ as _main
             if hasattr(self, 'geofence') and self.geofence and (getattr(_main, 'NFZ_SLOW', False) or getattr(_main, 'NFZ_CARROT', False)):
                 dist, inside = self.geofence.distance_to_boundary(self.lat, self.lon)
-                if inside:
-                    fly_speed = 5.0  # full speed inside NFZ — pilot must escape!
-                elif dist < 20.0:
+                if dist < 20.0 and not inside:
                     ratio = dist / 20.0
-                    fly_speed = min(fly_speed, max(1.0, 0.3 + ratio * (3.0 - 0.3)))  # min 1 m/s so never stuck
+                    fly_speed = min(fly_speed, 0.3 + ratio * (3.0 - 0.3))
+                # Repulsive push in 1m band around boundary (1m outside to 1m inside)
+                if dist < 1.0:
+                    off_lat, off_lon = self.geofence.repulsive_offset(self.lat, self.lon)
+                    if abs(off_lat) > 1e-9 or abs(off_lon) > 1e-9:
+                        lat_m = 111320.0
+                        lon_m = 111320.0 * math.cos(math.radians(self.lat))
+                        push_n = -off_lat * lat_m
+                        push_e = -off_lon * lon_m
+                        mag = math.sqrt(push_n**2 + push_e**2)
+                        if mag > 0.01:
+                            self.nav.send_velocity(push_n / mag * 3.0, push_e / mag * 3.0, 0)
+                            return  # repulsion overrides WASD this frame
             climb_rate = 2.0  # m/s
             yaw_rate = 30.0   # deg/s
             if key == ord('w') or key == ord('W'):
