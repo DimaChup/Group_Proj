@@ -783,7 +783,7 @@ class VisualFlightMission(StateHandlersMixin):
                             push_e = -off_lon * lon_m
                             mag = math.sqrt(push_n**2 + push_e**2)
                             if mag > 0.01:
-                                strength = (13.0 - dist_to_inner) / 13.0 * 3.0  # 3 m/s at inner, 0 at 13m
+                                strength = 3.0  # constant 3 m/s push within 13m of inner polygon
                                 self.nav.send_velocity(push_n / mag * strength, push_e / mag * strength, 0, current_yaw=0.0)
 
                 # NFZ_REPEL: push away (8m zone)
