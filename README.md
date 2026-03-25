@@ -96,17 +96,18 @@ DRONE_MODE=SIMULATION python main.py \
 DRONE_MODE=SIMULATION python main.py --search-area --no-descend --speed 5 --no-turn --transit flight_plans/transit.json
 ```
 
-### Setting 2 — With NFZ Geofence (repulsive force)
+### Setting 2 — Full Mission + NFZ Speed Cap + Diagonal Realign
 
 ```bash
-DRONE_MODE=SIMULATION python main.py --search-area --no-descend --speed 5 --no-turn --transit flight_plans/transit.json --nfz-repel
+DRONE_MODE=SIMULATION python main.py --search-area --no-descend --speed 5 --no-turn-realign-diag --nfz-carrot --transit flight_plans/transit.json --alt 50
 ```
 
-Adds SSSI no-fly zone protection:
-- **Orange buffer ring** (10m) drawn around SSSI on god-view
-- **Repulsive force** pushes drone away when within 10m of boundary (up to 5 m/s)
+Full mission with all safety features:
+- **Diagonal realign** — drone rotates 53° so camera diagonal is perpendicular to scan (67% overlap bonus), re-orients at each rescan pass
+- **NFZ speed cap** — smooth speed scalar field: 3.0 m/s at 20m from SSSI → 0.3 m/s at boundary (affects SEARCH + MANUAL WASD)
+- **Orange buffer ring** (20m) drawn around SSSI on god-view
 - **Auto-manual** if drone enters NFZ — operator flies out, press M to resume
-- No speed reduction, no RTL (repulsion only)
+- Press **B** to trigger PLB beacon redirect to focus area
 
 ### Setting 3 — Dry Run (no SITL needed)
 
