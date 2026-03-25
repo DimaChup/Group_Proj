@@ -578,6 +578,12 @@ class StateHandlersMixin:
                 self._set_state(State.RETURN_HOME)
 
     def _handle_return_transit(self, target_found, px_u, px_v, key):
+        # First climb to transit altitude before flying waypoints
+        if self.alt < config.TARGET_ALT - 3.0:
+            if time.time() - self.last_req > 2.0:
+                self.nav.send_global_target(self.lat, self.lon, config.TARGET_ALT)
+                self.last_req = time.time()
+            return  # wait until we've climbed
         # Fly transit path in reverse at search altitude
         self.nav.set_speed(config.TRANSIT_SPEED_MPS)
         if self.return_wp_index >= 0:
