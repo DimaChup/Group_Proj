@@ -567,7 +567,7 @@ class StateHandlersMixin:
             print(f"Hover complete ({elapsed:.0f}s). Climbing and returning home.")
             # Climb back to transit altitude before returning
             if self.master:
-                self.nav.send_global_target(self.lat, self.lon, config.TARGET_ALT)
+                self.nav.send_global_target(self.lat, self.lon, self._current_search_alt())
                 self._climb_start = time.time()
             if self.pre_waypoints:
                 # Retrace transit path in reverse
@@ -578,10 +578,11 @@ class StateHandlersMixin:
                 self._set_state(State.RETURN_HOME)
 
     def _handle_return_transit(self, target_found, px_u, px_v, key):
-        # First climb to transit altitude before flying waypoints
-        if self.alt < config.TARGET_ALT - 3.0:
+        # Climb to the altitude we were searching at before returning
+        return_alt = self._current_search_alt()
+        if self.alt < return_alt - 3.0:
             if time.time() - self.last_req > 2.0:
-                self.nav.send_global_target(self.lat, self.lon, config.TARGET_ALT)
+                self.nav.send_global_target(self.lat, self.lon, return_alt)
                 self.last_req = time.time()
             return  # wait until we've climbed
         # Fly transit path in reverse at search altitude
@@ -589,7 +590,7 @@ class StateHandlersMixin:
         if self.return_wp_index >= 0:
             wp = self.pre_waypoints[self.return_wp_index]
             if time.time() - self.last_req > 2.0:
-                self.nav.send_global_target(wp[0], wp[1], config.TARGET_ALT)
+                self.nav.send_global_target(wp[0], wp[1], return_alt)
                 self.last_req = time.time()
             if self.get_dist_to_point(wp[0], wp[1]) < 2.0:
                 print(f"Return transit WP {len(self.pre_waypoints) - self.return_wp_index}/{len(self.pre_waypoints)} reached.")

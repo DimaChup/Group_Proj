@@ -738,6 +738,8 @@ class VisualFlightMission(StateHandlersMixin):
                         self.manual_departure_lon = self.lon
                         self.manual_departure_alt = self.alt
                     self._set_state(State.MANUAL)
+                    if self.nav:
+                        self.nav.send_velocity(0, 0, 0)  # stop immediately
                 # NFZ_SLOW: velocity toward waypoint at capped speed (20m zone, SEARCH only)
                 elif NFZ_SLOW and not nfz_inside and nfz_dist < 20.0 and self.state == State.SEARCH:
                     ratio = nfz_dist / 20.0
