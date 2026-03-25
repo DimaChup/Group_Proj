@@ -462,7 +462,7 @@ class StateHandlersMixin:
                 self._set_state(State.DONE)
 
     def _handle_centering(self, target_found, px_u, px_v, key):
-        # NO-DESCEND variant: center at current altitude, then verify
+        # NO-DESCEND variant: center at current altitude, then hold & average GPS
         if time.time() - self.state_start_time > 60 and not self._centering_timeout_warned:
             print("CENTERING TIMEOUT: Lost target or can't converge. Resuming search.")
             self._centering_timeout_warned = True
@@ -475,15 +475,45 @@ class StateHandlersMixin:
             self.nav.send_global_target(self.target_lat, self.target_lon, self.alt)
             self.last_req = time.time()
         if self.get_dist_to_target() < 1.0:
-            # Go straight to VERIFY — no DESCENDING state
-            self._set_state(State.VERIFY)
-            print()
-            print("=" * 50)
-            print(f"  VERIFY (at {self.alt:.0f}m — no-descend mode)")
-            print("  Is this the target?")
-            print("  Y=Confirm  N=Reject  I=Item of Interest")
-            print("  (terminal key or browser button)")
-            print("=" * 50)
+            if not getattr(self, '_centering_hold_start', None):
+                # Start 10s GPS averaging phase
+                self._centering_hold_start = time.time()
+                self._centering_gps_samples = []
+                self._trig_estimate = (self.target_lat, self.target_lon)
+                print(f"[CENTERING] Centered — holding 10s for GPS averaging...")
+                print(f"  Trig estimate: ({self.target_lat:.6f}, {self.target_lon:.6f})")
+            # Collect GPS samples while holding
+            self._centering_gps_samples.append((self.lat, self.lon))
+            # Keep updating trig estimate while holding
+            if target_found:
+                self.calculate_target_gps(px_u, px_v)
+            elapsed = time.time() - self._centering_hold_start
+            if elapsed >= 10.0 and len(self._centering_gps_samples) > 0:
+                # Average drone GPS → final dummy position
+                avg_lat = sum(s[0] for s in self._centering_gps_samples) / len(self._centering_gps_samples)
+                avg_lon = sum(s[1] for s in self._centering_gps_samples) / len(self._centering_gps_samples)
+                # Compare trig vs centered average
+                trig_lat, trig_lon = self._trig_estimate
+                diff_m = self.get_dist_to_point(avg_lat, avg_lon)  # approx
+                print(f"  GPS average ({len(self._centering_gps_samples)} samples): ({avg_lat:.6f}, {avg_lon:.6f})")
+                print(f"  Trig estimate: ({self.target_lat:.6f}, {self.target_lon:.6f})")
+                lat_m = 111320.0
+                lon_m = 111320.0 * math.cos(math.radians(avg_lat))
+                err = math.sqrt(((avg_lat - self.target_lat) * lat_m)**2 + ((avg_lon - self.target_lon) * lon_m)**2)
+                print(f"  Difference: {err:.1f}m (trig vs centered)")
+                # Use centered average as final position
+                self.target_lat = avg_lat
+                self.target_lon = avg_lon
+                self._centering_hold_start = None
+                self._set_state(State.VERIFY)
+                print()
+                print("=" * 50)
+                print(f"  VERIFY (at {self.alt:.0f}m — no-descend mode)")
+                print(f"  Final position: ({avg_lat:.6f}, {avg_lon:.6f}) [centered GPS avg]")
+                print("  Is this the target?")
+                print("  Y=Confirm  N=Reject  I=Item of Interest")
+                print("  (terminal key or browser button)")
+                print("=" * 50)
 
     def _handle_descending(self, target_found, px_u, px_v, key):
         # NO-DESCEND variant: this state should never be reached
