@@ -1,3 +1,6 @@
+python main.py --search-area --no-descend --speed 5 --no-turn-realign-diag --nfz-carrot --transit flight_plans/transit.json --alt 35
+
+
 # SAR Drone — Autonomous Search and Rescue
 
 University of Bristol MSc project (AENGM0074). Autonomous drone that flies a search pattern, detects a casualty using onboard AI (YOLOv8), and delivers a payload to the target location.

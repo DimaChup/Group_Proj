@@ -90,6 +90,22 @@ class StateHandlersMixin:
         return math.sqrt(((lat1 - lat2) * s) ** 2 +
                          ((lon1 - lon2) * s * math.cos(math.radians(lat1))) ** 2)
 
+    # ── Smart-detect deduplication helper ──────────────────────────────
+
+    def _is_near_known(self, lat, lon):
+        """Check if position is near any rejected, IOI, or queued target."""
+        r = config.REJECTED_TARGET_RADIUS_M
+        for rej_lat, rej_lon in self.rejected_targets:
+            if self._gps_dist(lat, lon, rej_lat, rej_lon) < r:
+                return True
+        for item in getattr(self, 'items_of_interest', []):
+            if self._gps_dist(lat, lon, item['lat'], item['lon']) < r:
+                return True
+        for q_lat, q_lon in getattr(self, '_detect_queue', []):
+            if self._gps_dist(lat, lon, q_lat, q_lon) < r:
+                return True
+        return False
+
     # ── Per-state handler methods ─────────────────────────────────────
     # Each method corresponds to one state in the mission state machine.
     # They are called from run() via a dispatch dict. Navigation calls
@@ -386,28 +402,67 @@ class StateHandlersMixin:
             if time.time() - self._search_first_start >= beacon_delay:
                 self._trigger_beacon_redirect()
 
-        if target_found:
-            self.calculate_target_gps(px_u, px_v)
-            # Skip if detection is near a previously rejected target or item of interest
-            near_rejected = False
-            for rej_lat, rej_lon in self.rejected_targets:
-                d = self._gps_dist(self.target_lat, self.target_lon, rej_lat, rej_lon)
-                if d < config.REJECTED_TARGET_RADIUS_M:
-                    near_rejected = True
-                    break
-            if not near_rejected and hasattr(self, 'items_of_interest'):
-                for item in self.items_of_interest:
-                    d = self._gps_dist(self.target_lat, self.target_lon, item['lat'], item['lon'])
+        # --- Detection logic: smart-detect or default ---
+        import __main__ as _main
+        smart_detect = getattr(_main, 'SMART_DETECT', False)
+
+        if not smart_detect:
+            # === DEFAULT path (unchanged) ===
+            if target_found:
+                self.calculate_target_gps(px_u, px_v)
+                # Skip if detection is near a previously rejected target or item of interest
+                near_rejected = False
+                for rej_lat, rej_lon in self.rejected_targets:
+                    d = self._gps_dist(self.target_lat, self.target_lon, rej_lat, rej_lon)
                     if d < config.REJECTED_TARGET_RADIUS_M:
                         near_rejected = True
                         break
-            if not near_rejected:
-                print("TARGET DETECTED!")
-                # Remember where we left the search path
+                if not near_rejected and hasattr(self, 'items_of_interest'):
+                    for item in self.items_of_interest:
+                        d = self._gps_dist(self.target_lat, self.target_lon, item['lat'], item['lon'])
+                        if d < config.REJECTED_TARGET_RADIUS_M:
+                            near_rejected = True
+                            break
+                if not near_rejected:
+                    print("TARGET DETECTED!")
+                    # Remember where we left the search path
+                    self.departure_lat = self.lat
+                    self.departure_lon = self.lon
+                    self._set_state(State.CENTERING)
+        else:
+            # === SMART-DETECT path: multi-frame confirmation + queue ===
+            _detect_queue = getattr(self, '_detect_queue', None)
+            if _detect_queue is None:
+                self._detect_queue = []
+                self._consecutive_detect_count = 0
+                _detect_queue = self._detect_queue
+
+            if target_found:
+                self.calculate_target_gps(px_u, px_v)
+                if self._is_near_known(self.target_lat, self.target_lon):
+                    # Near a known target — skip, reset streak
+                    self._consecutive_detect_count = 0
+                else:
+                    self._consecutive_detect_count += 1
+                    if self._consecutive_detect_count >= config.DETECT_CONFIRM_FRAMES:
+                        print(f"[SMART] Confirmed detection ({self._consecutive_detect_count} frames) — queued at ({self.target_lat:.6f}, {self.target_lon:.6f})")
+                        self._detect_queue.append((self.target_lat, self.target_lon))
+                        self._consecutive_detect_count = 0
+            else:
+                self._consecutive_detect_count = 0
+
+        # Fly to next waypoint (runs when no new target, or target was rejected)
+        if self.state == State.SEARCH:
+            # Smart-detect: if queue has items and we're not already investigating, pop and go
+            if smart_detect and getattr(self, '_detect_queue', None) and len(self._detect_queue) > 0:
+                q_lat, q_lon = self._detect_queue.pop(0)
+                print(f"[SMART] Investigating queued target at ({q_lat:.6f}, {q_lon:.6f}) — {len(self._detect_queue)} remaining in queue")
+                self.target_lat = q_lat
+                self.target_lon = q_lon
                 self.departure_lat = self.lat
                 self.departure_lon = self.lon
+                self._locked_target = (q_lat, q_lon)
                 self._set_state(State.CENTERING)
-        # Fly to next waypoint (runs when no new target, or target was rejected)
         if self.state == State.SEARCH:
             if self.wp_index < len(self.waypoints):
                 target = self.waypoints[self.wp_index]
@@ -465,6 +520,7 @@ class StateHandlersMixin:
         # NO-DESCEND variant: center at current altitude, then VERIFY
         import __main__ as _main
         center_verify = getattr(_main, 'CENTER_VERIFY', False)
+        smart_detect = getattr(_main, 'SMART_DETECT', False)
 
         if time.time() - self.state_start_time > 60 and not self._centering_timeout_warned:
             print("CENTERING TIMEOUT: Lost target or can't converge. Resuming search.")
@@ -473,6 +529,22 @@ class StateHandlersMixin:
             return
         if target_found:
             self.calculate_target_gps(px_u, px_v)
+            if smart_detect:
+                locked = getattr(self, '_locked_target', None)
+                if locked:
+                    dist_to_locked = self._gps_dist(self.target_lat, self.target_lon, locked[0], locked[1])
+                    if dist_to_locked <= config.DETECT_LOCK_RADIUS_M:
+                        # Within lock radius — refine locked target
+                        self._locked_target = (self.target_lat, self.target_lon)
+                    else:
+                        # Outside lock radius — queue it if new, restore locked target
+                        if not self._is_near_known(self.target_lat, self.target_lon):
+                            _detect_queue = getattr(self, '_detect_queue', [])
+                            _detect_queue.append((self.target_lat, self.target_lon))
+                            self._detect_queue = _detect_queue
+                            print(f"[SMART] New target during CENTERING queued at ({self.target_lat:.6f}, {self.target_lon:.6f})")
+                        # Restore locked target for navigation
+                        self.target_lat, self.target_lon = locked
         if time.time() - self.last_req > 0.2:
             self.nav.send_global_target(self.target_lat, self.target_lon, self.alt)
             self.last_req = time.time()
@@ -895,7 +967,17 @@ class StateHandlersMixin:
                     self.target_lat = 0
                     self.target_lon = 0
                     self.last_req = 0
-                    if self.departure_lat != 0:
+                    # Smart-detect: if queue has items, go directly to next target
+                    import __main__ as _main
+                    _sd = getattr(_main, 'SMART_DETECT', False)
+                    if _sd and getattr(self, '_detect_queue', None) and len(self._detect_queue) > 0:
+                        q_lat, q_lon = self._detect_queue.pop(0)
+                        print(f"[SMART] Next queued target at ({q_lat:.6f}, {q_lon:.6f}) — {len(self._detect_queue)} remaining")
+                        self.target_lat = q_lat
+                        self.target_lon = q_lon
+                        self._locked_target = (q_lat, q_lon)
+                        self._set_state(State.CENTERING)
+                    elif self.departure_lat != 0:
                         self._set_state(State.RETURN_TO_SEARCH)
                     else:
                         self._set_state(State.SEARCH)
@@ -906,8 +988,18 @@ class StateHandlersMixin:
                     self.target_lat = 0
                     self.target_lon = 0
                     self.last_req = 0  # force immediate command
+                    # Smart-detect: if queue has items, go directly to next target
+                    import __main__ as _main
+                    _sd = getattr(_main, 'SMART_DETECT', False)
+                    if _sd and getattr(self, '_detect_queue', None) and len(self._detect_queue) > 0:
+                        q_lat, q_lon = self._detect_queue.pop(0)
+                        print(f"[SMART] Next queued target at ({q_lat:.6f}, {q_lon:.6f}) — {len(self._detect_queue)} remaining")
+                        self.target_lat = q_lat
+                        self.target_lon = q_lon
+                        self._locked_target = (q_lat, q_lon)
+                        self._set_state(State.CENTERING)
                     # If we came from manual flight, return to manual departure
-                    if self.manual_departure_lat != 0 and self.previous_state == State.MANUAL:
+                    elif self.manual_departure_lat != 0 and self.previous_state == State.MANUAL:
                         print(f"  Returning to manual departure point")
                         self._set_state(State.RETURN_FROM_MANUAL)
                     # If we came from search, return to search departure
