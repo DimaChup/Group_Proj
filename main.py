@@ -67,6 +67,8 @@ SIM_SPEED = 1  # SITL speedup multiplier (default 1x real-time, use --speed 5 fo
 NO_TURN = "--no-turn" in sys.argv  # Quadcopter strafes between waypoints (no yaw rotation)
 NO_DESCEND = "--no-descend" in sys.argv  # Stay at search altitude, don't descend to verify
 NFZ_REPEL = "--nfz-repel" in sys.argv   # Enable SSSI no-fly zone repulsion (potential field)
+NFZ_SLOW = "--nfz-slow" in sys.argv     # Velocity toward waypoint at capped speed (20m zone)
+NFZ_CARROT = "--nfz-carrot" in sys.argv  # Carrot-on-stick: nearby position target (20m zone)
 SMOOTH_BEZIER = "--smooth-bezier" in sys.argv  # Bezier curves at turns (smooth arcs)
 SMOOTH_EXTRA = "--smooth-extra" in sys.argv    # Extra waypoints at turns (wider arc)
 BEACON_DELAY = 0  # --beacon-delay N: simulate PLB signal N seconds after SEARCH begins (0=disabled)
@@ -212,7 +214,7 @@ class VisualFlightMission(StateHandlersMixin):
 
         # 2. Geofence (only with --nfz-repel flag)
         self.geofence = None
-        if NFZ_REPEL and config.SSSI_GPS and len(config.SSSI_GPS) >= 3:
+        if (NFZ_REPEL or NFZ_SLOW or NFZ_CARROT) and config.SSSI_GPS and len(config.SSSI_GPS) >= 3:
             from geofence import NFZGeofence
             self.geofence = NFZGeofence(self.geo)
             print(f"[GEOFENCE] Active — SSSI {len(config.SSSI_GPS)} corners, "
@@ -633,7 +635,7 @@ class VisualFlightMission(StateHandlersMixin):
                 current_state=self.state, rescan_pass=self.rescan_pass,
                 items_of_interest=getattr(self, 'items_of_interest', None),
                 rejected_targets=getattr(self, 'rejected_targets', None),
-                nfz_buffer_m=self.geofence.SOFT_BOUNDARY if self.geofence else 0,
+                nfz_buffer_m=(20.0 if (NFZ_SLOW or NFZ_CARROT) else self.geofence.SOFT_BOUNDARY) if self.geofence else 0,
                 nfz_repulsion_vec=getattr(self, '_last_repulsion_vec', None)
             )
 
@@ -727,7 +729,35 @@ class VisualFlightMission(StateHandlersMixin):
                     print(f"[GEOFENCE] INSIDE NFZ! Switching to MANUAL — fly out!")
                     self.previous_state = self.state
                     self._set_state(State.MANUAL)
-                elif not nfz_inside and nfz_dist < self.geofence.SOFT_BOUNDARY:
+                # NFZ_SLOW: velocity toward waypoint at capped speed (20m zone, SEARCH only)
+                elif NFZ_SLOW and not nfz_inside and nfz_dist < 20.0 and self.state == State.SEARCH:
+                    ratio = nfz_dist / 20.0
+                    max_speed = 0.3 + ratio * (3.0 - 0.3)  # 0.3 at boundary → 3.0 at 20m edge
+                    if hasattr(self, 'waypoints') and self.wp_index < len(self.waypoints) and self.nav:
+                        wp = self.waypoints[self.wp_index]
+                        lat_m = 111320.0
+                        lon_m = 111320.0 * math.cos(math.radians(self.lat))
+                        dn = (wp[0] - self.lat) * lat_m
+                        de = (wp[1] - self.lon) * lon_m
+                        dist_wp = math.sqrt(dn**2 + de**2)
+                        if dist_wp > 0.5:
+                            self.nav.send_velocity(dn / dist_wp * max_speed, de / dist_wp * max_speed, 0, current_yaw=0.0)
+                        else:
+                            self.nav.send_velocity(0, 0, 0, current_yaw=0.0)
+                    off_lat, off_lon = self.geofence.repulsive_offset(self.lat, self.lon)
+                    if abs(off_lat) > 1e-8 or abs(off_lon) > 1e-8:
+                        self._last_repulsion_vec = (off_lat, off_lon)
+
+                # NFZ_CARROT: speed-cap only during SEARCH (20m zone)
+                # Direction comes from normal waypoint navigation — only speed is capped
+                elif NFZ_CARROT and not nfz_inside and nfz_dist < 20.0 and self.state == State.SEARCH:
+                    ratio = nfz_dist / 20.0
+                    max_speed = 0.3 + ratio * (3.0 - 0.3)  # 0.3 at boundary → 3.0 at 20m edge
+                    self.nav.last_speed_req = 0  # bypass 3s throttle
+                    self.nav.set_speed(max_speed)
+
+                # NFZ_REPEL: push away (8m zone)
+                elif NFZ_REPEL and not nfz_inside and nfz_dist < self.geofence.SOFT_BOUNDARY:
                     off_lat, off_lon = self.geofence.repulsive_offset(self.lat, self.lon)
                     if abs(off_lat) > 1e-8 or abs(off_lon) > 1e-8:
                         self._last_repulsion_vec = (off_lat, off_lon)
