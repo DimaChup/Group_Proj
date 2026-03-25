@@ -748,9 +748,9 @@ class VisualFlightMission(StateHandlersMixin):
                     if abs(off_lat) > 1e-8 or abs(off_lon) > 1e-8:
                         self._last_repulsion_vec = (off_lat, off_lon)
 
-                # NFZ_CARROT: speed-cap only during SEARCH (20m zone)
-                # Direction comes from normal waypoint navigation — only speed is capped
-                elif NFZ_CARROT and not nfz_inside and nfz_dist < 20.0 and self.state == State.SEARCH:
+                # NFZ_CARROT: speed-cap scalar field (20m zone, ALL states)
+                # Direction comes from normal navigation — only speed is capped
+                elif NFZ_CARROT and not nfz_inside and nfz_dist < 20.0:
                     ratio = nfz_dist / 20.0
                     max_speed = 0.3 + ratio * (3.0 - 0.3)  # 0.3 at boundary → 3.0 at 20m edge
                     self.nav.last_speed_req = 0  # bypass 3s throttle

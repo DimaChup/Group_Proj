@@ -754,6 +754,14 @@ class StateHandlersMixin:
         # MANUAL mode — WASD flight controls
         if self.state == State.MANUAL and self.master:
             fly_speed = 5.0   # m/s
+            # Geofence speed cap — spatial field applies to manual too
+            if hasattr(self, 'geofence') and self.geofence and (g.get('NFZ_SLOW') or g.get('NFZ_CARROT')):
+                dist, inside = self.geofence.distance_to_boundary(self.lat, self.lon)
+                if inside:
+                    fly_speed = 0.0  # block movement inside NFZ
+                elif dist < 20.0:
+                    ratio = dist / 20.0
+                    fly_speed = min(fly_speed, 0.3 + ratio * (3.0 - 0.3))
             climb_rate = 2.0  # m/s
             yaw_rate = 30.0   # deg/s
             if key == ord('w') or key == ord('W'):
