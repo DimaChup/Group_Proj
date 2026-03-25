@@ -711,6 +711,7 @@ class StateHandlersMixin:
         REAL_CANVAS_SIZE = g['REAL_CANVAS_SIZE']
         focus_poly_px = [self.geo.gps_to_pixels(lat, lon) for lat, lon in config.FOCUS_AREA_GPS]
         self.planner.search_polygon = focus_poly_px
+        self.planner._focus_area = True  # tight margins for focus area coverage
         self.search_poly = focus_poly_px
 
         # Regenerate lawnmower for the smaller area

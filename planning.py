@@ -59,7 +59,10 @@ class PathPlanner:
         # Generate ALL possible lines (Strips)
         all_strips = []
         
-        margin = step_px // 2
+        if getattr(self, '_focus_area', False):
+            margin = step_px // 10  # tight margins in focus area (max coverage)
+        else:
+            margin = step_px // 2   # normal margins (buffer for turns)
         bottom_limit = y + h - margin
         last_scan_y = -999
 
