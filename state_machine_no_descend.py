@@ -508,7 +508,7 @@ class StateHandlersMixin:
         # Stay at CURRENT altitude — hold position, don't climb or descend
         self.nav.send_global_target(self.target_lat, self.target_lon, self.alt)
         # Collect GPS samples for averaging (started in CENTERING)
-        if hasattr(self, '_gps_avg_samples'):
+        if getattr(self, '_gps_avg_samples', None) is not None:
             self._gps_avg_samples.append((self.lat, self.lon))
         # If Y was pressed, wait for 10s of averaging then finalize
         if getattr(self, '_confirmed_y', False) and hasattr(self, '_gps_avg_start'):
