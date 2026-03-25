@@ -363,7 +363,7 @@ class SimulationEnvironment:
             # Inner NFZ polygon (20m inside boundary) — bright pink, bold
             if nfz_buffer_m > 0:
                 if not hasattr(self, '_nfz_inner_contours'):
-                    inner_px = int(20.0 * geo_tool.pix_per_m)  # 20m erosion
+                    inner_px = int(config.NFZ_INNER_OFFSET_M * geo_tool.pix_per_m)
                     h_map, w_map = self.full_map.shape[:2]
                     mask_inner = np.zeros((h_map, w_map), dtype=np.uint8)
                     cv2.fillPoly(mask_inner, [sssi_pts], 255)

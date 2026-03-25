@@ -206,5 +206,25 @@ def load_kml_zones(kml_path="flight_plans/AENGM0074.kml"):
 #   config.load_kml_zones()         # default: AENGM0074.kml
 #   config.load_kml_zones("path/to/other.kml")
 
+# --- NFZ GEOFENCE TUNING ---
+NFZ_SLOW_ZONE_M = 20.0          # Speed scalar field active within this distance of NFZ
+NFZ_MIN_SPEED_MPS = 0.3         # Minimum speed at NFZ boundary
+NFZ_ZONE_MAX_SPEED_MPS = 3.0    # Speed at outer edge of slow zone
+NFZ_INNER_OFFSET_M = 20.0       # Inner (pink) polygon offset inside NFZ boundary
+NFZ_INNER_RANGE_M = 23.0        # Repulsion active within this dist from inner polygon
+NFZ_PUSH_SPEED_MPS = 3.0        # Constant repulsive push speed (m/s)
+
+# --- MANUAL FLIGHT ---
+MANUAL_FLY_SPEED_MPS = 5.0      # WASD horizontal speed
+MANUAL_CLIMB_RATE_MPS = 2.0     # R/F vertical speed
+MANUAL_YAW_STEP_DEG = 10        # Q/E yaw step per keypress
+MANUAL_YAW_RATE_DEGS = 30.0     # Yaw rotation speed for Q/E and alignment
+
+# --- SEARCH TUNING ---
+REJECTED_TARGET_RADIUS_M = 3.0  # Skip detections within this radius of rejected/IOI targets
+MAX_RESCAN_PASSES = 3           # Number of altitude-drop rescan passes
+RESCAN_ALT_FACTOR = 0.8         # Altitude multiplier per rescan pass
+RESCAN_ALT_FLOOR_M = 15.0       # Minimum rescan altitude
+
 # --- LOGGING ---
 LOG_FILE = "logs/flight_log.csv"

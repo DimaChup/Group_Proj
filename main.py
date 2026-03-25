@@ -283,7 +283,7 @@ class VisualFlightMission(StateHandlersMixin):
         self.manual_departure_lon = 0
         self.manual_departure_alt = 0
         # Rescan at lower altitude if nothing found (drop 20% each pass)
-        self.max_rescan_passes = 3      # up to 3 rescans before giving up
+        self.max_rescan_passes = config.MAX_RESCAN_PASSES
         self.rescan_pass = 0            # 0 = first pass, 1+ = rescan
 
         # Pre-planned waypoints (fly before search)
@@ -638,7 +638,7 @@ class VisualFlightMission(StateHandlersMixin):
                 current_state=self.state, rescan_pass=self.rescan_pass,
                 items_of_interest=getattr(self, 'items_of_interest', None),
                 rejected_targets=getattr(self, 'rejected_targets', None),
-                nfz_buffer_m=(20.0 if (NFZ_SLOW or NFZ_CARROT) else self.geofence.SOFT_BOUNDARY) if self.geofence else 0,
+                nfz_buffer_m=(config.NFZ_SLOW_ZONE_M if (NFZ_SLOW or NFZ_CARROT) else self.geofence.SOFT_BOUNDARY) if self.geofence else 0,
                 nfz_repulsion_vec=getattr(self, '_last_repulsion_vec', None),
                 nfz_arrows=NFZ_ARROWS
             )
@@ -740,10 +740,10 @@ class VisualFlightMission(StateHandlersMixin):
                     self._set_state(State.MANUAL)
                     if self.nav:
                         self.nav.send_velocity(0, 0, 0)  # stop immediately
-                # NFZ_SLOW: velocity toward waypoint at capped speed (20m zone, SEARCH only)
-                elif NFZ_SLOW and not nfz_inside and nfz_dist < 20.0 and self.state == State.SEARCH:
-                    ratio = nfz_dist / 20.0
-                    max_speed = 0.3 + ratio * (3.0 - 0.3)  # 0.3 at boundary → 3.0 at 20m edge
+                # NFZ_SLOW: velocity toward waypoint at capped speed (slow zone, SEARCH only)
+                elif NFZ_SLOW and not nfz_inside and nfz_dist < config.NFZ_SLOW_ZONE_M and self.state == State.SEARCH:
+                    ratio = nfz_dist / config.NFZ_SLOW_ZONE_M
+                    max_speed = config.NFZ_MIN_SPEED_MPS + ratio * (config.NFZ_ZONE_MAX_SPEED_MPS - config.NFZ_MIN_SPEED_MPS)
                     if hasattr(self, 'waypoints') and self.wp_index < len(self.waypoints) and self.nav:
                         wp = self.waypoints[self.wp_index]
                         lat_m = 111320.0
@@ -759,11 +759,11 @@ class VisualFlightMission(StateHandlersMixin):
                     if abs(off_lat) > 1e-8 or abs(off_lon) > 1e-8:
                         self._last_repulsion_vec = (off_lat, off_lon)
 
-                # NFZ_CARROT: speed-cap scalar field (20m zone, ALL states)
+                # NFZ_CARROT: speed-cap scalar field (slow zone, ALL states)
                 # Direction comes from normal navigation — only speed is capped
-                elif NFZ_CARROT and not nfz_inside and nfz_dist < 20.0:
-                    ratio = nfz_dist / 20.0
-                    max_speed = 0.3 + ratio * (3.0 - 0.3)  # 0.3 at boundary → 3.0 at 20m edge
+                elif NFZ_CARROT and not nfz_inside and nfz_dist < config.NFZ_SLOW_ZONE_M:
+                    ratio = nfz_dist / config.NFZ_SLOW_ZONE_M
+                    max_speed = config.NFZ_MIN_SPEED_MPS + ratio * (config.NFZ_ZONE_MAX_SPEED_MPS - config.NFZ_MIN_SPEED_MPS)
                     self.nav.last_speed_req = 0  # bypass 3s throttle
                     self.nav.set_speed(max_speed)
 
@@ -772,8 +772,8 @@ class VisualFlightMission(StateHandlersMixin):
                 # Same mechanism as --nfz-repel, works with --nfz-carrot or --nfz-slow
                 if (NFZ_CARROT or NFZ_SLOW) and self.nav:
                     signed_dist = nfz_dist if not nfz_inside else -nfz_dist
-                    dist_to_inner = signed_dist + 20.0  # inner polygon is 20m inside NFZ
-                    if 0 < dist_to_inner < 23.0:
+                    dist_to_inner = signed_dist + config.NFZ_INNER_OFFSET_M  # inner polygon offset
+                    if 0 < dist_to_inner < config.NFZ_INNER_RANGE_M:
                         off_lat, off_lon = self.geofence.repulsive_offset(self.lat, self.lon)
                         if abs(off_lat) > 1e-8 or abs(off_lon) > 1e-8:
                             self._last_repulsion_vec = (off_lat, off_lon)
@@ -787,7 +787,7 @@ class VisualFlightMission(StateHandlersMixin):
                                 push_e = -push_e
                             mag = math.sqrt(push_n**2 + push_e**2)
                             if mag > 0.01:
-                                strength = 3.0  # constant 3 m/s push within 13m of inner polygon
+                                strength = config.NFZ_PUSH_SPEED_MPS
                                 self.nav.send_velocity(push_n / mag * strength, push_e / mag * strength, 0, current_yaw=0.0)
 
                 # NFZ_REPEL: push away (8m zone)

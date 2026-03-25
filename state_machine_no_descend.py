@@ -388,18 +388,17 @@ class StateHandlersMixin:
 
         if target_found:
             self.calculate_target_gps(px_u, px_v)
-            # Skip if detection is near a previously rejected target (within 3m)
-            # or near an item of interest (within 3m)
+            # Skip if detection is near a previously rejected target or item of interest
             near_rejected = False
             for rej_lat, rej_lon in self.rejected_targets:
                 d = self._gps_dist(self.target_lat, self.target_lon, rej_lat, rej_lon)
-                if d < 3.0:
+                if d < config.REJECTED_TARGET_RADIUS_M:
                     near_rejected = True
                     break
             if not near_rejected and hasattr(self, 'items_of_interest'):
                 for item in self.items_of_interest:
                     d = self._gps_dist(self.target_lat, self.target_lon, item['lat'], item['lon'])
-                    if d < 3.0:
+                    if d < config.REJECTED_TARGET_RADIUS_M:
                         near_rejected = True
                         break
             if not near_rejected:
@@ -418,9 +417,9 @@ class StateHandlersMixin:
                 if time.time() - self.last_req > resend_interval:
                     if nfz_slow_active:
                         dist, _ = self.geofence.distance_to_boundary(self.lat, self.lon)
-                        if dist < 20.0:
-                            ratio = dist / 20.0
-                            max_spd = 0.3 + ratio * (3.0 - 0.3)  # 0.3 at boundary → 3.0 at 20m edge
+                        if dist < config.NFZ_SLOW_ZONE_M:
+                            ratio = dist / config.NFZ_SLOW_ZONE_M
+                            max_spd = config.NFZ_MIN_SPEED_MPS + ratio * (config.NFZ_ZONE_MAX_SPEED_MPS - config.NFZ_MIN_SPEED_MPS)
                         else:
                             max_spd = config.speed_for_altitude(self.alt)
                         self.nav.last_speed_req = 0  # bypass 3s throttle
@@ -432,9 +431,9 @@ class StateHandlersMixin:
             elif self.rescan_pass < self.max_rescan_passes:
                 # Drop altitude by 20% and rescan from current position
                 current_alt = self._current_search_alt()
-                new_alt = max(15.0, current_alt * 0.8)
-                if new_alt <= 15.0:
-                    print("WARNING: Rescan altitude hit 15m floor. Ending mission.")
+                new_alt = max(config.RESCAN_ALT_FLOOR_M, current_alt * config.RESCAN_ALT_FACTOR)
+                if new_alt <= config.RESCAN_ALT_FLOOR_M:
+                    print(f"WARNING: Rescan altitude hit {config.RESCAN_ALT_FLOOR_M}m floor. Ending mission.")
                     self._set_state(State.DONE)
                     return
                 self.rescan_pass += 1
@@ -785,9 +784,9 @@ class StateHandlersMixin:
 
         # MANUAL mode — WASD flight controls
         if self.state == State.MANUAL and self.master:
-            fly_speed = 5.0   # m/s
-            climb_rate = 2.0  # m/s
-            yaw_rate = 30.0   # deg/s
+            fly_speed = config.MANUAL_FLY_SPEED_MPS
+            climb_rate = config.MANUAL_CLIMB_RATE_MPS
+            yaw_rate = config.MANUAL_YAW_RATE_DEGS
             if key == ord('w') or key == ord('W'):
                 self.nav.send_velocity(fly_speed, 0, 0)
             elif key == ord('s') or key == ord('S'):
@@ -801,19 +800,19 @@ class StateHandlersMixin:
             elif key == ord('f') or key == ord('F'):
                 self.nav.send_velocity(0, 0, climb_rate)
             elif key == ord('q') or key == ord('Q'):
-                # Yaw left 10 degrees (relative, counterclockwise)
+                # Yaw left (relative, counterclockwise)
                 from pymavlink import mavutil
                 self.master.mav.command_long_send(
                     self.master.target_system, self.master.target_component,
                     mavutil.mavlink.MAV_CMD_CONDITION_YAW, 0,
-                    10, 30, -1, 1, 0, 0, 0)  # 10deg, 30deg/s, CCW, relative
+                    config.MANUAL_YAW_STEP_DEG, yaw_rate, -1, 1, 0, 0, 0)
             elif key == ord('e') or key == ord('E'):
-                # Yaw right 10 degrees (relative, clockwise)
+                # Yaw right (relative, clockwise)
                 from pymavlink import mavutil
                 self.master.mav.command_long_send(
                     self.master.target_system, self.master.target_component,
                     mavutil.mavlink.MAV_CMD_CONDITION_YAW, 0,
-                    10, 30, 1, 1, 0, 0, 0)  # 10deg, 30deg/s, CW, relative
+                    config.MANUAL_YAW_STEP_DEG, yaw_rate, 1, 1, 0, 0, 0)
 
         # VERIFY state — Y/N confirmation and landing side selection
         if self.state == State.VERIFY:
