@@ -404,19 +404,7 @@ class StateHandlersMixin:
         if self.state == State.SEARCH:
             if self.wp_index < len(self.waypoints):
                 target = self.waypoints[self.wp_index]
-                # NFZ_SLOW: re-send faster (0.3s) with speed capped by distance to SSSI
-                nfz_slow_active = g.get('NFZ_SLOW') and hasattr(self, 'geofence') and self.geofence
-                resend_interval = 0.3 if nfz_slow_active else 2.0
-                if time.time() - self.last_req > resend_interval:
-                    if nfz_slow_active:
-                        dist, _ = self.geofence.distance_to_boundary(self.lat, self.lon)
-                        if dist < 20.0:
-                            ratio = dist / 20.0
-                            max_spd = 0.3 + ratio * (3.0 - 0.3)  # 0.3 at boundary → 3.0 at 20m edge
-                        else:
-                            max_spd = config.speed_for_altitude(self.alt)
-                        self.nav.last_speed_req = 0  # bypass 3s throttle
-                        self.nav.set_speed(max_spd)
+                if time.time() - self.last_req > 2.0:
                     self.nav.send_global_target(target[0], target[1], self._current_search_alt())
                     self.last_req = time.time()
                 if self.get_dist_to_point(target[0], target[1]) < 2.0:
