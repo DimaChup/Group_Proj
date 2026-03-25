@@ -1,5 +1,9 @@
 # SAR Drone — Autonomous Search and Rescue
 
+python main.py --search-area --no-descend --speed 5 --no-turn-realign-diag --nfz-carrot --transit flight_plans/transit.json --alt 35
+
+
+
 University of Bristol MSc project (AENGM0074). Autonomous drone that flies a search pattern, detects a casualty using onboard AI (YOLOv8), and delivers a payload to the target location.
 
 ## Quick Start
@@ -45,46 +49,59 @@ DRONE_MODE=SIMULATION python main.py \
 
 ---
 
-## All CLI Flags
+## CLI Flags Reference
 
-### Mission Flags
-
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--search-area` | off | Pre-load search polygon from KML (skip interactive drawing) |
-| `--no-descend` | off | Stay at search altitude during verification |
-| `--no-turn` | off | Strafe between waypoints (no yaw rotation) |
-| `--nfz-repel` | off | Enable SSSI no-fly zone repulsive force field |
-| `--speed N` | 1 | SITL time multiplier (e.g. `--speed 5` for 5x faster) |
-| `--alt N` | 50 | Override search altitude in metres |
-| `--dry-run` | off | No GPS/arm — just show the search pattern and exit |
-| `--headless` | auto | No cv2 windows (auto-detected on Pi/SSH) |
-
-### Path Flags
+### Flight Mode
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `--transit FILE` | none | Pre-drawn transit path JSON (flown to/from search area) |
-| `--waypoints FILE` | none | Pre-drawn waypoints to fly before search pattern |
-| `--pattern TYPE` | lawnmower | Search pattern algorithm (`lawnmower` or `spiral`) |
-| `--smooth-bezier` | off | Bezier curves at turns (smooth arcs) |
-| `--smooth-extra` | off | Extra waypoints at turns (wider arc) |
+| `--search-area` | off | Pre-load survey polygon from KML — skip the interactive polygon drawing step |
+| `--no-descend` | off | Stay at search altitude for VERIFY (no descent to 15m). Use when camera FOV is wide enough at search alt |
+| `--headless` | auto | Disable all `cv2` windows. Auto-detected over SSH/PuTTY. Browser dashboard still works |
+| `--dry-run` | off | Show lawnmower pattern and print commands — no GPS, no arming, no SITL needed |
+| `--speed N` | `1` | SITL time acceleration multiplier. `--speed 5` runs 5x real-time. Simulation only |
+| `--alt N` | `50` | Override `TARGET_ALT` (search altitude in metres) at launch without editing config.py |
 
-### Model Flags
+### Geofence (NFZ)
 
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--model PATH` | `best.tflite` | Path to TFLite model file |
-
-### Stream Flags
+These flags all relate to the SSSI no-fly zone. Pick one avoidance strategy at a time.
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `--stream-port N` | 8090 | HTTP stream server port |
-| `--stream-res WxH` | 320x240 | Stream resolution |
-| `--stream-fps N` | 5 | Stream frame rate |
-| `--stream-quality N` | 50 | JPEG quality (1-100) |
-| `--no-stream` | off | Disable web stream entirely |
+| `--nfz-repel` | off | Potential field repulsion: pushes drone away from NFZ with velocity commands |
+| `--nfz-slow` | off | Speed scalar field: caps waypoint speed as drone approaches NFZ (20m zone, 3.0 → 0.3 m/s) |
+| `--nfz-carrot` | off | Carrot-on-stick: shifts the position target sideways to steer around the NFZ boundary. **Recommended** |
+| `--arrows` | off | Draw vector field arrows on the god-view map inside the NFZ buffer ring (visual debug) |
+
+### Path / Pattern
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--transit FILE` | none | JSON file for pre-drawn transit path. Drone flies this to the search area and retraces it home (e.g. `flight_plans/transit.json`) |
+| `--waypoints FILE` | none | JSON file with waypoints to fly before the search pattern begins |
+| `--pattern TYPE` | `lawnmower` | Search pattern algorithm. Options: `lawnmower`, `spiral` |
+| `--no-turn` | off | Strafe sideways between scan lines — no yaw rotation. Fastest option |
+| `--no-turn-realign` | off | Strafe between lines but yaw to face the next line heading before strafing |
+| `--no-turn-realign-diag` | off | Like `--no-turn-realign` but rotates 53° so camera diagonal is perpendicular to scan direction (~67% overlap bonus). **Recommended for best coverage** |
+| `--smooth-bezier` | off | Replace sharp turns with Bezier curves |
+| `--smooth-extra` | off | Insert extra waypoints at turns for a wider arc |
+
+### Mission Behaviour
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--beacon-delay N` | `0` | Simulate a PLB beacon signal N seconds after SEARCH begins. Triggers redirect to Focus Area. `0` = disabled |
+| `--model PATH` | `best.tflite` | Path to the TFLite model file. Overrides the default without copying files |
+
+### Stream
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--stream-port N` | `8090` | HTTP stream/dashboard server port |
+| `--stream-res WxH` | `320x240` | MJPEG stream resolution (e.g. `640x480`) |
+| `--stream-fps N` | `5` | Stream frame rate cap |
+| `--stream-quality N` | `50` | JPEG quality 1–100. Higher = sharper, more bandwidth |
+| `--no-stream` | off | Disable the web stream entirely (saves CPU) |
 
 ---
 
@@ -345,19 +362,59 @@ pip install -r requirements_pi.txt
 
 ---
 
-## Key Configuration (config.py)
+## Config Tuning (config.py)
 
-| Setting | Value | Notes |
-|---------|-------|-------|
-| `TARGET_ALT` | 50m | Search altitude (tune after real testing) |
-| `VERIFY_ALT` | 15m | Verification altitude (with descent) |
-| `SEARCH_SPEED_MPS` | 5 m/s | Drone speed during search |
-| `IMAGE_W` | 1456 | Pi camera native width |
-| `IMAGE_H` | 1088 | Pi camera native height |
-| `FOCAL_LENGTH_MM` | 5.46 | Calibrated 2026-03-11 |
-| Confidence threshold | 0.4 | In vision.py |
+Config auto-detects the platform: serial port found → real Cube, otherwise → SITL on localhost. Override anything with environment variables or the `--alt` flag.
 
-Config auto-detects the platform: serial port found → real Cube, otherwise → SITL on localhost.
+### Altitudes
+
+| Constant | Default | Description |
+|----------|---------|-------------|
+| `TARGET_ALT` | `50.0` m | Search altitude. Lower = better detection, more passes needed. Override with `--alt N` |
+| `VERIFY_ALT` | `15.0` m | Altitude for close-up verification (used with descent mode, no `--no-descend`) |
+
+### Speeds
+
+| Constant | Default | Description |
+|----------|---------|-------------|
+| `TRANSIT_SPEED_MPS` | `15.0` | Speed flying to/from search area |
+| `SEARCH_SPEED_MPS` | `10.0` | Cruise speed during lawnmower pattern |
+| `FOCUS_SEARCH_SPEED_MPS` | `5.0` | Slower speed inside the Focus Area (more detection time) |
+| `SPEED_ALT_LOW` / `SPEED_AT_LOW` | `20m` / `6 m/s` | At or below this altitude, use this speed |
+| `SPEED_ALT_HIGH` / `SPEED_AT_HIGH` | `50m` / `10 m/s` | At or above this altitude, use this speed |
+| `MANUAL_FLY_SPEED_MPS` | `5.0` | WASD horizontal speed in manual override |
+| `MANUAL_CLIMB_RATE_MPS` | `2.0` | R/F climb/descend rate in manual |
+| `MANUAL_YAW_STEP_DEG` | `10` | Q/E yaw step per keypress |
+
+### NFZ Geofence Tuning
+
+| Constant | Default | Description |
+|----------|---------|-------------|
+| `NFZ_SLOW_ZONE_M` | `20.0` m | Outer radius of the speed-cap zone around the NFZ |
+| `NFZ_MIN_SPEED_MPS` | `0.3` | Speed floor at NFZ boundary (slow zone) |
+| `NFZ_ZONE_MAX_SPEED_MPS` | `3.0` | Speed at the outer edge of the slow zone |
+| `NFZ_INNER_OFFSET_M` | `20.0` m | Inner polygon shrunk by this amount inside NFZ boundary (repulsion reference) |
+| `NFZ_INNER_RANGE_M` | `23.0` m | Repulsion active within this distance from the inner polygon |
+| `NFZ_PUSH_SPEED_MPS` | `3.0` | Constant push speed for `--nfz-repel` mode |
+
+### Detection / CV
+
+| Constant | Default | Description |
+|----------|---------|-------------|
+| `CONFIDENCE_THRESHOLD` | `0.4` | Min detection confidence. Lower (e.g. `0.25`) = more detections + more false positives. Edit in `vision.py` |
+| `IMAGE_W` | `1456` | Pi camera capture width (IMX296 native) |
+| `IMAGE_H` | `1088` | Pi camera capture height (IMX296 native) |
+| `FOCAL_LENGTH_MM` | `5.46` | Calibrated 2026-03-11. Re-calibrate with `tests/calibration/fov_calibrate.py` |
+| `SENSOR_WIDTH_MM` | `5.02` | IMX296 sensor width |
+
+### Search Behaviour
+
+| Constant | Default | Description |
+|----------|---------|-------------|
+| `REJECTED_TARGET_RADIUS_M` | `3.0` m | Skip new detections within this radius of already-rejected/IOI targets |
+| `MAX_RESCAN_PASSES` | `3` | Number of altitude-drop rescan passes after initial search |
+| `RESCAN_ALT_FACTOR` | `0.8` | Altitude multiplier each rescan pass (e.g. 50m → 40m → 32m) |
+| `RESCAN_ALT_FLOOR_M` | `15.0` m | Minimum altitude for rescan passes |
 
 ---
 
