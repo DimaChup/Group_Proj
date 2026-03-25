@@ -29,12 +29,7 @@ from planning import PathPlanner
 from vision import VisionSystem
 
 # --- Extracted modules ---
-# Choose state machine: default or no-descend variant
-if "--no-descend" in sys.argv:
-    from state_machine_no_descend import StateHandlersMixin
-    print("[CONFIG] Using NO-DESCEND state machine (verify at search altitude)")
-else:
-    from state_machine import StateHandlersMixin
+from state_machine_no_descend import StateHandlersMixin
 from navigation import NavigationController
 from stream_server import (start_stream_server, set_stream_frame,
                            get_stream_frame, cmd_queue as stream_cmd_queue)
@@ -44,56 +39,27 @@ from gps_utils import gps_distance, calculate_target_from_pixels, landing_offset
 if config.MODE == "SIMULATION":
     from simulator.simulation import SimulationEnvironment
 
-# --- CLI FLAGS ---
-# Model:      --model models/best2.tflite   (default: best.tflite)
-# Dry-run:    --dry-run                      (skip GPS/arm, show pattern, print commands)
-# Pattern:    --pattern spiral               (default: lawnmower)
-# Stream:     --stream-port 8090 --stream-res 320x240 --stream-fps 5 --stream-quality 50
-# No stream:  --no-stream
+# --- CONFIGURATION ---
+# Defaults represent our best-tested settings. Override with CLI flags where noted.
 REAL_CANVAS_SIZE = 4800  # Virtual canvas size (pixels) for planner in REAL mode
 
 DRY_RUN = "--dry-run" in sys.argv
 MODEL_PATH = "best.tflite"
-SEARCH_PATTERN = "lawnmower"
-PRELOAD_SEARCH = "--search-area" in sys.argv  # skip polygon drawing, use KML survey area
-PRE_WAYPOINTS_FILE = None  # --waypoints waypoints.json -> fly these BEFORE search pattern
-TRANSIT_FILE = None        # --transit transit.json -> pre-drawn transit path (visualized + flown)
+TRANSIT_FILE = "flight_plans/transit.json"  # Transit path (override: --transit <path>)
 STREAM_ENABLED = "--no-stream" not in sys.argv
 STREAM_PORT = 8090
 STREAM_W, STREAM_H = 320, 240
 STREAM_FPS = 5
 STREAM_QUALITY = 50
-SIM_SPEED = 1  # SITL speedup multiplier (default 1x real-time, use --speed 5 for faster)
-NO_TURN = "--no-turn" in sys.argv or "--no-turn-realign" in sys.argv or "--no-turn-realign-diag" in sys.argv
-NO_TURN_REALIGN = "--no-turn-realign" in sys.argv or "--no-turn-realign-diag" in sys.argv
-NO_TURN_DIAG = "--no-turn-realign-diag" in sys.argv  # Diagonal footprint: rotate so diagonal is perpendicular to scan
-NO_DESCEND = "--no-descend" in sys.argv  # Stay at search altitude, don't descend to verify
-NFZ_REPEL = "--nfz-repel" in sys.argv   # Enable SSSI no-fly zone repulsion (potential field)
-NFZ_SLOW = "--nfz-slow" in sys.argv     # Velocity toward waypoint at capped speed (20m zone)
-NFZ_CARROT = "--nfz-carrot" in sys.argv  # Carrot-on-stick: nearby position target (20m zone)
-NFZ_ARROWS = "--arrows" in sys.argv      # Draw vector field arrows in NFZ buffer zone
-CENTER_VERIFY = "--center-verify" in sys.argv  # Vision centering + 10s GPS averaging before confirm
-SMART_DETECT = "--smart-detect" in sys.argv  # Detection queue + multi-frame confirmation
-SMOOTH_BEZIER = "--smooth-bezier" in sys.argv  # Bezier curves at turns (smooth arcs)
-SMOOTH_EXTRA = "--smooth-extra" in sys.argv    # Extra waypoints at turns (wider arc)
-BEACON_DELAY = 0  # --beacon-delay N: simulate PLB signal N seconds after SEARCH begins (0=disabled)
+SIM_SPEED = 1  # SITL speedup (override: --speed N)
+CENTER_VERIFY = "--center-verify" in sys.argv  # Opt-in: vision centering + 10s GPS averaging
+SMART_DETECT = "--smart-detect" in sys.argv    # Opt-in: multi-frame confirmation before trigger
+BEACON_DELAY = 0  # Simulate PLB signal N seconds after SEARCH begins (override: --beacon-delay N)
 
+# Parse CLI overrides
 for _i, _arg in enumerate(sys.argv):
     if _arg == "--model" and _i + 1 < len(sys.argv):
         MODEL_PATH = sys.argv[_i + 1]
-    elif _arg == "--pattern" and _i + 1 < len(sys.argv):
-        SEARCH_PATTERN = sys.argv[_i + 1]
-    elif _arg == "--stream-port" and _i + 1 < len(sys.argv):
-        STREAM_PORT = int(sys.argv[_i + 1])
-    elif _arg == "--stream-res" and _i + 1 < len(sys.argv):
-        _parts = sys.argv[_i + 1].split("x")
-        STREAM_W, STREAM_H = int(_parts[0]), int(_parts[1])
-    elif _arg == "--stream-fps" and _i + 1 < len(sys.argv):
-        STREAM_FPS = int(sys.argv[_i + 1])
-    elif _arg == "--stream-quality" and _i + 1 < len(sys.argv):
-        STREAM_QUALITY = int(sys.argv[_i + 1])
-    elif _arg == "--waypoints" and _i + 1 < len(sys.argv):
-        PRE_WAYPOINTS_FILE = sys.argv[_i + 1]
     elif _arg == "--transit" and _i + 1 < len(sys.argv):
         TRANSIT_FILE = sys.argv[_i + 1]
     elif _arg == "--speed" and _i + 1 < len(sys.argv):
@@ -155,17 +121,14 @@ class VisualFlightMission(StateHandlersMixin):
             self.sim = SimulationEnvironment(GeoTransformer(map_w_px=100)) # Temp init
             self.geo = GeoTransformer(map_w_px=self.sim.map_w)
             self.sim.geo = self.geo # Sync geo tool
-            # Returns only Target and Search Poly
-            # Pre-load search polygon from KML if --search-area flag used
-            preload_gps = None
+            # Load search polygon from KML and transit path from JSON
+            if not config.load_kml_zones():
+                print("[WARN] KML load failed — using fallback SEARCH_AREA_GPS from config.py")
+            preload_gps = config.SEARCH_AREA_GPS
+            print(f"  Search polygon from KML: {len(preload_gps)} points")
+
             preload_transit = None
-            if PRELOAD_SEARCH:
-                if not config.load_kml_zones():
-                    print("[WARN] KML load failed — using fallback SEARCH_AREA_GPS from config.py")
-                preload_gps = config.SEARCH_AREA_GPS
-                print(f"  Pre-loading search polygon from KML: {len(preload_gps)} points")
-            # Load transit path from JSON for preloading onto setup map
-            if TRANSIT_FILE:
+            if TRANSIT_FILE and os.path.exists(TRANSIT_FILE):
                 import json
                 try:
                     with open(TRANSIT_FILE) as f:
@@ -176,7 +139,7 @@ class VisualFlightMission(StateHandlersMixin):
                             preload_transit.append((wp["lat"], wp["lon"]))
                         else:
                             preload_transit.append((wp[0], wp[1]))
-                    print(f"  Pre-loading transit path: {len(preload_transit)} points from {TRANSIT_FILE}")
+                    print(f"  Transit path: {len(preload_transit)} points from {TRANSIT_FILE}")
                 except Exception as e:
                     print(f"WARNING: Failed to load transit from {TRANSIT_FILE}: {e}")
             self.target_px, self.tgt_type, self.search_poly, transit_px, focus_px = self.sim.setup_on_map(
@@ -217,9 +180,9 @@ class VisualFlightMission(StateHandlersMixin):
             self.eyes.using_ai = True
             print("Vision System: Real Camera Initialized")
 
-        # 2. Geofence (only with --nfz-repel flag)
+        # 2. Geofence (SSSI no-fly zone with speed cap + inner polygon repulsion)
         self.geofence = None
-        if (NFZ_REPEL or NFZ_SLOW or NFZ_CARROT) and config.SSSI_GPS and len(config.SSSI_GPS) >= 3:
+        if config.SSSI_GPS and len(config.SSSI_GPS) >= 3:
             from geofence import NFZGeofence
             self.geofence = NFZGeofence(self.geo)
             print(f"[GEOFENCE] Active — SSSI {len(config.SSSI_GPS)} corners, "
@@ -227,7 +190,7 @@ class VisualFlightMission(StateHandlersMixin):
 
         # 3. Planner
         self.planner = PathPlanner(self.geo, self.search_poly)
-        self.planner._no_turn = NO_TURN
+        self.planner._no_turn = True  # Fixed yaw during search (diagonal footprint alignment)
 
         # Search waypoints generated after pre_waypoints are known (need transit endpoint)
 
@@ -305,23 +268,15 @@ class VisualFlightMission(StateHandlersMixin):
                     wps.append((wp[0], wp[1]))
             return wps
 
-        # Source 1: --waypoints flag
-        if PRE_WAYPOINTS_FILE:
-            try:
-                wps = _load_waypoints_json(PRE_WAYPOINTS_FILE)
-                self.pre_waypoints.extend(wps)
-                print(f"  Pre-waypoints loaded: {len(wps)} from {PRE_WAYPOINTS_FILE}")
-            except Exception as e:
-                print(f"WARNING: Failed to load {PRE_WAYPOINTS_FILE}: {e}")
-        # Source 2: --transit flag
-        if TRANSIT_FILE:
+        # Load transit waypoints from file
+        if TRANSIT_FILE and os.path.exists(TRANSIT_FILE):
             try:
                 wps = _load_waypoints_json(TRANSIT_FILE)
                 self.pre_waypoints.extend(wps)
                 print(f"  Transit path loaded: {len(wps)} from {TRANSIT_FILE}")
             except Exception as e:
                 print(f"WARNING: Failed to load {TRANSIT_FILE}: {e}")
-        # Source 3: drawn on map during setup
+        # Additional transit from map drawing (simulation only)
         if hasattr(self, '_drawn_transit_gps') and self._drawn_transit_gps:
             self.pre_waypoints.extend(self._drawn_transit_gps)
 
@@ -336,11 +291,8 @@ class VisualFlightMission(StateHandlersMixin):
             else:
                 canvas_w, canvas_h = REAL_CANVAS_SIZE, REAL_CANVAS_SIZE
             start_ref = self.pre_waypoints[-1] if self.pre_waypoints else None
-            if SEARCH_PATTERN == "spiral":
-                self.waypoints = self.planner.generate_spiral_pattern(canvas_w, canvas_h, start_ref)
-            else:
-                self.waypoints = self.planner.generate_search_pattern(canvas_w, canvas_h, start_ref)
-            print(f"  Search pattern ({SEARCH_PATTERN}): {len(self.waypoints)} waypoints (start from {'transit endpoint' if start_ref else 'default'})")
+            self.waypoints = self.planner.generate_search_pattern(canvas_w, canvas_h, start_ref)
+            print(f"  Search pattern (lawnmower): {len(self.waypoints)} waypoints (start from {'transit endpoint' if start_ref else 'default'})")
 
         # Helper vars
         self.view_w_px = 100
@@ -640,9 +592,8 @@ class VisualFlightMission(StateHandlersMixin):
                 current_state=self.state, rescan_pass=self.rescan_pass,
                 items_of_interest=getattr(self, 'items_of_interest', None),
                 rejected_targets=getattr(self, 'rejected_targets', None),
-                nfz_buffer_m=(config.NFZ_SLOW_ZONE_M if (NFZ_SLOW or NFZ_CARROT) else self.geofence.SOFT_BOUNDARY) if self.geofence else 0,
+                nfz_buffer_m=config.NFZ_SLOW_ZONE_M if self.geofence else 0,
                 nfz_repulsion_vec=getattr(self, '_last_repulsion_vec', None),
-                nfz_arrows=NFZ_ARROWS
             )
 
 
@@ -725,15 +676,16 @@ class VisualFlightMission(StateHandlersMixin):
             if handler:
                 handler(target_found, px_u, px_v, key)
 
-            # Geofence check (runs after state dispatch)
+            # Geofence enforcement: speed cap near NFZ + inner polygon repulsion
             self._last_repulsion_vec = None
             if self.geofence and self.master and self.lat != 0 and self.state not in (
                     State.INIT, State.CONNECTING, State.ARMING, State.TAKEOFF,
                     State.LANDING, State.DONE):
                 nfz_dist, nfz_inside = self.geofence.distance_to_boundary(self.lat, self.lon)
+
+                # Hard boundary: inside NFZ triggers immediate manual override
                 if nfz_inside and self.state != State.MANUAL:
                     print(f"[GEOFENCE] INSIDE NFZ! Switching to MANUAL — fly out!")
-                    # Only save previous_state if not already returning from manual
                     if self.state != State.RETURN_FROM_MANUAL:
                         self.previous_state = self.state
                         self.manual_departure_lat = self.lat
@@ -741,40 +693,22 @@ class VisualFlightMission(StateHandlersMixin):
                         self.manual_departure_alt = self.alt
                     self._set_state(State.MANUAL)
                     if self.nav:
-                        self.nav.send_velocity(0, 0, 0)  # stop immediately
-                # NFZ_SLOW: velocity toward waypoint at capped speed (slow zone, SEARCH only)
-                elif NFZ_SLOW and not nfz_inside and nfz_dist < config.NFZ_SLOW_ZONE_M and self.state == State.SEARCH:
-                    ratio = nfz_dist / config.NFZ_SLOW_ZONE_M
-                    max_speed = config.NFZ_MIN_SPEED_MPS + ratio * (config.NFZ_ZONE_MAX_SPEED_MPS - config.NFZ_MIN_SPEED_MPS)
-                    if hasattr(self, 'waypoints') and self.wp_index < len(self.waypoints) and self.nav:
-                        wp = self.waypoints[self.wp_index]
-                        lat_m = 111320.0
-                        lon_m = 111320.0 * math.cos(math.radians(self.lat))
-                        dn = (wp[0] - self.lat) * lat_m
-                        de = (wp[1] - self.lon) * lon_m
-                        dist_wp = math.sqrt(dn**2 + de**2)
-                        if dist_wp > 0.5:
-                            self.nav.send_velocity(dn / dist_wp * max_speed, de / dist_wp * max_speed, 0, current_yaw=0.0)
-                        else:
-                            self.nav.send_velocity(0, 0, 0, current_yaw=0.0)
-                    off_lat, off_lon = self.geofence.repulsive_offset(self.lat, self.lon)
-                    if abs(off_lat) > 1e-8 or abs(off_lon) > 1e-8:
-                        self._last_repulsion_vec = (off_lat, off_lon)
+                        self.nav.send_velocity(0, 0, 0)
 
-                # NFZ_CARROT: speed-cap scalar field (slow zone, ALL states)
-                # Direction comes from normal navigation — only speed is capped
-                elif NFZ_CARROT and not nfz_inside and nfz_dist < config.NFZ_SLOW_ZONE_M:
+                # Speed cap: linear ramp from NFZ_MIN_SPEED at boundary to
+                # NFZ_ZONE_MAX_SPEED at the outer edge of the slow zone.
+                # Navigation direction unchanged — only magnitude is limited.
+                elif not nfz_inside and nfz_dist < config.NFZ_SLOW_ZONE_M:
                     ratio = nfz_dist / config.NFZ_SLOW_ZONE_M
                     max_speed = config.NFZ_MIN_SPEED_MPS + ratio * (config.NFZ_ZONE_MAX_SPEED_MPS - config.NFZ_MIN_SPEED_MPS)
-                    self.nav.last_speed_req = 0  # bypass 3s throttle
+                    self.nav.last_speed_req = 0
                     self.nav.set_speed(max_speed)
 
-                # Inner NFZ polygon repulsion (3m inside boundary, 6m range outward)
-                # Runs EVERY frame, ANY state — pure velocity push away from boundary
-                # Same mechanism as --nfz-repel, works with --nfz-carrot or --nfz-slow
-                if (NFZ_CARROT or NFZ_SLOW) and self.nav:
+                # Inner polygon repulsion: constant velocity push away from boundary.
+                # Active within NFZ_INNER_RANGE_M of the inner offset polygon.
+                if self.nav:
                     signed_dist = nfz_dist if not nfz_inside else -nfz_dist
-                    dist_to_inner = signed_dist + config.NFZ_INNER_OFFSET_M  # inner polygon offset
+                    dist_to_inner = signed_dist + config.NFZ_INNER_OFFSET_M
                     if 0 < dist_to_inner < config.NFZ_INNER_RANGE_M:
                         off_lat, off_lon = self.geofence.repulsive_offset(self.lat, self.lon)
                         if abs(off_lat) > 1e-8 or abs(off_lon) > 1e-8:
@@ -783,7 +717,6 @@ class VisualFlightMission(StateHandlersMixin):
                             lon_m = 111320.0 * math.cos(math.radians(self.lat))
                             push_n = -off_lat * lat_m
                             push_e = -off_lon * lon_m
-                            # Inside NFZ: repulsive_offset points inward, flip to push OUT
                             if nfz_inside:
                                 push_n = -push_n
                                 push_e = -push_e
@@ -791,23 +724,6 @@ class VisualFlightMission(StateHandlersMixin):
                             if mag > 0.01:
                                 strength = config.NFZ_PUSH_SPEED_MPS
                                 self.nav.send_velocity(push_n / mag * strength, push_e / mag * strength, 0, current_yaw=0.0)
-
-                # NFZ_REPEL: push away (8m zone)
-                elif NFZ_REPEL and not nfz_inside and nfz_dist < self.geofence.SOFT_BOUNDARY:
-                    off_lat, off_lon = self.geofence.repulsive_offset(self.lat, self.lon)
-                    if abs(off_lat) > 1e-8 or abs(off_lon) > 1e-8:
-                        self._last_repulsion_vec = (off_lat, off_lon)
-                        urgency = (1.0 - nfz_dist / self.geofence.SOFT_BOUNDARY) ** 2  # quadratic
-                        nudge_speed = 10.0 * urgency
-                        lat_m = 111320.0
-                        lon_m = 111320.0 * math.cos(math.radians(self.lat))
-                        push_n = -off_lat * lat_m
-                        push_e = -off_lon * lon_m
-                        mag = math.sqrt(push_n**2 + push_e**2)
-                        if mag > 0.01 and self.nav:
-                            vn = push_n / mag * nudge_speed
-                            ve = push_e / mag * nudge_speed
-                            self.nav.send_velocity(vn, ve, 0, current_yaw=0.0)
 
             # Exit loop when mission is complete (show final frame for 3s then quit)
             if self.state == State.DONE:
@@ -868,11 +784,8 @@ def _dry_run(mission):
     print(f"  Model: {MODEL_PATH}")
 
     canvas_w, canvas_h = REAL_CANVAS_SIZE, REAL_CANVAS_SIZE
-    print(f"  Search pattern: {SEARCH_PATTERN}")
-    if SEARCH_PATTERN == "spiral":
-        waypoints = mission.planner.generate_spiral_pattern(canvas_w, canvas_h, drone_gps)
-    else:
-        waypoints = mission.planner.generate_search_pattern(canvas_w, canvas_h, drone_gps)
+    print(f"  Search pattern: lawnmower")
+    waypoints = mission.planner.generate_search_pattern(canvas_w, canvas_h, drone_gps)
 
     if not waypoints:
         print("\n  ERROR: No waypoints generated! Check search polygon.")

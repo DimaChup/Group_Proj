@@ -55,7 +55,7 @@ CONNECTION_STR = _detect_connection()
 BAUD_RATE = int(os.environ.get("DRONE_BAUD", 921600))
 
 # --- ALTITUDES ---
-TARGET_ALT = 50.0 # Search Altitude (Meters) — 50m for wider coverage
+TARGET_ALT = 35.0 # Search Altitude (Meters)
 VERIFY_ALT = 15.0 # Descent Altitude for Verification
 
 # --- MAP CONFIGURATION (Simulation Only) ---

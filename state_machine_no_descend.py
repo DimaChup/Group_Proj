@@ -29,10 +29,6 @@ def _get_main_globals():
     return {
         'REAL_CANVAS_SIZE': getattr(main, 'REAL_CANVAS_SIZE', 4800),
         'SIM_SPEED': getattr(main, 'SIM_SPEED', 1),
-        'NO_TURN': getattr(main, 'NO_TURN', False),
-        'NO_TURN_REALIGN': getattr(main, 'NO_TURN_REALIGN', False),
-        'NO_TURN_DIAG': getattr(main, 'NO_TURN_DIAG', False),
-        'SEARCH_PATTERN': getattr(main, 'SEARCH_PATTERN', 'lawnmower'),
         'BEACON_DELAY': getattr(main, 'BEACON_DELAY', 0),
     }
 
@@ -127,7 +123,7 @@ class StateHandlersMixin:
                 g = _get_main_globals()
                 self.nav = NavigationController(
                     self.master,
-                    no_turn=g['NO_TURN'],
+                    no_turn=True,
                     get_yaw=lambda: self.yaw)
                 self.connect_start_time = time.time()  # FIX 4: start heartbeat timeout
                 self._set_state(State.CONNECTING)
@@ -227,10 +223,8 @@ class StateHandlersMixin:
     def _handle_takeoff(self, target_found, px_u, px_v, key):
         g = _get_main_globals()
         REAL_CANVAS_SIZE = g['REAL_CANVAS_SIZE']
-        SEARCH_PATTERN = g['SEARCH_PATTERN']
 
-        # Match dima1 behavior: retry arming in SIMULATION if disarmed,
-        # safety stop in REAL mode. Only send position targets once climbing.
+        # Retry arming in SIMULATION if disarmed; safety stop in REAL mode
         if self.master and not self.master.motors_armed():
             if config.MODE == "SIMULATION":
                 print("Drone disarmed during takeoff — retrying arm sequence...")
@@ -241,44 +235,24 @@ class StateHandlersMixin:
                 self._set_state(State.DONE)
                 return
 
-        # FIX 5: Takeoff timeout warning
         if time.time() - self.state_start_time > 60 and not self._takeoff_timeout_warned:
             print("TAKEOFF TIMEOUT: Drone may not be climbing. Check motors and GPS.")
             self._takeoff_timeout_warned = True
+
         if self.alt >= config.TARGET_ALT * 0.90:
             print("Target Altitude Reached.")
 
             if config.MODE == "SIMULATION":
                 canvas_w, canvas_h = self.sim.map_w, self.sim.map_h
             else:
-                canvas_w, canvas_h = REAL_CANVAS_SIZE, REAL_CANVAS_SIZE  # virtual canvas for planner
+                canvas_w, canvas_h = REAL_CANVAS_SIZE, REAL_CANVAS_SIZE
 
-            # Use transit endpoint as start reference if transit path exists
+            start_gps = self.pre_waypoints[-1] if self.pre_waypoints else (self.lat, self.lon)
+            self.waypoints = self.planner.generate_search_pattern(canvas_w, canvas_h, start_gps)
+
+            # Fly transit waypoints first, then search pattern
             if self.pre_waypoints:
-                start_gps = self.pre_waypoints[-1]
-            else:
-                start_gps = (self.lat, self.lon)
-
-            if SEARCH_PATTERN == "spiral":
-                self.waypoints = self.planner.generate_spiral_pattern(
-                    canvas_w, canvas_h, start_gps)
-            else:
-                self.waypoints = self.planner.generate_search_pattern(
-                    canvas_w, canvas_h, start_gps)
-
-            # Apply path smoothing if requested
-            if "--smooth-bezier" in sys.argv and self.waypoints:
-                orig_count = len(self.waypoints)
-                self.waypoints = self.planner.smooth_waypoints(self.waypoints, num_arc_points=3)
-                print(f"  Smoothed (Bezier): {orig_count} → {len(self.waypoints)} waypoints")
-            elif "--smooth-extra" in sys.argv and self.waypoints:
-                orig_count = len(self.waypoints)
-                self.waypoints = self.planner.smooth_waypoints(self.waypoints, num_arc_points=5)
-                print(f"  Smoothed (extra): {orig_count} → {len(self.waypoints)} waypoints")
-
-            # Fly pre-planned waypoints first (if any)
-            if self.pre_waypoints:
-                print(f"Flying {len(self.pre_waypoints)} pre-planned waypoints first.")
+                print(f"Flying {len(self.pre_waypoints)} transit waypoints first.")
                 self.pre_wp_index = 0
                 self._set_state(State.PRE_WAYPOINTS)
                 self.last_speed_req = 0
@@ -354,12 +328,13 @@ class StateHandlersMixin:
         g = _get_main_globals()
         REAL_CANVAS_SIZE = g['REAL_CANVAS_SIZE']
 
-        # No-turn mode: orient drone once along scan direction, wait for completion
-        if g['NO_TURN'] and not getattr(self, '_search_yaw_done', False):
+        # Orient drone once: yaw aligned to scan direction + diagonal offset.
+        # The diagonal offset rotates the camera so its diagonal (longest dimension)
+        # is perpendicular to the scan direction, maximising ground coverage per pass.
+        if not getattr(self, '_search_yaw_done', False):
             if hasattr(self.planner, 'last_scan_angle'):
                 from pymavlink import mavutil
                 if not getattr(self, '_search_yaw_sent', False):
-                    # First scan line direction: from waypoint 0 to waypoint 1
                     if len(self.waypoints) >= 2:
                         wp0 = self.waypoints[0]
                         wp1 = self.waypoints[1]
@@ -368,30 +343,26 @@ class StateHandlersMixin:
                         yaw_deg = math.degrees(math.atan2(dlon * math.cos(math.radians(wp0[0])), dlat)) % 360
                     else:
                         yaw_deg = self.planner.last_scan_angle
-                    # Diagonal mode: offset yaw by atan(W/H) so diagonal is perpendicular to scan
-                    diag_label = ""
-                    if g.get('NO_TURN_DIAG', False):
-                        diag_offset = math.degrees(math.atan2(config.IMAGE_W, config.IMAGE_H))
-                        yaw_deg = (yaw_deg + diag_offset) % 360
-                        diag_label = " [DIAG]"
+                    # Diagonal offset: atan(W/H) so camera diagonal is perpendicular to scan
+                    diag_offset = math.degrees(math.atan2(config.IMAGE_W, config.IMAGE_H))
+                    yaw_deg = (yaw_deg + diag_offset) % 360
                     self.master.mav.command_long_send(
                         self.master.target_system, self.master.target_component,
                         mavutil.mavlink.MAV_CMD_CONDITION_YAW, 0,
-                        yaw_deg, 45, 1, 0, 0, 0, 0)  # 45 deg/s, absolute
+                        yaw_deg, 45, 1, 0, 0, 0, 0)
                     self._search_yaw_sent = True
                     self._search_yaw_target = yaw_deg
                     self._search_yaw_time = time.time()
-                    print(f"[NO-TURN] Orienting to {yaw_deg:.0f} deg{diag_label} (along first scan line)...")
-                    return  # don't fly yet, wait for yaw
+                    print(f"[YAW] Orienting to {yaw_deg:.0f} deg (diagonal alignment)...")
+                    return
                 else:
-                    # Wait for yaw to complete (within 10 deg or 5s timeout)
                     yaw_error = abs(math.degrees(self.yaw) - self._search_yaw_target) % 360
                     if yaw_error > 180: yaw_error = 360 - yaw_error
                     if yaw_error < 10 or time.time() - self._search_yaw_time > 5.0:
                         self._search_yaw_done = True
-                        print(f"[NO-TURN] Aligned. Starting search pattern.")
+                        print(f"[YAW] Aligned. Starting search pattern.")
                     else:
-                        return  # still waiting
+                        return
 
         # Speed depends on altitude (slower low = less blur) and focus area
         if getattr(self, '_beacon_triggered', False):
@@ -413,31 +384,31 @@ class StateHandlersMixin:
         import __main__ as _main
         smart_detect = getattr(_main, 'SMART_DETECT', False)
 
-        # Init detection queue (always active)
+        # Detection queue: all detections are queued and investigated in order
         if not hasattr(self, '_detect_queue'):
             self._detect_queue = []
             self._consecutive_detect_count = 0
 
         if target_found:
             self.calculate_target_gps(px_u, px_v)
-            # Skip detections inside NFZ
+            # Ignore detections inside the no-fly zone
             if self._is_inside_nfz(self.target_lat, self.target_lon):
                 target_found = False
                 self._consecutive_detect_count = 0
+            # Ignore detections near already-known targets (rejected / items of interest)
             elif self._is_near_known(self.target_lat, self.target_lon):
-                # Near a known target — skip
                 self._consecutive_detect_count = 0
             else:
                 conf = getattr(self, 'current_conf', 0.5)
                 if smart_detect:
-                    # Multi-frame confirmation: need N consecutive frames
+                    # Multi-frame confirmation (opt-in): require N consecutive frames
                     self._consecutive_detect_count += 1
                     if self._consecutive_detect_count >= config.DETECT_CONFIRM_FRAMES:
-                        print(f"[SMART] Confirmed ({self._consecutive_detect_count} frames) — queued at ({self.target_lat:.6f}, {self.target_lon:.6f}) conf={conf:.2f}")
+                        print(f"[SMART] Confirmed ({self._consecutive_detect_count} frames) at ({self.target_lat:.6f}, {self.target_lon:.6f}) conf={conf:.2f}")
                         self._detect_queue.append((self.target_lat, self.target_lon, conf))
                         self._consecutive_detect_count = 0
                 else:
-                    # Default: single frame triggers — queue immediately
+                    # Single-frame trigger (default): queue immediately
                     print("TARGET DETECTED!")
                     self._detect_queue.append((self.target_lat, self.target_lon, conf))
         else:
@@ -458,19 +429,7 @@ class StateHandlersMixin:
         if self.state == State.SEARCH:
             if self.wp_index < len(self.waypoints):
                 target = self.waypoints[self.wp_index]
-                # NFZ_SLOW: re-send faster (0.3s) with speed capped by distance to SSSI
-                nfz_slow_active = g.get('NFZ_SLOW') and hasattr(self, 'geofence') and self.geofence
-                resend_interval = 0.3 if nfz_slow_active else 2.0
-                if time.time() - self.last_req > resend_interval:
-                    if nfz_slow_active:
-                        dist, _ = self.geofence.distance_to_boundary(self.lat, self.lon)
-                        if dist < config.NFZ_SLOW_ZONE_M:
-                            ratio = dist / config.NFZ_SLOW_ZONE_M
-                            max_spd = config.NFZ_MIN_SPEED_MPS + ratio * (config.NFZ_ZONE_MAX_SPEED_MPS - config.NFZ_MIN_SPEED_MPS)
-                        else:
-                            max_spd = config.speed_for_altitude(self.alt)
-                        self.nav.last_speed_req = 0  # bypass 3s throttle
-                        self.nav.set_speed(max_spd)
+                if time.time() - self.last_req > 2.0:
                     self.nav.send_global_target(target[0], target[1], self._current_search_alt())
                     self.last_req = time.time()
                 if self.get_dist_to_point(target[0], target[1]) < 2.0:
@@ -498,10 +457,9 @@ class StateHandlersMixin:
                 self.waypoints = self.planner.generate_search_pattern(
                     canvas_w, canvas_h, (self.lat, self.lon), alt_override=new_alt)
                 self.wp_index = 0
-                # No-turn-realign: re-orient for new pass (new waypoints, possibly different direction)
-                if g.get('NO_TURN_REALIGN', False):
-                    self._search_yaw_done = False
-                    self._search_yaw_sent = False
+                # Re-orient yaw for new pass (waypoints may change direction)
+                self._search_yaw_done = False
+                self._search_yaw_sent = False
                 # Keep rejected targets across passes (N = false positive, don't revisit)
                 # Stay in SEARCH — just descend and continue (no transit back)
                 self._set_state(State.SEARCH)
