@@ -411,9 +411,10 @@ class StateHandlersMixin:
                         self._detect_queue.append((self.target_lat, self.target_lon, conf))
                         self._consecutive_detect_count = 0
                 else:
-                    # Single-frame trigger (default): queue immediately
-                    print("TARGET DETECTED!")
-                    self._detect_queue.append((self.target_lat, self.target_lon, conf))
+                    # Single-frame trigger (default): queue if not already queued nearby
+                    if not self._is_near_known(self.target_lat, self.target_lon):
+                        print("TARGET DETECTED!")
+                        self._detect_queue.append((self.target_lat, self.target_lon, conf))
         else:
             self._consecutive_detect_count = 0
 
@@ -490,8 +491,9 @@ class StateHandlersMixin:
                         # Within lock radius — refine locked target
                         self._locked_target = (self.target_lat, self.target_lon)
                     else:
-                        # Outside lock radius — queue it if new, restore locked target
-                        if not self._is_near_known(self.target_lat, self.target_lon):
+                        # Outside lock radius — queue it if new and not in NFZ
+                        if not self._is_inside_nfz(self.target_lat, self.target_lon) and \
+                           not self._is_near_known(self.target_lat, self.target_lon):
                             _detect_queue = getattr(self, '_detect_queue', [])
                             c = getattr(self, 'current_conf', 0.5)
                             _detect_queue.append((self.target_lat, self.target_lon, c))
@@ -927,6 +929,8 @@ class StateHandlersMixin:
                         print(f"Next queued target at ({q_lat:.6f}, {q_lon:.6f}) — {len(self._detect_queue)} remaining")
                         self.target_lat = q_lat
                         self.target_lon = q_lon
+                        self.departure_lat = self.lat  # update departure to current pos
+                        self.departure_lon = self.lon
                         self._locked_target = (q_lat, q_lon)
                         self._set_state(State.CENTERING)
                     elif self.departure_lat != 0:
@@ -946,6 +950,8 @@ class StateHandlersMixin:
                         print(f"Next queued target at ({q_lat:.6f}, {q_lon:.6f}) — {len(self._detect_queue)} remaining")
                         self.target_lat = q_lat
                         self.target_lon = q_lon
+                        self.departure_lat = self.lat  # update departure to current pos
+                        self.departure_lon = self.lon
                         self._locked_target = (q_lat, q_lon)
                         self._set_state(State.CENTERING)
                     # If we came from manual flight, return to manual departure
