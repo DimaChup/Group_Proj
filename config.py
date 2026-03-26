@@ -220,6 +220,12 @@ MANUAL_CLIMB_RATE_MPS = 2.0     # R/F vertical speed
 MANUAL_YAW_STEP_DEG = 10        # Q/E yaw step per keypress
 MANUAL_YAW_RATE_DEGS = 30.0     # Yaw rotation speed for Q/E and alignment
 
+# --- DIAGONAL REALIGN ---
+# Yaw offset from scan direction when re-orienting at each search pass.
+# None = auto-compute from atan(IMAGE_W/IMAGE_H) = 53.2 deg (optimal diagonal).
+# 0 = face along scan line (no rotation). Any value = custom angle in degrees.
+DIAGONAL_YAW_OFFSET_DEG = None
+
 # --- SEARCH TUNING ---
 REJECTED_TARGET_RADIUS_M = 5.0  # Skip detections within this radius of rejected/IOI targets (accounts for GPS noise ~2-3m CEP)
 DETECT_CONFIRM_FRAMES = 3       # Consecutive detection frames required before triggering (--smart-detect)

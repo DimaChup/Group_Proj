@@ -343,8 +343,11 @@ class StateHandlersMixin:
                         yaw_deg = math.degrees(math.atan2(dlon * math.cos(math.radians(wp0[0])), dlat)) % 360
                     else:
                         yaw_deg = self.planner.last_scan_angle
-                    # Diagonal offset: atan(W/H) so camera diagonal is perpendicular to scan
-                    diag_offset = math.degrees(math.atan2(config.IMAGE_W, config.IMAGE_H))
+                    # Diagonal offset: configurable or auto-computed from camera aspect
+                    if config.DIAGONAL_YAW_OFFSET_DEG is not None:
+                        diag_offset = config.DIAGONAL_YAW_OFFSET_DEG
+                    else:
+                        diag_offset = math.degrees(math.atan2(config.IMAGE_W, config.IMAGE_H))
                     yaw_deg = (yaw_deg + diag_offset) % 360
                     self.master.mav.command_long_send(
                         self.master.target_system, self.master.target_component,
