@@ -54,6 +54,7 @@ STREAM_QUALITY = 50
 SIM_SPEED = 1  # SITL speedup (override: --speed N)
 CENTER_VERIFY = "--center-verify" in sys.argv  # Opt-in: vision centering + 10s GPS averaging
 SMART_DETECT = "--smart-detect" in sys.argv    # Opt-in: multi-frame confirmation before trigger
+NO_NFZ = "--no-nfz" in sys.argv               # Disable all geofence logic (testing only)
 BEACON_DELAY = 0  # Simulate PLB signal N seconds after SEARCH begins (override: --beacon-delay N)
 
 # Parse CLI overrides
@@ -182,7 +183,7 @@ class VisualFlightMission(StateHandlersMixin):
 
         # 2. Geofence (SSSI no-fly zone with speed cap + inner polygon repulsion)
         self.geofence = None
-        if config.SSSI_GPS and len(config.SSSI_GPS) >= 3:
+        if not NO_NFZ and config.SSSI_GPS and len(config.SSSI_GPS) >= 3:
             from geofence import NFZGeofence
             self.geofence = NFZGeofence(self.geo)
             print(f"[GEOFENCE] Active — SSSI {len(config.SSSI_GPS)} corners, "
