@@ -483,24 +483,24 @@ class StateHandlersMixin:
             return
         if target_found:
             self.calculate_target_gps(px_u, px_v)
-            if smart_detect:
-                locked = getattr(self, '_locked_target', None)
-                if locked:
-                    dist_to_locked = self._gps_dist(self.target_lat, self.target_lon, locked[0], locked[1])
-                    if dist_to_locked <= config.DETECT_LOCK_RADIUS_M:
-                        # Within lock radius — refine locked target
-                        self._locked_target = (self.target_lat, self.target_lon)
-                    else:
-                        # Outside lock radius — queue it if new and not in NFZ
-                        if not self._is_inside_nfz(self.target_lat, self.target_lon) and \
-                           not self._is_near_known(self.target_lat, self.target_lon):
-                            _detect_queue = getattr(self, '_detect_queue', [])
-                            c = getattr(self, 'current_conf', 0.5)
-                            _detect_queue.append((self.target_lat, self.target_lon, c))
-                            self._detect_queue = _detect_queue
-                            print(f"New target during CENTERING queued at ({self.target_lat:.6f}, {self.target_lon:.6f})")
-                        # Restore locked target for navigation
-                        self.target_lat, self.target_lon = locked
+            # Target lock: only refine if within lock radius, queue others
+            locked = getattr(self, '_locked_target', None)
+            if locked:
+                dist_to_locked = self._gps_dist(self.target_lat, self.target_lon, locked[0], locked[1])
+                if dist_to_locked <= config.DETECT_LOCK_RADIUS_M:
+                    # Within lock radius — refine locked target
+                    self._locked_target = (self.target_lat, self.target_lon)
+                else:
+                    # Outside lock radius — queue it if new and not in NFZ
+                    if not self._is_inside_nfz(self.target_lat, self.target_lon) and \
+                       not self._is_near_known(self.target_lat, self.target_lon):
+                        _detect_queue = getattr(self, '_detect_queue', [])
+                        c = getattr(self, 'current_conf', 0.5)
+                        _detect_queue.append((self.target_lat, self.target_lon, c))
+                        self._detect_queue = _detect_queue
+                        print(f"New target during CENTERING queued at ({self.target_lat:.6f}, {self.target_lon:.6f})")
+                    # Restore locked target for navigation
+                    self.target_lat, self.target_lon = locked
         if time.time() - self.last_req > 0.2:
             self.nav.send_global_target(self.target_lat, self.target_lon, self.alt)
             self.last_req = time.time()
