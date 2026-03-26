@@ -109,6 +109,19 @@ class StateHandlersMixin:
             return inside
         return False
 
+    def _is_outside_search_area(self, lat, lon):
+        """Check if position is outside the current search polygon — ignore detections there."""
+        if hasattr(self, 'planner') and self.planner and hasattr(self.planner, 'search_polygon'):
+            poly = self.planner.search_polygon
+            if poly and len(poly) >= 3:
+                import cv2
+                import numpy as np
+                pt = self.planner.geo.gps_to_pixels(lat, lon)
+                contour = np.array(poly, dtype=np.float32).reshape(-1, 1, 2)
+                result = cv2.pointPolygonTest(contour, (float(pt[0]), float(pt[1])), False)
+                return result < 0  # negative = outside
+        return False  # no polygon = don't filter
+
     # ── Per-state handler methods ─────────────────────────────────────
     # Each method corresponds to one state in the mission state machine.
     # They are called from run() via a dispatch dict. Navigation calls
@@ -394,8 +407,9 @@ class StateHandlersMixin:
 
         if target_found:
             self.calculate_target_gps(px_u, px_v)
-            # Ignore detections inside the no-fly zone
-            if self._is_inside_nfz(self.target_lat, self.target_lon):
+            # Ignore detections inside NFZ or outside search area
+            if self._is_inside_nfz(self.target_lat, self.target_lon) or \
+               self._is_outside_search_area(self.target_lat, self.target_lon):
                 target_found = False
                 self._consecutive_detect_count = 0
             # Ignore detections near already-known targets (rejected / items of interest)
