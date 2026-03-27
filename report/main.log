@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.3.27)  27 MAR 2026 23:35
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.3.27)  27 MAR 2026 23:39
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1843,67 +1843,73 @@ T1/lmr/m/n/10 (-20) The Pi 5 runs Python 3.13. Google's of-fi-cial \OT1/lmtt/m/
 n/10 tflite-runtime
  []
 
-[11]) (sections/system_description.tex
-<figs/mission_overview.pdf, id=1675, 488.03644pt x 464.76385pt>
+[11]
+
+LaTeX Warning: Reference `app:field-day' on page 12 undefined on input line 277
+.
+
+) (sections/system_description.tex
+<figs/mission_overview.pdf, id=1676, 488.03644pt x 464.76385pt>
 File: figs/mission_overview.pdf Graphic file (type pdf)
 <use figs/mission_overview.pdf>
 Package pdftex.def Info: figs/mission_overview.pdf  used on input line 12.
 (pdftex.def)             Requested size: 512.14963pt x 487.76114pt.
-<figs/architecture.pdf, id=1678, 654.40488pt x 570.93298pt>
+<figs/architecture.pdf, id=1679, 654.40488pt x 570.93298pt>
 File: figs/architecture.pdf Graphic file (type pdf)
 <use figs/architecture.pdf>
 Package pdftex.def Info: figs/architecture.pdf  used on input line 50.
 (pdftex.def)             Requested size: 435.3303pt x 379.81377pt.
-<figs/pi_system.pdf, id=1679, 873.46724pt x 681.93645pt>
+<figs/pi_system.pdf, id=1680, 873.46724pt x 681.93645pt>
 File: figs/pi_system.pdf Graphic file (type pdf)
 <use figs/pi_system.pdf>
 Package pdftex.def Info: figs/pi_system.pdf  used on input line 57.
 (pdftex.def)             Requested size: 384.11221pt x 299.88647pt.
- [12] [13 <./figs/mission_overview.pdf>]
-<figs/geofence_diagram.pdf, id=1788, 974.55922pt x 699.68274pt>
+ [12]
+<figs/geofence_diagram.pdf, id=1695, 974.55922pt x 699.68274pt>
 File: figs/geofence_diagram.pdf Graphic file (type pdf)
 <use figs/geofence_diagram.pdf>
 Package pdftex.def Info: figs/geofence_diagram.pdf  used on input line 94.
 (pdftex.def)             Requested size: 512.14963pt x 367.71262pt.
-
-[14 <./figs/architecture.pdf>]
-<figs/cv_pipeline.pdf, id=1953, 797.37903pt x 195.129pt>
+ [13 <./figs/mission_overview.pdf>]
+<figs/cv_pipeline.pdf, id=1794, 797.37903pt x 195.129pt>
 File: figs/cv_pipeline.pdf Graphic file (type pdf)
 <use figs/cv_pipeline.pdf>
 Package pdftex.def Info: figs/cv_pipeline.pdf  used on input line 112.
 (pdftex.def)             Requested size: 435.3303pt x 106.52927pt.
- [15 <./figs/pi_system.pdf>] [16 <./figs/geofence_diagram.pdf> <./figs/cv_pipel
-ine.pdf>]
-<figs/coverage_vs_time.pdf, id=2365, 425.99664pt x 256.37357pt>
+
+[14 <./figs/architecture.pdf>]
+<figs/coverage_vs_time.pdf, id=1959, 425.99664pt x 256.37357pt>
 File: figs/coverage_vs_time.pdf Graphic file (type pdf)
 <use figs/coverage_vs_time.pdf>
 Package pdftex.def Info: figs/coverage_vs_time.pdf  used on input line 142.
 (pdftex.def)             Requested size: 409.72125pt x 246.59306pt.
-<figs/state_machine.pdf, id=2368, 547.08388pt x 498.663pt>
+ [15 <./figs/pi_system.pdf>]
+<figs/state_machine.pdf, id=2134, 547.08388pt x 498.663pt>
 File: figs/state_machine.pdf Graphic file (type pdf)
 <use figs/state_machine.pdf>
 Package pdftex.def Info: figs/state_machine.pdf  used on input line 154.
 (pdftex.def)             Requested size: 486.54057pt x 443.48909pt.
- [17 <./figs/coverage_vs_time.pdf>]
-<figs/gps_bullseye.pdf, id=2423, 415.84798pt x 426.3403pt>
+ [16 <./figs/geofence_diagram.pdf> <./figs/cv_pipeline.pdf>]
+<figs/gps_bullseye.pdf, id=2373, 415.84798pt x 426.3403pt>
 File: figs/gps_bullseye.pdf Graphic file (type pdf)
 <use figs/gps_bullseye.pdf>
-Package pdftex.def Info: figs/gps_bullseye.pdf  used on input line 207.
+Package pdftex.def Info: figs/gps_bullseye.pdf  used on input line 208.
 (pdftex.def)             Requested size: 245.82962pt x 252.033pt.
-<figs/gps_error_direction.pdf, id=2424, 743.24844pt x 354.82443pt>
+<figs/gps_error_direction.pdf, id=2374, 743.24844pt x 354.82443pt>
 File: figs/gps_error_direction.pdf Graphic file (type pdf)
 <use figs/gps_error_direction.pdf>
-Package pdftex.def Info: figs/gps_error_direction.pdf  used on input line 214.
+Package pdftex.def Info: figs/gps_error_direction.pdf  used on input line 215.
 (pdftex.def)             Requested size: 245.82962pt x 117.35771pt.
-<figs/gps_convergence.pdf, id=2425, 403.13737pt x 260.18466pt>
+ [17 <./figs/coverage_vs_time.pdf>]
+<figs/gps_convergence.pdf, id=2427, 403.13737pt x 260.18466pt>
 File: figs/gps_convergence.pdf Graphic file (type pdf)
 <use figs/gps_convergence.pdf>
-Package pdftex.def Info: figs/gps_convergence.pdf  used on input line 226.
+Package pdftex.def Info: figs/gps_convergence.pdf  used on input line 227.
 (pdftex.def)             Requested size: 245.82962pt x 158.66078pt.
-<figs/estimator_comparison.pdf, id=2426, 499.19498pt x 316.54886pt>
+<figs/estimator_comparison.pdf, id=2428, 499.19498pt x 316.54886pt>
 File: figs/estimator_comparison.pdf Graphic file (type pdf)
 <use figs/estimator_comparison.pdf>
-Package pdftex.def Info: figs/estimator_comparison.pdf  used on input line 233.
+Package pdftex.def Info: figs/estimator_comparison.pdf  used on input line 234.
 
 (pdftex.def)             Requested size: 245.82962pt x 155.88312pt.
 
@@ -1911,7 +1917,7 @@ Package pdftex.def Info: figs/estimator_comparison.pdf  used on input line 233.
 <figs/mission_timeline.pdf, id=2521, 723.18619pt x 291.45325pt>
 File: figs/mission_timeline.pdf Graphic file (type pdf)
 <use figs/mission_timeline.pdf>
-Package pdftex.def Info: figs/mission_timeline.pdf  used on input line 259.
+Package pdftex.def Info: figs/mission_timeline.pdf  used on input line 260.
 (pdftex.def)             Requested size: 460.93153pt x 185.7645pt.
 ) (sections/requirements_verification.tex
 Overfull \hbox (2.64287pt too wide) in paragraph at lines 12--12
@@ -2079,7 +2085,8 @@ Overfull \hbox (7.87587pt too wide) in paragraph at lines 32--33
 
  []
 
-[19 <./figs/gps_bullseye.pdf> <./figs/gps_error_direction.pdf>]
+[19 <./figs/gps_bullseye.pdf> <./figs/gps_error_direction.pdf> <./figs/gps_conv
+ergence.pdf> <./figs/estimator_comparison.pdf>]
 Overfull \hbox (5.38629pt too wide) in paragraph at lines 41--42
 \OT1/lmtt/m/n/10 NFZ[]WAYPOINT[]BUFFER[]M \OT1/lmr/m/n/10 (-20) = 30m of the SS
 SI poly-gon us-ing signed-distance com-pu-ta-tion via \OT1/lmtt/m/n/10 cv2.poin
@@ -2093,8 +2100,6 @@ lmr/m/n/10 (-20) = 3.0m/s di-rected away from the near-est bound-ary edge. The
 \OT1/lmtt/m/n/10 repulsive[]offset()
  []
 
-[20 <./figs/gps_convergence.pdf> <./figs/estimator_comparison.pdf> <./figs/miss
-ion_timeline.pdf>]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
 (hyperref)                removing `\leavevmode@ifvmode' on input line 52.
@@ -2113,7 +2118,7 @@ Package hyperref Warning: Token not allowed in a PDF string (Unicode):
 (hyperref)                \kern 1.66702pt
 (hyperref)                removed on input line 56.
 
-[21]
+[20 <./figs/mission_timeline.pdf>] [21]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
 (hyperref)                removing `\leavevmode@ifvmode' on input line 87.
@@ -2131,19 +2136,18 @@ Overfull \hbox (0.58803pt too wide) in paragraph at lines 89--90
 offset[]7[]5m()
  []
 
-[22]
+[22{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathex
+.enc}]
 Overfull \hbox (9.97177pt too wide) in paragraph at lines 107--108
 []\OT1/lmr/bx/n/10 (-20) Automated fail-safes: \OT1/lmr/m/n/10 (-20) GPS fix de
 gra-da-tion be-yond 5s trig-gers emer-gency RTL. GCS heart-beat loss (\OT1/lmtt
 /m/n/10 FS[]GCS[]ENABLE\OT1/lmr/m/n/10 (-20) )
  []
 
-[23{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathex
-.enc}]
 
 Package hyperref Warning: Suppressing empty link on input line 123.
 
-) (sections/evaluation.tex
+) [23] (sections/evaluation.tex
 Underfull \hbox (badness 3646) in paragraph at lines 57--57
 []|\OT1/lmtt/m/n/9 vision.py \OT1/lmr/m/n/9 (+20) is the sole file that touches
  CV/AI; all other mod-ules call
@@ -2194,7 +2198,8 @@ n/10 (-20) Iso-lat-ing all computer-vision logic be-hind a sin-gle in-ter-face
 (\OT1/lmtt/m/n/10 detect[]in[]image\OT1/lmr/m/n/10 (-20) )
  []
 
-[24 <./figs/conf_vs_alt.pdf> <./figs/det_vs_speed.pdf>]
+[24 <./figs/conf_vs_alt.pdf> <./figs/det_vs_speed.pdf> <./figs/latency_breakdow
+n.pdf> <./figs/detection_heatmap.pdf>]
 Underfull \hbox (badness 1721) in paragraph at lines 126--126
 []|\OT1/lmr/m/n/9 (+20) Geofence sign con-ven-tion in-
  []
@@ -2224,9 +2229,8 @@ Underfull \hbox (badness 3219) in paragraph at lines 148--149
 []|\OT1/lmr/m/n/9 (+20) Crash on first de-tec-tion in
  []
 
-[25 <./figs/latency_breakdown.pdf> <./figs/detection_heatmap.pdf>] [26])
-[27] [28] [29] (sections/A1_state_table.tex
-<figs/state_machine_full.pdf, id=3364, 973.76273pt x 863.3819pt>
+[25] [26]) [27] [28] [29] (sections/A1_state_table.tex
+<figs/state_machine_full.pdf, id=3363, 973.76273pt x 863.3819pt>
 File: figs/state_machine_full.pdf Graphic file (type pdf)
 <use figs/state_machine_full.pdf>
 Package pdftex.def Info: figs/state_machine_full.pdf  used on input line 12.
@@ -2545,12 +2549,12 @@ te_machine_full.pdf>]
 ignored error: Infinite glue shrinkage found in box being split [31])
 (sections/A2_config_params.tex [32]) (sections/12_model_training.tex [33]
 [34]
-<figs/training_curves.pdf, id=3549, 569.997pt x 316.75526pt>
+<figs/training_curves.pdf, id=3548, 569.997pt x 316.75526pt>
 File: figs/training_curves.pdf Graphic file (type pdf)
 <use figs/training_curves.pdf>
 Package pdftex.def Info: figs/training_curves.pdf  used on input line 149.
 (pdftex.def)             Requested size: 435.3303pt x 241.93031pt.
-<figs/confusion_matrix.pdf, id=3551, 471.25906pt x 351.91475pt>
+<figs/confusion_matrix.pdf, id=3550, 471.25906pt x 351.91475pt>
 File: figs/confusion_matrix.pdf Graphic file (type pdf)
 <use figs/confusion_matrix.pdf>
 Package pdftex.def Info: figs/confusion_matrix.pdf  used on input line 174.
@@ -2634,7 +2638,7 @@ CE[]FP16
  []
 
 [48]
-<figs/benchmark_comparison.pdf, id=3887, 715.4611pt x 388.22917pt>
+<figs/benchmark_comparison.pdf, id=3886, 715.4611pt x 388.22917pt>
 File: figs/benchmark_comparison.pdf Graphic file (type pdf)
 <use figs/benchmark_comparison.pdf>
 Package pdftex.def Info: figs/benchmark_comparison.pdf  used on input line 122.
@@ -2646,7 +2650,7 @@ Overfull \hbox (36.0382pt too wide) in paragraph at lines 210--227
  [][] 
  []
 
-<figs/altitude_detection_table.pdf, id=4027, 783.79636pt x 334.37234pt>
+<figs/altitude_detection_table.pdf, id=4026, 783.79636pt x 334.37234pt>
 File: figs/altitude_detection_table.pdf Graphic file (type pdf)
 <use figs/altitude_detection_table.pdf>
 Package pdftex.def Info: figs/altitude_detection_table.pdf  used on input line 
@@ -2656,7 +2660,7 @@ File: figs/conf_vs_alt.pdf Graphic file (type pdf)
 <use figs/conf_vs_alt.pdf>
 Package pdftex.def Info: figs/conf_vs_alt.pdf  used on input line 244.
 (pdftex.def)             Requested size: 384.11221pt x 274.13704pt.
-<figs/detection_envelope.pdf, id=4030, 571.09987pt x 354.0703pt>
+<figs/detection_envelope.pdf, id=4029, 571.09987pt x 354.0703pt>
 File: figs/detection_envelope.pdf Graphic file (type pdf)
 <use figs/detection_envelope.pdf>
 Package pdftex.def Info: figs/detection_envelope.pdf  used on input line 254.
@@ -2668,7 +2672,7 @@ File: lstlang1.sty 2025/11/14 1.11b listings language file
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/listings\lstlang1.sty
 File: lstlang1.sty 2025/11/14 1.11b listings language file
 ) [55 <./figs/detection_envelope.pdf>]
-<figs/blur_vs_altitude.pdf, id=4262, 788.11186pt x 357.6005pt>
+<figs/blur_vs_altitude.pdf, id=4261, 788.11186pt x 357.6005pt>
 File: figs/blur_vs_altitude.pdf Graphic file (type pdf)
 <use figs/blur_vs_altitude.pdf>
 Package pdftex.def Info: figs/blur_vs_altitude.pdf  used on input line 371.
@@ -2969,25 +2973,25 @@ LaTeX Warning: Reference `sec:focus-area' on page 91 undefined on input line 84
 
 ) (sections/payload_release.tex [91]) (sections/model_comparison.tex [92]
 [93]) (sections/search_optimization.tex [94]
-<figs/energy_efficiency.pdf, id=4787, 546.09808pt x 390.17519pt>
+<figs/energy_efficiency.pdf, id=4786, 546.09808pt x 390.17519pt>
 File: figs/energy_efficiency.pdf Graphic file (type pdf)
 <use figs/energy_efficiency.pdf>
 Package pdftex.def Info: figs/energy_efficiency.pdf  used on input line 61.
 (pdftex.def)             Requested size: 435.3303pt x 311.0332pt.
  [95 <./figs/energy_efficiency.pdf>]
-<figs/rotation_comparison.pdf, id=4886, 1004.2368pt x 382.12764pt>
+<figs/rotation_comparison.pdf, id=4885, 1004.2368pt x 382.12764pt>
 File: figs/rotation_comparison.pdf Graphic file (type pdf)
 <use figs/rotation_comparison.pdf>
 Package pdftex.def Info: figs/rotation_comparison.pdf  used on input line 89.
 (pdftex.def)             Requested size: 435.3303pt x 165.64693pt.
  [96 <./figs/rotation_comparison.pdf>]
-<figs/nfz_margin_altitude.pdf, id=4977, 571.4587pt x 354.04019pt>
+<figs/nfz_margin_altitude.pdf, id=4976, 571.4587pt x 354.04019pt>
 File: figs/nfz_margin_altitude.pdf Graphic file (type pdf)
 <use figs/nfz_margin_altitude.pdf>
 Package pdftex.def Info: figs/nfz_margin_altitude.pdf  used on input line 159.
 (pdftex.def)             Requested size: 435.3303pt x 269.7108pt.
  [97 <./figs/nfz_margin_altitude.pdf>]
-<figs/speed_detection_energy.pdf, id=5098, 571.83449pt x 389.89288pt>
+<figs/speed_detection_energy.pdf, id=5097, 571.83449pt x 389.89288pt>
 File: figs/speed_detection_energy.pdf Graphic file (type pdf)
 <use figs/speed_detection_energy.pdf>
 Package pdftex.def Info: figs/speed_detection_energy.pdf  used on input line 20
@@ -3014,13 +3018,13 @@ LaTeX Warning: Reference `sec:algorithm' on page 99 undefined on input line 26.
 Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on in
 put line 29.
 [99] [100]) (sections/path_optimization_definitive.tex [101]
-<figs/real_energy_heatmap.png, id=5264, 867.24pt x 578.16pt>
+<figs/real_energy_heatmap.png, id=5263, 867.24pt x 578.16pt>
 File: figs/real_energy_heatmap.png Graphic file (type png)
 <use figs/real_energy_heatmap.png>
 Package pdftex.def Info: figs/real_energy_heatmap.png  used on input line 90.
 (pdftex.def)             Requested size: 450.69417pt x 300.46849pt.
  [102]
-<figs/real_energy_vs_altitude.png, id=5286, 722.7pt x 505.89pt>
+<figs/real_energy_vs_altitude.png, id=5285, 722.7pt x 505.89pt>
 File: figs/real_energy_vs_altitude.png Graphic file (type png)
 <use figs/real_energy_vs_altitude.png>
 Package pdftex.def Info: figs/real_energy_vs_altitude.png  used on input line 1
@@ -3031,12 +3035,12 @@ Overfull \vbox (356.25522pt too high) has occurred while \output is active []
 
 
 [103 <./figs/real_energy_heatmap.png> <./figs/real_energy_vs_altitude.png>]
-<figs/real_path_patterns.png, id=5303, 1582.713pt x 738.1176pt>
+<figs/real_path_patterns.png, id=5302, 1582.713pt x 738.1176pt>
 File: figs/real_path_patterns.png Graphic file (type png)
 <use figs/real_path_patterns.png>
 Package pdftex.def Info: figs/real_path_patterns.png  used on input line 192.
 (pdftex.def)             Requested size: 486.54057pt x 226.89941pt.
-<figs/top3_paths.pdf, id=5304, 1111.90283pt x 425.66428pt>
+<figs/top3_paths.pdf, id=5303, 1111.90283pt x 425.66428pt>
 File: figs/top3_paths.pdf Graphic file (type pdf)
 <use figs/top3_paths.pdf>
 Package pdftex.def Info: figs/top3_paths.pdf  used on input line 199.
@@ -3048,18 +3052,18 @@ LaTeX Warning: Reference `sec:focus-area' on page 105 undefined on input line 2
 23.
 
 [105]
-<figs/real_optimal_pattern.png, id=5450, 1156.32pt x 578.16pt>
+<figs/real_optimal_pattern.png, id=5449, 1156.32pt x 578.16pt>
 File: figs/real_optimal_pattern.png Graphic file (type png)
 <use figs/real_optimal_pattern.png>
 Package pdftex.def Info: figs/real_optimal_pattern.png  used on input line 319.
 
 (pdftex.def)             Requested size: 450.69417pt x 225.34033pt.
-<figs/pareto_2d_composite.pdf, id=5451, 568.41425pt x 437.38728pt>
+<figs/pareto_2d_composite.pdf, id=5450, 568.41425pt x 437.38728pt>
 File: figs/pareto_2d_composite.pdf Graphic file (type pdf)
 <use figs/pareto_2d_composite.pdf>
 Package pdftex.def Info: figs/pareto_2d_composite.pdf  used on input line 342.
 (pdftex.def)             Requested size: 450.69417pt x 346.8069pt.
-<figs/altitude_tradeoff_dual.pdf, id=5452, 837.92926pt x 361.55928pt>
+<figs/altitude_tradeoff_dual.pdf, id=5451, 837.92926pt x 361.55928pt>
 File: figs/altitude_tradeoff_dual.pdf Graphic file (type pdf)
 <use figs/altitude_tradeoff_dual.pdf>
 Package pdftex.def Info: figs/altitude_tradeoff_dual.pdf  used on input line 34
@@ -3082,13 +3086,13 @@ File: figs/real_energy_heatmap.png Graphic file (type png)
 <use figs/real_energy_heatmap.png>
 Package pdftex.def Info: figs/real_energy_heatmap.png  used on input line 177.
 (pdftex.def)             Requested size: 435.3303pt x 290.22615pt.
-<figs/tornado_sensitivity.pdf, id=5737, 571.04657pt x 285.1285pt>
+<figs/tornado_sensitivity.pdf, id=5736, 571.04657pt x 285.1285pt>
 File: figs/tornado_sensitivity.pdf Graphic file (type pdf)
 <use figs/tornado_sensitivity.pdf>
 Package pdftex.def Info: figs/tornado_sensitivity.pdf  used on input line 203.
 (pdftex.def)             Requested size: 384.11221pt x 191.79211pt.
  [110]
-<figs/n2_diagram.pdf, id=5753, 629.07869pt x 979.9812pt>
+<figs/n2_diagram.pdf, id=5752, 629.07869pt x 979.9812pt>
 File: figs/n2_diagram.pdf Graphic file (type pdf)
 <use figs/n2_diagram.pdf>
 Package pdftex.def Info: figs/n2_diagram.pdf  used on input line 229.
@@ -3098,12 +3102,12 @@ File: figs/coupling_matrix.pdf Graphic file (type pdf)
 Package pdftex.def Info: figs/coupling_matrix.pdf  used on input line 233.
 (pdftex.def)             Requested size: 245.82962pt x 246.70604pt.
  [111 <./figs/tornado_sensitivity.pdf>]
-<figs/sensitivity_matrix.pdf, id=5877, 680.28354pt x 390.66585pt>
+<figs/sensitivity_matrix.pdf, id=5876, 680.28354pt x 390.66585pt>
 File: figs/sensitivity_matrix.pdf Graphic file (type pdf)
 <use figs/sensitivity_matrix.pdf>
 Package pdftex.def Info: figs/sensitivity_matrix.pdf  used on input line 258.
 (pdftex.def)             Requested size: 245.82962pt x 141.17012pt.
-<figs/sensitivity_spider.pdf, id=5878, 462.53987pt x 427.51283pt>
+<figs/sensitivity_spider.pdf, id=5877, 462.53987pt x 427.51283pt>
 File: figs/sensitivity_spider.pdf Graphic file (type pdf)
 <use figs/sensitivity_spider.pdf>
 Package pdftex.def Info: figs/sensitivity_spider.pdf  used on input line 262.
@@ -3127,13 +3131,13 @@ File: figs/n2_diagram.pdf Graphic file (type pdf)
 <use figs/n2_diagram.pdf>
 Package pdftex.def Info: figs/n2_diagram.pdf  used on input line 191.
 (pdftex.def)             Requested size: 450.69417pt x 702.1018pt.
-<figs/objective_conflict.pdf, id=6292, 736.75905pt x 587.34618pt>
+<figs/objective_conflict.pdf, id=6291, 736.75905pt x 587.34618pt>
 File: figs/objective_conflict.pdf Graphic file (type pdf)
 <use figs/objective_conflict.pdf>
 Package pdftex.def Info: figs/objective_conflict.pdf  used on input line 198.
 (pdftex.def)             Requested size: 450.69417pt x 359.29337pt.
  [117]) (sections/design_strategy.tex [118] [119] [120]
-<figs/optimization_network.pdf, id=6352, 1149.09305pt x 758.835pt>
+<figs/optimization_network.pdf, id=6351, 1149.09305pt x 758.835pt>
 File: figs/optimization_network.pdf Graphic file (type pdf)
 <use figs/optimization_network.pdf>
 Package pdftex.def Info: figs/optimization_network.pdf  used on input line 236.
@@ -3156,7 +3160,7 @@ File: figs/altitude_speed_tradeoff.pdf Graphic file (type pdf)
 Package pdftex.def Info: figs/altitude_speed_tradeoff.pdf  used on input line 2
 64.
 (pdftex.def)             Requested size: 435.3303pt x 354.73053pt.
-<figs/function_chain.pdf, id=6353, 798.58348pt x 537.06151pt>
+<figs/function_chain.pdf, id=6352, 798.58348pt x 537.06151pt>
 File: figs/function_chain.pdf Graphic file (type pdf)
 <use figs/function_chain.pdf>
 Package pdftex.def Info: figs/function_chain.pdf  used on input line 271.
@@ -3167,29 +3171,29 @@ Package pdftex.def Info: figs/tornado_sensitivity.pdf  used on input line 278.
 (pdftex.def)             Requested size: 450.69417pt x 225.0402pt.
 )
 (sections/vision_performance.tex
-<figs/real_altitude_vs_px.png, id=6363, 505.89pt x 325.215pt>
+<figs/real_altitude_vs_px.png, id=6362, 505.89pt x 325.215pt>
 File: figs/real_altitude_vs_px.png Graphic file (type png)
 <use figs/real_altitude_vs_px.png>
 Package pdftex.def Info: figs/real_altitude_vs_px.png  used on input line 88.
 (pdftex.def)             Requested size: 435.3303pt x 279.8581pt.
-<figs/real_speed_vs_blur.png, id=6366, 505.89pt x 325.215pt>
+<figs/real_speed_vs_blur.png, id=6365, 505.89pt x 325.215pt>
 File: figs/real_speed_vs_blur.png Graphic file (type png)
 <use figs/real_speed_vs_blur.png>
 Package pdftex.def Info: figs/real_speed_vs_blur.png  used on input line 135.
 (pdftex.def)             Requested size: 435.3303pt x 279.8581pt.
  [121]
-<figs/real_speed_vs_frames.png, id=6385, 505.89pt x 325.215pt>
+<figs/real_speed_vs_frames.png, id=6384, 505.89pt x 325.215pt>
 File: figs/real_speed_vs_frames.png Graphic file (type png)
 <use figs/real_speed_vs_frames.png>
 Package pdftex.def Info: figs/real_speed_vs_frames.png  used on input line 185.
 
 (pdftex.def)             Requested size: 435.3303pt x 279.8581pt.
-<figs/real_coverage.png, id=6386, 505.89pt x 325.215pt>
+<figs/real_coverage.png, id=6385, 505.89pt x 325.215pt>
 File: figs/real_coverage.png Graphic file (type png)
 <use figs/real_coverage.png>
 Package pdftex.def Info: figs/real_coverage.png  used on input line 218.
 (pdftex.def)             Requested size: 435.3303pt x 279.8581pt.
-<figs/real_detection_envelope.png, id=6388, 542.025pt x 361.35pt>
+<figs/real_detection_envelope.png, id=6387, 542.025pt x 361.35pt>
 File: figs/real_detection_envelope.png Graphic file (type png)
 <use figs/real_detection_envelope.png>
 Package pdftex.def Info: figs/real_detection_envelope.png  used on input line 2
@@ -3227,10 +3231,10 @@ Package logreq Info: Writing requests to 'main.run.xml'.
 
  ) ) 
 Here is how much of TeX's memory you used:
- 55079 strings out of 467866
- 1241067 string characters out of 5417351
- 2356661 words of memory out of 5000000
- 81397 multiletter control sequences out of 15000+600000
+ 55078 strings out of 467866
+ 1241054 string characters out of 5417351
+ 2356660 words of memory out of 5000000
+ 81398 multiletter control sequences out of 15000+600000
  739496 words of font info for 392 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  99i,20n,118p,1475b,2559s stack positions out of 10000i,1000n,20000p,200000b,200000s
@@ -3272,9 +3276,9 @@ a/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtt9.pfb><C:/Users/Bristol/AppDa
 ta/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/symbols/msam10.pfb><C:/Use
 rs/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/symbols/ms
 bm10.pfb>
-Output written on main.pdf (147 pages, 4667547 bytes).
+Output written on main.pdf (147 pages, 4665858 bytes).
 PDF statistics:
- 7274 PDF objects out of 7423 (max. 8388607)
- 1147 named destinations out of 1200 (max. 500000)
+ 7272 PDF objects out of 7423 (max. 8388607)
+ 1145 named destinations out of 1200 (max. 500000)
  65773 words of extra memory for PDF output out of 74296 (max. 10000000)
 

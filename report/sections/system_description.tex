@@ -105,7 +105,7 @@ The vision subsystem is encapsulated in \texttt{vision.py}, exposing a single in
 
 \paragraph{Inference.} The TFLite model produces output tensor $[1, 5, 8400]$ (8400 anchor-free candidates across three feature pyramid scales). Postprocessing: confidence filtering (threshold 0.2), best-detection selection (greedy single-target), and coordinate rescaling to original frame dimensions. The Ultralytics backend handles NMS internally; TFLite implements equivalent filtering in \texttt{vision.py}.
 
-\paragraph{Three backends.} The system supports NCNN~\cite{ncnn} (ARM-optimised, ${\sim}15$\,FPS expected), Ultralytics~\cite{yolov8} (development laptop), and TFLite~\cite{tflite} (production Pi). Backend selection is automatic at import time. All consume the same model weights and produce identical detection semantics.
+\paragraph{Three backends.} The system supports Ultralytics~\cite{yolov8} (development laptop) and TFLite~\cite{tflite} (production Pi), with an NCNN~\cite{ncnn} backend implemented but not yet benchmarked on the Pi. Backend selection is automatic at import time. Both validated backends consume the same model weights and produce identical detection semantics.
 
 \begin{figure}[ht]
 \centering
@@ -116,7 +116,7 @@ The vision subsystem is encapsulated in \texttt{vision.py}, exposing a single in
 
 \paragraph{Smart detection mode.} An optional \texttt{-{}-smart-detect} flag requires $k$ consecutive positive frames before triggering investigation (default $k=3$), suppressing transient false positives at a 0.6\,s delay.
 
-\paragraph{Performance.} On the Pi~5 with XNNPACK CPU delegate: 206.5\,ms per frame (4.8\,FPS), 100\% detection rate, 0.966 mean confidence. At the nominal search speed of 8\,m/s (altitude-dependent schedule at 35\,m), adjacent frames overlap by ${\sim}91\%$, providing 11--17 detection opportunities per target during a single flyover.
+\paragraph{Performance.} On the Pi~5 with XNNPACK CPU delegate: 206.5\,ms per frame (4.8\,FPS), 100\% detection rate, 0.966 mean confidence. At the nominal search speed of 8\,m/s (altitude-dependent schedule at 35\,m), adjacent frames overlap by approximately 95\% ($1 - 1.67/32.2$), providing 11--17 detection opportunities per target during a single flyover.
 
 % ═══════════════════════════════════════════════════════════════
 \subsection{Search Pattern Generation}\label{sec:search-pattern}
@@ -159,8 +159,9 @@ The 20-state FSM (Figure~\ref{fig:state_machine}, Appendix~\ref{app:states}) orc
 \begin{itemize}
     \item \textbf{Startup:} INIT $\to$ CONNECTING $\to$ ARMING (GPS fix $\geq$3D, $\geq$6 sats) $\to$ TAKEOFF.
     \item \textbf{Search:} PRE\_WAYPOINTS $\to$ TRANSIT\_TO\_SEARCH $\to$ SEARCH (lawnmower pattern with CV detection; PLB beacon redirect if timer expires).
-    \item \textbf{Engagement:} CENTERING (fly to GPS estimate) $\to$ DESCENDING (reduce altitude for close-up view) $\to$ VERIFY (operator Y/N/I with 120\,s timeout) $\to$ APPROACH (7.5\,m offset) $\to$ HOVER\_TARGET (servo payload release).
+    \item \textbf{Engagement:} CENTERING (fly to GPS estimate) $\to$ DESCENDING (reduce altitude for close-up view) $\to$ VERIFY (operator Y/N/I with 120\,s timeout; auto-reject resumes search) $\to$ APPROACH (7.5\,m offset) $\to$ HOVER\_TARGET (servo payload release). If the operator rejects or the timeout expires, RETURN\_TO\_SEARCH climbs back to search altitude and resumes the lawnmower pattern from the next unvisited waypoint.
     \item \textbf{Recovery:} RETURN\_TRANSIT $\to$ RETURN\_HOME $\to$ LANDING (triple touchdown detection) $\to$ DONE.
+    \item \textbf{Override:} MANUAL mode is reachable from any active state via the M~key, RC switch, or geofence hard-cutoff. All autonomous commands cease; the pilot assumes full control. Re-entering autonomous mode requires an explicit resume command.
 \end{itemize}
 
 A detection queue with spatial deduplication (5\,m reject radius), bounded capacity (20 entries), and lazy validation manages multiple targets. Five independent safety mechanisms provide defence-in-depth: manual override, RC kill switch, RTL on link loss, three-layer geofence, and per-state timeouts.

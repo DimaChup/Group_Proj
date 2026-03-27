@@ -22,7 +22,7 @@ The complete system costs \pounds565 (Table~\ref{tab:hw-bom}), approximately one
 The adjacent SSSI imposes strict no-fly constraints. A three-layer geofence---speed capping, repulsive potential field, and hard-boundary cutoff---enforces the exclusion zone in software, with firmware geofencing as a fourth independent layer. At plan time, waypoints within 30\,m of the boundary are filtered to prevent the search pattern from routing the aircraft near the protected area. The lightweight airframe (\SI{3}{\kilo\gram} AUW) minimises noise disturbance to wildlife~\cite{wca1981}.
 
 \item[\textbf{Political.}]
-All flights comply with UK CAA Open Category A3 regulations~\cite{caa2024uas}. The system architecture supports BVLOS operation but was tested within VLOS range, as BVLOS authorisation requires a Specific Category assessment under SORA~\cite{jarus2019sora}. The open-source MIT licence (R12) ensures transparency and reproducibility.
+All flights comply with UK CAA Open Category A3 regulations~\cite{caa2024uas} and were conducted within VLOS range; BVLOS operation would require a Specific Category SORA assessment~\cite{jarus2019sora}. The open-source MIT licence (R12) ensures transparency and reproducibility.
 
 \item[\textbf{Legal.}]
 Data protection is considered: detection images are stored locally on the Pi and not transmitted to cloud services. The SSSI no-fly zone is a legal requirement under the Wildlife and Countryside Act 1981~\cite{wca1981}. The geofence implementation provides auditable evidence of compliance through logged distance-to-boundary measurements at every control loop iteration.
@@ -187,7 +187,7 @@ YOLOv8n (the nano variant, 3.2~million parameters, 8.7~GFLOPs) was selected afte
   \end{tabularx}
 \end{table}
 
-\noindent YOLOv8n is the only variant that achieves real-time inference on the Pi~5 CPU within the 300\,ms-per-frame budget required for useful detection at search speed. Larger variants (YOLOv8s at 11.2\,M parameters, YOLOv8m at 25.9\,M) exceeded this budget by factors of two and four respectively. SSD~MobileNetV2 matches YOLOv8n on speed but delivers lower accuracy, with reported mAP values on the COCO benchmark substantially below YOLO variants due to its simpler feature pyramid~\cite{lin2014coco, edgeai}.
+\noindent YOLOv8n is the only variant that achieves real-time inference on the Pi~5 CPU within the 300\,ms-per-frame budget required for useful detection at search speed. Larger variants (YOLOv8s at 11.2\,M parameters, YOLOv8m at 25.9\,M) exceeded this budget by factors of two and four respectively. SSD~MobileNetV2 matches YOLOv8n on speed but delivers lower accuracy on COCO~\cite{lin2014coco}; note that the SSD mAP of 0.88 is measured on COCO whereas the YOLO figures are on our custom dataset, so the comparison is indicative rather than direct~\cite{edgeai}.
 
 The model was trained as a single-class detector on 366 mixed images (300 synthetic, 16 real, 50 negatives) at native camera resolution ($1456 \times 1088$), following the domain-randomisation principle~\cite{domainrand}. Training at higher resolution than the $640 \times 640$ inference input allows the network to learn fine-grained features that survive downscaling~\cite{yolov8}. A COCO person detector is carried as a fallback model for field conditions where the custom model underperforms.
 
@@ -274,19 +274,4 @@ An additional discovery during integration was that the IMX296 outputs BGR chann
 
 \subsection{Field Day Adaptation Under Uncertainty}\label{sec:weather-rationale}
 
-The scheduled flight test (2026-03-11) was cancelled due to sustained winds exceeding the EDU-450's \SI{10}{\metre\per\second} operational limit. Rather than treating this as lost time, the team executed a pre-planned fallback protocol designed to maximise information gain from the available hardware access.
-
-\paragraph{Go/no-go decision framework.}
-Three criteria were evaluated 30~minutes before the scheduled flight window: (1)~sustained wind speed $< \SI{8}{\metre\per\second}$ (80\% of airframe limit, providing a safety margin); (2)~gust factor $< 1.5\times$ sustained (to avoid turbulence-induced attitude excursions); (3)~visibility $> \SI{500}{\metre}$ (VLOS requirement). On the day, sustained wind measured \SI{12}{\metre\per\second} with gusts to \SI{18}{\metre\per\second}, failing criterion~(1) by 50\%. The no-go decision was unanimous and immediate.
-
-\paragraph{Information-maximisation fallback.}
-The team pivoted to a bench-testing protocol that addressed the highest-uncertainty items from the risk register:
-
-\begin{itemize}
-    \item \textbf{FOV calibration} --- tape-measure measurement at \SI{1}{\metre} height corrected the focal length from \SI{7.0}{\milli\metre} to \SI{5.46}{\milli\metre} (Section~\ref{sec:decisions-changed}).
-    \item \textbf{Lens distortion calibration} --- a 14$\times$9 checkerboard calibration yielded RMS~0.399, and the undistortion remap was integrated into \texttt{vision.py} at a cost of \SI{1.5}{\milli\second} per frame.
-    \item \textbf{End-to-end connectivity} --- Pi $\rightarrow$ MAVProxy $\rightarrow$ Cube $\rightarrow$ Mission Planner chain verified, with telemetry confirmed on all three consumers simultaneously.
-    \item \textbf{Inference benchmark} --- 50-run benchmark on Pi~5 confirmed \SI{207}{\milli\second} average inference (\SI{4.8}{FPS}), 50/50 detection rate at 0.966 confidence.
-\end{itemize}
-
-\noindent These items required controlled bench conditions (stable platform, time for repeated measurements) that would have been difficult to achieve during flight. The focal length correction alone prevented a systematic \SI{3}{\metre} bias in all subsequent GPS estimates. The approach reflects the simulation-first methodology: when real-world conditions are unavailable, maximise the fidelity of the simulation parameters instead.
+The scheduled flight test (2026-03-11) was cancelled due to sustained winds exceeding the EDU-450's \SI{10}{\metre\per\second} operational limit (measured \SI{12}{\metre\per\second}, gusts to \SI{18}{\metre\per\second}). A pre-planned bench-testing fallback was executed instead, yielding the FOV calibration correction (\SI{7.0}{\milli\metre}~$\rightarrow$~\SI{5.46}{\milli\metre}), lens distortion calibration (RMS~0.399), end-to-end connectivity verification, and the inference benchmark (\SI{207}{\milli\second}, 4.8\,FPS)---results detailed in Section~\ref{sec:decisions-changed} and the evaluation (Section~\ref{sec:evaluation}). The go/no-go decision framework and full bench protocol are documented in Appendix~\ref{app:field-day}.
