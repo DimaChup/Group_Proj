@@ -47,33 +47,55 @@ called once per loop iteration.
                         |  MANUAL -> RETURN_FROM_MANUAL -> resume |
                         +----------------------------------------+
 
- INIT -> CONNECTING -> ARMING -> TAKEOFF
-                                    |
-                    (transit file?)--+-- (no transit)
-                    |                |
-               PRE_WAYPOINTS    TRANSIT_TO_SEARCH
-                    |                |
-                    +-> TRANSIT_TO_SEARCH
-                              |
-                           SEARCH  <-- rescan (drop alt) <--+
-                           /    \                            |
-                  detection    all WPs done, no confirm -----+
-                  queued         (pass < MAX_RESCAN_PASSES)
-                     |
-                  CENTERING (60s timeout -> SEARCH)
-                     |  dist < 1m
-                  VERIFY  (120s timeout -> reject)
-                  / | \
-           Y    N/I  timeout
-           |     |
-      APPROACH  queue pop -> CENTERING
-           |    or RETURN_TO_SEARCH -> SEARCH
-      HOVER_TARGET (servo release, 15s)
-           |
-      RETURN_TRANSIT -> RETURN_HOME -> LANDING -> DONE
+ INIT -[config loaded]-> CONNECTING -[heartbeat rx]-> ARMING -[GPS fix]-> TAKEOFF
+                                                                            |
+                                                              [alt reached]-+
+                                                                            |
+                                    (transit file?)-------------------------+-- (no transit)
+                                    |                                       |
+                               PRE_WAYPOINTS                    TRANSIT_TO_SEARCH
+                                    |                                       |
+                                    +-------> TRANSIT_TO_SEARCH <-----------+
+                                                       |
+                                              [at search area]
+                                                       |
+                                                    SEARCH  <-- rescan (drop alt) <--+
+                                                    /    \                            |
+                                   [detection   ]  /      \ [all WPs done,           |
+                                   [queued      ] /        \ no confirm] ------------+
+                                                 /          (pass < MAX_RESCAN_PASSES)
+                                              CENTERING (60s timeout -> SEARCH)
+                                                 |
+                                            [dist < 2.5m]
+                                                 |
+                                              VERIFY  (120s timeout -> reject)
+                                              / | \
+                                     [Y     ] [N/I]  [timeout]
+                                     [pressed]  |
+                                        |    queue pop -> CENTERING
+                                   APPROACH  or RETURN_TO_SEARCH -> SEARCH
+                                        |
+                                   HOVER_TARGET (servo release, 15s)
+                                        |
+                                   [payload released]
+                                        |
+                               RETURN_TRANSIT -> RETURN_HOME -[at home]-> LANDING -[disarmed]-> DONE
 ```
 
-### 1.3 Why a State Machine
+### 1.3 Typical Mission Timeline
+
+| Phase | Duration | Notes |
+|-------|----------|-------|
+| TAKEOFF | ~30 s | Climb to 35 m |
+| TRANSIT | ~2 min | 294 m at 8 m/s |
+| SEARCH (pass 1) | ~3.3 min | 18 waypoints at 35 m |
+| CENTERING + VERIFY | ~30 s | Per detection |
+| APPROACH + DELIVER | ~45 s | Descend to 3 m, servo release |
+| RETURN | ~2 min | Retrace transit |
+| LANDING | ~30 s | Auto-land at home |
+| **Total** | **~10-12 min** | Single pass, one target |
+
+### 1.4 Why a State Machine
 
 | Property | Benefit |
 |----------|---------|
@@ -267,7 +289,7 @@ integration is planned for future work.
 
 ## 3. NFZ Protection
 
-The survey area is adjacent to a SSSI no-fly zone. A single point of failure in
+The survey area is adjacent to a SSSI (no-fly zone) boundary. A single point of failure in
 boundary enforcement could cause an airspace violation, so the system uses three
 independent protection layers.
 
@@ -792,7 +814,7 @@ resolution teaches the model to recognise finer features that survive the downsc
 | Size (v2, sar_v2_1088) | 11.7 MB |
 | Size (v1, original) | 3.2 MB |
 | Quantisation | None (float32) |
-| Delegate | XNNPACK (CPU, ARM NEON) |
+| Delegate | XNNPACK (ARM CPU acceleration library, ARM NEON) |
 
 The v2 model is larger because it was trained at higher resolution, which produces more
 feature map weights. Both models have identical input/output shapes and are drop-in
@@ -1074,7 +1096,7 @@ Two tools provide real-time bullseye scatter plots of GPS estimation accuracy:
 
 - **`tests/laptop/video_test.py`** — replays DJI flight video with detection overlay. Shows two scatter plots: one coloured by distance from image centre (centre-snap detections are most accurate), one coloured by altitude (lower = more accurate). Prints CEP50, max spread, and mean error. This was used to measure the 2.3 m CEP50 from real flight data.
 
-- **`simulator/simple_simulator.py`** — interactive simulation with live bullseye plot. As the drone flies over dummies, each detection adds a dot to the scatter. Shows inverse-variance weighted average, Kalman filter estimate, and running total. Supports zoom/pan, landing zone donut overlay, and Tab to cycle between multiple targets. Used to validate the GPS estimation pipeline end-to-end before real flights.
+- **`simple_simulator.py`** — interactive simulation with live bullseye plot. As the drone flies over dummies, each detection adds a dot to the scatter. Shows inverse-variance weighted average, Kalman filter estimate, and running total. Supports zoom/pan, landing zone donut overlay, and Tab to cycle between multiple targets. Used to validate the GPS estimation pipeline end-to-end before real flights.
 
 Both tools demonstrate how estimates converge as more observations are collected, and how centering directly above the target produces the tightest cluster.
 
@@ -1210,13 +1232,13 @@ XNNPACK CPU delegate. Input: 640 x 640 float32.
 
 ### 6.13 Multi-Pass Descent Strategy
 
-The search begins at 50 m and descends if no detection occurs within the scan area. Each
+The search begins at `TARGET_ALT` (default 35 m) and descends if no detection occurs. Each
 rescan pass uses `RESCAN_ALT_FACTOR = 0.8` to reduce altitude:
 
 ```
-Pass 1: 50 m   (dummy 34 px tall in model -- viable)
-Pass 2: 40 m   (dummy 42 px tall -- comfortable)
-Pass 3: 32 m   (dummy 52 px tall -- easy)
+Pass 1: 35 m   (dummy 48 px tall in model -- viable)
+Pass 2: 28 m   (dummy 60 px tall -- comfortable)
+Pass 3: 22 m   (dummy 76 px tall -- easy)
 Floor:  15 m   (RESCAN_ALT_FLOOR_M -- dummy 100+ px tall)
 ```
 
@@ -1565,7 +1587,7 @@ These are active or planned improvements that have not yet been implemented:
 
 ---
 
-## References
+## Internal Source Documents
 
 All numeric values in this document are drawn from `config.py` as deployed. Source files
 are listed in Section 1.1. Design decision documents with full implementation details:
@@ -1575,3 +1597,11 @@ are listed in Section 1.1. Design decision documents with full implementation de
 - `docs/DESIGN_PATH_PLANNING.md` -- lawnmower pattern and scan angle optimisation
 - `docs/DESIGN_STATE_MACHINE.md` -- state definitions, transitions, timeouts
 - `docs/DESIGN_VISION.md` -- CV subsystem, model training, GPS estimation
+
+---
+
+## References
+
+- ArduPilot (2024). "ArduCopter GUIDED Mode Commands." https://ardupilot.org/copter/docs/common-mavlink-mission-command-messages-mav_cmd.html
+- Choset, H. (2001). "Coverage of Known Spaces: The Boustrophedon Cellular Decomposition." *Autonomous Robots*, 9(3), 247-253.
+- Jocher, G. et al. (2023). "Ultralytics YOLOv8." https://github.com/ultralytics/ultralytics
