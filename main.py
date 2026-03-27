@@ -31,6 +31,7 @@ REAL_CANVAS_SIZE = 4800
 DRY_RUN = "--dry-run" in sys.argv
 MODEL_PATH = "best.tflite"
 TRANSIT_FILE = "flight_plans/transit.json"
+_TRANSIT_EXPLICIT = False
 STREAM_ENABLED = "--no-stream" not in sys.argv
 STREAM_PORT = 8090
 STREAM_W, STREAM_H = 320, 240
@@ -44,7 +45,7 @@ BEACON_DELAY = 0
 
 for _i, _arg in enumerate(sys.argv):
     if _arg == "--model" and _i + 1 < len(sys.argv):        MODEL_PATH = sys.argv[_i + 1]
-    elif _arg == "--transit" and _i + 1 < len(sys.argv):     TRANSIT_FILE = sys.argv[_i + 1]
+    elif _arg == "--transit" and _i + 1 < len(sys.argv):     TRANSIT_FILE = sys.argv[_i + 1]; _TRANSIT_EXPLICIT = True
     elif _arg == "--speed" and _i + 1 < len(sys.argv):       SIM_SPEED = float(sys.argv[_i + 1])
     elif _arg == "--alt" and _i + 1 < len(sys.argv):         config.TARGET_ALT = float(sys.argv[_i + 1])
     elif _arg == "--beacon-delay" and _i + 1 < len(sys.argv): BEACON_DELAY = float(sys.argv[_i + 1])
@@ -184,7 +185,7 @@ class VisualFlightMission(StateHandlersMixin):
                 if transit_px and not preload_transit else [])
 
             self.eyes = VisionSystem(camera_index=None, model_path=MODEL_PATH)
-            self.eyes.using_ai = (self.tgt_type == "dummy")
+            self.eyes.using_ai = (self.tgt_type == "dummy") and self.eyes.model is not None
         else:
             self.sim = None
             self.search_poly = self._setup_real_search_area()
@@ -216,6 +217,10 @@ class VisualFlightMission(StateHandlersMixin):
         self.state_start_time = time.time()
         self.connect_start_time = 0
         self.gps_fix_ok = False
+        self.gps_fix_type = 0
+        self.gps_satellites = 0
+        self._gps_degraded_time = 0       # when fix first dropped below 3D
+        self._gps_warn_printed = 0        # throttle warnings
         self._last_gps_status_print = 0
         self._last_mode_warn = -1
         self._arming_timeout_warned = False
@@ -224,6 +229,8 @@ class VisualFlightMission(StateHandlersMixin):
         self._descending_timeout_warned = False
         self._last_log_time = 0
         self._servo_released = False
+        self._camera_none_count = 0
+        self._last_camera_warn = 0
 
         if config.TAKEOFF_GPS:
             self.lat, self.lon = config.TAKEOFF_GPS[0], config.TAKEOFF_GPS[1]
@@ -326,7 +333,14 @@ class VisualFlightMission(StateHandlersMixin):
     def update_telemetry(self):
         if not self.master: return
         while True:
-            msg = self.master.recv_match(blocking=False)
+            try:
+                msg = self.master.recv_match(blocking=False)
+            except (ConnectionResetError, ConnectionAbortedError,
+                    BrokenPipeError, OSError) as e:
+                print(f"\n[LINK LOST] recv_match failed: {e}")
+                self._emergency_rtl(reason=str(e))
+                self.state = State.DONE
+                return
             if not msg: break
             mtype = msg.get_type()
             if mtype == 'GLOBAL_POSITION_INT':
@@ -471,8 +485,14 @@ class VisualFlightMission(StateHandlersMixin):
     def run(self):
         print("Starting Mission Loop...")
         if STREAM_ENABLED:
-            start_stream_server(port=STREAM_PORT, stream_w=STREAM_W, stream_h=STREAM_H,
-                                stream_fps=STREAM_FPS, stream_quality=STREAM_QUALITY)
+            srv = start_stream_server(port=STREAM_PORT, stream_w=STREAM_W, stream_h=STREAM_H,
+                                      stream_fps=STREAM_FPS, stream_quality=STREAM_QUALITY)
+            if srv is None:
+                print("=" * 60)
+                print("WARNING: Stream server failed to start!")
+                print("  No video feed or web buttons available.")
+                print("  Kill any other script using the port and restart.")
+                print("=" * 60)
 
         threading.Thread(target=_terminal_input_thread, daemon=True).start()
 
@@ -584,6 +604,26 @@ class VisualFlightMission(StateHandlersMixin):
                     if mag > 0.01:
                         s = config.NFZ_PUSH_SPEED_MPS
                         self.nav.send_velocity(push_n/mag*s, push_e/mag*s, 0, current_yaw=0.0)
+
+    def _emergency_rtl(self, reason="unknown"):
+        """Best-effort RTL when the link is degraded. Warns operator loudly."""
+        print("=" * 60)
+        print(f"  EMERGENCY: Attempting RTL  —  {reason}")
+        print("  If RTL fails, ArduCopter GCS failsafe should trigger RTL")
+        print("  RC kill switch is always available")
+        print("=" * 60)
+        try:
+            if self.master:
+                # Try setting RTL mode directly via MAVLink (mode 6)
+                self.master.mav.command_long_send(
+                    self.master.target_system, self.master.target_component,
+                    mavutil.mavlink.MAV_CMD_DO_SET_MODE, 0,
+                    mavutil.mavlink.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED,
+                    6, 0, 0, 0, 0, 0)  # 6 = RTL
+                print("[EMERGENCY] RTL command sent")
+        except Exception as e2:
+            print(f"[EMERGENCY] RTL send failed: {e2}")
+            print("[EMERGENCY] Relying on ArduCopter GCS failsafe (FS_GCS_ENABLE)")
 
     def on_dashboard_mouse(self, event, x, y, flags, param):
         if event == cv2.EVENT_MOUSEWHEEL:

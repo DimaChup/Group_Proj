@@ -279,8 +279,13 @@ class _ThreadingHTTP(ThreadingMixIn, HTTPServer):
 
 def start_stream_server(port: int = 8090, host: str = '0.0.0.0',
                         stream_w: int = 320, stream_h: int = 240,
-                        stream_fps: int = 5, stream_quality: int = 50):
+                        stream_fps: int = 5, stream_quality: int = 50,
+                        max_port_retries: int = 5):
     """Start the MJPEG streaming server on a background daemon thread.
+
+    If the requested *port* is already in use the function tries up to
+    *max_port_retries* consecutive ports (port+1, port+2, ...) before
+    giving up.
 
     Parameters
     ----------
@@ -294,12 +299,14 @@ def start_stream_server(port: int = 8090, host: str = '0.0.0.0',
         Target frame rate for the ``/stream`` endpoint.
     stream_quality : int
         JPEG quality percentage (1--100).
+    max_port_retries : int
+        How many consecutive ports to try if the first is busy (default 5).
 
     Returns
     -------
     HTTPServer or None
         The running server instance (call ``server.shutdown()`` to stop),
-        or ``None`` if the port could not be bound.
+        or ``None`` if no port could be bound.
     """
     global _cfg_stream_w, _cfg_stream_h, _cfg_stream_fps, _cfg_stream_quality
     _cfg_stream_w = stream_w
@@ -307,25 +314,33 @@ def start_stream_server(port: int = 8090, host: str = '0.0.0.0',
     _cfg_stream_fps = stream_fps
     _cfg_stream_quality = stream_quality
 
+    pi_ip = "localhost"
     try:
-        server = _ThreadingHTTP((host, port), StreamHandler)
-        threading.Thread(target=server.serve_forever, daemon=True).start()
+        import subprocess
+        result = subprocess.run(
+            ['hostname', '-I'],
+            capture_output=True, text=True, timeout=3,
+        )
+        pi_ip = result.stdout.strip().split()[0]
+    except Exception:
+        pass
 
-        pi_ip = "localhost"
+    last_error = None
+    for attempt_port in range(port, port + max_port_retries):
         try:
-            import subprocess
-            result = subprocess.run(
-                ['hostname', '-I'],
-                capture_output=True, text=True, timeout=3,
-            )
-            pi_ip = result.stdout.strip().split()[0]
-        except Exception:
-            pass
+            server = _ThreadingHTTP((host, attempt_port), StreamHandler)
+            threading.Thread(target=server.serve_forever, daemon=True).start()
 
-        print(f"[STREAM] Live feed: http://{pi_ip}:{port}/")
-        print(f"[STREAM] Settings: {stream_w}x{stream_h} "
-              f"@ {stream_fps}fps, quality {stream_quality}%")
-        return server
-    except Exception as e:
-        print(f"[STREAM] Failed to start: {e}")
-        return None
+            if attempt_port != port:
+                print(f"[STREAM] Port {port} in use — bound to {attempt_port} instead")
+            print(f"[STREAM] Live feed: http://{pi_ip}:{attempt_port}/")
+            print(f"[STREAM] Settings: {stream_w}x{stream_h} "
+                  f"@ {stream_fps}fps, quality {stream_quality}%")
+            return server
+        except OSError as e:
+            last_error = e
+            continue
+
+    print(f"[STREAM] ERROR: could not bind ports {port}-{port + max_port_retries - 1}: "
+          f"{last_error}")
+    return None
