@@ -127,15 +127,18 @@ class StateHandlersMixin:
     def _handle_init(self, target_found, px_u, px_v, key):
         from pymavlink import mavutil
         if time.time() - self.last_req > 1.0:
-            try:
+            if not getattr(self, '_init_connect_printed', False):
                 print(f"Connecting to {config.CONNECTION_STR}...")
+                self._init_connect_printed = True
+            try:
                 self.master = mavutil.mavlink_connection(config.CONNECTION_STR)
                 self.nav = NavigationController(
                     self.master, no_turn=True, get_yaw=lambda: self.yaw)
                 self.connect_start_time = time.time()
                 self._set_state(State.CONNECTING)
             except Exception as e:
-                print(f"[ERROR] Connection to {config.CONNECTION_STR} failed: {e}. Check mavproxy is running and port is correct.")
+                print(f"[ERROR] Connection failed: {e}")
+                print(f"  ACTION: Check mavproxy is running. Verify port {config.CONNECTION_STR}.")
             self.last_req = time.time()
 
     def _handle_connecting(self, target_found, px_u, px_v, key):
@@ -144,7 +147,8 @@ class StateHandlersMixin:
         if self.connect_start_time > 0 and self.last_heartbeat == 0:
             elapsed = time.time() - self.connect_start_time
             if elapsed > 15 and int(elapsed) % 15 == 0 and time.time() - self.last_req > 5:
-                print(f"ERROR: No heartbeat in {int(elapsed)}s. Is mavproxy running?")
+                print(f"[WARN] No heartbeat in {int(elapsed)}s.")
+                print(f"  ACTION: Check mavproxy is running and Cube is powered.")
                 self.last_req = time.time()
         if self.last_heartbeat > 0:
             print("Heartbeat. Requesting Data Stream...")
@@ -162,7 +166,9 @@ class StateHandlersMixin:
         from pymavlink import mavutil
         arming_elapsed = time.time() - self.state_start_time
         if arming_elapsed > 120 and not self._arming_timeout_warned:
-            print("ARMING TIMEOUT (120s): Cannot arm. Common causes: no GPS fix, safety switch not pressed, RC failsafe active. Open Mission Planner Messages tab for pre-arm failure reason.")
+            print("[WARN] ARMING TIMEOUT (120s) — cannot arm.")
+            print("  ACTION: Check GPS fix, safety switch, RC failsafe.")
+            print("  Open Mission Planner Messages tab for pre-arm failure reason.")
             self._arming_timeout_warned = True
 
         if not self.gps_fix_ok:
@@ -226,7 +232,8 @@ class StateHandlersMixin:
             return
 
         if time.time() - self.state_start_time > 60 and not self._takeoff_timeout_warned:
-            print("TAKEOFF TIMEOUT (60s): Not reaching target altitude. Check propellers are spinning, GPS lock is valid, and no physical obstructions. Current alt logged in HUD.")
+            print(f"[WARN] TAKEOFF TIMEOUT (60s) — alt {self.alt:.1f}m / {config.TARGET_ALT}m target.")
+            print("  ACTION: Check propellers spinning, GPS lock, no obstructions.")
             self._takeoff_timeout_warned = True
 
         if self.alt >= config.TARGET_ALT * 0.90:
@@ -371,7 +378,7 @@ class StateHandlersMixin:
                     self._consecutive_detect_count = 0
             else:
                 if not self._is_near_known(self.target_lat, self.target_lon):
-                    print("TARGET DETECTED!")
+                    print(f"[DETECT] Target at ({self.target_lat:.6f}, {self.target_lon:.6f}) conf={conf:.2f} alt={self.alt:.0f}m")
                     self._enqueue_detection(self.target_lat, self.target_lon, conf)
         else:
             self._consecutive_detect_count = 0
@@ -392,7 +399,8 @@ class StateHandlersMixin:
             current_alt = self._current_search_alt()
             new_alt = max(config.RESCAN_ALT_FLOOR_M, current_alt * config.RESCAN_ALT_FACTOR)
             if new_alt <= config.RESCAN_ALT_FLOOR_M:
-                print(f"WARNING: Rescan altitude floor reached ({config.RESCAN_ALT_FLOOR_M}m). All rescan passes exhausted without confirmed target. Ending mission -- consider lowering RESCAN_ALT_FLOOR_M in config.py or improving detection model.")
+                print(f"[WARN] Rescan floor reached ({config.RESCAN_ALT_FLOOR_M}m). No confirmed target.")
+                print("  ACTION: Lower RESCAN_ALT_FLOOR_M in config.py or improve model.")
                 self._set_state(State.DONE)
                 return
             self.rescan_pass += 1
@@ -454,7 +462,7 @@ class StateHandlersMixin:
         center_verify = getattr(_main, 'CENTER_VERIFY', False)
 
         if time.time() - self.state_start_time > 60 and not self._centering_timeout_warned:
-            print("CENTERING TIMEOUT (60s): Could not reach target GPS within 1m. Target may have moved or GPS estimate was inaccurate. Resuming search pattern.")
+            print(f"[WARN] CENTERING TIMEOUT (60s) — dist {self.get_dist_to_target():.1f}m. Resuming search.")
             self._centering_timeout_warned = True
             self._set_state(State.SEARCH)
             return
@@ -545,7 +553,8 @@ class StateHandlersMixin:
 
     def _handle_hover(self, target_found, px_u, px_v, key):
         if time.time() - self.state_start_time > 60.0:
-            print("HOVER TIMEOUT (60s): Stuck in HOVER with no waypoints to fly. This usually means the search pattern was not generated. Check SEARCH_AREA_GPS in config.py or search_area.json. Ending mission.")
+            print("[WARN] HOVER TIMEOUT (60s) — no waypoints.")
+            print("  ACTION: Check SEARCH_AREA_GPS in config.py or search_area.json.")
             self._set_state(State.DONE)
 
     def _handle_approach(self, target_found, px_u, px_v, key):

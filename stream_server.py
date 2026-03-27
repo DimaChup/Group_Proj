@@ -264,53 +264,152 @@ def _build_dashboard_html() -> str:
     compass directions for landing), and a keyboard listener that mirrors
     physical key-presses to ``/cmd``.
     """
-    return (
-        "<!DOCTYPE html><html><head><meta charset='utf-8'>"
-        "<title>SAR Drone</title><style>"
-        "body{background:#111;color:#fff;font-family:monospace;"
-        "text-align:center;margin:0;padding:10px}"
-        "img{max-width:100%;border:2px solid #0f0;margin:10px 0}"
-        ".btns{display:flex;gap:8px;justify-content:center;"
-        "flex-wrap:wrap;margin:10px 0}"
-        ".btn{padding:12px 24px;font-size:16px;font-weight:bold;"
-        "border:none;border-radius:6px;cursor:pointer;"
-        "font-family:monospace;min-width:80px}"
-        ".btn-y{background:#2ecc71;color:#000}"
-        ".btn-n{background:#e74c3c;color:#fff}"
-        ".btn-dir{background:#3498db;color:#fff}"
-        ".btn-m{background:#f39c12;color:#000}"
-        ".info{color:#aaa;font-size:12px}"
-        "#status{color:#0f0;margin:5px 0;min-height:20px}"
-        "</style></head><body>"
-        "<h2>SAR Drone Mission Feed</h2>"
-        '<img src="/stream" alt="Video Stream">'
-        '<div id="status"></div>'
-        '<p class="info">VERIFY: press Y (confirm) or N (reject). '
-        "Then select landing side: N/E/W/S</p>"
-        '<div class="btns">'
-        """<button class="btn btn-y" onclick="cmd('y')">Y Confirm</button>"""
-        """<button class="btn btn-n" onclick="cmd('n')">N Reject</button>"""
-        """<button class="btn btn-m" onclick="cmd('m')">M Manual</button>"""
-        "</div>"
-        '<p class="info">Landing direction (after Y):</p>'
-        '<div class="btns">'
-        """<button class="btn btn-dir" onclick="cmd('n')">North</button>"""
-        """<button class="btn btn-dir" onclick="cmd('e')">East</button>"""
-        """<button class="btn btn-dir" onclick="cmd('s')">South</button>"""
-        """<button class="btn btn-dir" onclick="cmd('w')">West</button>"""
-        "</div>"
-        f'<p class="info">{_cfg_stream_w}x{_cfg_stream_h} | '
-        f"{_cfg_stream_fps} fps | Quality {_cfg_stream_quality}%</p>"
-        "<script>"
-        "function cmd(k){fetch('/cmd?key='+k).then(r=>r.json()).then(d=>{"
-        "document.getElementById('status').textContent="
-        "'Sent: '+k.toUpperCase()+' ('+new Date().toLocaleTimeString()+')';"
-        "}).catch(e=>{document.getElementById('status').textContent='Error: '+e})}"
-        "document.addEventListener('keydown',e=>{"
-        "if(['y','n','e','w','s','m'].includes(e.key.toLowerCase()))"
-        "cmd(e.key.toLowerCase());});"
-        "</script></body></html>"
-    )
+    return f"""<!DOCTYPE html><html><head><meta charset='utf-8'>
+<title>SAR Drone</title>
+<style>
+*{{box-sizing:border-box}}
+body{{background:#111;color:#fff;font-family:monospace;margin:0;padding:8px}}
+.top{{display:flex;gap:8px;align-items:stretch;min-height:0}}
+.video-box{{flex:2;position:relative;min-width:0}}
+.video-box img{{width:100%;display:block;border:2px solid #0f0;border-radius:4px}}
+.telem-panel{{flex:0 0 260px;background:#1a1a1a;border:1px solid #333;border-radius:6px;
+  padding:10px;font-size:13px;display:flex;flex-direction:column;gap:6px;overflow-y:auto}}
+.telem-panel h3{{margin:0 0 4px;color:#0f0;font-size:14px;border-bottom:1px solid #333;padding-bottom:4px}}
+.t-row{{display:flex;justify-content:space-between;padding:2px 0}}
+.t-label{{color:#888}}.t-val{{color:#fff;text-align:right}}
+#t-state{{font-size:18px;font-weight:bold;text-align:center;padding:6px;
+  border-radius:4px;background:#222;color:#0f0}}
+#t-state.verify{{background:#e74c3c;color:#fff;animation:pulse 1s infinite}}
+#t-state.manual{{background:#f39c12;color:#000}}
+#t-state.search{{background:#2980b9;color:#fff}}
+#t-state.done{{background:#333;color:#888}}
+@keyframes pulse{{0%,100%{{opacity:1}}50%{{opacity:0.6}}}}
+.t-bar{{height:6px;background:#333;border-radius:3px;overflow:hidden}}
+.t-bar-fill{{height:100%;background:#2ecc71;transition:width 0.3s}}
+.btns{{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:6px 0}}
+.btn{{padding:10px 20px;font-size:15px;font-weight:bold;border:none;border-radius:6px;
+  cursor:pointer;font-family:monospace;min-width:70px}}
+.btn-y{{background:#2ecc71;color:#000}}.btn-n{{background:#e74c3c;color:#fff}}
+.btn-dir{{background:#3498db;color:#fff}}.btn-m{{background:#f39c12;color:#000}}
+.info{{color:#888;font-size:11px;text-align:center;margin:2px 0}}
+#cmd-status{{color:#0f0;text-align:center;margin:4px 0;min-height:18px;font-size:12px}}
+#t-prompt{{text-align:center;padding:4px;font-size:13px;color:#ff0;display:none}}
+</style></head><body>
+
+<div class="top">
+  <div class="video-box">
+    <img src="/stream" alt="Video Stream">
+  </div>
+  <div class="telem-panel">
+    <div id="t-state">CONNECTING</div>
+    <div id="t-prompt"></div>
+
+    <h3>Telemetry</h3>
+    <div class="t-row"><span class="t-label">ALT</span><span class="t-val" id="t-alt">--</span></div>
+    <div class="t-row"><span class="t-label">SPD</span><span class="t-val" id="t-spd">--</span></div>
+    <div class="t-row"><span class="t-label">LAT</span><span class="t-val" id="t-lat">--</span></div>
+    <div class="t-row"><span class="t-label">LON</span><span class="t-val" id="t-lon">--</span></div>
+
+    <h3>Detection</h3>
+    <div class="t-row"><span class="t-label">Conf</span><span class="t-val" id="t-conf">--</span></div>
+    <div class="t-row"><span class="t-label">Queue</span><span class="t-val" id="t-queue">--</span></div>
+
+    <h3>Search</h3>
+    <div class="t-row"><span class="t-label">WP</span><span class="t-val" id="t-wp">--</span></div>
+    <div class="t-bar"><div class="t-bar-fill" id="t-wp-bar" style="width:0%"></div></div>
+
+    <h3>GPS</h3>
+    <div class="t-row"><span class="t-label">Fix</span><span class="t-val" id="t-fix">--</span></div>
+    <div class="t-row"><span class="t-label">Sats</span><span class="t-val" id="t-sats">--</span></div>
+  </div>
+</div>
+
+<div id="cmd-status"></div>
+
+<div class="btns">
+  <button class="btn btn-y" onclick="cmd('y')">Y Confirm</button>
+  <button class="btn btn-n" onclick="cmd('n')">N Reject</button>
+  <button class="btn btn-m" onclick="cmd('m')">M Manual</button>
+</div>
+<p class="info">Landing direction (after Y confirm):</p>
+<div class="btns">
+  <button class="btn btn-dir" onclick="cmd('n')">North</button>
+  <button class="btn btn-dir" onclick="cmd('e')">East</button>
+  <button class="btn btn-dir" onclick="cmd('s')">South</button>
+  <button class="btn btn-dir" onclick="cmd('w')">West</button>
+</div>
+<p class="info">{_cfg_stream_w}x{_cfg_stream_h} | {_cfg_stream_fps} fps | Q{_cfg_stream_quality}%</p>
+
+<script>
+function cmd(k){{
+  fetch('/cmd?key='+k).then(r=>r.json()).then(d=>{{
+    document.getElementById('cmd-status').textContent=
+      'Sent: '+k.toUpperCase()+' ('+new Date().toLocaleTimeString()+')';
+  }}).catch(e=>{{document.getElementById('cmd-status').textContent='Error: '+e}});
+}}
+document.addEventListener('keydown',e=>{{
+  if(['y','n','e','w','s','m'].includes(e.key.toLowerCase()))
+    cmd(e.key.toLowerCase());
+}});
+
+/* Poll /status every 1s for live telemetry */
+function poll(){{
+  fetch('/status').then(r=>r.json()).then(d=>{{
+    var s=document.getElementById('t-state');
+    s.textContent=d.state||'--';
+    s.className='';
+    var sl=(d.state||'').toLowerCase();
+    if(sl==='verify')s.className='verify';
+    else if(sl==='manual')s.className='manual';
+    else if(sl.indexOf('search')>=0)s.className='search';
+    else if(sl==='done')s.className='done';
+
+    document.getElementById('t-alt').textContent=
+      d.alt!==undefined?d.alt.toFixed(1)+'m':'--';
+    document.getElementById('t-spd').textContent=
+      d.speed!==undefined?d.speed.toFixed(1)+'m/s':'--';
+    document.getElementById('t-lat').textContent=
+      d.lat!==undefined?d.lat.toFixed(6):'--';
+    document.getElementById('t-lon').textContent=
+      d.lon!==undefined?d.lon.toFixed(6):'--';
+
+    var confEl=document.getElementById('t-conf');
+    if(d.conf!==undefined){{
+      confEl.textContent=d.conf.toFixed(2);
+      confEl.style.color=d.conf>0.5?'#2ecc71':d.conf>0?'#f39c12':'#888';
+    }}else confEl.textContent='--';
+
+    document.getElementById('t-queue').textContent=
+      d.cmd_queue_size!==undefined?d.cmd_queue_size:'--';
+
+    var wpEl=document.getElementById('t-wp');
+    var wpBar=document.getElementById('t-wp-bar');
+    if(d.wp_index!==undefined&&d.wp_total!==undefined&&d.wp_total>0){{
+      wpEl.textContent=d.wp_index+'/'+d.wp_total;
+      wpBar.style.width=Math.round(d.wp_index/d.wp_total*100)+'%';
+    }}else{{wpEl.textContent='--';wpBar.style.width='0%';}}
+
+    var fixTypes={{0:'No GPS',1:'No Fix',2:'2D',3:'3D',4:'DGPS',5:'RTK Float',6:'RTK Fix'}};
+    document.getElementById('t-fix').textContent=
+      d.gps_fix!==undefined?(fixTypes[d.gps_fix]||d.gps_fix):'--';
+    document.getElementById('t-sats').textContent=
+      d.gps_sats!==undefined?d.gps_sats:'--';
+
+    /* Prompt bar for VERIFY / landing side */
+    var pr=document.getElementById('t-prompt');
+    if(d.selecting_side){{
+      pr.style.display='block';pr.textContent='SELECT LANDING SIDE: N / E / S / W';
+      pr.style.color='#0ff';
+    }}else if(d.waiting){{
+      var vt=d.verify_timeout!==undefined?' ('+Math.round(d.verify_timeout)+'s)':'';
+      pr.style.display='block';pr.textContent='VERIFY TARGET: Y / N / I'+vt;
+      pr.style.color='#f00';
+    }}else pr.style.display='none';
+
+  }}).catch(()=>{{}});
+}}
+setInterval(poll,1000);poll();
+</script></body></html>"""
 
 
 # -- Server lifecycle --------------------------------------------------------
