@@ -500,7 +500,8 @@ class StateHandlersMixin:
                 self._gps_avg_samples = None
                 self._confirmed_y = False
             self._set_state(State.VERIFY)
-            print(f"\nVERIFY (at {self.alt:.0f}m) — Y=Confirm  N=Reject  I=Interest")
+            print(f"  Target: ({self.target_lat:.6f}, {self.target_lon:.6f}) at {self.alt:.0f}m")
+            print(f"  ACTION: Y=Confirm  N=Reject  I=Interest (120s timeout)")
 
     def _handle_descending(self, target_found, px_u, px_v, key):
         # No-descend mode: skip straight to VERIFY
@@ -718,7 +719,13 @@ class StateHandlersMixin:
         s = 111132.0
         self.final_dist = math.sqrt(((self.lat - self.home_lat) * s) ** 2 +
                                     ((self.lon - self.home_lon) * s * math.cos(math.radians(self.lat))) ** 2)
-        print(f"MISSION COMPLETE — {reason} Landed {self.final_dist:.2f}m from home.")
+        elapsed = time.time() - getattr(self, '_mission_start_time', time.time())
+        mins, secs = int(elapsed // 60), int(elapsed % 60)
+        print(f"\n{'='*60}")
+        print(f"  MISSION COMPLETE  [T+{mins:02d}:{secs:02d}]")
+        print(f"  {reason}")
+        print(f"  Landing error: {self.final_dist:.2f}m from home")
+        print(f"{'='*60}")
         self._set_state(State.DONE)
 
     # -- PLB beacon redirect --
@@ -926,8 +933,9 @@ class StateHandlersMixin:
                not self._is_outside_search_area(self.target_lat, self.target_lon) and \
                not self._is_near_known(self.target_lat, self.target_lon):
                 conf = getattr(self, 'current_conf', 0.5)
-                self._enqueue_detection(self.target_lat, self.target_lon, conf)
-                print(f"[MANUAL] Detection queued at ({self.target_lat:.6f}, {self.target_lon:.6f})")
+                if not self._is_near_known(self.target_lat, self.target_lon):
+                    self._enqueue_detection(self.target_lat, self.target_lon, conf)
+                    print(f"[MANUAL] Detection queued at ({self.target_lat:.6f}, {self.target_lon:.6f}) conf={conf:.2f}")
             self.target_lat = self.target_lon = 0
         if self.state == State.MANUAL and self.master:
             self._handle_manual_flight(key)

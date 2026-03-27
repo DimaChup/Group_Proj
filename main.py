@@ -20,7 +20,8 @@ from vision import VisionSystem
 from state_machine import StateHandlersMixin
 from navigation import NavigationController
 from stream_server import (start_stream_server, set_stream_frame,
-                           get_stream_frame, cmd_queue as stream_cmd_queue)
+                           get_stream_frame, set_telemetry,
+                           cmd_queue as stream_cmd_queue)
 from gps_utils import calculate_target_from_pixels, landing_offset_7_5m
 
 if config.MODE == "SIMULATION":
@@ -551,6 +552,23 @@ class VisualFlightMission(StateHandlersMixin):
 
         if STREAM_ENABLED:
             set_stream_frame(frame)
+            spd_val = math.sqrt(self.vx**2 + self.vy**2)
+            set_telemetry(
+                state=str(self.state).replace("State.", ""),
+                alt=round(self.alt, 1),
+                lat=self.lat,
+                lon=self.lon,
+                speed=round(spd_val, 1),
+                conf=round(self.current_conf, 3),
+                cmd_queue_size=stream_cmd_queue.qsize(),
+                wp_index=self.wp_index,
+                wp_total=len(self.waypoints) if self.waypoints else 0,
+                gps_fix=self.gps_fix_type,
+                gps_sats=self.gps_satellites,
+                waiting=getattr(self, 'waiting_for_confirmation', False),
+                selecting_side=getattr(self, 'selecting_landing_side', False),
+                verify_timeout=getattr(self, '_verify_remaining', None),
+            )
         if not HEADLESS:
             cv2.imshow("Mission Dashboard", final_display)
         return found, u, v
@@ -558,16 +576,17 @@ class VisualFlightMission(StateHandlersMixin):
     # ── Main loop ─────────────────────────────────────────────────────
 
     def run(self):
-        print("Starting Mission Loop...")
+        self._mission_start_time = time.time()
+        print("\n" + "=" * 60)
+        print("  MISSION LOOP STARTED")
+        print("  Keys: M=manual  Y/N/I=verify  K=reset  B=beacon  ESC=quit")
+        print("=" * 60)
         if STREAM_ENABLED:
             srv = start_stream_server(port=STREAM_PORT, stream_w=STREAM_W, stream_h=STREAM_H,
                                       stream_fps=STREAM_FPS, stream_quality=STREAM_QUALITY)
             if srv is None:
-                print("=" * 60)
-                print("WARNING: Stream server failed to start!")
-                print("  No video feed or web buttons available.")
-                print("  Kill any other script using the port and restart.")
-                print("=" * 60)
+                print("[WARN] Stream server failed to start!")
+                print("  ACTION: Kill any other script using port %d and restart." % STREAM_PORT)
 
         threading.Thread(target=_terminal_input_thread, daemon=True).start()
 
