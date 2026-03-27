@@ -122,6 +122,18 @@ class StateHandlersMixin:
                 return result < 0  # negative = outside
         return False  # no polygon = don't filter
 
+    def _pop_valid_target(self):
+        """Pop the next valid target from the queue, skipping any that are now invalid."""
+        while getattr(self, '_detect_queue', None) and len(self._detect_queue) > 0:
+            q_lat, q_lon, _qc = self._detect_queue.pop(0)
+            if self._is_inside_nfz(q_lat, q_lon) or \
+               self._is_outside_search_area(q_lat, q_lon) or \
+               self._is_near_known(q_lat, q_lon):
+                print(f"Skipping invalid queued target ({q_lat:.6f}, {q_lon:.6f})")
+                continue
+            return q_lat, q_lon, _qc
+        return None
+
     # ── Per-state handler methods ─────────────────────────────────────
     # Each method corresponds to one state in the mission state machine.
     # They are called from run() via a dispatch dict. Navigation calls
@@ -435,8 +447,9 @@ class StateHandlersMixin:
         # Fly to next waypoint (runs when no new target, or target was rejected)
         if self.state == State.SEARCH:
             # If queue has items, pop and go investigate
-            if getattr(self, '_detect_queue', None) and len(self._detect_queue) > 0:
-                q_lat, q_lon, q_conf = self._detect_queue.pop(0)
+            result = self._pop_valid_target()
+            if result:
+                q_lat, q_lon, q_conf = result
                 print(f"Investigating target at ({q_lat:.6f}, {q_lon:.6f}) conf={q_conf:.2f} — {len(self._detect_queue)} remaining")
                 self.target_lat = q_lat
                 self.target_lon = q_lon
@@ -505,8 +518,9 @@ class StateHandlersMixin:
                     # Within lock radius — refine locked target
                     self._locked_target = (self.target_lat, self.target_lon)
                 else:
-                    # Outside lock radius — queue it if new and not in NFZ
+                    # Outside lock radius — queue if valid (inside search area, not NFZ, not known)
                     if not self._is_inside_nfz(self.target_lat, self.target_lon) and \
+                       not self._is_outside_search_area(self.target_lat, self.target_lon) and \
                        not self._is_near_known(self.target_lat, self.target_lon):
                         _detect_queue = getattr(self, '_detect_queue', [])
                         c = getattr(self, 'current_conf', 0.5)
@@ -835,14 +849,23 @@ class StateHandlersMixin:
                     self.nav.send_velocity(0, 0, 0)
             else:
                 if target_found:
-                    # Detection during manual — go investigate immediately
-                    print("Target detected during manual flight — investigating!")
                     self.calculate_target_gps(px_u, px_v)
-                    self._set_state(State.CENTERING)
-                else:
+                    if not self._is_inside_nfz(self.target_lat, self.target_lon) and \
+                       not self._is_outside_search_area(self.target_lat, self.target_lon) and \
+                       not self._is_near_known(self.target_lat, self.target_lon):
+                        print("Target detected during manual flight — investigating!")
+                        self._locked_target = (self.target_lat, self.target_lon)
+                        self._set_state(State.CENTERING)
+                    else:
+                        self.target_lat = 0
+                        self.target_lon = 0
+                        # Fall through to queue check below
+                        target_found = False
+                if not target_found:
                     # Check detection queue first — investigate queued targets before resuming
-                    if getattr(self, '_detect_queue', None) and len(self._detect_queue) > 0:
-                        q_lat, q_lon, _qc = self._detect_queue.pop(0)
+                    result = self._pop_valid_target()
+                    if result:
+                        q_lat, q_lon, _qc = result
                         print(f"Investigating queued detection at ({q_lat:.6f}, {q_lon:.6f}) — {len(self._detect_queue)} remaining")
                         self.target_lat = q_lat
                         self.target_lon = q_lon
@@ -960,9 +983,10 @@ class StateHandlersMixin:
                     self.target_lat = 0
                     self.target_lon = 0
                     self.last_req = 0
-                    # If queue has items, go directly to next target
-                    if getattr(self, '_detect_queue', None) and len(self._detect_queue) > 0:
-                        q_lat, q_lon, _qc = self._detect_queue.pop(0)
+                    # If queue has items, go directly to next valid target
+                    result = self._pop_valid_target()
+                    if result:
+                        q_lat, q_lon, _qc = result
                         print(f"Next queued target at ({q_lat:.6f}, {q_lon:.6f}) — {len(self._detect_queue)} remaining")
                         self.target_lat = q_lat
                         self.target_lon = q_lon
@@ -980,9 +1004,10 @@ class StateHandlersMixin:
                     self.target_lat = 0
                     self.target_lon = 0
                     self.last_req = 0  # force immediate command
-                    # If queue has items, go directly to next target
-                    if getattr(self, '_detect_queue', None) and len(self._detect_queue) > 0:
-                        q_lat, q_lon, _qc = self._detect_queue.pop(0)
+                    # If queue has items, go directly to next valid target
+                    result = self._pop_valid_target()
+                    if result:
+                        q_lat, q_lon, _qc = result
                         print(f"Next queued target at ({q_lat:.6f}, {q_lon:.6f}) — {len(self._detect_queue)} remaining")
                         self.target_lat = q_lat
                         self.target_lon = q_lon
