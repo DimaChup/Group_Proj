@@ -209,17 +209,23 @@ length.
 Higher altitude means fewer scan lines, fewer U-turns, and faster speed (10 m/s at 50 m
 vs 8 m/s at 35 m). The energy cost at 35 m is 52% higher than at 50 m for the same area.
 
-**Decision:** Start at 50 m for the fastest initial sweep. If the target is missed, rescan
-at lower altitudes (40 m, 32 m) where pixel size improves. This "start high, drop on miss"
-strategy optimises for the common case (target found on first pass) while retaining
-fallback thoroughness.
+**Analysis recommendation:** Start at 50 m for the fastest initial sweep. If the target is
+missed, rescan at lower altitudes (40 m, 32 m) where pixel size improves. This "start high,
+drop on miss" strategy optimises for the common case (target found on first pass) while
+retaining fallback thoroughness.
+
+**Deployed default:** `TARGET_ALT = 35 m` is the conservative operational choice for initial
+flights, prioritising detection confidence over scan efficiency. `TARGET_ALT` can be changed
+to 50 m after first-flight validation confirms reliable detection at that altitude.
 
 **Future work:** Full momentum simulation with wind model, path smoothing at U-turns to
 reduce deceleration penalty.
 
-### 2.8 Altitude Justification (Why 50 m)
+### 2.8 Altitude Justification (Why 50 m Is Recommended)
 
-The choice of 50 m as the initial search altitude is driven by five factors:
+The energy analysis recommends 50 m as the optimal initial search altitude, driven by five
+factors. The deployed default is `TARGET_ALT = 35 m` as a conservative choice for initial
+flights; `TARGET_ALT` can be raised to 50 m after first-flight validation.
 
 1. **Detection threshold:** At 50 m, the dummy is 34 pixels tall in the model's 640x640
    input -- well above the empirical 20-pixel detection threshold. The critical altitude
@@ -234,10 +240,11 @@ The choice of 50 m as the initial search altitude is driven by five factors:
 4. **Speed advantage:** The altitude-speed curve (Section 2.6) allows 10 m/s at 50 m vs
    8 m/s at 35 m -- a 25% speed increase.
 
-5. **Rescan safety net:** If the first pass at 50 m misses the target, rescanning at 40 m
-   then 32 m catches it with progressively better pixel resolution. The cost of starting
-   high is one fast pass; the cost of starting low is spending the entire flight at slower
-   speed with more scan lines.
+5. **Rescan safety net:** With the deployed default of 35 m, rescans proceed at 28 m then
+   22.4 m (RESCAN_ALT_FACTOR = 0.8). If TARGET_ALT is changed to 50 m, rescans would be
+   50 m -> 40 m -> 32 m. Either way, each pass catches targets with progressively better
+   pixel resolution. The cost of starting high is one fast pass; the cost of starting low
+   is spending the entire flight at slower speed with more scan lines.
 
 ### 2.9 Focus Area (PLB Beacon Redirect)
 
@@ -252,6 +259,9 @@ search redirects to a smaller polygon:
 5. Preserve all rejected targets from the broad search
 
 Fallback chain: JSON file -> drawn polygon (`config.FOCUS_AREA_GPS`) -> KML Focus Area.
+
+The PLB beacon is simulated via the B key or `--beacon-delay` flag. Real PLB hardware
+integration is planned for future work.
 
 ---
 
@@ -300,10 +310,10 @@ speed(d) = NFZ_MIN_SPEED_MPS + (d / NFZ_SLOW_ZONE_M) * (NFZ_ZONE_MAX_SPEED_MPS -
 | > 20 m | Normal (6-10 m/s) |
 
 **Why 20 m zone width:** The drone's maximum search speed is 10 m/s (at 50 m altitude).
-At 10 m/s, stopping distance is approximately 5-8 m depending on wind conditions. A 20 m
-zone provides roughly 2x safety margin over the worst-case stopping distance. It also
-gives the drone sufficient distance to decelerate smoothly -- a gentle linear ramp over
-20 m rather than a hard wall that would cause abrupt braking or overshoot.
+Based on ArduCopter's default WPNAV_ACCEL = 2.5 m/s^2, stopping from 10 m/s takes ~4 s /
+~20 m. The 20 m buffer provides safety margin. It also gives the drone sufficient distance
+to decelerate smoothly -- a gentle linear ramp over 20 m rather than a hard wall that would
+cause abrupt braking or overshoot.
 
 **Why 3 m/s at the outer edge:** 3 m/s is the minimum useful search speed. Slower than
 this and the drone produces too many scan lines for the same area, wasting battery and
@@ -799,14 +809,14 @@ closes, the drone climbs to search altitude, and transitions to `RETURN_TRANSIT`
 
 ### 9.7 50 m vs 35 m Start Altitude
 
-| | 50 m (chosen) | 35 m |
+| | 50 m (analysis recommendation) | 35 m (deployed default) |
 |---|---|---|
 | **Scan lines** | 6 | 9 (50% more) |
 | **Time** | 1.8 min | 3.3 min |
 | **Energy** | 8.3 Wh | 12.6 Wh (52% more) |
 | **Target pixel size** | 34 px | 49 px |
 | **Speed** | 10 m/s | 8 m/s |
-| **Decision** | Start high for fastest initial sweep. 34 px is above the 20 px detection threshold. Rescan at lower altitude if missed. |
+| **Decision** | Energy analysis favours 50 m for fastest initial sweep (34 px is above the 20 px detection threshold). 35 m is the conservative operational default for initial flights, prioritising detection confidence. TARGET_ALT can be raised to 50 m after first-flight validation. |
 
 ### 9.8 Energy vs Thoroughness
 
@@ -824,9 +834,7 @@ on pass 1 (the common case).
 | **20 m (chosen)** | 2x worst-case stopping distance | Smooth deceleration, ample margin |
 | 30 m | Very conservative | Wastes 30% of scan lines in slow zone, excessive time penalty |
 
-The 20 m zone provides roughly 2x the stopping distance at maximum search speed (10 m/s),
-accounting for GPS lag and wind gusts. Wider zones eat into the search area; narrower zones
-risk overshoot.
+See Section 3.3 for full stopping distance derivation.
 
 ### 9.10 Why U-Turns Are Not Smoothed by Default
 
