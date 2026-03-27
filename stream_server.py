@@ -189,6 +189,7 @@ document.addEventListener('keydown',e=>{
 # ---------------------------------------------------------------------------
 class _ThreadingHTTP(ThreadingMixIn, HTTPServer):
     daemon_threads = True
+    allow_reuse_address = True
 
 
 def start_stream_server(port=8090, host='0.0.0.0',
