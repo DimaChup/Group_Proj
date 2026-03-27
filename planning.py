@@ -41,10 +41,10 @@ class PathPlanner:
         # Scan Lines — spacing depends on turning mode
         ground_width_m = (config.SENSOR_WIDTH_MM * search_alt) / config.FOCAL_LENGTH_MM
         if getattr(self, '_no_turn', False):
-            # No-turn: use height (perpendicular dim), zero overlap (edge-to-edge)
+            # No-turn: use height (perpendicular dim), 20% overlap
             aspect = config.IMAGE_H / config.IMAGE_W
             ground_width_m = ground_width_m * aspect
-            overlap = 0.0
+            overlap = 0.2
         else:
             # Turning: use width (perpendicular dim), 20% overlap
             overlap = 0.2
@@ -60,9 +60,9 @@ class PathPlanner:
         all_strips = []
         
         if getattr(self, '_focus_area', False):
-            margin = step_px // 10  # tight margins in focus area (max coverage)
+            margin = step_px // 3  # tight margins in focus area (max coverage)
         else:
-            margin = step_px // 2   # normal margins (buffer for turns)
+            margin = step_px // 3   # normal margins (buffer for turns)
         bottom_limit = y + h - margin
         last_scan_y = -999
 
