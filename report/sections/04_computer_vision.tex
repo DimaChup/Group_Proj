@@ -1,0 +1,90 @@
+\section{Computer Vision Pipeline}\label{sec:cv}
+
+The computer vision subsystem is responsible for detecting a casualty (represented by a mannequin during testing) from the drone's onboard camera during flight. The pipeline is encapsulated in a single module (\texttt{vision.py}) that exposes one interface function---\texttt{detect\_in\_image(frame)}---returning a tuple \texttt{(found, cx, cy, confidence)}. Every other module in the system calls this function without knowledge of the underlying model, backend, or preprocessing steps, enforcing a strict separation of concerns.
+
+\subsection{Detection Architecture}\label{sec:cv:arch}
+
+YOLOv8n (nano) was selected as the object detection backbone after evaluating the speed--accuracy trade-off across the YOLOv8 model family~\cite{yolov8}. The ``nano'' variant contains approximately 3.2 million parameters and produces a 3.2\,MB TFLite file, making it the only variant that achieves real-time inference on the Raspberry Pi~5 CPU without hardware acceleration. Larger variants (YOLOv8s, YOLOv8m) were benchmarked but exceeded the 300\,ms-per-frame budget required for useful detection at search speed.
+
+The model is trained as a single-class detector with one target class (\textit{dummy}). Training used a custom dataset of 366 images at 1456$\times$1088 resolution---the native resolution of the onboard IMX296 global-shutter sensor---comprising 300 synthetic composites (mannequin image pasted onto real aerial backgrounds with augmentation), 16 manually labelled frames from DJI flight video, and 50 negative images containing no targets. Training was performed on Google Colab (NVIDIA T4 GPU) for 150 epochs at \texttt{imgsz=1088} with a batch size of~8, achieving a validation mAP$_{50}$ of 0.995.
+
+The YOLO architecture performs detection in a single forward pass through a convolutional backbone, feature pyramid neck, and decoupled detection head~\cite{redmon2016yolo, yolov8}. This single-stage design avoids the two-stage overhead of region-proposal networks, which is critical given the constrained inference budget.
+
+% --- Figure placeholder ---
+\begin{figure}[ht]
+    \centering
+    % \includegraphics[width=\linewidth]{figures/cv_pipeline.pdf}
+    \fbox{\parbox{0.9\linewidth}{\centering\vspace{2em}\textbf{[Figure placeholder]}\\ Detection pipeline: camera frame $\rightarrow$ undistort $\rightarrow$ resize 640$\times$640 $\rightarrow$ normalise $\rightarrow$ inference $\rightarrow$ NMS $\rightarrow$ (found, cx, cy, conf)\vspace{2em}}}
+    \caption{Computer vision detection pipeline from raw camera frame to detection output. Lens undistortion is applied using precomputed remap matrices when calibration data is available.}
+    \label{fig:cv_pipeline}
+\end{figure}
+
+\subsection{Dual-Backend Design}\label{sec:cv:backends}
+
+A key design requirement was that the same codebase must run unmodified on both the development laptop (Windows, full Python ML stack) and the deployment platform (Raspberry Pi~5, lightweight dependencies). The \texttt{VisionSystem} class resolves this through automatic backend selection at import time, probing for available libraries in priority order:
+
+\begin{enumerate}
+    \item \textbf{NCNN}~--- ARM-optimised inference engine, fastest on Pi~5 (selected when \texttt{-{}-backend ncnn} flag is passed and the \texttt{ncnn} Python package is installed).
+    \item \textbf{Ultralytics YOLO}~--- full-featured framework used during development on the laptop. Provides built-in NMS, class name resolution, and training utilities~\cite{yolov8}.
+    \item \textbf{TFLite}~--- lightweight runtime for deployment on the Pi~\cite{tflite}. Three import paths are attempted in sequence: \texttt{tflite\_runtime}, \texttt{ai\_edge\_litert} (required for Python~3.13), and \texttt{tensorflow.lite}.
+\end{enumerate}
+
+All three backends consume the same exported model weights and produce identical detection semantics through the unified \texttt{detect\_in\_image()} interface. Model files are interchangeable: deploying a retrained model on the Pi requires only copying the new \texttt{best.tflite} file into the project root with no code changes.
+
+\subsection{Preprocessing Pipeline}\label{sec:cv:preproc}
+
+Each camera frame undergoes the following preprocessing steps before inference:
+
+\begin{enumerate}
+    \item \textbf{Lens undistortion.} If a calibration file (\texttt{calibration\_data.npz}) is present, precomputed remap matrices (generated via \texttt{cv2.initUndistortRectifyMap}) are applied using \texttt{cv2.remap} with bilinear interpolation. This corrects barrel distortion from the IMX296 lens (calibrated RMS error: 0.399). The remap matrices are computed once at initialisation, so the per-frame cost is only the remap operation itself.
+
+    \item \textbf{Colour space handling.} The IMX296 global-shutter sensor outputs BGR data despite the picamera2 driver labelling the format as RGB888. This was discovered empirically by testing all six channel permutations against known colour targets. Consequently, no \texttt{cv2.cvtColor} conversion is applied on the Pi camera path, avoiding an unnecessary copy. The TFLite inference path converts BGR$\rightarrow$RGB before model input, as the YOLOv8 model was trained on RGB data.
+
+    \item \textbf{Resize.} The frame is resized from the native camera resolution (1456$\times$1088) to the model's fixed input size of 640$\times$640 pixels using \texttt{cv2.resize}. All exported YOLOv8 models use this square input regardless of the training \texttt{imgsz} parameter.
+
+    \item \textbf{Normalisation.} Pixel values are cast to \texttt{float32} and divided by 255.0, mapping the $[0, 255]$ range to $[0, 1]$. The normalised image is then expanded to a batch dimension, yielding an input tensor of shape $[1, 640, 640, 3]$.
+\end{enumerate}
+
+\subsection{Inference and Postprocessing}\label{sec:cv:postproc}
+
+The TFLite model produces a raw output tensor of shape $[1, 5, 8400]$, where 8400 is the total number of anchor-free detection candidates across all three feature pyramid scales (80$\times$80 + 40$\times$40 + 20$\times$20 = 8400), and 5 corresponds to four bounding box coordinates ($c_x$, $c_y$, $w$, $h$ in normalised form) plus one class confidence score for the single \textit{dummy} class.
+
+The output tensor is transposed to $[8400, 5]$ so that each row represents one candidate detection. Postprocessing proceeds as follows:
+
+\begin{enumerate}
+    \item \textbf{Confidence filtering.} Each candidate's class score is compared against a configurable threshold (default 0.2, set in \texttt{config.py}). Candidates below this threshold are discarded. The threshold is set deliberately low because the system is designed for operator-in-the-loop confirmation---false positives are filtered by the human operator, while missed detections cannot be recovered.
+
+    \item \textbf{Best detection selection.} Among surviving candidates, the detection with the highest confidence is selected. This greedy selection is sufficient for the single-target SAR scenario.
+
+    \item \textbf{Coordinate rescaling.} The normalised bounding box centre $(c_x, c_y)$ is rescaled to pixel coordinates in the original frame dimensions, providing the target location used by the navigation state machine for centering manoeuvres.
+\end{enumerate}
+
+The Ultralytics backend performs its own internal NMS and returns post-processed results directly. The TFLite and NCNN backends implement the filtering logic described above within \texttt{vision.py}.
+
+\subsection{Performance Benchmarks}\label{sec:cv:benchmarks}
+
+All benchmarks were conducted on the Raspberry Pi~5 (Broadcom BCM2712, quad-core Cortex-A76 at 2.4\,GHz) using the TFLite backend with XNNPACK CPU delegate. Table~\ref{tab:cv_benchmarks} summarises the key results.
+
+\begin{table}[ht]
+    \centering
+    \caption{Detection performance on Raspberry Pi~5 (TFLite, XNNPACK CPU, float32 model, 50-run average).}
+    \label{tab:cv_benchmarks}
+    \begin{tabular}{lcc}
+        \toprule
+        \textbf{Metric} & \textbf{Without undistortion} & \textbf{With undistortion} \\
+        \midrule
+        Inference time (avg)    & 206.5\,ms  & 208.0\,ms  \\
+        Throughput              & 4.8\,FPS   & 4.8\,FPS   \\
+        Detection rate          & 30/30      & 30/30      \\
+        Mean confidence         & 0.966      & 0.958      \\
+        Model file size         & 3.2\,MB    & 3.2\,MB    \\
+        Undistortion overhead   & ---        & +1.5\,ms   \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+The 1.5\,ms undistortion overhead is negligible relative to the 206.5\,ms inference time, confirming that lens correction can be enabled unconditionally without impacting the frame rate. At 4.8\,FPS and a search speed of 5\,m/s, the drone advances approximately 1.04\,m between consecutive inference frames. Given a ground footprint width of roughly 25\,m at 30\,m altitude (based on the calibrated 54.4$^{\circ}$ horizontal field of view), adjacent frames overlap substantially, providing multiple detection opportunities per target.
+
+The retrained v2 model (\texttt{sar\_v2\_1088}, 11.7\,MB float32) achieves identical inference latency to the original 3.2\,MB model because TFLite input dimensions remain $640 \times 640 \times 3$; the larger file size reflects retained training precision rather than architectural changes.
+
+Potential speed improvements identified but not yet deployed include FP16 quantisation via XNNPACK (estimated 2$\times$ speedup), threaded capture--inference pipelining (+20--30\%), and the NCNN backend (~15\,FPS expected on Pi~5). These represent viable paths to real-time performance if mission requirements demand higher frame rates.

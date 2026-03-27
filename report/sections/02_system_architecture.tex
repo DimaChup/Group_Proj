@@ -1,0 +1,158 @@
+\section{System Architecture}\label{sec:architecture}
+
+This section describes the software architecture of the autonomous SAR drone system, covering the modular design philosophy, module dependency graph, data flow from camera to flight controller, the MAVLink-based communication interface, and the deployment model that enables the same codebase to operate across simulation and flight hardware.
+
+\subsection{Design Philosophy}\label{sec:arch-philosophy}
+
+The architecture is guided by four principles:
+
+\begin{enumerate}
+    \item \textbf{Modular separation.} Each concern---computer vision, path planning, flight control, configuration---is isolated in a dedicated module with a narrow public interface. Modules can be developed, tested, and replaced independently. For example, the vision system exposes a single function \texttt{detect\_in\_image(frame)} returning a tuple \texttt{(found, x, y, conf)}, regardless of whether inference is performed by the Ultralytics library on a laptop GPU or TensorFlow Lite on the Raspberry Pi CPU.
+
+    \item \textbf{Same code, simulation and real.} The mission orchestrator (\texttt{main.py}) is identical in both environments. A \texttt{MODE} flag selects the camera source (simulated map crops vs.\ live CSI frames), while connection auto-detection selects the flight controller endpoint. No conditional branches distinguish simulation from hardware at the application level.
+
+    \item \textbf{Configuration-driven tuning.} All mission parameters---altitudes, speeds, camera optics, detection thresholds, geofence boundaries---reside in a single \texttt{config.py} file. Transitioning from simulation to outdoor flight requires only parameter adjustment, not code modification. Zone coordinates are loaded from a KML flight plan file at startup.
+
+    \item \textbf{Dual inference backend.} The vision module auto-detects the available inference engine at import time: Ultralytics (PyTorch) on the development laptop, TFLite on the Pi. Both backends consume the same YOLOv8n model weights exported to TFLite format and produce identical output tensors of shape $[1, 5, 8400]$, ensuring detection behaviour is consistent across platforms.
+\end{enumerate}
+
+\subsection{Software Architecture}\label{sec:arch-software}
+
+The system comprises eleven Python modules totalling approximately 4{,}400 lines of code. Figure~\ref{fig:architecture} shows the system block diagram; Figure~\ref{fig:arch-block} shows the module dependency graph.
+
+\begin{figure}[H]
+\centering
+\fbox{\parbox{0.8\textwidth}{\centering\vspace{2cm}System Architecture Block Diagram\vspace{2cm}}}
+\caption{Software module diagram. Arrows indicate data dependencies. \texttt{vision.py} and \texttt{planning.py} are independent modules with no cross-dependencies; both feed into \texttt{main.py}, which orchestrates the mission state machine.}
+\label{fig:architecture}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\fbox{\parbox{0.85\textwidth}{\centering\vspace{2cm}Module Dependency Graph\vspace{2cm}}}
+\caption{Module dependency graph. \texttt{config.py} sits at the base, read by eight modules. Independent modules (\texttt{vision.py}, \texttt{planning.py}, \texttt{gps\_utils.py}) have no cross-dependencies. The orchestrator (\texttt{main.py}) inherits from \texttt{state\_machine.py} via a mixin pattern, which in turn calls \texttt{navigation.py} for MAVLink commands.}
+\label{fig:arch-block}
+\end{figure}
+
+The modules are organised into four layers, listed from lowest dependency to highest:
+
+\paragraph{Configuration layer.}
+\textbf{config.py} (267~lines) centralises all tuneable parameters: flight altitudes and speeds, camera sensor dimensions and focal length, detection confidence thresholds, servo PWM values, GPS zone polygons, and geofence buffer distances. It also performs platform auto-detection at import time (Section~\ref{sec:arch-deployment}). The module contains values only---no control logic beyond auto-detection and KML parsing. \textbf{states.py} (22~lines) defines a state enumeration with 19 named states spanning the full mission lifecycle: \texttt{INIT}, \texttt{CONNECTING}, \texttt{ARMING}, \texttt{TAKEOFF}, \texttt{TRANSIT\_TO\_SEARCH}, \texttt{SEARCH}, \texttt{CENTERING}, \texttt{DESCENDING}, \texttt{VERIFY}, \texttt{APPROACH}, \texttt{LANDING}, \texttt{DONE}, among others. Each state maps to a handler function in the orchestrator. Additional states cover manual override (\texttt{MANUAL}), return-to-home (\texttt{RETURN\_HOME}), and hover behaviours.
+
+\paragraph{Independent modules.}
+Four modules sit above the configuration layer with no mutual dependencies:
+
+\begin{itemize}
+    \item \textbf{vision.py} (651~lines) encapsulates all computer vision and AI inference. It initialises the camera (picamera2 on the Pi, OpenCV \texttt{VideoCapture} on the laptop), loads the YOLOv8n TFLite model, applies optional lens undistortion via precomputed remap matrices, and runs inference. The public interface is a single function returning detection coordinates and confidence. This isolation means the model, preprocessing pipeline, or inference backend can be changed without modifying any other module.
+
+    \item \textbf{planning.py} (335~lines) generates a lawnmower search pattern over an arbitrary convex polygon defined by GPS coordinates. It computes parallel scan lines at a spacing determined by the camera field of view and target altitude, selects the optimal entry point to minimise transit distance, and returns an ordered list of GPS waypoints. The module depends only on \texttt{config.py} (for camera parameters) and \texttt{utils.py} (for coordinate transforms).
+
+    \item \textbf{gps\_utils.py} (177~lines) provides pure-math functions for GPS distance calculation, pixel-to-GPS coordinate conversion, and landing offset computation. It has zero project imports and is therefore fully unit-testable.
+
+    \item \textbf{utils.py} (170~lines) provides the \texttt{GeoTransformer} class which converts between GPS coordinates (latitude/longitude) and local pixel or metre offsets using a flat-Earth approximation scaled by the cosine of the reference latitude.
+\end{itemize}
+
+\paragraph{Domain modules.}
+\textbf{geofence.py} (327~lines) enforces the SSSI no-fly zone boundary. It precomputes a pixel-space contour of the protected area and uses \texttt{cv2.pointPolygonTest} for fast signed-distance queries. Waypoints within a configurable buffer are filtered during planning; at runtime, a repulsive force vector steers the drone away from the boundary when it approaches within the soft boundary distance, and triggers an automatic return-to-launch if the hard boundary is breached. \textbf{navigation.py} (149~lines) wraps all MAVLink command construction into a clean API (Section~\ref{sec:arch-mavlink}). \textbf{stream\_server.py} (494~lines) implements the HTTP streaming server that serves MJPEG video, JSON telemetry, and operator command buttons to the ground station browser.
+
+\paragraph{Orchestration layer.}
+\textbf{state\_machine.py} (943~lines) implements all 18 state handler methods as a mixin class. Each handler reads telemetry, evaluates transition conditions, and calls \texttt{navigation.py} methods to issue flight commands. \textbf{main.py} (823~lines) is the mission entry point: it instantiates every module, inherits the state handlers from the mixin, and runs the main loop that reads telemetry, invokes detection, dispatches the current state handler, and pushes camera frames to the stream server.
+
+The key architectural property is that \texttt{vision.py} and \texttt{planning.py} have no mutual dependencies and no dependency on the flight control layer. They can be tested entirely in isolation: vision against static images or recorded video, and planning against arbitrary polygon inputs. The four independent development streams---vision, path planning, flight control, and ground station---only converge at runtime inside \texttt{main.py}.
+
+A circular dependency between \texttt{main.py} and \texttt{state\_machine.py} (the mixin needs simulation constants defined in \texttt{main.py}) is resolved by a lazy-import helper that defers the import to runtime, after both modules have finished loading.
+
+\subsection{Data Flow}\label{sec:arch-dataflow}
+
+The pipeline from camera frame to motor command traverses five stages:
+
+\begin{enumerate}
+    \item \textbf{Capture.} \texttt{vision.py} acquires a frame from the camera (1456$\times$1088 on the Pi, 640$\times$480 in simulation), applies lens undistortion from a precomputed calibration, and resizes the frame to 640$\times$640 for model input.
+
+    \item \textbf{Detection.} The YOLOv8n model runs inference and returns pixel coordinates $(x, y)$ in model space along with a confidence score. On the Pi this takes approximately 200\,ms per frame using the TFLite XNNPACK CPU delegate.
+
+    \item \textbf{GPS estimation.} \texttt{gps\_utils.py} converts the pixel coordinates to a world-frame GPS position using the drone's current latitude, longitude, altitude, and heading from MAVLink telemetry. The conversion uses the calibrated camera focal length (5.46\,mm) and sensor width (5.02\,mm) to compute the ground footprint at the current altitude, then projects the pixel offset from frame centre onto a flat-Earth coordinate system.
+
+    \item \textbf{State dispatch.} The state machine evaluates the detection against current mission state. In \texttt{SEARCH}, a detection triggers a transition to \texttt{CENTERING}. In \texttt{CENTERING}, pixel error drives a visual servo loop. In \texttt{VERIFY}, the operator confirms or rejects the target via browser buttons.
+
+    \item \textbf{Navigation command.} \texttt{navigation.py} translates the state handler's intent into a MAVLink message and sends it to the autopilot via pymavlink.
+\end{enumerate}
+
+Telemetry flows in the opposite direction: the autopilot continuously publishes position, attitude, battery, and GPS quality messages, which the main loop reads and makes available to all state handlers. The ground station browser receives a parallel feed via HTTP: an MJPEG video stream on \texttt{/mjpeg} and a JSON telemetry endpoint on \texttt{/status}, both served by \texttt{stream\_server.py} on port~8090.
+
+\subsection{MAVLink Protocol Interface}\label{sec:arch-mavlink}
+
+The \texttt{navigation.py} module abstracts MAVLink~v2 \cite{mavlink2} into six high-level methods. Table~\ref{tab:mavlink-commands} lists the MAVLink messages constructed by each method.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{lll}
+\toprule
+\textbf{Method} & \textbf{MAVLink message} & \textbf{Purpose} \\
+\midrule
+\texttt{arm()} & \texttt{MAV\_CMD\_COMPONENT\_ARM\_DISARM} & Arm or disarm motors \\
+\texttt{takeoff(alt)} & \texttt{MAV\_CMD\_NAV\_TAKEOFF} & Climb to target altitude \\
+\texttt{send\_global\_target()} & \texttt{SET\_POSITION\_TARGET\_GLOBAL\_INT} & Fly to lat/lon/alt (GUIDED) \\
+\texttt{send\_velocity()} & \texttt{SET\_POSITION\_TARGET\_LOCAL\_NED} & Fly velocity vector (visual servo) \\
+\texttt{set\_mode(mode)} & \texttt{SET\_MODE} & Change flight mode (GUIDED, LAND, RTL) \\
+\texttt{land()} & \texttt{MAV\_CMD\_NAV\_LAND} & Land at current position \\
+\bottomrule
+\end{tabular}
+\caption{MAVLink command messages used by the navigation module. All messages are constructed via the pymavlink library and sent over the active MAVLink connection.}
+\label{tab:mavlink-commands}
+\end{table}
+
+Inbound telemetry is read by the main loop using pymavlink message hooks. The system monitors five message types: \texttt{GLOBAL\_POSITION\_INT} (latitude, longitude, altitude, velocity), \texttt{ATTITUDE} (roll, pitch, yaw), \texttt{HEARTBEAT} (armed status, current flight mode), \texttt{GPS\_RAW\_INT} (fix type, satellite count), and \texttt{BATTERY\_STATUS} (voltage, current draw). Heartbeat monitoring provides link-loss detection: if no heartbeat is received for a configurable timeout (default 5\,s), the system displays a warning banner and, after a longer timeout, triggers an automatic return-to-launch.
+
+\subsection{Communication Architecture}\label{sec:arch-comms}
+
+The drone's companion computer (Raspberry Pi~5) communicates with the CubePilot Orange+ autopilot via the MAVLink protocol \cite{mavlink2}, a lightweight message-oriented protocol widely used in unmanned vehicle systems. The physical link is a UART serial connection at 921\,600~baud.
+
+Due to a known incompatibility between Python~3.13 and the pyserial library (dropped bytes causing \texttt{BAD\_DATA} errors), the system interposes a \texttt{mavproxy} bridge process \cite{ardupilot_mavproxy}. mavproxy reads the serial port reliably using its own C-level serial handler and re-publishes the MAVLink stream over UDP:
+
+\begin{verbatim}
+mavproxy.py --master=/dev/ttyAMA0 --baudrate=921600 \
+  --out=udpout:127.0.0.1:14550 \
+  --out=tcpin:0.0.0.0:5762
+\end{verbatim}
+
+The Python scripts connect to \texttt{udpin:0.0.0.0:14550} for flight commands and telemetry. A second output on TCP port~5762 allows Mission Planner on the ground station laptop to monitor telemetry and display the flight path in real time via a Wi-Fi link.
+
+In simulation, the Software-In-The-Loop (SITL) simulator provided by ArduPilot \cite{ardupilot} replaces the physical autopilot. SITL exposes the same MAVLink interface over TCP on localhost, so the application code connects identically. The only difference is the transport endpoint string, which \texttt{config.py} resolves automatically (Section~\ref{sec:arch-deployment}).
+
+An MJPEG video stream is served over HTTP (port~8090) from the Pi to the ground station browser, providing the operator with a live camera view overlaid with detection bounding boxes and GPS estimation data. This stateless HTTP approach was chosen over H.264/HLS or WebRTC for its minimal latency (${\sim}300$\,ms), zero additional dependencies, and resilience to network interruptions---each JPEG frame is independent, so dropped frames do not corrupt subsequent ones.
+
+\subsection{Deployment Model}\label{sec:arch-deployment}
+
+A single codebase runs on three platforms---Windows laptop, WSL/Linux, and Raspberry Pi~5---with only the installed dependencies differing. The laptop environment includes the full Ultralytics/PyTorch stack for GPU-accelerated inference and OpenCV GUI windows. The Pi environment uses a lightweight set of four packages: pymavlink, opencv-python-headless, numpy, and ai-edge-litert (the Python~3.13-compatible TFLite runtime).
+
+Platform detection is performed at import time in \texttt{config.py} through a priority chain:
+
+\begin{enumerate}
+    \item An environment variable \texttt{DRONE\_CONN}, if set, overrides all auto-detection.
+    \item If a serial device (\texttt{/dev/ttyAMA0}, \texttt{/dev/ttyACM0}, or \texttt{/dev/ttyUSB0}) is present, the system assumes it is running on the Pi with a wired autopilot and connects via the mavproxy UDP bridge.
+    \item Under WSL, the Windows host gateway IP is resolved from the routing table and used to reach SITL running on the Windows side.
+    \item Otherwise, the default \texttt{tcp:127.0.0.1:5762} targets a local SITL instance.
+\end{enumerate}
+
+This auto-detection means that the command \texttt{python main.py} executes the correct mission profile on any platform without manual configuration changes. The progression from simulation to flight---laptop SITL, laptop with real webcam, Pi bench test (no propellers), full autonomous flight---uses identical application code at every stage, with hardware determining the connection path. Table~\ref{tab:deployment-platforms} summarises what each platform supports.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{lccc}
+\toprule
+\textbf{Capability} & \textbf{Windows laptop} & \textbf{WSL/Linux} & \textbf{Raspberry Pi 5} \\
+\midrule
+SITL simulation & \checkmark & \checkmark & --- \\
+Real camera & Webcam & --- & Pi Camera (IMX296) \\
+Cube autopilot & --- & --- & \checkmark \\
+GUI windows & \checkmark & --- & --- \\
+Headless/browser UI & \checkmark & \checkmark & \checkmark \\
+Inference backend & Ultralytics (GPU) & Ultralytics & TFLite (CPU) \\
+\bottomrule
+\end{tabular}
+\caption{Platform capability matrix. The same Python codebase runs on all three platforms; only the installed dependencies and available hardware differ.}
+\label{tab:deployment-platforms}
+\end{table}

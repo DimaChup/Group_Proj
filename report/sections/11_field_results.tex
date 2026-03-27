@@ -1,0 +1,105 @@
+\section{Field Testing and Results}\label{sec:results}
+
+This section presents the results from the scheduled field day on 11 March 2026, during which the full hardware stack---Raspberry Pi~5, Cube Orange autopilot, and IMX296 global shutter camera---was assembled and tested at the designated flight site. Although adverse weather prevented outdoor flight, the bench and calibration tests validated the complete hardware chain and produced quantitative benchmarks that informed subsequent system tuning.
+
+\subsection{Bench Testing Results}\label{sec:bench-results}
+
+The first objective was to verify end-to-end connectivity between the Pi, Cube, and camera in a field-representative configuration. A three-terminal workflow was established over PuTTY and the Pi's local display:
+
+\begin{description}
+    \item[Terminal~1 (mavproxy):] Forwarded Cube telemetry from the UART link (\texttt{/dev/ttyAMA0}, 921\,600~baud) to two UDP outputs---port~14550 for flight scripts and port~14551 for the diagnostics dashboard---plus a TCP bridge on port~5762 for Mission Planner on the laptop.
+    \item[Terminal~2 (diagnostics):] Ran \texttt{diagnostics.py}, confirming camera frame capture, AI model loading, Cube heartbeat, GPS satellite count, and battery voltage in a single multi-panel view.
+    \item[Terminal~3 (scripts):] Executed calibration and benchmark scripts sequentially.
+\end{description}
+
+Two issues were identified and resolved during setup: a camera-in-use conflict caused by two scripts attempting to open the CSI interface simultaneously, and a port-binding collision on 8090 from a previous process. Both were resolved by enforcing a single-script-at-a-time workflow and adding port-release guards. With these fixes, all four subsystems---camera, AI model, Cube link, and GPS receiver---reported healthy status simultaneously for the first time on real hardware.
+
+\subsection{FOV Calibration Results}\label{sec:fov-results}
+
+Accurate field-of-view (FOV) calibration is critical because every GPS estimate derived from pixel coordinates depends on the ratio of sensor width to focal length. Calibration was performed using \texttt{capture\_training.py} to stream the camera view while a tape measure was placed directly below the lens at a known height of 1.0~m.
+
+The measured visible width was 92~cm at 1.0~m height, yielding a corrected focal length:
+
+\begin{equation}
+    f = \frac{W_{\text{sensor}} \times d}{W_{\text{visible}}} = \frac{5.02~\text{mm} \times 1000~\text{mm}}{920~\text{mm}} = 5.46~\text{mm}
+    \label{eq:focal-length}
+\end{equation}
+
+\noindent where $W_{\text{sensor}} = 5.02$~mm is the IMX296 sensor width from the datasheet. The previous default of 7.0~mm would have underestimated ground footprint by 22\%, producing systematic GPS estimation errors of approximately 2~m at 10~m altitude. The corrected value of $\texttt{FOCAL\_LENGTH\_MM} = 5.46$ was committed to \texttt{config.py} immediately.
+
+\subsection{Lens Calibration}\label{sec:lens-calibration}
+
+Lens distortion was characterised using a printed checkerboard calibration target (calib.io pattern, $14 \times 9$ grid with $13 \times 8$ inner corners, 28~mm square size). The \texttt{lens\_calibrate.py} script captured multiple images of the board at varying angles and distances, then computed intrinsic parameters and distortion coefficients using OpenCV's \texttt{calibrateCamera} with robust detection flags and a \texttt{findChessboardCornersSB} fallback.
+
+The calibration achieved an RMS reprojection error of 0.399~pixels, indicating a good fit. The resulting camera matrix and distortion coefficients were saved to \texttt{calibration\_data.npz} on the Pi. Undistortion was integrated directly into \texttt{vision.py} using precomputed remap lookup tables (\texttt{cv2.initUndistortRectifyMap} at startup, \texttt{cv2.remap} per frame), adding only 1.5~ms per frame---negligible compared to the 206~ms inference time. All downstream scripts (passive observer, ground station, main mission) benefit automatically without modification.
+
+\subsection{Inference Benchmarks}\label{sec:inference-benchmarks}
+
+The primary inference benchmark was conducted on the Raspberry Pi~5 using the YOLOv8n model exported to TFLite (float32, 3.2~MB, input shape $[1, 640, 640, 3]$). The benchmark script ran 50 inference passes on a static test image with the dummy target visible at a representative scale. Table~\ref{tab:benchmark-results} summarises the results.
+
+\begin{table}[H]
+\centering
+\caption{Inference benchmark results on Raspberry Pi~5 (TFLite, XNNPACK CPU delegate).}
+\label{tab:benchmark-results}
+\small
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Configuration} & \textbf{Avg. Latency (ms)} & \textbf{FPS} & \textbf{Detection Rate} & \textbf{Confidence} \\
+\midrule
+Without undistortion & 206.5 & 4.8 & 50/50 & 0.966 \\
+With undistortion    & 208.0 & 4.8 & 50/50 & 0.958 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The 1.5~ms overhead from lens undistortion is within measurement noise and does not reduce the effective frame rate. The detection rate of 100\% with a mean confidence of 0.966 confirms that the model produces reliable detections on the target hardware. At 4.8~FPS, the system processes approximately one frame every 208~ms, which is sufficient for a drone travelling at the planned search speed of 5~m/s (covering roughly 1~m between frames---well within the camera's ground footprint at 15--30~m altitude).
+
+Research into inference acceleration identified several viable paths for future work: FP16 XNNPACK quantisation (estimated ${\sim}10$~FPS on Pi~5's native FP16 support), threaded capture-inference pipelining ($+$20--30\%), NCNN backend (${\sim}15$~FPS), and overclocking to 2.8~GHz ($+$15\%). INT8 quantisation and Coral TPU acceleration were ruled out due to platform incompatibility with the Pi~5.
+
+\subsection{DJI Video Analysis}\label{sec:dji-analysis}
+
+To supplement the bench tests, a post-hoc analysis was performed on DJI Mavic flight video recorded over the test site at altitudes between 15 and 50~m. The 30~fps video (1456$\times$1088 cropped from 4K) was replayed through the detection pipeline using \texttt{video\_test.py}, which overlays bounding boxes on each frame and computes GPS target estimates from pixel coordinates and SRT telemetry (altitude, drone GPS position). An important methodological note emerged during this analysis: SRT telemetry files contain one entry per 30~fps frame (6854 entries), so only the 30~fps video maintains correct frame-to-telemetry alignment. Downsampled 6~fps versions introduce a frame index mismatch that corrupts altitude and GPS readings.
+
+\subsubsection{Detection Performance}
+
+The retrained model (\texttt{sar\_v2\_1088}, mAP50 = 0.995 on validation data) successfully detected the dummy target across the altitude range captured in the video. FOV for the cropped DJI frame was independently calibrated at 54.4$^{\circ}$ HFOV (focal length 1416~px $\pm$ 41) using nine measurements of the known 1.8~m dummy at different altitudes; the dummy consistently measured 1.7--1.9~m across all samples, validating the calibration.
+
+A comparative analysis tool (\texttt{video\_test\_compare.py}) enabled live A/B switching between model variants on the same video frames. This confirmed that the retrained v2 model offered improved detection consistency over the baseline, particularly at higher altitudes where the target occupies fewer pixels.
+
+\subsubsection{GPS Estimation Accuracy}
+
+Each detection was converted to a GPS estimate using the GeoTransformer module, producing a scatter plot of estimated target positions. The circular error probable (CEP) metrics were:
+
+\begin{itemize}
+    \item \textbf{CEP50} = 2.3~m (50\% of estimates within this radius of the median)
+    \item \textbf{Maximum error} = 16.5~m (a single outlier during a high-speed pass at 50~m altitude)
+\end{itemize}
+
+The scatter distribution exhibited a characteristic diagonal elongation aligned with the flight direction, attributable to GPS receiver latency. Analysis of the timing offset between telemetry updates and frame timestamps revealed a systematic lag of 100--200~ms in the GPS data. At the survey speed of 5~m/s, this lag introduces an along-track displacement of 0.5--1.0~m per detection. The effect is mitigated by spatial clustering: the mission software aggregates detections from multiple passes using inverse-variance-weighted averaging, and the median of a cluster converges on the true target position as the number of observations increases.
+
+\subsection{Dry-Run Validation}\label{sec:dry-run}
+
+A dry-run mode was implemented in \texttt{main.py} to validate the mission planning pipeline without requiring hardware or GPS connectivity. Running \texttt{python main.py --dry-run} instantiates the lawnmower search pattern generator against the survey polygon defined in \texttt{config.py}, computes waypoints, estimates flight timing, and exercises the state machine transition logic---all without arming or sending any MAVLink commands.
+
+For the designated survey area, the dry-run produced the following outputs:
+
+\begin{itemize}
+    \item \textbf{18 waypoints} covering the survey polygon in a lawnmower pattern at 35~m altitude with lane spacing derived from the camera footprint and a 20\% overlap margin.
+    \item \textbf{Estimated search time} of approximately 2.2~minutes at the configured search speed of 5~m/s, plus transit time to and from the survey area at 8~m/s.
+    \item A \textbf{state machine walkthrough} printed to the terminal: INIT $\rightarrow$ CONNECTING $\rightarrow$ ARMING (GPS fix $\geq$ 3, satellites $\geq$ 6) $\rightarrow$ TAKEOFF (35~m) $\rightarrow$ SEARCH (18 waypoints) $\rightarrow$ CENTERING $\rightarrow$ DESCENDING (15~m) $\rightarrow$ VERIFY $\rightarrow$ LANDING.
+    \item A \textbf{map visualisation} saved to \texttt{dry\_run\_pattern.jpg}, overlaying the generated waypoints and connecting legs on the satellite image.
+\end{itemize}
+
+The dry-run confirmed that the search pattern provides complete coverage of the survey polygon without generating waypoints that encroach on the adjacent SSSI no-fly zone. It also verified that the \texttt{--model} flag allows model selection at launch without requiring file-copy operations, reducing the risk of configuration errors on flight day.
+
+\subsection{Discussion}\label{sec:results-discussion}
+
+The results from bench testing, calibration, and video analysis collectively provide evidence that the system meets its minimum functional requirements, while also quantifying the uncertainties that remain before autonomous flight.
+
+\textbf{Confidence in the detection pipeline.} The TFLite benchmark demonstrated 100\% detection at 0.966 mean confidence on a static test image, and the DJI video replay confirmed detection across a 15--50~m altitude range with the retrained model. These results were obtained under controlled conditions---a stationary camera for the bench test, and a DJI gimbal-stabilised camera for the video analysis. The Pi's IMX296 global shutter mitigates motion blur relative to a rolling-shutter sensor, but detection performance at the planned search speed of 5~m/s with a non-stabilised camera mount remains unmeasured. This is the single largest source of uncertainty.
+
+\textbf{GPS estimation accuracy.} The CEP50 of 2.3~m from DJI video analysis is within the operational requirement: the mission does not require sub-metre localisation, as the centering phase uses visual servoing to refine position once a detection triggers investigation. The GPS timing lag (100--200~ms) was identified as a systematic error source and is addressed in software through spatial clustering with inverse-variance weighting. The 16.5~m outlier occurred during a high-speed, high-altitude pass and would be filtered by the clustering algorithm in an operational mission.
+
+\textbf{Inference throughput.} At 4.8~FPS, the system processes one frame per metre of ground travel at 5~m/s. Given the camera footprint of approximately 40~m $\times$ 30~m at 35~m altitude, each ground point appears in roughly 30 consecutive frames along the flight direction. Even with a conservative 50\% detection rate in flight conditions, this provides approximately 15 detection opportunities per target---sufficient for reliable triggering of the investigation sequence.
+
+\textbf{Remaining unknowns.} Four quantities could not be measured without outdoor flight and must be resolved during the first flight test: (1)~detection reliability with the non-stabilised Pi camera at search speed, (2)~real GPS accuracy and satellite geometry at the test site, (3)~wind-induced position hold error during the centering and verify phases, and (4)~MAVLink command latency over the Pi--Cube UART link under flight load. The progressive test protocol (Section~\ref{sec:methodology}) is designed to isolate each of these variables incrementally, beginning with passive observation during manual flight before enabling autonomous commands.

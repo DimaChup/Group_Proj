@@ -1,0 +1,124 @@
+\section{State Machine and Mission Logic}\label{sec:statemachine}
+
+The mission controller is implemented as a deterministic finite state machine (FSM)~\cite{wagner2006fsm}, a widely adopted pattern in autonomous robotics for its verifiability, traceability, and ease of runtime monitoring. The FSM orchestrates the entire flight --- from power-on through search, detection, operator verification, payload delivery, and return --- while enforcing safety invariants at every transition.
+
+\subsection{State Definitions}\label{subsec:states}
+
+The system defines 17 discrete states, grouped into four functional phases: startup, search, engagement, and recovery.
+
+\paragraph{Startup Phase.}
+\begin{itemize}
+    \item \textbf{INIT} --- Entry state. Establishes a MAVLink connection to the autopilot via the configured transport (serial on Pi, UDP for SITL). Transitions to \textsc{Connecting} once the connection object is created.
+    \item \textbf{CONNECTING} --- Waits for a valid heartbeat from the Cube autopilot and requests data streams at 10\,Hz. A 15-second warning is issued if no heartbeat arrives. Transitions to \textsc{Arming} on first heartbeat.
+    \item \textbf{ARMING} --- Sets GUIDED flight mode, waits for a GPS fix ($\geq$3D, $\geq$6 satellites), records the home position, and sends the arm command. A 120-second timeout alerts the operator to check pre-arm conditions. Transitions to \textsc{Takeoff} once motors are armed.
+    \item \textbf{TAKEOFF} --- Sends \texttt{MAV\_CMD\_NAV\_TAKEOFF} to the configured search altitude. Monitors altitude and re-enters \textsc{Arming} if the vehicle disarms unexpectedly (SITL) or transitions to \textsc{Done} (real hardware). Transitions to \textsc{Pre\_Waypoints} or \textsc{Transit\_to\_Search} when 90\% of target altitude is reached.
+\end{itemize}
+
+\paragraph{Search Phase.}
+\begin{itemize}
+    \item \textbf{PRE\_WAYPOINTS} --- Flies a sequence of operator-defined transit waypoints (loaded from JSON) at transit speed before entering the search area. Provides a controlled ingress path.
+    \item \textbf{TRANSIT\_TO\_SEARCH} --- Navigates to the first lawnmower waypoint at transit speed. Transitions to \textsc{Search} on arrival ($<$2\,m).
+    \item \textbf{SEARCH} --- Executes the lawnmower pattern waypoint-by-waypoint. Each frame is processed by the vision system; confirmed detections are filtered against rejected targets, no-fly zones, and the search boundary, then enqueued. When a valid queued detection exists, the drone departs the pattern and transitions to \textsc{Centering}. If all waypoints are exhausted without a confirmed target, a rescan pass at lower altitude may be triggered (configurable), or the mission ends.
+\end{itemize}
+
+\paragraph{Engagement Phase.}
+\begin{itemize}
+    \item \textbf{CENTERING} --- Navigates to the estimated GPS position of the detected target. A lock radius prevents the drone from chasing secondary detections that appear during approach; new detections outside the lock radius are queued for later investigation. A 60-second timeout returns the drone to \textsc{Search} if convergence fails. Transitions to \textsc{Verify} when within 1\,m of the target.
+    \item \textbf{DESCENDING} --- Reserved for future altitude-staged verification. Currently passes through directly to \textsc{Verify}.
+    \item \textbf{VERIFY} --- The operator-in-the-loop decision point (Section~\ref{subsec:operator}). The drone holds position above the target while the operator classifies it as confirmed (\texttt{Y}), rejected (\texttt{N}), or item of interest (\texttt{I}). A 120-second timeout auto-rejects to prevent indefinite hovering.
+    \item \textbf{APPROACH} --- Flies to the computed landing spot, offset 7.5\,m from the target in an operator-selected cardinal direction (N/E/S/W) at 3\,m altitude. Transitions to \textsc{Hover\_Target} on arrival.
+    \item \textbf{HOVER\_TARGET} --- Executes a 15-second payload deployment sequence using a servo-actuated release mechanism (two-stage: partial release at $t$=3\,s, full release at $t$=6\,s). The servo is returned to closed position before departure. Transitions to \textsc{Return\_Transit} or \textsc{Return\_Home}.
+\end{itemize}
+
+\paragraph{Recovery Phase.}
+\begin{itemize}
+    \item \textbf{RETURN\_TO\_SEARCH} --- Returns to the point where the drone departed the search pattern after a rejected or interest-classified target, then resumes the lawnmower pattern.
+    \item \textbf{RETURN\_FROM\_MANUAL} --- Returns to the position where manual override was engaged, then resumes the previously active state.
+    \item \textbf{RETURN\_TRANSIT} --- Retraces the pre-waypoint transit path in reverse order at search altitude. Provides controlled egress from the search area.
+    \item \textbf{RETURN\_HOME} --- Navigates to the recorded home (takeoff) position. A safety guard checks that GPS was successfully fixed during arming; if not, the drone lands in place rather than flying to a potentially incorrect location.
+    \item \textbf{LANDING} --- Sends \texttt{MAV\_CMD\_NAV\_LAND} and monitors descent via three independent mechanisms: ArduPilot auto-disarm detection (accelerometer-based), altimeter-based touchdown (5 consecutive ticks below 0.5\,m), and a 90-second absolute timeout with forced disarm. Transitions to \textsc{Done}.
+    \item \textbf{DONE} --- Terminal state. Logs the landing error (distance from home) and mission elapsed time.
+    \item \textbf{MANUAL} --- Software manual override, accessible from any active state (Section~\ref{subsec:safety}).
+\end{itemize}
+
+\subsection{State Transitions}\label{subsec:transitions}
+
+% Placeholder for state machine diagram
+\begin{figure}[htbp]
+    \centering
+    % \includegraphics[width=\textwidth]{figures/state_machine_diagram.pdf}
+    \fbox{\parbox{0.9\textwidth}{\centering\vspace{3cm}\textit{State machine diagram placeholder}\vspace{3cm}}}
+    \caption{State transition diagram for the SAR mission controller. The primary mission path flows left-to-right across the top; engagement branches downward from \textsc{Search}. Manual override (dashed) is accessible from any active state.}
+    \label{fig:state_machine}
+\end{figure}
+
+Table~\ref{tab:transitions} summarises the principal transitions. The dispatch loop (executing at approximately 50\,Hz) reads telemetry, runs the vision pipeline, processes operator input, invokes the handler for the current state, and enforces geofence constraints --- in that fixed order each iteration.
+
+\begin{table}[htbp]
+\centering
+\caption{State transition table. Conditions marked with $^*$ are safety-critical.}
+\label{tab:transitions}
+\small
+\begin{tabular}{lll}
+\toprule
+\textbf{From} & \textbf{Condition} & \textbf{To} \\
+\midrule
+INIT & MAVLink connection created & CONNECTING \\
+CONNECTING & First heartbeat received & ARMING \\
+ARMING & GPS fix $\geq$3D, $\geq$6 sats, motors armed & TAKEOFF \\
+TAKEOFF & Altitude $\geq$ 90\% of target & PRE\_WAYPOINTS \\
+PRE\_WAYPOINTS & All transit waypoints reached & TRANSIT\_TO\_SEARCH \\
+TRANSIT\_TO\_SEARCH & Within 2\,m of first search waypoint & SEARCH \\
+SEARCH & Valid detection dequeued & CENTERING \\
+SEARCH & All waypoints exhausted & DONE / rescan \\
+CENTERING & Within 1\,m of target GPS & VERIFY \\
+CENTERING & 60\,s timeout$^*$ & SEARCH \\
+VERIFY & Operator presses Y + side selected & APPROACH \\
+VERIFY & Operator presses N & RETURN\_TO\_SEARCH \\
+VERIFY & Operator presses I & RETURN\_TO\_SEARCH \\
+VERIFY & 120\,s timeout$^*$ (auto-reject) & SEARCH \\
+APPROACH & Within 2\,m of landing spot, alt $<$ 4\,m & HOVER\_TARGET \\
+HOVER\_TARGET & 15\,s elapsed (payload deployed) & RETURN\_TRANSIT \\
+RETURN\_TRANSIT & All transit waypoints retraced & RETURN\_HOME \\
+RETURN\_HOME & Within 2\,m of home position & LANDING \\
+LANDING & Touchdown detected or timeout$^*$ & DONE \\
+\midrule
+Any active state & M key pressed & MANUAL \\
+MANUAL & M key pressed & RETURN\_FROM\_MANUAL \\
+RETURN\_FROM\_MANUAL & Within 3\,m of departure point & \textit{previous state} \\
+Any active state$^*$ & GPS degraded $>$ 5\,s & LANDING (via RTL) \\
+Any active state$^*$ & MAVLink link lost & DONE (via RTL) \\
+Any active state$^*$ & Inside NFZ boundary & MANUAL \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Operator-in-the-Loop Verification}\label{subsec:operator}
+
+The \textsc{Verify} state implements a human-in-the-loop decision gate, a design choice motivated by the high cost of false positives in SAR operations~\cite{murphy2014disaster}. Autonomous descent onto an incorrectly identified target wastes battery, delays the search, and risks damage to the drone or bystanders. The operator classifies each detection into one of three categories:
+
+\begin{itemize}
+    \item \textbf{Confirm (Y)} --- The target is the casualty. GPS averaging is performed over 10 seconds to refine the position estimate, after which the operator selects a landing side (N/E/S/W) to avoid overflying the casualty during approach.
+    \item \textbf{Reject (N)} --- The target is a false positive. Its GPS position is added to a rejection list; future detections within a configurable radius are suppressed, preventing repeated investigation of the same object.
+    \item \textbf{Interest (I)} --- The target is noteworthy but not the primary casualty (e.g., debris, equipment). Its position is logged for later review while the search continues.
+\end{itemize}
+
+A 120-second timeout ensures the drone does not hover indefinitely if the operator is unreachable; the target is automatically rejected and the search resumes. Visual and terminal warnings escalate at 60, 90, and 100 seconds. The operator interface supports three input modalities to accommodate different deployment scenarios: keyboard input over SSH/PuTTY for terminal-based operation, browser buttons on the web dashboard (Section~\ref{sec:groundstation}) for headless Pi deployments, and OpenCV key events for laptop-based simulation.
+
+This tiered confirmation approach reflects the supervisory control paradigm recommended for field robotics~\cite{goodrich2007human}, where autonomy handles the high-bandwidth search task while human judgement is reserved for the high-consequence classification decision.
+
+\subsection{Safety Overrides and Fault Handling}\label{subsec:safety}
+
+Four independent safety mechanisms operate across all flight states:
+
+\paragraph{Manual Override (M key).}
+Pressing M at any time transitions the FSM to \textsc{Manual}, immediately halting autonomous commands. The drone accepts WASD velocity commands from the operator (5\,m/s horizontal, 2\,m/s vertical). The departure position is recorded so that pressing M again triggers \textsc{Return\_From\_Manual}, which navigates back to the departure point before resuming the previous state. Detections observed during manual flight are queued rather than discarded.
+
+\paragraph{RC Kill Switch.}
+The RC transmitter can override the flight controller at the hardware level, independent of the companion computer. Switching the RC mode channel to STABILIZE or LOITER immediately removes the drone from GUIDED mode. The software monitors the \texttt{HEARTBEAT.custom\_mode} field and warns when the mode is no longer GUIDED, but takes no corrective action --- the pilot has full authority. This layered approach ensures that a software failure cannot prevent the safety pilot from regaining control~\cite{ardupilot_failsafe}.
+
+\paragraph{Return-to-Launch on Link Loss.}
+Two link-loss scenarios are handled. First, if the MAVLink \texttt{recv\_match} call raises a connection exception (socket error, broken pipe), an emergency RTL command (mode 6) is sent as a best-effort measure and the mission terminates. Second, GPS degradation is continuously monitored: if the fix type drops below 3D or satellite count falls below 6 for more than 5 seconds, an emergency RTL is triggered and the FSM transitions to \textsc{Landing}. ArduPilot's own GCS failsafe (\texttt{FS\_GCS\_ENABLE}) provides an additional hardware-level RTL if heartbeats from the companion computer cease entirely.
+
+\paragraph{Geofence Enforcement.}
+A no-fly zone (NFZ) polygon, defined from the site survey KML file, is enforced at every loop iteration. If the drone enters the NFZ hard boundary (3\,m inside the polygon), the FSM forces a transition to \textsc{Manual} and halts all velocity commands. Within a configurable buffer zone outside the boundary, the drone's speed is progressively reduced and a repulsive velocity vector is applied, pushing it away from the NFZ edge. Detected targets whose estimated GPS positions fall inside the NFZ are silently discarded rather than investigated.

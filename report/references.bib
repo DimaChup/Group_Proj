@@ -1,0 +1,478 @@
+% references.bib — AENGM0074 SAR Drone Project
+% University of Bristol MSc Robotics
+
+% ============================================================
+% Object Detection & YOLO
+% ============================================================
+
+@misc{yolov8,
+  author       = {Glenn Jocher and Ayush Chaurasia and Jing Qiu},
+  title        = {{Ultralytics YOLOv8}},
+  year         = {2023},
+  howpublished = {\url{https://github.com/ultralytics/ultralytics}},
+  note         = {Accessed: 2026}
+}
+
+@inproceedings{yolohistory,
+  author    = {Redmon, Joseph and Divvala, Santosh and Girshick, Ross and Farhadi, Ali},
+  title     = {You Only Look Once: Unified, Real-Time Object Detection},
+  booktitle = {Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
+  year      = {2016},
+  pages     = {779--788},
+  doi       = {10.1109/CVPR.2016.91}
+}
+
+@article{yolov3,
+  author  = {Redmon, Joseph and Farhadi, Ali},
+  title   = {{YOLOv3}: An Incremental Improvement},
+  journal = {arXiv preprint arXiv:1804.02767},
+  year    = {2018}
+}
+
+@inproceedings{nms,
+  author    = {Neubeck, Alexander and Van Gool, Luc},
+  title     = {Efficient Non-Maximum Suppression},
+  booktitle = {Proceedings of the 18th International Conference on Pattern Recognition (ICPR)},
+  year      = {2006},
+  volume    = {3},
+  pages     = {850--855},
+  publisher = {IEEE},
+  doi       = {10.1109/ICPR.2006.479}
+}
+
+% ============================================================
+% Edge AI & Inference
+% ============================================================
+
+@misc{tflite,
+  author       = {{Google}},
+  title        = {{TensorFlow Lite}: Deploy Machine Learning Models on Mobile and Edge Devices},
+  year         = {2023},
+  howpublished = {\url{https://www.tensorflow.org/lite}},
+  note         = {Accessed: 2026}
+}
+
+@article{edgeai,
+  author  = {Chen, Jiasi and Ran, Xukan},
+  title   = {Deep Learning With Edge Computing: A Review},
+  journal = {Proceedings of the IEEE},
+  year    = {2019},
+  volume  = {107},
+  number  = {8},
+  pages   = {1655--1674},
+  doi     = {10.1109/JPROC.2019.2921977}
+}
+
+@misc{xnnpack,
+  author       = {{Google}},
+  title        = {{XNNPACK}: High-Efficiency Floating-Point Neural Network Inference Operators},
+  year         = {2023},
+  howpublished = {\url{https://github.com/google/XNNPACK}},
+  note         = {Accessed: 2026}
+}
+
+% ============================================================
+% Synthetic Data & Domain Randomization
+% ============================================================
+
+@inproceedings{synthdata,
+  author    = {Tremblay, Jonathan and Prakash, Aayush and Acuna, David and Brober, Mark and Jampani, Varun and Anil, Cem and To, Thang and Cameracci, Eric and Boochoon, Shaad and Birchfield, Stan},
+  title     = {Training Deep Networks with Synthetic Data: Bridging the Reality Gap by Domain Randomization},
+  booktitle = {Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition Workshops (CVPRW)},
+  year      = {2018},
+  pages     = {969--977},
+  doi       = {10.1109/CVPRW.2018.00143}
+}
+
+@inproceedings{domainrand,
+  author    = {Tobin, Josh and Fong, Rachel and Ray, Alex and Schneider, Jonas and Zaremba, Wojciech and Abbeel, Pieter},
+  title     = {Domain Randomization for Transferring Deep Neural Networks from Simulation to the Real World},
+  booktitle = {Proceedings of the IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)},
+  year      = {2017},
+  pages     = {23--30},
+  publisher = {IEEE},
+  doi       = {10.1109/IROS.2017.8202133}
+}
+
+% ============================================================
+% Autopilot & MAVLink
+% ============================================================
+
+@misc{ardupilot,
+  author       = {{ArduPilot Dev Team}},
+  title        = {{ArduPilot}: Open Source Autopilot},
+  year         = {2023},
+  howpublished = {\url{https://ardupilot.org/}},
+  note         = {Accessed: 2026}
+}
+
+@misc{mavlink,
+  author       = {Meier, Lorenz and Camacho, Julian and Godbolt, Brian and Goppert, James and Heng, Lionel and Lizarraga, Michael},
+  title        = {{MAVLink}: Micro Air Vehicle Communication Protocol},
+  year         = {2013},
+  howpublished = {\url{https://mavlink.io/en/}},
+  note         = {Accessed: 2026}
+}
+
+@misc{cubepilot,
+  author       = {{CubePilot}},
+  title        = {{The Cube Orange+}: Open Source Flight Controller},
+  year         = {2023},
+  howpublished = {\url{https://docs.cubepilot.org/}},
+  note         = {Accessed: 2026}
+}
+
+% ============================================================
+% SAR & UAV Operations
+% ============================================================
+
+@article{goodrich2008,
+  author  = {Goodrich, Michael A. and Morse, Bryan S. and Gerhardt, Damon and Cooper, Joseph L. and Quigley, Morgan and Adams, Julie A. and Humphrey, Curtis},
+  title   = {Supporting Wilderness Search and Rescue Using a Camera-Equipped Mini {UAV}},
+  journal = {Journal of Field Robotics},
+  year    = {2008},
+  volume  = {25},
+  number  = {1--2},
+  pages   = {89--110},
+  doi     = {10.1002/rob.20226}
+}
+
+@book{murphy2014,
+  author    = {Murphy, Robin R.},
+  title     = {Disaster Robotics},
+  publisher = {MIT Press},
+  year      = {2014},
+  address   = {Cambridge, MA},
+  isbn      = {978-0-262-02735-9}
+}
+
+@article{sarreview,
+  author  = {Silvagni, Mario and Tonoli, Andrea and Zenerino, Enrico and Chiaberge, Marcello},
+  title   = {Multipurpose {UAV} for Search and Rescue Operations in Mountain Avalanche Events},
+  journal = {Geomatics, Natural Hazards and Risk},
+  year    = {2017},
+  volume  = {8},
+  number  = {1},
+  pages   = {18--33},
+  doi     = {10.1080/19475705.2016.1238852}
+}
+
+@article{thermal_sar,
+  author  = {Burke, Ciar\'{a}n and McWhirter, Paul and McRoberts, Naomi and Worden, Keith},
+  title   = {Optimising {UAV} Image Capture and Analysis for Thermal Imaging Applications in Search and Rescue},
+  journal = {Drones},
+  year    = {2019},
+  volume  = {3},
+  number  = {3},
+  pages   = {73},
+  doi     = {10.3390/drones3030073}
+}
+
+@article{multiuav,
+  author  = {Hayat, Samira and Yanmaz, Evsen and Muzaffar, Raheeb},
+  title   = {Survey on Unmanned Aerial Vehicle Networks for Civil Applications: A Communications Viewpoint},
+  journal = {IEEE Communications Surveys \& Tutorials},
+  year    = {2016},
+  volume  = {18},
+  number  = {4},
+  pages   = {2624--2661},
+  doi     = {10.1109/COMST.2016.2560343}
+}
+
+% ============================================================
+% Path Planning & Coverage
+% ============================================================
+
+@article{boustrophedon,
+  author  = {Choset, Howie},
+  title   = {Coverage of Known Spaces: The Boustrophedon Cellular Decomposition},
+  journal = {Autonomous Robots},
+  year    = {2000},
+  volume  = {9},
+  number  = {3},
+  pages   = {247--253},
+  doi     = {10.1023/A:1008958800904}
+}
+
+@article{covpath,
+  author  = {Galceran, Enric and Carreras, Marc},
+  title   = {A Survey on Coverage Path Planning for Robotics},
+  journal = {Robotics and Autonomous Systems},
+  year    = {2013},
+  volume  = {61},
+  number  = {12},
+  pages   = {1258--1276},
+  doi     = {10.1016/j.robot.2013.09.004}
+}
+
+% ============================================================
+% Filtering & Estimation
+% ============================================================
+
+@article{kalman1960,
+  author  = {Kalman, Rudolf E.},
+  title   = {A New Approach to Linear Filtering and Prediction Problems},
+  journal = {Journal of Basic Engineering},
+  year    = {1960},
+  volume  = {82},
+  number  = {1},
+  pages   = {35--45},
+  doi     = {10.1115/1.3662552}
+}
+
+@book{gps_accuracy,
+  author    = {van Diggelen, Frank},
+  title     = {{A-GPS}: Assisted {GPS}, {GNSS}, and {SBAS}},
+  publisher = {Artech House},
+  year      = {2009},
+  address   = {Boston, MA},
+  isbn      = {978-1-59693-374-3}
+}
+
+% ============================================================
+% Human Factors & State Machines
+% ============================================================
+
+@article{hitl,
+  author  = {Endsley, Mica R.},
+  title   = {From Here to Autonomy: Lessons Learned from Human--Automation Research},
+  journal = {Human Factors},
+  year    = {2017},
+  volume  = {59},
+  number  = {1},
+  pages   = {5--27},
+  doi     = {10.1177/0018720816681350}
+}
+
+@article{fsm,
+  author  = {Harel, David},
+  title   = {Statecharts: A Visual Formalism for Complex Systems},
+  journal = {Science of Computer Programming},
+  year    = {1987},
+  volume  = {8},
+  number  = {3},
+  pages   = {231--274},
+  doi     = {10.1016/0167-6423(87)90035-9}
+}
+
+% ============================================================
+% Regulations & Safety
+% ============================================================
+
+@techreport{sora,
+  author      = {{JARUS}},
+  title       = {{JARUS} Guidelines on Specific Operations Risk Assessment ({SORA})},
+  institution = {Joint Authorities for Rulemaking on Unmanned Systems},
+  year        = {2019},
+  number      = {Edition 2.0},
+  note        = {JAR-DEL-WG6-D.04}
+}
+
+@misc{ukcaa,
+  author       = {{UK Civil Aviation Authority}},
+  title        = {The Drone and Model Aircraft Code},
+  year         = {2023},
+  howpublished = {\url{https://www.caa.co.uk/drones/}},
+  note         = {Accessed: 2026}
+}
+
+% ============================================================
+% Hardware
+% ============================================================
+
+@misc{raspberrypi5,
+  author       = {{Raspberry Pi Foundation}},
+  title        = {{Raspberry Pi 5} Documentation},
+  year         = {2023},
+  howpublished = {\url{https://www.raspberrypi.com/documentation/computers/raspberry-pi-5.html}},
+  note         = {Accessed: 2026}
+}
+
+@misc{picamera2,
+  author       = {{Raspberry Pi Foundation}},
+  title        = {{Picamera2}: The Native Python Camera Library for Raspberry Pi},
+  year         = {2023},
+  howpublished = {\url{https://github.com/raspberrypi/picamera2}},
+  note         = {Accessed: 2026}
+}
+
+@misc{imx296,
+  author       = {{Sony Semiconductor Solutions}},
+  title        = {{IMX296}: 1/2.9-Type Global Shutter {CMOS} Image Sensor},
+  year         = {2020},
+  howpublished = {\url{https://www.sony-semicon.com/en/products/is/industry/global-shutter.html}},
+  note         = {Accessed: 2026}
+}
+
+% ============================================================
+% Software Libraries
+% ============================================================
+
+@misc{opencv,
+  author       = {Bradski, Gary},
+  title        = {The {OpenCV} Library},
+  journal      = {Dr. Dobb's Journal of Software Tools},
+  year         = {2000},
+  howpublished = {\url{https://opencv.org/}},
+  note         = {Accessed: 2026}
+}
+
+@article{numpy,
+  author  = {Harris, Charles R. and Millman, K. Jarrod and van der Walt, St\'{e}fan J. and Gommers, Ralf and Virtanen, Pauli and Cournapeau, David and Wieser, Eric and Taylor, Julian and Berg, Sebastian and Smith, Nathaniel J. and Kern, Robert and Picus, Matti and Hoyer, Stephan and van Krevelen, Marten H. and Brett, Matthew and Haldane, Allan and del R\'{i}o, Jaime Fern\'{a}ndez and Wiebe, Mark and Peterson, Pearu and G\'{e}rard-Marchant, Pierre and Sheppard, Kevin and Reddy, Tyler and Weckesser, Warren and Abbasi, Hameer and Gohlke, Christoph and Oliphant, Travis E.},
+  title   = {Array Programming with {NumPy}},
+  journal = {Nature},
+  year    = {2020},
+  volume  = {585},
+  number  = {7825},
+  pages   = {357--362},
+  doi     = {10.1038/s41586-020-2649-2}
+}
+
+% ============================================================
+% Camera Calibration & Streaming
+% ============================================================
+
+@article{lens_calibration,
+  author  = {Zhang, Zhengyou},
+  title   = {A Flexible New Technique for Camera Calibration},
+  journal = {IEEE Transactions on Pattern Analysis and Machine Intelligence},
+  year    = {2000},
+  volume  = {22},
+  number  = {11},
+  pages   = {1330--1334},
+  doi     = {10.1109/34.888718}
+}
+
+@misc{mjpeg,
+  author       = {{IETF}},
+  title        = {{RFC 2435}: {RTP} Payload Format for {JPEG}-Compressed Video},
+  year         = {1998},
+  howpublished = {\url{https://www.rfc-editor.org/rfc/rfc2435}},
+  note         = {Accessed: 2026}
+}
+
+% ============================================================
+% Additional SAR & UAV References (Introduction)
+% ============================================================
+
+@techreport{mra2023,
+  author      = {{Mountain Rescue England and Wales}},
+  title       = {Annual Incident Report 2023},
+  institution = {Mountain Rescue England and Wales},
+  year        = {2023},
+  note        = {\url{https://www.mountain.rescue.org.uk/statistics/}. Accessed: 2026}
+}
+
+@misc{dji_matrice,
+  author       = {{DJI}},
+  title        = {{Matrice 300 RTK}: Enterprise Drone Platform},
+  year         = {2023},
+  howpublished = {\url{https://enterprise.dji.com/matrice-300}},
+  note         = {Accessed: 2026}
+}
+
+@misc{sensefly_sar,
+  author       = {{senseFly (AgEagle)}},
+  title        = {{eBee X}: Fixed-Wing Drone for Mapping and Survey},
+  year         = {2023},
+  howpublished = {\url{https://www.sensefly.com/drone/ebee-x/}},
+  note         = {Accessed: 2026}
+}
+
+@article{mishra2020,
+  author  = {Mishra, Brij and Garg, Deepak and Narang, Pratik and Mishra, Vipul},
+  title   = {Drone-surveillance for Search and Rescue in Natural Disaster},
+  journal = {Computer Communications},
+  year    = {2020},
+  volume  = {156},
+  pages   = {1--10},
+  doi     = {10.1016/j.comcom.2020.03.012}
+}
+
+@article{thermal_review,
+  author  = {Lygouras, Eleftherios and Efstathiou, Nikolaos and Elenas, Anaxagoras and Santavas, Nicholas and Tzes, Anthony},
+  title   = {Unsupervised Human Detection with an Embedded Vision System on a Fully Autonomous {UAV} for Search and Rescue Operations},
+  journal = {Sensors},
+  year    = {2019},
+  volume  = {19},
+  number  = {16},
+  pages   = {3542},
+  doi     = {10.3390/s19163542}
+}
+
+@article{alkaff2019,
+  author  = {Al-Kaff, Abdulla and Mart\'{i}n, David and Garc\'{i}a, Fernando and de la Escalera, Arturo and Armingol, Jos\'{e} Mar\'{i}a},
+  title   = {Survey of Computer Vision Algorithms and Applications for Unmanned Aerial Vehicles},
+  journal = {Expert Systems with Applications},
+  year    = {2019},
+  volume  = {92},
+  pages   = {447--463},
+  doi     = {10.1016/j.eswa.2017.09.033}
+}
+
+@article{zhu2021,
+  author  = {Zhu, Pengfei and Wen, Longyin and Du, Dawei and Bian, Xiao and Fan, Heng and Hu, Qinghua and Ling, Haibin},
+  title   = {Detection and Tracking Meet Drones Challenge},
+  journal = {IEEE Transactions on Pattern Analysis and Machine Intelligence},
+  year    = {2021},
+  volume  = {44},
+  number  = {11},
+  pages   = {7380--7399},
+  doi     = {10.1109/TPAMI.2021.3119563}
+}
+
+@article{mandal2020,
+  author  = {Mandal, Murari and Kumar, Lav Kush and Vipparthi, Santosh Kumar},
+  title   = {{AVDNet}: A Small-Sized Vehicle Detection Network for Aerial Visual Data},
+  journal = {IEEE Geoscience and Remote Sensing Letters},
+  year    = {2020},
+  volume  = {17},
+  number  = {3},
+  pages   = {494--498},
+  doi     = {10.1109/LGRS.2019.2923564}
+}
+
+@inproceedings{visdrone2021,
+  author    = {Zhu, Pengfei and Wen, Longyin and Du, Dawei and Bian, Xiao and Fan, Heng and Hu, Qinghua and Ling, Haibin},
+  title     = {{VisDrone-DET2021}: The Vision Meets Drone Object Detection Challenge Results},
+  booktitle = {Proceedings of the IEEE/CVF International Conference on Computer Vision Workshops (ICCVW)},
+  year      = {2021},
+  pages     = {2847--2854},
+  doi       = {10.1109/ICCVW54120.2021.00319}
+}
+
+@article{coco_dataset,
+  author  = {Lin, Tsung-Yi and Maire, Michael and Belongie, Serge and Hays, James and Perona, Pietro and Ramanan, Deva and Doll\'{a}r, Piotr and Zitnick, C. Lawrence},
+  title   = {{Microsoft COCO}: Common Objects in Context},
+  journal = {arXiv preprint arXiv:1405.0312},
+  year    = {2014}
+}
+
+@inproceedings{tijtgat2017,
+  author    = {Tijtgat, Nils and Van Ranst, Wiebe and Goedeme, Toon and Volckaert, Bruno and De Turck, Filip},
+  title     = {Embedded Real-Time Object Detection for a {UAV} Warning System},
+  booktitle = {Proceedings of the IEEE International Conference on Computer Vision Workshops (ICCVW)},
+  year      = {2017},
+  pages     = {2110--2118},
+  doi       = {10.1109/ICCVW.2017.247}
+}
+
+@article{anwar2020,
+  author  = {Anwar, Abbas and Raychowdhury, Arijit},
+  title   = {Autonomous Navigation via Deep Reinforcement Learning for Resource Constraint Edge Nodes Using Transfer Learning},
+  journal = {IEEE Access},
+  year    = {2020},
+  volume  = {8},
+  pages   = {26549--26560},
+  doi     = {10.1109/ACCESS.2020.2971172}
+}
+
+@article{mazzia2022,
+  author  = {Mazzia, Vittorio and Khaliq, Aleem and Salvetti, Francesco and Chiaberge, Marcello},
+  title   = {Real-Time Apple Detection System Using Embedded Systems With Hardware Accelerators: An Edge {AI} Application},
+  journal = {IEEE Access},
+  year    = {2020},
+  volume  = {8},
+  pages   = {9102--9114},
+  doi     = {10.1109/ACCESS.2020.2964608}
+}

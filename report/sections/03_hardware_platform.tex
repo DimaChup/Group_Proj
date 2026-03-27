@@ -1,0 +1,93 @@
+\section{Hardware Platform}\label{sec:hardware}
+
+The hardware platform integrates a quadcopter airframe, an open-source flight controller, a single-board companion computer, and a global shutter camera into a self-contained system capable of autonomous flight and onboard inference. This section details each component and the calibration procedures required to produce reliable metric estimates from visual data.
+
+% ── Block diagram placeholder ─────────────────────────────────────────
+\begin{figure}[ht]
+  \centering
+  % \includegraphics[width=\linewidth]{hardware_block_diagram}
+  \fbox{\parbox{0.92\linewidth}{\centering\vspace{2.8cm}
+    \textit{Hardware block diagram: Camera $\xrightarrow{\text{CSI}}$ Pi~5
+    $\xrightarrow{\text{UART}}$ Cube Orange
+    $\xrightarrow{\text{Radio}}$ Ground Station}
+  \vspace{2.8cm}}}
+  \caption{Hardware block diagram showing data and command flow between subsystems.
+           Solid lines indicate wired links; dashed lines indicate wireless.}
+  \label{fig:hw-block}
+\end{figure}
+
+% ── Specs table ───────────────────────────────────────────────────────
+\begin{table}[ht]
+  \centering\compactTable
+  \caption{Key hardware specifications.}\label{tab:hw-specs}
+  \begin{tabularx}{\linewidth}{@{}l l X@{}}
+    \toprule
+    \textbf{Component} & \textbf{Parameter} & \textbf{Value} \\
+    \midrule
+    \multirow{4}{*}{Raspberry Pi 5}
+      & Processor   & Broadcom BCM2712, 4-core Arm Cortex-A76, \SI{2.4}{\giga\hertz} \\
+      & RAM         & \SI{8}{\giga\byte} LPDDR4X-4267 \\
+      & OS          & Raspberry Pi OS (Debian Bookworm), Python 3.13 \\
+      & Mass        & \SI{45}{\gram} (board only) \\
+    \midrule
+    \multirow{5}{*}{IMX296 Camera}
+      & Sensor      & Sony IMX296, $\frac{1}{2.9}$\,in global shutter CMOS \\
+      & Resolution  & $1456 \times 1088$\,px (native) \\
+      & Sensor width& \SI{5.02}{\milli\metre} \\
+      & Focal length& \SI{5.46}{\milli\metre} (calibrated) \\
+      & Interface   & CSI-2, 2-lane MIPI \\
+    \midrule
+    \multirow{3}{*}{Cube Orange}
+      & MCU         & STM32H757, dual-core Arm Cortex-M7/M4 \\
+      & IMU         & Triple-redundant (ICM-20948 $\times$2, ICM-20649) \\
+      & Firmware    & ArduPilot Copter 4.5 \cite{ardupilot} \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+
+\subsection{Airframe and Flight Controller}\label{sec:hw-airframe}
+
+The airframe is a conventional X-configuration quadcopter sized for a \SI{3}{\kilo\gram} all-up weight. The Cube Orange flight controller \cite{cubepilot} runs ArduPilot Copter firmware \cite{ardupilot}, providing GPS-aided attitude stabilisation, waypoint navigation, and a MAVLink~2.0 command interface. An RC transmitter provides manual override at all times: the pilot can switch from \texttt{GUIDED} to \texttt{STABILIZE} or \texttt{LOITER} via a mode switch, and a dedicated kill switch triggers immediate motor disarm. This dual-authority design ensures that the companion computer can never prevent the pilot from assuming control.
+
+
+\subsection{Companion Computer}\label{sec:hw-pi}
+
+A Raspberry Pi~5 \cite{rpi5} serves as the companion computer, chosen for its low cost (\textasciitilde\pounds60), sufficient compute for real-time inference, native CSI camera interface, GPIO serial connectivity to the flight controller, and the extensive community support available for both hardware peripherals and machine learning deployment.
+
+The Pi runs Python~3.13 under Raspberry Pi OS. This version introduced a compatibility issue: the standard \texttt{tflite-runtime} package fails to build, as does direct serial communication via \texttt{pyserial}. Both problems were resolved without code-level workarounds. For inference, the Google-maintained \texttt{ai-edge-litert} package provides a drop-in replacement with an identical API. For serial communication, the \texttt{mavproxy} utility \cite{mavproxy} runs as a system service that reads the hardware UART and re-publishes MAVLink traffic over a local UDP socket, which \texttt{pymavlink} consumes without issue.
+
+Only four Python packages are installed on the Pi: \texttt{pymavlink}, \texttt{opencv-python-headless}, \texttt{numpy\,<\,2}, and \texttt{ai-edge-litert}. The \texttt{picamera2} library is accessed via the system site-packages. This minimal dependency footprint reduces attack surface and simplifies deployment.
+
+
+\subsection{Camera System}\label{sec:hw-camera}
+
+The Raspberry Pi Global Shutter Camera, based on the Sony IMX296 sensor, was selected for two reasons. First, its global shutter eliminates rolling-shutter distortion during forward flight, which would otherwise skew bounding boxes and degrade detection accuracy. Second, it interfaces directly with the Pi via a CSI ribbon cable, requiring no USB bandwidth and leaving the USB ports free for telemetry radios or storage.
+
+The camera captures at its native resolution of $1456 \times 1088$\,pixels via the \texttt{picamera2} library \cite{picamera2}, configured with the \texttt{RGB888} pixel format. Empirical testing revealed that the IMX296 driver outputs BGR-ordered data despite the RGB888 label. Applying the conventional \texttt{cv2.cvtColor(frame, COLOR\_RGB2BGR)} conversion therefore double-swaps channels and produces a blue colour cast. The correct approach---confirmed by testing all six channel permutations against ground truth---is to use the raw buffer directly. The camera is mounted inverted on the airframe and corrected in software via a $180°$ rotation (\texttt{CAMERA\_FLIP\_180 = True} in the configuration).
+
+
+\subsection{Sensor Calibration}\label{sec:hw-calib}
+
+Two calibrations are required before the vision pipeline can produce metric position estimates: lens distortion correction and field-of-view (FOV) measurement.
+
+\textbf{Lens distortion.}
+A printed chequerboard target (calib.io pattern, $13 \times 8$ inner corners, \SI{28}{\milli\metre} square size) was captured from multiple angles. OpenCV's \texttt{calibrateCamera} function yielded intrinsic parameters and distortion coefficients with a reprojection RMS of 0.399\,px. Undistortion is applied at the start of every inference frame using precomputed \texttt{cv2.remap} look-up tables, adding only \SI{1.5}{\milli\second} to the per-frame pipeline---negligible relative to the \SI{206}{\milli\second} inference time.
+
+\textbf{FOV calibration.}
+The focal length was measured by imaging a tape measure at a known \SI{1}{\metre} standoff: \SI{92}{\centi\metre} of the ruler was visible across the sensor width, giving a calibrated focal length of \SI{5.46}{\milli\metre} (\texttt{FOCAL\_LENGTH\_MM}). This value, combined with the \SI{5.02}{\milli\metre} sensor width, determines the horizontal field of view used by the geo-transformer module (\secref{sec:target-loc}) to convert pixel offsets into metre-scale displacements at a given altitude.
+
+
+\subsection{Communication Links}\label{sec:hw-comms}
+
+Three communication links connect the subsystems (\figref{fig:hw-block}):
+
+\begin{enumerate}[leftmargin=1.4em]
+  \item \textbf{Camera\,$\rightarrow$\,Pi (CSI).} A short ribbon cable carries raw frames from the IMX296 to the Pi's CSI-2 port at up to 60\,fps (the pipeline is inference-bound at ${\sim}\,5$\,fps).
+
+  \item \textbf{Pi\,$\rightarrow$\,Cube (UART).} GPIO~14 (TX) and GPIO~15 (RX) connect to the Cube's TELEM2 port at \SI{921600}{baud}. As noted in \secref{sec:hw-pi}, \texttt{mavproxy} bridges the physical UART to a UDP socket (\texttt{udpout:127.0.0.1:14550}), from which all Python scripts consume telemetry and send commands. A second \texttt{mavproxy} output (\texttt{tcpin:0.0.0.0:5762}) allows Mission Planner on a ground-station laptop to connect over Wi-Fi for real-time monitoring.
+
+  \item \textbf{Cube\,$\rightarrow$\,Ground Station (telemetry radio).} A 433\,MHz SiK radio pair on TELEM1 provides an independent, low-latency link for Mission Planner, operating in parallel with the Wi-Fi path and serving as a fallback if the network connection is lost.
+\end{enumerate}
+
+The \texttt{config.py} auto-detection logic probes for a serial device (\texttt{/dev/ttyAMA0}), a WSL gateway, or a localhost TCP socket, and selects the appropriate MAVLink connection string without user intervention. An environment variable (\texttt{DRONE\_CONN}) overrides auto-detection when needed.

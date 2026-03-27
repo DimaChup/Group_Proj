@@ -1,0 +1,57 @@
+\section{Ground Station and Operator Interface}\label{sec:groundstation}
+
+Conventional ground control stations such as Mission Planner and QGroundControl provide comprehensive telemetry displays but lack integration with custom onboard perception pipelines~\cite{qgroundcontrol2020,meier2015px4}. This project implements a lightweight, browser-based ground station that fuses live AI detection overlays, spatial clustering of target estimates, and single-click operator commands into a single interface served directly from the companion computer.
+
+% ── 8.1 ──────────────────────────────────────────────────────────────
+\subsection{Web-Based Architecture}\label{sec:gs-arch}
+
+The ground station is implemented as a self-contained Python HTTP server (\texttt{pi\_flight.py}, 1\,097 lines) using the standard-library \texttt{http.server} module with \texttt{ThreadingMixIn} for concurrent request handling. The server binds to \texttt{0.0.0.0:8090} on the Raspberry Pi and exposes five endpoints:
+
+\begin{itemize}
+  \item \texttt{GET /} --- inline HTML/CSS/JavaScript single-page application (no build step);
+  \item \texttt{GET /stream} --- continuous MJPEG video stream at up to 20\,fps~\cite{rfc2435};
+  \item \texttt{GET /state} --- JSON telemetry payload polled by the browser every 400\,ms;
+  \item \texttt{GET /snapshot} --- JPEG frame captured during the observation phase;
+  \item \texttt{POST /command} --- operator commands dispatched to the flight controller.
+\end{itemize}
+
+This architecture requires no desktop application, no framework installation, and no display server on the Pi. Any device on the local network --- laptop, tablet, or phone --- can open \texttt{http://PI\_IP:8090} and gain full situational awareness and command authority. The MJPEG transport was chosen over HLS or WebRTC for its simplicity and zero-latency characteristics; each JPEG frame is pushed as a multipart boundary, decoded natively by the \texttt{<img>} element in all modern browsers~\cite{munoz2016mjpeg}.
+
+% ── 8.2 ──────────────────────────────────────────────────────────────
+\subsection{Dashboard Features}\label{sec:gs-dashboard}
+
+The dashboard layout is divided into three horizontal bands (Figure~\ref{fig:dashboard}):
+
+\begin{enumerate}
+  \item \textbf{Header bar} --- flight mode (colour-coded: green for manual, amber for investigating, magenta for landing), drone mode from ArduCopter, GPS coordinates, altitude, total detections, and battery voltage with colour thresholds. A red \textsc{link lost} banner appears when the heartbeat age exceeds five seconds.
+  \item \textbf{Main panel} --- split into a 2D GPS grid (left, \texttt{flex:1}) and the live video stream (right, \texttt{flex:2}). The grid renders the drone as a yaw-oriented arrow, detection clusters as numbered circles with hit counts, the search polygon outline, logged items of interest (cyan squares) and false positives (red crosses), and the current investigation or landing target. The video stream overlays detection bounding boxes, a heads-up display with altitude and mode, and an orange \textsc{detection} flash alert.
+  \item \textbf{Control bar} --- nine command buttons: \textsc{arm}, \textsc{takeoff}, \textsc{n:~investigate}, \textsc{y:~confirm}, \textsc{i:~interest}, \textsc{x:~false positive}, \textsc{l:~land}, \textsc{m:~resume}, and \textsc{rtl} (with confirmation dialog). Keyboard shortcuts (\texttt{N}, \texttt{Y}, \texttt{I}, \texttt{X}, \texttt{L}, \texttt{M}) mirror the buttons for rapid input.
+\end{enumerate}
+
+Detection clusters are formed by routing each GPS-projected observation to the nearest existing cluster within a configurable distance threshold (default 30\,m) or creating a new cluster. Each cluster maintains a rolling window of the most recent 50 weighted observations, where the weight is proportional to $(30/\text{alt})^2$ --- lower-altitude detections contribute exponentially more to the position estimate (Section~\ref{sec:gps-estimation}). The operator selects a cluster on the grid, then issues \textsc{investigate} to fly the drone to that estimate.
+
+% ── Figure placeholder ───────────────────────────────────────────────
+\begin{figure}[ht]
+  \centering
+  % \includegraphics[width=\linewidth]{dashboard_screenshot}
+  \fbox{\parbox{0.92\linewidth}{\centering\vspace{3cm}
+    \textit{Browser dashboard screenshot: GPS grid (left) with drone arrow, numbered detection clusters, and search polygon; MJPEG video stream (right) with detection overlay and HUD; command buttons (bottom).}
+  \vspace{3cm}}}
+  \caption{Web-based ground station dashboard served from the Raspberry Pi at \texttt{http://PI\_IP:8090}. The operator monitors detections and issues commands from any browser on the local network.}
+  \label{fig:dashboard}
+\end{figure}
+
+% ── 8.3 ──────────────────────────────────────────────────────────────
+\subsection{Passive Monitoring Mode}\label{sec:gs-passive}
+
+For early flight testing where the pilot retains full manual control, \texttt{passive\_watch.py} provides a streaming observer that sends \emph{zero} commands to the flight controller. It runs the same camera and inference pipeline, saves annotated JPEG snapshots of every detection to disk with JSON metadata (timestamp, GPS, confidence, bounding box), and serves an MJPEG stream with GPS overlay. This script was used during manual RC flights to validate detection performance at operational altitudes before enabling any autonomous behaviour, following the progressive testing methodology described in Section~\ref{sec:testing}. The \texttt{--passive} flag on \texttt{pi\_flight.py} provides the same guarantee within the full dashboard, blocking all MAVLink send methods while preserving the complete UI.
+
+% ── 8.4 ──────────────────────────────────────────────────────────────
+\subsection{Headless Operation}\label{sec:gs-headless}
+
+The system auto-detects the absence of a display server (no \texttt{DISPLAY} environment variable) and overrides all OpenCV GUI calls (\texttt{cv2.imshow}, \texttt{cv2.waitKey}, \texttt{cv2.namedWindow}) with no-ops. This allows the same codebase to run over SSH or PuTTY without modification. In headless mode, operator input is accepted through three parallel channels: terminal keyboard via \texttt{msvcrt} (Windows) or \texttt{termios} (Linux) in a dedicated thread, browser buttons over HTTP, and the \texttt{POST /command} REST endpoint for programmatic integration. All three channels converge on the same \texttt{handle\_command()} dispatcher.
+
+% ── 8.5 ──────────────────────────────────────────────────────────────
+\subsection{Training Data Capture}\label{sec:gs-training}
+
+A dedicated capture utility (\texttt{capture\_training.py}) runs alongside the ground station on a separate port (8091) to collect training imagery during flight without interfering with the mission. It supports manual photo capture (spacebar), continuous video recording (toggled with \texttt{V}), and timed auto-capture at a configurable interval. All frames are geotagged via read-only MAVLink telemetry when available. This tool produced the 16 real-world labelled images used in the v2 model retraining (Section~\ref{sec:cv-training}), supplementing the 300 synthetic composites with authentic aerial perspectives.

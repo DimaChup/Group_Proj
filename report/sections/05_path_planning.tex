@@ -1,0 +1,108 @@
+\section{Search Pattern and Path Planning}\label{sec:planning}
+
+Efficient coverage of the search area is a prerequisite for any autonomous SAR mission: every square metre of ground must be imaged by the onboard camera at least once, while minimising flight time and energy expenditure. This section describes the coverage path planning approach, the algorithm that generates waypoints from an arbitrary polygonal boundary, and the parameter choices that ensure complete camera coverage.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{Coverage Path Planning}\label{sec:cpp}
+
+Coverage path planning (CPP) seeks a route that passes a sensor over every point in a target region~\cite{galceran2013survey}. Three canonical strategies were considered:
+
+\begin{enumerate}
+  \item \textbf{Boustrophedon (lawnmower)} --- parallel back-and-forth strips that systematically sweep the area. Guarantees complete coverage by construction and produces a predictable, easily verifiable flight path~\cite{choset2001coverage}.
+  \item \textbf{Spiral} --- an inward rectangular spiral. Covers the same area but generates many more turns and is harder to verify visually for missed strips.
+  \item \textbf{Random / probabilistic} --- stochastic waypoint selection. Offers no coverage guarantee within a bounded time and is therefore unsuitable for time-critical SAR operations.
+\end{enumerate}
+
+The boustrophedon pattern was selected for several reasons. First, its regularity makes it straightforward to verify that no region has been skipped---a critical property when a human life may depend on detection. Second, the parallel-strip geometry aligns naturally with a downward-facing camera whose footprint is rectangular: each strip corresponds to one swath of the sensor. Third, the pattern admits a simple closed-form calculation of total path length, enabling accurate endurance estimates before flight. Both the lawnmower and spiral generators are implemented in the system (Section~\ref{sec:algorithm}), but all field missions use the lawnmower pattern.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{Search Area Definition}\label{sec:area-def}
+
+The search area is defined as an arbitrary convex or concave polygon whose vertices are specified in WGS\,84 latitude/longitude coordinates. Two input methods are supported:
+
+\begin{itemize}
+  \item \textbf{Interactive drawing} (laptop/simulation): the operator clicks vertices on a georeferenced satellite image. The polygon is saved to a JSON file (\texttt{search\_area.json}).
+  \item \textbf{KML import}: the system parses a KML file exported from Google Earth or mission planning software. Named placemarks are mapped to the survey area, flight boundary, and no-fly zones automatically.
+  \item \textbf{Headless loading} (Pi): on the companion computer, the polygon is loaded from the JSON file or KML without any graphical interface, enabling fully autonomous start-up over SSH.
+\end{itemize}
+
+For the flight trials, the survey area was a five-vertex polygon defined in the course KML file (AENGM0074.kml), with the take-off point at \SI{51.4234}{\degree}N, \SI{2.6714}{\degree}W.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{Pattern Generation Algorithm}\label{sec:algorithm}
+
+The waypoint generation proceeds in six steps, implemented in \texttt{planning.py}:
+
+\begin{enumerate}
+  \item \textbf{Rasterisation.} The GPS polygon is converted to pixel coordinates via a \texttt{GeoTransformer} and rasterised into a binary mask using \texttt{cv2.fillPoly}.
+  \item \textbf{Rotation alignment.} The minimum-area bounding rectangle of the polygon is computed (\texttt{cv2.minAreaRect}). The mask is rotated so that the polygon's longest edge becomes axis-aligned, minimising the number of strips (and therefore U-turns) required for coverage.
+  \item \textbf{Strip spacing.} The ground footprint width is calculated from the camera optics and search altitude (Section~\ref{sec:lane-width}). Strips are spaced at intervals equal to the footprint width minus the overlap margin.
+  \item \textbf{Scan-line generation.} Horizontal scan lines are cast across the rotated mask at the computed spacing. For each line, the leftmost and rightmost filled pixels define the strip endpoints, with a small inset (\(\nicefrac{1}{3}\) of the strip spacing) to avoid waypoints outside the polygon boundary.
+  \item \textbf{Start-corner optimisation.} If the drone's current GPS position is known, the four polygon corners are evaluated and the pattern begins from the nearest one, reducing transit distance. Successive strips alternate direction (left-to-right, then right-to-left) to form the characteristic zigzag.
+  \item \textbf{Inverse rotation and GPS conversion.} Strip endpoints are transformed back to the original coordinate frame via the inverse affine matrix, then converted to WGS\,84 coordinates.
+\end{enumerate}
+
+An optional Bezier smoothing pass replaces each 180\textdegree{} U-turn with a quadratic arc (three interpolation points), allowing the drone to maintain airspeed through turns rather than decelerating to a stop.
+
+% ── Lawnmower figure placeholder ─────────────────────────────────────
+\begin{figure}[ht]
+  \centering
+  % \includegraphics[width=0.85\linewidth]{lawnmower_pattern}
+  \fbox{\parbox{0.82\linewidth}{\centering\vspace{3.2cm}
+    \textit{Lawnmower pattern over the five-vertex survey polygon.
+    Parallel strips are aligned to the longest polygon edge;
+    arrows indicate the alternating sweep direction.
+    Dashed outline shows the SSSI no-fly zone.}
+  \vspace{3.2cm}}}
+  \caption{Generated boustrophedon search pattern. Strips are spaced according to the camera ground footprint at \SI{35}{\metre} altitude with \SI{20}{\percent} lateral overlap.}
+  \label{fig:lawnmower}
+\end{figure}
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{Lane Width Calculation}\label{sec:lane-width}
+
+The strip spacing is derived from the camera's ground footprint to guarantee that adjacent swaths overlap by a configurable margin. The ground footprint width \(W_g\) at altitude \(h\) is given by the thin-lens relation:
+
+\begin{equation}\label{eq:footprint}
+  W_g = \frac{w_s \cdot h}{f}
+\end{equation}
+
+\noindent where \(w_s = \SI{5.02}{\milli\metre}\) is the IMX296 sensor width and \(f = \SI{5.46}{\milli\metre}\) is the calibrated focal length. The effective strip spacing (lane width) \(L\) is then:
+
+\begin{equation}\label{eq:lane-width}
+  L = W_g \,(1 - \alpha) = \frac{w_s \cdot h}{f}\,(1 - \alpha)
+\end{equation}
+
+\noindent where \(\alpha\) is the fractional overlap (default \(\alpha = 0.20\), i.e.\ \SI{20}{\percent}). At the nominal search altitude of \(h = \SI{35}{\metre}\):
+
+\[
+  W_g = \frac{5.02 \times 35}{5.46} \approx \SI{32.2}{\metre}, \qquad
+  L = 32.2 \times 0.80 \approx \SI{25.7}{\metre}.
+\]
+
+The \SI{20}{\percent} overlap compensates for GPS drift (typically \SIrange{2}{3}{\metre} CEP), cross-wind displacement, and minor attitude variations, ensuring no gap exists between adjacent swaths under realistic flight conditions. If the polygon is narrower than a single footprint in any direction, the planner collapses the pattern to a single centroid waypoint.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{Flight Parameters}\label{sec:flight-params}
+
+Table~\ref{tab:flight-params} summarises the key parameters governing the search flight. The search altitude of \SI{35}{\metre} was chosen as a compromise between detection range (the YOLOv8n model reliably detects a prone mannequin from this height---see Section~\ref{sec:detection}) and ground coverage rate. An altitude-dependent speed schedule linearly interpolates between \SI{6}{\metre\per\second} at \SI{20}{\metre} and \SI{10}{\metre\per\second} at \SI{50}{\metre}, reducing motion blur at lower altitudes where spatial resolution is highest.
+
+\begin{table}[ht]
+  \centering\compactTable
+  \caption{Search flight parameters.}\label{tab:flight-params}
+  \begin{tabularx}{\linewidth}{@{}l l X@{}}
+    \toprule
+    \textbf{Parameter} & \textbf{Value} & \textbf{Rationale} \\
+    \midrule
+    Search altitude        & \SI{35}{\metre}               & Balances footprint size and detection confidence \\
+    Verification altitude  & \SI{15}{\metre}               & Close-up confirmation after initial detection \\
+    Search speed           & \SI{10}{\metre\per\second}    & Default; reduced in focus areas \\
+    Focus area speed       & \SI{5}{\metre\per\second}     & Slower near PLB signal zone \\
+    Transit speed          & \SI{15}{\metre\per\second}    & To/from search area \\
+    Lateral overlap        & \SI{20}{\percent}             & Compensates GPS drift and crosswind \\
+    Lane width (at \SI{35}{\metre}) & $\approx$\SI{25.7}{\metre} & Derived from Eq.~\eqref{eq:lane-width} \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+Waypoint acceptance uses ArduPilot's \texttt{GUIDED} mode with a configurable radius; the drone advances to the next waypoint once it passes within this radius rather than decelerating to hover at the exact coordinate. Combined with the Bezier-smoothed turns, this produces a fluid, energy-efficient search trajectory.

@@ -1,0 +1,105 @@
+\section{Testing Methodology}\label{sec:testing}
+
+This section describes the testing strategy used to validate the SAR drone system, from individual component checks through to full autonomous flight. The approach follows a progressive trust-building philosophy inspired by V-model verification practices \cite{forsberg1991relationship} and incremental autonomy validation used in safety-critical robotics \cite{koopman2016challenges}.
+
+\subsection{Progressive Testing Philosophy}\label{sec:test-philosophy}
+
+The fundamental principle is \emph{never skip a step}. Each testing stage validates a specific set of assumptions before the next stage adds risk. A failure at any level is resolved before proceeding---the system is never flown with an unverified subsystem. This progression mirrors the V-model's pairing of integration levels with corresponding verification activities, adapted for a rapid-iteration university project where hardware access is limited to scheduled flight days.
+
+The full progression is:
+
+\begin{enumerate}
+    \item \textbf{Simulation on laptop} --- prove state machine logic, path planning, and detection pipeline using SITL and synthetic camera frames. No hardware risk.
+    \item \textbf{Bench testing with hardware} --- verify that MAVLink commands reach the autopilot, the camera produces frames, and the AI model loads on the Pi. Propellers removed.
+    \item \textbf{Passive flight} --- a human pilot flies the drone manually on RC while the Pi runs the full vision pipeline, logging detections without issuing any commands. Validates detection performance under real outdoor conditions.
+    \item \textbf{Autonomous flight (log only)} --- the drone flies the search pattern autonomously, but detection events are logged rather than acted upon. Validates the flight path without coupling it to CV decisions.
+    \item \textbf{Full autonomous mission} --- all subsystems active: search, detect, centre, descend, verify with operator confirmation, and land.
+\end{enumerate}
+
+This layered approach ensures that each new capability (camera, autopilot commands, detection-driven decisions) is introduced only after its prerequisites have been independently verified.
+
+\subsection{Test Categories}\label{sec:test-categories}
+
+The 41 test scripts are organised into six directories, each targeting a different verification concern:
+
+\begin{itemize}
+    \item \textbf{Hardware} (\texttt{tests/hardware/}) --- individual component checks: inference benchmark (50-run timing), GPS satellite tracking, buzzer verification. These confirm that each peripheral functions before integration.
+    \item \textbf{Flight} (\texttt{tests/flight/}) --- progressive flight tests numbered 0a through 4, described in Section~\ref{sec:test-flight}. Scripts are numbered by risk level; lower numbers must pass before higher numbers are attempted.
+    \item \textbf{Diagnostics} (\texttt{tests/diagnostics/}) --- runtime monitoring tools: a multi-panel connectivity dashboard, live Cube telemetry viewer, and MJPEG camera streams. Used during preflight checks and in-flight monitoring.
+    \item \textbf{Calibration} (\texttt{tests/calibration/}) --- parameter measurement scripts for FOV calibration (ruler method and altitude method), lens distortion characterisation (checkerboard pattern), and GPS ground-truth comparison.
+    \item \textbf{Experiments} (\texttt{tests/day\_1\_experiments/}) --- structured data-collection scripts that run passively during manual flights and output CSV files. Described in Section~\ref{sec:test-experiments}.
+    \item \textbf{Laptop} (\texttt{tests/laptop/}) --- development-only tools for simulation: model inspection, synthetic benchmarks, video replay with detection overlay. Not used on flight day.
+\end{itemize}
+
+\subsection{Bench Testing}\label{sec:test-bench}
+
+Three bench-test scripts verify the command and sensing pathways with propellers removed:
+
+\begin{description}
+    \item[0a -- Cube Commands.] Tests individual MAVLink commands: mode changes (GUIDED, LOITER, STABILIZE), parameter reads, and arming pre-checks. Confirms that the Pi-to-Cube communication link is functional and that the autopilot responds to programmatic commands.
+    \item[0b -- Bench Mission.] Executes the full mission command sequence---arm, takeoff, waypoint navigation, mode transitions, landing---and verifies that each command receives a \texttt{COMMAND\_ACK} from the autopilot. No motors spin (arming safety switch remains disengaged or propellers are removed), but the command handshake is validated end-to-end.
+    \item[0c -- Feedback Test.] Runs the vision-to-GPS estimation pipeline with the camera active: the operator carries the drone past a dummy target while the script computes GPS estimates from pixel detections. Validates that the full sensing chain (camera capture, AI inference, coordinate transformation) produces plausible position estimates before any flight occurs.
+\end{description}
+
+\subsection{Flight Test Progression}\label{sec:test-flight}
+
+Table~\ref{tab:flight-progression} summarises the five flight-test steps. Each step isolates a specific risk domain and provides a clear go/no-go gate.
+
+\begin{table}[H]
+\centering
+\caption{Progressive flight test steps. Each step must pass before the next is attempted.}
+\label{tab:flight-progression}
+\small
+\begin{tabular}{@{}clcl@{}}
+\toprule
+\textbf{Step} & \textbf{What} & \textbf{Risk} & \textbf{What It Proves} \\
+\midrule
+1 & Mission Planner AUTO waypoints & Low & Cube, GPS, motors, RTL all work \\
+  & (no custom code) & & without any project software \\
+\addlinespace
+2 & Waypoint test script & Medium & MAVLink arm, takeoff, goto, and \\
+  & (no CV) & & land commands work on real hardware \\
+\addlinespace
+3 & Manual flight + passive CV & Medium & CV detects target in real outdoor \\
+  & (zero commands) & & conditions; calibrates detection altitude \\
+\addlinespace
+4 & Autonomous search + CV & High & Full search pattern executes correctly; \\
+  & (log only, no action on detections) & & CV detections are reviewed post-flight \\
+\addlinespace
+5 & Full autonomous mission & Critical & End-to-end: search, detect, centre, \\
+  & (all systems active) & & descend, verify, land \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Step~1 uses only Mission Planner's built-in waypoint upload with no project code involved, isolating the hardware platform from the software. Step~2 introduces the project's MAVLink command layer but excludes computer vision entirely. Step~3 adds the full CV pipeline but issues zero flight commands---the pilot retains full manual control while the Pi logs detections, providing ground-truth data on detection range, false-positive rate, and altitude sensitivity. Only after Steps~1--3 pass does the system attempt autonomous flight with CV in the loop.
+
+At every step, the RC transmitter kill switch (mode change to STABILIZE) provides an independent safety override that bypasses all software.
+
+\subsection{Experiment Scripts}\label{sec:test-experiments}
+
+Six passive data-collection scripts are designed to run during manual flights (Step~3), producing CSV files for post-flight analysis:
+
+\begin{itemize}
+    \item \textbf{Altitude sweep} --- records detection rate and confidence in altitude bins (10--30\,m) to determine the maximum reliable detection altitude.
+    \item \textbf{Speed sweep} --- correlates detection rate with ground speed and a Laplacian blur metric to quantify motion-blur degradation.
+    \item \textbf{GPS accuracy} --- compares the vision-based GPS estimate of the target against a surveyed ground-truth position, measuring circular error probable (CEP).
+    \item \textbf{GPS drift} --- logs raw GPS coordinates while the drone hovers stationary, computing CEP50 and CEP95 to characterise the GPS noise floor.
+    \item \textbf{Model comparison} --- benchmarks all available TFLite model variants (inference time, detection rate, confidence) on the Pi hardware.
+    \item \textbf{Detection log} --- a general-purpose logger that records every detection event with timestamp, pixel coordinates, confidence, altitude, and GPS position.
+\end{itemize}
+
+All experiment scripts issue zero flight commands and are safe to run at any time. The CSV output format enables direct import into analysis tools for the results presented in Section~\ref{sec:results}.
+
+\subsection{Preflight Checklist}\label{sec:test-preflight}
+
+A structured preflight checklist is executed before every flight session, covering four domains:
+
+\begin{enumerate}
+    \item \textbf{Hardware inspection} --- battery voltage and capacity, propeller security, camera lens cleanliness, antenna connections, wiring integrity.
+    \item \textbf{Software verification} --- correct code version pulled from the repository, AI model file verified (\texttt{best.tflite} checksum), configuration parameters reviewed (altitudes, speeds, geofence coordinates, search polygon).
+    \item \textbf{Communication links} --- mavproxy bridge running with dual UDP outputs, Mission Planner connected via TCP, MJPEG video stream accessible in the ground station browser, RC transmitter bound and responsive.
+    \item \textbf{Safety systems} --- RC kill switch tested (mode switch to STABILIZE), geofence boundaries loaded and visualised, link-loss timeout configured, return-to-home altitude set.
+\end{enumerate}
+
+The diagnostics dashboard (\texttt{diagnostics.py}) provides a single-screen summary of all communication links, camera status, GPS fix quality, and battery level, serving as the final go/no-go gate before arming.

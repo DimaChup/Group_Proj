@@ -1,0 +1,72 @@
+\section{Simulation Framework}\label{sec:simulation}
+
+Autonomous SAR drone development presents a fundamental tension: algorithms must be validated extensively before flight, yet real flights are expensive, weather-dependent, and carry the risk of hardware loss. This section describes the multi-fidelity simulation framework developed to address this challenge, enabling iterative development of the detection, estimation, and landing algorithms entirely on a laptop before any outdoor testing.
+
+\subsection{Multi-Fidelity Approach}\label{sec:sim-fidelity}
+
+The project employs three simulation levels of increasing fidelity, following the simulation-first methodology advocated for robotic systems where hardware access is intermittent or costly \cite{shah2018}:
+
+\begin{enumerate}
+    \item \textbf{Level 1: Interactive simulator} (\texttt{simple\_simulator.py}). A self-contained environment where the operator flies a virtual drone over a satellite image using keyboard controls. The same YOLOv8n model runs inference on a synthetically generated camera view. No autopilot software is required---MAVLink telemetry is simulated internally. This level tests the GPS estimation pipeline, multi-target clustering, visual servoing, and landing sequence with full ground-truth comparison.
+
+    \item \textbf{Level 2: SITL with simulated camera} (\texttt{simulation.py} feeding \texttt{main.py}). ArduPilot's Software-in-the-Loop (SITL) runs the full autopilot firmware on the laptop \cite{ardupilot2024}. The mission orchestrator sends identical MAVLink commands to those used in flight, while \texttt{simulation.py} extracts a FOV-correct camera subimage from the satellite map at the drone's current position and altitude. This level validates the complete state machine, including arming, takeoff, guided navigation, geofence enforcement, and landing, against a realistic autopilot model with simulated GPS noise and vehicle dynamics.
+
+    \item \textbf{Level 3: SITL with real webcam}. The same SITL autopilot runs, but the camera source is switched to a physical webcam pointed at a printed dummy. This tests the vision pipeline against real optical conditions---lighting variation, lens distortion, motion blur---while keeping the flight controller in simulation. Configuration auto-detection handles the switch: setting \texttt{DRONE\_MODE=REAL} routes frames from the webcam instead of the satellite map.
+\end{enumerate}
+
+Each level shares the same detection model (\texttt{best.tflite}), the same state machine logic, and the same MAVLink command interface where applicable. Bugs found at Level~1 do not require re-testing at Level~3; only the camera and vehicle dynamics change between levels.
+
+\subsection{Interactive Simulator}\label{sec:sim-interactive}
+
+The interactive simulator (\texttt{simple\_simulator.py}, 2508 lines) provides a comprehensive test environment for the GPS estimation and target approach algorithms. The operator controls the virtual drone via keyboard: WASD for lateral movement, R/F for altitude, Q/E for yaw. Seven flight modes are available:
+
+\begin{itemize}
+    \item \textbf{Manual flight} (WASD) for flyover detection sweeps.
+    \item \textbf{GPS centering} (C key): the drone navigates to the current best GPS estimate of the target, derived from accumulated pixel-to-GPS observations.
+    \item \textbf{Visual servo} (V key): proportional control centres the target in the camera frame using pixel error, with exponential moving average smoothing ($\alpha = 0.3$) to reject jitter. Speed is clamped and the controller falls back to the last GPS estimate if the target is temporarily lost.
+    \item \textbf{GPS lock} (G key): while visually centred, the drone's GPS position is averaged over 30 seconds to produce a high-accuracy target coordinate. Only centre-snap samples (target within 30\,px of frame centre) are included.
+    \item \textbf{Offset landing} (L key): the drone flies to a point 7.5\,m north of the locked estimate, then descends and lands.
+\end{itemize}
+
+Three GPS estimators run concurrently on each detection cluster: a rolling weighted average of the most recent 50 observations, a cumulative weighted average over all observations, and a two-dimensional Kalman filter with measurement noise scaled by inverse observation weight. Observations are weighted by an altitude-dependent factor $w_{\text{alt}} = (30/h)^2$, reflecting the improved ground sample distance at lower altitudes, multiplied by a centre-proximity weight. All three estimators are compared against ground truth in real time, allowing direct evaluation of convergence behaviour.
+
+The simulator supports configurable error injection via command-line flags: \texttt{-{}-gps-drift} applies Ornstein--Uhlenbeck random walk to the reported GPS position, \texttt{-{}-shake} introduces altitude-dependent angular camera jitter, and \texttt{-{}-fps} throttles inference to match the Raspberry Pi's measured 4\,FPS throughput. Multiple targets can be placed on the map, and the operator classifies each during an observation phase (Y for confirmed dummy, I for item of interest, X for false positive), testing the full operational workflow including spatial clustering and cluster disambiguation.
+
+\begin{figure}[H]
+\centering
+\fbox{\parbox{0.85\textwidth}{\centering\vspace{3cm}Interactive Simulator Screenshot --- 2$\times$2 Layout\\[0.3cm]\small Top-left: god view (satellite map with drone, targets, clusters). Top-right: simulated camera with HUD overlay. Bottom-left: GPS scatter plot with error ellipses. Bottom-right: status dashboard.\vspace{1cm}}}
+\caption{The interactive simulator presents a four-panel display: god view with ground truth, simulated camera feed with detection overlay, GPS estimate scatter plot against ground truth, and a telemetry dashboard. Error injection sliders allow real-time adjustment of GPS drift, camera shake, and altitude noise.}
+\label{fig:simulator}
+\end{figure}
+
+\subsection{SITL Integration}\label{sec:sim-sitl}
+
+At Level~2, ArduPilot SITL replaces the keyboard-driven flight model with a full autopilot simulation. SITL runs the same C++ firmware as the Cube Orange+ flight controller, modelling vehicle dynamics, GPS receiver behaviour, barometric altitude, and RC input \cite{ardupilot2024}. The mission orchestrator connects via MAVLink over UDP (port 14550) and issues identical commands to those used in real flight: \texttt{MAV\_CMD\_NAV\_TAKEOFF}, guided waypoint navigation via \texttt{SET\_POSITION\_TARGET\_GLOBAL\_INT}, mode changes, and \texttt{MAV\_CMD\_NAV\_LAND}. Mission Planner connects simultaneously via a TCP bridge (port 5762) for monitoring and parameter adjustment.
+
+The SITL home location is set to the actual flight site coordinates (51.423406\textdegree{}N, 2.671446\textdegree{}W), ensuring that the lawnmower search pattern, geofence boundaries, and SSSI no-fly zone are tested with real-world geometry. SITL's simulated GPS noise (${\sim}0.5$\,m) is smaller than real conditions (${\sim}2$--3\,m), but provides a baseline for verifying navigation logic.
+
+\subsection{Simulated Camera View}\label{sec:sim-camera}
+
+The \texttt{SimulationEnvironment} class in \texttt{simulation.py} generates a synthetic camera frame at each timestep by extracting a subimage from a georeferenced satellite photograph (\texttt{map.jpg}). Given the drone's pixel position $(c_x, c_y)$, altitude $h$, and yaw angle $\psi$, the visible ground footprint is computed from the camera's calibrated field of view:
+
+\begin{equation}
+    w_{\text{ground}} = 2h \tan\!\left(\frac{\text{FOV}_h}{2}\right), \qquad \text{FOV}_h = 2\arctan\!\left(\frac{w_{\text{sensor}}}{2f}\right)
+\end{equation}
+
+\noindent where $w_{\text{sensor}} = 5.02$\,mm and $f = 5.46$\,mm are the calibrated sensor width and focal length. The corresponding map region is extracted with edge padding, rotated by the yaw angle using an affine transform, cropped to the camera aspect ratio ($1456 \times 1088$), and resized to the inference resolution. A dummy image (\texttt{dummy.png}) with alpha-channel transparency is composited at the correct position and scale, producing a frame that the YOLOv8n model processes identically to a real camera capture. Multiple targets---dummies and traffic cones---can be placed interactively on the map before each run.
+
+This approach ensures that the detection model is exercised against realistic background textures (grass, paths, shadows) at altitude-correct scales, rather than against synthetic uniform backgrounds that would inflate detection performance.
+
+\subsection{Simulation-to-Real Transfer}\label{sec:sim-transfer}
+
+A central design goal is that the transition from simulation to real hardware requires no code changes, only configuration changes---an approach consistent with the digital twin methodology applied in UAV development \cite{jones2020}. Three mechanisms enable this:
+
+\begin{enumerate}
+    \item \textbf{Configuration auto-detection.} At import time, \texttt{config.py} probes for a serial connection to the Cube flight controller. If found, the system operates in real mode; otherwise, it connects to SITL via UDP. The \texttt{DRONE\_MODE} environment variable provides an explicit override. Camera selection follows the same pattern: picamera2 on the Pi, OpenCV \texttt{VideoCapture} on the laptop.
+
+    \item \textbf{Identical state machine.} The mission orchestrator (\texttt{main.py}) contains no conditional branches distinguishing simulation from real flight. The 19-state finite state machine, including arming, takeoff, search pattern execution, detection-triggered transitions, operator verification, and landing, runs the same logic in both environments. Only the camera frame source and MAVLink endpoint differ.
+
+    \item \textbf{Same model weights.} All platforms load the same \texttt{best.tflite} model file with input shape $[1, 640, 640, 3]$ and output shape $[1, 5, 8400]$. The vision module applies identical preprocessing (resize, normalise, optional lens undistortion) regardless of whether the frame originates from a satellite map crop, a webcam, or the Pi's IMX296 global shutter sensor.
+\end{enumerate}
+
+The simulation framework identified several issues before any outdoor flight: a MAVLink command race condition during takeoff, an incorrect latitude scaling factor in the geo-transformer, and the need for camera warm-up frames to avoid initial dark exposures. These were resolved in simulation, avoiding costly debugging in the field. The primary sim-to-real gap is detection reliability: the model trained on synthetic composites may underperform against real lighting conditions, motion blur, and non-ideal target poses. This gap is addressed by the progressive testing methodology described in Section~\ref{sec:testing}, where passive flight logging validates detection performance before autonomous operation is enabled.

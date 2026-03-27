@@ -1,0 +1,165 @@
+\documentclass[10pt,a4paper]{article}
+
+% ── Layout ──────────────────────────────────────────────────────────────
+\usepackage[margin=15mm,heightrounded]{geometry}
+\usepackage{microtype}
+\usepackage{lmodern}
+\usepackage{setspace}
+\setstretch{1.05}
+
+% ── Graphics & Figures ──────────────────────────────────────────────────
+\usepackage{graphicx}
+\graphicspath{{figs/}}
+\usepackage{wrapfig}
+\usepackage{subcaption}
+\usepackage[font=small,labelfont=bf,skip=4pt]{caption}
+\usepackage{float}
+\usepackage{placeins}
+
+% ── Tables ──────────────────────────────────────────────────────────────
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{ltablex}
+\usepackage{siunitx}
+\usepackage{multirow}
+
+% ── Math & Science ──────────────────────────────────────────────────────
+\usepackage{amsmath,amssymb}
+
+% ── Typography & Colour ────────────────────────────────────────────────
+\usepackage[dvipsnames]{xcolor}
+\definecolor{headblue}{HTML}{1F3864}
+\usepackage{titlesec}
+\titleformat{\section}{\normalfont\Large\bfseries\color{headblue}}{\thesection}{0.6em}{}
+\titleformat{\subsection}{\normalfont\large\bfseries\color{headblue}}{\thesubsection}{0.5em}{}
+\titleformat{\subsubsection}{\normalfont\normalsize\bfseries\color{headblue}}{\thesubsubsection}{0.4em}{}
+\titlespacing*{\section}{0pt}{10pt plus 2pt}{4pt plus 1pt}
+\titlespacing*{\subsection}{0pt}{8pt plus 2pt}{3pt plus 1pt}
+
+% ── Headers & Footers ──────────────────────────────────────────────────
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\cfoot{\footnotesize\thepage}
+\renewcommand{\headrulewidth}{0pt}
+
+% ── Lists ───────────────────────────────────────────────────────────────
+\usepackage[nosep]{enumitem}
+
+% ── Boxes ───────────────────────────────────────────────────────────────
+\usepackage[framemethod=TikZ]{mdframed}
+\newmdenv[
+  backgroundcolor=black!5,
+  linewidth=0pt,
+  innertopmargin=8pt,
+  innerbottommargin=8pt,
+  innerleftmargin=10pt,
+  innerrightmargin=10pt,
+  roundcorner=3pt
+]{abstractbox}
+
+\newmdenv[
+  backgroundcolor=blue!3,
+  linecolor=headblue,
+  linewidth=0.8pt,
+  innertopmargin=6pt,
+  innerbottommargin=6pt,
+  innerleftmargin=8pt,
+  innerrightmargin=8pt,
+  roundcorner=2pt
+]{infobox}
+
+% ── Code Listings ───────────────────────────────────────────────────────
+\usepackage{listings}
+\lstset{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  frame=single,
+  rulecolor=\color{black!20},
+  backgroundcolor=\color{black!2},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  tabsize=4,
+  showstringspaces=false,
+  keywordstyle=\color{blue!70},
+  commentstyle=\color{green!50!black},
+  stringstyle=\color{red!60!black}
+}
+
+% ── References ──────────────────────────────────────────────────────────
+\usepackage[backend=biber,style=numeric,sorting=none,maxbibnames=3,
+            giveninits=true,doi=false,isbn=false,url=false]{biblatex}
+\addbibresource{references.bib}
+\setlength{\bibitemsep}{0pt}
+\setlength{\bibhang}{1em}
+\renewcommand*{\bibfont}{\small}
+
+% ── Hyperlinks ──────────────────────────────────────────────────────────
+\usepackage[hidelinks,colorlinks=true,linkcolor=headblue,citecolor=headblue,urlcolor=blue!60]{hyperref}
+\usepackage{csquotes}
+\usepackage{multicol}
+
+% ── Float control ───────────────────────────────────────────────────────
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.8}
+\renewcommand{\floatpagefraction}{0.85}
+\setlength{\parskip}{2pt plus 1pt}
+\setlength{\parindent}{0pt}
+
+% ── Custom commands ─────────────────────────────────────────────────────
+\newcommand{\compactTable}{\small\setlength{\tabcolsep}{3pt}\renewcommand{\arraystretch}{1.05}}
+\newcommand{\figref}[1]{Figure~\ref{#1}}
+\newcommand{\tabref}[1]{Table~\ref{#1}}
+\newcommand{\secref}[1]{Section~\ref{#1}}
+
+% ═══════════════════════════════════════════════════════════════════════
+\begin{document}
+
+% ── Title Block ─────────────────────────────────────────────────────────
+\begin{center}
+  {\LARGE\bfseries Autonomous Search and Rescue Drone with\\[3pt]
+   Onboard AI-Based Casualty Detection}\\[10pt]
+  {\large Dmytro Chuprynyuk, \textit{et al.}}\\[4pt]
+  {\normalsize AENGM0074 Group Design Project --- University of Bristol --- March 2026}
+\end{center}
+
+\vspace{4pt}
+
+% ── Abstract ────────────────────────────────────────────────────────────
+\begin{abstractbox}
+\input{sections/00_abstract}
+\end{abstractbox}
+
+\vspace{6pt}
+
+% ── Main Sections ───────────────────────────────────────────────────────
+\input{sections/01_introduction}
+\input{sections/02_system_architecture}
+\input{sections/03_hardware_platform}
+\input{sections/04_computer_vision}
+\input{sections/05_path_planning}
+\input{sections/06_state_machine}
+\input{sections/07_target_localisation}
+\input{sections/08_ground_station}
+\input{sections/09_simulation}
+\input{sections/10_testing}
+\input{sections/11_field_results}
+\input{sections/12_model_training}
+\input{sections/13_safety_risk}
+\input{sections/14_future_work}
+\input{sections/15_conclusion}
+
+% ── References ──────────────────────────────────────────────────────────
+\newpage
+\begin{multicols}{2}[\section*{References}]
+\printbibliography[heading=none]
+\end{multicols}
+
+% ── Appendices ──────────────────────────────────────────────────────────
+\newpage
+\appendix
+\input{sections/A1_state_table}
+\input{sections/A2_config_params}
+
+\end{document}
