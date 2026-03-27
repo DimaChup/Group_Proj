@@ -300,14 +300,14 @@ Status key:
 
 ### Numbers Consistent Across Sections
 
-- [ ] **Numbers consistent across sections**
-  - Status: KNOWN ISSUES remain:
-    - Search speed inconsistent (5, 8, 10 m/s across sections)
-    - Two FOV values (49.3 Pi vs 54.4 DJI) not always distinguished
-    - Footprint width R05: "27.6m" should be "32.2m" at 35m
-    - Sheridan level: R08 "Level 2" vs Design Rationale "Level 5/3"
-    - Waypoint count: exec summary "18" vs R01 "35 waypoints across 5 passes"
-    - Module names in system_description don't match actual code filenames
+- [~] **Numbers consistent across sections**
+  - Status: MOSTLY FIXED. 4 of 6 previously documented issues are now resolved:
+    - ~~Search speed inconsistent~~ FIXED: Report consistently uses altitude-dependent schedule (6 m/s at 20m, 8 m/s at 35m, 10 m/s at 50m). All references say "8 m/s nominal at 35m" or explain the schedule. Config.py uses 10 m/s as max, which matches the schedule.
+    - ~~Two FOV values~~ FIXED: `calibration_deep.tex` line 89 explicitly distinguishes "DJI video HFOV (54.4 deg) is distinct from onboard Pi IMX296 camera HFOV (49.3 deg)". Both values used correctly in context.
+    - ~~Footprint width R05~~ FIXED: `requirements_verification.tex` line 62 now correctly says "32.2m" at 35m.
+    - ~~Sheridan level~~ FIXED: R08 (line 99) and `design_rationale.tex` (line 168) both consistently say "L7-8 search / L3-4 landing".
+    - ~~Waypoint count~~ FIXED: exec summary says "18 waypoints" and `11_field_results.tex` says "18 waypoints". No "35 waypoints across 5 passes" found anywhere.
+    - **STILL PRESENT**: Module names in `system_description.tex` line 64 reference `gps_utils.py` and `geofence.py` which don't exist as separate files (actual code uses `utils.py` and geofence logic in `main.py`). Also referenced in `06_state_machine.tex` line 15 and `requirements_verification.tex` line 45.
 
 ### Real Simulation Data
 
@@ -321,25 +321,25 @@ Status key:
 
 | # | What User Asked For | Priority | Status |
 |---|---------------------|----------|--------|
-| 1 | **Real photos** (drone, bench setup, dashboard screenshot, field day, dummy on field, payload mechanism) | CRITICAL | All still placeholder text boxes in `figure_descriptions.tex` |
-| 2 | **Number consistency fixes** (speed, FOV, footprint, Sheridan, waypoint count) | CRITICAL | 6 inconsistencies documented but unfixed |
-| 3 | **Broken citations and cross-refs** (`rtca_do178c`, `extra_refs.bib`, sec:detection, sec:target-localisation) | HIGH | Compilation issues unfixed |
-| 4 | **"What would change" subsection** in Evaluation | HIGH | Not written. Prioritised improvements with effort estimates. |
-| 5 | **Sim-to-real confidence statement** | MEDIUM | Not written. 2-3 sentences quantifying what sim validates vs what it cannot. |
-| 6 | **MCDA authenticity sentence** ("Initially selected X, trade study revealed Y") | MEDIUM | Not written. |
-| 7 | **GPS error budget pulled into body** (currently appendix-only) | MEDIUM | tab:error-budget exists in gps_estimation_deep but not summarised in body |
-| 8 | **Five-tier testing table pulled into body** (currently appendix-only) | MEDIUM | tab:five-tier exists in 10_testing but not summarised in body |
-| 9 | **Docker Pi test as Tier 2.5** mentioned in report | LOW | Not mentioned anywhere |
-| 10 | **Dashboard mention** (React project tracker) | LOW | Not mentioned anywhere |
-| 11 | **Detection montage** (4-6 frames at different altitudes with bounding boxes) | HIGH | Not created |
-| 12 | **ArduPilot citation** in references.bib | LOW | Used throughout but never cited |
-| 13 | **Exec summary** doesn't mention field day pivot | MEDIUM | Needs 1 sentence about weather adaptation |
-| 14 | **R06 verification** needs quantitative evidence or figure | MEDIUM | Currently thin |
-| 15 | **R07 verification** needs visual (landing offset diagram) | MEDIUM | Currently thin |
-| 16 | **Module names** in system_description don't match real code | MEDIUM | gps_utils.py, geofence.py etc. should be utils.py, main.py |
-| 17 | **05_path_planning.tex** -- comprehensive section NOT in main.tex | HIGH | 181-line section with CPP comparison table, algorithm detail -- orphaned |
-| 18 | **Duplicate appendix letter "R"** (centering_analysis + figure_descriptions) | LOW | Confusing but harmless |
-| 19 | **Verify "58 test scripts" claim** | LOW | Unverified |
+| 1 | **Real photos** (drone, bench setup, dashboard screenshot, field day, dummy on field, payload mechanism) | CRITICAL | [~] Still placeholder text boxes in `figure_descriptions.tex`. Need real photos to replace them. |
+| 2 | ~~**Number consistency fixes**~~ | ~~CRITICAL~~ | [x] RESOLVED. 5 of 6 issues fixed (speed, FOV, footprint, Sheridan, waypoint count all now consistent). Only module names remain (see #16). |
+| 3 | ~~**Broken citations and cross-refs**~~ | ~~HIGH~~ | [x] RESOLVED. `rtca_do178c` exists in `references.bib` (line 1219). `extra_refs.bib` file exists. `sec:detection` and `sec:target-localisation` references no longer appear in any .tex file -- removed or fixed. |
+| 4 | ~~**"What would change" subsection**~~ | ~~HIGH~~ | [x] DONE. `evaluation.tex` line 184: `\subsection{What Would Change in a Second Iteration}` with 5 prioritised improvements + 4 lessons learned (lines 184-218). |
+| 5 | ~~**Sim-to-real confidence statement**~~ | ~~MEDIUM~~ | [x] DONE. `simulation_validation.tex` (Appendix P) has full "Simulation-to-Real Transfer" section with "Known Sim-to-Real Gaps" subsection. Also `09_simulation.tex` line 108 has `\subsection{Simulation-to-Real Transfer}`. Quantitative confidence statement at line 116 of `simulation_validation.tex`. |
+| 6 | **MCDA authenticity sentence** ("Initially selected X, trade study revealed Y") | MEDIUM | [ ] Still missing. No "Initially selected" or "trade study revealed" phrasing found in any .tex file. Needs 1 sentence per MCDA table. |
+| 7 | ~~**GPS error budget pulled into body**~~ | ~~MEDIUM~~ | [x] DONE. `system_description.tex` line 181: `\paragraph{Error budget.}` with `tab:error-budget-summary` table in the body. Appendix has full version. |
+| 8 | ~~**Five-tier testing table pulled into body**~~ | ~~MEDIUM~~ | [x] DONE. `evaluation.tex` line 167: `tab:five-tier-summary` condensed table in the body with "condensed from Appendix" reference. |
+| 9 | ~~**Docker Pi test as Tier 2.5**~~ | ~~LOW~~ | [x] DONE. Docker is Tier 2 in the five-tier framework. `10_testing.tex` line 28 lists it, line 41 explains the Docker container. `evaluation.tex` line 173 and 181 mention it. `field_day_narrative.tex` line 26 references Docker-based estimates. |
+| 10 | **Dashboard mention** (React project tracker) | LOW | [ ] Still missing. The React dashboard (`dashboard/`) for project tracking/WBS is not mentioned in the report. Note: the ground station web dashboard IS mentioned extensively -- this item refers to the separate project management React app. |
+| 11 | **Detection montage** (4-6 frames at different altitudes with bounding boxes) | HIGH | [ ] Still missing. No montage figure exists in `figs/`. `figure_descriptions.tex` has a placeholder for a single detection frame but not a multi-altitude montage. **Fix: create composite image from DJI video test frames at 15m/25m/35m/50m.** |
+| 12 | ~~**ArduPilot citation**~~ | ~~LOW~~ | [x] DONE. `ardupilot` cited 10+ times across sections: `02_system_architecture.tex`, `03_hardware_platform.tex`, `06_state_machine.tex`, `09_simulation.tex`, `10_testing.tex`, `11_field_results.tex`, `13_safety_risk.tex`, `design_rationale.tex`, `steeple.tex`. Multiple bib entries exist (ardupilot, ardupilot2024, ardupilot_mavproxy, ardupilot_failsafe). |
+| 13 | ~~**Exec summary doesn't mention field day pivot**~~ | ~~MEDIUM~~ | [x] DONE. `exec_summary.tex` line 17: `\paragraph{Demonstration and weather adaptation.}` with full paragraph on weather cancellation and bench-day adaptation. |
+| 14 | **R06 verification** needs quantitative evidence or figure | MEDIUM | [~] Partially addressed. `requirements_verification.tex` and `focus_and_repulsive.tex` (Appendix Y) cover R06 with equations and logic, but still thin on quantitative flight evidence (no real flight data). |
+| 15 | **R07 verification** needs visual (landing offset diagram) | MEDIUM | [~] Partially addressed. Landing offset math is in the text but no dedicated landing offset diagram figure exists. |
+| 16 | **Module names** in system_description don't match real code | MEDIUM | [ ] Still present. `system_description.tex` line 64, `06_state_machine.tex` line 15, and `requirements_verification.tex` line 45 reference `gps_utils.py` and `geofence.py`. Real code has `utils.py` (GPS transforms) and geofence logic in `main.py`. **Fix: rename to match actual filenames.** |
+| 17 | **05_path_planning.tex** -- comprehensive section NOT in main.tex | HIGH | [~] Still orphaned. 181-line section with CPP comparison table, Bezier smoothing, algorithm detail -- not included via `\input` in `main.tex`. Content is partially duplicated in appendix sections (path_tradeoffs, search_optimization, path_optimization_definitive). **Fix: either add `\input{sections/05_path_planning}` to main.tex or merge unique content into existing appendices.** |
+| 18 | **Duplicate appendix letter comments** in main.tex | LOW | [~] Cosmetic issue only. main.tex comments label both line 249 and line 285 as "Appendix R", and both line 276 and 282 as "Appendix AA". LaTeX auto-numbers correctly regardless. **Fix: update comments to match actual auto-assigned letters.** |
+| 19 | ~~**Verify "58 test scripts" claim**~~ | ~~LOW~~ | [x] RESOLVED. Report now consistently says "71 test scripts" (exec_summary, 10_testing, evaluation, introduction, test_scripts_guide). The old "58" claim no longer appears. |
 
 ---
 
@@ -347,14 +347,16 @@ Status key:
 
 | Category | Done | Partial | Missing | Total |
 |----------|------|---------|---------|-------|
-| Figures & Charts | 16 | 1 | 1 | 18 |
-| Content & Sections | 24 | 1 | 0 | 25 |
-| Quality & Process | 4 | 3 | 1 | 8 |
-| Missing Items (above table) | -- | -- | 19 | 19 |
+| Figures & Charts | 16 | 1 | 0 | 17 |
+| Content & Sections | 25 | 0 | 0 | 25 |
+| Quality & Process | 7 | 1 | 0 | 8 |
+| Missing Items (table above) | 10 resolved | 4 partial | 5 still missing | 19 |
 
-**Bottom line:** The vast majority of content the user asked for has been written and exists in the report (body or appendices). The biggest gaps are:
-1. **Real photos** -- still placeholder text, no actual images
-2. **Number inconsistencies** -- 6 documented but unfixed
-3. **Broken LaTeX references** -- compilation issues
-4. **A few body-level improvements** -- "what would change" subsection, error budget in body, five-tier table in body
-5. **The orphaned 05_path_planning.tex** -- rich content not compiled into the PDF
+**Bottom line:** Major improvement since last audit. 10 of 19 "missing" items are now fully resolved (citations, "what would change", sim-to-real, error budget in body, five-tier in body, Docker mention, ArduPilot citation, exec summary field day, waypoint count, test script count). The remaining gaps are:
+1. **Real photos** -- still placeholder text boxes, no actual images (CRITICAL)
+2. **Detection montage** -- multi-altitude composite figure not created (HIGH)
+3. **05_path_planning.tex orphaned** -- 181 lines of unique content not compiled into PDF (HIGH)
+4. **Module names wrong** -- `gps_utils.py`/`geofence.py` referenced but don't exist (MEDIUM)
+5. **MCDA authenticity sentence** -- "Initially selected X, trade study revealed Y" not written (MEDIUM)
+6. **R06/R07 verification** -- thin on quantitative evidence (MEDIUM, limited by no flight data)
+7. **Dashboard mention** -- React project tracker not mentioned (LOW, not a graded item)
