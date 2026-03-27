@@ -1,0 +1,58 @@
+\subsection{Payload Release Mechanism}\label{sec:payload-release}
+
+The mission's final objective is to deliver a first-aid kit to the vicinity of the casualty. This subsection describes the release hardware, the rationale for deploying from a low hover rather than landing beside the casualty, and the servo actuation sequence.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsubsection{Tarot Double-Throw Release Mechanism}
+
+The payload is suspended beneath the airframe by a university-provided Tarot servo-actuated release mechanism, controlled via a single PWM channel on the Cube Orange (AUX output channel~9, configured as \texttt{SERVO\_CHANNEL} in \texttt{config.py}). The mechanism supports two-stage actuation: a partial opening at PWM~1300 (\texttt{SERVO\_PARTIAL\_PWM}) and a full release at PWM~1100 (\texttt{SERVO\_FULL\_PWM}). The two-stage design is deliberate---during transit the servo is held at PWM~1500 (closed), and the partial-open intermediate step prevents premature payload separation caused by airframe vibration or sudden manoeuvres that might overcome a single-latch mechanism. Only the second command fully disengages the retaining hooks.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsubsection{Why Release from Altitude, Not Land}
+
+An alternative design would land the drone directly beside the casualty and release the payload on the ground. This was rejected for five reasons:
+
+\begin{enumerate}
+    \item \textbf{Casualty safety.} Landing within a few metres of an injured person exposes them to rotor downwash, debris blown by the propellers, and the risk of a ground-level tip-over. Requirement R07 explicitly mandates a \SI{5}{\metre} exclusion zone around the casualty for this reason.
+
+    \item \textbf{Terrain uncertainty.} SAR sites are typically unimproved terrain---long grass, slopes, rocks, or mud. Landing gear contact with uneven ground can cause a roll-over or motor stall, potentially destroying the aircraft and the payload. A low hover avoids surface interaction entirely.
+
+    \item \textbf{GPS accuracy.} The system's GPS-based target localisation has a measured $\text{CEP}_{50} = \SI{2.3}{\metre}$ (Section~\ref{sec:localisation}). A ground landing adds the full position error to the touchdown point, whereas an aerial release from \SI{3}{\metre} altitude disperses the payload over a small area predictable from simple ballistics (free-fall time $t = \sqrt{2h/g} \approx \SI{0.78}{\second}$, negligible lateral drift in light wind).
+
+    \item \textbf{Reduced low-altitude exposure.} Ground-effect aerodynamics, obstacle proximity, and limited sensor coverage at very low altitude all increase the probability of a mishap. Releasing from \SI{3}{\metre} and immediately climbing to transit altitude minimises time in the highest-risk flight regime.
+
+    \item \textbf{Operational simplicity.} A hover-and-release sequence requires only position-hold commands followed by two servo actuations. A ground landing requires additional logic for touchdown detection, motor shutdown, ground-level release, re-arming, and takeoff---each step introducing failure modes that are difficult to test without flight trials.
+\end{enumerate}
+
+% ─────────────────────────────────────────────────────────────────────
+\subsubsection{The \SI{7.5}{\metre} Offset}\label{sec:offset-rationale}
+
+Requirement R07 specifies that the drone must land (or, in this design, deploy the payload) within \SI{10}{\metre} of the casualty but not within \SI{5}{\metre}. The system therefore computes a delivery point offset \SI{7.5}{\metre} from the estimated casualty position in an operator-selected cardinal direction (N/E/S/W), implemented in \texttt{landing\_offset\_7\_5m()} in \texttt{gps\_utils.py}. The \SI{7.5}{\metre} value is the midpoint of the \SIrange{5}{10}{\metre} annular band, providing \SI{2.5}{\metre} of margin on both sides and maximising the probability of compliance given the Gaussian-distributed GPS estimation error. Section~\ref{sec:centering-analysis} shows that with multi-detection fusion ($N_\text{eff} = 6$, $\sigma_\text{fused} \approx \SI{0.80}{\metre}$), the probability of the delivery point falling within the required band exceeds 99\%.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsubsection{Servo Actuation Sequence}
+
+The payload deployment is executed during the \textsc{Hover\_Target} state, implemented in \texttt{state\_machine.py}. The full sequence proceeds as follows:
+
+\begin{enumerate}
+    \item \textbf{Approach} (\textsc{Approach} state): the drone flies to the offset point at \SI{3}{\metre\per\second} and descends to \SI{3}{\metre} AGL. The state transitions to \textsc{Hover\_Target} once the aircraft is within \SI{2}{\metre} laterally and below \SI{4}{\metre} altitude.
+
+    \item \textbf{Stabilise} ($t = 0$--\SI{3}{\second}): the drone holds position at \SI{3}{\metre} AGL, allowing oscillations from the approach to damp out. The servo remains closed (PWM~1500).
+
+    \item \textbf{Partial release} ($t = \SI{3}{\second}$): a \texttt{MAV\_CMD\_DO\_SET\_SERVO} command sets channel~9 to PWM~1300, partially opening the mechanism. This loosens the payload without dropping it, confirming that the servo responds before committing to full release.
+
+    \item \textbf{Full release} ($t = \SI{6}{\second}$): a second \texttt{MAV\_CMD\_DO\_SET\_SERVO} sets channel~9 to PWM~1100, fully disengaging the retaining hooks and allowing the payload to free-fall approximately \SI{3}{\metre} to the ground.
+
+    \item \textbf{Close and depart} ($t = \SI{15}{\second}$): the servo is returned to PWM~1500 (closed) to prevent snagging during climb-out. The drone ascends to search altitude and enters \textsc{Return\_Transit} or \textsc{Return\_Home} to fly back to the takeoff location via the pre-planned transit corridor.
+\end{enumerate}
+
+The \SI{15}{\second} total hover time balances deployment reliability against battery consumption and low-altitude exposure time. A visual animation of the sequence is rendered on the ground-station HUD during the hover to provide the operator with real-time feedback on deployment progress.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsubsection{Why Visual Servo Centering Was Not Required}
+
+The system includes \textsc{Centering} and \textsc{Descending} states capable of visually servoing the drone above the target to improve localisation accuracy (Section~\ref{sec:centering-analysis}). However, for the payload release mission this pipeline was bypassed. The CEP$_{50}$ of \SI{2.3}{\metre} from the GPS estimation pipeline is already well within the \SI{2.5}{\metre} margin provided by the \SI{7.5}{\metre} offset, making visual servo centering unnecessary for R07 compliance. As demonstrated in Section~\ref{sec:centering-analysis}, simulation comparison of twenty runs with and without centering showed that the direct offset approach achieved 95\% R07 compliance without the added risks of low-altitude manoeuvring, visual servo fragility below \SI{10}{\metre}, and extended hover time over the casualty. The centering capability is retained in the codebase as a future enhancement for precision-drop missions where tighter tolerances are required.
+
+\subsubsection{Future Work: Precision Drop}
+
+With the NCNN inference backend (available in \texttt{cv\_models/sar\_v2\_1088/ncnn/}), frame rates of approximately \SI{15}{FPS} become achievable on the Raspberry Pi~5, enabling real-time visual servo control. Combined with the existing centering pipeline, this could reduce the effective CEP to below \SI{1}{\metre}, permitting precision drops from \SI{5}{\metre} altitude without the \SI{7.5}{\metre} lateral offset---useful for scenarios requiring delivery directly to the casualty's position rather than to a nearby clear area.

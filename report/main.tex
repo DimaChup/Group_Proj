@@ -27,6 +27,8 @@
 
 % ── Math & Science ──────────────────────────────────────────────────────
 \usepackage{amsmath,amssymb}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
 
 % ── Typography & Colour ────────────────────────────────────────────────
 \usepackage[dvipsnames]{xcolor}
@@ -248,6 +250,21 @@
 
 % Appendix S: Communication architecture
 \input{sections/comms_architecture}
+
+% Appendix T: Pipeline FPS vs raw inference
+\input{sections/pipeline_fps}
+
+% Appendix U: Path planning tradeoffs
+\input{sections/path_tradeoffs}
+
+% Appendix V: Payload release mechanism
+\input{sections/payload_release}
+
+% Appendix W: Model comparison and future CV
+\input{sections/model_comparison}
+
+% Appendix X: Alternative text versions
+\input{sections/alternatives}
 
 % Appendix R: Figure descriptions (blackboard diagrams)
 \input{sections/figure_descriptions}

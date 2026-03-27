@@ -2481,6 +2481,11 @@
     <bcf:citekey order="98" intorder="1">brown1966decentering</bcf:citekey>
     <bcf:citekey order="99" intorder="1">mavproxy</bcf:citekey>
     <bcf:citekey order="100" intorder="1">mavlink2</bcf:citekey>
+    <bcf:citekey order="101" intorder="1">coco_dataset</bcf:citekey>
+    <bcf:citekey order="102" intorder="1">yolov8</bcf:citekey>
+    <bcf:citekey order="103" intorder="1">yolov8</bcf:citekey>
+    <bcf:citekey order="104" intorder="1">rudol2008human</bcf:citekey>
+    <bcf:citekey order="105" intorder="1">settles2009active</bcf:citekey>
   </bcf:section>
   <!-- SORTING TEMPLATES -->
   <bcf:sortingtemplate name="none">

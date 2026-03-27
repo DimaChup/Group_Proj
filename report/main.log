@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.3.27)  27 MAR 2026 21:00
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.3.27)  27 MAR 2026 21:08
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -385,7 +385,100 @@ Package: amsfonts 2013/01/14 v3.01 Basic AMSFonts support
 LaTeX Font Info:    Redeclaring math symbol \hbar on input line 98.
 LaTeX Font Info:    Overwriting math alphabet `\mathfrak' in version `bold'
 (Font)                  U/euf/m/n --> U/euf/b/n on input line 106.
-)) (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/xcolor\xcolor.sty
+))
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/pgfplots\pgfplots.sty
+
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots\pgfplots.r
+evision.tex)
+Package: pgfplots 2021/05/15 v1.18.1 Data Visualization (1.18.1)
+
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/pgf/frontendlayer\tik
+z.sty
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/pgf/basiclayer\pgf.st
+y
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/pgf/utilities\pgfrcs.
+sty
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfut
+il-common.tex
+\pgfutil@everybye=\toks32
+\pgfutil@tempdima=\dimen262
+\pgfutil@tempdimb=\dimen263
+)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfut
+il-latex.def
+\pgfutil@abb=\box74
+)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfrc
+s.code.tex
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf\pgf.revision.te
+x)
+Package: pgfrcs 2025-08-29 v3.1.11a (3.1.11a)
+))
+Package: pgf 2025-08-29 v3.1.11a (3.1.11a)
+
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/pgf/basiclayer\pgfcor
+e.sty
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/pgf/systemlayer\pgfsy
+s.sty
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgf
+sys.code.tex
+Package: pgfsys 2025-08-29 v3.1.11a (3.1.11a)
+
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfke
+ys.code.tex
+\pgfkeys@pathtoks=\toks33
+\pgfkeys@temptoks=\toks34
+
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfke
+yslibraryfiltered.code.tex
+\pgfkeys@tmptoks=\toks35
+))
+\pgf@x=\dimen264
+\pgf@y=\dimen265
+\pgf@xa=\dimen266
+\pgf@ya=\dimen267
+\pgf@xb=\dimen268
+\pgf@yb=\dimen269
+\pgf@xc=\dimen270
+\pgf@yc=\dimen271
+\pgf@xd=\dimen272
+\pgf@yd=\dimen273
+\w@pgf@writea=\write3
+\r@pgf@reada=\read2
+\c@pgf@counta=\count332
+\c@pgf@countb=\count333
+\c@pgf@countc=\count334
+\c@pgf@countd=\count335
+\t@pgf@toka=\toks36
+\t@pgf@tokb=\toks37
+\t@pgf@tokc=\toks38
+\pgf@sys@id@count=\count336
+
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgf
+.cfg
+File: pgf.cfg 2025-08-29 v3.1.11a (3.1.11a)
+)
+Driver file for pgf: pgfsys-pdftex.def
+
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgf
+sys-pdftex.def
+File: pgfsys-pdftex.def 2025-08-29 v3.1.11a (3.1.11a)
+
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgf
+sys-common-pdf.def
+File: pgfsys-common-pdf.def 2025-08-29 v3.1.11a (3.1.11a)
+)))
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgf
+syssoftpath.code.tex
+File: pgfsyssoftpath.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgfsyssoftpath@smallbuffer@items=\count337
+\pgfsyssoftpath@bigbuffer@items=\count338
+)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgf
+sysprotocol.code.tex
+File: pgfsysprotocol.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+))
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/xcolor\xcolor.sty
 Package: xcolor 2024/09/29 v3.02 LaTeX color extensions (UK)
 
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/graphics-cfg\color.cf
@@ -406,20 +499,360 @@ Package xcolor Info: Model `HSB' substituted by `hsb' on input line 1370.
 Package xcolor Info: Model `Gray' substituted by `gray' on input line 1371.
 Package xcolor Info: Model `wave' substituted by `hsb' on input line 1372.
 )
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfc
+ore.code.tex
+Package: pgfcore 2025-08-29 v3.1.11a (3.1.11a)
+
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmath.co
+de.tex
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathuti
+l.code.tex)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathpar
+ser.code.tex
+\pgfmath@dimen=\dimen274
+\pgfmath@count=\count339
+\pgfmath@box=\box75
+\pgfmath@toks=\toks39
+\pgfmath@stack@operand=\toks40
+\pgfmath@stack@operation=\toks41
+)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfun
+ctions.code.tex)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfun
+ctions.basic.code.tex)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfun
+ctions.trigonometric.code.tex)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfun
+ctions.random.code.tex)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfun
+ctions.comparison.code.tex)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfun
+ctions.base.code.tex)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfun
+ctions.round.code.tex)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfun
+ctions.misc.code.tex)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfun
+ctions.integerarithmetics.code.tex)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathcal
+c.code.tex)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathflo
+at.code.tex
+\c@pgfmathroundto@lastzeros=\count340
+))
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfint.cod
+e.tex)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfc
+orepoints.code.tex
+File: pgfcorepoints.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgf@picminx=\dimen275
+\pgf@picmaxx=\dimen276
+\pgf@picminy=\dimen277
+\pgf@picmaxy=\dimen278
+\pgf@pathminx=\dimen279
+\pgf@pathmaxx=\dimen280
+\pgf@pathminy=\dimen281
+\pgf@pathmaxy=\dimen282
+\pgf@xx=\dimen283
+\pgf@xy=\dimen284
+\pgf@yx=\dimen285
+\pgf@yy=\dimen286
+\pgf@zx=\dimen287
+\pgf@zy=\dimen288
+)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfc
+orepathconstruct.code.tex
+File: pgfcorepathconstruct.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgf@path@lastx=\dimen289
+\pgf@path@lasty=\dimen290
+)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfc
+orepathusage.code.tex
+File: pgfcorepathusage.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgf@shorten@end@additional=\dimen291
+\pgf@shorten@start@additional=\dimen292
+)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfc
+orescopes.code.tex
+File: pgfcorescopes.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgfpic=\box76
+\pgf@hbox=\box77
+\pgf@layerbox@main=\box78
+\pgf@picture@serial@count=\count341
+)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfc
+oregraphicstate.code.tex
+File: pgfcoregraphicstate.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgflinewidth=\dimen293
+)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfc
+oretransformations.code.tex
+File: pgfcoretransformations.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgf@pt@x=\dimen294
+\pgf@pt@y=\dimen295
+\pgf@pt@temp=\dimen296
+)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfc
+orequick.code.tex
+File: pgfcorequick.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfc
+oreobjects.code.tex
+File: pgfcoreobjects.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfc
+orepathprocessing.code.tex
+File: pgfcorepathprocessing.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfc
+orearrows.code.tex
+File: pgfcorearrows.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgfarrowsep=\dimen297
+)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfc
+oreshade.code.tex
+File: pgfcoreshade.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgf@max=\dimen298
+\pgf@sys@shading@range@num=\count342
+\pgf@shadingcount=\count343
+)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfc
+oreimage.code.tex
+File: pgfcoreimage.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfc
+oreexternal.code.tex
+File: pgfcoreexternal.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgfexternal@startupbox=\box79
+)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfc
+orelayers.code.tex
+File: pgfcorelayers.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfc
+oretransparency.code.tex
+File: pgfcoretransparency.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfc
+orepatterns.code.tex
+File: pgfcorepatterns.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfc
+orerdf.code.tex
+File: pgfcorerdf.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)))
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/modules\pgfmodu
+leshapes.code.tex
+File: pgfmoduleshapes.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgfnodeparttextbox=\box80
+)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/modules\pgfmodu
+leplot.code.tex
+File: pgfmoduleplot.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/pgf/compatibility\pgf
+comp-version-0-65.sty
+Package: pgfcomp-version-0-65 2025-08-29 v3.1.11a (3.1.11a)
+\pgf@nodesepstart=\dimen299
+\pgf@nodesepend=\dimen300
+)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/pgf/compatibility\pgf
+comp-version-1-18.sty
+Package: pgfcomp-version-1-18 2025-08-29 v3.1.11a (3.1.11a)
+))
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/pgf/utilities\pgffor.
+sty
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/pgf/utilities\pgfkeys
+.sty
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfke
+ys.code.tex))
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/pgf/math\pgfmath.sty
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmath.co
+de.tex))
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgffo
+r.code.tex
+Package: pgffor 2025-08-29 v3.1.11a (3.1.11a)
+\pgffor@iter=\dimen301
+\pgffor@skip=\dimen302
+\pgffor@stack=\toks42
+\pgffor@toks=\toks43
+))
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendlayer/t
+ikz\tikz.code.tex
+Package: tikz 2025-08-29 v3.1.11a (3.1.11a)
+
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/libraries\pgfli
+braryplothandlers.code.tex
+File: pgflibraryplothandlers.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgf@plot@mark@count=\count344
+\pgfplotmarksize=\dimen303
+)
+\tikz@lastx=\dimen304
+\tikz@lasty=\dimen305
+\tikz@lastxsaved=\dimen306
+\tikz@lastysaved=\dimen307
+\tikz@lastmovetox=\dimen308
+\tikz@lastmovetoy=\dimen309
+\tikzleveldistance=\dimen310
+\tikzsiblingdistance=\dimen311
+\tikz@figbox=\box81
+\tikz@figbox@bg=\box82
+\tikz@tempbox=\box83
+\tikz@tempbox@bg=\box84
+\tikztreelevel=\count345
+\tikznumberofchildren=\count346
+\tikznumberofcurrentchild=\count347
+\tikz@fig@count=\count348
+
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/modules\pgfmodu
+lematrix.code.tex
+File: pgfmodulematrix.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgfmatrixcurrentrow=\count349
+\pgfmatrixcurrentcolumn=\count350
+\pgf@matrix@numberofcolumns=\count351
+)
+\tikz@expandcount=\count352
+
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendlayer/t
+ikz/libraries\tikzlibrarytopaths.code.tex
+File: tikzlibrarytopaths.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)))
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots\pgfplots.c
+ode.tex
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots\pgfplotsco
+re.code.tex
+\t@pgfplots@toka=\toks44
+\t@pgfplots@tokb=\toks45
+\t@pgfplots@tokc=\toks46
+\pgfplots@tmpa=\dimen312
+\c@pgfplots@coordindex=\count353
+\c@pgfplots@scanlineindex=\count354
+
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots/sys\pgfplo
+tssysgeneric.code.tex))
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots/libs\pgfpl
+otslibrary.code.tex)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots/oldpgfcomp
+atib\pgfplotsoldpgfsupp_loader.code.tex
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/libraries\pgfli
+braryfpu.code.tex)
+Package pgfplots: loading complementary utilities for your pgf version...
+\t@pgf@toka=\toks47
+\t@pgf@tokb=\toks48
+\t@pgf@tokc=\toks49
+
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots/oldpgfcomp
+atib\pgfplotsoldpgfsupp_pgfutil-common-lists.tex))
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots/util\pgfpl
+otsutil.code.tex
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots/liststruct
+ure\pgfplotsliststructure.code.tex)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots/liststruct
+ure\pgfplotsliststructureext.code.tex)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots/liststruct
+ure\pgfplotsarray.code.tex
+\c@pgfplotsarray@tmp=\count355
+)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots/liststruct
+ure\pgfplotsmatrix.code.tex)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots/numtable\p
+gfplotstableshared.code.tex
+\c@pgfplotstable@counta=\count356
+\t@pgfplotstable@a=\toks50
+)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots/liststruct
+ure\pgfplotsdeque.code.tex)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots/util\pgfpl
+otsbinary.code.tex
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots/util\pgfpl
+otsbinary.data.code.tex))
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots/util\pgfpl
+otsutil.verb.code.tex)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots/libs\pgfli
+brarypgfplots.surfshading.code.tex
+\c@pgfplotslibrarysurf@no=\count357
+
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots/sys\pgflib
+rarypgfplots.surfshading.pgfsys-pdftex.def)))
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots/util\pgfpl
+otscolormap.code.tex
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots/util\pgfpl
+otscolor.code.tex))
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots\pgfplotsst
+ackedplots.code.tex)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots\pgfplotspl
+othandlers.code.tex
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots\pgfplotsme
+shplothandler.code.tex
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots\pgfplotsme
+shplotimage.code.tex)))
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots\pgfplots.s
+caling.code.tex)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots\pgfplotsco
+ordprocessing.code.tex)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots\pgfplots.e
+rrorbars.code.tex)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots\pgfplots.m
+arkers.code.tex)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots\pgfplotsti
+cks.code.tex)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots\pgfplots.p
+aths.code.tex)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendlayer/t
+ikz/libraries\tikzlibrarydecorations.code.tex
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/modules\pgfmodu
+ledecorations.code.tex
+\pgfdecoratedcompleteddistance=\dimen313
+\pgfdecoratedremainingdistance=\dimen314
+\pgfdecoratedinputsegmentcompleteddistance=\dimen315
+\pgfdecoratedinputsegmentremainingdistance=\dimen316
+\pgf@decorate@distancetomove=\dimen317
+\pgf@decorate@repeatstate=\count358
+\pgfdecorationsegmentamplitude=\dimen318
+\pgfdecorationsegmentlength=\dimen319
+)
+\tikz@lib@dec@box=\box85
+)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendlayer/t
+ikz/libraries\tikzlibrarydecorations.pathmorphing.code.tex
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/libraries/decor
+ations\pgflibrarydecorations.pathmorphing.code.tex))
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendlayer/t
+ikz/libraries\tikzlibrarydecorations.pathreplacing.code.tex
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/libraries/decor
+ations\pgflibrarydecorations.pathreplacing.code.tex))
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots/libs\tikzl
+ibrarypgfplots.contourlua.code.tex)
+\pgfplots@numplots=\count359
+\pgfplots@xmin@reg=\dimen320
+\pgfplots@xmax@reg=\dimen321
+\pgfplots@ymin@reg=\dimen322
+\pgfplots@ymax@reg=\dimen323
+\pgfplots@zmin@reg=\dimen324
+\pgfplots@zmax@reg=\dimen325
+)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendlayer/t
+ikz/libraries\tikzlibraryplotmarks.code.tex
+File: tikzlibraryplotmarks.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/libraries\pgfli
+braryplotmarks.code.tex
+File: pgflibraryplotmarks.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)))
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/graphics\dvipsnam.def
 File: dvipsnam.def 2016/06/17 v3.0m Driver-dependent file (DPC,SPQR)
 )
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/titlesec\titlesec.sty
 Package: titlesec 2025/01/04 v2.17 Sectioning titles
-\ttl@box=\box74
+\ttl@box=\box86
 \beforetitleunit=\skip63
 \aftertitleunit=\skip64
-\ttl@plus=\dimen262
-\ttl@minus=\dimen263
-\ttl@toksa=\toks32
-\titlewidth=\dimen264
-\titlewidthlast=\dimen265
-\titlewidthfirst=\dimen266
+\ttl@plus=\dimen326
+\ttl@minus=\dimen327
+\ttl@toksa=\toks51
+\titlewidth=\dimen328
+\titlewidthlast=\dimen329
+\titlewidthfirst=\dimen330
 )
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/fancyhdr\fancyhdr.sty
 Package: fancyhdr 2025/02/07 v5.2 Extensive control of page headers and footers
@@ -438,16 +871,16 @@ Package: fancyhdr 2025/02/07 v5.2 Extensive control of page headers and footers
 \f@nch@widthL=\skip76
 \f@nch@widthC=\skip77
 \f@nch@widthR=\skip78
-\@temptokenb=\toks33
+\@temptokenb=\toks52
 )
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/enumitem\enumitem.sty
 Package: enumitem 2025/02/06 v3.11 Customized lists
 \labelindent=\skip79
-\enit@outerparindent=\dimen267
-\enit@toks=\toks34
-\enit@inbox=\box75
-\enit@count@id=\count332
-\enitdp@description=\count333
+\enit@outerparindent=\dimen331
+\enit@toks=\toks53
+\enit@inbox=\box87
+\enit@count@id=\count360
+\enitdp@description=\count361
 )
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/mdframed\mdframed.sty
 Package: mdframed 2013/07/01 1.9b: mdframed
@@ -468,7 +901,7 @@ Package: expl3 2026-01-19 L3 programming layer (loader)
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/l3backend\l3backend-p
 dftex.def
 File: l3backend-pdftex.def 2025-10-09 L3 backend support: PDF output (pdfTeX)
-\l__color_backend_stack_int=\count334
+\l__color_backend_stack_int=\count362
 ))
 Package: xparse 2025-10-09 L3 Experimental document command parser
 )
@@ -492,7 +925,7 @@ Package zref Info: New property list: main on input line 767.
 Package zref Info: New property: default on input line 768.
 Package zref Info: New property: page on input line 769.
 )
-\c@abspage=\count335
+\c@abspage=\count363
 Package zref Info: New property: abspage on input line 67.
 )
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/needspace\needspace.s
@@ -500,7 +933,7 @@ ty
 Package: needspace 2025/03/13 v1.3e reserve vertical space
 )
 \mdf@templength=\skip80
-\c@mdf@globalstyle@cnt=\count336
+\c@mdf@globalstyle@cnt=\count364
 \mdf@skipabove@length=\skip81
 \mdf@skipbelow@length=\skip82
 \mdf@leftmargin@length=\skip83
@@ -541,319 +974,15 @@ Package: needspace 2025/03/13 v1.3e reserve vertical space
 \mdf@subsubtitleinneraboveskip@length=\skip118
 \mdf@subsubtitleinnerbelowskip@length=\skip119
 
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/pgf/frontendlayer\tik
-z.sty
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/pgf/basiclayer\pgf.st
-y
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/pgf/utilities\pgfrcs.
-sty
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfut
-il-common.tex
-\pgfutil@everybye=\toks35
-\pgfutil@tempdima=\dimen268
-\pgfutil@tempdimb=\dimen269
-)
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfut
-il-latex.def
-\pgfutil@abb=\box76
-)
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfrc
-s.code.tex
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf\pgf.revision.te
-x)
-Package: pgfrcs 2025-08-29 v3.1.11a (3.1.11a)
-))
-Package: pgf 2025-08-29 v3.1.11a (3.1.11a)
-
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/pgf/basiclayer\pgfcor
-e.sty
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/pgf/systemlayer\pgfsy
-s.sty
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgf
-sys.code.tex
-Package: pgfsys 2025-08-29 v3.1.11a (3.1.11a)
-
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfke
-ys.code.tex
-\pgfkeys@pathtoks=\toks36
-\pgfkeys@temptoks=\toks37
-
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfke
-yslibraryfiltered.code.tex
-\pgfkeys@tmptoks=\toks38
-))
-\pgf@x=\dimen270
-\pgf@y=\dimen271
-\pgf@xa=\dimen272
-\pgf@ya=\dimen273
-\pgf@xb=\dimen274
-\pgf@yb=\dimen275
-\pgf@xc=\dimen276
-\pgf@yc=\dimen277
-\pgf@xd=\dimen278
-\pgf@yd=\dimen279
-\w@pgf@writea=\write3
-\r@pgf@reada=\read2
-\c@pgf@counta=\count337
-\c@pgf@countb=\count338
-\c@pgf@countc=\count339
-\c@pgf@countd=\count340
-\t@pgf@toka=\toks39
-\t@pgf@tokb=\toks40
-\t@pgf@tokc=\toks41
-\pgf@sys@id@count=\count341
-
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgf
-.cfg
-File: pgf.cfg 2025-08-29 v3.1.11a (3.1.11a)
-)
-Driver file for pgf: pgfsys-pdftex.def
-
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgf
-sys-pdftex.def
-File: pgfsys-pdftex.def 2025-08-29 v3.1.11a (3.1.11a)
-
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgf
-sys-common-pdf.def
-File: pgfsys-common-pdf.def 2025-08-29 v3.1.11a (3.1.11a)
-)))
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgf
-syssoftpath.code.tex
-File: pgfsyssoftpath.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-\pgfsyssoftpath@smallbuffer@items=\count342
-\pgfsyssoftpath@bigbuffer@items=\count343
-)
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgf
-sysprotocol.code.tex
-File: pgfsysprotocol.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-))
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfc
-ore.code.tex
-Package: pgfcore 2025-08-29 v3.1.11a (3.1.11a)
-
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmath.co
-de.tex
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathuti
-l.code.tex)
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathpar
-ser.code.tex
-\pgfmath@dimen=\dimen280
-\pgfmath@count=\count344
-\pgfmath@box=\box77
-\pgfmath@toks=\toks42
-\pgfmath@stack@operand=\toks43
-\pgfmath@stack@operation=\toks44
-)
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfun
-ctions.code.tex)
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfun
-ctions.basic.code.tex)
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfun
-ctions.trigonometric.code.tex)
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfun
-ctions.random.code.tex)
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfun
-ctions.comparison.code.tex)
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfun
-ctions.base.code.tex)
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfun
-ctions.round.code.tex)
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfun
-ctions.misc.code.tex)
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfun
-ctions.integerarithmetics.code.tex)
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathcal
-c.code.tex)
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathflo
-at.code.tex
-\c@pgfmathroundto@lastzeros=\count345
-))
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfint.cod
-e.tex)
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfc
-orepoints.code.tex
-File: pgfcorepoints.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-\pgf@picminx=\dimen281
-\pgf@picmaxx=\dimen282
-\pgf@picminy=\dimen283
-\pgf@picmaxy=\dimen284
-\pgf@pathminx=\dimen285
-\pgf@pathmaxx=\dimen286
-\pgf@pathminy=\dimen287
-\pgf@pathmaxy=\dimen288
-\pgf@xx=\dimen289
-\pgf@xy=\dimen290
-\pgf@yx=\dimen291
-\pgf@yy=\dimen292
-\pgf@zx=\dimen293
-\pgf@zy=\dimen294
-)
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfc
-orepathconstruct.code.tex
-File: pgfcorepathconstruct.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-\pgf@path@lastx=\dimen295
-\pgf@path@lasty=\dimen296
-)
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfc
-orepathusage.code.tex
-File: pgfcorepathusage.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-\pgf@shorten@end@additional=\dimen297
-\pgf@shorten@start@additional=\dimen298
-)
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfc
-orescopes.code.tex
-File: pgfcorescopes.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-\pgfpic=\box78
-\pgf@hbox=\box79
-\pgf@layerbox@main=\box80
-\pgf@picture@serial@count=\count346
-)
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfc
-oregraphicstate.code.tex
-File: pgfcoregraphicstate.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-\pgflinewidth=\dimen299
-)
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfc
-oretransformations.code.tex
-File: pgfcoretransformations.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-\pgf@pt@x=\dimen300
-\pgf@pt@y=\dimen301
-\pgf@pt@temp=\dimen302
-)
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfc
-orequick.code.tex
-File: pgfcorequick.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-)
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfc
-oreobjects.code.tex
-File: pgfcoreobjects.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-)
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfc
-orepathprocessing.code.tex
-File: pgfcorepathprocessing.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-)
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfc
-orearrows.code.tex
-File: pgfcorearrows.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-\pgfarrowsep=\dimen303
-)
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfc
-oreshade.code.tex
-File: pgfcoreshade.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-\pgf@max=\dimen304
-\pgf@sys@shading@range@num=\count347
-\pgf@shadingcount=\count348
-)
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfc
-oreimage.code.tex
-File: pgfcoreimage.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-)
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfc
-oreexternal.code.tex
-File: pgfcoreexternal.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-\pgfexternal@startupbox=\box81
-)
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfc
-orelayers.code.tex
-File: pgfcorelayers.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-)
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfc
-oretransparency.code.tex
-File: pgfcoretransparency.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-)
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfc
-orepatterns.code.tex
-File: pgfcorepatterns.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-)
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfc
-orerdf.code.tex
-File: pgfcorerdf.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-)))
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/modules\pgfmodu
-leshapes.code.tex
-File: pgfmoduleshapes.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-\pgfnodeparttextbox=\box82
-)
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/modules\pgfmodu
-leplot.code.tex
-File: pgfmoduleplot.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-)
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/pgf/compatibility\pgf
-comp-version-0-65.sty
-Package: pgfcomp-version-0-65 2025-08-29 v3.1.11a (3.1.11a)
-\pgf@nodesepstart=\dimen305
-\pgf@nodesepend=\dimen306
-)
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/pgf/compatibility\pgf
-comp-version-1-18.sty
-Package: pgfcomp-version-1-18 2025-08-29 v3.1.11a (3.1.11a)
-))
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/pgf/utilities\pgffor.
-sty
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/pgf/utilities\pgfkeys
-.sty
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfke
-ys.code.tex))
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/pgf/math\pgfmath.sty
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmath.co
-de.tex))
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgffo
-r.code.tex
-Package: pgffor 2025-08-29 v3.1.11a (3.1.11a)
-\pgffor@iter=\dimen307
-\pgffor@skip=\dimen308
-\pgffor@stack=\toks45
-\pgffor@toks=\toks46
-))
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendlayer/t
-ikz\tikz.code.tex
-Package: tikz 2025-08-29 v3.1.11a (3.1.11a)
-
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/libraries\pgfli
-braryplothandlers.code.tex
-File: pgflibraryplothandlers.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-\pgf@plot@mark@count=\count349
-\pgfplotmarksize=\dimen309
-)
-\tikz@lastx=\dimen310
-\tikz@lasty=\dimen311
-\tikz@lastxsaved=\dimen312
-\tikz@lastysaved=\dimen313
-\tikz@lastmovetox=\dimen314
-\tikz@lastmovetoy=\dimen315
-\tikzleveldistance=\dimen316
-\tikzsiblingdistance=\dimen317
-\tikz@figbox=\box83
-\tikz@figbox@bg=\box84
-\tikz@tempbox=\box85
-\tikz@tempbox@bg=\box86
-\tikztreelevel=\count350
-\tikznumberofchildren=\count351
-\tikznumberofcurrentchild=\count352
-\tikz@fig@count=\count353
-
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/modules\pgfmodu
-lematrix.code.tex
-File: pgfmodulematrix.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-\pgfmatrixcurrentrow=\count354
-\pgfmatrixcurrentcolumn=\count355
-\pgf@matrix@numberofcolumns=\count356
-)
-\tikz@expandcount=\count357
-
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendlayer/t
-ikz/libraries\tikzlibrarytopaths.code.tex
-File: tikzlibrarytopaths.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-)))
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/mdframed\md-frame-1.m
 df
 File: md-frame-1.mdf 2013/07/01\ 1.9b: md-frame-1
 )
-\mdf@frametitlebox=\box87
-\mdf@footnotebox=\box88
-\mdf@splitbox@one=\box89
-\mdf@splitbox@two=\box90
-\mdf@splitbox@save=\box91
+\mdf@frametitlebox=\box88
+\mdf@footnotebox=\box89
+\mdf@splitbox@one=\box90
+\mdf@splitbox@two=\box91
+\mdf@splitbox@save=\box92
 \mdfsplitboxwidth=\skip120
 \mdfsplitboxtotalwidth=\skip121
 \mdfsplitboxheight=\skip122
@@ -881,40 +1010,40 @@ File: md-frame-1.mdf 2013/07/01\ 1.9b: md-frame-1
 \mdf@horizontalspaceofbox=\skip144
 \mdfsubtitleheight=\skip145
 \mdfsubsubtitleheight=\skip146
-\c@mdfcountframes=\count358
+\c@mdfcountframes=\count365
 
 ****** mdframed patching \endmdf@trivlist
 
 ****** -- success******
 
-\mdf@envdepth=\count359
-\c@mdf@env@i=\count360
-\c@mdf@env@ii=\count361
-\c@mdf@zref@counter=\count362
+\mdf@envdepth=\count366
+\c@mdf@env@i=\count367
+\c@mdf@env@ii=\count368
+\c@mdf@zref@counter=\count369
 Package zref Info: New property: mdf@pagevalue on input line 895.
 )
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/listings\listings.sty
-\lst@mode=\count363
-\lst@gtempboxa=\box92
-\lst@token=\toks47
-\lst@length=\count364
-\lst@currlwidth=\dimen318
-\lst@column=\count365
-\lst@pos=\count366
-\lst@lostspace=\dimen319
-\lst@width=\dimen320
-\lst@newlines=\count367
-\lst@lineno=\count368
-\lst@maxwidth=\dimen321
+\lst@mode=\count370
+\lst@gtempboxa=\box93
+\lst@token=\toks54
+\lst@length=\count371
+\lst@currlwidth=\dimen332
+\lst@column=\count372
+\lst@pos=\count373
+\lst@lostspace=\dimen333
+\lst@width=\dimen334
+\lst@newlines=\count374
+\lst@lineno=\count375
+\lst@maxwidth=\dimen335
 
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/listings\lstpatch.sty
 File: lstpatch.sty 2025/11/14 1.11b (Carsten Heinz)
 )
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/listings\lstmisc.sty
 File: lstmisc.sty 2025/11/14 1.11b (Carsten Heinz)
-\c@lstnumber=\count369
-\lst@skipnumbers=\count370
-\lst@framebox=\box93
+\c@lstnumber=\count376
+\lst@skipnumbers=\count377
+\lst@framebox=\box94
 )
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/listings\listings.cfg
 File: listings.cfg 2025/11/14 1.11b listings configuration
@@ -930,13 +1059,13 @@ Package: listings 2025/11/14 1.11b (Carsten Heinz)
 
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/csquotes\csquotes.sty
 Package: csquotes 2024-04-04 v5.2o context-sensitive quotations (JAW)
-\csq@reset=\count371
-\csq@gtype=\count372
-\csq@glevel=\count373
-\csq@qlevel=\count374
-\csq@maxlvl=\count375
-\csq@tshold=\count376
-\csq@ltx@everypar=\toks48
+\csq@reset=\count378
+\csq@gtype=\count379
+\csq@glevel=\count380
+\csq@qlevel=\count381
+\csq@maxlvl=\count382
+\csq@tshold=\count383
+\csq@ltx@everypar=\toks55
 
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/csquotes\csquotes.def
 File: csquotes.def 2024-04-04 v5.2o csquotes generic definitions (JAW)
@@ -948,29 +1077,28 @@ Package csquotes Info: ... configuration file loaded successfully.
 File: csquotes.cfg 
 )) (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/tools\multicol.sty
 Package: multicol 2025/10/21 v2.0b multicolumn formatting (FMi)
-\c@tracingmulticols=\count377
-\mult@box=\box94
-\multicol@leftmargin=\dimen322
-\c@unbalance=\count378
-\c@collectmore=\count379
-\doublecol@number=\count380
-\multicoltolerance=\count381
-\multicolpretolerance=\count382
-\full@width=\dimen323
-\page@free=\dimen324
-\premulticols=\dimen325
-\postmulticols=\dimen326
+\c@tracingmulticols=\count384
+\mult@box=\box95
+\multicol@leftmargin=\dimen336
+\c@unbalance=\count385
+\c@collectmore=\count386
+\doublecol@number=\count387
+\multicoltolerance=\count388
+\multicolpretolerance=\count389
+\full@width=\dimen337
+\page@free=\dimen338
+\premulticols=\dimen339
+\postmulticols=\dimen340
 \multicolsep=\skip147
 \multicolbaselineskip=\skip148
-\partial@page=\box95
-\last@line=\box96
-\mc@boxedresult=\box97
-\maxbalancingoverflow=\dimen327
-\mult@rightbox=\box98
-\mult@grightbox=\box99
-\mult@firstbox=\box100
-\mult@gfirstbox=\box101
-\@tempa=\box102
+\partial@page=\box96
+\last@line=\box97
+\mc@boxedresult=\box98
+\maxbalancingoverflow=\dimen341
+\mult@rightbox=\box99
+\mult@grightbox=\box100
+\mult@firstbox=\box101
+\mult@gfirstbox=\box102
 \@tempa=\box103
 \@tempa=\box104
 \@tempa=\box105
@@ -1006,22 +1134,23 @@ Package: multicol 2025/10/21 v2.0b multicolumn formatting (FMi)
 \@tempa=\box135
 \@tempa=\box136
 \@tempa=\box137
-\c@minrows=\count383
-\c@columnbadness=\count384
-\c@finalcolumnbadness=\count385
-\last@try=\dimen328
-\multicolovershoot=\dimen329
-\multicolundershoot=\dimen330
-\mult@nat@firstbox=\box138
-\colbreak@box=\box139
-\mc@col@check@num=\count386
-\g__mc_curr_col_int=\count387
+\@tempa=\box138
+\c@minrows=\count390
+\c@columnbadness=\count391
+\c@finalcolumnbadness=\count392
+\last@try=\dimen342
+\multicolovershoot=\dimen343
+\multicolundershoot=\dimen344
+\mult@nat@firstbox=\box139
+\colbreak@box=\box140
+\mc@col@check@num=\count393
+\g__mc_curr_col_int=\count394
 )
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/biblatex\biblatex.sty
 Package: biblatex 2025/07/10 v3.21 programmable bibliographies (PK/MW)
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/logreq\logreq.sty
 Package: logreq 2010/08/04 v1.0 xml request logger
-\lrq@indent=\count388
+\lrq@indent=\count395
 
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/logreq\logreq.def
 File: logreq.def 2010/08/04 v1.0 logreq spec v1.0
@@ -1033,49 +1162,49 @@ Package: ifthen 2024/03/16 v1.1e Standard LaTeX ifthen package (DPC)
 \Urlmuskip=\muskip18
 Package: url 2013/09/16  ver 3.4  Verb mode for urls, etc.
 )
-\c@tabx@nest=\count389
-\c@listtotal=\count390
-\c@listcount=\count391
-\c@liststart=\count392
-\c@liststop=\count393
-\c@citecount=\count394
-\c@citetotal=\count395
-\c@multicitecount=\count396
-\c@multicitetotal=\count397
-\c@instcount=\count398
-\c@maxnames=\count399
-\c@minnames=\count400
-\c@maxitems=\count401
-\c@minitems=\count402
-\c@citecounter=\count403
-\c@maxcitecounter=\count404
-\c@savedcitecounter=\count405
-\c@uniquelist=\count406
-\c@uniquename=\count407
-\c@refsection=\count408
-\c@refsegment=\count409
-\c@maxextratitle=\count410
-\c@maxextratitleyear=\count411
-\c@maxextraname=\count412
-\c@maxextradate=\count413
-\c@maxextraalpha=\count414
-\c@abbrvpenalty=\count415
-\c@highnamepenalty=\count416
-\c@lownamepenalty=\count417
-\c@maxparens=\count418
-\c@parenlevel=\count419
-\blx@tempcnta=\count420
-\blx@tempcntb=\count421
-\blx@tempcntc=\count422
-\c@blx@maxsection=\count423
-\blx@maxsegment@0=\count424
-\blx@notetype=\count425
-\blx@parenlevel@text=\count426
-\blx@parenlevel@foot=\count427
-\blx@sectionciteorder@0=\count428
-\blx@sectionciteorderinternal@0=\count429
-\blx@entrysetcounter=\count430
-\blx@biblioinstance=\count431
+\c@tabx@nest=\count396
+\c@listtotal=\count397
+\c@listcount=\count398
+\c@liststart=\count399
+\c@liststop=\count400
+\c@citecount=\count401
+\c@citetotal=\count402
+\c@multicitecount=\count403
+\c@multicitetotal=\count404
+\c@instcount=\count405
+\c@maxnames=\count406
+\c@minnames=\count407
+\c@maxitems=\count408
+\c@minitems=\count409
+\c@citecounter=\count410
+\c@maxcitecounter=\count411
+\c@savedcitecounter=\count412
+\c@uniquelist=\count413
+\c@uniquename=\count414
+\c@refsection=\count415
+\c@refsegment=\count416
+\c@maxextratitle=\count417
+\c@maxextratitleyear=\count418
+\c@maxextraname=\count419
+\c@maxextradate=\count420
+\c@maxextraalpha=\count421
+\c@abbrvpenalty=\count422
+\c@highnamepenalty=\count423
+\c@lownamepenalty=\count424
+\c@maxparens=\count425
+\c@parenlevel=\count426
+\blx@tempcnta=\count427
+\blx@tempcntb=\count428
+\blx@tempcntc=\count429
+\c@blx@maxsection=\count430
+\blx@maxsegment@0=\count431
+\blx@notetype=\count432
+\blx@parenlevel@text=\count433
+\blx@parenlevel@foot=\count434
+\blx@sectionciteorder@0=\count435
+\blx@sectionciteorderinternal@0=\count436
+\blx@entrysetcounter=\count437
+\blx@biblioinstance=\count438
 \labelnumberwidth=\skip149
 \labelalphawidth=\skip150
 \biblabelsep=\skip151
@@ -1087,9 +1216,9 @@ Package: url 2013/09/16  ver 3.4  Verb mode for urls, etc.
 \blx@bcfin=\read3
 \blx@bcfout=\write4
 \blx@langwohyphens=\language79
-\c@mincomprange=\count432
-\c@maxcomprange=\count433
-\c@mincompwidth=\count434
+\c@mincomprange=\count439
+\c@maxcomprange=\count440
+\c@mincompwidth=\count441
 Package biblatex Info: Trying to load biblatex default data model...
 Package biblatex Info: ... file 'blx-dm.def' found.
 
@@ -1100,74 +1229,74 @@ Package biblatex Info: Trying to load biblatex style data model...
 Package biblatex Info: ... file 'numeric.dbx' not found.
 Package biblatex Info: Trying to load biblatex custom data model...
 Package biblatex Info: ... file 'biblatex-dm.cfg' not found.
-\c@afterword=\count435
-\c@savedafterword=\count436
-\c@annotator=\count437
-\c@savedannotator=\count438
-\c@author=\count439
-\c@savedauthor=\count440
-\c@bookauthor=\count441
-\c@savedbookauthor=\count442
-\c@commentator=\count443
-\c@savedcommentator=\count444
-\c@editor=\count445
-\c@savededitor=\count446
-\c@editora=\count447
-\c@savededitora=\count448
-\c@editorb=\count449
-\c@savededitorb=\count450
-\c@editorc=\count451
-\c@savededitorc=\count452
-\c@foreword=\count453
-\c@savedforeword=\count454
-\c@holder=\count455
-\c@savedholder=\count456
-\c@introduction=\count457
-\c@savedintroduction=\count458
-\c@namea=\count459
-\c@savednamea=\count460
-\c@nameb=\count461
-\c@savednameb=\count462
-\c@namec=\count463
-\c@savednamec=\count464
-\c@translator=\count465
-\c@savedtranslator=\count466
-\c@shortauthor=\count467
-\c@savedshortauthor=\count468
-\c@shorteditor=\count469
-\c@savedshorteditor=\count470
-\c@labelname=\count471
-\c@savedlabelname=\count472
-\c@institution=\count473
-\c@savedinstitution=\count474
-\c@lista=\count475
-\c@savedlista=\count476
-\c@listb=\count477
-\c@savedlistb=\count478
-\c@listc=\count479
-\c@savedlistc=\count480
-\c@listd=\count481
-\c@savedlistd=\count482
-\c@liste=\count483
-\c@savedliste=\count484
-\c@listf=\count485
-\c@savedlistf=\count486
-\c@location=\count487
-\c@savedlocation=\count488
-\c@organization=\count489
-\c@savedorganization=\count490
-\c@origlocation=\count491
-\c@savedoriglocation=\count492
-\c@origpublisher=\count493
-\c@savedorigpublisher=\count494
-\c@publisher=\count495
-\c@savedpublisher=\count496
-\c@language=\count497
-\c@savedlanguage=\count498
-\c@origlanguage=\count499
-\c@savedoriglanguage=\count500
-\c@pageref=\count501
-\c@savedpageref=\count502
+\c@afterword=\count442
+\c@savedafterword=\count443
+\c@annotator=\count444
+\c@savedannotator=\count445
+\c@author=\count446
+\c@savedauthor=\count447
+\c@bookauthor=\count448
+\c@savedbookauthor=\count449
+\c@commentator=\count450
+\c@savedcommentator=\count451
+\c@editor=\count452
+\c@savededitor=\count453
+\c@editora=\count454
+\c@savededitora=\count455
+\c@editorb=\count456
+\c@savededitorb=\count457
+\c@editorc=\count458
+\c@savededitorc=\count459
+\c@foreword=\count460
+\c@savedforeword=\count461
+\c@holder=\count462
+\c@savedholder=\count463
+\c@introduction=\count464
+\c@savedintroduction=\count465
+\c@namea=\count466
+\c@savednamea=\count467
+\c@nameb=\count468
+\c@savednameb=\count469
+\c@namec=\count470
+\c@savednamec=\count471
+\c@translator=\count472
+\c@savedtranslator=\count473
+\c@shortauthor=\count474
+\c@savedshortauthor=\count475
+\c@shorteditor=\count476
+\c@savedshorteditor=\count477
+\c@labelname=\count478
+\c@savedlabelname=\count479
+\c@institution=\count480
+\c@savedinstitution=\count481
+\c@lista=\count482
+\c@savedlista=\count483
+\c@listb=\count484
+\c@savedlistb=\count485
+\c@listc=\count486
+\c@savedlistc=\count487
+\c@listd=\count488
+\c@savedlistd=\count489
+\c@liste=\count490
+\c@savedliste=\count491
+\c@listf=\count492
+\c@savedlistf=\count493
+\c@location=\count494
+\c@savedlocation=\count495
+\c@organization=\count496
+\c@savedorganization=\count497
+\c@origlocation=\count498
+\c@savedoriglocation=\count499
+\c@origpublisher=\count500
+\c@savedorigpublisher=\count501
+\c@publisher=\count502
+\c@savedpublisher=\count503
+\c@language=\count504
+\c@savedlanguage=\count505
+\c@origlanguage=\count506
+\c@savedoriglanguage=\count507
+\c@pageref=\count508
+\c@savedpageref=\count509
 \shorthandwidth=\skip157
 \shortjournalwidth=\skip158
 \shortserieswidth=\skip159
@@ -1194,19 +1323,19 @@ Package biblatex Info: ... file 'biblatex.def' found.
 
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/biblatex\biblatex.def
 File: biblatex.def 2025/07/10 v3.21 biblatex compatibility (PK/MW)
-\c@textcitecount=\count503
-\c@textcitetotal=\count504
-\c@textcitemaxnames=\count505
-\c@biburlbigbreakpenalty=\count506
-\c@biburlbreakpenalty=\count507
-\c@biburlnumpenalty=\count508
-\c@biburlucpenalty=\count509
-\c@biburllcpenalty=\count510
+\c@textcitecount=\count510
+\c@textcitetotal=\count511
+\c@textcitemaxnames=\count512
+\c@biburlbigbreakpenalty=\count513
+\c@biburlbreakpenalty=\count514
+\c@biburlnumpenalty=\count515
+\c@biburlucpenalty=\count516
+\c@biburllcpenalty=\count517
 \biburlbigskip=\muskip19
 \biburlnumskip=\muskip20
 \biburlucskip=\muskip21
 \biburllcskip=\muskip22
-\c@smartand=\count511
+\c@smartand=\count518
 )
 Package biblatex Info: Trying to load bibliography style 'numeric'...
 Package biblatex Info: ... file 'numeric.bbx' found.
@@ -1220,8 +1349,8 @@ Package biblatex Info: ... file 'standard.bbx' found.
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/biblatex/bbx\standard
 .bbx
 File: standard.bbx 2025/07/10 v3.21 biblatex bibliography style (PK/MW)
-\c@bbx:relatedcount=\count512
-\c@bbx:relatedtotal=\count513
+\c@bbx:relatedcount=\count519
+\c@bbx:relatedtotal=\count520
 ))
 Package biblatex Info: Trying to load citation style 'numeric'...
 Package biblatex Info: ... file 'numeric.cbx' found.
@@ -1278,16 +1407,16 @@ Package: refcount 2019/12/15 v3.6 Data extraction from label references (HO)
 itlestring.sty
 Package: gettitlestring 2019/12/15 v1.6 Cleanup title references (HO)
 )
-\c@section@level=\count514
+\c@section@level=\count521
 )
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/stringenc\stringenc
 .sty
 Package: stringenc 2019/11/29 v1.12 Convert strings between diff. encodings (HO
 )
 )
-\@linkdim=\dimen331
-\Hy@linkcounter=\count515
-\Hy@pagecounter=\count516
+\@linkdim=\dimen345
+\Hy@linkcounter=\count522
+\Hy@pagecounter=\count523
 
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\pd1enc.def
 File: pd1enc.def 2026-01-29 v7.01p Hyperref: PDFDocEncoding definition (HO)
@@ -1297,7 +1426,7 @@ Now handling font encoding PD1 ...
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/intcalc\intcalc.sty
 Package: intcalc 2019/12/15 v1.3 Expandable calculations with integers (HO)
 )
-\Hy@SavedSpaceFactor=\count517
+\Hy@SavedSpaceFactor=\count524
  (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\puenc.def
 File: puenc.def 2026-01-29 v7.01p Hyperref: PDF Unicode definition (HO)
 Now handling font encoding PU ...
@@ -1311,9 +1440,9 @@ Package hyperref Info: Plain pages OFF on input line 4216.
 Package hyperref Info: Backreferencing OFF on input line 4221.
 Package hyperref Info: Implicit mode ON; LaTeX internals redefined.
 Package hyperref Info: Bookmarks ON on input line 4468.
-\c@Hy@tempcnt=\count518
+\c@Hy@tempcnt=\count525
 LaTeX Info: Redefining \url on input line 4807.
-\XeTeXLinkMargin=\dimen332
+\XeTeXLinkMargin=\dimen346
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/bitset\bitset.sty
 Package: bitset 2019/12/09 v1.3 Handle bit-vector datatype (HO)
 
@@ -1322,9 +1451,9 @@ lc.sty
 Package: bigintcalc 2019/12/15 v1.5 Expandable calculations on big integers (HO
 )
 ))
-\Fld@menulength=\count519
-\Field@Width=\dimen333
-\Fld@charsize=\dimen334
+\Fld@menulength=\count526
+\Field@Width=\dimen347
+\Fld@charsize=\dimen348
 Package hyperref Info: Hyper figures OFF on input line 6084.
 Package hyperref Info: Link nesting OFF on input line 6089.
 Package hyperref Info: Hyper index ON on input line 6092.
@@ -1332,17 +1461,17 @@ Package hyperref Info: backreferencing OFF on input line 6099.
 Package hyperref Info: Link coloring ON on input line 6102.
 Package hyperref Info: Link coloring with OCG OFF on input line 6109.
 Package hyperref Info: PDF/A mode OFF on input line 6114.
-\Hy@abspage=\count520
-\c@Item=\count521
-\c@Hfootnote=\count522
+\Hy@abspage=\count527
+\c@Item=\count528
+\c@Hfootnote=\count529
 )
 Package hyperref Info: Driver (autodetected): hpdftex.
 
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\hpdftex.def
 File: hpdftex.def 2026-01-29 v7.01p Hyperref driver for pdfTeX
-\HyAnn@Count=\count523
-\Fld@listcount=\count524
-\c@bookmark@seq@number=\count525
+\HyAnn@Count=\count530
+\Fld@listcount=\count531
+\c@bookmark@seq@number=\count532
 
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/rerunfilecheck\rerunf
 ilecheck.sty
@@ -1358,11 +1487,11 @@ Package uniquecounter Info: New unique counter `rerunfilecheck' on input line 2
 \Hy@SectionHShift=\skip171
 )
 Package translations Info: No language package found. I am going to use `englis
-h' as default language. on input line 121.
+h' as default language. on input line 123.
 Package csquotes Info: Checking for multilingual support...
 Package csquotes Info: ... none found.
 LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 1
-21.
+23.
 
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/lm\ot1lmr.fd
 File: ot1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
@@ -1386,24 +1515,24 @@ LaTeX Warning: Label `eq:footprint' multiply defined.
 )
 \openout1 = `main.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 121.
-LaTeX Font Info:    ... okay on input line 121.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 121.
-LaTeX Font Info:    ... okay on input line 121.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 121.
-LaTeX Font Info:    ... okay on input line 121.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 121.
-LaTeX Font Info:    ... okay on input line 121.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 121.
-LaTeX Font Info:    ... okay on input line 121.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 121.
-LaTeX Font Info:    ... okay on input line 121.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 121.
-LaTeX Font Info:    ... okay on input line 121.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 121.
-LaTeX Font Info:    ... okay on input line 121.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 121.
-LaTeX Font Info:    ... okay on input line 121.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 123.
+LaTeX Font Info:    ... okay on input line 123.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 123.
+LaTeX Font Info:    ... okay on input line 123.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 123.
+LaTeX Font Info:    ... okay on input line 123.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 123.
+LaTeX Font Info:    ... okay on input line 123.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 123.
+LaTeX Font Info:    ... okay on input line 123.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 123.
+LaTeX Font Info:    ... okay on input line 123.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 123.
+LaTeX Font Info:    ... okay on input line 123.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 123.
+LaTeX Font Info:    ... okay on input line 123.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 123.
+LaTeX Font Info:    ... okay on input line 123.
 
 *geometry* driver: auto-detecting
 *geometry* detected driver: pdftex
@@ -1439,13 +1568,13 @@ LaTeX Font Info:    ... okay on input line 121.
 * \@reversemarginfalse
 * (1in=72.27pt=25.4mm, 1cm=28.453pt)
 
-LaTeX Info: Redefining \microtypecontext on input line 121.
-Package microtype Info: Applying patch `item' on input line 121.
-Package microtype Info: Applying patch `toc' on input line 121.
-Package microtype Info: Applying patch `eqnum' on input line 121.
-Package microtype Info: Applying patch `footnote' on input line 121.
-Package microtype Info: Applying patch `verbatim' on input line 121.
-LaTeX Info: Redefining \microtypesetup on input line 121.
+LaTeX Info: Redefining \microtypecontext on input line 123.
+Package microtype Info: Applying patch `item' on input line 123.
+Package microtype Info: Applying patch `toc' on input line 123.
+Package microtype Info: Applying patch `eqnum' on input line 123.
+Package microtype Info: Applying patch `footnote' on input line 123.
+Package microtype Info: Applying patch `verbatim' on input line 123.
+LaTeX Info: Redefining \microtypesetup on input line 123.
 Package microtype Info: Generating PDF output.
 Package microtype Info: Character protrusion enabled (level 2).
 Package microtype Info: Using default protrusion set `alltext'.
@@ -1463,17 +1592,17 @@ File: mt-cmr.cfg 2013/05/19 v2.2 microtype config. file: Computer Modern Roman
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/context/base/mkii\supp-pdf.
 mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count526
-\scratchdimen=\dimen335
-\scratchbox=\box140
-\nofMPsegments=\count527
-\nofMParguments=\count528
-\everyMPshowfont=\toks49
-\MPscratchCnt=\count529
-\MPscratchDim=\dimen336
-\MPnumerator=\count530
-\makeMPintoPDFobject=\count531
-\everyMPtoPDFconversion=\toks50
+\scratchcounter=\count533
+\scratchdimen=\dimen349
+\scratchbox=\box141
+\nofMPsegments=\count534
+\nofMParguments=\count535
+\everyMPshowfont=\toks56
+\MPscratchCnt=\count536
+\MPscratchDim=\dimen350
+\MPnumerator=\count537
+\makeMPintoPDFobject=\count538
+\everyMPtoPDFconversion=\toks57
 )
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/epstopdf-pkg\epstopdf
 -base.sty
@@ -1502,8 +1631,12 @@ File: translations-basic-dictionary-english.trsl (english translation file `tra
 nslations-basic-dictionary')
 )
 Package translations Info: loading dictionary `translations-basic-dictionary' f
-or `english'. on input line 121.
-\c@lstlisting=\count532
+or `english'. on input line 123.
+
+Package pgfplots notification 'compat/show suggested version=true': document ha
+s been generated with the most recent feature set (\pgfplotsset{compat=1.18}).
+
+\c@lstlisting=\count539
 Package biblatex Info: Trying to load language 'english'...
 Package biblatex Info: ... file 'english.lbx' found.
 
@@ -1550,14 +1683,21 @@ Package biblatex Warning: The following entry could not be found
 
 Package biblatex Warning: The following entry could not be found
 (biblatex)                in the database:
+(biblatex)                settles2009active
+(biblatex)                Please verify the spelling and rerun
+(biblatex)                LaTeX afterwards.
+
+
+Package biblatex Warning: The following entry could not be found
+(biblatex)                in the database:
 (biblatex)                wiegand2003h264
 (biblatex)                Please verify the spelling and rerun
 (biblatex)                LaTeX afterwards.
 
 )
-Package biblatex Info: Reference section=0 on input line 121.
-Package biblatex Info: Reference segment=0 on input line 121.
-Package hyperref Info: Link coloring ON on input line 121.
+Package biblatex Info: Reference section=0 on input line 123.
+Package biblatex Info: Reference segment=0 on input line 123.
+Package hyperref Info: Link coloring ON on input line 123.
  (main.out) (main.out)
 \@outlinefile=\write5
 \openout5 = `main.out'.
@@ -1649,70 +1789,70 @@ n/10 tflite-runtime
 
 [8{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-rmsc.en
 c}] [9]) (sections/system_description.tex
-<figs/mission_overview.pdf, id=1073, 488.03644pt x 464.76385pt>
+<figs/mission_overview.pdf, id=1177, 488.03644pt x 464.76385pt>
 File: figs/mission_overview.pdf Graphic file (type pdf)
 <use figs/mission_overview.pdf>
 Package pdftex.def Info: figs/mission_overview.pdf  used on input line 12.
 (pdftex.def)             Requested size: 512.14963pt x 487.76114pt.
  [10 <./figs/mission_overview.pdf>]
-<figs/architecture.pdf, id=1169, 654.40488pt x 570.93298pt>
+<figs/architecture.pdf, id=1273, 654.40488pt x 570.93298pt>
 File: figs/architecture.pdf Graphic file (type pdf)
 <use figs/architecture.pdf>
 Package pdftex.def Info: figs/architecture.pdf  used on input line 50.
 (pdftex.def)             Requested size: 435.3303pt x 379.81377pt.
-<figs/pi_system.pdf, id=1170, 873.46724pt x 681.93645pt>
+<figs/pi_system.pdf, id=1274, 873.46724pt x 681.93645pt>
 File: figs/pi_system.pdf Graphic file (type pdf)
 <use figs/pi_system.pdf>
 Package pdftex.def Info: figs/pi_system.pdf  used on input line 57.
 (pdftex.def)             Requested size: 384.11221pt x 299.88647pt.
-<figs/geofence_diagram.pdf, id=1174, 974.55922pt x 699.68274pt>
+<figs/geofence_diagram.pdf, id=1278, 974.55922pt x 699.68274pt>
 File: figs/geofence_diagram.pdf Graphic file (type pdf)
 <use figs/geofence_diagram.pdf>
 Package pdftex.def Info: figs/geofence_diagram.pdf  used on input line 94.
 (pdftex.def)             Requested size: 512.14963pt x 367.71262pt.
 
 [11]
-<figs/cv_pipeline.pdf, id=1190, 797.37903pt x 195.129pt>
+<figs/cv_pipeline.pdf, id=1294, 797.37903pt x 195.129pt>
 File: figs/cv_pipeline.pdf Graphic file (type pdf)
 <use figs/cv_pipeline.pdf>
 Package pdftex.def Info: figs/cv_pipeline.pdf  used on input line 112.
 (pdftex.def)             Requested size: 435.3303pt x 106.52927pt.
  [12 <./figs/architecture.pdf>]
-<figs/coverage_vs_time.pdf, id=1356, 425.99664pt x 256.37357pt>
+<figs/coverage_vs_time.pdf, id=1460, 425.99664pt x 256.37357pt>
 File: figs/coverage_vs_time.pdf Graphic file (type pdf)
 <use figs/coverage_vs_time.pdf>
 Package pdftex.def Info: figs/coverage_vs_time.pdf  used on input line 142.
 (pdftex.def)             Requested size: 409.72125pt x 246.59306pt.
-<figs/state_machine.pdf, id=1359, 547.08388pt x 498.663pt>
+<figs/state_machine.pdf, id=1463, 547.08388pt x 498.663pt>
 File: figs/state_machine.pdf Graphic file (type pdf)
 <use figs/state_machine.pdf>
 Package pdftex.def Info: figs/state_machine.pdf  used on input line 154.
 (pdftex.def)             Requested size: 486.54057pt x 443.48909pt.
  [13 <./figs/pi_system.pdf>] [14 <./figs/geofence_diagram.pdf> <./figs/cv_pipel
 ine.pdf>]
-<figs/gps_bullseye.pdf, id=1768, 415.84798pt x 426.3403pt>
+<figs/gps_bullseye.pdf, id=1872, 415.84798pt x 426.3403pt>
 File: figs/gps_bullseye.pdf Graphic file (type pdf)
 <use figs/gps_bullseye.pdf>
 Package pdftex.def Info: figs/gps_bullseye.pdf  used on input line 185.
 (pdftex.def)             Requested size: 245.82962pt x 252.033pt.
-<figs/gps_error_direction.pdf, id=1769, 743.24844pt x 354.82443pt>
+<figs/gps_error_direction.pdf, id=1873, 743.24844pt x 354.82443pt>
 File: figs/gps_error_direction.pdf Graphic file (type pdf)
 <use figs/gps_error_direction.pdf>
 Package pdftex.def Info: figs/gps_error_direction.pdf  used on input line 192.
 (pdftex.def)             Requested size: 245.82962pt x 117.35771pt.
-<figs/gps_convergence.pdf, id=1770, 403.13737pt x 260.18466pt>
+<figs/gps_convergence.pdf, id=1874, 403.13737pt x 260.18466pt>
 File: figs/gps_convergence.pdf Graphic file (type pdf)
 <use figs/gps_convergence.pdf>
 Package pdftex.def Info: figs/gps_convergence.pdf  used on input line 204.
 (pdftex.def)             Requested size: 245.82962pt x 158.66078pt.
-<figs/estimator_comparison.pdf, id=1771, 499.19498pt x 316.54886pt>
+<figs/estimator_comparison.pdf, id=1875, 499.19498pt x 316.54886pt>
 File: figs/estimator_comparison.pdf Graphic file (type pdf)
 <use figs/estimator_comparison.pdf>
 Package pdftex.def Info: figs/estimator_comparison.pdf  used on input line 211.
 
 (pdftex.def)             Requested size: 245.82962pt x 155.88312pt.
  [15 <./figs/coverage_vs_time.pdf>]
-<figs/mission_timeline.pdf, id=1821, 723.18619pt x 291.45325pt>
+<figs/mission_timeline.pdf, id=1925, 723.18619pt x 291.45325pt>
 File: figs/mission_timeline.pdf Graphic file (type pdf)
 <use figs/mission_timeline.pdf>
 Package pdftex.def Info: figs/mission_timeline.pdf  used on input line 237.
@@ -1975,22 +2115,22 @@ Underfull \hbox (badness 10000) in paragraph at lines 57--57
 
 LaTeX Warning: Float too large for page by 172.71274pt on input line 58.
 
-<figs/conf_vs_alt.pdf, id=2370, 359.22015pt x 256.37357pt>
+<figs/conf_vs_alt.pdf, id=2474, 359.22015pt x 256.37357pt>
 File: figs/conf_vs_alt.pdf Graphic file (type pdf)
 <use figs/conf_vs_alt.pdf>
 Package pdftex.def Info: figs/conf_vs_alt.pdf  used on input line 67.
 (pdftex.def)             Requested size: 245.82962pt x 175.44661pt.
-<figs/det_vs_speed.pdf, id=2371, 362.40393pt x 256.37357pt>
+<figs/det_vs_speed.pdf, id=2475, 362.40393pt x 256.37357pt>
 File: figs/det_vs_speed.pdf Graphic file (type pdf)
 <use figs/det_vs_speed.pdf>
 Package pdftex.def Info: figs/det_vs_speed.pdf  used on input line 74.
 (pdftex.def)             Requested size: 245.82962pt x 173.90921pt.
-<figs/latency_breakdown.pdf, id=2372, 362.54507pt x 254.02415pt>
+<figs/latency_breakdown.pdf, id=2476, 362.54507pt x 254.02415pt>
 File: figs/latency_breakdown.pdf Graphic file (type pdf)
 <use figs/latency_breakdown.pdf>
 Package pdftex.def Info: figs/latency_breakdown.pdf  used on input line 86.
 (pdftex.def)             Requested size: 245.82962pt x 172.24962pt.
-<figs/detection_heatmap.pdf, id=2373, 550.9432pt x 380.144pt>
+<figs/detection_heatmap.pdf, id=2477, 550.9432pt x 380.144pt>
 File: figs/detection_heatmap.pdf Graphic file (type pdf)
 <use figs/detection_heatmap.pdf>
 Package pdftex.def Info: figs/detection_heatmap.pdf  used on input line 93.
@@ -2415,7 +2555,7 @@ File: figs/conf_vs_alt.pdf Graphic file (type pdf)
 <use figs/conf_vs_alt.pdf>
 Package pdftex.def Info: figs/conf_vs_alt.pdf  used on input line 237.
 (pdftex.def)             Requested size: 384.11221pt x 274.13704pt.
-<figs/detection_envelope.pdf, id=2984, 571.09987pt x 354.0703pt>
+<figs/detection_envelope.pdf, id=3088, 571.09987pt x 354.0703pt>
 File: figs/detection_envelope.pdf Graphic file (type pdf)
 <use figs/detection_envelope.pdf>
 Package pdftex.def Info: figs/detection_envelope.pdf  used on input line 247.
@@ -2427,7 +2567,7 @@ File: lstlang1.sty 2025/11/14 1.11b listings language file
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/listings\lstlang1.sty
 File: lstlang1.sty 2025/11/14 1.11b listings language file
 )
-<figs/blur_vs_altitude.pdf, id=3115, 788.11186pt x 357.6005pt>
+<figs/blur_vs_altitude.pdf, id=3219, 788.11186pt x 357.6005pt>
 File: figs/blur_vs_altitude.pdf Graphic file (type pdf)
 <use figs/blur_vs_altitude.pdf>
 Package pdftex.def Info: figs/blur_vs_altitude.pdf  used on input line 364.
@@ -2740,24 +2880,61 @@ Overfull \hbox (1.19736pt too wide) in paragraph at lines 55--63
  [][] 
  []
 
-[78]) (sections/comms_architecture.tex [79]) (sections/figure_descriptions.tex
-LaTeX Font Info:    Trying to load font information for OT1+lmss on input line 
-34.
-
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/lm\ot1lmss.fd
-File: ot1lmss.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
-)
-LaTeX Font Info:    Font shape `OT1/lmss/m/it' in size <10> not available
-(Font)              Font shape `OT1/lmss/m/sl' tried instead on input line 34.
-Package microtype Info: Loading generic protrusion settings for font family
-(microtype)             `lmss' (encoding: OT1).
-(microtype)             For optimal results, create family-specific settings.
-(microtype)             See the microtype manual for details.
-)
-Overfull \vbox (90.35931pt too high) has occurred while \output is active []
+[78]) (sections/comms_architecture.tex [79]) (sections/pipeline_fps.tex
+Overfull \vbox (143.70584pt too high) has occurred while \output is active []
 
 
-[80] [81] [82] [83] [84] [85] [86] [87] [88] [89] [90] (main.aux)
+[80]
+Package pgfplots info on input line 80: Using 'lua backend=false' for axis: sta
+cked plots unsupported (yet).
+Package pgfplots info on input line 80: Using 'lua backend=false' for axis: x c
+oord trafo unsupported.
+ [81]) (sections/path_tradeoffs.tex
+
+LaTeX Warning: Reference `tab:flight-params' on page 82 undefined on input line
+ 6.
+
+
+LaTeX Warning: Reference `sec:algorithm' on page 82 undefined on input line 11.
+
+
+
+LaTeX Warning: Reference `sec:scan-angle' on page 82 undefined on input line 11
+.
+
+
+LaTeX Warning: Command \textdegree invalid in math mode on input line 13.
+
+
+LaTeX Warning: Command \textdegree invalid in math mode on input line 13.
+
+[82]
+
+LaTeX Warning: Reference `sec:bezier' on page 83 undefined on input line 59.
+
+
+LaTeX Warning: Command \textdegree invalid in math mode on input line 69.
+
+
+LaTeX Warning: Command \textdegree invalid in math mode on input line 69.
+
+
+LaTeX Warning: Reference `sec:algorithm' on page 83 undefined on input line 77.
+
+
+[83]
+
+LaTeX Warning: Reference `sec:focus-area' on page 84 undefined on input line 82
+.
+
+) (sections/payload_release.tex [84]) (sections/model_comparison.tex [85]
+[86]
+
+LaTeX Warning: Citation 'settles2009active' on page 87 undefined on input line 
+76.
+
+) (sections/alternatives.tex [87] [88] [89] [90] [91] [92] [93] [94] [95]
+[96] [97] [98] (main.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-01-19>
@@ -2770,61 +2947,55 @@ LaTeX Warning: There were undefined references.
 LaTeX Warning: There were multiply-defined labels.
 
 Package rerunfilecheck Info: File `main.out' has not changed.
-(rerunfilecheck)             Checksum: 8E55321BA6B21511C7EC505A9774795A;43509.
-
-Package biblatex Warning: Please rerun LaTeX.
-
+(rerunfilecheck)             Checksum: B784773B0104351D73146AAB386B7FD4;49256.
 Package logreq Info: Writing requests to 'main.run.xml'.
 \openout1 = `main.run.xml'.
 
- ) 
+ ) ) 
 Here is how much of TeX's memory you used:
- 42745 strings out of 467866
- 849475 string characters out of 5417351
- 1809614 words of memory out of 5000000
- 69732 multiletter control sequences out of 15000+600000
- 744959 words of font info for 375 fonts, out of 8000000 for 9000
+ 53284 strings out of 467866
+ 1205369 string characters out of 5417351
+ 2235959 words of memory out of 5000000
+ 80091 multiletter control sequences out of 15000+600000
+ 733937 words of font info for 349 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 104i,20n,116p,1475b,2219s stack positions out of 10000i,1000n,20000p,200000b,200000s
-<C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx10.
-pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx1
-2.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmb
-x7.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lm
-bx8.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/l
-mbx9.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/
-lmbxi10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/
-lm/lmcsc10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/publ
-ic/lm/lmex10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/pu
-blic/lm/lmmi10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/
-public/lm/lmmi6.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1
-/public/lm/lmmi7.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type
-1/public/lm/lmmi8.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/typ
-e1/public/lm/lmmi9.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/ty
-pe1/public/lm/lmmib10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts
-/type1/public/lm/lmr10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/font
-s/type1/public/lm/lmr12.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fon
-ts/type1/public/lm/lmr6.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fon
-ts/type1/public/lm/lmr7.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fon
-ts/type1/public/lm/lmr8.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fon
-ts/type1/public/lm/lmr9.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fon
-ts/type1/public/lm/lmri10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/f
-onts/type1/public/lm/lmri12.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX
-/fonts/type1/public/lm/lmri9.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTe
-X/fonts/type1/public/lm/lmsso10.pfb><C:/Users/Bristol/AppData/Local/Programs/Mi
-KTeX/fonts/type1/public/lm/lmsy10.pfb><C:/Users/Bristol/AppData/Local/Programs/
-MiKTeX/fonts/type1/public/lm/lmsy6.pfb><C:/Users/Bristol/AppData/Local/Programs
-/MiKTeX/fonts/type1/public/lm/lmsy7.pfb><C:/Users/Bristol/AppData/Local/Program
-s/MiKTeX/fonts/type1/public/lm/lmsy8.pfb><C:/Users/Bristol/AppData/Local/Progra
-ms/MiKTeX/fonts/type1/public/lm/lmsy9.pfb><C:/Users/Bristol/AppData/Local/Progr
-ams/MiKTeX/fonts/type1/public/lm/lmtk10.pfb><C:/Users/Bristol/AppData/Local/Pro
-grams/MiKTeX/fonts/type1/public/lm/lmtt10.pfb><C:/Users/Bristol/AppData/Local/P
-rograms/MiKTeX/fonts/type1/public/lm/lmtt8.pfb><C:/Users/Bristol/AppData/Local/
-Programs/MiKTeX/fonts/type1/public/lm/lmtt9.pfb><C:/Users/Bristol/AppData/Local
-/Programs/MiKTeX/fonts/type1/public/lm/lmtti10.pfb><C:/Users/Bristol/AppData/Lo
-cal/Programs/MiKTeX/fonts/type1/public/amsfonts/symbols/msam10.pfb>
-Output written on main.pdf (90 pages, 2009670 bytes).
+ 99i,20n,118p,1475b,2559s stack positions out of 10000i,1000n,20000p,200000b,200000s
+<C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx1
+0.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmb
+x12.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/l
+mbx7.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/
+lmbx8.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm
+/lmbx9.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/l
+m/lmcsc10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/publi
+c/lm/lmex10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/pub
+lic/lm/lmmi10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/p
+ublic/lm/lmmi6.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/
+public/lm/lmmi7.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1
+/public/lm/lmmi8.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type
+1/public/lm/lmmi9.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/typ
+e1/public/lm/lmmib10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/
+type1/public/lm/lmr10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts
+/type1/public/lm/lmr12.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/font
+s/type1/public/lm/lmr6.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/font
+s/type1/public/lm/lmr7.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/font
+s/type1/public/lm/lmr8.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/font
+s/type1/public/lm/lmr9.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/font
+s/type1/public/lm/lmri10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fo
+nts/type1/public/lm/lmri12.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/
+fonts/type1/public/lm/lmri9.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX
+/fonts/type1/public/lm/lmsy10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKT
+eX/fonts/type1/public/lm/lmsy6.pfb><C:/Users/Bristol/AppData/Local/Programs/MiK
+TeX/fonts/type1/public/lm/lmsy7.pfb><C:/Users/Bristol/AppData/Local/Programs/Mi
+KTeX/fonts/type1/public/lm/lmsy8.pfb><C:/Users/Bristol/AppData/Local/Programs/M
+iKTeX/fonts/type1/public/lm/lmsy9.pfb><C:/Users/Bristol/AppData/Local/Programs/
+MiKTeX/fonts/type1/public/lm/lmtk10.pfb><C:/Users/Bristol/AppData/Local/Program
+s/MiKTeX/fonts/type1/public/lm/lmtt10.pfb><C:/Users/Bristol/AppData/Local/Progr
+ams/MiKTeX/fonts/type1/public/lm/lmtt8.pfb><C:/Users/Bristol/AppData/Local/Prog
+rams/MiKTeX/fonts/type1/public/lm/lmtt9.pfb><C:/Users/Bristol/AppData/Local/Pro
+grams/MiKTeX/fonts/type1/public/amsfonts/symbols/msam10.pfb>
+Output written on main.pdf (98 pages, 2009392 bytes).
 PDF statistics:
- 3910 PDF objects out of 4296 (max. 8388607)
- 689 named destinations out of 1000 (max. 500000)
- 70527 words of extra memory for PDF output out of 74296 (max. 10000000)
+ 4111 PDF objects out of 4296 (max. 8388607)
+ 772 named destinations out of 1000 (max. 500000)
+ 64079 words of extra memory for PDF output out of 74296 (max. 10000000)
 

@@ -1,0 +1,79 @@
+\section{Model Comparison and Future Vision Improvements}\label{sec:model_comparison}
+
+The vision pipeline underwent three training iterations, each informed by lessons from the previous round.  This section compares the model generations, discusses the COCO fallback strategy, examines the tiling versus full-frame trade-off, and identifies improvement directions for future deployments.
+
+\subsection{Model Generations}\label{sec:model_comparison:generations}
+
+Table~\ref{tab:model_generations} summarises the three model generations trained during the project.  All share the YOLOv8n architecture (3.2\,M parameters) and export to the same TFLite tensor shapes ($[1,640,640,3]$ input, $[1,5,8400]$ output), ensuring drop-in interchangeability at deployment.
+
+\begin{table}[ht]
+    \centering
+    \caption{Comparison of trained model generations.  All models are YOLOv8n exported to TFLite float32.  Inference latency measured on Raspberry Pi~5 (TFLite + XNNPACK, 4 threads).  mAP values are computed on each model's respective validation set.}
+    \label{tab:model_generations}
+    \begin{tabular}{@{}l c c c c c@{}}
+        \toprule
+        \textbf{Model} & \textbf{Training data} & \textbf{Train res.} & \textbf{mAP\textsubscript{50}} & \textbf{mAP\textsubscript{50--95}} & \textbf{File size} \\
+        \midrule
+        v1 (\texttt{sar\_640})     & 200 synthetic              & $640\times640$     & ${\sim}0.95$     & ---          & 3.2\,MB  \\
+        v2 (\texttt{sar\_1280})    & 200 synthetic              & $1280\times1280$   & ${\sim}0.96$     & ---          & 3.2\,MB  \\
+        v3 (\texttt{sar\_v2\_1088}) & 300 syn + 16 real + 50 neg & $1088\times1088$   & \textbf{0.995}   & 0.828        & 11.7\,MB \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\textbf{v1} (\texttt{sar\_640}) was the initial baseline, trained exclusively on 200 synthetic composite images generated at $640\times640$ using a single satellite background (\texttt{map.jpg}).  It demonstrated proof-of-concept detection in simulation but exhibited frequent false positives on terrain features---shadows, path markings, and field equipment---because the training set contained no negative examples and offered limited background diversity.
+
+\textbf{v2} (\texttt{sar\_1280}) increased the training resolution to $1280\times1280$, allowing the network to learn finer spatial features during training.  This yielded a marginal improvement in detection quality at higher altitudes (where the target subtends fewer pixels), but since the training data remained purely synthetic from the same single background source, the false-positive problem persisted.  The key lesson was that \emph{resolution alone cannot compensate for limited data diversity}.
+
+\textbf{v3} (\texttt{sar\_v2\_1088}) addressed both limitations simultaneously.  Training resolution was set to $1088\times1088$ (matching the native camera sensor height), and the dataset was restructured with three complementary sources: 300 synthetic composites using real flight-video backgrounds for diverse terrain textures, 16 manually labelled real aerial frames to anchor the model to authentic appearance, and 50 negative frames to explicitly teach false-positive suppression (Section~\ref{sec:training}).  This combination produced the highest validation metrics (mAP$_{50}=0.995$, mAP$_{50\text{--}95}=0.828$) and, critically, near-zero false positives during video replay analysis across 15--50\,m altitude.
+
+All three models produce identical inference latency on the Pi (${\sim}207$\,ms at 4.8\,FPS) because the TFLite runtime resizes all inputs to $640\times640$ regardless of training resolution.  The v3 file size is larger (11.7\,MB vs.\ 3.2\,MB) because it was exported as float32 without quantisation; the earlier models used a more aggressive compression pipeline.  This size difference has no impact on inference speed, as model loading is a one-time startup cost.
+
+\subsection{COCO Person Detector as Fallback}\label{sec:model_comparison:coco}
+
+A pre-trained YOLOv8n model exported from the standard COCO dataset~\cite{coco_dataset} was retained as a flight-day backup (\texttt{models/human.tflite}, 13\,MB, 80 classes).  This model detects people without any SAR-specific training, providing a zero-effort deployment option if the custom model proved unreliable in field conditions.
+
+Testing revealed two trade-offs.  On the positive side, the COCO detector reliably detected people in aerial video at altitudes up to 30\,m, confirming that transfer from ground-level training data generalises to moderate aerial perspectives.  On the negative side, the 80-class output space produced substantially more false positives: backpacks, dogs, bicycles, and even shadows were flagged as detections, requiring either aggressive confidence thresholding (which risked suppressing true positives) or downstream filtering logic.  The custom single-class model, having learned to classify ``dummy versus everything else'', achieved a far more favourable precision--recall balance.
+
+The COCO model was therefore designated as a backup rather than a primary detector: if the custom model failed catastrophically in the field (e.g., due to an unforeseen domain shift), the operator could swap to the COCO model in under 30~seconds via \texttt{cp models/human.tflite best.tflite}, accepting the higher false-positive rate as preferable to zero detection capability.
+
+\subsection{Overfitting Risk in Single-Class Detection}\label{sec:model_comparison:overfit}
+
+Training a single-class detector on a narrow domain introduces a specific overfitting risk: the model may learn \emph{background shortcuts} rather than genuine target features.  Because all positive training images share a common context (green field, overcast lighting, UK terrain), the network could learn to trigger on the co-occurrence of a small bright patch against grass rather than on the mannequin's actual shape and colour signature.  This shortcut would fail when the background changes---different seasons, terrain types, or lighting conditions.
+
+The negative images mitigate this risk by presenting the same background without a target, forcing the network to learn discriminative features of the target itself rather than background correlations.  However, the 50 negatives are drawn from a single flight on a single day, limiting the diversity of background contexts that the model has been taught to suppress.
+
+A more robust long-term approach would be multi-class detection---training the model to distinguish between ``dummy'', ``person'', ``equipment'', and ``background''---which would force the network to learn category-specific features rather than binary shortcuts.  This requires a substantially larger and more diverse labelled dataset than was available within the project's single-flight-day constraint.
+
+\subsection{Tiling vs.\ Full-Frame Detection}\label{sec:model_comparison:tiling}
+
+At search altitudes of 30--35\,m, the mannequin subtends approximately 24 pixels in height when the $1456\times1088$ camera frame is resized to the $640\times640$ inference input.  This is above the empirical minimum for YOLOv8 detection (${\sim}10$~pixels)~\cite{yolov8}, but leaves limited margin.  Two detection strategies were therefore evaluated:
+
+\begin{enumerate}
+    \item \textbf{Full-frame resize.}  The entire $1456\times1088$ frame is resized to $640\times640$ in a single pass.  One inference call per frame; latency ${\sim}207$\,ms.
+    \item \textbf{Tiled detection.}  The frame is divided into overlapping $640\times640$ tiles (typically $2\times2$ with 25\% overlap), each processed independently.  Four inference calls per frame; latency ${\sim}830$\,ms.
+\end{enumerate}
+
+Tiling preserves higher effective resolution per tile, improving detection of very small targets at extreme altitude.  However, testing on DJI flight video (\texttt{video\_test.py}) showed that full-frame detection achieved reliable detection across the entire 15--50\,m altitude range with the v3 model, with no altitude band where tiling produced detections that full-frame missed.  The $4\times$ inference cost of tiling---reducing throughput from 4.8\,FPS to 1.2\,FPS---would significantly increase the probability of missing a target during a search pass at 5\,m/s, where each frame covers approximately 1\,m of ground track.
+
+Full-frame detection was therefore selected as the deployment strategy.  Tiling remains available as a configurable option in the video analysis tools for post-flight forensic review, where latency is not a constraint.
+
+\subsection{Future Vision Improvements}\label{sec:model_comparison:future}
+
+Six directions are identified for improving detection reliability and operational capability beyond the current system:
+
+\begin{enumerate}
+    \item \textbf{Expanded real training data.}  Each future flight day could yield hundreds of labelled frames using the existing annotation tool (\texttt{label\_tool.py}).  Increasing the real-image fraction from 4.4\% to 30--50\% of the dataset would substantially reduce the synthetic-to-real domain gap, the single largest source of generalisation risk in the current model.  Frames should be collected across multiple days, weather conditions, and terrain types to build environmental diversity.
+
+    \item \textbf{Larger model variant.}  YOLOv8s (11.2\,M parameters) offers improved accuracy at the cost of ${\sim}400$\,ms inference on Pi TFLite---viable at reduced search speeds of 3\,m/s, where the longer frame-to-frame interval compensates for slower processing.  The existing pipeline would require no architectural changes, only a model file swap.
+
+    \item \textbf{Multi-class detection.}  Extending the label space to four classes---dummy, person, equipment, false-positive-class---would force the network to learn category-discriminative features and provide the operator with richer information at the verification stage.  This requires a labelled dataset with representative examples of each class, which could be built incrementally across flight campaigns.
+
+    \item \textbf{Next-generation architectures.}  YOLO11~\cite{yolov8} and future iterations introduce architectural refinements (attention mechanisms, improved feature pyramid designs) that may improve small-object detection without increasing parameter count.  The modular export-and-deploy pipeline means any YOLO-family model producing $[1,5,N]$ output tensors can be integrated without code changes.
+
+    \item \textbf{Thermal camera fusion.}  A FLIR Lepton~3.5 module ($160\times120$, LWIR 8--14\,$\mu$m) would provide body-heat detection independent of visible appearance, enabling night and low-visibility operations~\cite{rudol2008human}.  Decision-level fusion---requiring confirmation in both visual and thermal modalities---would suppress the false positives inherent in each sensor alone (sun-heated objects in thermal, colour-similar debris in visual).
+
+    \item \textbf{Active learning.}  Flagging detections with confidence scores in the 0.3--0.6 range (below the current 0.4 threshold) for human review would create a feedback loop: uncertain predictions are labelled by the operator post-flight and added to the training set, progressively improving the model in the regions of feature space where it is least confident.  This approach is particularly efficient for rare-event detection where exhaustive labelling is impractical~\cite{settles2009active}.
+\end{enumerate}
+
+These improvements are ordered by implementation effort: items 1--2 require only additional data and a retraining cycle, items 3--4 require dataset restructuring and architecture evaluation, and items 5--6 require new hardware or workflow infrastructure.  The modular vision architecture---where all detection logic is encapsulated behind a single function interface---ensures that any of these improvements can be integrated without modifying the state machine, ground station, or flight control code.

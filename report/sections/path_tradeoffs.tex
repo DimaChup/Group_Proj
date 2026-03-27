@@ -1,0 +1,82 @@
+% path_tradeoffs.tex — Flight path optimisation trade-offs
+% ~1.5 pages covering diagonal scanning, lane width, speed, turns, overlap, start corner, PLB
+
+\subsection{Flight Path Optimisation}\label{sec:path-tradeoffs}
+
+The preceding sections describe the algorithm that generates the search pattern; this section analyses the engineering trade-offs behind the parameter choices that govern its geometry.  Every parameter interacts with at least one other---altitude affects lane width, which affects turn count, which affects energy---so parameter selection is inherently a multi-objective optimisation problem.  The values in Table~\ref{tab:flight-params} represent the operating point that balances detection probability, coverage time, and energy expenditure for the specific survey polygon and sensor suite used in this project.
+
+% ── 1. Diagonal vs axis-aligned ──────────────────────────────────────
+\subsubsection{Diagonal vs Axis-Aligned Scanning}\label{sec:diagonal}
+
+The planner aligns scan lines with the polygon's longest edge by rotating the binary mask so that this edge becomes horizontal (Section~\ref{sec:algorithm}).  This minimises the number of perpendicular scan lines and therefore the number of U-turns, which are the dominant source of wasted time and energy in a boustrophedon pattern.  For the AENGM0074 survey polygon---an elongated pentagon oriented roughly northeast--southwest---the optimal scan angle falls in the \SIrange{65}{75}{\degree} range, confirmed by the 216-configuration parametric sweep (Section~\ref{sec:scan-angle}).  Deviating by \SI{30}{\degree} from this optimum increases the scan-line count by approximately \SI{40}{\percent}.
+
+An alternative strategy considered during design was \emph{diagonal scanning at \SI{45}{\degree} to the prevailing wind direction}.  The rationale is that crosswind drift displaces the drone laterally during each scan leg; if the scan direction is perpendicular to the wind, drift accumulates along the inter-lane axis and can open coverage gaps between adjacent swaths.  Scanning diagonally distributes the drift component across both the along-track and cross-track axes, reducing the effective cross-track displacement by a factor of $\cos(45°) \approx 0.71$.  However, this benefit comes at the cost of additional scan lines whenever the diagonal does not coincide with the polygon's long axis.  For the survey polygon, wind-aligned scanning at \SI{45}{\degree} to a typical westerly wind would require approximately \SI{30}{\percent} more scan lines than the longest-edge alignment.  Given that the \SI{20}{\percent} overlap margin (Section~\ref{sec:overlap-margin}) already absorbs typical crosswind displacements of \SIrange{1}{2}{\metre}, the additional lines were judged unnecessary.  The longest-edge alignment was therefore retained, with the overlap margin serving as the primary defence against wind-induced coverage gaps.
+
+% ── 2. Lane width vs altitude ────────────────────────────────────────
+\subsubsection{Lane Width vs Altitude Trade-Off}\label{sec:lane-alt}
+
+The lane width is a direct function of search altitude through Eq.~\eqref{eq:footprint}: higher altitude widens the ground footprint, requiring fewer scan lines but shrinking the target in the camera frame.  Table~\ref{tab:alt-tradeoff} quantifies this trade-off for the survey polygon.
+
+\begin{table}[ht]
+  \centering\compactTable
+  \caption{Altitude--lane width--detection trade-off for the AENGM0074 survey polygon.  Target pixel extent assumes a \SI{1.8}{\metre} prone mannequin imaged by the IMX296 sensor at 1456$\times$1088 resolution.}\label{tab:alt-tradeoff}
+  \begin{tabularx}{\linewidth}{@{}c c c c c X@{}}
+    \toprule
+    \textbf{Alt (m)} & \textbf{Footprint (m)} & \textbf{Lane (m)} & \textbf{Passes} & \textbf{Target (px)} & \textbf{Notes} \\
+    \midrule
+    20 & 18.4 & 14.7 & $\sim$2$\times$ & 42 & High confidence, slow coverage \\
+    25 & 23.0 & 18.4 & $\sim$1.5$\times$ & 34 & Good detection, moderate speed \\
+    35 & 32.2 & 25.7 & 1$\times$ (ref) & 24 & Selected: reliable detection, efficient coverage \\
+    50 & 45.9 & 36.7 & $\sim$0.7$\times$ & 17 & Risk of missed detections \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+At \SI{20}{\metre} the mannequin subtends approximately 42~pixels---comfortably above YOLOv8n's detection threshold---but the narrow \SI{18.4}{\metre} footprint roughly doubles the number of scan lines compared to \SI{35}{\metre}, increasing both flight time and the number of U-turns.  At \SI{50}{\metre} the target shrinks to approximately 17~pixels, approaching the limit at which detection confidence degrades significantly.  The \SI{35}{\metre} operating point provides a 24-pixel target extent---sufficient for reliable detection at the 0.2 confidence threshold used in the system---while maintaining a practical scan-line count.  This altitude also leaves margin for the verification descent to \SI{15}{\metre}, where the target subtends over 50~pixels for high-confidence confirmation.
+
+% ── 3. Speed schedule ────────────────────────────────────────────────
+\subsubsection{Altitude-Dependent Speed Schedule}\label{sec:speed-schedule}
+
+A fixed search speed is suboptimal because the camera's ground footprint---and therefore the time a target remains in view---varies with altitude.  At \SI{20}{\metre} altitude the along-track footprint is approximately \SI{14}{\metre}; at \SI{10}{\metre\per\second} a ground target traverses the frame in \SI{1.4}{\second}, leaving only 5--7 inference frames at \SI{4.8}{FPS} (the Pi~5 TFLite throughput).  Reducing the speed to \SI{6}{\metre\per\second} extends the dwell time to \SI{2.3}{\second} ($\sim$11 frames), significantly improving the probability of at least one high-confidence detection.
+
+The speed schedule implements a linear interpolation between two anchor points:
+
+\begin{equation}\label{eq:speed-schedule}
+  v(h) = \begin{cases}
+    v_{\text{low}} = 6 & h \leq 20\,\text{m} \\[4pt]
+    v_{\text{low}} + \dfrac{h - h_{\text{low}}}{h_{\text{high}} - h_{\text{low}}} \bigl(v_{\text{high}} - v_{\text{low}}\bigr) & 20 < h < 50\,\text{m} \\[4pt]
+    v_{\text{high}} = 10 & h \geq 50\,\text{m}
+  \end{cases}
+\end{equation}
+
+\noindent At the nominal \SI{35}{\metre} search altitude this yields $v \approx \SI{7.3}{\metre\per\second}$.  The anchor values were chosen conservatively: \SI{6}{\metre\per\second} at low altitude keeps the target in view for at least 10 inference cycles, while \SI{10}{\metre\per\second} at high altitude is below the airframe's maximum cruise speed, leaving margin for wind gusts.  Transit segments to and from the search area use a separate, higher speed of \SI{15}{\metre\per\second} since no detection is required.
+
+% ── 4. Turn strategy ─────────────────────────────────────────────────
+\subsubsection{Turn Strategy}\label{sec:turn-strategy}
+
+At each strip endpoint the drone must execute a \SI{180}{\degree} U-turn to begin the adjacent strip.  A naive implementation commands the drone to fly to the exact waypoint, decelerate to a hover, rotate, and accelerate along the new heading.  This produces two problems: the deceleration--acceleration cycle wastes approximately \SI{2}{\second} per turn, and the abrupt attitude change (pitch-up to decelerate, pitch-down to accelerate) disturbs the camera pointing angle, creating a brief period during which the ground footprint shifts unpredictably.
+
+The B\'{e}zier smoothing pass (Section~\ref{sec:bezier}) replaces each sharp corner with a three-point quadratic arc evaluated at $t \in \{0.25, 0.50, 0.75\}$.  The arc allows the drone to maintain forward momentum through the turn, following a smooth trajectory rather than stopping at the vertex.  Combined with ArduPilot's waypoint acceptance radius---which advances to the next waypoint once the drone passes within a configurable distance rather than requiring an exact position hold---this yields fluid, banking turns that keep the camera platform stable.  The arc adds approximately \SI{2}{\second} of flight time per turn compared to an instantaneous direction change, but this is offset by the elimination of the hover--rotate--accelerate cycle.  For a typical 12-line pattern with 11 U-turns, B\'{e}zier smoothing reduces total turn time by an estimated \SI{15}{\second} while simultaneously improving camera stability during the portions of the flight that are most susceptible to coverage gaps.
+
+% ── 5. Overlap margin ────────────────────────────────────────────────
+\subsubsection{Overlap Margin Analysis}\label{sec:overlap-margin}
+
+The \SI{20}{\percent} lateral overlap between adjacent swaths is the system's primary defence against coverage gaps.  Three error sources motivate this margin:
+
+\begin{enumerate}
+  \item \textbf{GPS drift.}  Consumer-grade GNSS receivers exhibit a circular error probable (CEP) of \SIrange{2}{3}{\metre} under open sky.  In the worst case, two adjacent scan legs drift in opposite directions, producing up to \SI{6}{\metre} of relative displacement.
+  \item \textbf{Crosswind displacement.}  A sustained crosswind displaces the drone laterally during each scan leg.  At \SI{7}{\metre\per\second} groundspeed with a \SI{3}{\metre\per\second} crosswind, the drift over a \SI{200}{\metre} leg is approximately \SI{1.5}{\metre} (assuming partial compensation by the flight controller's heading hold).
+  \item \textbf{Attitude variations.}  Pitch and roll during turbulence shift the camera footprint laterally.  At \SI{35}{\metre} altitude, a \SI{5}{\degree} roll displaces the footprint centre by $35 \times \tan(5°) \approx \SI{3}{\metre}$.
+\end{enumerate}
+
+At \SI{35}{\metre} altitude, the \SI{20}{\percent} overlap produces \SI{6.4}{\metre} of redundant coverage between adjacent swaths.  The combined worst-case displacement from all three sources (assuming independent, uncorrelated errors) is approximately $\sqrt{6^2 + 1.5^2 + 3^2} \approx \SI{6.9}{\metre}$---marginally exceeding the overlap.  However, the worst-case GPS scenario (maximum opposite drift on consecutive legs) is statistically unlikely; the \SI{50}{\percent} probability displacement is approximately \SI{3}{\metre}, leaving \SI{3.4}{\metre} of residual overlap under typical conditions.  Increasing the margin to \SI{30}{\percent} was considered but rejected because it would add approximately two additional scan lines to the pattern, increasing flight time by \SI{10}{\percent} for marginal improvement in an already-adequate coverage guarantee.
+
+% ── 6. Start corner optimisation ─────────────────────────────────────
+\subsubsection{Start Corner Optimisation}\label{sec:start-corner}
+
+The boustrophedon pattern can begin from any of four corners of the rotated bounding rectangle.  The planner evaluates all four and selects the corner closest to the drone's current GPS position (Section~\ref{sec:algorithm}, step~5).  This minimises the transit distance from the take-off point (or current hover position, in the case of a rescan) to the first scan line.  For the AENGM0074 polygon with the take-off point at its western edge, this optimisation saves \SIrange{10}{30}{\second} of transit time depending on the scan angle and wind conditions.  When the pattern is reversed (bottom-to-top instead of top-to-bottom), the strip traversal direction is also flipped to maintain the nearest-start property, ensuring that the zigzag begins in the correct direction regardless of which corner is selected.
+
+% ── 7. PLB focus area redirect ───────────────────────────────────────
+\subsubsection{PLB Focus Area Redirect}\label{sec:plb-redirect}
+
+When a Personal Locator Beacon (PLB) signal is received during the wide-area search, the planner abandons the current pattern and regenerates a new lawnmower grid over a smaller focus polygon centred on the PLB coordinates (Section~\ref{sec:focus-area}).  The focus area pattern uses the same rotated-mask algorithm but with two parameter changes: the search speed drops from the altitude-dependent schedule to a fixed \SI{5}{\metre\per\second}, and the start corner is recomputed from the drone's current position rather than the take-off point.  The reduced speed increases dwell time per target, improving detection probability in the high-priority zone.  Existing detection clusters, rejected false positives, and items of interest are preserved across the pattern switch, preventing re-investigation of previously classified targets.  The waypoint index and rescan counter both reset, so the focus area is searched from scratch regardless of how much of the original pattern had been completed.

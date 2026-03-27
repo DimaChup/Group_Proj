@@ -148,16 +148,19 @@ def chart_detection_vs_speed():
 
     # Per-frame detection probability degrades with speed due to motion blur.
     # At 0 m/s: ~0.95 (benchmark). Motion blur reduces this progressively.
-    # Model: linear drop from 0.95 at 0 m/s to ~0.60 at 15 m/s (empirical
+    # Model: linear drop from 0.95 at 0 m/s to ~0.58 at 15 m/s (empirical
     # approximation accounting for blur, reduced dwell time, and vibration).
     def per_frame_rate(speed):
         return np.clip(0.95 - 0.025 * speed, 0.55, 0.95)
 
     p_frame = per_frame_rate(speeds)
 
-    # Cumulative detection rate: P = 1 - (1 - p_frame)^n_frames
+    # Cumulative detection rate per flyover: P = 1 - (1 - p_frame)^n_frames
+    # At lane edge, the target appears at the periphery of the along-track
+    # FOV and receives fewer usable frames (~2-4 at 10 m/s vs ~12 centered).
+    # Use n_eff = footprint / (3 * speed) to represent lane-edge geometry.
     def cumulative_rate(speed, fps):
-        time_in_view = fp_along / speed
+        time_in_view = fp_along / (3.0 * np.maximum(speed, 0.5))
         n_frames = np.maximum(time_in_view * fps, 1)
         pf = per_frame_rate(speed)
         return (1.0 - (1.0 - pf) ** n_frames) * 100
@@ -179,7 +182,7 @@ def chart_detection_vs_speed():
 
     # Mark operational speed
     ax.axvline(x=SEARCH_SPEED_MPS, color="#9CA3AF", linestyle=":", linewidth=1.0)
-    ax.annotate(f"Search speed\n({SEARCH_SPEED_MPS:.0f} m/s)", xy=(SEARCH_SPEED_MPS, 42),
+    ax.annotate(f"Search speed\n({SEARCH_SPEED_MPS:.0f} m/s)", xy=(SEARCH_SPEED_MPS, 55),
                 fontsize=8, color="#6B7280", ha="center")
 
     ax.set_xlabel("Ground Speed (m/s)")
