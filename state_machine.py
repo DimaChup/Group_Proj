@@ -405,7 +405,7 @@ class StateHandlersMixin:
                 return
             self.rescan_pass += 1
             self._rescan_alt = new_alt
-            print(f"\nSEARCH COMPLETE — nothing confirmed. Dropping {current_alt:.0f}m -> {new_alt:.0f}m (pass {self.rescan_pass + 1})")
+            print(f"[RESCAN] Pass {self.rescan_pass + 1}: altitude {current_alt:.0f}m -> {new_alt:.0f}m")
             if config.MODE == "SIMULATION":
                 canvas_w, canvas_h = self.sim.map_w, self.sim.map_h
             else:
@@ -514,7 +514,7 @@ class StateHandlersMixin:
         self._verify_remaining = remaining  # exposed for HUD countdown
 
         if remaining <= 0:
-            print("WARNING: VERIFY timeout (120s). No operator response — rejecting.")
+            print("[WARN] VERIFY TIMEOUT (120s) — no operator response. Auto-rejecting target.")
             self.rejected_targets.append((self.target_lat, self.target_lon))
             self.waiting_for_confirmation = False
             self._set_state(State.SEARCH)
@@ -563,7 +563,7 @@ class StateHandlersMixin:
             self.nav.send_global_target(self.landing_lat, self.landing_lon, 3.0)
             self.last_req = time.time()
         if self.get_dist_to_point(self.landing_lat, self.landing_lon) < 2.0 and self.alt < 4.0:
-            print("Hovering at 3m above target for 15 seconds...")
+            print("  Hovering at 3m above target — payload deploy sequence (15s)")
             self._set_state(State.HOVER_TARGET)
 
     def _handle_hover_target(self, target_found, px_u, px_v, key):
