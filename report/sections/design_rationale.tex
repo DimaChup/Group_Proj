@@ -61,6 +61,34 @@ A 216-configuration parametric sweep (6~altitudes $\times$ 36~scan angles, Appen
 
 \noindent The selected operating point (\SI{35}{\metre}, \SI{70}{\degree}, \SI{8}{\metre\per\second}) is not the energy minimum---that belongs to \SI{50}{\metre}/\SI{70}{\degree}/\SI{10}{\metre\per\second} at \SI{8.2}{Wh}---but it is the best Pareto compromise: 96\% coverage, $P_d > 99.97\%$, \SI{12.6}{Wh} (10.9\% of battery), and a \SI{50}{\metre} NFZ margin with $2.2\times$ surplus. The 4\% coverage gap lies within a fenced wildlife reserve with negligible casualty probability. The full derivation, energy model, strategy comparison, and sensitivity analysis are provided in Appendices~\ref{sec:path-opt} and~\ref{sec:design-strategy}.
 
+\subsection{Parameter Derivation Chain}\label{sec:param-chain}
+
+Every operating parameter traces back to a physical measurement or regulatory constraint through an unbroken chain of reasoning. The eight steps below summarise how each parameter was derived; full equations and sensitivity analysis are provided in Appendix~\ref{sec:path-opt}.
+
+\paragraph{Step~1: Detection ceiling.}
+The rescue dummy (\SI{1.8}{\metre} tall) must remain detectable by the YOLOv8n model. At altitude~$h$, the dummy subtends $1.8 \times 1584/h$ sensor pixels, scaled to $1.8 \times 696/h$ model-input pixels by the $640/1456$ resize. Below approximately 20~model-input pixels, detection confidence drops below the operational threshold of~0.2, giving a ceiling of approximately \SI{63}{\metre}.
+
+\paragraph{Step~2: Safety margin $\rightarrow$ operating altitude.}
+A 30\% margin below this ceiling accounts for atmospheric haze, attitude-induced foreshortening, and barometric altitude uncertainty, yielding an operating altitude of \SI{35}{\metre}. At this altitude the dummy subtends 36~model-input pixels---comfortably above the 20-pixel minimum.
+
+\paragraph{Step~3: Maximum speed at operating altitude.}
+At \SI{35}{\metre} the along-track camera footprint is \SI{24.0}{\metre}. At \SI{4.8}{FPS}, reliable multi-frame detection requires at least 10~raw frames on target, giving a maximum speed of $24.0 / (10/4.8) = \SI{11.5}{\metre\per\second}$. A conservative schedule of \SI{8}{\metre\per\second} at \SI{35}{\metre} was adopted.
+
+\paragraph{Step~4: Ground footprint $\rightarrow$ lane spacing.}
+The cross-track footprint at \SI{35}{\metre} is \SI{32.2}{\metre}. With 20\% overlap---justified by an RSS analysis of GPS drift (\SI{3}{\metre}), crosswind displacement, and attitude error, totalling \SI{4.6}{\metre} against a \SI{6.4}{\metre} overlap margin---lane spacing is \SI{25.7}{\metre}.
+
+\paragraph{Step~5: Scan angle for energy efficiency.}
+A sweep across 36~scan angles selected longest-edge alignment ($\approx$\SI{70}{\degree}), which minimises U-turns (5~vs~9 for north--south), saving \SI{60}{\second} and \SI{13}{Wh} per mission.
+
+\paragraph{Step~6: NFZ margins.}
+The camera footprint extends \SI{16.1}{\metre} from nadir at \SI{35}{\metre}. Adding GPS error (\SI{3}{\metre} CEP) and reaction distance at \SI{8}{\metre\per\second}, a \SI{30}{\metre} waypoint buffer was set. A speed-ramp zone extends to \SI{20}{\metre} from the SSSI boundary, and a repulsive potential field activates \SI{3}{\metre} beyond that, giving a total clearance of \SI{50}{\metre}.
+
+\paragraph{Step~7: Coverage completeness.}
+These margins exclude approximately 4\% of the search area adjacent to the SSSI fence line---an area within a fenced wildlife reserve, inaccessible to hikers and therefore low-probability for the casualty. 96\% coverage was accepted.
+
+\paragraph{Step~8: Energy validation.}
+The selected configuration (\SI{35}{\metre}, \SI{70}{\degree}, \SI{8}{\metre\per\second}, 20\% overlap, \SI{30}{\metre} NFZ buffer) consumes approximately \SI{12.6}{Wh}---10.9\% of the \SI{115.4}{Wh} battery---leaving 14~minutes of flight time for transit, verification, landing, and return-to-launch.
+
 \subsection{Hardware Platform Selection}\label{sec:hw-rationale}
 
 The hardware integrates a Hexsoon EDU-450 airframe, CubePilot Orange+ flight controller with ArduPilot firmware, Raspberry Pi~5 companion computer, and IMX296 global shutter camera.

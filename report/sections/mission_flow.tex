@@ -31,9 +31,9 @@ Once 90\% of the target altitude is reached, the planner generates the lawnmower
 The drone executes the boustrophedon search pattern at \SI{35}{\metre} altitude. Speed follows an altitude-dependent schedule: \SI{6}{\metre\per\second} at \SI{20}{\metre}, linearly interpolating to \SI{10}{\metre\per\second} at \SI{50}{\metre}, yielding approximately \SI{8}{\metre\per\second} at the nominal search altitude. The computer vision pipeline runs continuously at \SI{4.8}{FPS} on the Pi~5 (TFLite, XNNPACK backend). Each frame undergoes the following processing chain:
 
 \begin{enumerate}
-  \item \textbf{Capture} --- the IMX296 global-shutter camera acquires a \num{1456x1088} frame.
+  \item \textbf{Capture} --- the IMX296 global-shutter camera acquires a $1456\!\times\!1088$ frame.
   \item \textbf{Undistort} --- a precomputed lens-distortion remap corrects barrel distortion (\SI{1.5}{\milli\second} cost).
-  \item \textbf{Resize and normalise} --- the frame is resized to the model's \num{640x640} input tensor and normalised to $[0, 1]$.
+  \item \textbf{Resize and normalise} --- the frame is resized to the model's $640\!\times\!640$ input tensor and normalised to $[0, 1]$.
   \item \textbf{Inference} --- the YOLOv8n TFLite model produces bounding-box predictions (\SI{206}{\milli\second} average).
   \item \textbf{Threshold} --- detections with confidence below 0.2 are discarded. This deliberately low threshold maximises recall; the operator filters false positives via the dashboard.
 \end{enumerate}
