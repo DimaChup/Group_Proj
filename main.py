@@ -750,8 +750,10 @@ if __name__ == "__main__":
             mission.run()
         except (ConnectionResetError, ConnectionAbortedError, BrokenPipeError) as e:
             print(f"\n[LINK LOST] {e}")
+            mission._emergency_rtl(reason=str(e))
         except KeyboardInterrupt:
-            print("\n[USER] Aborted")
+            print("\n[USER] Aborted — attempting RTL before exit")
+            mission._emergency_rtl(reason="KeyboardInterrupt")
         finally:
             if hasattr(mission, 'log_file') and mission.log_file:
                 mission.log_file.close()
