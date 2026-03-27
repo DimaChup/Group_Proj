@@ -1,15 +1,15 @@
 \section{Model Training and Dataset}\label{sec:training}
 
-Training a reliable aerial object detector for SAR requires data that closely represents the deployment domain---a mannequin viewed from altitude against a grassy field background. Obtaining large volumes of real labelled aerial imagery is expensive and weather-dependent, so a mixed-source training strategy was adopted that combines synthetic composites, a small set of real labelled frames, and hard negative images. This section describes the dataset construction pipeline, training configuration, and deployment workflow.
+Training a reliable aerial object detector for SAR requires data that closely represents the deployment domain---a mannequin viewed from altitude against a grassy field background. Obtaining large volumes of real labelled aerial imagery is expensive and weather-dependent, so a mixed-source strategy was adopted combining synthetic composites, real labelled frames, and hard negatives. This section describes the dataset construction, training configuration, and deployment workflow.
 
 \subsection{Training Data Strategy}\label{sec:training:strategy}
 
 The final dataset (\texttt{dataset\_v2}) contains 366 images at the native camera resolution of $1456\times1088$ pixels drawn from three complementary sources:
 
 \begin{enumerate}
-    \item \textbf{Synthetic composites} (300 images). A cutout of the mannequin (\texttt{dummy.png}, with alpha channel) is composited onto random crops from real DJI flight video backgrounds at altitude-correct scales. These images provide the bulk of the training volume and allow systematic variation of target size, orientation, and position.
-    \item \textbf{Real labelled frames} (16 images). Frames extracted from a DJI flight recording at multiple altitudes (15--50\,m) and manually annotated with bounding boxes. These anchor the model to real-world textures, lighting, and target appearance.
-    \item \textbf{Negative images} (50 images). Background frames from the same flight video containing no mannequin, paired with empty label files. These teach the model to suppress false positives on terrain features such as shadows, tarpaulins, and path markings.
+    \item \textbf{Synthetic composites} (300 images). A cutout of the mannequin (\texttt{dummy.png}, with alpha channel) is composited onto random crops from real DJI flight video backgrounds at altitude-correct scales, providing systematic variation of target size, orientation, and position.
+    \item \textbf{Real labelled frames} (16 images). Frames extracted from a DJI flight recording at multiple altitudes (15--50\,m) and manually annotated with bounding boxes, anchoring the model to real-world textures, lighting, and target appearance.
+    \item \textbf{Negative images} (50 images). Background frames from the same flight video containing no mannequin, paired with empty label files, teaching the model to suppress false positives on terrain features such as shadows, tarpaulins, and path markings.
 \end{enumerate}
 
 This three-source approach follows the domain-randomisation principle~\cite{domainrand}: synthetic data provides scale and diversity, real data provides domain fidelity, and negatives provide specificity. Training at the native sensor resolution rather than the standard $640\times640$ YOLO input size allows the network to learn fine-grained features during training, even though inference-time resizing reduces the input to $640\times640$~\cite{yolov8}.
@@ -36,7 +36,7 @@ Sixteen frames were labelled from the DJI flight recording \texttt{DJI\_0001\_14
 
 \subsection{Negative Mining}\label{sec:training:negatives}
 
-Fifty frames were extracted from the same flight video at locations where no mannequin was present. Each negative image is paired with an empty label file, signalling to the YOLO loss function that no objects exist in the frame. Including negatives is a standard technique for reducing false-positive rates in object detection~\cite{hardneg}, and proved essential for this project: the v1 model (trained without negatives) frequently hallucinated detections on shadows and field markings, whereas the v2 model suppresses these spurious activations.
+Fifty frames were extracted from the same flight video at locations where no mannequin was present. Each negative image is paired with an empty label file, signalling to the YOLO loss function that no objects exist in the frame. Including negatives is a standard technique for reducing false-positive rates in object detection~\cite{shrivastava2016training}, and proved essential for this project: the v1 model (trained without negatives) frequently hallucinated detections on shadows and field markings, whereas the v2 model suppresses these spurious activations.
 
 \subsection{Training Pipeline}\label{sec:training:pipeline}
 
@@ -64,7 +64,7 @@ Training was performed on Google Colab using an NVIDIA T4 GPU. The model was ini
     \end{tabular}
 \end{table}
 
-The training-time augmentation parameters were tuned for aerial detection: aggressive scale variation ($0.7$) simulates altitude changes, mosaic augmentation improves small-object detection by tiling four images into one training sample~\cite{yolov4}, and copy-paste augmentation randomly pastes annotated objects onto new backgrounds for additional diversity. Random erasing was explicitly disabled (\texttt{erasing=0.0}) because it risks erasing the small target entirely.
+The training-time augmentation parameters were tuned for aerial detection: aggressive scale variation (range 0.3--1.7$\times$) simulates the wide altitude range, mosaic augmentation tiles four images into one training sample to improve small-object detection~\cite{bochkovskiy2020yolov4}, and copy-paste augmentation pastes annotated objects onto new backgrounds for additional diversity. Random erasing was explicitly disabled (\texttt{erasing=0.0}) because at high altitudes the target occupies few pixels and risks being erased entirely.
 
 \subsection{Results}\label{sec:training:results}
 
@@ -84,21 +84,21 @@ Table~\ref{tab:training_results} presents the validation metrics for the v2 mode
     \end{tabular}
 \end{table}
 
-A caveat applies: the training and validation splits use the same image set (\texttt{train=val=images}), which inflates the reported metrics relative to a held-out evaluation. This pragmatic choice was driven by the small dataset size---splitting 366 images 80/20 would leave only 73 validation images, too few for stable metric estimation. The strong field-test results (Section~\ref{sec:results}) provide independent confirmation that the model generalises beyond the training distribution.
+A caveat applies: the training and validation splits use the same image directory (\texttt{train=val=images/}), so the reported metrics reflect in-sample performance and likely overstate true generalisation accuracy. This pragmatic choice was driven by the small dataset size---an 80/20 split would leave only 73 validation images, too few for stable metric estimation. The field-test results (Section~\ref{sec:results}) provide independent confirmation that the model generalises beyond the training distribution.
 
 The exported TFLite model is 11.7\,MB (float32) and maintains the same input tensor shape $[1, 640, 640, 3]$ and output tensor shape $[1, 5, 8400]$ as the original model. Three model variants are archived in the \texttt{cv\_models/} directory: \texttt{sar\_v2\_1088} (current best), \texttt{sar\_640}, and \texttt{sar\_1280}, each containing TFLite, PyTorch, and NCNN exports along with training curves and confusion matrices for reproducibility.
 
 \subsection{Deployment}\label{sec:training:deployment}
 
-The deployment workflow is deliberately minimal. Because all model variants share the same input/output tensor shapes, swapping the active model on the Raspberry Pi requires a single file copy:
+The deployment workflow is deliberately minimal. Because all model variants share the same input/output tensor shapes ($[1, 640, 640, 3]$ input, $[1, 5, 8400]$ output), swapping the active model on the Pi requires only:
 
 \begin{verbatim}
 cp cv_models/sar_v2_1088/best.tflite best.tflite
 \end{verbatim}
 
-No code changes, configuration edits, or dependency updates are needed. The \texttt{vision.py} module loads whichever \texttt{best.tflite} file is present in the project root, and all downstream modules consume the same \texttt{(found, cx, cy, confidence)} interface regardless of which model generated the detection. This design supports rapid model iteration on flight day: if a model produces excessive false positives in the field, an alternative can be deployed in under 30 seconds by copying a different TFLite file from the \texttt{cv\_models/} directory.
+No code changes, configuration edits, or dependency updates are needed. The \texttt{vision.py} module loads whichever \texttt{best.tflite} is present in the project root, and all downstream modules consume the same \texttt{(found, cx, cy, confidence)} interface regardless of which model generated the detection. If a model produces excessive false positives in the field, an alternative can be deployed in under 30 seconds. The \texttt{-{}-model} flag in \texttt{main.py} additionally allows runtime model selection without file copying, further streamlining field testing.
 
-An NCNN export is also produced alongside each TFLite model, offering a potential path to approximately $3\times$ faster inference on the Pi~5 ARM cores if future mission requirements demand higher frame rates. The \texttt{-{}-model} flag in \texttt{main.py} allows runtime model selection without file copying, further streamlining field testing of alternative models.
+An NCNN export is produced alongside each TFLite model, offering a potential ${\sim}3\times$ speedup on the Pi~5 ARM cores via NEON vectorisation (Section~\ref{sec:cv:future}).
 
 \subsection{Limitations}\label{sec:training:limitations}
 
@@ -107,7 +107,7 @@ Several limitations of the current training pipeline should be acknowledged:
 \begin{itemize}
     \item \textbf{Train/validation overlap.} As noted in Section~\ref{sec:training:results}, the \texttt{dataset.yaml} configuration uses the same image directory for both training and validation. The reported mAP$_{50}$ of 0.995 therefore reflects in-sample performance and likely overstates true generalisation accuracy. A proper stratified 80/20 split would provide more meaningful validation metrics, but was not pursued due to the small dataset size.
 
-    \item \textbf{Small real-image fraction.} Only 16 of 366 images (4.4\%) are real aerial photographs; the remaining 95.6\% are synthetic composites or negatives derived from a single satellite image and one flight video. While domain randomisation mitigates this to some extent~\cite{domainrand}, the model may struggle with target appearances, lighting conditions, or ground textures not represented in the limited real data.
+    \item \textbf{Small real-image fraction.} Only 16 of 366 images (4.4\%) are manually labelled real aerial photographs; the remainder are synthetic composites or negatives derived from one satellite image and one flight video. While domain randomisation mitigates this to some extent~\cite{domainrand}, the model may struggle with target appearances, lighting conditions, or ground textures not represented in the limited real data.
 
     \item \textbf{Single target appearance.} All synthetic images use the same mannequin foreground image. A real SAR scenario would present casualties in varied clothing, body positions, and degrees of occlusion. The model's ability to generalise to human targets beyond the specific mannequin used in training has not been validated.
 

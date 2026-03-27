@@ -1,0 +1,12 @@
+\section{Introduction and Role}
+\label{sec:introduction}
+
+This report reflects on my experience as the software and computer vision lead for an autonomous search and rescue (SAR) drone, developed as part of the AENGM0074 Group Design Project at the University of Bristol. The project ran from January to March 2026, with a team of five MSc students tasked with building a drone that could autonomously search a defined area, detect a simulated casualty using onboard AI, and land nearby.
+
+My role evolved considerably from what was originally scoped. I was initially assigned responsibility for the computer vision pipeline---training a YOLOv8 model, deploying it on a Raspberry Pi 5, and integrating camera-based detection into the mission logic. In practice, I ended up designing and implementing the entire software stack: the finite state machine that orchestrates the mission, the dual-backend vision system, the lawnmower search pattern generator, the GPS-based target localisation algorithm, a web-based ground station for headless operation, an interactive flight simulator for development, a progressive testing framework with 41 test scripts, and all supporting infrastructure including configuration management, preflight checks, and field deployment tools.
+
+This was not a deliberate power grab. It happened organically as the project progressed---I had the strongest software background on the team, I was the most comfortable working with MAVLink and ArduPilot, and I found it faster to build things myself than to explain the architecture and wait for implementation. Whether that was the right call is something I reflect on in \secref{sec:team_dynamics}.
+
+The project produced a system that works end-to-end in simulation and has been partially validated on real hardware. The state machine, detection pipeline, ground station, and communication stack all function correctly on the Raspberry Pi 5 with a Cube Orange+ autopilot. Weather prevented a full autonomous flight test, but progressive bench and field testing validated each subsystem independently.
+
+This reflection covers what I built (\secref{sec:contributions}), the design principles that guided my decisions (\secref{sec:philosophy}), the technical challenges I encountered (\secref{sec:challenges}), the skills I developed (\secref{sec:skills}), how I navigated team dynamics (\secref{sec:team_dynamics}), and what I would do differently (\secref{sec:reflection}).

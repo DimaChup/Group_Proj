@@ -1,6 +1,6 @@
 \section{Simulation Framework}\label{sec:simulation}
 
-Autonomous SAR drone development presents a fundamental tension: algorithms must be validated extensively before flight, yet real flights are expensive, weather-dependent, and carry the risk of hardware loss. This section describes the multi-fidelity simulation framework developed to address this challenge, enabling iterative development of the detection, estimation, and landing algorithms entirely on a laptop before any outdoor testing.
+Autonomous SAR drone development presents a fundamental tension: algorithms must be validated extensively before flight, yet real flights are expensive, weather-dependent, and risk hardware loss. This section describes the multi-fidelity simulation framework developed to address this challenge, enabling iterative refinement of the detection, estimation, and landing algorithms entirely on a laptop before any outdoor testing.
 
 \subsection{Multi-Fidelity Approach}\label{sec:sim-fidelity}
 
@@ -9,9 +9,9 @@ The project employs four simulation levels of increasing fidelity, following the
 \begin{enumerate}
     \item \textbf{Level~1: Interactive simulator} (\texttt{simple\_simulator.py}). A self-contained environment where the operator flies a virtual drone over a satellite image using keyboard controls. The same YOLOv8n model runs inference on a synthetically generated camera view. No autopilot software is required---MAVLink telemetry is simulated internally. This level tests the GPS estimation pipeline, multi-target clustering, visual servoing, and landing sequence with full ground-truth comparison.
 
-    \item \textbf{Level~2: SITL with simulated camera} (\texttt{simulation.py} feeding \texttt{main.py}). ArduPilot's Software-in-the-Loop (SITL) runs the full autopilot firmware on the laptop \cite{ardupilot2024}. The mission orchestrator sends identical MAVLink commands to those used in flight, while \texttt{simulation.py} extracts a FOV-correct camera subimage from the satellite map at the drone's current position and altitude. This level validates the complete state machine---arming, takeoff, guided navigation, geofence enforcement, and landing---against a realistic autopilot model with simulated GPS noise and vehicle dynamics.
+    \item \textbf{Level~2: SITL with simulated camera} (\texttt{simulation.py} feeding \texttt{main.py}). ArduPilot's Software-in-the-Loop (SITL) runs the full autopilot firmware on the laptop~\cite{ardupilot2024}. The mission orchestrator issues MAVLink commands identical to those used in flight, while \texttt{simulation.py} extracts a FOV-correct camera subimage from the satellite map at the drone's current position and altitude. This level validates the complete state machine---arming, takeoff, guided navigation, geofence enforcement, and landing---against a realistic autopilot model with simulated GPS noise and vehicle dynamics.
 
-    \item \textbf{Level~3: SITL with real webcam}. The same SITL autopilot runs, but the camera source is switched to a physical webcam pointed at a printed dummy. This tests the vision pipeline against real optical conditions---lighting variation, lens distortion, motion blur---while keeping the flight controller in simulation. Setting \texttt{DRONE\_MODE=REAL} routes frames from the webcam instead of the satellite map.
+    \item \textbf{Level~3: SITL with real webcam}. The same SITL autopilot runs, but the camera source switches to a physical webcam pointed at a printed dummy. This exercises the vision pipeline under real optical conditions---lighting variation, lens distortion, motion blur---while keeping the flight controller in simulation. Setting \texttt{DRONE\_MODE=REAL} routes frames from the webcam instead of the satellite map.
 
     \item \textbf{Level~4: Video replay} (\texttt{video\_test.py}). Recorded DJI flight footage is replayed frame-by-frame with the detection model running on each frame. SRT telemetry files provide per-frame GPS coordinates, altitude, and heading, enabling the full pixel-to-GPS estimation pipeline to run on real aerial imagery. This level bridges the sim-to-real gap by exercising the vision system against genuine outdoor conditions---sun glare, shadows, varied terrain textures, real target appearance---without requiring a live flight.
 \end{enumerate}
@@ -31,7 +31,7 @@ The interactive simulator (\texttt{simple\_simulator.py}, 2508~lines) provides a
     \item \textbf{Offset landing} (L~key): the drone flies to a point 7.5\,m north of the locked GPS estimate, descends, and lands autonomously.
 \end{itemize}
 
-Three GPS estimators run concurrently on each detection cluster: a rolling weighted average of the most recent 50~observations, a cumulative weighted average over all observations, and a two-dimensional Kalman filter with measurement noise scaled by inverse observation weight. Observations are weighted by an altitude-dependent factor $w_{\text{alt}} = (30/h)^2$, reflecting the improved ground sample distance at lower altitudes, multiplied by a centre-proximity weight. All three estimators are compared against ground truth in real time.
+Three GPS estimators run concurrently on each detection cluster: a rolling weighted average of the most recent 50~observations, a cumulative weighted average over all observations, and a two-dimensional Kalman filter with measurement noise scaled by inverse observation weight. Each observation is weighted by an altitude-dependent factor $w_{\text{alt}} = (30/h)^2$, reflecting the improved ground sample distance at lower altitudes, multiplied by a centre-proximity weight. All three estimators are compared against ground truth in real time.
 
 \subsubsection{Configurable Error Injection}
 
@@ -101,13 +101,13 @@ This approach ensures that the detection model is exercised against realistic ba
 
 The video replay tool (\texttt{video\_test.py}) provides the highest-fidelity offline validation by running the detection model on recorded DJI flight footage. Each video frame is paired with its corresponding SRT telemetry entry, providing GPS coordinates, barometric altitude, and heading at 30\,fps resolution. The tool runs the full pixel-to-GPS estimation pipeline on each detection, accumulating observations, updating the Kalman filter, and building the same scatter plots used in the interactive simulator.
 
-Key features include a scale bar calibrated to the current altitude and FOV, a right-click measurement tool that reports ground distances in metres, and a side-by-side model comparison mode (\texttt{video\_test\_compare.py}) that toggles between two models on the same frame with a single keypress. The FOV was calibrated specifically for the cropped DJI video ($\text{HFOV} = 54.4\degree$ at $1456 \times 1088$) by clicking the top and bottom of the dummy at nine different altitudes using a dedicated calibration tool.
+Key features include a scale bar calibrated to the current altitude and FOV, a right-click measurement tool that reports ground distances in metres, and a side-by-side model comparison mode (\texttt{video\_test\_compare.py}) that toggles between two models on the same frame with a single keypress. The FOV was calibrated specifically for the cropped DJI video ($\text{HFOV} = 54.4^{\circ}$ at $1456 \times 1088$) by clicking the top and bottom of the dummy at nine different altitudes using a dedicated calibration tool.
 
 Analysis of 6854~frames from a real flight revealed a GPS timing lag of 100--200\,ms in the receiver, causing a ${\sim}1$\,m systematic offset along the direction of travel at 5\,m/s. This finding---which would have been nearly impossible to diagnose during a live flight---led to the identification of speed-dependent bias in the estimation pipeline and informed the design of the multi-pass averaging strategy described in Section~\ref{sec:localisation}.
 
 \subsection{Simulation-to-Real Transfer}\label{sec:sim-transfer}
 
-A central design goal is that the transition from simulation to real hardware requires no code changes, only configuration changes---an approach consistent with the digital twin methodology applied in UAV development \cite{jones2020}. Three mechanisms enable this:
+A central design goal is that the transition from simulation to real hardware requires no code changes---only configuration changes---an approach consistent with digital twin methodology in UAV development~\cite{jones2020}. Three mechanisms enable this:
 
 \begin{enumerate}
     \item \textbf{Configuration auto-detection.} At import time, \texttt{config.py} probes for a serial connection to the Cube flight controller. If found, the system operates in real mode; otherwise, it connects to SITL via UDP. The \texttt{DRONE\_MODE} environment variable provides an explicit override. Camera selection follows the same pattern: picamera2 on the Pi, OpenCV \texttt{VideoCapture} on the laptop.
@@ -123,7 +123,7 @@ State machine logic, GPS estimation mathematics, geofence enforcement, and the M
 
 \subsubsection{Known Sim-to-Real Gaps}
 
-Detection reliability is the primary gap: the model trained on synthetic composites may underperform against real lighting, motion blur, and non-ideal target poses. Wind effects on flight stability and their interaction with visual servoing cannot be simulated at Levels~1--2. GPS accuracy in simulation (${\sim}0.5$\,m SITL noise) is optimistic compared to real conditions (${\sim}2$--3\,m). These gaps are addressed by the progressive testing methodology described in Section~\ref{sec:testing}, where passive flight logging validates detection performance before autonomous operation is enabled.
+Detection reliability is the primary gap: a model trained on synthetic composites may underperform against real lighting, motion blur, and non-ideal target poses. Wind effects on flight stability and their interaction with visual servoing cannot be reproduced at Levels~1--2. GPS accuracy in simulation (${\sim}0.5$\,m SITL noise) is optimistic relative to real conditions (${\sim}2$--3\,m). These gaps are addressed by the progressive testing methodology described in Section~\ref{sec:testing}, where passive flight logging validates detection performance before autonomous operation is enabled.
 
 \subsection{Bugs Caught in Simulation}\label{sec:sim-bugs}
 
@@ -137,4 +137,4 @@ The simulation framework identified several issues that would have been dangerou
     \item A GPS timing lag of 100--200\,ms causing directional bias in target estimates at speed, discovered through video replay analysis of DJI footage.
 \end{itemize}
 
-Each of these was resolved in simulation at zero cost and zero risk, avoiding time-pressured debugging in the field. The multi-fidelity approach---from keyboard-driven sandbox to recorded real footage---provided confidence that the algorithms were sound before committing to outdoor testing.
+Each issue was resolved in simulation at zero cost and zero risk, avoiding time-pressured debugging in the field. The multi-fidelity approach---from keyboard-driven sandbox to recorded flight footage---provided confidence that the algorithms were sound before committing to outdoor testing.

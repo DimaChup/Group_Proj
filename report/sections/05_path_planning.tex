@@ -36,11 +36,11 @@ The core insight of the waypoint generation algorithm is a \emph{rotate--rasteri
 \begin{enumerate}
   \item \textbf{Rasterisation.} The GPS polygon is converted to pixel coordinates via a \texttt{GeoTransformer} and rasterised into a binary mask using \texttt{cv2.fillPoly}. This naturally handles concave boundaries, irregular shapes, and narrow peninsulas without explicit polygon-clipping algorithms.
 
-  \item \textbf{PCA-based rotation alignment.} The minimum-area bounding rectangle of the polygon is computed via \texttt{cv2.minAreaRect}, which is equivalent to finding the principal axes of the polygon's point distribution. The mask is rotated so that the polygon's longest edge becomes axis-aligned, minimising the number of perpendicular scan lines (and therefore U-turns) required for coverage. The rotation angle is stored for use in the inverse transform.
+  \item \textbf{Rotation alignment.} The minimum-area bounding rectangle of the polygon is computed via \texttt{cv2.minAreaRect}, which uses the rotating calipers algorithm to find the rectangle of smallest area enclosing the polygon vertices. The mask is rotated so that the polygon's longest edge becomes axis-aligned, minimising the number of perpendicular scan lines (and therefore U-turns) required for coverage. The rotation angle is stored for use in the inverse transform.
 
   \item \textbf{Swath-width computation.} The ground footprint width is calculated from the camera optics and search altitude (Section~\ref{sec:lane-width}). Strips are spaced at intervals equal to the footprint width minus the overlap margin: $L = W_g \,(1 - \alpha)$, where $\alpha = 0.20$ provides \SI{20}{\percent} lateral overlap.
 
-  \item \textbf{Scan-line generation.} Horizontal scan lines are cast across the rotated mask at the computed spacing. For each line, the leftmost and rightmost filled pixels define the strip endpoints, with a small inset ($\nicefrac{1}{3}$ of the strip spacing) to prevent waypoints from falling outside the polygon boundary. A final scan line is added at the bottom edge if the regular spacing does not reach it, ensuring no uncovered band remains.
+  \item \textbf{Scan-line generation.} Horizontal scan lines are cast across the rotated mask at the computed spacing. For each line, the leftmost and rightmost filled pixels define the strip endpoints, with a small inset ($\tfrac{1}{3}$ of the strip spacing) to prevent waypoints from falling outside the polygon boundary. A final scan line is added at the bottom edge if the regular spacing does not reach it, ensuring no uncovered band remains.
 
   \item \textbf{Start-corner optimisation.} If the drone's current GPS position is known, the four polygon corners (top-left, top-right, bottom-left, bottom-right of the rotated grid) are evaluated and the pattern begins from the nearest one, reducing transit distance. Successive strips alternate direction (left-to-right, then right-to-left) to form the characteristic zigzag.
 
@@ -92,7 +92,7 @@ The \SI{20}{\percent} overlap compensates for GPS drift (typically \SIrange{2}{3
 
 The scan angle---the orientation of the parallel strips relative to north---critically affects the number of scan lines and therefore the total path length, number of U-turns, and energy expenditure. The planner uses the minimum-area bounding rectangle to select the angle automatically, but a comprehensive parametric analysis was conducted to validate this choice and quantify the sensitivity.
 
-The analysis script (\texttt{analysis/path\_optimization/optimize\_path.py}) evaluated \textbf{216 configurations}: 6 altitudes (\SIlist{20;25;30;35;40;50}{\metre}) $\times$ 36 scan angles (\SIrange{0}{175}{\degree} in \SI{5}{\degree} steps). For each configuration, the script computes the lawnmower pattern geometry over the real AENGM0074 survey polygon, accounting for altitude-dependent speed, U-turn deceleration penalties, and NFZ slowdown zones near the adjacent SSSI boundary.
+The analysis script (\texttt{analysis/path\_optimization/optimize\_path.py}) evaluated \textbf{216 configurations}: 6 altitudes (20, 25, 30, 35, 40, and \SI{50}{\metre}) $\times$ 36 scan angles (\SIrange{0}{175}{\degree} in \SI{5}{\degree} steps). For each configuration, the script computes the lawnmower pattern geometry over the real AENGM0074 survey polygon, accounting for altitude-dependent speed, U-turn deceleration penalties, and NFZ slowdown zones near the adjacent SSSI boundary.
 
 Results confirm that the optimal scan angle for the survey polygon falls in the \SIrange{65}{75}{\degree} range across all altitudes tested, consistent with the polygon's elongated northeast--southwest geometry. The angle returned by \texttt{cv2.minAreaRect} agrees with this range, validating the automatic selection. Deviating by \SI{30}{\degree} from the optimum increases the scan-line count by approximately \SI{40}{\percent} and total energy by a similar margin.
 
@@ -102,7 +102,7 @@ Results confirm that the optimal scan angle for the survey polygon falls in the 
 An energy model was developed to quantify the trade-offs between altitude, speed, and path geometry. The model uses a simplified quadcopter power formulation:
 
 \begin{equation}\label{eq:power}
-  P_{\text{total}} = P_{\text{hover}} + P_{\text{drag}} = 150 + 50 \left(\frac{v}{v_{\text{ref}}}\right)^2 \;\text{[W]}
+  P_{\text{total}} = P_{\text{hover}} + P_{\text{drag}} = 150 + 50 \left(\frac{v}{v_{\text{ref}}}\right)^2 \quad [\si{\watt}]
 \end{equation}
 
 \noindent where $P_{\text{hover}} = \SI{150}{\watt}$ is the constant power to remain airborne and $v_{\text{ref}} = \SI{5}{\metre\per\second}$ is the reference speed. Each U-turn incurs a \SI{2}{\second} hover-only penalty for deceleration and reacceleration. Total energy integrates over the search time (scan lines at altitude-dependent speed), transit time (at \SI{15}{\metre\per\second}), and U-turn penalties.
@@ -117,15 +117,15 @@ Key findings from the 216-configuration sweep:
 \end{itemize}
 
 % ─────────────────────────────────────────────────────────────────────
-\subsection{Bezier Smoothing}\label{sec:bezier}
+\subsection{B\'{e}zier Smoothing}\label{sec:bezier}
 
-In a raw lawnmower pattern the drone must decelerate to a hover at each strip endpoint to execute a \SI{180}{\degree} U-turn, wasting time and energy. An optional Bezier smoothing pass (\texttt{PathPlanner.smooth\_waypoints}) replaces each U-turn with a quadratic Bezier arc. For each turn corner at waypoint~$\mathbf{p}_i$, three interpolated points are generated on the curve defined by the control triangle $(\mathbf{p}_{i-1},\, \mathbf{p}_i,\, \mathbf{p}_{i+1})$:
+In an unsmoothed lawnmower pattern the drone must decelerate to a hover at each strip endpoint to execute a \SI{180}{\degree} U-turn, wasting time and energy. An optional B\'{e}zier smoothing pass replaces each U-turn with a quadratic B\'{e}zier arc. For each turn corner at waypoint~$\mathbf{p}_i$, three interpolated points are generated on the curve defined by the control triangle $(\mathbf{p}_{i-1},\, \mathbf{p}_i,\, \mathbf{p}_{i+1})$:
 
-\begin{equation}
+\begin{equation}\label{eq:bezier}
   \mathbf{B}(t) = (1-t)^2\,\mathbf{p}_{i-1} \;+\; 2(1-t)\,t\,\mathbf{p}_i \;+\; t^2\,\mathbf{p}_{i+1}, \qquad t \in \{0.25,\, 0.50,\, 0.75\}
 \end{equation}
 
-This produces a smooth arc that the drone can follow at speed, maintaining momentum through turns rather than stopping. Combined with ArduPilot's waypoint acceptance radius (the drone advances to the next waypoint once within the radius rather than hovering at the exact coordinate), this produces a fluid, energy-efficient search trajectory. Bezier smoothing is activated via the \texttt{-{}-smooth-bezier} command-line flag and is reapplied to rescan patterns generated at lower altitudes.
+\noindent This produces a smooth arc that the drone can follow at speed, maintaining momentum through turns rather than decelerating to a hover. Combined with ArduPilot's waypoint acceptance radius---whereby the autopilot advances to the next waypoint once the vehicle passes within a configurable distance rather than hovering at the exact coordinate---this yields a fluid, energy-efficient search trajectory. B\'{e}zier smoothing is activated via a command-line flag and is reapplied to rescan patterns generated at lower altitudes.
 
 % ─────────────────────────────────────────────────────────────────────
 \subsection{Focus Area Support}\label{sec:focus-area}
@@ -151,14 +151,14 @@ Table~\ref{tab:cpp-comparison} compares the implemented boustrophedon approach a
     \midrule
     Boustrophedon~\cite{choset2001coverage} & Complete & $O(n)$ & Selected. Predictable, verifiable, optimal with angle alignment. \\
     Spiral inward & Complete & $O(4n)$ & Implemented as alternative. More turns, harder to verify visually. \\
-    Spanning tree~\cite{gabriely2001spanning} & Complete & Variable & STC guarantees coverage but produces complex paths with many short segments. \\
+    Spanning tree~\cite{gabriely2001spanning} & Complete & Variable & Spanning-tree coverage guarantees completeness but produces complex paths with many short segments. \\
     Sector search & Partial & Few & Requires known last-seen point; unsuitable when no prior information exists. \\
     Grid-based A$^*$ & Complete & Variable & High computational cost for large areas; path optimality depends on heuristic. \\
     \bottomrule
   \end{tabularx}
 \end{table}
 
-The boustrophedon pattern, combined with PCA-based angle alignment and Bezier-smoothed turns, achieves complete coverage with near-minimum path length for the given polygon geometry, while remaining simple enough to verify visually and predict analytically before flight.
+The boustrophedon pattern, combined with minimum-area bounding rectangle angle alignment and B\'{e}zier-smoothed turns, achieves complete coverage with near-minimum path length for the given polygon geometry, while remaining simple to verify visually and predict analytically before flight.
 
 % ─────────────────────────────────────────────────────────────────────
 \subsection{Flight Parameters}\label{sec:flight-params}

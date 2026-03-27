@@ -4,19 +4,19 @@ The mission controller is implemented as a deterministic finite state machine (F
 
 \subsection{Software Architecture}\label{subsec:arch}
 
-The mission software separates concerns across seven Python modules, each with a single responsibility:
+The mission software separates concerns across seven Python modules, each with a single responsibility (see also Section~\ref{sec:safety} for the safety implications of this decomposition):
 
 \begin{itemize}
     \item \texttt{config.py} --- every tunable parameter (altitudes, speeds, camera, NFZ polygons, connection strings);
     \item \texttt{states.py} --- a \texttt{State} class defining 20 string constants, one per discrete state;
     \item \texttt{vision.py} --- camera acquisition and AI detection behind a single interface: \texttt{detect\_in\_image(frame)} $\rightarrow$ \texttt{(found, x, y, conf)};
     \item \texttt{planning.py} --- lawnmower search pattern generator, returns an ordered list of GPS waypoints;
-    \item \texttt{navigation.py} --- MAVLink command abstraction: \texttt{goto}, \texttt{set\_speed}, \texttt{send\_velocity}, \texttt{land}, \texttt{arm};
-    \item \texttt{geofence.py} --- NFZ boundary distance computation and repulsive offset generation;
-    \item \texttt{state\_machine.py} --- all state handler methods, packaged as a mixin class.
+    \item \texttt{navigation.py} --- MAVLink command abstraction (\texttt{goto}, \texttt{set\_speed}, \texttt{send\_velocity}, \texttt{land}, \texttt{arm});
+    \item \texttt{geofence.py} --- NFZ boundary distance computation and repulsive offset generation (Section~\ref{sec:geofencing});
+    \item \texttt{state\_machine.py} --- per-state handler methods, packaged as a mixin class.
 \end{itemize}
 
-\noindent The orchestration lives in \texttt{main.py}, which defines the central class \texttt{VisualFlightMission}. This class inherits from \texttt{StateHandlersMixin} (defined in \texttt{state\_machine.py}) using Python's mixin pattern: the mixin contributes all per-state handler methods (e.g.\ \texttt{\_handle\_search}, \texttt{\_handle\_verify}) and shared helpers, while the main class owns the event loop, telemetry, HUD rendering, and module wiring. The mixin declares no \texttt{\_\_init\_\_} and relies on attributes initialised by the consuming class, keeping the two files decoupled yet composable --- the orchestrator at under 700~lines, the handler mixin at 950~lines.
+\noindent The orchestration lives in \texttt{main.py}, which defines the central class \texttt{VisualFlightMission}. This class inherits from \texttt{StateHandlersMixin} (defined in \texttt{state\_machine.py}) using Python's mixin pattern: the mixin contributes all per-state handler methods (e.g.\ \texttt{\_handle\_search}, \texttt{\_handle\_verify}) and shared helpers, while the main class owns the event loop, telemetry, HUD rendering, and module wiring. The mixin declares no \texttt{\_\_init\_\_} and relies on attributes initialised by the consuming class, keeping the two files decoupled yet composable --- the orchestrator at approximately 820~lines, the handler mixin at approximately 940~lines.
 
 \paragraph{Dispatch Table.}
 Rather than a chain of \texttt{if}/\texttt{elif} branches, the main loop uses a dictionary that maps each \texttt{State} constant to its handler method:
@@ -27,7 +27,7 @@ _dispatch = {
     State.SEARCH:            self._handle_search,
     State.CENTERING:         self._handle_centering,
     State.VERIFY:            self._handle_verify,
-    ...                      # 17 entries total
+    ...                      # 18 entries total
 }
 
 handler = _dispatch.get(self.state)
@@ -39,30 +39,30 @@ if handler:
 
 \subsection{State Definitions}\label{subsec:states}
 
-The system defines 20 discrete states, grouped into four functional phases: startup, search, engagement, and recovery.
+The system defines 20~discrete states, grouped into four functional phases: startup, search, engagement, and recovery. Two states (\textsc{Manual} and \textsc{Done}) are handled outside the dispatch table as they require special control flow.
 
 \paragraph{Startup Phase.}
 \begin{itemize}
-    \item \textbf{INIT} --- Entry state. Establishes a MAVLink connection to the autopilot via the configured transport (serial on Pi, UDP for SITL). Transitions to \textsc{Connecting} once the connection object is created.
+    \item \textbf{INIT} --- Entry state. Establishes a MAVLink connection to the autopilot via the configured transport (serial on the Raspberry Pi, UDP for SITL). Transitions to \textsc{Connecting} once the connection object is created.
     \item \textbf{CONNECTING} --- Waits for a valid heartbeat from the Cube autopilot and requests data streams at 10\,Hz. A 15-second warning is issued if no heartbeat arrives. Transitions to \textsc{Arming} on first heartbeat.
-    \item \textbf{ARMING} --- Sets GUIDED flight mode, waits for a GPS fix ($\geq$3D, $\geq$6 satellites), records the home position, and sends the arm command. A 120-second timeout alerts the operator to check pre-arm conditions. Transitions to \textsc{Takeoff} once motors are armed.
-    \item \textbf{TAKEOFF} --- Sends \texttt{MAV\_CMD\_NAV\_TAKEOFF} to the configured search altitude. Monitors altitude and re-enters \textsc{Arming} if the vehicle disarms unexpectedly (SITL) or transitions to \textsc{Done} (real hardware). Transitions to \textsc{Pre\_Waypoints} or \textsc{Transit\_to\_Search} when 90\% of target altitude is reached.
+    \item \textbf{ARMING} --- Sets GUIDED flight mode, waits for a GPS fix ($\geq$\,3D, $\geq$\,6~satellites), records the home position, and sends the arm command. A 120\,s timeout alerts the operator to check pre-arm conditions. Transitions to \textsc{Takeoff} once motors are armed.
+    \item \textbf{TAKEOFF} --- Sends \texttt{MAV\_CMD\_NAV\_TAKEOFF} to the configured search altitude (\texttt{TARGET\_ALT}\,=\,35\,m). Monitors altitude and re-enters \textsc{Arming} if the vehicle disarms unexpectedly (a known SITL artefact) or transitions to \textsc{Done} on real hardware. Transitions to \textsc{Pre\_Waypoints} or \textsc{Transit\_To\_Search} when 90\% of target altitude is reached.
 \end{itemize}
 
 \paragraph{Search Phase.}
 \begin{itemize}
     \item \textbf{PRE\_WAYPOINTS} --- Flies a sequence of operator-defined transit waypoints (loaded from JSON) at transit speed before entering the search area. Provides a controlled ingress path.
-    \item \textbf{TRANSIT\_TO\_SEARCH} --- Navigates to the first lawnmower waypoint at transit speed. Transitions to \textsc{Search} on arrival ($<$2\,m).
+    \item \textbf{TRANSIT\_TO\_SEARCH} --- Navigates to the first lawnmower waypoint at transit speed (\texttt{TRANSIT\_SPEED\_MPS}\,=\,15\,m/s). Transitions to \textsc{Search} on arrival ($<$\,2\,m).
     \item \textbf{SEARCH} --- Executes the lawnmower pattern waypoint-by-waypoint. Each frame is processed by the vision system; confirmed detections are filtered against rejected targets, no-fly zones, and the search boundary, then enqueued. When a valid queued detection exists, the drone departs the pattern and transitions to \textsc{Centering}. If all waypoints are exhausted without a confirmed target, a rescan pass at lower altitude may be triggered (configurable), or the mission ends.
 \end{itemize}
 
 \paragraph{Engagement Phase.}
 \begin{itemize}
-    \item \textbf{CENTERING} --- Navigates to the estimated GPS position of the detected target. A lock radius prevents the drone from chasing secondary detections that appear during approach; new detections outside the lock radius are queued for later investigation. A 60-second timeout returns the drone to \textsc{Search} if convergence fails. Transitions to \textsc{Verify} when within 1\,m of the target.
+    \item \textbf{CENTERING} --- Navigates to the estimated GPS position of the detected target. A lock radius (\texttt{DETECT\_LOCK\_RADIUS\_M}\,=\,5\,m) prevents the drone from diverting to secondary detections that appear during approach; new detections outside this radius are queued for later investigation. A 60\,s timeout returns the drone to \textsc{Search} if convergence fails. Transitions to \textsc{Verify} when within 1\,m of the target.
     \item \textbf{DESCENDING} --- Reserved for future altitude-staged verification. Currently passes through directly to \textsc{Verify}.
-    \item \textbf{VERIFY} --- The operator-in-the-loop decision point (Section~\ref{subsec:operator}). The drone holds position above the target while the operator classifies it as confirmed (\texttt{Y}), rejected (\texttt{N}), or item of interest (\texttt{I}). A 120-second timeout auto-rejects to prevent indefinite hovering.
-    \item \textbf{APPROACH} --- Flies to the computed landing spot, offset 7.5\,m from the target in an operator-selected cardinal direction (N/E/S/W) at 3\,m altitude. Transitions to \textsc{Hover\_Target} on arrival.
-    \item \textbf{HOVER\_TARGET} --- Executes a 15-second payload deployment sequence using a servo-actuated release mechanism (two-stage: partial release at $t$=3\,s, full release at $t$=6\,s). The servo is returned to closed position before departure. Transitions to \textsc{Return\_Transit} or \textsc{Return\_Home}.
+    \item \textbf{VERIFY} --- The operator-in-the-loop decision point (Section~\ref{subsec:operator}). The drone holds position above the target while the operator classifies it as confirmed (\texttt{Y}), rejected (\texttt{N}), or item of interest (\texttt{I}). A 120\,s timeout auto-rejects the target to prevent indefinite hovering.
+    \item \textbf{APPROACH} --- Flies to the computed landing spot, offset 7.5\,m from the target in an operator-selected cardinal direction (N/E/S/W), at 3\,m altitude. Transitions to \textsc{Hover\_Target} on arrival.
+    \item \textbf{HOVER\_TARGET} --- Executes a 15\,s payload deployment sequence using a servo-actuated release mechanism (two-stage: partial release at $t=3$\,s, full release at $t=6$\,s). The servo is returned to its closed position before departure. Transitions to \textsc{Return\_Transit} or \textsc{Return\_Home}.
 \end{itemize}
 
 \paragraph{Recovery Phase.}
@@ -70,10 +70,10 @@ The system defines 20 discrete states, grouped into four functional phases: star
     \item \textbf{RETURN\_TO\_SEARCH} --- Returns to the point where the drone departed the search pattern after a rejected or interest-classified target, then resumes the lawnmower pattern.
     \item \textbf{RETURN\_FROM\_MANUAL} --- Returns to the position where manual override was engaged, then resumes the previously active state.
     \item \textbf{RETURN\_TRANSIT} --- Retraces the pre-waypoint transit path in reverse order at search altitude. Provides controlled egress from the search area.
-    \item \textbf{RETURN\_HOME} --- Navigates to the recorded home (takeoff) position. A safety guard checks that GPS was successfully fixed during arming; if not, the drone lands in place rather than flying to a potentially incorrect location.
+    \item \textbf{RETURN\_HOME} --- Navigates to the recorded home (take-off) position. A safety guard verifies that a GPS fix was successfully obtained during arming; if not, the drone lands in place rather than flying to a potentially erroneous location.
     \item \textbf{LANDING} --- Sends \texttt{MAV\_CMD\_NAV\_LAND} and monitors descent via three independent touchdown mechanisms (Section~\ref{subsec:safety}). Transitions to \textsc{Done}.
     \item \textbf{DONE} --- Terminal state. Logs the landing error (distance from home) and mission elapsed time.
-    \item \textbf{HOVER} --- Fallback loiter state entered if no search waypoints are available after takeoff, with a 60-second timeout leading to \textsc{Done}.
+    \item \textbf{HOVER} --- Fallback loiter state entered if no search waypoints are available after take-off, with a 60\,s timeout leading to \textsc{Done}.
     \item \textbf{MANUAL} --- Software manual override, accessible from any active state (Section~\ref{subsec:safety}).
 \end{itemize}
 
@@ -189,7 +189,7 @@ A no-fly zone (NFZ) polygon, defined from the site survey KML file corresponding
 \noindent Detected targets whose estimated GPS positions fall inside the NFZ or outside the search area boundary are silently discarded rather than investigated.
 
 \paragraph{Landing Fault Tolerance.}
-The \textsc{Landing} state employs three independent touchdown detection mechanisms to handle the well-known barometric drift problem in small UAS~\cite{ardupilot_failsafe}:
+The \textsc{Landing} state employs three independent touchdown detection mechanisms to address the well-documented barometric drift problem in small UAS:
 
 \begin{enumerate}
     \item \textbf{ArduPilot auto-disarm} --- the autopilot's accelerometer-based landing detector disarms the motors when sustained low vibration is detected after a land command, requiring no companion-computer involvement;
@@ -197,7 +197,7 @@ The \textsc{Landing} state employs three independent touchdown detection mechani
     \item \textbf{Absolute timeout} --- a 90-second wall-clock timeout triggers a forced disarm (using the MAVLink emergency disarm magic number 21196), ensuring the drone does not hover indefinitely if barometric drift keeps the reported altitude above the threshold.
 \end{enumerate}
 
-\noindent If the land command does not produce descent within 5\,s, it is retried up to 5 times before forced disarm. This layered approach ensures landing completes under all observed failure modes, including barometric drift deadlock documented during bench testing.
+\noindent If the land command does not produce descent within 5\,s, it is retried up to five times before forced disarm. This layered approach ensures that landing completes under all observed failure modes, including a barometric drift deadlock documented during bench testing.
 
 \paragraph{State Timeouts.}
 Every blocking state carries a wall-clock timeout: \textsc{Arming} warns at 120\,s, \textsc{Takeoff} at 60\,s, \textsc{Centering} aborts to \textsc{Search} at 60\,s, \textsc{Verify} auto-rejects at 120\,s, and \textsc{Hover} transitions to \textsc{Done} at 60\,s. No state can hang the mission. The centralised \texttt{\_set\_state} method resets all timeout flags and records the entry timestamp, so each state's timeout logic is self-contained.
