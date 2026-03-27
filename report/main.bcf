@@ -2488,6 +2488,9 @@
     <bcf:citekey order="105" intorder="1">settles2009active</bcf:citekey>
     <bcf:citekey order="106" intorder="1">golden2006hypothermia</bcf:citekey>
     <bcf:citekey order="107" intorder="1">stolaroff2018energy</bcf:citekey>
+    <bcf:citekey order="108" intorder="1">golden2006hypothermia</bcf:citekey>
+    <bcf:citekey order="109" intorder="1">choset2001coverage</bcf:citekey>
+    <bcf:citekey order="110" intorder="1">galceran2013survey</bcf:citekey>
   </bcf:section>
   <!-- SORTING TEMPLATES -->
   <bcf:sortingtemplate name="none">

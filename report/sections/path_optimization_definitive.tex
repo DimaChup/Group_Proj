@@ -1,0 +1,354 @@
+% path_optimization_definitive.tex — Definitive path optimisation section
+% Supersedes search_optimization.tex. ~4–5 pages with equations, tables, figures.
+
+\section{Search Path Optimisation}\label{sec:path-opt}
+
+The search pattern parameters---altitude~$h$, scan angle~$\theta$, speed~$v$, overlap margin~$\alpha$, and NFZ buffer---do not have independently optimal values.
+Each parameter trades off against at least two competing objectives, forming a coupled multi-dimensional optimisation landscape.
+This section formalises the problem, presents the energy model and parametric sweep methodology, compares six candidate search strategies against real polygon geometry, and justifies the selected operating point.
+
+% =====================================================================
+\subsection{The Multi-Objective Optimisation Problem}\label{sec:moo}
+
+Five objectives are in tension:
+
+\begin{enumerate}
+  \item \textbf{Coverage completeness}~($C$): the fraction of the survey polygon imaged by at least one camera frame.
+        Complete coverage ($C = 1.0$) requires every ground point to fall within at least one swath.
+  \item \textbf{Mission time}~($T$): total elapsed time from takeoff to landing.
+        In SAR operations, every minute of delay reduces casualty survival probability; UK Maritime and Coastguard Agency survival curves show a steep decline in hypothermia survivability after \SI{60}{\minute} of exposure~\cite{golden2006hypothermia}.
+  \item \textbf{Energy consumption}~($E$): total energy drawn from the battery.
+        The EDU-450 airframe carries a 6S 5200\,mAh LiPo (\SI{115.4}{\watt\hour}), imposing a hard flight-time ceiling of approximately \SI{18}{\minute} at search power levels.
+  \item \textbf{Detection probability}~($P_d$): the probability that a casualty present in the search area is detected by at least one inference frame.
+        This depends on the number of frames in which the target appears, the per-frame confidence, and the confirmation threshold.
+  \item \textbf{NFZ safety margin}~($d_{\mathrm{NFZ}}$): the minimum distance between any waypoint and the SSSI no-fly zone boundary.
+        Larger margins reduce regulatory risk but sacrifice coverage of the polygon edge adjacent to the SSSI.
+\end{enumerate}
+
+\noindent These objectives are coupled through three decision variables:
+
+\begin{itemize}
+  \item \textbf{Altitude}~$h \in [20, 50]$\,m --- determines the camera ground footprint~$W_g = w_s h / f$, the ground sample distance (GSD), the target pixel extent, and therefore both coverage rate and detection confidence.
+  \item \textbf{Scan angle}~$\theta \in [0\degree, 180\degree)$ --- the orientation of parallel scan lines relative to north. Controls the number of scan lines, U-turns, and path length for a given polygon.
+  \item \textbf{Speed}~$v(h)$ --- an altitude-dependent schedule interpolating linearly from \SI{6}{\metre\per\second} at \SI{20}{\metre} to \SI{10}{\metre\per\second} at \SI{50}{\metre}, balancing coverage rate against frame dwell time.
+\end{itemize}
+
+\noindent Subject to four constraints:
+
+\begin{enumerate}[label=\textbf{R\arabic*}]
+  \item All waypoints must lie within the KML-defined flight area polygon.
+  \item No waypoint shall fall within \SI{30}{\metre} of the SSSI boundary (\texttt{NFZ\_WAYPOINT\_BUFFER\_M}).
+  \item Maximum altitude $h \leq \SI{50}{\metre}$ (UK drone regulation and airspace ceiling).
+  \item Total energy $E \leq \SI{115.4}{\watt\hour}$ (single battery, no mid-mission swap).
+\end{enumerate}
+
+\noindent No single configuration simultaneously optimises all five objectives.
+The operating point must be selected from the Pareto frontier by engineering judgement, informed by the quantitative analysis that follows.
+
+% =====================================================================
+\subsection{Energy Model}\label{sec:energy-model}
+
+A simplified quadcopter power model was developed to evaluate energy consumption across the parameter space.
+Total power at forward speed~$v$ is decomposed into a constant hover component and a speed-dependent parasitic drag component:
+
+\begin{equation}\label{eq:power-model}
+  P_{\mathrm{total}}(v) = P_{\mathrm{hover}} + P_{\mathrm{drag}}(v) = P_{\mathrm{hover}} + P_{\mathrm{drag,ref}} \left(\frac{v}{v_{\mathrm{ref}}}\right)^{\!2}
+\end{equation}
+
+\noindent where $P_{\mathrm{hover}} = \SI{150}{\watt}$ is the constant power to remain airborne (estimated from momentum theory for the EDU-450 at \SI{2.3}{\kilo\gram} all-up weight), $P_{\mathrm{drag,ref}} = \SI{50}{\watt}$ is the parasitic drag power at the reference speed $v_{\mathrm{ref}} = \SI{5}{\metre\per\second}$, and the quadratic scaling follows from the $\tfrac{1}{2} C_D \rho A v^2$ aerodynamic drag relation.
+
+Each U-turn incurs a penalty of $\Delta t_{\mathrm{turn}} = \SI{2}{\second}$ of hover-only power for deceleration and reacceleration.
+The total mission energy is therefore:
+
+\begin{equation}\label{eq:total-energy}
+  E_{\mathrm{total}} = \underbrace{P_{\mathrm{hover}} \cdot t_{\mathrm{total}}}_{\text{hover}} \;+\; \underbrace{P_{\mathrm{drag}}(v) \cdot t_{\mathrm{flight}}}_{\text{drag}} \;+\; \underbrace{n_{\mathrm{turns}} \cdot \Delta t_{\mathrm{turn}} \cdot P_{\mathrm{hover}}}_{\text{U-turn penalty}}
+\end{equation}
+
+\noindent where $t_{\mathrm{total}}$ is the total airborne time (including turns), $t_{\mathrm{flight}}$ is the time spent in forward motion along scan lines and transit segments, and $n_{\mathrm{turns}}$ is the number of U-turns.
+At the selected operating point (\SI{35}{\metre}, \SI{8}{\metre\per\second}), the drag component contributes $50 \times (8/5)^2 = \SI{128}{\watt}$, giving a total in-flight power of \SI{278}{\watt}.
+
+Near the SSSI boundary, the speed scalar field reduces the drone's velocity from the search speed down to $v_{\mathrm{min}} = \SI{0.3}{\metre\per\second}$ at the boundary, following a linear ramp over a \SI{20}{\metre} slow zone.
+Within this zone, drag power decreases (lower $v$) but hover time increases (same distance at lower speed), and since $P_{\mathrm{hover}} \gg P_{\mathrm{drag}}$ at low speeds, the net effect is an energy \emph{increase} for scan lines that pass through the slow zone.
+The optimisation script accounts for this by numerically integrating the speed-dependent traverse time along each scan segment with 50 sample points.
+
+% =====================================================================
+\subsection{The 216-Configuration Parametric Sweep}\label{sec:sweep}
+
+To systematically explore the design space, the optimisation script (\texttt{analysis/path\_optimization/optimize\_path.py}) evaluates \textbf{216 configurations}: 6~altitudes $\times$ 36~scan angles.
+For each combination, the script:
+
+\begin{enumerate}
+  \item Computes the camera ground footprint and swath spacing (with \SI{20}{\percent} overlap);
+  \item Generates the lawnmower scan lines over the real AENGM0074 five-vertex survey polygon using the rotate--rasterise--rotate-back algorithm;
+  \item Calculates total path length (scan lines plus U-turn transits);
+  \item Evaluates traverse time at the altitude-dependent speed, with per-sample NFZ slowdown integration;
+  \item Applies the energy model of Eq.~\eqref{eq:total-energy} to compute total energy with and without NFZ effects.
+\end{enumerate}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.88\linewidth]{real_energy_heatmap}
+  \caption{Energy heatmap across 216 altitude--angle configurations. The colour scale represents total energy consumption including NFZ slowdown penalties. A clear valley of low-energy configurations runs through the \SIrange{65}{75}{\degree} scan angle band at all altitudes, corresponding to alignment with the polygon's longest edge. The red star marks the global energy minimum at \SI{50}{\metre} altitude and \SI{70}{\degree} scan angle.}
+  \label{fig:energy-heatmap}
+\end{figure}
+
+Figure~\ref{fig:energy-heatmap} shows the resulting energy landscape.
+Several features are immediately apparent:
+
+\begin{itemize}
+  \item \textbf{Angle sensitivity dominates altitude sensitivity.} At any given altitude, varying the scan angle from optimal (\SIrange{65}{75}{\degree}) to worst-case (\SI{0}{\degree} or \SI{90}{\degree}) increases energy by \SIrange{100}{200}{\percent}. By contrast, changing altitude from \SI{35}{\metre} to \SI{50}{\metre} at the optimal angle saves only \SIrange{30}{40}{\percent}.
+
+  \item \textbf{Low-energy valley.} A band of low-energy configurations runs through $\theta \approx 70\degree$ across all altitudes. This corresponds to alignment with the polygon's longest edge (northeast--southwest axis), which minimises the number of perpendicular scan lines and therefore U-turns.
+
+  \item \textbf{Low altitude penalised.} At \SI{20}{\metre}, the narrow footprint (\SI{18.4}{\metre}) requires approximately 10 scan lines with 9 U-turns, roughly doubling energy compared to \SI{50}{\metre} (4--5 lines, 3--4 turns).
+\end{itemize}
+
+Table~\ref{tab:energy-top-bottom} presents the five best and five worst configurations from the sweep.
+
+\begin{table}[ht]
+  \centering\compactTable
+  \caption{Top~5 and bottom~5 configurations by total energy (with NFZ) from the 216-configuration sweep. The selected operating point is highlighted.}\label{tab:energy-top-bottom}
+  \begin{tabularx}{\linewidth}{@{}c c c c c c c X@{}}
+    \toprule
+    \textbf{Rank} & \textbf{Angle~(\si{\degree})} & \textbf{Alt~(m)} & \textbf{Speed~(m/s)} & \textbf{Turns} & \textbf{Time~(s)} & \textbf{Energy~(Wh)} & \textbf{Notes} \\
+    \midrule
+    1  & 70  & 50 & 10.0 & 4  & 68  & 8.2  & Widest footprint, fewest turns \\
+    2  & 65  & 50 & 10.0 & 5  & 74  & 9.0  & Near-optimal, slightly more lines \\
+    3  & 75  & 50 & 10.0 & 4  & 71  & 8.5  & Symmetric about optimal angle \\
+    4  & 70  & 40 & 8.7  & 5  & 88  & 10.1 & Moderate altitude \\
+    5  & 70  & 35 & 8.0  & 6  & 112 & 12.6 & \textbf{Selected operating point} \\
+    \midrule
+    212 & 0   & 20 & 6.0  & 16 & 380 & 39.7 & N--S scan, narrow footprint \\
+    213 & 10  & 20 & 6.0  & 15 & 365 & 38.1 & Near-N--S, same problem \\
+    214 & 170 & 20 & 6.0  & 15 & 358 & 37.6 & Symmetric counterpart \\
+    215 & 90  & 20 & 6.0  & 18 & 410 & 42.8 & E--W: perpendicular to long axis \\
+    216 & 95  & 20 & 6.0  & 18 & 415 & 43.2 & Worst: most turns at lowest alt \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+The energy-optimal configuration (\SI{50}{\metre}, \SI{70}{\degree}) consumes only \SI{8.2}{\watt\hour}---\SI{7.1}{\percent} of battery capacity---and completes the search in \SI{68}{\second}.
+The worst configuration (\SI{20}{\metre}, \SI{95}{\degree}) consumes \SI{43.2}{\watt\hour}, a 5.3$\times$ increase, and takes over \SI{6.9}{\minute}.
+The sweep confirms that scan angle selection is at least as important as altitude selection for energy efficiency.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.88\linewidth]{real_energy_vs_altitude}
+  \caption{Total search energy versus altitude at the optimal scan angle, with and without NFZ slowdown. The NFZ penalty is most pronounced at \SI{20}{\metre}, where several scan lines pass through the slow zone near the SSSI boundary. The shaded region quantifies the additional hover energy incurred by the speed ramp.}
+  \label{fig:energy-vs-altitude}
+\end{figure}
+
+Figure~\ref{fig:energy-vs-altitude} shows the altitude--energy relationship at the optimal scan angle, decomposed into clean (no NFZ) and penalised (with NFZ) components.
+The NFZ slowdown adds approximately \SI{15}{\percent} to total energy at \SI{35}{\metre} and up to \SI{45}{\percent} at \SI{20}{\metre}, where the narrower swath forces scan lines closer to the SSSI boundary.
+
+% =====================================================================
+\subsection{Search Strategy Comparison}\label{sec:strategy-compare}
+
+While the parametric sweep optimises altitude and angle within the boustrophedon pattern, the choice of search \emph{strategy} itself requires justification.
+Six candidate strategies were evaluated on the AENGM0074 survey polygon using the same energy model and polygon geometry.
+
+\begin{enumerate}
+  \item \textbf{Boustrophedon (lawnmower)} --- parallel back-and-forth strips aligned to the polygon's longest edge.
+        Guarantees complete coverage by construction~\cite{choset2001coverage}.
+        The scan angle is auto-selected via \texttt{cv2.minAreaRect}.
+
+  \item \textbf{Spiral inward} --- concentric rectangular rings converging on the polygon centroid.
+        Covers the perimeter first; each ring includes four \SI{90}{\degree} corners instead of \SI{180}{\degree} U-turns, but the total path length is \SIrange{8}{12}{\percent} longer due to poor nesting on irregular polygons.
+
+  \item \textbf{Expanding square} --- outward expansion from a centre point in increasing-length legs.
+        Requires a known start point (PLB signal); without prior information, degrades to uniform coverage with \SIrange{18}{23}{\percent} higher energy due to legs extending outside the polygon boundary.
+
+  \item \textbf{Sector search} --- the polygon is divided into probability-weighted sectors, each searched with a sub-pattern.
+        Inter-sector transit adds \SIrange{100}{200}{\metre} of overhead, and the method requires a probability model that was not available for this mission.
+
+  \item \textbf{Creeping line ahead} --- all scan lines traverse in the same direction, with dead-heading back to the start side between lines.
+        Path length is approximately double the boustrophedon (\SI{75}{\percent} energy penalty) for the same coverage guarantee.
+        Advantageous only for side-looking sensors (sonar, SAR radar), which are not applicable here.
+
+  \item \textbf{Adaptive / heatmap} --- a coarse initial sweep followed by targeted infill based on detection results.
+        Best-case energy (\SI{6.2}{\watt\hour}) is attractive, but worst-case (\SI{16}{\watt\hour}) exceeds the boustrophedon, and the method provides no coverage guarantee.
+        The engineering complexity of real-time replanning was judged disproportionate for a \SI{3.2}{\hectare} polygon coverable in a single pass.
+\end{enumerate}
+
+\begin{table}[ht]
+  \centering\compactTable
+  \caption{Quantitative comparison of six search strategies at \SI{50}{\metre} altitude, \SI{10}{\metre\per\second}. All values computed on the real AENGM0074 polygon (\SI{32200}{\metre\squared}).}\label{tab:strategy-compare}
+  \begin{tabularx}{\linewidth}{@{}l c c c c c@{}}
+    \toprule
+    \textbf{Strategy} & \textbf{Path~(m)} & \textbf{Time~(min)} & \textbf{Energy~(Wh)} & \textbf{Coverage} & \textbf{Prior needed?} \\
+    \midrule
+    \textbf{Boustrophedon}  & 876  & 1.5 & 8.3  & 100\% & No  \\
+    Spiral inward           & 980  & 1.6 & 9.0  & Partial & No  \\
+    Expanding square        & 1100 & 1.8 & 10.2 & No guarantee & Yes \\
+    Sector search           & 1000 & 1.7 & 9.5  & Per-sector & Yes \\
+    Creeping line ahead     & 1550 & 2.6 & 14.5 & 100\% & No  \\
+    Adaptive / heatmap      & 650--1500 & 1.2--3.5 & 6.2--16.0 & Probabilistic & No \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.95\linewidth]{real_path_patterns}
+  \caption{Search patterns overlaid on the AENGM0074 survey polygon at \SI{35}{\metre} and \SI{50}{\metre} altitude. The boustrophedon (leftmost column) achieves the shortest path and highest coverage for both altitudes. Start and end waypoints are marked with green circles and red squares respectively.}
+  \label{fig:path-patterns}
+\end{figure}
+
+The boustrophedon pattern was selected for five reasons:
+
+\begin{enumerate}
+  \item \textbf{No prior information.} The mission brief specifies a casualty somewhere in the survey polygon with no PLB signal, last known position, or probability map.
+        Without prior information, expanding square and sector search degrade to uniform coverage with added transit overhead.
+
+  \item \textbf{Coverage guarantee.} The assessment requires demonstrating that the drone can find the target.
+        Only the boustrophedon and creeping-line-ahead provide mathematically provable complete coverage; the creeping line costs \SI{75}{\percent} more energy for the same guarantee.
+
+  \item \textbf{Irregular polygon with adjacent NFZ.} The five-vertex polygon has a northeast--southwest elongation that the spiral pattern fits poorly (coverage gaps, inefficient nesting).
+        The boustrophedon's rasterisation-based approach handles arbitrary polygon geometry naturally, and the speed scalar field integrates cleanly with parallel scan lines---the drone simply slows at the ends of affected lines.
+
+  \item \textbf{Small area, single battery.} At \SI{32200}{\metre\squared}, the entire polygon can be covered in \SI{1.5}{\minute} at \SI{50}{\metre}.
+        The energy cost (\SI{8.3}{\watt\hour}) is \SI{7.2}{\percent} of battery capacity.
+        There is no need for partial-coverage strategies or multi-sortie efficiency.
+
+  \item \textbf{IAMSAR compliance.} Boustrophedon coverage is the standard method recommended by the International Aeronautical and Maritime Search and Rescue Manual (IAMSAR Vol.~III) and is widely deployed on autonomous marine and aerial SAR platforms~\cite{galceran2013survey}.
+\end{enumerate}
+
+\noindent The system also implements an \emph{expanding-square-equivalent} through the Focus Area mode (Section~\ref{sec:focus-area}): when a PLB signal is received, the search redirects to a smaller polygon around the beacon location, using a boustrophedon within that focused area.
+This combines the ``search likely area first'' benefit of the expanding square with the coverage guarantee of the lawnmower.
+
+% =====================================================================
+\subsection{NFZ Interaction and Speed Scalar Field}\label{sec:nfz-interaction}
+
+The SSSI no-fly zone on the northeast edge of the survey polygon introduces a position-dependent speed constraint that interacts with the path energy computation.
+The NFZ avoidance operates through three layers (Section~\ref{sec:nfz-avoidance}):
+
+\begin{enumerate}
+  \item \textbf{Waypoint exclusion.} Any waypoint within \SI{30}{\metre} of the SSSI boundary is removed from the pattern, truncating or omitting the corresponding scan line.
+  \item \textbf{Speed ramp.} Within a \SI{20}{\metre} slow zone around the SSSI, the drone's speed is reduced linearly from $v_{\mathrm{zone}} = \SI{3.0}{\metre\per\second}$ at the outer edge to $v_{\mathrm{min}} = \SI{0.3}{\metre\per\second}$ at the boundary:
+  \begin{equation}\label{eq:speed-ramp}
+    v(d) = v_{\mathrm{min}} + \frac{d}{d_{\mathrm{zone}}} \left(v_{\mathrm{zone}} - v_{\mathrm{min}}\right), \qquad 0 \leq d \leq d_{\mathrm{zone}}
+  \end{equation}
+  where $d$ is the distance to the nearest SSSI edge and $d_{\mathrm{zone}} = \SI{20}{\metre}$.
+  \item \textbf{Hard boundary.} Inside \SI{3}{\metre} of the NFZ, the system automatically switches to MANUAL mode as a fail-safe.
+\end{enumerate}
+
+The energy impact of the speed ramp is asymmetric across scan angles.
+At the optimal angle (\SI{70}{\degree}), scan lines run roughly parallel to the polygon's long axis and only clip the NFZ slow zone at their northeastern endpoints.
+At \SI{0}{\degree} (north--south scanning), several scan lines run along the full length of the SSSI boundary, with each metre of that segment traversed at reduced speed.
+The optimisation script accounts for this by numerically integrating the effective speed along each scan segment with 50 uniformly spaced sample points, computing the distance to the nearest NFZ edge at each sample.
+This per-segment NFZ time penalty is summed to produce the total time (and therefore energy) ``with NFZ'' reported in the sweep results.
+
+The practical consequence is that NFZ-aware scan angle selection becomes critical: configurations that align scan lines parallel to the SSSI boundary incur disproportionate time penalties.
+The optimal angle (\SI{70}{\degree}) happens to align with the polygon's longest edge \emph{and} to run perpendicular to the SSSI boundary---a fortunate geometric coincidence that minimises both U-turn count and NFZ dwell time simultaneously.
+
+% =====================================================================
+\subsection{Detection Probability Integration}\label{sec:detect-prob}
+
+The search altitude affects target detection through a chain of coupled physical relationships.
+At altitude~$h$, the ground sample distance is:
+
+\begin{equation}\label{eq:gsd}
+  \mathrm{GSD} = \frac{w_s \cdot h}{f \cdot W_{\mathrm{px}}} = \frac{5.02 \times h}{5.46 \times 1456}
+\end{equation}
+
+\noindent where $W_{\mathrm{px}} = 1456$ is the image width in pixels.
+The mannequin (\SI{1.8}{\metre} tall, \SI{0.5}{\metre} wide) projects to:
+
+\begin{equation}
+  \mathrm{px}_{\mathrm{tall}} = \frac{1.8}{\mathrm{GSD}}, \qquad
+  \mathrm{px}_{\mathrm{wide}} = \frac{0.5}{\mathrm{GSD}}
+\end{equation}
+
+\noindent Since YOLOv8n resizes the input to $640 \times 640$, the model-input target size is further reduced by the aspect-ratio-dependent scale factors ($640/1456$ horizontally, $640/1088$ vertically).
+
+Table~\ref{tab:detect-chain} traces this function chain from altitude through to detection probability.
+The altitude-dependent speed~$v(h)$ determines the dwell time (how long the target remains in the field of view), and therefore the number of inference frames:
+
+\begin{equation}\label{eq:dwell}
+  n_f = \frac{H_g}{v(h)} \times f_{\mathrm{inf}}
+\end{equation}
+
+\noindent where $H_g$ is the along-track footprint height and $f_{\mathrm{inf}} = \SI{4.8}{FPS}$ is the TFLite inference rate on the Raspberry~Pi~5.
+Assuming independent per-frame detection with probability~$p$ (a function of pixel extent), the cumulative detection probability over $n_f$ frames is:
+
+\begin{equation}\label{eq:pdetect}
+  P_d = 1 - (1 - p)^{n_f}
+\end{equation}
+
+\begin{table}[ht]
+  \centering\compactTable
+  \caption{Detection probability function chain from altitude to cumulative detection probability per target flyover. Motion blur is sub-pixel at all speeds (IMX296 global shutter, $1/1000$\,s exposure) and is therefore omitted.}\label{tab:detect-chain}
+  \begin{tabularx}{\linewidth}{@{}c c c c c c c c@{}}
+    \toprule
+    \textbf{Alt (m)} & \textbf{GSD (mm/px)} & \textbf{Target (px)} & \textbf{Model (px)} & $v$ \textbf{(m/s)} & \textbf{Dwell (s)} & $n_f$ & $P_d$ \\
+    \midrule
+    20 & 12.6 & $143 \times 40$ & $84 \times 18$ & 6.0  & 2.3  & 11 & 0.9999 \\
+    25 & 15.8 & $114 \times 32$ & $67 \times 14$ & 6.7  & 2.6  & 12 & 0.9999 \\
+    30 & 18.9 & $95 \times 26$  & $56 \times 12$ & 7.3  & 2.8  & 14 & 0.9999 \\
+    35 & 22.1 & $81 \times 23$  & $48 \times 10$ & 8.0  & 3.0  & 14 & 0.9997 \\
+    40 & 25.3 & $71 \times 20$  & $42 \times 9$  & 8.7  & 3.2  & 15 & 0.9994 \\
+    50 & 31.6 & $57 \times 16$  & $34 \times 7$  & 10.0 & 3.4  & 16 & 0.9966 \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+Two results are noteworthy.
+First, \textbf{motion blur is not a limiting factor}: the IMX296 global shutter combined with a $1/1000$\,s exposure produces sub-pixel blur (\SI{0.3}{\px} at \SI{10}{\metre\per\second}, \SI{50}{\metre} altitude) at all operating speeds.
+The critical speed for single-pixel blur exceeds \SI{30}{\metre\per\second} at all altitudes---well beyond drone capability.
+
+Second, \textbf{the dwell time paradoxically increases with altitude} (from \SI{2.3}{\second} at \SI{20}{\metre} to \SI{3.4}{\second} at \SI{50}{\metre}) because the footprint height grows faster than the speed.
+The target is captured in 11--16 frames at all altitudes---more than sufficient given that a single detection above the \SI{0.2}{} confidence threshold triggers investigation.
+Detection probability exceeds \SI{99.6}{\percent} even at \SI{50}{\metre}, where the target width drops to 7\,pixels in the model input.
+The binding constraint on altitude is therefore not detection probability per se, but detection \emph{confidence}: at \SI{50}{\metre} the model produces lower-confidence detections that are more likely to be marginal, whereas at \SI{35}{\metre} the target subtends 48\,pixels in the model input with comfortable margin above the \SI{20}{\px} minimum detectable size.
+
+% =====================================================================
+\subsection{Selected Configuration and Justification}\label{sec:selected-config}
+
+The selected operating point is \textbf{\SI{35}{\metre} altitude, \SI{70}{\degree} scan angle, \SI{8}{\metre\per\second} search speed}.
+This configuration is \emph{not} the energy minimum---that distinction belongs to \SI{50}{\metre}/\SI{70}{\degree}/\SI{10}{\metre\per\second}---but it represents the best Pareto compromise across all five objectives.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.88\linewidth]{real_optimal_pattern}
+  \caption{The selected lawnmower pattern over the AENGM0074 survey polygon at \SI{35}{\metre} altitude with \SI{70}{\degree} scan angle. The SSSI no-fly zone (red fill) and its \SI{20}{\metre} buffer zone (red dashed line) are shown. Scan lines are colour-coded by sequence order; dashed lines indicate U-turn transits. The take-off point is marked with a green triangle.}
+  \label{fig:optimal-pattern}
+\end{figure}
+
+\begin{table}[ht]
+  \centering\compactTable
+  \caption{Pareto trade-off summary. The selected configuration prioritises detection reliability and regulatory safety over minimum energy.}\label{tab:pareto-final}
+  \begin{tabularx}{\linewidth}{@{}l l l X@{}}
+    \toprule
+    \textbf{Objective} & \textbf{Ideal value} & \textbf{Selected} & \textbf{Compromise rationale} \\
+    \midrule
+    Coverage        & 100\%             & 96\%          & 4\% loss in fenced NFZ buffer zone (low casualty probability) \\
+    Mission time    & \SI{68}{\second}  & \SI{112}{\second} & Slower speed ensures $\geq$14 inference frames per target \\
+    Energy          & \SI{8.2}{Wh}      & \SI{12.6}{Wh} & \SI{35}{\metre} vs \SI{50}{\metre}: 48\,px target vs 34\,px \\
+    Detection $P_d$ & $>$99.99\%        & 99.97\%       & Near-unity at all operating speeds \\
+    NFZ margin      & \SI{50}{\metre}   & \SI{50}{\metre} & \SI{34}{\metre} surplus above footprint radius at \SI{35}{\metre} \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+The rationale for choosing \SI{35}{\metre} over the energy-optimal \SI{50}{\metre} is as follows:
+
+\begin{itemize}
+  \item At \SI{50}{\metre}, the mannequin's width in the model input drops to 7\,pixels---below the 10\,pixel comfort threshold for width-dependent features.
+        At \SI{35}{\metre}, the width is 10\,pixels, providing a $\times$1.4 margin.
+  \item The retrained YOLOv8n model (\texttt{sar\_v2\_1088}, mAP$_{50}$ = 0.995) was trained on synthetic images including high-altitude views, but real-world conditions (lighting variation, partial occlusion, unusual target pose) can degrade detection at the pixel-count margin.
+        The \SI{35}{\metre} altitude provides a buffer against these degradation modes.
+  \item The energy penalty is \SI{4.4}{\watt\hour} (\SI{54}{\percent} more than the minimum), consuming only \SI{10.9}{\percent} of battery capacity and leaving over \SI{14}{\minute} of flight endurance---well above the \SI{1.9}{\minute} search time.
+  \item The multi-pass rescan chain ($35 \to 28 \to 22$\,m, Section~\ref{sec:rescan}) provides a safety net: if the initial pass at \SI{35}{\metre} misses the target, subsequent passes at lower altitude increase pixel extent to 60+ pixels, where detection is virtually certain.
+\end{itemize}
+
+The \SI{96}{\percent} coverage figure arises from the \SI{30}{\metre} NFZ waypoint buffer, which excludes waypoints near the SSSI boundary.
+The uncovered \SI{4}{\percent} lies within a fenced wildlife reserve with no public access, making the conditional probability of a casualty in this strip negligibly small.
+A probabilistic coverage-weighted detection probability of:
+\begin{equation}
+  P_{\mathrm{eff}} = C \cdot P_d + (1 - C) \cdot P_{\mathrm{access}} \cdot P_d \approx 0.96 \times 0.9997 \approx 0.96
+\end{equation}
+\noindent is operationally equivalent to full coverage of the accessible area.
+
+The key finding from this analysis is that detection probability is \emph{not} the binding constraint: even at the fastest speed considered (\SI{15}{\metre\per\second}), $P_d$ exceeds \SI{99.6}{\percent}.
+The binding constraints are instead the NFZ safety margin (which imposes the \SI{4}{\percent} coverage gap) and the detection confidence floor (which prevents flying above \SI{35}{\metre} despite the energy savings).
+The selected operating point sits at the intersection of these two binding constraints on the Pareto frontier, delivering near-complete coverage with comfortable energy margin and near-certain detection within the endurance limit of a single battery.
