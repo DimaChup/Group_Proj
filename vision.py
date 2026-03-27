@@ -2,6 +2,19 @@
 import cv2
 import numpy as np
 import os
+import sys
+
+# COCO class names for TFLite multi-class models (e.g. human.tflite)
+COCO_NAMES = {
+    0: "person", 1: "bicycle", 2: "car", 3: "motorcycle", 4: "airplane",
+    5: "bus", 6: "train", 7: "truck", 8: "boat", 9: "traffic light",
+    10: "fire hydrant", 11: "stop sign", 12: "parking meter", 13: "bench",
+    14: "bird", 15: "cat", 16: "dog", 17: "horse", 18: "sheep", 19: "cow",
+    20: "elephant", 24: "backpack", 25: "umbrella", 26: "handbag", 27: "tie",
+    28: "suitcase", 39: "bottle", 56: "chair", 57: "couch",
+    58: "potted plant", 59: "bed", 60: "dining table", 62: "tv", 63: "laptop",
+    64: "mouse", 67: "cell phone",
+}
 
 # --- Backend Detection ---
 # Priority 1: Ultralytics YOLO (accurate, for dev machines)
@@ -148,7 +161,7 @@ class VisionSystem:
             return
 
         # Option 0: NCNN (if model path points to ncnn directory or --backend ncnn)
-        ncnn_requested = "--backend" in " ".join(os.sys.argv) and "ncnn" in " ".join(os.sys.argv)
+        ncnn_requested = "--backend" in " ".join(sys.argv) and "ncnn" in " ".join(sys.argv)
         ncnn_model_dir = None
         if model_path.endswith('.tflite'):
             # Check if matching NCNN model exists alongside
@@ -331,14 +344,6 @@ class VisionSystem:
                     best_conf = conf
                     best_det = det
                     best_cls_id = cls_id
-
-            # COCO class names for TFLite multi-class models
-            COCO_NAMES = {0:"person",1:"bicycle",2:"car",3:"motorcycle",4:"airplane",5:"bus",
-                6:"train",7:"truck",8:"boat",9:"traffic light",10:"fire hydrant",11:"stop sign",
-                12:"parking meter",13:"bench",14:"bird",15:"cat",16:"dog",17:"horse",18:"sheep",
-                19:"cow",20:"elephant",24:"backpack",25:"umbrella",26:"handbag",27:"tie",
-                28:"suitcase",39:"bottle",56:"chair",57:"couch",58:"potted plant",59:"bed",
-                60:"dining table",62:"tv",63:"laptop",64:"mouse",67:"cell phone"}
 
             if best_det is not None:
                 cx = int(best_det[0] * w)
