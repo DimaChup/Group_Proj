@@ -95,7 +95,7 @@ CAMERA_FLIP_180 = True   # Camera mounted inverted on drone — flip image 180°
 # All scripts use best.tflite in root. To swap model on Pi:
 #   cp cv_models/sar_v2_1088/best.tflite best.tflite  (retrained v2, recommended)
 #   cp cv_models/sar_640/best.tflite best.tflite       (earlier 640x640 training)
-CONFIDENCE_THRESHOLD = 0.1  # Min detection confidence (low = catch everything, queue and visit in order)
+CONFIDENCE_THRESHOLD = 0.2  # Min detection confidence (low enough to catch edge cases, operator filters FPs)
 
 # --- SPEED SETTINGS ---
 TRANSIT_SPEED_MPS = 15.0
