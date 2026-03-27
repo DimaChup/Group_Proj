@@ -231,6 +231,13 @@ The six steps above form a directed acyclic graph of parameter dependencies, whe
     \SI{12.6}{Wh} is \SI{10.9}{\percent} of the \SI{115.4}{Wh} battery, leaving \SI{14}{\minute} of flight endurance---sufficient for the \SI{1.9}{\minute} search plus transit, descent, verification, and landing.
 \end{enumerate}
 
-\noindent Every parameter is traceable to a physical measurement (target dimensions, sensor specifications, inference benchmarks) or a regulatory constraint (altitude ceiling, NFZ boundaries).
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\linewidth]{optimization_network}
+  \caption{Optimisation variable dependency network. Decision variables (blue) cascade through derived quantities (white) to performance metrics (green/red). Arrow thickness indicates influence strength.}
+  \label{fig:optimization-network}
+\end{figure}
+
+\noindent Every parameter is traceable to a physical measurement (target dimensions, sensor specifications, inference benchmarks) or a regulatory constraint (altitude ceiling, NFZ boundaries). Figure~\ref{fig:optimization-network} visualises this dependency chain.
 No parameter was assumed or rounded for convenience.
 The chain can be re-evaluated instantly if any input changes---for example, a faster inference backend would relax the speed constraint, and a different target size would shift the altitude ceiling---making the design robust to future system upgrades.

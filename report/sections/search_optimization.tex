@@ -63,7 +63,7 @@ Table~\ref{tab:energy-top5} presents the five most and least energy-efficient co
   \label{fig:energy_efficiency}
 \end{figure}
 
-The selected operating point (rank~5: \SI{70}{\degree}, \SI{35}{\metre}, \SI{8}{\metre\per\second}) is not the global energy minimum---that distinction belongs to the \SI{50}{\metre}/\SI{10}{\metre\per\second} configuration---but it is the most energy-efficient configuration that maintains reliable detection. At \SI{50}{\metre} the mannequin subtends only 17~pixels, approaching the YOLOv8n detection threshold; at \SI{35}{\metre} it subtends 24~pixels with a comfortable margin above the minimum detectable size. The energy penalty for this safety margin is \SI{4.4}{\watt\hour} (\SI{54}{\percent} more than the absolute minimum), which consumes only \SI{10.9}{\percent} of the battery capacity and leaves over \SI{14}{\minute} of flight endurance---well above the \SI{2}{\minute} search time.
+The selected operating point (rank~5: \SI{70}{\degree}, \SI{35}{\metre}, \SI{8}{\metre\per\second}) is not the global energy minimum---that distinction belongs to the \SI{50}{\metre}/\SI{10}{\metre\per\second} configuration---but it is the most energy-efficient configuration that maintains reliable detection. At \SI{50}{\metre} the mannequin subtends only 25 model-input pixels (57 sensor pixels), approaching the detection confidence limit; at \SI{35}{\metre} it subtends 36 model-input pixels (81 sensor pixels) with a comfortable margin above the 20-pixel minimum. The energy penalty for this safety margin is \SI{4.4}{\watt\hour} (\SI{54}{\percent} more than the absolute minimum), which consumes only \SI{10.9}{\percent} of the battery capacity and leaves over \SI{14}{\minute} of flight endurance---well above the \SI{2}{\minute} search time.
 
 % ─────────────────────────────────────────────────────────────────────
 \subsection{Rotation Angle Analysis}\label{sec:rotation-analysis}
@@ -168,7 +168,7 @@ The probability of detecting a casualty depends on the number of inference frame
   n_f = \frac{W_g}{v} \times f_{\text{inf}} = \frac{W_g \cdot f_{\text{inf}}}{v}
 \end{equation}
 
-\noindent where $W_g$ is the along-track ground footprint (\SI{24}{\metre} at \SI{35}{\metre} altitude, accounting for the 4:3 aspect ratio of the IMX296) and $f_{\text{inf}} = \SI{4.8}{FPS}$. Assuming independent per-frame detection with probability $p = 0.95$ (based on bench-test results with the retrained YOLOv8n model at 24-pixel target extent), the probability of at least one detection in $n_f$ frames is:
+\noindent where $W_g$ is the along-track ground footprint (\SI{24}{\metre} at \SI{35}{\metre} altitude, accounting for the 4:3 aspect ratio of the IMX296) and $f_{\text{inf}} = \SI{4.8}{FPS}$. Assuming independent per-frame detection with probability $p = 0.95$ (based on bench-test results with the retrained YOLOv8n model at 36 model-input pixels), the probability of at least one detection in $n_f$ frames is:
 
 \begin{equation}\label{eq:detect-prob}
   P_d = 1 - (1 - p)^{n_f}
@@ -234,7 +234,7 @@ Table~\ref{tab:pareto-summary} summarises the Pareto trade-offs and the rational
     \midrule
     Coverage        & 100\%          & 96\%         & 4\% loss in fenced NFZ buffer zone (low casualty probability) \\
     Mission time    & \SI{59}{\second}  & \SI{112}{\second} & Slower speed ensures $\geq$14 inference frames per target \\
-    Energy          & \SI{8.2}{Wh}  & \SI{12.6}{Wh} & \SI{35}{\metre} vs \SI{50}{\metre}: 24\,px target vs 17\,px \\
+    Energy          & \SI{8.2}{Wh}  & \SI{12.6}{Wh} & \SI{35}{\metre} vs \SI{50}{\metre}: 36\,px model target vs 25\,px \\
     Detection $P_d$ & 99.99\%        & 99.97\%      & Near-unity at all operating speeds \\
     NFZ margin      & \SI{50}{\metre}   & \SI{50}{\metre}  & \SI{34}{\metre} surplus above footprint radius at \SI{35}{\metre} \\
     \bottomrule

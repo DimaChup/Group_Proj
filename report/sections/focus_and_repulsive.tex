@@ -114,8 +114,8 @@ Layers 1 and 2 overlap spatially: the speed ramp activates at 20\,m while the re
 The specific distances were chosen to account for known error sources:
 
 \begin{itemize}
-  \item \textbf{30\,m waypoint buffer} --- ensures the planned path maintains a comfortable margin from the NFZ. At the nominal search speed of \SI{10}{\metre\per\second}, a 30\,m buffer provides 3\,s of reaction time if the drone overshoots a waypoint.
-  \item \textbf{20\,m speed ramp} --- allows gradual deceleration from the search speed. At an approach rate of \SI{10}{\metre\per\second}, the 20\,m zone provides 2\,s of braking distance. The minimum speed of \SI{0.3}{\metre\per\second} at the boundary means the drone is nearly stationary before reaching the danger zone.
+  \item \textbf{30\,m waypoint buffer} --- ensures the planned path maintains a comfortable margin from the NFZ. At the nominal search speed of \SI{8}{\metre\per\second}, a 30\,m buffer provides 3.75\,s of reaction time if the drone overshoots a waypoint.
+  \item \textbf{20\,m speed ramp} --- allows gradual deceleration from the search speed. At an approach rate of \SI{8}{\metre\per\second}, the 20\,m zone provides 2.5\,s of braking distance. The minimum speed of \SI{0.3}{\metre\per\second} at the boundary means the drone is nearly stationary before reaching the danger zone.
   \item \textbf{23\,m repulsive field} --- extends 3\,m beyond the speed ramp onset to catch trajectories where GPS drift has already placed the drone closer than planned. The 3\,m margin matches the typical GPS CEP (Circular Error Probable) observed during bench testing (\SIrange{2}{3}{\metre}).
   \item \textbf{3\,m hard boundary} --- a last-resort cutoff that accounts for worst-case GPS error. At this distance the drone is within one CEP of the true boundary, so autonomous flight is no longer safe. The transition to \textsc{Manual} halts all velocity commands and alerts the operator, who can then fly the aircraft away using RC override.
 \end{itemize}

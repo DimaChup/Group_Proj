@@ -67,7 +67,7 @@ for perm in [(0,1,2), (0,2,1), (1,0,2), (1,2,0), (2,0,1), (2,1,0)]:
 
 The identity permutation $(0,1,2)$---i.e.\ treating the data as BGR without any conversion---produced correct colours. This confirms that the IMX296 driver delivers data in \textbf{BGR} byte order despite the \texttt{RGB888} format label. Applying the na\"ive \texttt{cv2.cvtColor(frame, cv2.COLOR\_RGB2BGR)} conversion that the label would suggest actually \emph{swaps} the channels into an incorrect order, resulting in the red and blue planes being exchanged.
 
-The fix was to remove the incorrect \texttt{cvtColor} call entirely. The practical impact is twofold. First, the YOLO model---which expects BGR input---now receives correctly ordered data, restoring detection confidence to its trained level ($>0.95$ on the bench-test dummy). Second, the MJPEG stream served to the ground-station browser displays natural colours without post-processing, reducing per-frame latency. This discovery was documented as a permanent warning in \texttt{CLAUDE.md} and \texttt{config.py} to prevent future regressions.
+The fix was to remove the incorrect \texttt{cvtColor} call entirely. The practical impact is twofold. First, the YOLO model---which expects BGR input---now receives correctly ordered data, restoring detection confidence to its trained level ($>0.95$ on the bench-test dummy). Second, the MJPEG stream served to the ground-station browser displays natural colours without post-processing, reducing per-frame latency. This discovery was documented as a permanent warning in the project documentation and \texttt{config.py} to prevent future regressions.
 
 % ─────────────────────────────────────────────────────────────────────
 \subsection{DJI Video FOV Calibration}\label{sec:cal:dji}
