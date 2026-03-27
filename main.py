@@ -371,6 +371,49 @@ class VisualFlightMission(StateHandlersMixin):
                                  5:'LOITER',6:'RTL',9:'LAND',16:'POSHOLD'}
                         print(f"WARNING: Cube in {modes.get(msg.custom_mode, f'MODE_{msg.custom_mode}')} (not GUIDED)")
                         self._last_mode_warn = msg.custom_mode
+            elif mtype == 'GPS_RAW_INT':
+                self.gps_fix_type = msg.fix_type
+                self.gps_satellites = msg.satellites_visible
+                self._check_gps_degradation()
+
+    GPS_DEGRADE_RTL_SECONDS = 5  # RTL after this many seconds of degraded GPS
+
+    def _check_gps_degradation(self):
+        """Warn and RTL if GPS fix degrades during flight."""
+        # Only monitor during active flight states
+        if self.state in (State.INIT, State.CONNECTING, State.ARMING, State.DONE,
+                          State.MANUAL, State.LANDING):
+            return
+
+        now = time.time()
+        fix_ok = self.gps_fix_type >= 3 and self.gps_satellites >= 6
+
+        if fix_ok:
+            # GPS recovered — clear degradation timer
+            if self._gps_degraded_time > 0:
+                elapsed = now - self._gps_degraded_time
+                print(f"[GPS] Fix recovered (fix={self.gps_fix_type}, sats={self.gps_satellites}) "
+                      f"after {elapsed:.1f}s degraded")
+                self._gps_degraded_time = 0
+            return
+
+        # GPS is degraded
+        if self._gps_degraded_time == 0:
+            self._gps_degraded_time = now
+
+        # Throttled warning (every 3 seconds)
+        if now - self._gps_warn_printed >= 3.0:
+            elapsed = now - self._gps_degraded_time
+            print(f"WARNING: GPS DEGRADED — fix={self.gps_fix_type}, sats={self.gps_satellites}, "
+                  f"degraded for {elapsed:.1f}s (RTL in {max(0, self.GPS_DEGRADE_RTL_SECONDS - elapsed):.0f}s)")
+            self._gps_warn_printed = now
+
+        # RTL after sustained degradation
+        elapsed = now - self._gps_degraded_time
+        if elapsed >= self.GPS_DEGRADE_RTL_SECONDS:
+            print(f"[GPS] FIX LOST for {elapsed:.1f}s — EMERGENCY RTL")
+            self._emergency_rtl(reason=f"GPS fix lost ({self.gps_fix_type}, {self.gps_satellites} sats) for {elapsed:.1f}s")
+            self._set_state(State.LANDING)
 
     # ── GPS math wrappers ─────────────────────────────────────────────
 
