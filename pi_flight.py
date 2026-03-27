@@ -493,7 +493,7 @@ class PiFlight:
         self.httpd = ThreadedHTTPServer(('0.0.0.0', args.port), WebHandler)
         self._web_thread = threading.Thread(target=self.httpd.serve_forever, daemon=True)
         self._web_thread.start()
-        print(f"[WEB] Dashboard running at http://localhost:{args.port}")
+        print(f"[WEB] Dashboard running at http://{pi_ip}:{args.port}")
 
     # --- MAVLink ---
     def _connect_mavlink(self):

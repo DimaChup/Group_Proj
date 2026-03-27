@@ -1,0 +1,99 @@
+===============================================
+TEST CHECKLIST FOR WORKING5.8
+===============================================
+
+LOCATION: docs/TEST_CHECKLIST_5.8.md (823 lines)
+
+WHAT THIS CHECKLIST COVERS:
+===========================
+
+1. Pre-Test Setup (Environment verification)
+   - SITL running, venv activated
+   - Verify DRONE_MODE=SIMULATION
+   - Dummy placement workflow
+
+2. Core Feature Tests (22 total tests)
+
+   BASELINE & REFACTORING:
+   - TEST 1: Full autonomous mission (lawnmower → detect → center → verify → land)
+   - TEST 15: Code refactoring validation (state_machine, navigation, gps_utils, stream_server)
+   - TEST 22: Log file generation (flight_log.csv with telemetry)
+
+   NEW CLI FLAGS:
+   - TEST 2: --smart-detect (multi-frame confirmation)
+   - TEST 3: --center-verify (vision centering + 10s GPS averaging)
+   - TEST 5: --no-nfz (disable geofence for testing)
+   - TEST 10: --beacon-delay N (PLB signal simulation)
+   - TEST 11: --transit (path optimization)
+   - TEST 12: --alt N (altitude override)
+   - TEST 13: --dry-run (mission plan without flying)
+   - TEST 14: --headless (Pi simulation, no windows)
+
+   SAFETY & GEOFENCE:
+   - TEST 4: Geofence (NFZ) enforcement (speed capping, repulsion, auto-manual)
+   - TEST 8: NFZ speed capping at boundary (detailed gradient test)
+   - TEST 9: Detection outside search area (filtered out)
+   - TEST 18: Reject radius 5m (prevent loops on same dummy)
+
+   MULTI-TARGET SYSTEM:
+   - TEST 6: Manual override (M key) workflow (pause, detect, queue, resume)
+   - TEST 7: Multiple dummies (queue ordering)
+   - TEST 19: Manual mode detection queue (persist across resume)
+   - TEST 21: Empty detection queue (sensible next action)
+
+   UI & INTEGRATION:
+   - TEST 16: Stream server (HTTP UI with buttons)
+   - TEST 17: Confidence threshold (0.2)
+   - TEST 20: Rapid key presses (input robustness)
+
+QUICK RUN (Critical Tests):
+===========================
+If time-limited, run these 5 tests (~20 minutes):
+1. TEST 1 (baseline mission)
+2. TEST 6 (manual override)
+3. TEST 8 (NFZ safety)
+4. TEST 15 (refactoring)
+5. TEST 22 (logging)
+
+FULL RUN (Complete Validation):
+===============================
+All 22 tests (~45-60 minutes in simulation)
+Recommended before any deployment
+
+PASS CRITERIA:
+==============
+- 0 crashes
+- 0 exceptions (all caught and logged)
+- 0 failed state transitions
+- All 22 tests pass (or documented as known limitation)
+- Performance acceptable (<5s state transitions, smooth video)
+
+STRUCTURE:
+==========
+Each test includes:
+- Purpose (what is being tested)
+- Command (exact CLI to run)
+- Test steps (numbered walkthrough)
+- Pass criteria (checklist, what to verify)
+- Fail/Investigate (common issues and debugging)
+
+TESTING ENVIRONMENT:
+====================
+Platform: Windows laptop with SITL
+Mode: DRONE_MODE=SIMULATION
+VEnv: test_env (has pymavlink, Ultralytics, TFLite)
+SITL: Mission Planner or mavproxy running
+Map: map.jpg in project root
+Model: best.tflite must exist
+
+NEXT STEPS:
+===========
+1. Open TEST_CHECKLIST_5.8.md in browser or editor
+2. Set up environment (SITL running, venv activated)
+3. Run tests in order (or quick run for speed)
+4. Log results (pass/fail, times, screenshots)
+5. Fix any failures before deployment
+6. Merge to MainOne2 staging branch
+7. Deploy to Pi and test in REAL mode
+
+===============================================
