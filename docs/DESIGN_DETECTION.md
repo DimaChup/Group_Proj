@@ -17,7 +17,7 @@ This document records the design rationale behind the detection pipeline in the 
 
 The asymmetry of costs is decisive: investigating a false positive costs approximately 10 seconds (fly to target, operator presses N, resume search). Missing a real target costs a full rescan pass at lower altitude, adding minutes to the mission and consuming battery. The expected cost of a false positive investigation is far lower than the expected cost of a missed detection.
 
-**Implementation:** In `_handle_search()` within `state_machine_no_descend.py`, a detection on any single frame calls `_detect_queue.append((lat, lon, conf))`. When `--smart-detect` is active, the counter `_consecutive_detect_count` must reach `DETECT_CONFIRM_FRAMES` before queuing, and resets to zero whenever a frame produces no detection.
+**Implementation:** In `_handle_search()` within `state_machine.py`, a detection on any single frame calls `_detect_queue.append((lat, lon, conf))`. When `--smart-detect` is active, the counter `_consecutive_detect_count` must reach `DETECT_CONFIRM_FRAMES` before queuing, and resets to zero whenever a frame produces no detection.
 
 ---
 

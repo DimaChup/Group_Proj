@@ -195,7 +195,7 @@ v3/
 ├── geofence.py                NFZ boundary checking + repulsive offset
 ├── utils.py                   GPS <-> pixel math (GeoTransformer)
 ├── state_machine.py           Full state machine (with descent)
-├── state_machine_no_descend.py  No-descend variant
+├── state_machine.py  No-descend variant
 ├── stream_server.py           HTTP MJPEG stream + browser dashboard
 │
 ├── best.tflite                Active AI model (swap to change detection)

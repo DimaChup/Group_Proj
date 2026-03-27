@@ -27,7 +27,7 @@ sequencing in autonomous robotics because it provides:
 
 - **Separation of concerns.** Detection logic lives in `vision.py`, path planning in
   `planning.py`, navigation commands in `navigation.py`, and geo-transforms in
-  `utils.py`. The state machine in `state_machine_no_descend.py` orchestrates these
+  `utils.py`. The state machine in `state_machine.py` orchestrates these
   modules without duplicating their logic.
 
 - **Operator override at every state.** The M key and the RC transmitter switch can
@@ -37,7 +37,7 @@ sequencing in autonomous robotics because it provides:
 The implementation uses a dispatch dictionary in `main.py` (line 637) that maps each
 `State` constant to a handler method. The main loop calls the active handler once per
 iteration, passing the latest detection result and keypress. All handler methods are
-defined in the `StateHandlersMixin` class (`state_machine_no_descend.py`), which the
+defined in the `StateHandlersMixin` class (`state_machine.py`), which the
 `VisualFlightMission` class inherits via mixin.
 
 ---
@@ -177,7 +177,7 @@ defined in the `StateHandlersMixin` class (`state_machine_no_descend.py`), which
 Earlier iterations of the state machine included a `DESCENDING` state that lowered
 the drone from search altitude (35 m) to a verification altitude (15 m) before
 presenting the operator with the confirm/reject prompt. The current design
-(`state_machine_no_descend.py`) eliminates that descent for three reasons:
+(`state_machine.py`) eliminates that descent for three reasons:
 
 1. **Camera FOV is sufficient at 35 m.** The onboard camera (IMX296, 1456 x 1088 px,
    HFOV 54.4 deg) covers approximately 37 m x 28 m of ground at 35 m altitude. A
@@ -237,7 +237,7 @@ departure point, it enters `RETURN_FROM_MANUAL` to fly back before resuming. If
 within 5 m, it resumes the previous state directly.
 
 During `MANUAL` mode, detections are still queued (line 900-911 of
-`state_machine_no_descend.py`). This means the operator can manually fly over an area
+`state_machine.py`). This means the operator can manually fly over an area
 of interest and accumulate detections, which are then investigated automatically when
 manual mode ends.
 

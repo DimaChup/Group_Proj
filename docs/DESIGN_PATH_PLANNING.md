@@ -1,6 +1,6 @@
 # Path Planning Design
 
-This document describes the search pattern generation and path planning subsystem of the SAR drone. It covers the algorithmic choices, geometric optimisations, and operational parameters implemented in `planning.py`, `config.py`, and `state_machine_no_descend.py`. All numeric values cited below are drawn directly from the codebase.
+This document describes the search pattern generation and path planning subsystem of the SAR drone. It covers the algorithmic choices, geometric optimisations, and operational parameters implemented in `planning.py`, `config.py`, and `state_machine.py`. All numeric values cited below are drawn directly from the codebase.
 
 ---
 

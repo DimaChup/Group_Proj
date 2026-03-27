@@ -26,7 +26,7 @@ which shapes many of the design choices below.
 | `utils.py` | Geo math: GPS-to-pixel and pixel-to-GPS conversion (`GeoTransformer`) |
 | `navigation.py` | MAVLink command abstraction: goto, set_speed, send_velocity, land, arm |
 | `geofence.py` | NFZ boundary distance, repulsive offset computation, inner polygon geometry |
-| `state_machine_no_descend.py` | All state handler methods (mixin class inherited by main mission) |
+| `state_machine.py` | All state handler methods (mixin class inherited by main mission) |
 | `main.py` | Mission orchestrator: connects modules, runs main loop, dispatches states |
 | `simple_simulator.py` | Interactive keyboard-flight simulator with CV + GPS estimation (laptop only) |
 | `pi_flight.py` | Web-based ground station: MJPEG stream + browser dashboard (headless on Pi) |

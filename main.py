@@ -29,7 +29,7 @@ from planning import PathPlanner
 from vision import VisionSystem
 
 # --- Extracted modules ---
-from state_machine_no_descend import StateHandlersMixin
+from state_machine import StateHandlersMixin
 from navigation import NavigationController
 from stream_server import (start_stream_server, set_stream_frame,
                            get_stream_frame, cmd_queue as stream_cmd_queue)
