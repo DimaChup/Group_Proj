@@ -463,10 +463,8 @@ class StateHandlersMixin:
                     if not self._is_inside_nfz(self.target_lat, self.target_lon) and \
                        not self._is_outside_search_area(self.target_lat, self.target_lon) and \
                        not self._is_near_known(self.target_lat, self.target_lon):
-                        _dq = getattr(self, '_detect_queue', [])
                         c = getattr(self, 'current_conf', 0.5)
-                        _dq.append((self.target_lat, self.target_lon, c))
-                        self._detect_queue = _dq
+                        self._enqueue_detection(self.target_lat, self.target_lon, c)
                         print(f"New target during CENTERING queued at ({self.target_lat:.6f}, {self.target_lon:.6f})")
                     self.target_lat, self.target_lon = locked
 

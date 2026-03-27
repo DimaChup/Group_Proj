@@ -177,6 +177,17 @@ class PathPlanner:
 
             direction *= -1  # zigzag
 
+        # 7. Remove consecutive duplicate waypoints (from zero-length strips)
+        if len(waypoints) >= 2:
+            deduped = [waypoints[0]]
+            for wp in waypoints[1:]:
+                if abs(wp[0] - deduped[-1][0]) > 1e-9 or abs(wp[1] - deduped[-1][1]) > 1e-9:
+                    deduped.append(wp)
+            if len(deduped) < len(waypoints):
+                print(f"  Removed {len(waypoints) - len(deduped)} duplicate waypoints "
+                      f"(polygon narrower than footprint in places)")
+            waypoints = deduped
+
         return waypoints
 
     @staticmethod

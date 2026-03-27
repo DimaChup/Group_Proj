@@ -471,6 +471,11 @@ class VisualFlightMission(StateHandlersMixin):
                 cv2.putText(frame, "N/S/W/E", (cx-60, cy+90), F, 0.8, (0,255,255), 2)
             else:
                 cv2.putText(frame, "Y=Confirm  N=Reject  I=Interest", (cx-200, cy+80), F, 0.8, (0,0,255), 2)
+                _vr = getattr(self, '_verify_remaining', None)
+                if _vr is not None:
+                    _vr_int = int(_vr)
+                    _vr_color = (0, 0, 255) if _vr < 30 else (0, 165, 255) if _vr < 60 else (0, 255, 255)
+                    cv2.putText(frame, f"Timeout: {_vr_int}s", (cx-80, cy+110), F, 0.7, _vr_color, 2)
 
         if hasattr(self, 'items_of_interest') and self.items_of_interest:
             y_off = frame.shape[0] - 30 * len(self.items_of_interest) - 10
