@@ -252,6 +252,20 @@ The six steps above form a directed acyclic graph of parameter dependencies, whe
   \label{fig:sensitivity-spider}
 \end{figure}
 
-\noindent Every parameter is traceable to a physical measurement (target dimensions, sensor specifications, inference benchmarks) or a regulatory constraint (altitude ceiling, NFZ boundaries). Figures~\ref{fig:sensitivity-matrix} and~\ref{fig:sensitivity-spider} quantify these inter-parameter sensitivities, while Figure~\ref{fig:optimization-network} visualises the dependency chain.
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.85\linewidth]{coupling_matrix}
+  \caption{Variable coupling matrix showing pairwise interaction effects. The altitude--speed pair exhibits the only strong coupling, jointly determining coverage rate and detection probability. Off-diagonal cells indicate which performance metric is affected by each variable pair.}
+  \label{fig:coupling-matrix}
+\end{figure}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.85\linewidth]{altitude_speed_tradeoff}
+  \caption{Altitude--speed trade-off space. Colour shows composite mission score (40\% detection $+$ 35\% coverage $+$ 25\% energy). Blue contours: detection probability. Orange contours: coverage time. The selected operating point (35\,m, 8\,m/s) sits above the 95\% detection contour in the high-score region.}
+  \label{fig:alt-speed-tradeoff}
+\end{figure}
+
+\noindent Every parameter is traceable to a physical measurement (target dimensions, sensor specifications, inference benchmarks) or a regulatory constraint (altitude ceiling, NFZ boundaries). Figures~\ref{fig:sensitivity-matrix} and~\ref{fig:sensitivity-spider} quantify single-variable sensitivities, Figure~\ref{fig:coupling-matrix} reveals pairwise interactions, and Figure~\ref{fig:alt-speed-tradeoff} maps the dominant altitude--speed trade-off space. Figure~\ref{fig:optimization-network} visualises the full dependency chain.
 No parameter was assumed or rounded for convenience.
 The chain can be re-evaluated instantly if any input changes---for example, a faster inference backend would relax the speed constraint, and a different target size would shift the altitude ceiling---making the design robust to future system upgrades.

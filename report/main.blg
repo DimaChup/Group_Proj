@@ -1,17 +1,17 @@
 [0] Config.pm:328> INFO - This is Biber 2.21
 [0] Config.pm:331> INFO - Logfile is 'main.blg'
-[222] biber-MSWIN64:342> INFO - === 
-[339] Biber.pm:421> INFO - Reading 'main.bcf'
-[585] Biber.pm:1002> INFO - Found 62 citekeys in bib section 0
-[612] Biber.pm:4487> INFO - Processing section 0
-[639] Biber.pm:4678> INFO - Looking for bibtex file 'references.bib' for section 0
-[765] bibtex.pm:1713> INFO - LaTeX decoding ...
-[960] bibtex.pm:1519> INFO - Found BibTeX data source 'references.bib'
-[1555] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'normalization = NFD' with 'normalization = prenormalized'
-[1555] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'variable = shifted' with 'variable = non-ignorable'
-[1555] Biber.pm:4307> INFO - Sorting list 'none/global//global/global/global' of type 'entry' with template 'none' and locale 'en-US'
-[1555] Biber.pm:4313> INFO - No sort tailoring available for locale 'en-US'
-[1634] bbl.pm:676> INFO - Writing 'main.bbl' with encoding 'UTF-8'
-[1711] bbl.pm:779> INFO - Output to main.bbl
-[1712] Biber.pm:132> WARN - ISBN '978-0-471-23428-1' in entry 'sheridan2002humans' is invalid - run biber with '--validate_datamodel' for details.
-[1712] Biber.pm:134> INFO - WARNINGS: 1
+[178] biber-MSWIN64:342> INFO - === 
+[234] Biber.pm:421> INFO - Reading 'main.bcf'
+[460] Biber.pm:1002> INFO - Found 62 citekeys in bib section 0
+[484] Biber.pm:4487> INFO - Processing section 0
+[507] Biber.pm:4678> INFO - Looking for bibtex file 'references.bib' for section 0
+[604] bibtex.pm:1713> INFO - LaTeX decoding ...
+[801] bibtex.pm:1519> INFO - Found BibTeX data source 'references.bib'
+[1269] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'normalization = NFD' with 'normalization = prenormalized'
+[1269] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'variable = shifted' with 'variable = non-ignorable'
+[1269] Biber.pm:4307> INFO - Sorting list 'none/global//global/global/global' of type 'entry' with template 'none' and locale 'en-US'
+[1270] Biber.pm:4313> INFO - No sort tailoring available for locale 'en-US'
+[1316] bbl.pm:676> INFO - Writing 'main.bbl' with encoding 'UTF-8'
+[1357] bbl.pm:779> INFO - Output to main.bbl
+[1358] Biber.pm:132> WARN - ISBN '978-0-471-23428-1' in entry 'sheridan2002humans' is invalid - run biber with '--validate_datamodel' for details.
+[1358] Biber.pm:134> INFO - WARNINGS: 1
