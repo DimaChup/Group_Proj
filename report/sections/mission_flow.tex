@@ -1,0 +1,124 @@
+\section{Mission Flow}\label{sec:mission-flow}
+
+This section describes the end-to-end operational sequence of a real autonomous SAR mission, from power-on to return-to-launch. The narrative follows the state machine (Figure~\ref{fig:state_machine}) and the mission timeline (Figure~\ref{fig:mission_timeline}), with explicit reference to the flight parameters summarised in Table~\ref{tab:flight-params} and the requirement identifiers from the project brief.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{Pre-Flight}\label{sec:mf-preflight}
+
+Before every flight the crew executes a structured start-up sequence:
+
+\begin{enumerate}
+  \item The pilot powers the Hexsoon EDU-450 and verifies that the Cube Orange obtains a 3D GPS fix with at least six satellites.
+  \item On the Raspberry Pi~5 companion computer, the operator starts \texttt{mavproxy} over the serial link to the Cube (\SI{921600}{baud}), with two UDP outputs: port~14550 for the mission script and port~14551 for a diagnostics monitor. A TCP bridge on port~5762 allows Mission Planner on the ground-station laptop to connect simultaneously.
+  \item The operator runs \texttt{preflight.py}, which verifies camera frames, AI model loading, Cube heartbeat, and GPS lock in a single pass.
+  \item The operator opens the browser-based ground station at \texttt{http://PI\_IP:8090}, which provides a live MJPEG video stream, a 2D GPS grid, detection cluster markers, and command buttons (Section~\ref{sec:ground-station}).
+  \item The mission script (\texttt{main.py}) is launched. It loads the survey polygon, flight boundary, SSSI no-fly zone, and take-off location from the course KML file, generates the lawnmower search pattern, and enters the \textsc{Init} state.
+\end{enumerate}
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{Takeoff}\label{sec:mf-takeoff}
+
+The pilot arms the motors via the RC transmitter and switches to GUIDED mode. The state machine confirms motor arm status and issues \texttt{MAV\_CMD\_NAV\_TAKEOFF} to the search altitude of \SI{35}{\metre} (R04: maximum \SI{50}{\metre}). The drone climbs vertically from the Take-Off Location (R03: within \SI{5}{\metre} of the defined TOL). A 60-second timeout alerts the operator if the target altitude is not reached; on real hardware, an unexpected disarm during climb transitions the system to \textsc{Done} rather than silently retrying, ensuring the pilot retains full awareness.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{Transit to Search Area}\label{sec:mf-transit}
+
+Once 90\% of the target altitude is reached, the planner generates the lawnmower waypoints from the drone's current position. If operator-defined transit waypoints exist (loaded from \texttt{waypoints.json}), the drone follows them first at \SI{15}{\metre\per\second} transit speed, providing a controlled ingress path that avoids the SSSI. The NFZ geofence is active throughout transit: any waypoint within \SI{30}{\metre} of the SSSI boundary was already filtered at plan time, and the runtime speed ramp (Section~\ref{sec:mf-nfz}) provides a continuous safety margin.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{Search}\label{sec:mf-search}
+
+The drone executes the boustrophedon search pattern at \SI{35}{\metre} altitude. Speed follows an altitude-dependent schedule: \SI{6}{\metre\per\second} at \SI{20}{\metre}, linearly interpolating to \SI{10}{\metre\per\second} at \SI{50}{\metre}, yielding approximately \SI{8}{\metre\per\second} at the nominal search altitude. The computer vision pipeline runs continuously at \SI{4.8}{FPS} on the Pi~5 (TFLite, XNNPACK backend). Each frame undergoes the following processing chain:
+
+\begin{enumerate}
+  \item \textbf{Capture} --- the IMX296 global-shutter camera acquires a \num{1456x1088} frame.
+  \item \textbf{Undistort} --- a precomputed lens-distortion remap corrects barrel distortion (\SI{1.5}{\milli\second} cost).
+  \item \textbf{Resize and normalise} --- the frame is resized to the model's \num{640x640} input tensor and normalised to $[0, 1]$.
+  \item \textbf{Inference} --- the YOLOv8n TFLite model produces bounding-box predictions (\SI{206}{\milli\second} average).
+  \item \textbf{Threshold} --- detections with confidence below 0.2 are discarded. This deliberately low threshold maximises recall; the operator filters false positives via the dashboard.
+\end{enumerate}
+
+\noindent The live MJPEG stream on the ground-station dashboard shows each frame with a detection overlay (bounding box, confidence score, crosshair-to-target line), the current state, altitude, speed, GPS coordinates, and waypoint progress. The operator monitors the stream passively during the search phase.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{Detection and Queuing}\label{sec:mf-detection}
+
+When the vision system detects a target, the pixel coordinates are converted to a GPS estimate using the drone's current position, altitude, and heading (Section~\ref{sec:target-localisation}). The estimate is then filtered through three validity checks:
+
+\begin{itemize}
+  \item \textbf{NFZ check} --- detections whose estimated GPS falls inside the SSSI polygon are discarded.
+  \item \textbf{Search boundary check} --- detections outside the survey polygon are discarded.
+  \item \textbf{De-duplication} --- detections within \SI{5}{\metre} of a previously rejected target, a logged item of interest, or an already-queued detection are suppressed.
+\end{itemize}
+
+\noindent Valid detections are appended to a bounded queue (maximum 20~entries; oldest dropped on overflow). Critically, the drone does \emph{not} stop or deviate on the first detection. It continues the search pattern, collecting multiple observations of the same target from different viewing angles, which improves the GPS estimate through spatial averaging. Only when a queued detection is ready for investigation does the state machine transition.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{PLB Focus Area Redirect}\label{sec:mf-plb}
+
+Between 5 and 15~minutes into the search, the operator receives simulated Personal Locator Beacon (PLB) coordinates (R06). The operator presses the \texttt{B}~key on the dashboard or terminal, and the system loads a focus-area polygon from a JSON file. A new, tighter lawnmower pattern is generated over the focus polygon from the drone's current position, with reduced search speed (\SI{5}{\metre\per\second}) to maximise detection probability in the high-priority zone. The waypoint index and rescan counter reset; previously rejected false positives are preserved so they are not re-investigated.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{Investigation}\label{sec:mf-investigation}
+
+When the operator observes a detection cluster on the dashboard and judges it worth investigating, they press the \texttt{N}~key (investigate). The state machine pops the highest-priority queued detection, records the drone's current pattern position as a departure point, and flies to the cluster centroid at transit speed. This operator-in-the-loop decision (R08) prevents the drone from chasing every low-confidence detection autonomously, conserving flight time and battery.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{Verification}\label{sec:mf-verify}
+
+Upon arrival within \SI{1}{\metre} of the estimated target position, the drone hovers and the state machine enters \textsc{Verify}. The operator sees a close-up live video feed on the dashboard and has 120~seconds to make a classification decision:
+
+\begin{itemize}
+  \item \textbf{Y (confirm casualty)} --- the target GPS is refined using a 10-second GPS position average. The operator is then prompted to select a landing side (N/E/S/W).
+  \item \textbf{I (item of interest)} --- the target is logged with its GPS coordinates and imagery (R05, R10) but no landing is attempted. The drone returns to its departure point and resumes the search pattern.
+  \item \textbf{X / N (false positive / reject)} --- the target is added to the rejected list (suppressing future detections within \SI{5}{\metre}) and the drone returns to its departure point.
+\end{itemize}
+
+\noindent A countdown timer is displayed on both the HUD and the dashboard, with audible warnings at 60, 90, and 100~seconds. If no response is received within 120~seconds, the target is auto-rejected and the drone resumes searching.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{Approach and Landing}\label{sec:mf-landing}
+
+If the operator confirms the casualty, the drone calculates a landing point offset \SI{7.5}{\metre} from the target in the operator-selected direction, satisfying the requirement to land within \SI{10}{\metre} but not within \SI{5}{\metre} of the casualty (R07). The choice of \SI{7.5}{\metre} provides margin for GPS estimation error (CEP50 $\approx$ \SI{2.3}{\metre} from video analysis) while remaining well within the \SI{10}{\metre} outer bound.
+
+The drone descends to \SI{3}{\metre} above the offset landing point and enters the \textsc{Hover\_Target} state for a 15-second payload deployment sequence:
+
+\begin{enumerate}
+  \item $t = 0$--$3$\,s: stabilise hover at \SI{3}{\metre}.
+  \item $t = 3$\,s: Tarot servo partial release (stage~1, PWM~1300) --- parachute or strap slips.
+  \item $t = 6$\,s: Tarot servo full release (stage~2, PWM~1100) --- first-aid kit separates.
+  \item $t = 15$\,s: servo retracts (PWM~1500), hover complete.
+\end{enumerate}
+
+\noindent Direct offset landing was chosen over a visual-servoing descent for three reasons. First, the GPS estimate accuracy (CEP50 $\approx$ \SI{2.3}{\metre}) is sufficient for a \SI{7.5}{\metre} offset, where the absolute position of the landing point matters less than its distance from the target. Second, visual servoing at low altitude introduces risk: the target may leave the camera's field of view during descent, and corrective manoeuvres close to the ground increase the probability of a crash. Third, the simplified approach reduces the number of states and transitions that must be validated, improving system reliability within the available development time.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{Return to Launch}\label{sec:mf-rtl}
+
+After payload deployment, the drone climbs back to search altitude and retraces the transit waypoints in reverse order at \SI{15}{\metre\per\second}. Upon reaching the launch vicinity ($<$\,\SI{2}{\metre} horizontal), it issues \texttt{MAV\_CMD\_NAV\_LAND}. Touchdown is confirmed by three independent mechanisms: ArduPilot's accelerometer-based auto-disarm, an altimeter threshold (\SI{0.5}{\metre} for five consecutive ticks), and an absolute 90-second landing timeout with forced disarm. The mission terminates in \textsc{Done}, reporting the landing error relative to the home position (R03).
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{Safety Layers During Flight}\label{sec:mf-safety}
+
+Four safety mechanisms operate concurrently throughout the mission, independent of the current state.
+
+\paragraph{NFZ Geofence (R01, R02).}\label{sec:mf-nfz}
+The SSSI no-fly zone is enforced by a three-layer geofence (Section~\ref{sec:geofencing}):
+
+\begin{enumerate}
+  \item \textbf{Plan-time filtering} --- waypoints within \SI{30}{\metre} of the SSSI boundary are removed during pattern generation.
+  \item \textbf{Speed ramp} --- within \SI{20}{\metre} of the boundary, a linear speed scalar reduces the drone's velocity from \SI{3.0}{\metre\per\second} at the zone edge to \SI{0.3}{\metre\per\second} at the boundary, providing a smooth deceleration that prevents overshoot.
+  \item \textbf{Repulsive field} --- within \SI{23}{\metre} of an inner offset polygon, a constant-magnitude (\SI{3.0}{\metre\per\second}) velocity vector pushes the drone away from the boundary.
+  \item \textbf{Hard boundary} --- if the drone enters the SSSI polygon, the system immediately transitions to \textsc{Manual} mode and halts all autonomous commands, returning control to the pilot.
+\end{enumerate}
+
+\paragraph{Manual Override.}
+At any point during the mission, the pilot can press the \texttt{M}~key (via terminal, dashboard, or a mapped RC switch) to enter \textsc{Manual} mode. The state machine saves the current position and active state, then ceases all autonomous commands. The pilot flies the drone manually. Pressing \texttt{M} again transitions to \textsc{Return\_From\_Manual}, which navigates back to the saved departure point and resumes the interrupted state. This provides a non-destructive override that preserves mission progress (R09).
+
+\paragraph{RC Kill Switch (R09).}
+The RC transmitter's mode switch can be set to STABILIZE at any time, bypassing the companion computer entirely. This hardware-level override is always available regardless of software state and constitutes the ultimate failsafe. The Safety Pilot retains authority to take this action at any point during the flight (R11).
+
+\paragraph{Link Loss.}
+The state machine monitors MAVLink heartbeats continuously. If no heartbeat is received for five seconds, the system triggers an automatic Return-to-Launch via ArduPilot's built-in \texttt{FS\_GCS\_ENABLE} failsafe parameter, which is configured before flight. This ensures the drone returns home even if the companion computer loses communication with the autopilot.
+
+% end of mission flow section

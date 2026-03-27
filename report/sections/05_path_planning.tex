@@ -1,6 +1,6 @@
 \section{Search Pattern and Path Planning}\label{sec:planning}
 
-Efficient coverage of the search area is a prerequisite for any autonomous SAR mission: every square metre of ground must be imaged by the onboard camera at least once, while minimising flight time and energy expenditure. This section describes the coverage path planning approach implemented in the system's \texttt{planning.py} module, the rotated-mask algorithm that generates waypoints from an arbitrary polygonal boundary, and the parameter optimisation that ensures complete camera coverage with minimal energy cost.
+Efficient coverage of the search area is a prerequisite for any autonomous SAR mission: every square metre of ground must be imaged by the onboard camera at least once, while minimising flight time and energy expenditure. The \texttt{planning.py} module addresses this requirement through a rotated-mask boustrophedon algorithm that generates waypoints from an arbitrary polygonal boundary, with automatic scan-angle selection to minimise total path length.
 
 % ─────────────────────────────────────────────────────────────────────
 \subsection{Coverage Path Planning}\label{sec:cpp}
@@ -49,18 +49,12 @@ The core insight of the waypoint generation algorithm is a \emph{rotate--rasteri
 
 This rotate--rasterise--rotate-back approach is robust to any polygon geometry. Unlike analytical clipping methods that must handle edge cases for concave vertices, the binary mask naturally represents the polygon interior, and scan-line intersection reduces to reading non-zero pixel runs from a single row.
 
-% ── Lawnmower figure placeholder ─────────────────────────────────────
+% ── Lawnmower figure ─────────────────────────────────────
 \begin{figure}[ht]
   \centering
-  % \includegraphics[width=0.85\linewidth]{lawnmower_pattern}
-  \fbox{\parbox{0.82\linewidth}{\centering\vspace{3.2cm}
-    \textit{Lawnmower pattern over the five-vertex survey polygon.
-    Parallel strips are aligned to the longest polygon edge;
-    arrows indicate the alternating sweep direction.
-    Dashed outline shows the SSSI no-fly zone.}
-  \vspace{3.2cm}}}
-  \caption{Generated boustrophedon search pattern. Strips are spaced according to the camera ground footprint at \SI{35}{\metre} altitude with \SI{20}{\percent} lateral overlap. The scan angle of approximately \SI{70}{\degree} was determined by the minimum-area bounding rectangle of the survey polygon.}
-  \label{fig:lawnmower}
+  \includegraphics[width=0.85\linewidth]{coverage_vs_time}
+  \caption{Area coverage progression over time for the boustrophedon search pattern at \SI{35}{\metre} altitude. The near-linear increase confirms systematic, gap-free coverage of the survey polygon.}
+  \label{fig:coverage_vs_time}
 \end{figure}
 
 % ─────────────────────────────────────────────────────────────────────
@@ -90,7 +84,7 @@ The \SI{20}{\percent} overlap compensates for GPS drift (typically \SIrange{2}{3
 % ─────────────────────────────────────────────────────────────────────
 \subsection{Scan Angle Optimisation}\label{sec:scan-angle}
 
-The scan angle---the orientation of the parallel strips relative to north---critically affects the number of scan lines and therefore the total path length, number of U-turns, and energy expenditure. The planner uses the minimum-area bounding rectangle to select the angle automatically, but a comprehensive parametric analysis was conducted to validate this choice and quantify the sensitivity.
+The scan angle---the orientation of the parallel strips relative to north---significantly affects the number of scan lines and therefore the total path length, number of U-turns, and energy expenditure. The planner uses the minimum-area bounding rectangle to select the angle automatically; however, a comprehensive parametric analysis was conducted to validate this choice and quantify the sensitivity.
 
 The analysis script (\texttt{analysis/path\_optimization/optimize\_path.py}) evaluated \textbf{216 configurations}: 6 altitudes (20, 25, 30, 35, 40, and \SI{50}{\metre}) $\times$ 36 scan angles (\SIrange{0}{175}{\degree} in \SI{5}{\degree} steps). For each configuration, the script computes the lawnmower pattern geometry over the real AENGM0074 survey polygon, accounting for altitude-dependent speed, U-turn deceleration penalties, and NFZ slowdown zones near the adjacent SSSI boundary.
 

@@ -11,66 +11,66 @@ Parameters are loaded at startup and may be overridden via environment variables
 \label{tab:config-params}
 \begin{tabular}{@{}llll@{}}
 \toprule
-\textbf{Parameter} & \textbf{Default} & \textbf{Unit} & \textbf{Description} \
+\textbf{Parameter} & \textbf{Default} & \textbf{Unit} & \textbf{Description} \\
 \midrule
 
-\multicolumn{4}{@{}l}{\textit{Flight Altitudes}} \
+\multicolumn{4}{@{}l}{\textit{Flight Altitudes}} \\
 \addlinespace[2pt]
-\texttt{TARGET\_ALT}           & 35.0  & m   & Search-pattern cruise altitude \
-\texttt{VERIFY\_ALT}           & 15.0  & m   & Descent altitude for close-up verification \
-\texttt{RESCAN\_ALT\_FACTOR}   & 0.8   & --  & Altitude multiplier per rescan pass \
-\texttt{RESCAN\_ALT\_FLOOR\_M} & 15.0  & m   & Minimum permitted rescan altitude \
+\texttt{TARGET\_ALT}           & 35.0  & m   & Search-pattern cruise altitude \\
+\texttt{VERIFY\_ALT}           & 15.0  & m   & Descent altitude for close-up verification \\
+\texttt{RESCAN\_ALT\_FACTOR}   & 0.8   & --  & Altitude multiplier per rescan pass \\
+\texttt{RESCAN\_ALT\_FLOOR\_M} & 15.0  & m   & Minimum permitted rescan altitude \\
 \addlinespace[4pt]
 
-\multicolumn{4}{@{}l}{\textit{Speeds}} \
+\multicolumn{4}{@{}l}{\textit{Speeds}} \\
 \addlinespace[2pt]
-\texttt{TRANSIT\_SPEED\_MPS}      & 15.0  & m/s & Speed to/from search area \
-\texttt{SEARCH\_SPEED\_MPS}       & 10.0  & m/s & Default search-leg speed \
-\texttt{FOCUS\_SEARCH\_SPEED\_MPS}& 5.0   & m/s & Reduced speed inside Focus Area (PLB zone) \
-\texttt{SPEED\_ALT\_LOW}          & 20.0  & m   & Altitude below which \texttt{SPEED\_AT\_LOW} applies \
-\texttt{SPEED\_ALT\_HIGH}         & 50.0  & m   & Altitude above which \texttt{SPEED\_AT\_HIGH} applies \
-\texttt{SPEED\_AT\_LOW}           & 6.0   & m/s & Cruise speed at low altitude (blur mitigation) \
-\texttt{SPEED\_AT\_HIGH}          & 10.0  & m/s & Cruise speed at high altitude \
+\texttt{TRANSIT\_SPEED\_MPS}      & 15.0  & m/s & Speed to/from search area \\
+\texttt{SEARCH\_SPEED\_MPS}       & 10.0  & m/s & Default search-leg speed \\
+\texttt{FOCUS\_SEARCH\_SPEED\_MPS}& 5.0   & m/s & Reduced speed inside Focus Area (PLB zone) \\
+\texttt{SPEED\_ALT\_LOW}          & 20.0  & m   & Altitude below which \texttt{SPEED\_AT\_LOW} applies \\
+\texttt{SPEED\_ALT\_HIGH}         & 50.0  & m   & Altitude above which \texttt{SPEED\_AT\_HIGH} applies \\
+\texttt{SPEED\_AT\_LOW}           & 6.0   & m/s & Cruise speed at low altitude (blur mitigation) \\
+\texttt{SPEED\_AT\_HIGH}          & 10.0  & m/s & Cruise speed at high altitude \\
 \addlinespace[4pt]
 
-\multicolumn{4}{@{}l}{\textit{Camera \& Optics (IMX296 Global Shutter)}} \
+\multicolumn{4}{@{}l}{\textit{Camera \& Optics (IMX296 Global Shutter)}} \\
 \addlinespace[2pt]
-\texttt{SENSOR\_WIDTH\_MM}  & 5.02  & mm  & IMX296 sensor physical width \
-\texttt{FOCAL\_LENGTH\_MM}  & 5.46  & mm  & Calibrated focal length (bench test) \
-\texttt{IMAGE\_W}           & 1456  & px  & Capture resolution (width) \
-\texttt{IMAGE\_H}           & 1088  & px  & Capture resolution (height) \
-\texttt{CAMERA\_FLIP\_180}  & True  & --  & Rotate image 180\textdegree\ (inverted mount) \
+\texttt{SENSOR\_WIDTH\_MM}  & 5.02  & mm  & IMX296 sensor physical width \\
+\texttt{FOCAL\_LENGTH\_MM}  & 5.46  & mm  & Calibrated focal length (bench test) \\
+\texttt{IMAGE\_W}           & 1456  & px  & Capture resolution (width) \\
+\texttt{IMAGE\_H}           & 1088  & px  & Capture resolution (height) \\
+\texttt{CAMERA\_FLIP\_180}  & True  & --  & Rotate image \SI{180}{\degree} (inverted mount) \\
 \addlinespace[4pt]
 
-\multicolumn{4}{@{}l}{\textit{Detection \& Target}} \
+\multicolumn{4}{@{}l}{\textit{Detection \& Target}} \\
 \addlinespace[2pt]
-\texttt{CONFIDENCE\_THRESHOLD}    & 0.2   & --  & Minimum YOLOv8 confidence to register detection \
-\texttt{DETECT\_CONFIRM\_FRAMES}  & 3     & frames & Consecutive detections before trigger \
-\texttt{DETECT\_LOCK\_RADIUS\_M}  & 5.0   & m   & Ignore detections beyond this from locked target \
-\texttt{MAX\_DETECT\_QUEUE}       & 20    & --  & Maximum queued detections (FIFO overflow) \
-\texttt{TARGET\_REAL\_RADIUS\_M}  & 0.15  & m   & Physical radius of search dummy \
-\texttt{DUMMY\_HEIGHT\_M}         & 1.8   & m   & Dummy height used in FOV calculations \
-\texttt{REJECTED\_TARGET\_RADIUS\_M} & 5.0 & m  & Exclusion radius around rejected targets \
-\texttt{MAX\_RESCAN\_PASSES}      & 3     & --  & Altitude-drop rescan attempts before abort \
+\texttt{CONFIDENCE\_THRESHOLD}    & 0.2   & --  & Minimum YOLOv8 confidence to register detection \\
+\texttt{DETECT\_CONFIRM\_FRAMES}  & 3     & frames & Consecutive detections before trigger \\
+\texttt{DETECT\_LOCK\_RADIUS\_M}  & 5.0   & m   & Ignore detections beyond this from locked target \\
+\texttt{MAX\_DETECT\_QUEUE}       & 20    & --  & Maximum queued detections (FIFO overflow) \\
+\texttt{TARGET\_REAL\_RADIUS\_M}  & 0.15  & m   & Physical radius of search dummy \\
+\texttt{DUMMY\_HEIGHT\_M}         & 1.8   & m   & Dummy height used in FOV calculations \\
+\texttt{REJECTED\_TARGET\_RADIUS\_M} & 5.0 & m  & Exclusion radius around rejected targets \\
+\texttt{MAX\_RESCAN\_PASSES}      & 3     & --  & Altitude-drop rescan attempts before abort \\
 \addlinespace[4pt]
 
-\multicolumn{4}{@{}l}{\textit{NFZ Geofence}} \
+\multicolumn{4}{@{}l}{\textit{NFZ Geofence}} \\
 \addlinespace[2pt]
-\texttt{NFZ\_HARD\_BOUNDARY\_M}     & 3.0   & m   & Penetration depth triggering forced MANUAL mode \
-\texttt{NFZ\_SOFT\_BOUNDARY\_M}     & 8.0   & m   & Outer repulsion zone (quadratic field) \
-\texttt{NFZ\_WAYPOINT\_BUFFER\_M}   & 30.0  & m   & Skip waypoints within this distance of NFZ \
-\texttt{NFZ\_SLOW\_ZONE\_M}         & 20.0  & m   & Speed-reduction field active within this distance \
-\texttt{NFZ\_MIN\_SPEED\_MPS}       & 0.3   & m/s & Minimum speed at NFZ boundary \
-\texttt{NFZ\_ZONE\_MAX\_SPEED\_MPS} & 3.0   & m/s & Speed at outer edge of slow zone \
-\texttt{NFZ\_PUSH\_SPEED\_MPS}      & 3.0   & m/s & Constant repulsive push speed \
+\texttt{NFZ\_HARD\_BOUNDARY\_M}     & 3.0   & m   & Penetration depth triggering forced \texttt{MANUAL} mode \\
+\texttt{NFZ\_SOFT\_BOUNDARY\_M}     & 8.0   & m   & Outer repulsion zone (quadratic field) \\
+\texttt{NFZ\_WAYPOINT\_BUFFER\_M}   & 30.0  & m   & Skip waypoints within this distance of NFZ \\
+\texttt{NFZ\_SLOW\_ZONE\_M}         & 20.0  & m   & Speed-reduction field active within this distance \\
+\texttt{NFZ\_MIN\_SPEED\_MPS}       & 0.3   & m/s & Minimum speed at NFZ boundary \\
+\texttt{NFZ\_ZONE\_MAX\_SPEED\_MPS} & 3.0   & m/s & Speed at outer edge of slow zone \\
+\texttt{NFZ\_PUSH\_SPEED\_MPS}      & 3.0   & m/s & Constant repulsive push speed \\
 \addlinespace[4pt]
 
-\multicolumn{4}{@{}l}{\textit{Payload Servo (Tarot Double-Throw)}} \
+\multicolumn{4}{@{}l}{\textit{Payload Servo (Tarot Double-Throw)}} \\
 \addlinespace[2pt]
-\texttt{SERVO\_CHANNEL}       & 9     & --  & Cube AUX output channel \
-\texttt{SERVO\_CLOSE\_PWM}    & 1500  & \textmu s & PWM to hold / re-latch mechanism \
-\texttt{SERVO\_PARTIAL\_PWM}  & 1300  & \textmu s & Stage~1: partial release \
-\texttt{SERVO\_FULL\_PWM}     & 1100  & \textmu s & Stage~2: full release \
+\texttt{SERVO\_CHANNEL}       & 9     & --  & Cube AUX output channel \\
+\texttt{SERVO\_CLOSE\_PWM}    & 1500  & \si{\micro\second} & PWM to hold / re-latch mechanism \\
+\texttt{SERVO\_PARTIAL\_PWM}  & 1300  & \si{\micro\second} & Stage~1: partial release \\
+\texttt{SERVO\_FULL\_PWM}     & 1100  & \si{\micro\second} & Stage~2: full release \\
 
 \bottomrule
 \end{tabular}

@@ -1,0 +1,113 @@
+\section{Sensor Calibration}\label{sec:calibration}
+
+Accurate target localisation from an aerial platform depends on the fidelity of every link in the imaging chain: if the camera's field of view, lens geometry, or colour representation deviates from the values assumed by the software, errors propagate multiplicatively through the GPS estimation pipeline. This section documents the four calibration campaigns conducted during development, each of which corrected a specific source of systematic error.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{Field-of-View Calibration}\label{sec:cal:fov}
+
+The ground footprint of a pinhole camera at altitude $h$ is governed by
+\begin{equation}\label{eq:footprint}
+    W_{\text{ground}} = \frac{w_{\text{sensor}} \cdot h}{f}
+\end{equation}
+where $w_{\text{sensor}}$ is the physical sensor width and $f$ is the effective focal length. This relationship is used twice in the system: first by \texttt{planning.py} to compute the scan-strip spacing (with a 20\% overlap margin), and second by the GPS estimation module to convert pixel offsets from the image centre into metric displacements on the ground. An error of $\Delta f / f$ in the focal length therefore produces an identical fractional error in every GPS estimate and in the strip spacing, meaning the search pattern either leaves uncovered gaps or wastes flight time on excessive overlap.
+
+The IMX296 global-shutter sensor has a nominal pixel pitch of \SI{3.45}{\micro\metre} and an active area width of \SI{5.02}{\milli\metre}. The lens datasheet quoted a focal length of \SI{7.0}{\milli\metre}, which was used as the initial default in \texttt{config.py}. To verify this value, a bench calibration was performed on the assembled camera module:
+
+\begin{enumerate}
+    \item The camera was mounted vertically at a measured height of \SI{1.000 \pm 0.005}{\metre} above a flat surface, using the \texttt{capture\_training.py} MJPEG stream for live preview.
+    \item A tape measure was placed horizontally across the full width of the frame.
+    \item The visible extent was read directly from the tape as \SI{0.92 \pm 0.01}{\metre}.
+\end{enumerate}
+
+Substituting into Equation~\ref{eq:footprint} and solving for $f$:
+\begin{equation}\label{eq:fov-result}
+    f = \frac{w_{\text{sensor}} \cdot h}{W_{\text{ground}}} = \frac{5.02 \times 1.00}{0.92} = \SI{5.46}{\milli\metre}
+\end{equation}
+
+The calibrated value is 22\% lower than the datasheet nominal. The corresponding horizontal field of view is
+\begin{equation}
+    \theta_{\text{HFOV}} = 2 \arctan\!\left(\frac{w_{\text{sensor}}}{2f}\right) = 2 \arctan\!\left(\frac{5.02}{2 \times 5.46}\right) \approx 49.3^{\circ}
+\end{equation}
+
+Had the uncalibrated value of \SI{7.0}{\milli\metre} been retained, every ground-distance calculation would have been scaled by a factor of $5.46/7.0 = 0.78$---i.e.\ the system would have \emph{underestimated} the camera footprint by 22\%, producing GPS target estimates displaced from the true position by the same fraction of the pixel offset. At a search altitude of \SI{35}{\metre}, the ground footprint is \SI{32.1}{\metre} (calibrated) versus \SI{25.1}{\metre} (uncalibrated); a detection at the frame edge would yield a GPS error of $\approx$\SI{1.5}{\metre} purely from the focal length mismatch. The strip spacing in the search pattern would also have been 22\% too narrow, wasting approximately four additional scan lines over the survey area.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{Lens Distortion Calibration}\label{sec:cal:lens}
+
+Wide-angle lenses introduce radial and tangential distortion that displaces pixel coordinates from their ideal pinhole-model positions. For a target near the frame edge, uncorrected barrel distortion can shift the detected bounding-box centre by several pixels, degrading the pixel-to-GPS conversion. The standard Brown--Conrady model~\cite{brown1966decentering} parameterises radial distortion as
+\begin{equation}\label{eq:distortion}
+    r' = r\bigl(1 + k_1 r^2 + k_2 r^4 + k_3 r^6\bigr)
+\end{equation}
+where $r$ is the normalised radial distance from the principal point and $k_1, k_2, k_3$ are the radial distortion coefficients. Tangential terms ($p_1, p_2$) account for misalignment between the lens and sensor planes.
+
+Calibration was performed using a printed checkerboard target (calib.io pattern, $14 \times 9$ squares at \SI{28}{\milli\metre} pitch, yielding $13 \times 8$ inner corners). Approximately 20 images were captured at varying orientations using \texttt{tests/calibration/lens\_calibrate.py}, which calls \texttt{cv2.findChessboardCornersSB} (the sector-based detector, more robust to lighting variation) with a fallback to the standard \texttt{cv2.findChessboardCorners} with adaptive thresholding and corner normalisation flags. Sub-pixel refinement was applied with \texttt{cv2.cornerSubPix} using a $(5,5)$ search window and termination criteria of 30 iterations or $\epsilon = 0.001$.
+
+The resulting reprojection RMS was \textbf{0.399\,px}, indicating an excellent fit. The five distortion coefficients and $3\times3$ camera matrix were saved to \texttt{calibration\_data.npz}. At runtime, \texttt{vision.py} loads this file during initialisation and precomputes a pair of remap lookup tables via \texttt{cv2.initUndistortRectifyMap}:
+
+\begin{verbatim}
+new_mtx, _ = cv2.getOptimalNewCameraMatrix(
+    mtx, dist, (cam_w, cam_h), 0, (cam_w, cam_h))
+map1, map2 = cv2.initUndistortRectifyMap(
+    mtx, dist, None, new_mtx, (cam_w, cam_h), cv2.CV_16SC2)
+\end{verbatim}
+
+Every frame is then undistorted with a single call to \texttt{cv2.remap(frame, map1, map2, cv2.INTER\_LINEAR)} before being passed to the detection model. The precomputed integer remap (\texttt{CV\_16SC2}) adds only \SI{1.5}{\milli\second} per frame---negligible compared to the \SI{207}{\milli\second} TFLite inference time---so the correction is effectively free. All downstream modules (passive observer, ground station, autonomous mission) benefit transparently because undistortion is applied inside \texttt{detect\_in\_image()}.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{Camera Colour-Space Discovery}\label{sec:cal:colour}
+
+The IMX296 sensor is configured via \texttt{picamera2} with the \texttt{RGB888} pixel format, which the library documents as returning 8-bit RGB data. However, during integration testing on the Raspberry Pi~5, colour reproduction appeared incorrect: the detection model (trained on BGR images, the OpenCV default) produced anomalously low confidence scores, and visual inspection of the stream showed a red/blue channel swap.
+
+To diagnose the issue, all six permutations of the three colour channels were tested by displaying each alongside the raw frame:
+
+\begin{verbatim}
+for perm in [(0,1,2), (0,2,1), (1,0,2), (1,2,0), (2,0,1), (2,1,0)]:
+    cv2.imshow(str(perm), frame[:,:,list(perm)])
+\end{verbatim}
+
+The identity permutation $(0,1,2)$---i.e.\ treating the data as BGR without any conversion---produced correct colours. This confirms that the IMX296 driver delivers data in \textbf{BGR} byte order despite the \texttt{RGB888} format label. Applying the na\"ive \texttt{cv2.cvtColor(frame, cv2.COLOR\_RGB2BGR)} conversion that the label would suggest actually \emph{swaps} the channels into an incorrect order, resulting in the red and blue planes being exchanged.
+
+The fix was to remove the incorrect \texttt{cvtColor} call entirely. The practical impact is twofold. First, the YOLO model---which expects BGR input---now receives correctly ordered data, restoring detection confidence to its trained level ($>0.95$ on the bench-test dummy). Second, the MJPEG stream served to the ground-station browser displays natural colours without post-processing, reducing per-frame latency. This discovery was documented as a permanent warning in \texttt{CLAUDE.md} and \texttt{config.py} to prevent future regressions.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{DJI Video FOV Calibration}\label{sec:cal:dji}
+
+Separate from the onboard IMX296 camera, the team analysed recorded flight video from a DJI Mini~3 Pro to evaluate detection performance at real altitudes before the first autonomous flight. The DJI footage was centre-cropped from $3840\times2160$ to $1456\times1088$ to match the onboard camera's aspect ratio, but the crop changes the effective field of view, which must be known to convert pixel detections into metric ground coordinates.
+
+A calibration tool (\texttt{tools/fov\_calibrate\_video.py}) was developed. The operator pauses the video at frames where the mannequin is visible and clicks the top and bottom of the dummy; the tool computes the apparent height in pixels and, using the known real height of \SI{1.8}{\metre} and the SRT-encoded altitude, solves for the focal length in pixels:
+
+\begin{equation}\label{eq:dji-focal}
+    f_{\text{px}} = \frac{h_{\text{px}} \cdot h_{\text{alt}}}{h_{\text{real}}}
+\end{equation}
+
+Nine samples were collected across altitudes from \SI{15}{\metre} to \SI{50}{\metre}, yielding a mean focal length of $1416 \pm 41$\,px. The corresponding horizontal FOV for the $1456$-pixel crop width is
+
+\begin{equation}
+    \theta_{\text{HFOV}} = 2\arctan\!\left(\frac{1456}{2 \times 1416}\right) = 54.4^{\circ}
+\end{equation}
+
+As a consistency check, the dummy height was back-calculated at each sample altitude using the calibrated focal length; all nine measurements fell within \SIrange{1.7}{1.9}{\metre}, confirming the calibration against the known \SI{1.8}{\metre} ground truth. This calibrated value replaced a hardcoded $73^{\circ}$ assumption, which would have underestimated the focal length by 34\% and corrupted every GPS estimate derived from the DJI analysis footage.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{Calibration Impact Summary}\label{sec:cal:summary}
+
+Table~\ref{tab:calibration} summarises each calibration, its method, and the quantified impact on system accuracy.
+
+\begin{table}[ht]
+\centering
+\caption{Sensor calibration summary. The ``Error if uncalibrated'' column quantifies the systematic bias that would have affected every measurement had the default or assumed value been retained.}
+\label{tab:calibration}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}p{2.8cm}cccp{4.2cm}@{}}
+\toprule
+\textbf{Calibration} & \textbf{Before} & \textbf{After} & \textbf{Method} & \textbf{Error if uncalibrated} \\
+\midrule
+Focal length (IMX296) & \SI{7.0}{\milli\metre} & \SI{5.46}{\milli\metre} & Tape at \SI{1}{\metre} & 22\% GPS estimate bias; 4 wasted scan lines \\
+Lens distortion & None & RMS 0.399\,px & Checkerboard $13{\times}8$ & Edge-pixel shift of several px; \SI{<0.5}{\metre} GPS error at \SI{35}{\metre} \\
+Colour space & RGB assumed & BGR actual & 6-permutation test & Model confidence $\downarrow$; colour-dependent features corrupted \\
+DJI video FOV & $73^{\circ}$ assumed & $54.4^{\circ}$ measured & Click calibration, 9 samples & 34\% error in video-derived GPS estimates \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The four calibrations are complementary: the FOV calibration corrects the dominant scale factor in the pinhole model, lens undistortion corrects the nonlinear residual, the colour-space fix ensures the detection model receives data in its trained domain, and the DJI FOV calibration enables accurate offline analysis of flight footage. Together, they reduce the systematic component of the target localisation error to the level set by GPS receiver noise ($\sim$\SI{2}{\metre} CEP) and atmospheric effects, rather than being dominated by avoidable modelling errors.

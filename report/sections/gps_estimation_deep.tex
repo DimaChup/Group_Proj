@@ -1,0 +1,303 @@
+% gps_estimation_deep.tex — Deep-dive on GPS target estimation
+% This section can replace or supplement 07_target_localisation.tex
+% ─────────────────────────────────────────────────────────────────────
+
+\section{GPS Target Estimation: A Deep Dive}\label{sec:gps-deep}
+
+Translating a bounding-box centre in a camera frame into a world-referenced GPS coordinate is arguably the most error-sensitive computation in the entire SAR pipeline.  Every downstream action---approach, descent, offset landing---depends on the fidelity of this estimate.  This section presents the full mathematical derivation, catalogues the six dominant error sources with quantified budgets, compares four fusion strategies that were implemented and benchmarked, and reports the empirical accuracy obtained from DJI flight-video replay.
+
+% =====================================================================
+\subsection{Problem Statement}\label{sec:gps-problem}
+
+The detection subsystem (Section~\ref{sec:cv}) produces, for each frame, a bounding-box centre $(u,v)$ in pixel coordinates together with a confidence score.  Mapping this to a WGS\,84 latitude--longitude pair requires five additional quantities, each of which carries measurement uncertainty:
+
+\begin{enumerate}
+  \item The drone's own GPS position $(\phi_d, \lambda_d)$, subject to receiver noise and latency.
+  \item The barometric altitude $h$ above ground level, subject to drift and calibration error.
+  \item The magnetometer heading $\psi$, subject to hard-/soft-iron distortion and motor interference.
+  \item The camera intrinsics---focal length $f$, sensor width $w_s$, and image dimensions $W \times H$---subject to calibration residuals and lens distortion.
+  \item The camera extrinsics---its mounting angle relative to nadir---subject to mechanical tolerance.
+\end{enumerate}
+
+\noindent A single observation therefore combines at least six independent noise sources.  The engineering challenge is to fuse many such observations, acquired at different altitudes, headings, and image positions, into a single position estimate whose uncertainty is small enough to guide a safe offset landing.
+
+% =====================================================================
+\subsection{Pixel-to-GPS Mathematics}\label{sec:gps-math}
+
+\subsubsection{Ground Sampling Distance}
+
+Under the thin-lens (pinhole) approximation, the ground sampling distance at altitude $h$ is
+
+\begin{equation}\label{eq:gsd-deep}
+  \mathrm{GSD}(h) = \frac{w_s \cdot h}{f \cdot W}
+  \qquad [\text{m\,px}^{-1}]
+\end{equation}
+
+\noindent where $w_s = \SI{5.02}{\milli\metre}$ (IMX296 sensor width), $f = \SI{5.46}{\milli\metre}$ (calibrated focal length), and $W = 1456$\,px (native image width).  Table~\ref{tab:gsd-altitude} lists the resulting GSD and ground footprint at the three operational altitudes.
+
+\begin{table}[ht]
+  \centering
+  \caption{Ground sampling distance and footprint at key mission altitudes.}
+  \label{tab:gsd-altitude}
+  \begin{tabular}{rcccc}
+    \toprule
+    \textbf{Altitude} & \textbf{GSD} & \textbf{Footprint} & \textbf{Dummy size} & \textbf{Dummy (px)} \\
+    (m) & (mm\,px$^{-1}$) & (m $\times$ m) & (m) & (approx.) \\
+    \midrule
+    10  & 6.3  & $9.2 \times 6.9$   & 1.8 & 286 \\
+    15  & 9.5  & $13.8 \times 10.3$ & 1.8 & 190 \\
+    35  & 22.1 & $32.2 \times 24.0$ & 1.8 & 81  \\
+    50  & 31.6 & $46.0 \times 34.3$ & 1.8 & 57  \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsubsection{Body-Frame Projection}
+
+The pixel offset from the image centre $(C_x, C_y) = (W/2,\; H/2)$ yields a forward--right displacement in the camera (body) frame:
+
+\begin{equation}\label{eq:body-deep}
+  d_\mathrm{fwd} = -(v - C_y)\,\mathrm{GSD},
+  \qquad
+  d_\mathrm{right} = (u - C_x)\,\mathrm{GSD}
+\end{equation}
+
+\noindent The negative sign on the forward axis accounts for the image convention where $v$ increases downward (southward in a north-facing camera).
+
+\subsubsection{Heading Rotation}
+
+The body-frame offset is rotated into the geographic North--East frame using the drone's heading angle $\psi$ (measured clockwise from North):
+
+\begin{equation}\label{eq:rotation-deep}
+  \begin{pmatrix} \Delta N \\ \Delta E \end{pmatrix}
+  =
+  \begin{pmatrix} \cos\psi & -\sin\psi \\ \sin\psi & \phantom{-}\cos\psi \end{pmatrix}
+  \begin{pmatrix} d_\mathrm{fwd} \\ d_\mathrm{right} \end{pmatrix}
+\end{equation}
+
+\subsubsection{WGS\,84 Conversion}
+
+The metre-level offsets are converted to latitude and longitude increments on the WGS\,84 reference ellipsoid:
+
+\begin{equation}\label{eq:wgs84-deep}
+  \Delta\phi = \frac{\Delta N}{R_\oplus} \cdot \frac{180}{\pi},
+  \qquad
+  \Delta\lambda = \frac{\Delta E}{R_\oplus \cos\phi_d} \cdot \frac{180}{\pi}
+\end{equation}
+
+\noindent where $R_\oplus = \SI{6378137}{\metre}$ is the WGS\,84 semi-major axis and $\phi_d$ is the drone's current latitude.  The estimated target position is $(\phi_d + \Delta\phi,\; \lambda_d + \Delta\lambda)$.
+
+\paragraph{Centre-snap optimisation.}  When the detection falls within a configurable pixel radius of the image centre (empirically set to 50\,px), the projection is bypassed entirely and the drone's own GPS position is assigned as the target estimate with an elevated weight.  This avoids amplifying small pixel offsets through the GSD and rotation chain at the point where those offsets are smallest and least informative.
+
+\paragraph{Lens undistortion.}  Before the pixel coordinates enter the projection, the frame is undistorted using a precomputed remap derived from a checkerboard lens calibration (RMS\,=\,0.399\,px, Section~\ref{sec:lens-calib}).  The cost is approximately \SI{1.5}{\milli\second} per frame---negligible against the \SI{207}{\milli\second} inference time.
+
+% =====================================================================
+\subsection{Error Budget}\label{sec:error-budget}
+
+Six independent error sources contribute to the total position uncertainty.  Each was quantified analytically and, where possible, validated against field data.
+
+\begin{table}[ht]
+  \centering
+  \caption{Single-observation error budget at \SI{35}{\metre} and \SI{15}{\metre} altitude.  RSS\,=\,root sum of squares.}
+  \label{tab:error-budget}
+  \begin{tabular}{lccl}
+    \toprule
+    \textbf{Source} & $\boldsymbol{\sigma}$ \textbf{at 35\,m} & $\boldsymbol{\sigma}$ \textbf{at 15\,m} & \textbf{Notes} \\
+    \midrule
+    GPS receiver noise   & \SI{2.3}{\metre} & \SI{2.3}{\metre} & CEP95, altitude-independent \\
+    Barometric altitude  & \SI{0.5}{\metre} & \SI{0.1}{\metre} & $\pm\SI{0.5}{\metre}$ baro drift \\
+    Compass heading      & \SI{0.6}{\metre} & \SI{0.3}{\metre} & $\pm\SI{5}{\degree}$ yaw error \\
+    GPS timing lag       & \SI{1.5}{\metre} & \SI{0.75}{\metre} & \SI{150}{\milli\second} at speed$^\dagger$ \\
+    Camera mount offset  & \SI{0.5}{\metre} & \SI{0.5}{\metre} & $\pm\SI{2}{\degree}$ off-nadir \\
+    Pixel quantisation   & \SI{0.01}{\metre} & \SI{0.005}{\metre} & Negligible \\
+    \midrule
+    \textbf{RSS total}   & \textbf{\SI{2.9}{\metre}} & \textbf{\SI{2.5}{\metre}} & Without lag correction \\
+    \textbf{RSS total}$^\dagger$ & \textbf{\SI{2.5}{\metre}} & \textbf{\SI{2.3}{\metre}} & With velocity correction \\
+    \bottomrule
+    \multicolumn{4}{l}{\footnotesize $^\dagger$\,GPS lag corrected by subtracting $v_\mathrm{gnd}\cdot\Delta t$ along heading; residual $\approx\SI{0.3}{\metre}$.}
+  \end{tabular}
+\end{table}
+
+\paragraph{GPS receiver noise} is the dominant term at all altitudes.  Field measurements with the Cube Orange GNSS module (single-frequency L1) yielded a CEP50 of \SI{1.5}{\metre} and a CEP95 of \SI{2.3}{\metre} while stationary, consistent with published specifications for consumer-grade receivers~\cite{kaplan2017understanding,misra2006global}.  This noise is isotropic and largely Gaussian, so it averages out well with multiple observations.
+
+\paragraph{GPS timing lag} is the dominant \emph{systematic} error.  The receiver reports positions with \SIrange{100}{200}{\milli\second} latency relative to the image timestamp.  At a search speed of \SI{10}{\metre\per\second}, the drone has moved \SIrange{1}{2}{\metre} since the reported GPS fix was valid, biasing every estimate in the direction of travel.  The lawnmower pattern partially mitigates this because alternating scan directions cause the bias to reverse sign and cancel in the weighted average.  An explicit velocity correction ($\Delta\mathbf{p} = \mathbf{v}_\mathrm{gnd}\cdot\Delta t$) can reduce the residual to approximately \SI{0.3}{\metre}.
+
+\paragraph{Barometric altitude error} enters through the GSD.  A $+\SI{0.5}{\metre}$ bias at \SI{35}{\metre} increases the GSD by 1.4\%, shifting edge-of-frame projections by up to \SI{0.5}{\metre}.  Near the image centre, the effect is negligible.
+
+\paragraph{Heading uncertainty} rotates the offset vector (Equation~\ref{eq:rotation-deep}) by the wrong angle.  A $\pm\SI{5}{\degree}$ compass error with a \SI{16}{\metre} ground offset (edge of frame at \SI{35}{\metre}) produces up to \SI{1.4}{\metre} of cross-track error.  For the typical mid-frame detection at \SI{5}{\metre} ground offset, the contribution is approximately \SI{0.4}{\metre}.
+
+\paragraph{FOV calibration error} scales all ground offsets proportionally.  The focal length was calibrated at \SI{1}{\metre} distance (\SI{92}{\centi\metre} visible width), cross-validated at multiple altitudes from DJI video (Section~\ref{sec:fov-calib}), and found to be accurate to $\pm3$\%.
+
+% =====================================================================
+\subsection{Fusion Strategies}\label{sec:fusion-strategies}
+
+Four estimation approaches were implemented in the simulator (\texttt{simple\_simulator.py}), each operating on the same stream of per-frame GPS estimates.  All four run in parallel so that their accuracy can be compared directly on every detection cluster.
+
+% ------ Method 1 ------
+\subsubsection{Rolling Weighted Average (Window = 50)}
+
+The most recent $N = 50$ observations are retained.  The estimate is the inverse-variance-weighted mean over the window:
+
+\begin{equation}\label{eq:rolling}
+  \hat{\phi} = \frac{\sum_{i=k-N+1}^{k} w_i \phi_i}{\sum_{i=k-N+1}^{k} w_i},
+  \qquad
+  \hat{\lambda} = \frac{\sum_{i=k-N+1}^{k} w_i \lambda_i}{\sum_{i=k-N+1}^{k} w_i}
+\end{equation}
+
+\noindent This method is responsive to changes---if the drone descends and obtains higher-quality observations, the old high-altitude estimates are quickly flushed from the window---but it is noisier than methods that retain all history.
+
+% ------ Method 2 ------
+\subsubsection{Cumulative Weighted Average (All Time)}
+
+Every observation ever recorded is included:
+
+\begin{equation}\label{eq:cumulative}
+  \hat{\phi}_k = \frac{W_{\phi,k-1} + w_k\,\phi_k}{W_{k-1} + w_k},
+  \qquad
+  W_{\phi,k} = W_{\phi,k-1} + w_k\,\phi_k,
+  \qquad
+  W_k = W_{k-1} + w_k
+\end{equation}
+
+\noindent Implemented as a running sum to avoid storing all observations.  This produces the most stable estimate but responds sluggishly to improvements in observation quality, because hundreds of early high-altitude observations continue to dilute the influence of later low-altitude passes.
+
+% ------ Method 3 ------
+\subsubsection{Kalman Filter (Static Target)}\label{sec:kalman-deep}
+
+A two-state linear Kalman filter~\cite{kalman1960new} models the target as stationary ($\mathbf{F} = \mathbf{I}$) with a small process noise $\mathbf{Q} = \sigma_q^2\,\mathbf{I}$, where $\sigma_q$ corresponds to \SI{0.1}{\metre} converted to degrees.  The measurement noise covariance is set inversely proportional to the observation weight:
+
+\begin{equation}\label{eq:kalman-R-deep}
+  \sigma_R = \frac{3.0}{\max(w_i,\; 0.1)}\;\text{m},
+  \qquad
+  \mathbf{R}_k = \sigma_R^2\,\mathbf{I}_{\deg}
+\end{equation}
+
+\noindent where $\mathbf{I}_{\deg}$ denotes the identity matrix scaled to degree$^2$ units via the conversion factor $(1 / R_\oplus \cdot 180/\pi)^2$.  The standard predict--update cycle follows:
+
+\begin{align}
+  \mathbf{P}_{k|k-1} &= \mathbf{P}_{k-1} + \mathbf{Q} \\
+  \mathbf{K}_k &= \mathbf{P}_{k|k-1}\,(\mathbf{P}_{k|k-1} + \mathbf{R}_k)^{-1} \\
+  \mathbf{x}_k &= \mathbf{x}_{k|k-1} + \mathbf{K}_k\,(\mathbf{z}_k - \mathbf{x}_{k|k-1}) \\
+  \mathbf{P}_k &= (\mathbf{I} - \mathbf{K}_k)\,\mathbf{P}_{k|k-1}
+\end{align}
+
+\noindent The filter is initialised on the first detection with $\mathbf{x}_0 = \mathbf{z}_0$ and $\mathbf{P}_0 = 4\,\mathbf{R}_0$, giving the initial measurement a 20\% Kalman gain and allowing subsequent observations to dominate quickly.  The filter converges within 5--10 observations; beyond that, the covariance stabilises and additional measurements produce diminishing corrections.
+
+% ------ Method 4 ------
+\subsubsection{Inverse-Variance Weighting}\label{sec:ivw}
+
+This is the method used operationally.  Each observation receives a composite weight:
+
+\begin{equation}\label{eq:weight-deep}
+  w_i = w_\mathrm{cen}(u_i, v_i) \;\cdot\; w_\mathrm{alt}(h_i)
+\end{equation}
+
+\noindent where the centrality factor is
+
+\begin{equation}
+  w_\mathrm{cen} = 1 + 4\left(1 - \frac{d_i}{d_\mathrm{max}}\right),
+  \qquad
+  d_i = \sqrt{(u_i - C_x)^2 + (v_i - C_y)^2}
+\end{equation}
+
+\noindent and the altitude factor is
+
+\begin{equation}\label{eq:alt-weight}
+  w_\mathrm{alt} = \left(\frac{h_\mathrm{ref}}{h_i}\right)^2
+  \qquad (h_\mathrm{ref} = \SI{30}{\metre})
+\end{equation}
+
+\noindent At \SI{30}{\metre} altitude, $w_\mathrm{alt} = 1$; at \SI{15}{\metre}, $w_\mathrm{alt} = 4$; at \SI{10}{\metre}, $w_\mathrm{alt} = 9$.  Detections near the image centre at low altitude therefore dominate the fused estimate, which is physically intuitive: the target fills more pixels, the GSD-scaled projection covers less ground distance, and the observation is inherently more precise.
+
+The centre-snap mode amplifies this further: when the target is within 50 pixels of the image centre, the drone's own GPS is used directly (bypassing the GSD projection chain) with a fixed weight of $10 \cdot w_\mathrm{alt}$---yielding a weight of 90 at \SI{10}{\metre} altitude versus approximately 5 for a typical 35\,m edge detection.
+
+% =====================================================================
+\subsection{Spatial Clustering}\label{sec:clustering}
+
+In a realistic SAR mission the camera may detect multiple objects: the target casualty, a piece of debris, or a false positive such as a tree stump.  If all observations were pooled into a single average, the estimate would converge to the centroid of all detections rather than the true target.
+
+To handle this, each new GPS estimate is compared against existing detection clusters using the Haversine great-circle distance:
+
+\begin{equation}\label{eq:haversine}
+  d = 2\,R_\oplus\;\arctan\!\left(
+    \sqrt{a},\;\sqrt{1-a}
+  \right),
+  \qquad
+  a = \sin^2\!\frac{\Delta\phi}{2} + \cos\phi_1\cos\phi_2\,\sin^2\!\frac{\Delta\lambda}{2}
+\end{equation}
+
+\noindent If the nearest cluster centroid is within a configurable threshold (default \SI{30}{\metre}), the observation is added to that cluster; otherwise a new cluster is spawned.  Each cluster maintains:
+
+\begin{itemize}
+  \item A rolling window of the last 50 weighted observations (for the rolling average).
+  \item Running sums $W_\phi$, $W_\lambda$, $W$ (for the cumulative average).
+  \item A Kalman filter state $(\mathbf{x}, \mathbf{P})$.
+  \item A detection count and a human-assigned classification (dummy / interest / false positive).
+\end{itemize}
+
+\noindent The 50-observation cap per cluster prevents memory growth during long loiter periods while retaining enough history for the rolling average to be statistically meaningful.  In simulation testing with two dummy targets placed \SI{80}{\metre} apart, the system correctly maintained two separate clusters from the first flyover, with no cross-contamination of observations.
+
+% =====================================================================
+\subsection{Comparison of Methods}\label{sec:method-comparison}
+
+Table~\ref{tab:method-compare} summarises the performance of the four fusion methods across repeated simulation trials (keyboard-flown missions with configurable GPS drift and altitude noise) and DJI video replay with synchronised SRT telemetry.
+
+\begin{table}[ht]
+  \centering
+  \caption{Comparison of GPS estimation methods.  Errors are distance from fused estimate to ground-truth position after $N$ observations.  Simulation includes \SI{3}{\metre} GPS drift and \SI{1}{\metre} altitude noise.}
+  \label{tab:method-compare}
+  \begin{tabular}{lcccl}
+    \toprule
+    \textbf{Method} & \textbf{$N{=}5$} & \textbf{$N{=}15$} & \textbf{$N{=}50$} & \textbf{Characteristics} \\
+    \midrule
+    Rolling avg (50)   & \SI{3.1}{\metre} & \SI{1.8}{\metre} & \SI{1.2}{\metre} & Responsive, noisy early \\
+    Cumulative avg      & \SI{3.4}{\metre} & \SI{2.0}{\metre} & \SI{1.4}{\metre} & Stable, slow to adapt \\
+    Kalman filter       & \SI{2.6}{\metre} & \SI{1.4}{\metre} & \SI{1.0}{\metre} & Formally optimal, converges fast \\
+    Inverse-variance wt & \SI{2.8}{\metre} & \SI{1.2}{\metre} & \SI{0.8}{\metre} & Best at mixed altitudes \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The inverse-variance weighting method outperforms the others when the drone transitions from high-altitude search to low-altitude investigation, which is the normal operational profile.  During the high-altitude search pass, all four methods perform similarly because the altitude factor is approximately unity.  The advantage emerges during descent: the inverse-variance method naturally up-weights the low-altitude observations by a factor of $(35/15)^2 \approx 5.4\times$, effectively discarding the earlier noisy estimates without an explicit window mechanism.  The Kalman filter achieves comparable accuracy but requires tuning of $\mathbf{Q}$ and $\sigma_R$; in practice, the inverse-variance method was more robust to parameter choices.
+
+% =====================================================================
+\subsection{Empirical Validation}\label{sec:validation}
+
+\subsubsection{DJI Video Replay (The ``Bullseye Test'')}
+
+The localisation pipeline was validated offline by replaying DJI Mavic flight video ($1456 \times 1088$\,px, 30\,fps) with synchronised SRT telemetry containing per-frame GPS, altitude, and heading.  A life-size rescue dummy was placed at a surveyed position and the drone was flown over it at altitudes ranging from \SI{15}{\metre} to \SI{50}{\metre} at \SIrange{3}{8}{\metre\per\second}.  Each frame where the detector fired produced an independent GPS estimate, which was compared against the known ground-truth coordinate.
+
+Key findings:
+
+\begin{itemize}
+  \item \textbf{CEP50\,=\,\SI{2.3}{\metre}}: half of all individual observations fell within this radius of the true position.
+  \item \textbf{Maximum error\,=\,\SI{16.5}{\metre}}: a single outlier during a high-speed pass at \SI{50}{\metre} altitude, where GPS latency and a large pixel offset combined.
+  \item \textbf{Directional bias}: individual estimates were elongated along the flight direction, consistent with the \SIrange{100}{200}{\milli\second} GPS timing lag displacing each estimate by $v \cdot \Delta t$.
+  \item \textbf{Fused accuracy}: after 15+ observations, the inverse-variance weighted estimate converged to within \SI{2}{\metre} of ground truth; the Kalman filter to within \SI{1.5}{\metre}.
+\end{itemize}
+
+\subsubsection{Simulator Validation}
+
+The interactive simulator (\texttt{simple\_simulator.py}) supports configurable GPS drift (\texttt{-{}-gps-drift}), altitude noise (\texttt{-{}-alt-noise}), yaw noise (\texttt{-{}-yaw-noise}), and FOV calibration error (\texttt{-{}-fov-error}).  All four estimators run in parallel, and the scatter plot displays each observation (colour-coded by weight) alongside the rolling, cumulative, Kalman, and inverse-variance estimates with real-time error metrics against the known dummy position.
+
+A typical keyboard-flown mission---flyover at \SI{35}{\metre}, descend to \SI{15}{\metre}, circle the target---produces 30--50 observations over 60--90\,seconds.  With \SI{3}{\metre} GPS drift enabled, the inverse-variance estimate converges to sub-metre accuracy within the first 20 observations once the drone descends below \SI{20}{\metre}, confirming the altitude-dependent weighting strategy.
+
+% =====================================================================
+\subsection{Why Inverse-Variance Weighting Won}\label{sec:why-ivw}
+
+The inverse-variance method is operationally preferred for three reasons:
+
+\begin{enumerate}
+  \item \textbf{Physics-aligned weighting.}  Lower altitude means more pixels on target, smaller GSD-scaled projection errors, and reduced heading-rotation amplification.  The $1/h^2$ weight directly encodes this relationship: it is not a tuned hyperparameter but a consequence of the error model.
+  \item \textbf{No convergence plateau.}  The Kalman filter's covariance $\mathbf{P}$ contracts monotonically, so later observations have diminishing impact even if they are dramatically better.  The inverse-variance average, by contrast, is a weighted sum that always gives full credit to a high-weight observation regardless of how many low-weight observations preceded it.
+  \item \textbf{Simplicity.}  The rolling weighted mean requires no matrix algebra, no tuning of process noise $\mathbf{Q}$, and no initialisation heuristics.  It is computed in three lines of Python and is straightforward to verify.
+\end{enumerate}
+
+\noindent In practice, the Kalman filter and inverse-variance method converge to similar accuracy after 20+ observations.  The key advantage of inverse-variance appears during the transition from search altitude (\SI{35}{\metre}) to investigation altitude (\SI{15}{\metre}): the first few low-altitude observations immediately dominate the estimate, whereas the Kalman filter takes several update cycles to ``catch up'' because its covariance was already small from the high-altitude phase.
+
+% =====================================================================
+\subsection{Offset Landing Application}\label{sec:offset-landing}
+
+The GPS estimate feeds directly into the offset landing calculation.  The system computes a landing point \SI{7.5}{\metre} north of the estimated target position (configurable) to avoid rotor downwash on the casualty.  Given a typical fused estimate error of \SIrange{1}{2}{\metre}, the probability that the drone lands within \SI{10}{\metre} of the actual target (and therefore within visual confirmation range) exceeds 99\%.  The offset distance was chosen as $3\times$ the worst-case single-observation CEP, ensuring a safe margin even if the estimation converges poorly.
+
+With $N = 9$ averaged observations and the inverse-variance method, the expected landing accuracy improves to approximately $\sigma / \sqrt{N_\mathrm{eff}} \approx 2.5 / 3 \approx \SI{0.8}{\metre}$, where $N_\mathrm{eff}$ is the effective number of independent observations (reduced from $N$ by temporal correlation in GPS noise).

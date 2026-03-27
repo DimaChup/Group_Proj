@@ -57,7 +57,7 @@ The hardware platform integrates a quadcopter airframe, an open-source flight co
       & Mass        & \SI{45}{\gram} (board only) \\
     \midrule
     \multirow{5}{*}{IMX296 Camera}
-      & Sensor      & Sony IMX296, $\frac{1}{2.9}$\,in global shutter CMOS \\
+      & Sensor      & Sony IMX296, 1/2.9\,in global shutter CMOS \\
       & Resolution  & $1456 \times 1088$\,px (native) \\
       & Sensor width& \SI{5.02}{\milli\metre} \\
       & Focal length& \SI{5.46}{\milli\metre} (calibrated) \\
@@ -97,7 +97,7 @@ Only four Python packages are installed on the Pi: \texttt{pymavlink}, \texttt{o
 
 The Raspberry Pi Global Shutter Camera, based on the Sony IMX296 sensor, was selected for two reasons. First, its global shutter eliminates rolling-shutter distortion during forward flight, which would otherwise skew bounding boxes and degrade detection accuracy---a critical advantage over cheaper rolling-shutter alternatives when the drone is moving at up to \SI{10}{\metre\per\second}. Second, it interfaces directly with the Pi via a CSI ribbon cable, requiring no USB bandwidth and leaving the USB ports free for telemetry radios or storage.
 
-The camera captures at its native resolution of $1456 \times 1088$\,pixels via the \texttt{picamera2} library \cite{picamera2}, configured with the \texttt{RGB888} pixel format. Empirical testing revealed that the IMX296 driver outputs BGR-ordered data despite the RGB888 label. Applying the conventional \texttt{cv2.cvtColor(frame, COLOR\_RGB2BGR)} conversion therefore double-swaps channels and produces a blue colour cast. The correct approach---confirmed by testing all six channel permutations against ground truth---is to use the raw buffer directly. The camera is mounted inverted on the airframe and corrected in software via a $180°$ rotation (\texttt{CAMERA\_FLIP\_180 = True} in the configuration).
+The camera captures at its native resolution of $1456 \times 1088$\,pixels via the \texttt{picamera2} library \cite{picamera2}, configured with the \texttt{RGB888} pixel format. Empirical testing revealed that the IMX296 driver outputs BGR-ordered data despite the RGB888 label. Applying the conventional \texttt{cv2.cvtColor(frame, COLOR\_RGB2BGR)} conversion therefore double-swaps channels and produces a blue colour cast. The correct approach---confirmed by testing all six channel permutations against ground truth---is to use the raw buffer directly. The camera is mounted inverted on the airframe and corrected in software via a \SI{180}{\degree} rotation (\texttt{CAMERA\_FLIP\_180 = True} in the configuration).
 
 
 \subsection{Sensor Calibration}\label{sec:hw-calib}
@@ -113,7 +113,7 @@ The focal length was measured by imaging a tape measure at a known \SI{1}{\metre
 \begin{equation}\label{eq:hfov}
   \theta_{\mathrm{HFOV}} = 2\arctan\!\left(\frac{w_s}{2f}\right)
                          = 2\arctan\!\left(\frac{5.02}{2 \times 5.46}\right)
-                         \approx 49.3°
+                         \approx 49.3^{\circ}
 \end{equation}
 %
 where $w_s$ is the sensor width and $f$ the focal length. The corresponding ground sample distance (GSD) at altitude $h$ is:
@@ -142,7 +142,7 @@ The \texttt{config.py} auto-detection logic probes for a serial device (\texttt{
 
 \subsection{Ground Station}\label{sec:hw-gs}
 
-The ground station consists of a laptop running two parallel interfaces. \textit{Mission Planner} \cite{missionplanner} connects to the Cube via the SiK telemetry radio or the \texttt{mavproxy} TCP bridge, providing a real-time moving map, full parameter editing, and the ability to upload waypoint missions. In parallel, the Pi serves a browser-based dashboard at \texttt{http://PI\_IP:8090} via an MJPEG video stream with detection overlays, a 2D GPS grid showing estimated target positions, and command buttons for the operator to confirm, reject, or classify detections. This dual-interface approach separates vehicle telemetry (Mission Planner) from mission-specific SA (browser dashboard), ensuring that the operator can monitor both without context-switching between tools.
+The ground station consists of a laptop running two parallel interfaces. \textit{Mission Planner} \cite{missionplanner2024} connects to the Cube via the SiK telemetry radio or the \texttt{mavproxy} TCP bridge, providing a real-time moving map, full parameter editing, and the ability to upload waypoint missions. In parallel, the Pi serves a browser-based dashboard at \texttt{http://PI\_IP:8090} via an MJPEG video stream with detection overlays, a 2D GPS grid showing estimated target positions, and command buttons for the operator to confirm, reject, or classify detections. This dual-interface approach separates vehicle telemetry (Mission Planner) from mission-specific SA (browser dashboard), ensuring that the operator can monitor both without context-switching between tools.
 
 
 \subsection{Cost Comparison with Commercial Platforms}\label{sec:hw-cost}

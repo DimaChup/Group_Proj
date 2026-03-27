@@ -20,6 +20,7 @@
 \usepackage{booktabs}
 \usepackage{array}
 \usepackage{tabularx}
+\usepackage{longtable}
 \usepackage{ltablex}
 \usepackage{siunitx}
 \usepackage{multirow}
@@ -45,7 +46,8 @@
 \renewcommand{\headrulewidth}{0pt}
 
 % ── Lists ───────────────────────────────────────────────────────────────
-\usepackage[nosep]{enumitem}
+\usepackage{enumitem}
+\setlist{nosep}
 
 % ── Boxes ───────────────────────────────────────────────────────────────
 \usepackage[framemethod=TikZ]{mdframed}
@@ -118,50 +120,136 @@
 % ═══════════════════════════════════════════════════════════════════════
 \begin{document}
 
-% ── Title Block ─────────────────────────────────────────────────────────
+% ══════════════════════════════════════════════════════════════════════
+% COVER PAGE (not counted toward 15-page limit)
+% ══════════════════════════════════════════════════════════════════════
 \begin{center}
+  \vspace*{2cm}
   {\LARGE\bfseries Autonomous Search and Rescue Drone with\\[3pt]
-   Onboard AI-Based Casualty Detection}\\[10pt]
-  {\large Dmytro Chuprynyuk, \textit{et al.}}\\[4pt]
+   Onboard AI-Based Casualty Detection}\\[20pt]
+  {\large Dmytro Chuprynyuk, \textit{et al.}}\\[8pt]
   {\normalsize AENGM0074 Group Design Project --- University of Bristol --- March 2026}
+  \vspace*{2cm}
 \end{center}
 
-\vspace{4pt}
+\newpage
 
-% ── Abstract ────────────────────────────────────────────────────────────
-\begin{abstractbox}
-\input{sections/00_abstract}
-\end{abstractbox}
+% ══════════════════════════════════════════════════════════════════════
+% EXECUTIVE SUMMARY (excluded from 15-page limit)
+% ══════════════════════════════════════════════════════════════════════
+\section*{Executive Summary}\label{sec:exec-summary}
+\addcontentsline{toc}{section}{Executive Summary}
 
-\vspace{6pt}
+\input{sections/exec_summary}
 
-% ── Main Sections ───────────────────────────────────────────────────────
-\input{sections/01_introduction}
-\input{sections/02_system_architecture}
-\input{sections/03_hardware_platform}
-\input{sections/04_computer_vision}
-\input{sections/05_path_planning}
-\input{sections/06_state_machine}
-\input{sections/07_target_localisation}
-\input{sections/08_ground_station}
-\input{sections/09_simulation}
-\input{sections/10_testing}
-\input{sections/11_field_results}
-\input{sections/12_model_training}
-\input{sections/13_safety_risk}
-\input{sections/14_future_work}
-\input{sections/15_conclusion}
+\newpage
 
-% ── References ──────────────────────────────────────────────────────────
+% ══════════════════════════════════════════════════════════════════════
+% INTRODUCTION (excluded from 15-page limit)
+% Context, background, Company description, member bios/roles, contributions
+% ══════════════════════════════════════════════════════════════════════
+\input{sections/intro_d6}
+
+\newpage
+
+% ══════════════════════════════════════════════════════════════════════
+% --- 15-PAGE COUNTED CONTENT STARTS HERE ---
+% ══════════════════════════════════════════════════════════════════════
+
+% ── Section 1: Design Rationale (~4 pages) ──────────────────────────
+% Justification of design decisions including STEEPLE considerations
+\input{sections/design_rationale}
+
+% ── Section 2: System Description (~5 pages) ────────────────────────
+% Architecture of final system. Flow charts, schematics, images.
+\input{sections/system_description}
+
+% ── Section 3: Requirements Verification (~3 pages) ─────────────────
+% Process and evidence of satisfaction of requirements R01-R12
+\input{sections/requirements_verification}
+
+% ── Section 4: Evaluation (~3 pages) ────────────────────────────────
+% Plus/delta review of system technical performance
+\input{sections/evaluation}
+
+% ══════════════════════════════════════════════════════════════════════
+% --- 15-PAGE COUNTED CONTENT ENDS HERE ---
+% ══════════════════════════════════════════════════════════════════════
+
+% ══════════════════════════════════════════════════════════════════════
+% REFERENCES (excluded from 15-page limit)
+% ══════════════════════════════════════════════════════════════════════
 \newpage
 \begin{multicols}{2}[\section*{References}]
 \printbibliography[heading=none]
 \end{multicols}
 
-% ── Appendices ──────────────────────────────────────────────────────────
+% ══════════════════════════════════════════════════════════════════════
+% APPENDICES (excluded from 15-page limit, NOT assessed)
+% ══════════════════════════════════════════════════════════════════════
 \newpage
 \appendix
+% Appendix A: Full state transition table (20 states, 32 transitions)
 \input{sections/A1_state_table}
+
+% Appendix B: Configuration parameters
 \input{sections/A2_config_params}
+
+% Appendix C: Model training pipeline and dataset
+\input{sections/12_model_training}
+
+% Appendix D: Safety, risk management, and regulatory compliance
+\input{sections/13_safety_risk}
+
+% Appendix E: Testing methodology (five-tier framework, stress tests)
+\input{sections/10_testing}
+
+% Appendix F: Field testing results and calibration data
+\input{sections/11_field_results}
+
+% Appendix G: Future work
+\input{sections/14_future_work}
+
+% Appendix H: Inference architecture
+\input{sections/inference_architecture}
+
+% Appendix H2: Computer Vision extended analysis
+\input{sections/cv_extended}
+
+% Appendix I: Streaming architecture
+\input{sections/streaming_architecture}
+
+% Appendix J: GPS estimation deep dive
+\input{sections/gps_estimation_deep}
+
+% Appendix K: Testing deep dive
+\input{sections/testing_deep}
+
+% Appendix L: Field day narrative
+\input{sections/field_day_narrative}
+
+% Appendix M: Contingency planning
+\input{sections/contingency}
+
+% Appendix N: Test scripts guide
+\input{sections/test_scripts_guide}
+
+% Appendix O: Sensor calibration deep dive
+\input{sections/calibration_deep}
+
+% Appendix P: Simulation validation
+\input{sections/simulation_validation}
+
+% Appendix Q: Mission flow (real flight narrative)
+\input{sections/mission_flow}
+
+% Appendix R: Centering vs direct offset analysis
+\input{sections/centering_analysis}
+
+% Appendix S: Communication architecture
+\input{sections/comms_architecture}
+
+% Appendix R: Figure descriptions (blackboard diagrams)
+\input{sections/figure_descriptions}
 
 \end{document}

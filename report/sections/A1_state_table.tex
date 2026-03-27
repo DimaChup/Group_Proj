@@ -127,7 +127,7 @@ VERIFY &
   Centered over TGT ($<$\,1\,m) &
   Hover over TGT; collect GPS avg samples; display countdown; wait for operator input via keyboard or browser &
   \textbf{Y}: GPS avg (10\,s) $\to$ select landing side (N/E/S/W) $\to$ \texttt{APPROACH} \newline
-  \textbf{N}: reject TGT; queue check $\to$ \texttt{CENTERING} / \textsc{return\_from\_manual} / \textsc{return\_to\_search} / \texttt{SEARCH} \newline
+  \textbf{N}: reject TGT; queue check $\to$ \texttt{CENTERING} / \texttt{RETURN\_FROM\_MANUAL} / \texttt{RETURN\_TO\_SEARCH} / \texttt{SEARCH} \newline
   \textbf{I}: log as IOI; queue check $\to$ same as N &
   120\,s $\to$ auto-reject, \texttt{SEARCH} \\
 
@@ -148,7 +148,7 @@ HOVER\_TARGET &
   Hold position; servo stage~1 at $t$\,=\,3\,s (partial release, PWM 1200); servo stage~2 at $t$\,=\,6\,s (full release, PWM 1900); close servo at $t$\,=\,15\,s &
   $t > 15$\,s: \newline
   \quad pre-WPs exist $\to$ \texttt{RETURN\_TRANSIT} \newline
-  \quad else $\to$ \textsc{return\_home} &
+  \quad else $\to$ \texttt{RETURN\_HOME} &
   Fixed 15\,s sequence \\
 
 % ── Return sequence ───────────────────────────────────────────
@@ -159,15 +159,15 @@ HOVER\_TARGET &
 RETURN\_TRANSIT &
   Pre-WPs need retracing &
   Climb to search alt; retrace pre-WPs in reverse order at \texttt{TRANSIT\_SPEED} &
-  All return WPs reached $\to$ \textsc{return\_home} &
+  All return WPs reached $\to$ \texttt{RETURN\_HOME} &
   None \\
 \addlinespace
 
 RETURN\_HOME &
   Return transit complete or no pre-WPs &
   Fly to home position at \texttt{TARGET\_ALT}; guard against invalid home if GPS never fixed &
-  dist to home\,$<$\,2\,m $\to$ \textsc{landing} \newline
-  No GPS fix $\to$ \textsc{landing} (in place) &
+  dist to home\,$<$\,2\,m $\to$ \texttt{LANDING} \newline
+  No GPS fix $\to$ \texttt{LANDING} (in place) &
   None \\
 \addlinespace
 
@@ -210,7 +210,7 @@ MANUAL &
   M pressed: \newline
   \quad TGT visible $\to$ \texttt{CENTERING} \newline
   \quad queued TGT $\to$ \texttt{CENTERING} \newline
-  \quad $>$\,5\,m from departure $\to$ \textsc{return\_from\_manual} \newline
+  \quad $>$\,5\,m from departure $\to$ \texttt{RETURN\_FROM\_MANUAL} \newline
   \quad else $\to$ resume previous state &
   None \\
 \addlinespace
@@ -226,10 +226,10 @@ DONE &
 
 \noindent\textbf{Global overrides} (apply in any non-terminal state):
 \begin{itemize}[nosep]
-  \item \textbf{M key} --- toggles \textsc{manual} override from any active flight state.
+  \item \textbf{M key} --- toggles \texttt{MANUAL} override from any active flight state.
   \item \textbf{K key} --- clears all rejected targets and items of interest (re-enables detection areas).
   \item \textbf{B key} (during \texttt{SEARCH}) --- triggers PLB beacon redirect to focus area polygon.
   \item \textbf{ESC key} --- immediate loop exit (emergency stop).
-  \item \textbf{Geofence violation} --- if the drone enters the NFZ boundary, the state machine forces a transition to \textsc{manual} and halts all velocity commands. Within the NFZ slow zone, speed is ramped down proportionally and a repulsive force vector is applied.
+  \item \textbf{Geofence violation} --- if the drone enters the NFZ boundary, the state machine forces a transition to \texttt{MANUAL} and halts all velocity commands. Within the NFZ slow zone, speed is ramped down proportionally and a repulsive force vector is applied.
   \item \textbf{RC failsafe} --- if the RC link is lost, telemetry detects the failsafe flag and the flight controller's built-in RTL behaviour takes precedence.
 \end{itemize}

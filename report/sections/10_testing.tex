@@ -1,6 +1,6 @@
 \section{Testing Methodology}\label{sec:testing}
 
-This section describes the verification and validation strategy employed to build confidence in the SAR drone system prior to autonomous flight. The approach draws on V-model principles~\cite{forsberg1991relationship}, where each level of system integration is paired with a corresponding verification activity, and on incremental autonomy practices from safety-critical robotics~\cite{koopman2016challenges}. The result is a five-tier progressive testing framework advancing from pure software simulation to full autonomous flight, supported by 41 dedicated test scripts organised across six categories and a stress-testing campaign that exercised 20 failure scenarios before the first outdoor test.
+The verification and validation strategy draws on V-model principles~\cite{forsberg1991relationship}, where each level of system integration is paired with a corresponding verification activity, and on incremental autonomy practices from safety-critical robotics~\cite{koopman2016challenges}. The resulting five-tier progressive testing framework advances from pure software simulation to full autonomous flight, supported by 41 dedicated test scripts organised across six categories and a stress-testing campaign that exercised 20 failure scenarios before the first outdoor test.
 
 \subsection{V-Model Verification Approach}\label{sec:vmodel}
 
@@ -69,13 +69,13 @@ Dry-run validation is executed before every flight day as the first item on the 
 
 \subsection{DJI Video Analysis}\label{sec:video-analysis}
 
-Real flight footage from a DJI survey drone provided a supplementary validation path between simulation and live flight. The video analysis pipeline (\texttt{tests/laptop/video\_test.py}) replays recorded 4K video at 30\,fps with frame-synchronised SRT telemetry (GPS, altitude, heading) while running the YOLOv8n model on every frame. Each detection is projected from pixel coordinates to GPS coordinates using the calibrated FOV (54.4$^\circ$ HFOV for the cropped 1456$\times$1088 frame, calibrated via \texttt{tools/fov\_calibrate\_video.py}). The pipeline produces scatter plots of estimated target positions, circular error statistics, and a scale bar overlay for visual verification of distance estimates.
+Real flight footage from a DJI survey drone provided a supplementary validation path between simulation and live flight. The video analysis pipeline replays recorded 4K video at 30\,fps with frame-synchronised SRT telemetry (GPS, altitude, heading) while running the YOLOv8n model on every frame. Each detection is projected from pixel coordinates to GPS coordinates using the calibrated FOV ($\SI{54.4}{\degree}$ HFOV for the cropped $1456 \times 1088$ frame). The pipeline produces scatter plots of estimated target positions, circular error statistics, and a scale bar overlay for visual verification of distance estimates.
 
-An A/B comparison tool (\texttt{video\_test\_compare.py}) switches between model variants during replay, enabling side-by-side evaluation of the baseline and retrained models on identical footage. This analysis informed the decision to retrain on mixed synthetic-plus-real data (Section~\ref{sec:model-training}) and quantified the GPS estimation accuracy (CEP50~=~2.3\,m, max~=~16.5\,m) under real flight dynamics, including the 100--200\,ms GPS timing lag identified during analysis.
+An A/B comparison tool switches between model variants during replay, enabling direct evaluation of the baseline and retrained models on identical footage. This analysis informed the decision to retrain on mixed synthetic-plus-real data (Section~\ref{sec:model-training}) and quantified the GPS estimation accuracy (CEP50 = 2.3\,m, maximum error = 16.5\,m) under real flight dynamics, including the 100--200\,ms GPS timing lag identified during analysis.
 
 \subsection{Stress Testing and Failure Scenarios}\label{sec:stress}
 
-A systematic stress-testing campaign exercised the system's response to 20 failure and edge-case scenarios in SITL simulation prior to outdoor testing. The scenarios were derived from the contingency table (a state-by-failure matrix covering all 15 states against six failure categories: timeout, manual override, GPS loss, camera failure, connection drop, and operator error) and from the 22-test simulation checklist described below. Table~\ref{tab:stress-results} summarises the results.
+A systematic stress-testing campaign exercised the system's response to 20 failure and edge-case scenarios in SITL simulation prior to outdoor testing. The scenarios were derived from a contingency table---a state-by-failure matrix covering all 15 states against six failure categories (timeout, manual override, GPS loss, camera failure, connection drop, and operator error)---and from the 22-test simulation checklist described below. Table~\ref{tab:stress-results} summarises the results.
 
 \begin{table}[H]
 \centering
@@ -110,7 +110,7 @@ Stale departure point after manual & PASS & Correctly returns to pre-manual posi
 \end{tabular}
 \end{table}
 
-Of the 20 scenarios, 11 passed on the first attempt with the correct automated response already in place. The remaining 9 revealed deficiencies---missing timeouts, insufficient input validation, hardcoded parameters, or unclear error messages---that were fixed and re-verified before outdoor testing. No scenario was left unhandled: every failure mode either triggers an automated recovery (RTL, mode change, queue management) or produces an actionable operator warning with a clear next step.
+Of the 20 scenarios, 11 passed on the first attempt with the correct automated response already in place. The remaining nine revealed deficiencies---missing timeouts, insufficient input validation, hardcoded parameters, or unclear error messages---that were resolved and re-verified before outdoor testing. No scenario was left unhandled: every failure mode either triggers an automated recovery (RTL, mode change, queue management) or produces an actionable operator warning with a clear next step.
 
 The 22-test simulation checklist provides structured coverage of all operational modes: full autonomous mission (baseline), multi-frame detection confirmation, vision-based centering with GPS averaging, geofence enforcement and disable, manual override workflow, multi-target queue ordering, NFZ speed ramp, out-of-polygon detection filtering, beacon redirect, transit planning, altitude override, dry-run generation, headless mode, code refactoring validation, stream server functionality, confidence threshold tuning, reject radius deduplication, manual-mode queue persistence, rapid input robustness, empty queue handling, and log file integrity.
 

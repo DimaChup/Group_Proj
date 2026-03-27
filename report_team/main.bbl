@@ -1,0 +1,807 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 3.3 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated by
+% biber as required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+
+\refsection{0}
+  \datalist[entry]{none/global//global/global/global}
+    \entry{murphy2014}{book}{}{}
+      \name{author}{1}{}{%
+        {{hash=f8af99d8c09e5149ad6299e4de8c210e}{%
+           family={Murphy},
+           familyi={M\bibinitperiod},
+           given={Robin\bibnamedelima R.},
+           giveni={R\bibinitperiod\bibinitdelim R\bibinitperiod}}}%
+      }
+      \list{location}{1}{%
+        {Cambridge, MA}%
+      }
+      \list{publisher}{1}{%
+        {MIT Press}%
+      }
+      \strng{namehash}{f8af99d8c09e5149ad6299e4de8c210e}
+      \strng{fullhash}{f8af99d8c09e5149ad6299e4de8c210e}
+      \strng{fullhashraw}{f8af99d8c09e5149ad6299e4de8c210e}
+      \strng{bibnamehash}{f8af99d8c09e5149ad6299e4de8c210e}
+      \strng{authorbibnamehash}{f8af99d8c09e5149ad6299e4de8c210e}
+      \strng{authornamehash}{f8af99d8c09e5149ad6299e4de8c210e}
+      \strng{authorfullhash}{f8af99d8c09e5149ad6299e4de8c210e}
+      \strng{authorfullhashraw}{f8af99d8c09e5149ad6299e4de8c210e}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{isbn}{978-0-262-02735-9}
+      \field{title}{Disaster Robotics}
+      \field{year}{2014}
+    \endentry
+    \entry{goodrich2008}{article}{}{}
+      \name{author}{7}{}{%
+        {{hash=17e89dff3d93fe393718f6882ca6bc8a}{%
+           family={Goodrich},
+           familyi={G\bibinitperiod},
+           given={Michael\bibnamedelima A.},
+           giveni={M\bibinitperiod\bibinitdelim A\bibinitperiod}}}%
+        {{hash=afd9cb027c9b3ce9bcbd85ee379217d3}{%
+           family={Morse},
+           familyi={M\bibinitperiod},
+           given={Bryan\bibnamedelima S.},
+           giveni={B\bibinitperiod\bibinitdelim S\bibinitperiod}}}%
+        {{hash=f07a76efd57b95585c3da5e566b99acb}{%
+           family={Gerhardt},
+           familyi={G\bibinitperiod},
+           given={Damon},
+           giveni={D\bibinitperiod}}}%
+        {{hash=67fa1e23bf509abe1b188db505ce989d}{%
+           family={Cooper},
+           familyi={C\bibinitperiod},
+           given={Joseph\bibnamedelima L.},
+           giveni={J\bibinitperiod\bibinitdelim L\bibinitperiod}}}%
+        {{hash=9404eebbe5c52f5580a6f6515ebcbb80}{%
+           family={Quigley},
+           familyi={Q\bibinitperiod},
+           given={Morgan},
+           giveni={M\bibinitperiod}}}%
+        {{hash=4bc765d95775477675814c3e7c5538e4}{%
+           family={Adams},
+           familyi={A\bibinitperiod},
+           given={Julie\bibnamedelima A.},
+           giveni={J\bibinitperiod\bibinitdelim A\bibinitperiod}}}%
+        {{hash=924a3aa2dc0c45a6e875fab999b35d64}{%
+           family={Humphrey},
+           familyi={H\bibinitperiod},
+           given={Curtis},
+           giveni={C\bibinitperiod}}}%
+      }
+      \strng{namehash}{f87394a215a7ab6d509c442e5b396ab7}
+      \strng{fullhash}{bbfd4507898b0b7e53d8d4f4456b7373}
+      \strng{fullhashraw}{bbfd4507898b0b7e53d8d4f4456b7373}
+      \strng{bibnamehash}{f87394a215a7ab6d509c442e5b396ab7}
+      \strng{authorbibnamehash}{f87394a215a7ab6d509c442e5b396ab7}
+      \strng{authornamehash}{f87394a215a7ab6d509c442e5b396ab7}
+      \strng{authorfullhash}{bbfd4507898b0b7e53d8d4f4456b7373}
+      \strng{authorfullhashraw}{bbfd4507898b0b7e53d8d4f4456b7373}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Journal of Field Robotics}
+      \field{number}{1--2}
+      \field{title}{Supporting Wilderness Search and Rescue Using a Camera-Equipped Mini {UAV}}
+      \field{volume}{25}
+      \field{year}{2008}
+      \field{pages}{89\bibrangedash 110}
+      \range{pages}{22}
+      \verb{doi}
+      \verb 10.1002/rob.20226
+      \endverb
+    \endentry
+    \entry{sarreview}{article}{}{}
+      \name{author}{4}{}{%
+        {{hash=185ef69aba0eb7953739aa40c35ae12f}{%
+           family={Silvagni},
+           familyi={S\bibinitperiod},
+           given={Mario},
+           giveni={M\bibinitperiod}}}%
+        {{hash=6caecedf408d2c7a1534c25e4fa180b2}{%
+           family={Tonoli},
+           familyi={T\bibinitperiod},
+           given={Andrea},
+           giveni={A\bibinitperiod}}}%
+        {{hash=18f5e9ab02dc369e4465696c3d552cb3}{%
+           family={Zenerino},
+           familyi={Z\bibinitperiod},
+           given={Enrico},
+           giveni={E\bibinitperiod}}}%
+        {{hash=387a1f8b4c5989acc0a87e7c915fb8d8}{%
+           family={Chiaberge},
+           familyi={C\bibinitperiod},
+           given={Marcello},
+           giveni={M\bibinitperiod}}}%
+      }
+      \strng{namehash}{7dad0d7a89601efcc634aa2d793e1ebd}
+      \strng{fullhash}{6f931786a89d0f88a6d8c98a77316da9}
+      \strng{fullhashraw}{6f931786a89d0f88a6d8c98a77316da9}
+      \strng{bibnamehash}{7dad0d7a89601efcc634aa2d793e1ebd}
+      \strng{authorbibnamehash}{7dad0d7a89601efcc634aa2d793e1ebd}
+      \strng{authornamehash}{7dad0d7a89601efcc634aa2d793e1ebd}
+      \strng{authorfullhash}{6f931786a89d0f88a6d8c98a77316da9}
+      \strng{authorfullhashraw}{6f931786a89d0f88a6d8c98a77316da9}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Geomatics, Natural Hazards and Risk}
+      \field{number}{1}
+      \field{title}{Multipurpose {UAV} for Search and Rescue Operations in Mountain Avalanche Events}
+      \field{volume}{8}
+      \field{year}{2017}
+      \field{pages}{18\bibrangedash 33}
+      \range{pages}{16}
+      \verb{doi}
+      \verb 10.1080/19475705.2016.1238852
+      \endverb
+    \endentry
+    \entry{mishra2020}{article}{}{}
+      \name{author}{4}{}{%
+        {{hash=27c6dcad65ae9acda33612faa094dc35}{%
+           family={Mishra},
+           familyi={M\bibinitperiod},
+           given={Brij},
+           giveni={B\bibinitperiod}}}%
+        {{hash=02f931af1c81227a7825bb46069a6eb7}{%
+           family={Garg},
+           familyi={G\bibinitperiod},
+           given={Deepak},
+           giveni={D\bibinitperiod}}}%
+        {{hash=290d5bf6ae15fd4aba5a4438d9dbb5ac}{%
+           family={Narang},
+           familyi={N\bibinitperiod},
+           given={Pratik},
+           giveni={P\bibinitperiod}}}%
+        {{hash=29b4fd20d9753e9c4b933f6267fcd8a9}{%
+           family={Mishra},
+           familyi={M\bibinitperiod},
+           given={Vipul},
+           giveni={V\bibinitperiod}}}%
+      }
+      \strng{namehash}{128833984344b6a4c106cffb4d4616ff}
+      \strng{fullhash}{1cc1e648f7a74cc90e7dbd0fac16ba16}
+      \strng{fullhashraw}{1cc1e648f7a74cc90e7dbd0fac16ba16}
+      \strng{bibnamehash}{128833984344b6a4c106cffb4d4616ff}
+      \strng{authorbibnamehash}{128833984344b6a4c106cffb4d4616ff}
+      \strng{authornamehash}{128833984344b6a4c106cffb4d4616ff}
+      \strng{authorfullhash}{1cc1e648f7a74cc90e7dbd0fac16ba16}
+      \strng{authorfullhashraw}{1cc1e648f7a74cc90e7dbd0fac16ba16}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Computer Communications}
+      \field{title}{Drone-surveillance for Search and Rescue in Natural Disaster}
+      \field{volume}{156}
+      \field{year}{2020}
+      \field{pages}{1\bibrangedash 10}
+      \range{pages}{10}
+      \verb{doi}
+      \verb 10.1016/j.comcom.2020.03.012
+      \endverb
+    \endentry
+    \entry{pmbok2021}{book}{}{}
+      \name{author}{1}{}{%
+        {{hash=1ef4da9f3cd29e1ab68b3bc1995dc4a1}{%
+           family={{Project Management Institute}},
+           familyi={P\bibinitperiod}}}%
+      }
+      \list{location}{1}{%
+        {Newtown Square, PA}%
+      }
+      \list{publisher}{1}{%
+        {Project Management Institute}%
+      }
+      \strng{namehash}{1ef4da9f3cd29e1ab68b3bc1995dc4a1}
+      \strng{fullhash}{1ef4da9f3cd29e1ab68b3bc1995dc4a1}
+      \strng{fullhashraw}{1ef4da9f3cd29e1ab68b3bc1995dc4a1}
+      \strng{bibnamehash}{1ef4da9f3cd29e1ab68b3bc1995dc4a1}
+      \strng{authorbibnamehash}{1ef4da9f3cd29e1ab68b3bc1995dc4a1}
+      \strng{authornamehash}{1ef4da9f3cd29e1ab68b3bc1995dc4a1}
+      \strng{authorfullhash}{1ef4da9f3cd29e1ab68b3bc1995dc4a1}
+      \strng{authorfullhashraw}{1ef4da9f3cd29e1ab68b3bc1995dc4a1}
+      \field{sortinit}{3}
+      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{edition}{7th}
+      \field{isbn}{978-1-62825-664-2}
+      \field{title}{A Guide to the Project Management Body of Knowledge ({PMBOK} Guide)}
+      \field{year}{2021}
+    \endentry
+    \entry{boehm1988spiral}{article}{}{}
+      \name{author}{1}{}{%
+        {{hash=30901c504c4e9f9f386b59986264609c}{%
+           family={Boehm},
+           familyi={B\bibinitperiod},
+           given={Barry\bibnamedelima W.},
+           giveni={B\bibinitperiod\bibinitdelim W\bibinitperiod}}}%
+      }
+      \strng{namehash}{30901c504c4e9f9f386b59986264609c}
+      \strng{fullhash}{30901c504c4e9f9f386b59986264609c}
+      \strng{fullhashraw}{30901c504c4e9f9f386b59986264609c}
+      \strng{bibnamehash}{30901c504c4e9f9f386b59986264609c}
+      \strng{authorbibnamehash}{30901c504c4e9f9f386b59986264609c}
+      \strng{authornamehash}{30901c504c4e9f9f386b59986264609c}
+      \strng{authorfullhash}{30901c504c4e9f9f386b59986264609c}
+      \strng{authorfullhashraw}{30901c504c4e9f9f386b59986264609c}
+      \field{sortinit}{3}
+      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Computer}
+      \field{number}{5}
+      \field{title}{A Spiral Model of Software Development and Enhancement}
+      \field{volume}{21}
+      \field{year}{1988}
+      \field{pages}{61\bibrangedash 72}
+      \range{pages}{12}
+      \verb{doi}
+      \verb 10.1109/2.59
+      \endverb
+    \endentry
+    \entry{ardupilot2024}{misc}{}{}
+      \name{author}{1}{}{%
+        {{hash=002e4a64dbc1404d94eef1845911c190}{%
+           family={{ArduPilot Dev Team}},
+           familyi={A\bibinitperiod}}}%
+      }
+      \strng{namehash}{002e4a64dbc1404d94eef1845911c190}
+      \strng{fullhash}{002e4a64dbc1404d94eef1845911c190}
+      \strng{fullhashraw}{002e4a64dbc1404d94eef1845911c190}
+      \strng{bibnamehash}{002e4a64dbc1404d94eef1845911c190}
+      \strng{authorbibnamehash}{002e4a64dbc1404d94eef1845911c190}
+      \strng{authornamehash}{002e4a64dbc1404d94eef1845911c190}
+      \strng{authorfullhash}{002e4a64dbc1404d94eef1845911c190}
+      \strng{authorfullhashraw}{002e4a64dbc1404d94eef1845911c190}
+      \field{sortinit}{4}
+      \field{sortinithash}{9381316451d1b9788675a07e972a12a7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{https://ardupilot.org/dev/docs/sitl-simulator-software-in-the-loop.html}}
+      \field{note}{Accessed: 2026}
+      \field{title}{{ArduPilot SITL Simulator}: Software in the Loop Simulation}
+      \field{year}{2024}
+    \endentry
+    \entry{schwaber1997scrum}{inproceedings}{}{}
+      \name{author}{1}{}{%
+        {{hash=ee6f08fcba839e09471a0bc69152b6a5}{%
+           family={Schwaber},
+           familyi={S\bibinitperiod},
+           given={Ken},
+           giveni={K\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {Springer}%
+      }
+      \strng{namehash}{ee6f08fcba839e09471a0bc69152b6a5}
+      \strng{fullhash}{ee6f08fcba839e09471a0bc69152b6a5}
+      \strng{fullhashraw}{ee6f08fcba839e09471a0bc69152b6a5}
+      \strng{bibnamehash}{ee6f08fcba839e09471a0bc69152b6a5}
+      \strng{authorbibnamehash}{ee6f08fcba839e09471a0bc69152b6a5}
+      \strng{authornamehash}{ee6f08fcba839e09471a0bc69152b6a5}
+      \strng{authorfullhash}{ee6f08fcba839e09471a0bc69152b6a5}
+      \strng{authorfullhashraw}{ee6f08fcba839e09471a0bc69152b6a5}
+      \field{sortinit}{5}
+      \field{sortinithash}{20e9b4b0b173788c5dace24730f47d8c}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{booktitle}{Business Object Design and Implementation}
+      \field{title}{{SCRUM} Development Process}
+      \field{year}{1997}
+      \field{pages}{117\bibrangedash 134}
+      \range{pages}{18}
+      \verb{doi}
+      \verb 10.1007/978-1-4471-0947-1_11
+      \endverb
+    \endentry
+    \entry{forsberg1991relationship}{article}{}{}
+      \name{author}{2}{}{%
+        {{hash=2e22bd98667e3e06bac5e528a1b2360e}{%
+           family={Forsberg},
+           familyi={F\bibinitperiod},
+           given={Kevin},
+           giveni={K\bibinitperiod}}}%
+        {{hash=2bc98a65e627d636a303ba1df75a2d8a}{%
+           family={Mooz},
+           familyi={M\bibinitperiod},
+           given={Harold},
+           giveni={H\bibinitperiod}}}%
+      }
+      \strng{namehash}{c4962fe4acf382aa2ca76f0808fd457c}
+      \strng{fullhash}{c4962fe4acf382aa2ca76f0808fd457c}
+      \strng{fullhashraw}{c4962fe4acf382aa2ca76f0808fd457c}
+      \strng{bibnamehash}{c4962fe4acf382aa2ca76f0808fd457c}
+      \strng{authorbibnamehash}{c4962fe4acf382aa2ca76f0808fd457c}
+      \strng{authornamehash}{c4962fe4acf382aa2ca76f0808fd457c}
+      \strng{authorfullhash}{c4962fe4acf382aa2ca76f0808fd457c}
+      \strng{authorfullhashraw}{c4962fe4acf382aa2ca76f0808fd457c}
+      \field{sortinit}{6}
+      \field{sortinithash}{b33bc299efb3c36abec520a4c896a66d}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Engineering Management Journal}
+      \field{number}{3}
+      \field{title}{The Relationship of System Engineering to the Project Cycle}
+      \field{volume}{3}
+      \field{year}{1991}
+      \field{pages}{36\bibrangedash 43}
+      \range{pages}{8}
+      \verb{doi}
+      \verb 10.1080/10429247.1991.11414687
+      \endverb
+    \endentry
+    \entry{incose2015}{book}{}{}
+      \name{author}{1}{}{%
+        {{hash=1b745d41b5b5c89275ccc07f6f09bace}{%
+           family={{INCOSE}},
+           familyi={I\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {John Wiley \& Sons}%
+      }
+      \strng{namehash}{1b745d41b5b5c89275ccc07f6f09bace}
+      \strng{fullhash}{1b745d41b5b5c89275ccc07f6f09bace}
+      \strng{fullhashraw}{1b745d41b5b5c89275ccc07f6f09bace}
+      \strng{bibnamehash}{1b745d41b5b5c89275ccc07f6f09bace}
+      \strng{authorbibnamehash}{1b745d41b5b5c89275ccc07f6f09bace}
+      \strng{authornamehash}{1b745d41b5b5c89275ccc07f6f09bace}
+      \strng{authorfullhash}{1b745d41b5b5c89275ccc07f6f09bace}
+      \strng{authorfullhashraw}{1b745d41b5b5c89275ccc07f6f09bace}
+      \field{sortinit}{7}
+      \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{edition}{4th}
+      \field{isbn}{978-1-118-99940-0}
+      \field{title}{Systems Engineering Handbook: A Guide for System Life Cycle Processes and Activities}
+      \field{year}{2015}
+    \endentry
+    \entry{blanchard2011systems}{book}{}{}
+      \name{author}{2}{}{%
+        {{hash=aa173ea25a9e6d296a65910d23464e9a}{%
+           family={Blanchard},
+           familyi={B\bibinitperiod},
+           given={Benjamin\bibnamedelima S.},
+           giveni={B\bibinitperiod\bibinitdelim S\bibinitperiod}}}%
+        {{hash=8e6dc1a2d5bf2e1cfc38e9a2bb314419}{%
+           family={Fabrycky},
+           familyi={F\bibinitperiod},
+           given={Wolter\bibnamedelima J.},
+           giveni={W\bibinitperiod\bibinitdelim J\bibinitperiod}}}%
+      }
+      \list{location}{1}{%
+        {Upper Saddle River, NJ}%
+      }
+      \list{publisher}{1}{%
+        {Prentice Hall}%
+      }
+      \strng{namehash}{aa8de0811ea736b7fde4d40ede3eb1a9}
+      \strng{fullhash}{aa8de0811ea736b7fde4d40ede3eb1a9}
+      \strng{fullhashraw}{aa8de0811ea736b7fde4d40ede3eb1a9}
+      \strng{bibnamehash}{aa8de0811ea736b7fde4d40ede3eb1a9}
+      \strng{authorbibnamehash}{aa8de0811ea736b7fde4d40ede3eb1a9}
+      \strng{authornamehash}{aa8de0811ea736b7fde4d40ede3eb1a9}
+      \strng{authorfullhash}{aa8de0811ea736b7fde4d40ede3eb1a9}
+      \strng{authorfullhashraw}{aa8de0811ea736b7fde4d40ede3eb1a9}
+      \field{sortinit}{7}
+      \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{edition}{5th}
+      \field{isbn}{978-0-13-221735-4}
+      \field{title}{Systems Engineering and Analysis}
+      \field{year}{2011}
+    \endentry
+    \entry{ukcaa}{misc}{}{}
+      \name{author}{1}{}{%
+        {{hash=2480ef2f25ba65e0fb108373831027c8}{%
+           family={{UK Civil Aviation Authority}},
+           familyi={U\bibinitperiod}}}%
+      }
+      \strng{namehash}{2480ef2f25ba65e0fb108373831027c8}
+      \strng{fullhash}{2480ef2f25ba65e0fb108373831027c8}
+      \strng{fullhashraw}{2480ef2f25ba65e0fb108373831027c8}
+      \strng{bibnamehash}{2480ef2f25ba65e0fb108373831027c8}
+      \strng{authorbibnamehash}{2480ef2f25ba65e0fb108373831027c8}
+      \strng{authornamehash}{2480ef2f25ba65e0fb108373831027c8}
+      \strng{authorfullhash}{2480ef2f25ba65e0fb108373831027c8}
+      \strng{authorfullhashraw}{2480ef2f25ba65e0fb108373831027c8}
+      \field{extraname}{1}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{https://www.caa.co.uk/drones/}}
+      \field{note}{Accessed: 2026}
+      \field{title}{The Drone and Model Aircraft Code}
+      \field{year}{2023}
+    \endentry
+    \entry{cap722}{misc}{}{}
+      \name{author}{1}{}{%
+        {{hash=2480ef2f25ba65e0fb108373831027c8}{%
+           family={{UK Civil Aviation Authority}},
+           familyi={U\bibinitperiod}}}%
+      }
+      \strng{namehash}{2480ef2f25ba65e0fb108373831027c8}
+      \strng{fullhash}{2480ef2f25ba65e0fb108373831027c8}
+      \strng{fullhashraw}{2480ef2f25ba65e0fb108373831027c8}
+      \strng{bibnamehash}{2480ef2f25ba65e0fb108373831027c8}
+      \strng{authorbibnamehash}{2480ef2f25ba65e0fb108373831027c8}
+      \strng{authornamehash}{2480ef2f25ba65e0fb108373831027c8}
+      \strng{authorfullhash}{2480ef2f25ba65e0fb108373831027c8}
+      \strng{authorfullhashraw}{2480ef2f25ba65e0fb108373831027c8}
+      \field{extraname}{2}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{https://publicapps.caa.co.uk/}}
+      \field{note}{Accessed: 2026}
+      \field{title}{{CAP 722}: Unmanned Aircraft System Operations in {UK} Airspace}
+      \field{year}{2024}
+    \endentry
+    \entry{pugh1991total}{book}{}{}
+      \name{author}{1}{}{%
+        {{hash=069d3867eff10c1e998bced052f003e8}{%
+           family={Pugh},
+           familyi={P\bibinitperiod},
+           given={Stuart},
+           giveni={S\bibinitperiod}}}%
+      }
+      \list{location}{1}{%
+        {Wokingham, UK}%
+      }
+      \list{publisher}{1}{%
+        {Addison-Wesley}%
+      }
+      \strng{namehash}{069d3867eff10c1e998bced052f003e8}
+      \strng{fullhash}{069d3867eff10c1e998bced052f003e8}
+      \strng{fullhashraw}{069d3867eff10c1e998bced052f003e8}
+      \strng{bibnamehash}{069d3867eff10c1e998bced052f003e8}
+      \strng{authorbibnamehash}{069d3867eff10c1e998bced052f003e8}
+      \strng{authornamehash}{069d3867eff10c1e998bced052f003e8}
+      \strng{authorfullhash}{069d3867eff10c1e998bced052f003e8}
+      \strng{authorfullhashraw}{069d3867eff10c1e998bced052f003e8}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{isbn}{978-0-201-41639-0}
+      \field{title}{Total Design: Integrated Methods for Successful Product Engineering}
+      \field{year}{1991}
+    \endentry
+    \entry{raspberrypi5}{misc}{}{}
+      \name{author}{1}{}{%
+        {{hash=0dac029e46904a2d35a186cfa0c1303c}{%
+           family={{Raspberry Pi Foundation}},
+           familyi={R\bibinitperiod}}}%
+      }
+      \strng{namehash}{0dac029e46904a2d35a186cfa0c1303c}
+      \strng{fullhash}{0dac029e46904a2d35a186cfa0c1303c}
+      \strng{fullhashraw}{0dac029e46904a2d35a186cfa0c1303c}
+      \strng{bibnamehash}{0dac029e46904a2d35a186cfa0c1303c}
+      \strng{authorbibnamehash}{0dac029e46904a2d35a186cfa0c1303c}
+      \strng{authornamehash}{0dac029e46904a2d35a186cfa0c1303c}
+      \strng{authorfullhash}{0dac029e46904a2d35a186cfa0c1303c}
+      \strng{authorfullhashraw}{0dac029e46904a2d35a186cfa0c1303c}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{https://www.raspberrypi.com/documentation/computers/raspberry-pi-5.html}}
+      \field{note}{Accessed: 2026}
+      \field{title}{{Raspberry Pi 5} Documentation}
+      \field{year}{2023}
+    \endentry
+    \entry{chacon2014pro}{book}{}{}
+      \name{author}{2}{}{%
+        {{hash=8f4ee0c97dee95179ce1e79e846dd298}{%
+           family={Chacon},
+           familyi={C\bibinitperiod},
+           given={Scott},
+           giveni={S\bibinitperiod}}}%
+        {{hash=50418136ff59fed99760e32ba5613c51}{%
+           family={Straub},
+           familyi={S\bibinitperiod},
+           given={Ben},
+           giveni={B\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {Apress}%
+      }
+      \strng{namehash}{1764b95256df68c84d8a593fc2dfa143}
+      \strng{fullhash}{1764b95256df68c84d8a593fc2dfa143}
+      \strng{fullhashraw}{1764b95256df68c84d8a593fc2dfa143}
+      \strng{bibnamehash}{1764b95256df68c84d8a593fc2dfa143}
+      \strng{authorbibnamehash}{1764b95256df68c84d8a593fc2dfa143}
+      \strng{authornamehash}{1764b95256df68c84d8a593fc2dfa143}
+      \strng{authorfullhash}{1764b95256df68c84d8a593fc2dfa143}
+      \strng{authorfullhashraw}{1764b95256df68c84d8a593fc2dfa143}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{edition}{2nd}
+      \field{isbn}{978-1-4842-0076-6}
+      \field{note}{Available at \url{https://git-scm.com/book/en/v2}}
+      \field{title}{Pro Git}
+      \field{year}{2014}
+    \endentry
+    \entry{katzenbach2015wisdom}{book}{}{}
+      \name{author}{2}{}{%
+        {{hash=23171d02dcbc4895bcc6202f604c257e}{%
+           family={Katzenbach},
+           familyi={K\bibinitperiod},
+           given={Jon\bibnamedelima R.},
+           giveni={J\bibinitperiod\bibinitdelim R\bibinitperiod}}}%
+        {{hash=28f2d9e3aba784116b4b4ec183b055f1}{%
+           family={Smith},
+           familyi={S\bibinitperiod},
+           given={Douglas\bibnamedelima K.},
+           giveni={D\bibinitperiod\bibinitdelim K\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {Harvard Business Review Press}%
+      }
+      \strng{namehash}{3de8e0593f7e2159815039ed284479cf}
+      \strng{fullhash}{3de8e0593f7e2159815039ed284479cf}
+      \strng{fullhashraw}{3de8e0593f7e2159815039ed284479cf}
+      \strng{bibnamehash}{3de8e0593f7e2159815039ed284479cf}
+      \strng{authorbibnamehash}{3de8e0593f7e2159815039ed284479cf}
+      \strng{authornamehash}{3de8e0593f7e2159815039ed284479cf}
+      \strng{authorfullhash}{3de8e0593f7e2159815039ed284479cf}
+      \strng{authorfullhashraw}{3de8e0593f7e2159815039ed284479cf}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{isbn}{978-1-63369-110-4}
+      \field{title}{The Wisdom of Teams: Creating the High-Performance Organization}
+      \field{year}{2015}
+    \endentry
+    \entry{tuckman1965developmental}{article}{}{}
+      \name{author}{1}{}{%
+        {{hash=684381a556fe74d83a9f512740e8caa3}{%
+           family={Tuckman},
+           familyi={T\bibinitperiod},
+           given={Bruce\bibnamedelima W.},
+           giveni={B\bibinitperiod\bibinitdelim W\bibinitperiod}}}%
+      }
+      \strng{namehash}{684381a556fe74d83a9f512740e8caa3}
+      \strng{fullhash}{684381a556fe74d83a9f512740e8caa3}
+      \strng{fullhashraw}{684381a556fe74d83a9f512740e8caa3}
+      \strng{bibnamehash}{684381a556fe74d83a9f512740e8caa3}
+      \strng{authorbibnamehash}{684381a556fe74d83a9f512740e8caa3}
+      \strng{authornamehash}{684381a556fe74d83a9f512740e8caa3}
+      \strng{authorfullhash}{684381a556fe74d83a9f512740e8caa3}
+      \strng{authorfullhashraw}{684381a556fe74d83a9f512740e8caa3}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Psychological Bulletin}
+      \field{number}{6}
+      \field{title}{Developmental Sequence in Small Groups}
+      \field{volume}{63}
+      \field{year}{1965}
+      \field{pages}{384\bibrangedash 399}
+      \range{pages}{16}
+      \verb{doi}
+      \verb 10.1037/h0022100
+      \endverb
+    \endentry
+    \entry{iso31000}{report}{}{}
+      \name{author}{1}{}{%
+        {{hash=7058e4bd76f877c52b621c942b30613c}{%
+           family={{International Organization for Standardization}},
+           familyi={I\bibinitperiod}}}%
+      }
+      \list{institution}{1}{%
+        {ISO}%
+      }
+      \strng{namehash}{7058e4bd76f877c52b621c942b30613c}
+      \strng{fullhash}{7058e4bd76f877c52b621c942b30613c}
+      \strng{fullhashraw}{7058e4bd76f877c52b621c942b30613c}
+      \strng{bibnamehash}{7058e4bd76f877c52b621c942b30613c}
+      \strng{authorbibnamehash}{7058e4bd76f877c52b621c942b30613c}
+      \strng{authornamehash}{7058e4bd76f877c52b621c942b30613c}
+      \strng{authorfullhash}{7058e4bd76f877c52b621c942b30613c}
+      \strng{authorfullhashraw}{7058e4bd76f877c52b621c942b30613c}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{title}{{ISO 31000:2018} -- Risk Management Guidelines}
+      \field{type}{International Standard}
+      \field{year}{2018}
+    \endentry
+    \entry{hillson2009managing}{book}{}{}
+      \name{author}{2}{}{%
+        {{hash=4c18d1609a2658a9621a1e6984943e47}{%
+           family={Hillson},
+           familyi={H\bibinitperiod},
+           given={David},
+           giveni={D\bibinitperiod}}}%
+        {{hash=647afa280eebae051afd6bd59d3b3e57}{%
+           family={Simon},
+           familyi={S\bibinitperiod},
+           given={Peter},
+           giveni={P\bibinitperiod}}}%
+      }
+      \list{location}{1}{%
+        {Vienna, VA}%
+      }
+      \list{publisher}{1}{%
+        {Management Concepts}%
+      }
+      \strng{namehash}{b242996698ec16271e6bd8eeed81f024}
+      \strng{fullhash}{b242996698ec16271e6bd8eeed81f024}
+      \strng{fullhashraw}{b242996698ec16271e6bd8eeed81f024}
+      \strng{bibnamehash}{b242996698ec16271e6bd8eeed81f024}
+      \strng{authorbibnamehash}{b242996698ec16271e6bd8eeed81f024}
+      \strng{authornamehash}{b242996698ec16271e6bd8eeed81f024}
+      \strng{authorfullhash}{b242996698ec16271e6bd8eeed81f024}
+      \strng{authorfullhashraw}{b242996698ec16271e6bd8eeed81f024}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{edition}{2nd}
+      \field{isbn}{978-1-56726-366-0}
+      \field{title}{Practical Project Risk Management: The {ATOM} Methodology}
+      \field{year}{2012}
+    \endentry
+    \entry{nasa2015vv}{report}{}{}
+      \name{author}{1}{}{%
+        {{hash=72f826272be1a819ed284b8ed8310d76}{%
+           family={{National Aeronautics and Space Administration}},
+           familyi={N\bibinitperiod}}}%
+      }
+      \list{institution}{1}{%
+        {NASA}%
+      }
+      \strng{namehash}{72f826272be1a819ed284b8ed8310d76}
+      \strng{fullhash}{72f826272be1a819ed284b8ed8310d76}
+      \strng{fullhashraw}{72f826272be1a819ed284b8ed8310d76}
+      \strng{bibnamehash}{72f826272be1a819ed284b8ed8310d76}
+      \strng{authorbibnamehash}{72f826272be1a819ed284b8ed8310d76}
+      \strng{authornamehash}{72f826272be1a819ed284b8ed8310d76}
+      \strng{authorfullhash}{72f826272be1a819ed284b8ed8310d76}
+      \strng{authorfullhashraw}{72f826272be1a819ed284b8ed8310d76}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{note}{Describes progressive V\&V methodology for UAS}
+      \field{number}{NASA/TM-2015-218817}
+      \field{title}{{Unmanned Aircraft Systems (UAS) Integration in the National Airspace System (NAS) Project: Test and Evaluation}}
+      \field{type}{techreport}
+      \field{year}{2015}
+    \endentry
+    \entry{sora}{report}{}{}
+      \name{author}{1}{}{%
+        {{hash=d9aae16d9a506a3d9d736d069909ae7a}{%
+           family={{JARUS}},
+           familyi={J\bibinitperiod}}}%
+      }
+      \list{institution}{1}{%
+        {Joint Authorities for Rulemaking on Unmanned Systems}%
+      }
+      \strng{namehash}{d9aae16d9a506a3d9d736d069909ae7a}
+      \strng{fullhash}{d9aae16d9a506a3d9d736d069909ae7a}
+      \strng{fullhashraw}{d9aae16d9a506a3d9d736d069909ae7a}
+      \strng{bibnamehash}{d9aae16d9a506a3d9d736d069909ae7a}
+      \strng{authorbibnamehash}{d9aae16d9a506a3d9d736d069909ae7a}
+      \strng{authornamehash}{d9aae16d9a506a3d9d736d069909ae7a}
+      \strng{authorfullhash}{d9aae16d9a506a3d9d736d069909ae7a}
+      \strng{authorfullhashraw}{d9aae16d9a506a3d9d736d069909ae7a}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{note}{JAR-DEL-WG6-D.04}
+      \field{number}{Edition 2.0}
+      \field{title}{{JARUS} Guidelines on Specific Operations Risk Assessment ({SORA})}
+      \field{type}{techreport}
+      \field{year}{2019}
+    \endentry
+    \entry{koopman2016challenges}{inproceedings}{}{}
+      \name{author}{2}{}{%
+        {{hash=0180518be5acba53c0936c475b7ebeb0}{%
+           family={Koopman},
+           familyi={K\bibinitperiod},
+           given={Philip},
+           giveni={P\bibinitperiod}}}%
+        {{hash=b6ea5a7032ae19a0dc619b901a2d57ac}{%
+           family={Wagner},
+           familyi={W\bibinitperiod},
+           given={Michael},
+           giveni={M\bibinitperiod}}}%
+      }
+      \strng{namehash}{b5564d3a0915abfcdc63d8f83d3180b8}
+      \strng{fullhash}{b5564d3a0915abfcdc63d8f83d3180b8}
+      \strng{fullhashraw}{b5564d3a0915abfcdc63d8f83d3180b8}
+      \strng{bibnamehash}{b5564d3a0915abfcdc63d8f83d3180b8}
+      \strng{authorbibnamehash}{b5564d3a0915abfcdc63d8f83d3180b8}
+      \strng{authornamehash}{b5564d3a0915abfcdc63d8f83d3180b8}
+      \strng{authorfullhash}{b5564d3a0915abfcdc63d8f83d3180b8}
+      \strng{authorfullhashraw}{b5564d3a0915abfcdc63d8f83d3180b8}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{booktitle}{SAE International Journal of Transportation Safety}
+      \field{number}{1}
+      \field{title}{Challenges in Autonomous Vehicle Testing and Validation}
+      \field{volume}{4}
+      \field{year}{2016}
+      \field{pages}{15\bibrangedash 24}
+      \range{pages}{10}
+      \verb{doi}
+      \verb 10.4271/2016-01-0128
+      \endverb
+    \endentry
+    \entry{myers2011art}{book}{}{}
+      \name{author}{3}{}{%
+        {{hash=156343f4cbccb0e4838a03e1aa379f1c}{%
+           family={Myers},
+           familyi={M\bibinitperiod},
+           given={Glenford\bibnamedelima J.},
+           giveni={G\bibinitperiod\bibinitdelim J\bibinitperiod}}}%
+        {{hash=6bedbc386e093a07f6c0696fa075b157}{%
+           family={Sandler},
+           familyi={S\bibinitperiod},
+           given={Corey},
+           giveni={C\bibinitperiod}}}%
+        {{hash=14b5444d5651db3fbde7bcd5553fd0ec}{%
+           family={Badgett},
+           familyi={B\bibinitperiod},
+           given={Tom},
+           giveni={T\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {John Wiley \& Sons}%
+      }
+      \strng{namehash}{de4835ca5e0529d5a2f5f52e5e9cc011}
+      \strng{fullhash}{de4835ca5e0529d5a2f5f52e5e9cc011}
+      \strng{fullhashraw}{de4835ca5e0529d5a2f5f52e5e9cc011}
+      \strng{bibnamehash}{de4835ca5e0529d5a2f5f52e5e9cc011}
+      \strng{authorbibnamehash}{de4835ca5e0529d5a2f5f52e5e9cc011}
+      \strng{authornamehash}{de4835ca5e0529d5a2f5f52e5e9cc011}
+      \strng{authorfullhash}{de4835ca5e0529d5a2f5f52e5e9cc011}
+      \strng{authorfullhashraw}{de4835ca5e0529d5a2f5f52e5e9cc011}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{edition}{3rd}
+      \field{isbn}{978-1-118-03196-4}
+      \field{title}{The Art of Software Testing}
+      \field{year}{2011}
+    \endentry
+  \enddatalist
+\endrefsection
+\endinput
+

@@ -1,6 +1,6 @@
 \section{Field Testing and Results}\label{sec:results}
 
-This section presents results from the scheduled field day on 11~March~2026, during which the full hardware stack---Raspberry~Pi~5, Cube~Orange autopilot, and IMX296 global-shutter camera---was assembled and tested at the designated flight site. Although adverse weather prevented outdoor flight, bench and calibration tests validated the complete hardware chain and produced quantitative benchmarks that informed subsequent system tuning.
+On 11~March~2026 the full hardware stack---Raspberry~Pi~5, Cube~Orange autopilot, and IMX296 global-shutter camera---was assembled and tested at the designated flight site. Although adverse weather prevented outdoor flight, bench and calibration tests validated the complete hardware chain and produced quantitative benchmarks that informed subsequent system tuning.
 
 \subsection{Bench Testing Results}\label{sec:bench-results}
 
@@ -77,7 +77,7 @@ Each detection was converted to a GPS estimate using the geo-transformation modu
 
 The scatter distribution exhibited a characteristic diagonal elongation aligned with the flight direction, attributable to GPS receiver latency~\cite{misra2006global}. Analysis of the timing offset between telemetry updates and frame timestamps revealed a systematic lag of 100--200~ms. At the configured search speed of 10~m/s, this lag introduces an along-track displacement of 1.0--2.0~m per detection. The effect is mitigated by spatial clustering: the mission software aggregates detections from multiple passes using inverse-variance-weighted averaging, and the median of a cluster converges on the true target position as the number of observations increases.
 
-\subsection{Dry-Run Validation}\label{sec:dry-run}
+\subsection{Dry-Run Validation}\label{sec:dry-run-results}
 
 A dry-run mode was implemented to validate the mission-planning pipeline without requiring hardware or GPS connectivity. The mode instantiates the lawnmower search-pattern generator against the survey polygon, computes waypoints, estimates flight timing, and exercises the state-machine transition logic---all without arming or transmitting any MAVLink commands.
 

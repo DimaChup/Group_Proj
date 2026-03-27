@@ -1,0 +1,6 @@
+\section{Societal and Environmental Impact (M7)}
+\label{sec:impact}
+
+SAR drones save lives by surveying large areas faster than ground teams and detecting casualties in inaccessible terrain~\cite{sar_drones_review,goodrich2008sar}. Even modest reductions in search time improve survival outcomes, particularly where a low-cost autonomous drone could replace expensive helicopter searches. However, the same technology enables unauthorised surveillance. I addressed this through human-in-the-loop verification---the system detects and localises, but a human operator decides what to do---and local-only image logging with no persistent surveillance capability. Given the dual-use potential of autonomous search and edge AI, responsible development requires transparency and design choices that prevent fully autonomous targeting.
+
+Environmentally, automatic geofencing protects the SSSI's rare bird habitats by switching to manual mode near the no-fly zone rather than relying on pilot awareness. The Pi~5 consumes ${\sim}5$\,W versus 15--30\,W for GPU alternatives, and YOLOv8n was chosen as the smallest viable model. Simulation replaced approximately 50 physical flights, saving battery cycles and component wear. The drone platform is reusable for future cohorts, and the software is released under MIT licence.

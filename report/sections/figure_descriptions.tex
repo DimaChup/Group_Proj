@@ -1,0 +1,216 @@
+% Figure description placeholders — "blackboard diagrams"
+% Each figure contains a detailed textual description inside a framed box.
+% Replace with actual images when available: \includegraphics[width=\linewidth]{filename}
+
+%% ===================================================================
+%% 1. Ground Station Dashboard Screenshot
+%% ===================================================================
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox{0.92\linewidth}{%
+    \textit{%
+      Browser window (dark theme, \texttt{http://192.168.1.3:8090}) divided into two
+      main panels. \textbf{Left panel} (approximately two-thirds width): live MJPEG
+      video stream from the downward-facing IMX296 camera at 640$\times$480 display
+      resolution. A green bounding box is drawn around a detected rescue dummy with
+      the label ``dummy 0.94'' in green text above the box. A small pink dot marks the
+      detection centre. A translucent heads-up overlay in the top-left corner shows
+      current telemetry: altitude (28.3\,m), ground speed (4.2\,m/s), battery voltage
+      (22.4\,V), GPS fix type (3D Fix, 12 sats), and flight mode (GUIDED).
+      %
+      \textbf{Right panel} (one-third width, stacked vertically): \textbf{Top}---a 2D
+      GPS grid (north-up) rendered on a light background with 10\,m grid squares.
+      A blue arrow icon at the current drone position indicates heading. Red circles
+      of varying size represent detection clusters, where circle radius encodes the
+      number of detections at that location. A green diamond marks the weighted
+      centroid of all confirmed-target estimates. The search polygon boundary is drawn
+      as a dashed grey outline. \textbf{Bottom}---a row of five command buttons:
+      \textsf{N}\,Investigate (blue), \textsf{Y}\,Confirm (green),
+      \textsf{I}\,Interest (yellow), \textsf{X}\,False Positive (red),
+      \textsf{L}\,Land (orange). Below the buttons, a status bar displays the current
+      state machine state (e.g.\ ``CENTERING''), elapsed mission time, and number of
+      detections logged.
+    }%
+  }}
+  \caption{Web-based ground station dashboard served by \texttt{pi\_flight.py}.
+    The operator views the live camera feed with detection overlays (left),
+    monitors the drone's position relative to the search area and detection
+    clusters (right), and issues target-classification commands via the button
+    row. The entire interface runs in a standard browser with no client-side
+    installation, enabling ground-station access from any device on the local
+    network.}
+  \label{fig:dashboard-screenshot}
+\end{figure}
+
+
+%% ===================================================================
+%% 2. Hardware Assembly Photo
+%% ===================================================================
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox{0.92\linewidth}{%
+    \textit{%
+      Oblique three-quarter photograph of the fully assembled Hexsoon EDU-450
+      hexacopter on a workbench. The carbon-fibre frame has six motor arms
+      radiating symmetrically, each with a brushless motor and folding propeller.
+      %
+      \textbf{Centre of the top plate}: the Cube Orange+ autopilot is mounted on
+      a vibration-damping platform, its orange cube carrier clearly visible.
+      Immediately behind it, a \textbf{Raspberry Pi~5} sits in a 3D-printed PLA
+      mount secured with nylon standoffs; a short ribbon cable connects the Pi's
+      CSI port downward through a slot in the top plate to the
+      \textbf{IMX296 global-shutter camera} mounted on the underside, pointing
+      nadir (straight down) through a rectangular cutout in the bottom plate.
+      %
+      A \textbf{GPS mast} (Here3+ GNSS) extends roughly 10\,cm above the frame on
+      a carbon-fibre rod, positioned to minimise magnetic interference from the
+      power distribution board. A \textbf{FrSky X8R receiver} is zip-tied to one
+      arm with its two diversity antennas splayed at 90\textdegree.
+      A \textbf{4S 5200\,mAh LiPo battery} is strapped underneath the bottom plate
+      with a Velcro strap, its XT60 connector routed to the power module.
+      %
+      Labelled arrows (white text on semi-transparent dark background) point to
+      each component: (1)~Cube Orange+, (2)~Raspberry Pi~5, (3)~IMX296 camera,
+      (4)~Here3+ GPS, (5)~FrSky receiver, (6)~LiPo battery, (7)~UART cable
+      (Pi $\leftrightarrow$ Cube serial connection at 921\,600\,baud),
+      (8)~USB-C power for Pi.
+    }%
+  }}
+  \caption{Hardware assembly of the SAR drone showing all major components.
+    The Raspberry Pi~5 communicates with the Cube Orange+ autopilot over a
+    921\,600\,baud UART link, while the IMX296 global-shutter camera feeds
+    frames to the onboard YOLOv8n detector via the CSI ribbon cable.}
+  \label{fig:hardware-photo}
+\end{figure}
+
+
+%% ===================================================================
+%% 3. Detection Overlay Example
+%% ===================================================================
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox{0.92\linewidth}{%
+    \textit{%
+      A single frame captured from the downward-facing camera during a search pass
+      at approximately 35\,m altitude. The background is a mottled green grass field
+      with scattered patches of bare earth and a gravel path crossing diagonally in
+      the upper-right quadrant. Mild lens-barrel distortion is visible at the frame
+      edges (corrected in software but uncorrected here for illustration).
+      %
+      Near the centre-left of the frame, a \textbf{rescue dummy} is visible as a
+      small dark figure (roughly 40$\times$15 pixels at this altitude) lying on the
+      grass. A \textbf{green bounding box} (2\,px stroke) tightly encloses the dummy.
+      Above the top-left corner of the box, a label reads ``dummy 0.94'' in green
+      monospace font, indicating the class name and confidence score.
+      A \textbf{pink filled circle} (5\,px radius) marks the geometric centre of the
+      bounding box, representing the point used for GPS back-projection.
+      %
+      \textbf{Top-left overlay text} (white on semi-transparent black):
+      ``ALT: 34.7\,m\quad SPD: 4.1\,m/s\quad GPS: 51.42341, $-$2.67138''.
+      \textbf{Bottom-left}: a horizontal \textbf{scale bar}---a white line labelled
+      ``5\,m''---computed from the current altitude and calibrated field of view
+      (HFOV = 54.4\textdegree\ for the 1456$\times$1088 frame), giving the reader an
+      immediate sense of ground-sample distance. At 35\,m altitude the full frame
+      covers approximately 37\,m $\times$ 28\,m on the ground.
+    }%
+  }}
+  \caption{Example detection frame from a search pass at 35\,m altitude.
+    The YOLOv8n model identifies the rescue dummy with 94\% confidence.
+    The pink centre dot is back-projected through the calibrated camera model
+    to produce a GPS estimate of the target location.}
+  \label{fig:detection-overlay}
+\end{figure}
+
+
+%% ===================================================================
+%% 4. Lawnmower Pattern on Satellite Image
+%% ===================================================================
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox{0.92\linewidth}{%
+    \textit{%
+      Top-down satellite image of the Fenswood Farm wilderness area (University of
+      Bristol flight-test site) at approximately 1\,:\,2\,000 scale. The terrain is
+      a mix of open grassland, scrub, and scattered trees. A small lake is visible in
+      the north-west corner.
+      %
+      \textbf{Green polygon outline} (solid, 2\,px): the five-vertex search area
+      defined in \texttt{config.py} (\texttt{SEARCH\_AREA\_GPS}), an irregular
+      pentagon covering roughly 200\,m $\times$ 150\,m of open ground.
+      %
+      \textbf{Blue polyline}: the computed lawnmower (boustrophedon) flight path.
+      Parallel east--west legs are spaced 25.7\,m apart (80\% of the camera swath at
+      30\,m altitude), with short connecting segments at alternating ends. An arrow
+      on the first leg indicates the flight direction (west to east for the first
+      pass). Approximately 18 waypoints are marked as small blue circles at each
+      turn. The pattern begins and ends near the takeoff point to minimise
+      repositioning time.
+      %
+      \textbf{Red polygon} (hatched fill): the SSSI (Site of Special Scientific
+      Interest) no-fly zone to the south-east of the search area. The geofence
+      repulsive buffer (10\,m inside the SSSI boundary) is shown as a dashed red
+      line parallel to the SSSI edge.
+      %
+      \textbf{Yellow filled circle}: the takeoff/landing location
+      (51.42341\textdegree\,N, $-$2.67145\textdegree\,W), positioned on the gravel
+      access track at the western edge of the site.
+      %
+      A north arrow and 50\,m scale bar are placed in the bottom-right corner.
+    }%
+  }}
+  \caption{Lawnmower search pattern overlaid on satellite imagery of the
+    Fenswood Wilderness test site. The boustrophedon path (blue) covers the
+    search polygon (green) with parallel legs spaced at 80\% of the camera
+    footprint width, guaranteeing full visual coverage with 20\% overlap.
+    The SSSI no-fly zone (red) is avoided by the geofence module.}
+  \label{fig:lawnmower-satellite}
+\end{figure}
+
+
+%% ===================================================================
+%% 5. Bench Test Setup Photo
+%% ===================================================================
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox{0.92\linewidth}{%
+    \textit{%
+      Indoor workbench photograph taken from a slightly elevated angle showing the
+      complete bench-test configuration.
+      %
+      \textbf{Centre of bench}: a Raspberry Pi~5 in its official red/white case,
+      powered by a USB-C supply. A short CSI ribbon cable connects to the
+      \textbf{IMX296 global-shutter camera module} resting face-up on the bench,
+      pointed at a printed A3 image of the rescue dummy taped to the wall 1\,m away.
+      A serial UART cable (colour-coded dupont wires: red, black, white, green) runs
+      from the Pi's GPIO header to a \textbf{Cube Orange+} autopilot sitting on its
+      carrier board nearby, simulating the in-flight wiring.
+      %
+      \textbf{Left monitor}: a laptop screen displaying \textbf{Mission Planner}
+      with the HUD showing artificial horizon, compass, and telemetry readout
+      (connected via TCP to mavproxy on the Pi at \texttt{tcpin:0.0.0.0:5762}).
+      The Flight Data tab is active, showing ``GUIDED'' mode and 12-satellite GPS
+      fix (from SITL running in the background).
+      %
+      \textbf{Right monitor} (or second laptop screen): a PuTTY SSH terminal
+      connected to the Pi (\texttt{192.168.1.3}), showing the output of
+      \texttt{python passive\_watch.py} with detection log lines scrolling:
+      timestamps, confidence values, and estimated GPS coordinates.
+      %
+      On the bench surface, a \textbf{printed checkerboard} (A3, 14$\times$9
+      squares, 28\,mm pitch) used for lens distortion calibration is propped against
+      a book stand. A \textbf{tape measure} extends from the camera lens to the
+      dummy printout, used for FOV calibration (92\,cm visible at 1\,m distance
+      $\rightarrow$ focal length 5.46\,mm).
+      %
+      Cables are labelled in the photograph: (a)~CSI ribbon, (b)~UART serial,
+      (c)~USB-C power, (d)~Ethernet to router.
+    }%
+  }}
+  \caption{Bench-test setup used for integration testing before flight.
+    The Raspberry Pi~5 runs the detection pipeline on live camera frames
+    while communicating with the Cube Orange+ over UART. Mission Planner
+    on the laptop provides telemetry monitoring via the mavproxy TCP bridge.
+    The checkerboard and tape measure were used for lens and FOV calibration
+    respectively.}
+  \label{fig:bench-setup}
+\end{figure}

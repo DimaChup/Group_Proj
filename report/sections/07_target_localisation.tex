@@ -1,6 +1,6 @@
 \section{Target Localisation}\label{sec:localisation}
 
-Once the onboard detector identifies a candidate target in an image frame, the system must convert that pixel-level observation into a geographic coordinate that the drone can navigate to. A single detection is noisy---subject to GPS receiver latency, altitude uncertainty, and finite pixel resolution---so the system fuses multiple observations over time using spatial clustering, inverse-variance weighting, and Kalman filtering. This section describes each stage of the localisation pipeline.
+Once the onboard detector identifies a candidate target in an image frame, the system must convert that pixel-level observation into a geographic coordinate suitable for navigation. A single detection is inherently noisy---subject to GPS receiver latency, altitude uncertainty, and finite pixel resolution---so the system fuses multiple observations over time using spatial clustering, inverse-variance weighting, and Kalman filtering.
 
 % ─────────────────────────────────────────────────────────────────────
 \subsection{Pixel-to-GPS Conversion}\label{sec:pixel-gps}
@@ -8,10 +8,10 @@ Once the onboard detector identifies a candidate target in an image frame, the s
 Each detection returns the bounding-box centre $(u, v)$ in pixel coordinates. The conversion to a ground-plane offset uses the pinhole camera model with the following parameters: sensor width $w_s = \SI{5.02}{\milli\metre}$ (IMX296), calibrated focal length $f = \SI{5.46}{\milli\metre}$, and image dimensions $W \times H = 1456 \times 1088$~pixels. The ground sampling distance (GSD) at altitude $h$ is
 
 \begin{equation}\label{eq:gsd}
-  \mathrm{GSD} = \frac{w_s \cdot h}{f \cdot W} \qquad [\si{\metre\per\pixel}]
+  \mathrm{GSD} = \frac{w_s \cdot h}{f \cdot W} \qquad [\text{m\,px}^{-1}]
 \end{equation}
 
-\noindent At the nominal search altitude of $h = \SI{35}{\metre}$, this yields $\mathrm{GSD} \approx \SI{0.022}{\metre\per\pixel}$, so the full frame covers roughly $\SI{32}{\metre} \times \SI{24}{\metre}$ on the ground.
+\noindent At the nominal search altitude of $h = \SI{35}{\metre}$, this yields $\mathrm{GSD} \approx 0.022$\,m\,px$^{-1}$, so the full frame covers roughly $\SI{32}{\metre} \times \SI{24}{\metre}$ on the ground.
 
 The pixel offset from the image centre $(C_x, C_y) = (W/2,\; H/2)$ is projected to a forward--right body-frame displacement:
 
@@ -41,7 +41,7 @@ When the target falls within a small threshold of the image centre (the ``centre
 % ─────────────────────────────────────────────────────────────────────
 \subsection{Multi-Detection Fusion}\label{sec:fusion}
 
-A single GPS estimate is insufficiently accurate for landing guidance. The system therefore accumulates observations across successive frames and applies two fusion mechanisms.
+A single GPS estimate is insufficient for reliable landing guidance. The system therefore accumulates observations across successive frames and applies two fusion mechanisms.
 
 \paragraph{Spatial clustering.}
 Each new observation is compared against existing detection clusters using the Haversine distance. If the nearest cluster centroid is within a configurable threshold (default \SI{30}{\metre}), the observation is added to that cluster; otherwise, a new cluster is created. This allows the system to track multiple candidate targets simultaneously---for example, a real casualty and a piece of debris---without conflating their position estimates. Each cluster maintains its own rolling window of the most recent 50 observations and an all-time running average.
@@ -67,10 +67,10 @@ Not all observations are equally reliable. Two factors modulate the weight $w_i$
 
 While the weighted average converges given enough observations, it treats all recent measurements equally (within the 50-sample window) and has no formal model of uncertainty. A two-state Kalman filter~\cite{kalman1960new} is therefore applied in parallel, operating on the latitude--longitude state vector $\mathbf{x}_k = [\phi,\;\lambda]^\top$.
 
-The target is assumed stationary (casualty on the ground), so the state transition is the identity: $\mathbf{x}_{k|k-1} = \mathbf{x}_{k-1}$. A small process noise $\mathbf{Q} = \sigma_q^2\,\mathbf{I}$ with $\sigma_q = \SI{0.1}{\metre}$ (converted to degrees) accounts for minor model mismatch. The measurement noise covariance is set inversely proportional to the observation weight:
+The target is assumed stationary (casualty on the ground), so the state transition is the identity: $\mathbf{x}_{k|k-1} = \mathbf{x}_{k-1}$. A small process noise $\mathbf{Q} = \sigma_q^2\,\mathbf{I}$ is applied, where $\sigma_q$ corresponds to \SI{0.1}{\metre} of positional uncertainty converted to degrees via the WGS\,84 semi-major axis ($\sigma_q \approx 0.1 / R_\oplus \cdot 180/\pi$). This accounts for minor model mismatch. The measurement noise covariance is set inversely proportional to the observation weight:
 
 \begin{equation}\label{eq:kalman-R}
-  \sigma_R = \frac{\SI{3}{\metre}}{\max(w_i,\; 0.1)}, \qquad
+  \sigma_R = \frac{3\;\text{m}}{\max(w_i,\; 0.1)}, \qquad
   \mathbf{R}_k = \sigma_R^2\,\mathbf{I}
 \end{equation}
 
@@ -91,8 +91,8 @@ The target is assumed stationary (casualty on the ground), so the state transiti
 Several factors limit the achievable localisation accuracy:
 
 \begin{itemize}
-  \item \textbf{Receiver latency.} Consumer-grade GPS receivers exhibit 100--200\,ms of position latency~\cite{misra2006global}. At a search speed of \SI{5}{\metre\per\second}, this introduces up to \SI{1}{\metre} of along-track bias in every observation.
-  \item \textbf{GPS multipath and drift.} Even with a clear sky view, single-frequency L1 receivers have a circular error probable (CEP) of 2--3\,m~\cite{kaplan2017understanding}. This noise is largely isotropic and averages out with sufficient observations, but individual estimates can deviate by 5\,m or more.
+  \item \textbf{Receiver latency.} Consumer-grade GPS receivers exhibit \SIrange{100}{200}{\milli\second} of position latency~\cite{misra2006global}. At a search speed of \SI{5}{\metre\per\second}, this introduces up to \SI{1}{\metre} of along-track bias in every observation.
+  \item \textbf{GPS multipath and drift.} Even with a clear sky view, single-frequency L1 receivers have a circular error probable (CEP) of \SIrange{2}{3}{\metre}~\cite{kaplan2017understanding}. This noise is largely isotropic and averages out with sufficient observations, but individual estimates can deviate by \SI{5}{\metre} or more.
   \item \textbf{Altitude uncertainty.} Barometric altitude is used for the GSD calculation. Barometric drift of $\pm\SI{1}{\metre}$ at \SI{35}{\metre} induces a ${\sim}3\%$ GSD error, shifting the ground projection by up to \SI{0.5}{\metre} for edge-of-frame detections.
   \item \textbf{Heading uncertainty.} The rotation from body frame to North--East (Equation~\ref{eq:ne-offset}) depends on the magnetometer heading. A $\pm\SI{5}{\degree}$ compass error at \SI{35}{\metre} altitude displaces the estimate by up to \SI{1.4}{\metre} for targets at the image edge.
   \item \textbf{FOV calibration error.} The focal length was calibrated to $f = \SI{5.46}{\milli\metre}$ by measuring the visible width at a known distance (Section~\ref{sec:pixel-gps}). Residual calibration error of $\pm5\%$ scales all ground offsets proportionally.
@@ -103,7 +103,7 @@ Several factors limit the achievable localisation accuracy:
 % ─────────────────────────────────────────────────────────────────────
 \subsection{Accuracy Analysis}\label{sec:accuracy}
 
-The localisation pipeline was validated by replaying recorded DJI flight video (1456$\times$1088 at 30\,fps) with synchronised SRT telemetry containing per-frame GPS and altitude data. A known dummy target was placed at a surveyed ground-truth position, and each detection frame produced an independent GPS estimate. The results are summarised in Table~\ref{tab:localisation-accuracy}.
+The localisation pipeline was validated by replaying recorded DJI flight video ($1456 \times 1088$~pixels at 30\,fps) with synchronised SRT telemetry containing per-frame GPS and altitude data. A known dummy target was placed at a surveyed ground-truth position, and each detection frame produced an independent GPS estimate. The results are summarised in Table~\ref{tab:localisation-accuracy}.
 
 \begin{table}[ht]
   \centering
@@ -132,4 +132,4 @@ The localisation pipeline was validated by replaying recorded DJI flight video (
 
 The scatter plot (Figure~\ref{fig:gps-scatter}) shows the characteristic elongation along the flight direction caused by GPS receiver latency. The Kalman filter and weighted average both converge to within approximately \SI{2}{\metre} of the true position after 10--15 observations. This accuracy is sufficient for the approach phase, where the drone descends and switches to visual servoing (pixel-based centring) for the final \SI{15}{\metre} of altitude.
 
-Two strategies could further reduce localisation error in future work: (i)~compensating for GPS latency by subtracting $v_\mathrm{ground}\cdot\Delta t$ along the heading vector, where $\Delta t \approx \SI{150}{\milli\second}$ is the estimated receiver delay; and (ii)~fusing RTK-corrected GPS, which would reduce the base position noise from \SI{2.5}{\metre} CEP to below \SI{0.02}{\metre}~\cite{takasu2009development}.
+Two strategies could further reduce localisation error in future work: (i)~compensating for GPS latency by subtracting $v_{\mathrm{ground}} \cdot \Delta t$ along the heading vector, where $\Delta t \approx \SI{150}{\milli\second}$ is the estimated receiver delay; and (ii)~fusing RTK-corrected GPS, which would reduce the base position noise from approximately \SI{2.5}{\metre} CEP to below \SI{0.02}{\metre}~\cite{takasu2009development}.

@@ -1,0 +1,120 @@
+% inference_architecture.tex — NCNN vs TFLite decision and Pi inference architecture
+% Insert as a subsection within Section 4 (Computer Vision) or as a standalone section.
+
+\subsection{Edge Inference Architecture}\label{sec:cv:inference}
+
+Deploying real-time object detection on a companion computer imposes constraints that do not arise on workstation hardware.  This subsection documents the inference backend selection, quantisation trade-offs, pipeline architecture, and video streaming decisions that shape the onboard processing chain.
+
+\subsubsection{Compute Platform Constraints}\label{sec:cv:inference:hw}
+
+The Raspberry Pi~5 is built around the Broadcom BCM2712 system-on-chip, which integrates four ARM Cortex-A76 cores clocked at \SI{2.4}{\giga\hertz}~\cite{raspberrypi5}.  The A76 microarchitecture implements the ARMv8.2-A instruction set, which includes mandatory NEON Advanced SIMD (128-bit vector registers, fused multiply-accumulate across single- and half-precision floats) and optional half-precision (FP16) data-processing extensions.  These SIMD units are the primary compute resource for neural-network inference: the Pi~5 lacks a programmable GPU compute pipeline (the VideoCore~VII is a tile-based rasteriser without general-purpose shader support) and carries no dedicated neural-processing unit (NPU).  Consequently, all inference workloads execute on the four CPU cores, and throughput is bounded by single-threaded NEON throughput and L2 cache bandwidth rather than by massively parallel ALU arrays.
+
+This architectural reality eliminates frameworks that depend on GPU offload (e.g.\ CUDA, OpenCL) and motivates the selection of inference runtimes specifically optimised for ARM CPU execution with NEON vectorisation.
+
+\subsubsection{Backend Selection}\label{sec:cv:inference:backends}
+
+Three inference backends were evaluated for deployment of the YOLOv8n model on the Pi~5.  Table~\ref{tab:backend_comparison} summarises their characteristics.
+
+\begin{table}[ht]
+  \centering
+  \caption{Inference backend comparison for YOLOv8n ($640\times640$ input) on Raspberry Pi~5.}\label{tab:backend_comparison}
+  \begin{tabular}{@{}l c c c c@{}}
+    \toprule
+    \textbf{Backend} & \textbf{Latency} & \textbf{Throughput} & \textbf{Model size} & \textbf{Dependencies} \\
+    \midrule
+    TFLite + XNNPACK    & 206.5\,ms & 4.8\,FPS  & 3.2\,MB  & \texttt{ai-edge-litert} only \\
+    NCNN (projected)    & ${\sim}$68\,ms  & ${\sim}$15\,FPS & 3.1\,MB  & \texttt{ncnn} (C++ + Python bindings) \\
+    Ultralytics/PyTorch & $>$1200\,ms & $<$0.8\,FPS & 6.2\,MB\textsuperscript{$\dagger$} & PyTorch, Ultralytics ($>$800\,MB) \\
+    \bottomrule
+    \multicolumn{5}{@{}l}{\footnotesize\textsuperscript{$\dagger$}\,\texttt{.pt} weights; TFLite and NCNN exports are smaller.}
+  \end{tabular}
+\end{table}
+
+\paragraph{TFLite with XNNPACK delegate.}
+TensorFlow Lite~\cite{tflite} was selected as the primary deployment backend for three reasons.  First, the XNNPACK delegate~\cite{xnnpack}---a highly optimised library of floating-point micro-kernels---maps convolution, depthwise convolution, and fully-connected operations directly onto ARM NEON intrinsics, achieving near-peak utilisation of the SIMD pipeline without requiring framework-level graph optimisation.  Second, the Python runtime is lightweight: \texttt{ai-edge-litert} (the successor to \texttt{tflite-runtime} for Python~3.13) adds approximately \SI{5}{\mega\byte} to the deployment footprint, compared with over \SI{800}{\mega\byte} for a full PyTorch installation.  Third, TFLite's model format is stable and well-documented, with direct export support from the Ultralytics training framework via \texttt{yolo export format=tflite}.
+
+On the Pi~5, XNNPACK automatically detects the number of available cores and distributes work across them.  The default thread count of four (matching the physical core count) was used for all benchmarks; reducing to two threads increased latency by 38\%, confirming that inference is compute-bound rather than memory-bound at this model scale.
+
+\paragraph{NCNN.}
+NCNN~\cite{ncnn}, developed by Tencent for mobile deployment, is an alternative backend that has demonstrated faster execution on ARM platforms in third-party benchmarks.  Ultralytics reports YOLOv8n inference at approximately \SI{68}{\milli\second} on the Pi~5 using NCNN~\cite{yolov8}, a $3\times$ improvement over TFLite.  This speedup is attributed to NCNN's hand-tuned NEON assembly kernels and its memory-efficient blob pooling strategy, which reduces allocation overhead during inference.
+
+NCNN support was implemented in \texttt{vision.py} and is available via the \texttt{-{}-backend ncnn} flag.  Model weights were exported to the NCNN format (\texttt{.param}/\texttt{.bin}) through an ONNX intermediate representation.  However, NCNN was not used during flight testing for two reasons: (1)~the \texttt{ncnn} Python package on Python~3.13/aarch64 required manual compilation at the time of deployment, introducing a fragile build dependency on the field Pi; and (2)~the 4.8\,FPS achieved by TFLite was sufficient for the detection-at-altitude use case, where the target remains in the field of view for 10--20 consecutive frames during a flyover (Section~\ref{sec:cv:benchmarks}).  NCNN remains the recommended upgrade path for missions requiring higher frame rates.
+
+\paragraph{Ultralytics/PyTorch.}
+The Ultralytics framework~\cite{yolov8} serves as the development and training backend on the laptop (Ubuntu/Windows with CUDA or CPU).  It is unsuitable for Pi deployment: PyTorch's memory footprint exceeds \SI{800}{\mega\byte}, cold-start time is several seconds, and single-frame inference exceeds \SI{1.2}{\second} on the Cortex-A76 without GPU acceleration.  The framework is retained exclusively for laptop-based development, training, model export, and video analysis.
+
+\subsubsection{Quantisation Trade-offs}\label{sec:cv:inference:quant}
+
+The deployed model uses 32-bit floating-point (FP32) weights and activations.  Three numerical precision levels were considered:
+
+\begin{itemize}
+  \item \textbf{FP32 (deployed).}  Full single-precision inference.  This is the baseline configuration, requiring no additional export steps.  All measured benchmarks (Table~\ref{tab:cv_benchmarks}) use FP32.
+
+  \item \textbf{FP16 (viable, not deployed).}  The Cortex-A76 implements the ARMv8.2-A FP16 data-processing extension, enabling native half-precision fused multiply-accumulate operations at twice the throughput of FP32~\cite{arm_a76}.  The XNNPACK delegate supports transparent FP16 execution of FP32 models via the \texttt{TFLITE\_XNNPACK\_DELEGATE\_FLAG\_FORCE\_FP16} option, which converts weights and activations to FP16 at inference time without re-export.  This is projected to approximately halve inference latency to ${\sim}\SI{100}{\milli\second}$ (${\sim}$10\,FPS).  FP16 was not enabled during field testing because the FP32 frame rate was already adequate and the FP16 path had not been validated for detection accuracy regression on the custom model.
+
+  \item \textbf{INT8 (investigated, not viable).}  Post-training quantisation to 8-bit integers reduces model size by $4\times$ and can accelerate inference on hardware with dedicated integer SIMD units.  However, INT8 quantisation of YOLOv8n via the XNNPACK delegate yielded only a ${\sim}$30\% speedup in published benchmarks~\cite{tflite}, and INT8 inference on NCNN is unsupported on the Pi~5's ARM64 cores~\cite{ncnn}.  Additionally, INT8 export requires a representative calibration dataset of 300+ images and careful validation to ensure that quantisation-induced accuracy loss does not degrade detection of small targets at altitude.  Given the marginal benefit and validation cost, INT8 was deprioritised in favour of the more straightforward FP16 path.
+\end{itemize}
+
+\subsubsection{Pipeline Architecture}\label{sec:cv:inference:pipeline}
+
+The inference pipeline follows a strictly sequential architecture: frame capture, lens undistortion, preprocessing, model inference, and postprocessing execute in a single thread on a single core, while the remaining three cores handle XNNPACK's internal parallelism during the inference step.
+
+A \textbf{threaded pipeline} was considered, in which camera capture (${\sim}\SI{30}{\milli\second}$) would execute concurrently with inference (${\sim}\SI{206}{\milli\second}$) on separate cores, hiding capture latency and increasing effective throughput by an estimated 20--30\%.  This design was rejected for two reasons:
+
+\begin{enumerate}
+  \item \textbf{Race conditions in shared state.}  The state machine reads detection results (target pixel coordinates, confidence) and camera frames from the same \texttt{VisionSystem} instance.  Concurrent capture and inference would require synchronisation primitives (locks or double-buffering) around the frame buffer and detection output.  In a safety-critical flight system, the additional complexity and potential for deadlocks or stale-frame processing was judged unacceptable for a marginal throughput gain.
+
+  \item \textbf{Python GIL limitations.}  Although camera I/O releases the Global Interpreter Lock (GIL), the NumPy preprocessing steps (colour conversion, resize, normalisation) and TFLite's Python-side tensor copy do not.  The effective overlap is therefore limited to the raw camera read, reducing the theoretical 20--30\% gain to a more modest 10--15\% in practice.
+\end{enumerate}
+
+The single-threaded design guarantees that every detection result corresponds to the most recently captured frame with deterministic timing, simplifying the GPS-to-pixel timestamp alignment used by the target localisation module (Section~\ref{sec:localisation}).
+
+\subsubsection{Video Streaming Architecture}\label{sec:cv:inference:streaming}
+
+The ground station receives a live video feed from the Pi over Wi-Fi for operator situational awareness and verification decisions.  The streaming protocol was selected based on four requirements: browser compatibility (no native application), minimal latency ($<\SI{500}{\milli\second}$), zero additional infrastructure, and headless operation (no display attached to the Pi).
+
+\paragraph{MJPEG over HTTP (selected).}
+The Pi serves an MJPEG stream on port~8090 via Python's built-in \texttt{http.server} module with \texttt{ThreadingMixIn} for concurrent connections.  Each frame is JPEG-compressed at quality~70 (${\sim}\SI{30}{\kilo\byte}$ per frame at $1456\times1088$) and pushed as a multipart HTTP response.  The operator opens \texttt{http://PI\_IP:8090} in any browser to view the stream overlaid with detection bounding boxes, GPS estimates, and command buttons (Y/N/I/X/L).  This approach requires no client-side codec support beyond JPEG decoding, which is universal across browsers and platforms.
+
+\paragraph{Alternatives considered.}
+H.264 over HLS was prototyped (\texttt{camera\_stream\_h264.py}) but introduced 2--4 seconds of latency due to the segment-based delivery model, which is unacceptable for real-time operator verification.  H.264 over RTP/RTSP would achieve lower latency but requires a dedicated player (e.g.\ GStreamer, VLC) on the ground station, violating the browser-compatibility requirement.  WebRTC would satisfy both latency and browser requirements but introduces significant implementation complexity (STUN/TURN negotiation, DTLS-SRTP, SDP exchange) disproportionate to a single-stream, same-network use case.
+
+The MJPEG approach achieves sub-\SI{200}{\milli\second} glass-to-glass latency on the local Wi-Fi network, which is adequate for the operator's binary confirm/reject decision during the VERIFY state.
+
+\subsubsection{Benchmark Methodology}\label{sec:cv:inference:method}
+
+Inference benchmarks were conducted using the \texttt{tests/hardware/benchmark.py} script, which follows a standardised protocol:
+
+\begin{enumerate}
+  \item \textbf{Warm-up phase.}  Five inference passes are executed and discarded to populate instruction and data caches, trigger JIT compilation in the XNNPACK delegate, and allow thermal throttling to stabilise.
+
+  \item \textbf{Timed phase.}  Fifty consecutive inference passes are timed using Python's \texttt{time.perf\_counter()}, which provides microsecond-resolution wall-clock timing.  Each pass includes the full preprocessing pipeline (BGR$\rightarrow$RGB conversion, resize to $640\times640$, float32 normalisation, tensor expansion) and model invocation, matching the production code path exactly.
+
+  \item \textbf{Reporting.}  Mean, minimum, maximum, and standard deviation of per-frame latency are computed.  Detection rate (fraction of frames with confidence above threshold) and mean confidence are also recorded to verify that the model produces consistent results across runs.
+\end{enumerate}
+
+XNNPACK was configured with the default thread count of four (one per Cortex-A76 core).  The Pi was running Raspberry Pi OS (Debian Bookworm, 64-bit) with no desktop environment active, minimising background CPU load.  Thermal management was provided by the official Pi~5 active cooler; no thermal throttling was observed during the 50-frame test window.
+
+\subsubsection{Results and Projected Improvements}\label{sec:cv:inference:results}
+
+Table~\ref{tab:inference_roadmap} summarises the measured baseline and projected performance for each optimisation path.
+
+\begin{table}[ht]
+  \centering
+  \caption{Inference performance: measured baseline and projected improvements on Raspberry Pi~5 with YOLOv8n ($640\times640$ input, float32 weights).}\label{tab:inference_roadmap}
+  \begin{tabular}{@{}l l c c l@{}}
+    \toprule
+    \textbf{Configuration} & \textbf{Status} & \textbf{Latency} & \textbf{FPS} & \textbf{Notes} \\
+    \midrule
+    TFLite + XNNPACK (FP32)    & Measured  & 206.5\,ms & 4.8  & Production baseline \\
+    TFLite + XNNPACK (FP16)    & Projected & ${\sim}$100\,ms  & ${\sim}$10   & Native A76 FP16 FMLA \\
+    NCNN (FP32, 4 threads)     & Projected & ${\sim}$68\,ms   & ${\sim}$15   & Ultralytics benchmark~\cite{yolov8} \\
+    NCNN (FP16)                & Projected & ${\sim}$45\,ms   & ${\sim}$22   & Combines NEON FP16 + NCNN kernels \\
+    TFLite + INT8              & Projected & ${\sim}$145\,ms  & ${\sim}$7    & ${\sim}$30\% gain; calibration needed \\
+    Overclock (2.8\,GHz, FP32) & Projected & ${\sim}$177\,ms  & ${\sim}$5.6  & +15\%; active cooling required \\
+    Hailo-8L NPU               & Hardware  & $<$15\,ms & $>$60   & \pounds70 add-on; not integrated \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The measured 4.8\,FPS baseline, while modest in absolute terms, is sufficient for the current mission profile.  At a search speed of \SI{5}{\metre\per\second} and altitude of \SI{30}{\metre}, the ground-sample distance between consecutive frames is \SI{1.04}{\metre}---less than 4\% of the \SI{27.6}{\metre} horizontal field of view---ensuring that any target within the search swath is observed in at least 10 consecutive frames.  The projected NCNN and FP16 improvements represent viable paths to real-time performance for higher-speed search profiles or lower-altitude missions where the detection window is shorter.

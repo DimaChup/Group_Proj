@@ -1,0 +1,46 @@
+\section{Introduction}
+\label{sec:introduction}
+
+\subsection{Project Context}
+
+Search and rescue (SAR) operations in the United Kingdom face persistent challenges: large search areas, difficult terrain, limited personnel, and time-critical scenarios where every hour reduces the probability of finding a casualty alive~\cite{murphy2014, goodrich2008}. Unmanned aerial vehicles (UAVs) offer a compelling solution by providing rapid aerial coverage with sensor payloads that can detect casualties from altitude~\cite{sarreview, mishra2020}.
+
+This report documents the \textit{group engineering process} behind the AENGM0074 Group Design Project at the University of Bristol, in which our team of five MSc students designed, built, and tested an autonomous SAR drone. While the companion technical report details the system's algorithms, hardware, and performance, this report focuses on \textit{how} we worked as a team: our project management methodology, systems engineering approach, role allocation, risk management, and lessons learned.
+
+\subsection{Project Objectives}
+
+We defined the following top-level objectives at project inception:
+
+\begin{enumerate}
+  \item \textbf{Autonomous search}: the drone takes off and flies a lawnmower pattern over a defined search polygon without manual piloting.
+  \item \textbf{AI-based detection}: an onboard YOLOv8 neural network running on a Raspberry Pi~5 detects a casualty (represented by a life-sized dummy) from the search altitude.
+  \item \textbf{Operator verification}: upon detection, the drone centres on the target and descends; a human operator confirms or rejects the detection via a ground station interface.
+  \item \textbf{Safe landing}: if confirmed, the drone lands at a 7.5\,m offset from the casualty to avoid propwash injury, then marks the GPS location for ground teams.
+  \item \textbf{Progressive safety}: every capability is tested through a strict sequence --- simulation, bench test (no propellers), passive flight (manual RC, AI observes only), and finally full autonomous flight --- so that no untested behaviour is introduced to a live aircraft.
+\end{enumerate}
+
+\subsection{Team Composition}
+
+Our team comprised five members with complementary backgrounds spanning software engineering, flight dynamics, hardware integration, and project management (\tabref{tab:team}).
+
+\begin{table}[htbp]
+\centering
+\compactTable
+\caption{Team composition and primary responsibilities.}
+\label{tab:team}
+\begin{tabularx}{\linewidth}{l l X}
+\toprule
+\textbf{Member} & \textbf{Role} & \textbf{Focus Area} \\
+\midrule
+Dima & CV / Software Lead & Computer vision, AI detection, Pi software, simulator, ground station \\
+Robin & Flight Dynamics & State machine integration, flight parameter tuning, main.py testing \\
+[Member 3] & Pilot & RC flying, kill switch operation, manual override procedures \\
+[Member 4] & Hardware Lead & Frame assembly, wiring, Cube flight controller setup, power systems \\
+[Member 5] & PM / Report Lead & Project management, scheduling, risk assessment, report coordination \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Report Structure}
+
+The remainder of this report is organised as follows. \secref{sec:project_management} describes our work breakdown structure, timeline, and sprint methodology. \secref{sec:systems_engineering} presents the systems engineering framework including the V-model, requirements, and trade studies. \secref{sec:team_roles} details role allocation, the RACI matrix, and communication plan. \secref{sec:risk_management} covers the risk register and mitigation strategies. \secref{sec:testing} describes our progressive testing methodology. \secref{sec:lessons} reflects on what worked, what did not, and recommendations for future teams. \secref{sec:conclusion} summarises the group's achievements.

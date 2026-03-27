@@ -1,0 +1,87 @@
+\section{Team Roles and Communication}
+\label{sec:team_roles}
+
+\subsection{Role Allocation}
+
+Roles were assigned based on individual expertise, interest, and prior experience. We aimed for each member to have a clearly defined primary responsibility while maintaining enough cross-training that no single absence would block progress~\cite{katzenbach2015wisdom}. The team naturally formed around a T-shaped competency model: each member had deep expertise in one area (the vertical bar of the T) and broad understanding of the overall system (the horizontal bar).
+
+\subsection{RACI Matrix}
+
+We used a RACI (Responsible, Accountable, Consulted, Informed) matrix to clarify ownership of key deliverables and avoid ambiguity~\cite{pmbok2021}. \tabref{tab:raci} presents the matrix for major project activities.
+
+\begin{table}[htbp]
+\centering
+\compactTable
+\caption{RACI matrix for key project activities. R = Responsible, A = Accountable, C = Consulted, I = Informed.}
+\label{tab:raci}
+\begin{tabular}{l c c c c c}
+\toprule
+\textbf{Activity} & \textbf{Dima} & \textbf{Robin} & \textbf{Pilot} & \textbf{Hardware} & \textbf{PM} \\
+\midrule
+CV model development & R/A & I & I & I & I \\
+State machine design & C & R/A & I & I & I \\
+Pi software integration & R/A & C & I & C & I \\
+Hardware assembly \& wiring & C & C & I & R/A & I \\
+Flight controller config & I & C & C & R/A & I \\
+RC setup \& kill switch & I & I & R/A & C & I \\
+Flight test piloting & I & C & R/A & I & I \\
+Ground station operation & C & R/A & I & I & I \\
+Risk assessment & C & C & C & C & R/A \\
+Report writing & C & C & C & C & R/A \\
+Schedule management & I & I & I & I & R/A \\
+Simulation development & R/A & C & I & I & I \\
+Progressive test planning & R/A & C & C & C & C \\
+Search area survey & I & I & I & I & R/A \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Communication Plan}
+
+Effective communication was critical given the interdisciplinary nature of the project and the need to coordinate hardware availability, software integration, and field testing logistics. We established the following communication channels:
+
+\begin{table}[htbp]
+\centering
+\compactTable
+\caption{Communication channels and their purposes.}
+\label{tab:comms}
+\begin{tabularx}{\linewidth}{l l X}
+\toprule
+\textbf{Channel} & \textbf{Frequency} & \textbf{Purpose} \\
+\midrule
+Group chat & Daily & Quick questions, sharing results, coordination \\
+Weekly meeting & Weekly & Sprint planning, progress review, design decisions \\
+GitHub pull requests & As needed & Code review, integration approval \\
+\texttt{GROUP\_STATUS.md} & Continuous & Persistent record of decisions, blockers, action items \\
+Ad-hoc pair sessions & As needed & Debugging hardware issues, integration testing \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsubsection{Decision Documentation}
+
+All significant technical decisions were recorded in a \texttt{DESIGN\_DECISIONS.md} file using a structured format: context, options considered, decision, rationale, and trade-offs accepted. This served two purposes: (1) it prevented re-litigating settled decisions in later meetings, and (2) it provided ready-made content for the project report. Over the project duration, we documented ten formal design decisions (DD-01 through DD-10) covering topics from streaming protocols to geofence strategies.
+
+\subsection{Team Dynamics}
+
+The team progressed through Tuckman's stages of group development~\cite{tuckman1965developmental} in an accelerated fashion due to the short project timeline:
+
+\begin{itemize}
+  \item \textbf{Forming} (weeks 1--2): initial meetings, getting to know each other's skills, agreeing on tools and workflow.
+  \item \textbf{Storming} (weeks 2--3): negotiating responsibilities, resolving differences in coding style and development workflow (e.g.\ branch naming, commit conventions).
+  \item \textbf{Norming} (weeks 3--5): established routines, clear ownership, effective use of GitHub and group chat.
+  \item \textbf{Performing} (weeks 5--12): focused execution, parallel workstreams running smoothly, integration checkpoints well-attended.
+\end{itemize}
+
+A key enabler of smooth collaboration was the \textbf{modular software architecture}. Because each major component (\texttt{vision.py}, \texttt{planning.py}, \texttt{config.py}, \texttt{main.py}) had well-defined interfaces, team members could work on their respective areas without creating merge conflicts or breaking each other's code. The vision system, for example, exposed a single function --- \texttt{detect\_in\_image(frame)} returning \texttt{(found, x, y, conf)} --- that all other modules consumed. This interface contract meant the CV developer could change model backends, preprocessing, or inference logic without touching any other file.
+
+\subsection{Knowledge Transfer}
+
+Given the specialised nature of certain components (particularly the AI pipeline and MAVLink protocol), we invested in knowledge transfer activities:
+
+\begin{itemize}
+  \item \textbf{Documentation}: comprehensive \texttt{CLAUDE.md} (project ground truth), architecture documents, setup guides for each platform, and flight day checklists --- all version-controlled alongside the code.
+  \item \textbf{Pair programming}: critical integration points (e.g.\ connecting the Pi to the Cube flight controller via MAVProxy) were done in pairs to spread knowledge.
+  \item \textbf{Written guides}: step-by-step setup documents (\texttt{PI\_SETUP.md}, \texttt{FLIGHT\_DAY\_CHECKLIST.md}) ensured any team member could reproduce the environment independently.
+  \item \textbf{Interactive simulator}: \texttt{simple\_simulator.py} allowed any team member to experience the full mission flow on their laptop without hardware, building shared understanding of the state machine and detection logic.
+\end{itemize}

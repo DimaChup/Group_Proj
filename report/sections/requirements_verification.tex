@@ -1,0 +1,123 @@
+\section{Requirements Verification}\label{sec:requirements}
+
+Table~\ref{tab:req-verification} maps each requirement from the AENGM0074 project brief (Release~2.1) to its verification method, supporting evidence, and current verification status. The subsections that follow expand on the evidence for each requirement.
+
+\begin{table}[htbp]
+\centering
+\caption{Requirements verification summary. Status indicates the highest fidelity at which each requirement has been tested.}
+\label{tab:req-verification}
+\small
+\begin{tabular}{p{0.55cm}p{2.4cm}p{2.8cm}p{3.4cm}p{2.6cm}}
+\toprule
+\textbf{Req} & \textbf{Requirement} & \textbf{Method} & \textbf{Evidence} & \textbf{Verification Status} \\
+\midrule
+R01 & Fly within Flight Area & KML polygon load + waypoint clipping + runtime geofence & SITL telemetry, geofence unit test, \texttt{config.py} polygon & Verified (SITL) \\
+R02 & No SSSI overfly & Three-layer NFZ + plan-time filter + firmware fence & SITL multi-angle approach, geofence diagram & Verified (SITL) \\
+R03 & Take off within 5\,m of TOL & KML point placemark, vertical takeoff & SITL telemetry ($<$1\,m error) & Verified (SITL) \\
+R04 & Max 50\,m altitude & \texttt{TARGET\_ALT}=35\,m + firmware \texttt{FENCE\_ALT\_MAX} & Config audit, no state exceeds 35\,m & Verified (SITL) \\
+R05 & Search + identify items & Lawnmower + YOLOv8n (mAP$_{50}$=0.995, 4.8\,FPS) & End-to-end sim, bench test, DJI video proxy & Verified (simulation + video) \\
+R06 & PLB Focus Area & \texttt{B} key / \texttt{-{}-beacon-delay} mid-flight injection & SITL diversion + resume test & Verified (SITL) \\
+R07 & Land 5--10\,m from casualty & 7.5\,m offset via \texttt{landing\_offset\_7\_5m()} & Probability analysis (CEP$_{50}$=2.3\,m) & Verified (simulation) \\
+R08 & Autonomy justified & L2 semi-autonomy, operator verify gate & Design rationale, Sheridan framework & Verified (design) \\
+R09 & RTH + Motor Cutoff & RC kill, software \texttt{M}, auto RTL failsafes & SITL: 3 independent override tests & Verified (SITL) \\
+R10 & Report lat/lon + images & GPS projection, web dashboard, snapshots + JSON & Ground station logs, CSV, MJPEG stream & Verified (SITL + bench) \\
+R11 & Company Pilot designated & Team role allocation & Team plan, Section~\ref{sec:intro-d6} & Verified (procedural) \\
+R12 & Public GitHub, MIT licence & \texttt{github.com/DimaChup/Group\_Proj} & Repository live and public & Verified (inspection) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{R01 --- Fly Within the Flight Area}
+
+The four-vertex Flight Area polygon is loaded at startup by \texttt{load\_kml\_zones()} in \texttt{config.py}, which parses \texttt{AENGM0074.kml} and populates the module-level variable \texttt{FLIGHT\_AREA\_GPS}. Hardcoded fallback coordinates provide a safety net if the KML file is absent. The lawnmower pattern generator (\texttt{planning.py}) clips all waypoints to the search area---itself a strict subset of the flight area---using a rotated-mask rasterisation that cannot produce points outside the polygon boundary.
+
+At plan time, the \texttt{NFZGeofence.filter\_waypoints()} method in \texttt{geofence.py} additionally rejects any waypoint within \texttt{NFZ\_WAYPOINT\_BUFFER\_M}~=~30\,m of the SSSI boundary, which lies inside the flight area. During flight, the geofence module calls \texttt{cv2.pointPolygonTest} against the flight area contour at every position update; any excursion beyond the boundary triggers an immediate transition to \textsc{Manual} mode with a logged warning. In SITL, the aircraft completed the full search pattern---35 waypoints across 5 parallel passes---without approaching the flight area boundary, verified via telemetry playback of latitude and longitude tracks against the KML polygon.
+
+\subsection{R02 --- No SSSI Overfly}
+
+The SSSI no-fly zone is the highest-risk constraint, as the search area shares a boundary with the SSSI. Four independent protection layers are implemented, illustrated in Figure~\ref{fig:geofence-diagram}:
+
+\begin{enumerate}
+    \item \textbf{Plan-time waypoint filtering.} \texttt{NFZGeofence.filter\_waypoints()} removes any lawnmower waypoint within \texttt{NFZ\_WAYPOINT\_BUFFER\_M}~=~30\,m of the SSSI polygon using signed-distance computation via \texttt{cv2.pointPolygonTest}. This ensures no planned trajectory approaches the boundary.
+
+    \item \textbf{Speed scalar field.} Within \texttt{NFZ\_SLOW\_ZONE\_M}~=~20\,m of the boundary, the flight speed is linearly ramped from the normal search speed down to \texttt{NFZ\_MIN\_SPEED\_MPS}~=~0.3\,m/s at the boundary itself. The outer edge of the zone is capped at \texttt{NFZ\_ZONE\_MAX\_SPEED\_MPS}~=~3.0\,m/s. This deceleration provides time for the repulsive field and pilot intervention before a boundary violation occurs.
+
+    \item \textbf{Repulsive vector field.} A 20\,m inner offset polygon (\texttt{NFZ\_INNER\_OFFSET\_M}) generates an inverse-distance repulsive push of \texttt{NFZ\_PUSH\_SPEED\_MPS}~=~3.0\,m/s directed away from the nearest boundary edge. The \texttt{repulsive\_offset()} function in \texttt{geofence.py} computes a GPS delta that actively steers the aircraft away from the NFZ, active within \texttt{NFZ\_INNER\_RANGE\_M}~=~23\,m of the inner polygon.
+
+    \item \textbf{Hard cutoff.} If the aircraft enters within \texttt{NFZ\_HARD\_BOUNDARY\_M}~=~3\,m of the SSSI polygon, the state machine forces an immediate transition to \textsc{Manual} mode, halting all autonomous commands and logging the violation.
+\end{enumerate}
+
+\noindent On real hardware, a fifth layer---the ArduCopter firmware geofence (\texttt{FENCE\_TYPE}, \texttt{FENCE\_ACTION}=RTL)---provides a completely independent safety net at the autopilot level, immune to companion-computer software failures. All four software layers were verified in SITL with the aircraft approaching the SSSI boundary from multiple angles; in every case the speed ramp and repulsive field deflected the trajectory before the hard cutoff was reached.
+
+\subsection{R03 --- Take Off Within 5\,m of TOL}
+
+The Take-Off Location is parsed from the KML file as a point placemark (51.42341\textdegree\,N, 2.67145\textdegree\,W) and stored in \texttt{config.TAKEOFF\_GPS}. At mission start, the system arms without commanding lateral movement; \texttt{MAV\_CMD\_NAV\_TAKEOFF} ascends vertically from the current position. In SITL, the home position is set to the TOL coordinates via the \texttt{-{}-home=51.423406,-2.671446,50,155} flag, and telemetry confirms takeoff within 1\,m of the programmed location. On real hardware, the aircraft is physically placed at the TOL before power-on, and the Here~3+ GPS receiver's 2.5\,m CEP provides sub-5\,m accuracy at the home position fix.
+
+\subsection{R04 --- Maximum 50\,m Altitude}
+
+The search altitude is set to \texttt{TARGET\_ALT}~=~35.0\,m in \texttt{config.py}, providing a 15\,m margin below the 50\,m limit; the verify descent altitude is \texttt{VERIFY\_ALT}~=~15.0\,m. A code audit of every \texttt{MAV\_CMD\_NAV\_WAYPOINT} and altitude command in the state machine confirms no state commands an altitude above 35\,m. The rescan altitude-drop logic (\texttt{RESCAN\_ALT\_FACTOR}~=~0.8, floor \texttt{RESCAN\_ALT\_FLOOR\_M}~=~15\,m) further reduces altitude on repeated passes, never increasing it. As a secondary safeguard, the ArduCopter firmware parameter \texttt{FENCE\_ALT\_MAX} is set to 50\,m, triggering automatic \texttt{RTL} if the ceiling is exceeded regardless of software commands.
+
+\subsection{R05 --- Search Area and Identify Items of Interest}
+
+\paragraph{Coverage guarantee.} The lawnmower pattern generator (\texttt{planning.py}) spaces parallel passes by the camera ground footprint width at search altitude, computed from the calibrated HFOV ($49.4^{\circ}$) and \texttt{TARGET\_ALT}~=~35\,m. This yields a ground footprint of approximately 27.6\,m per pass. The rotated-mask rasterisation ensures complete coverage of the 5-vertex search polygon with no gaps, verified by overlaying the waypoint pattern on the KML satellite image (Figure~\ref{fig:search-pattern}).
+
+\paragraph{Detection capability.} YOLOv8n processes each camera frame, returning bounding box coordinates and confidence scores above \texttt{CONFIDENCE\_THRESHOLD}~=~0.2. The model was retrained on 300~synthetic images, 16~real aerial photographs, and 50~hard-negative frames at the camera's native $1456\times1088$ resolution, achieving mAP$_{50}$~=~0.995 and 100\% recall on the validation set. On the Raspberry Pi~5 with the XNNPACK CPU delegate, inference runs at 4.8\,FPS (206.5\,ms per frame, benchmarked over 50 runs) with a mean confidence of 0.966 on true-positive detections.
+
+\paragraph{Per-flyover detection probability.} At a search speed of 10\,m/s and 4.8\,FPS inference rate, the camera footprint advances ${\sim}2.1$\,m between frames, well within the ${\sim}27.6$\,m ground footprint width. This provides approximately 11--17 frames in which the target is visible during a single flyover pass. With per-frame detection probability $p_d \geq 0.95$ (measured on bench and DJI video proxy), the probability of missing a target on a single pass is $P_{\text{miss}} = (1 - p_d)^{n} \leq 0.05^{11} \approx 5 \times 10^{-15}$, giving a cumulative detection probability effectively equal to unity. Even at the conservative lower bound of 11~frames and $p_d = 0.7$, the per-pass miss probability is $(0.3)^{11} < 2 \times 10^{-6}$.
+
+\paragraph{Verification evidence.} In SITL end-to-end simulation, the system detected the dummy target during the search pass and autonomously transitioned through \textsc{Centering}~$\rightarrow$~\textsc{Descending}~$\rightarrow$~\textsc{Verify}. DJI flight video proxy testing (1456$\times$1088 cropped footage at realistic altitudes) confirmed detection at altitudes up to 50\,m with the retrained model. Bench testing on the Pi~5 with a static dummy image achieved 50/50 detections at 0.966 mean confidence.
+
+\subsection{R06 --- PLB Focus Area}
+
+The brief specifies that PLB activation occurs 5--15 minutes into the search, providing 3--10 lat/lon coordinates for a Focus Area polygon. The implementation supports two activation methods:
+
+\begin{itemize}
+    \item \textbf{Manual trigger:} the \texttt{B}~key (terminal keyboard, browser button, or \texttt{/cmd?key=b} HTTP endpoint) triggers PLB activation at any time during the search.
+    \item \textbf{Timed trigger:} the \texttt{-{}-beacon-delay $T$} command-line flag schedules automatic PLB activation $T$~seconds after the search begins, simulating the brief's 5--15 minute window.
+\end{itemize}
+
+\noindent Upon activation, the system loads the Focus Area polygon from \texttt{flight\_plans/focus\_area.json} (re-read each time to allow ground-station coordinate updates). The current waypoint index and rescan state are saved. A new lawnmower pattern is generated for the focus polygon at the reduced speed \texttt{FOCUS\_SEARCH\_SPEED\_MPS}~=~5.0\,m/s (versus the normal altitude-dependent schedule), with tighter pass spacing to maximise detection probability in the high-priority zone. Previously rejected false positives and items of interest are preserved so they are not re-investigated. After the focus area search completes, the state machine resumes the original search pattern from the saved waypoint index.
+
+In SITL testing, a focus area was injected mid-flight via the \texttt{B}~key while the drone was executing the primary search pattern. The aircraft diverted to the focus polygon, completed a full coverage search at reduced speed, and then resumed the original lawnmower pattern from the correct waypoint---verified by comparing pre- and post-diversion waypoint indices in the flight log.
+
+\subsection{R07 --- Land 5--10\,m from Casualty}
+
+After operator confirmation (\textsc{Verify}~$\rightarrow$~\textsc{Approach}), the system computes a landing point using \texttt{landing\_offset\_7\_5m()} in \texttt{gps\_utils.py}. This function applies a fixed 7.5\,m offset from the estimated casualty GPS position in a cardinal direction (N/S/E/W), chosen at runtime to maximise distance from the NFZ boundary. The 7.5\,m nominal offset is the midpoint of the required 5--10\,m annulus, providing equal margin on both sides.
+
+\paragraph{Probability analysis.} The GPS estimation pipeline's measured CEP$_{50}$~=~2.3\,m (from DJI video proxy analysis with inverse-variance weighted observations) determines the landing accuracy. Modelling the radial position error as Rayleigh-distributed with $\sigma = \text{CEP}_{50} / 1.1774 \approx 1.95$\,m, the probability that the actual landing point falls within the 5--10\,m annulus centred on the true casualty position is:
+\[
+    P(5 \leq r \leq 10) = \exp\!\left(-\frac{5^2}{2\sigma^2}\right) - \exp\!\left(-\frac{10^2}{2\sigma^2}\right) > 99\%
+\]
+The dominant risk is landing too close ($<$5\,m) rather than too far, and the 7.5\,m offset shifts the distribution to make this probability negligible. A Tarot servo on Cube AUX channel~9 (\texttt{SERVO\_CHANNEL}~=~9) deploys the first-aid kit via a two-stage PWM sequence (\texttt{SERVO\_PARTIAL\_PWM}~=~1300, \texttt{SERVO\_FULL\_PWM}~=~1100) during \textsc{Approach} before landing. After touchdown, the aircraft returns to the TOL via \texttt{MAV\_CMD\_NAV\_RETURN\_TO\_LAUNCH}.
+
+\subsection{R08 --- Autonomy Level Justified}
+
+The system operates at Level~2 semi-autonomy: it searches and detects autonomously but requires explicit operator confirmation before committing to a target at the \textsc{Verify} state. The operator views the detection through a live MJPEG stream and classifies it as confirmed (\texttt{Y}), item of interest (\texttt{I}), or false positive (\texttt{X}). A timeout at the verify state automatically resumes the search if the operator does not respond, preventing indefinite hover. This design follows Sheridan's levels of automation~\cite{sheridan2002humans} and the SAR operational requirement that a human must validate casualty identification before deploying resources (Section~\ref{sec:rationale}).
+
+\subsection{R09 --- RTH and Motor Cutoff}
+
+Three independent return-to-home and emergency stop mechanisms are implemented, any one of which is sufficient to regain control:
+\begin{enumerate}
+    \item \textbf{RC kill switch:} The FrSky Twin~X14 transmitter's three-position mode switch selects \texttt{STABILIZE}, \texttt{LOITER}, or \texttt{RTL} at any time, overriding all software commands via the Cube Orange's RC input channel. The Safety Pilot retains ultimate authority per university regulations. This layer is entirely independent of the companion computer.
+    \item \textbf{Software manual override:} The \texttt{M}~key (terminal, browser button, or \texttt{/cmd?key=m} HTTP endpoint) immediately halts all autonomous commands and transitions the state machine to \textsc{Manual} mode. The \texttt{RTL} button sends \texttt{MAV\_CMD\_NAV\_RETURN\_TO\_LAUNCH} directly to the Cube.
+    \item \textbf{Automated failsafes:} GPS fix degradation beyond 5\,s triggers emergency RTL. GCS heartbeat loss (\texttt{FS\_GCS\_ENABLE}) and low battery (\texttt{FS\_BATT\_ENABLE}) trigger ArduCopter's built-in \texttt{RTL} failsafe at the firmware level. Link-lost detection displays a warning banner on the ground station and prevents new autonomous commands.
+\end{enumerate}
+All three layers were verified in SITL: RC override by switching modes mid-mission, software override by pressing \texttt{M} during search, and GPS failsafe by simulating fix loss. Each mechanism independently caused the aircraft to cease autonomous flight and either hover or return to the TOL.
+
+\subsection{R10 --- Report Lat/Lon and Images}
+
+The system reports detection coordinates and imagery through three complementary channels:
+
+\paragraph{GPS estimation pipeline.} Every detection triggers ground-position estimation by projecting the bounding-box centre pixel to a GPS coordinate using the calibrated focal length (\texttt{FOCAL\_LENGTH\_MM}~=~5.46\,mm), sensor width (\texttt{SENSOR\_WIDTH\_MM}~=~5.02\,mm), image dimensions ($1456\times1088$), and the current barometric altitude. Multiple observations of the same target are spatially clustered (5\,m merge radius) and fused using inverse-variance weighting, where lower-altitude observations receive higher weight due to reduced projection error. The pipeline is implemented identically in \texttt{main.py}, \texttt{pi\_flight.py}, and \texttt{simple\_simulator.py}.
+
+\paragraph{Detection snapshots and metadata.} Each detection saves a timestamped JPEG frame with the bounding box overlay to the \texttt{detections/} directory. An accompanying JSON metadata file records: estimated latitude and longitude, altitude, YOLO confidence score, bounding box coordinates (pixels), frame number, and timestamp. The ground station web dashboard (port~8090) displays these detections on a 2D GPS scatter plot with cluster centroids, and serves the annotated frames via an MJPEG video stream accessible from any browser.
+
+\paragraph{Flight log.} A CSV file (\texttt{logs/flight\_log.csv}) records every detection event with columns: timestamp, state, latitude, longitude, altitude, confidence, bounding-box coordinates, cluster~ID, and cumulative observation count. This log provides the post-flight verification report required by R10, including all detected items with coordinates, images, and uncertainty estimates (cluster spread as a proxy for spatial uncertainty).
+
+\subsection{R11 --- Company Pilot Designated}
+
+A designated Company Pilot is responsible for pre-flight checks, arming authorisation, and manual takeover capability. The Safety Pilot (Flight Lab staff) retains ultimate authority via the RC transmitter at all times, as required by university flight operations policy. The Company Pilot's responsibilities include: verifying the pre-flight checklist (\texttt{docs/FLIGHT\_DAY\_CHECKLIST.md}), confirming GPS lock quality before arming, monitoring the ground station during autonomous flight, and being prepared to call for manual takeover. Roles are documented in Section~\ref{sec:intro-d6}.
+
+\subsection{R12 --- Public GitHub Repository with MIT Licence}
+
+All source code, configuration files, and documentation are hosted at \url{https://github.com/DimaChup/Group_Proj} under the MIT licence. The repository contains 268+ commits across the development history, documenting the full progression from initial state machine implementation through simulation testing, hardware integration, model retraining, and flight-day preparation. Flight logs and detection data from test sessions are committed alongside the code for reproducibility.

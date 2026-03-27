@@ -1,0 +1,226 @@
+% test_scripts_guide.tex — Comprehensive test script reference
+% Include from main report: \input{sections/test_scripts_guide}
+
+\section{Test Script Reference}\label{sec:test-scripts}
+
+The 41 test scripts described in Section~\ref{sec:test-org} constitute a purpose-built verification harness.  This section provides a complete reference: what each script does, when it is used, and how it maps to the mission requirements and the five-tier progressive framework (Section~\ref{sec:five-tier}).
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{Organisation by Category}\label{sec:script-categories}
+
+Scripts are grouped into six directories, each targeting a distinct verification concern.  The naming convention reflects execution order: lower numbers within the \texttt{flight/} directory carry lower risk and must pass before higher-numbered scripts are attempted.
+
+\begin{description}
+    \item[\texttt{tests/hardware/}] \emph{Component-level checks} (6~scripts).  Each script tests a single peripheral---camera, AI model, GPS receiver, or buzzer---in isolation.  All issue zero flight commands and are safe to run on the bench at any time.
+    \item[\texttt{tests/flight/}] \emph{Progressive flight tests} (7~scripts, numbered 0a--4).  These form the critical path from bench to autonomous flight.  Three bench scripts (0a--0c) validate the command pipeline without propellers; four airborne scripts (1--4) build trust incrementally from manual RC with passive logging through to full autonomous search-and-land.
+    \item[\texttt{tests/diagnostics/}] \emph{Runtime monitoring} (5~scripts).  Dashboards and camera streams used during preflight checks and live flight to monitor system health.  The multi-panel diagnostics dashboard serves as the final go/no-go gate.
+    \item[\texttt{tests/calibration/}] \emph{Parameter measurement} (5~scripts).  FOV calibration (bench and altitude), lens distortion characterisation, and GPS ground-truth comparison.  Results feed directly into \texttt{config.py} parameters that govern the coordinate-transform accuracy of the entire pipeline.
+    \item[\texttt{tests/day\_1\_experiments/}] \emph{Structured data collection} (6~scripts).  All passive (zero commands), all output CSV.  Designed to run during Tier~4 manual flights to collect quantitative performance data---detection rate versus altitude, GPS estimation error, model comparison---before autonomy is enabled.
+    \item[\texttt{tests/laptop/}] \emph{Development-only tools} (10+~scripts).  Model inspection, TFLite debugging, DJI video replay with detection overlay, A/B model comparison, and path visualisation.  Not deployed to the Pi or used on flight day.
+\end{description}
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{Flight Test Progression}\label{sec:flight-progression}
+
+The seven flight scripts implement the incremental trust-building strategy.  Each script is designed so that its failure mode is benign at its tier: bench scripts cannot cause vehicle motion; passive scripts issue zero commands; waypoint scripts operate without CV decision-making.  Table~\ref{tab:flight-scripts} details the progression.
+
+\begin{table}[H]
+\centering
+\caption{Flight test progression.  Each script must pass before the next is attempted.  ``Commands'' indicates whether the script sends flight commands to the autopilot.}
+\label{tab:flight-scripts}
+\small
+\begin{tabular}{@{}llp{5.8cm}lc@{}}
+\toprule
+\textbf{Script} & \textbf{Tier} & \textbf{What It Proves} & \textbf{Commands} & \textbf{Risk} \\
+\midrule
+\texttt{0a\_cube\_commands} & 3 (Bench) & Individual MAVLink commands reach the Cube and return correct ACKs: mode changes, parameter reads, arming pre-checks. & Mode set & Low \\
+\addlinespace
+\texttt{0b\_bench\_mission} & 3 (Bench) & Full mission command sequence (arm, takeoff, waypoint, land) executes without error on the bench with propellers removed.  Every \texttt{COMMAND\_ACK} is verified. & Arm, goto, land & Low \\
+\addlinespace
+\texttt{0c\_feedback\_test} & 3 (Bench) & Vision$\to$GPS pipeline: operator carries drone past a dummy; camera captures frames, AI detects, pixel coordinates are transformed to GPS.  Validates the entire sensing chain. & Zero & Low \\
+\addlinespace
+\texttt{1\_passive\_flight} & 4 (Passive) & Real outdoor CV performance: pilot flies manually on RC while Pi runs camera + AI + GPS estimation.  Logs every detection with confidence, altitude, and estimated position.  Buzzer confirms detections audibly. & Zero & Medium \\
+\addlinespace
+\texttt{2\_waypoint\_test} & 5 (Auto) & Autonomous GPS navigation: arms, takes off to 10\,m, flies 3--4 GPS waypoints in GUIDED mode, lands.  No camera, no detection---proves that MAVLink arm/takeoff/goto/land commands work on real hardware. & Arm, goto, land & High \\
+\addlinespace
+\texttt{3\_auto\_detect} & 5 (Auto) & AUTO waypoint pattern + AI detection.  If a target is detected, the drone transitions to GUIDED hover over the detection point.  Does not descend or land autonomously. & Mode switch, hover & High \\
+\addlinespace
+\texttt{4\_detect\_and\_center} & 5 (Auto) & Full autonomous mission: search pattern, detect, centre on target using velocity commands, descend, verify, approach, land.  This is the complete system under test. & Velocity, land & Critical \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Three laptop-only drawing utilities support the flight scripts without running on the Pi: \texttt{draw\_search\_area.py} produces a \texttt{search\_area.json} polygon, \texttt{draw\_waypoints.py} produces a \texttt{waypoints.json} file, and \texttt{live\_map.py} provides a real-time position viewer during flight.  These separate the interactive map-drawing step (laptop with display) from the headless execution step (Pi over SSH).
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{Hardware Tests}\label{sec:hw-tests}
+
+\begin{table}[H]
+\centering
+\caption{Hardware test scripts.  All run on the Pi bench with zero flight commands.}
+\label{tab:hw-tests}
+\small
+\begin{tabular}{@{}lp{7.5cm}l@{}}
+\toprule
+\textbf{Script} & \textbf{Purpose} & \textbf{Output} \\
+\midrule
+\texttt{benchmark.py} & Runs 50 inference cycles on the TFLite model, reports mean/min/max latency, FPS, detection count, and confidence statistics.  Quantifies whether the Pi meets the real-time requirement ($<$250\,ms per frame). & Terminal report \\
+\addlinespace
+\texttt{cv\_benchmark.py} & Live detection rate and speed with the camera active, including simulated motion blur at configurable levels.  Tests the full capture$\to$inference$\to$decode pipeline. & Terminal report \\
+\addlinespace
+\texttt{gps\_test.py} & GPS diagnostics: satellite count, fix type (2D/3D/DGPS), HDOP, position, and time-to-fix.  Confirms the GPS receiver is functional and tracks enough satellites. & Terminal table \\
+\addlinespace
+\texttt{gps\_health.py} & Step-by-step GPS verification guide: walks the operator through satellite count, fix quality, and position stability checks with pass/fail criteria at each step. & Interactive \\
+\addlinespace
+\texttt{buzzer\_test.py} & Sends MAVLink tune commands to the Cube's buzzer.  Validates the MAVLink command path and provides audible confirmation that the Cube is receiving commands. & Audible tones \\
+\addlinespace
+\texttt{detection\_snapshot\_test.py} & Captures a single camera frame, runs inference, and saves the annotated detection image.  Quick smoke test for the camera$\to$model pipeline. & Saved image \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{Calibration Tests}\label{sec:cal-tests}
+
+Calibration scripts measure physical parameters that the coordinate-transform pipeline (Section~\ref{sec:target-localisation}) depends on.  Errors in these parameters propagate directly into GPS estimation accuracy.
+
+\begin{table}[H]
+\centering
+\caption{Calibration test scripts.}
+\label{tab:cal-tests}
+\small
+\begin{tabular}{@{}lp{5.8cm}p{4.2cm}@{}}
+\toprule
+\textbf{Script} & \textbf{Method} & \textbf{Result} \\
+\midrule
+\texttt{fov\_calibrate.py} & Bench FOV measurement: place ruler at known distance, capture frame, measure visible width.  Comprehensive multi-sample calibration. & \texttt{FOCAL\_LENGTH\_MM} for config.py (calibrated: 5.46\,mm) \\
+\addlinespace
+\texttt{fov\_test\_simple.py} & Quick single-measurement FOV check.  Lighter-weight version of the full calibration. & Quick HFOV estimate \\
+\addlinespace
+\texttt{alt\_test.py} & FOV measurement at real hover altitude.  Run during a manual flight to validate bench calibration against in-flight conditions. & Altitude-corrected FOV \\
+\addlinespace
+\texttt{lens\_calibrate.py} & Checkerboard lens distortion calibration (13$\times$8 inner corners, 28\,mm squares).  Produces undistortion remap matrices loaded by \texttt{vision.py} at startup. & \texttt{calibration\_data.npz} (RMS\,=\,0.399) \\
+\addlinespace
+\texttt{gps\_ground\_truth.py} & Post-flight comparison: CV-estimated GPS position vs.\ surveyed ground-truth position of the dummy.  Quantifies end-to-end localisation accuracy. & Position error in metres \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{Experiment Scripts}\label{sec:experiment-scripts}
+
+Six structured experiment scripts are designed to run passively during Tier~4 manual flights.  Each connects to the MAVLink telemetry stream (read-only) and the camera, but issues zero flight commands.  All output timestamped CSV files suitable for direct statistical analysis.
+
+\begin{table}[H]
+\centering
+\caption{Day~1 experiment scripts.  All passive (zero commands), all output CSV.}
+\label{tab:experiment-scripts}
+\small
+\begin{tabular}{@{}lp{4.5cm}p{4.5cm}@{}}
+\toprule
+\textbf{Script} & \textbf{What It Measures} & \textbf{Output} \\
+\midrule
+\texttt{altitude\_sweep.py} & Detection rate vs.\ altitude in 10--30\,m buckets.  Establishes the detection ceiling for the current model and camera. & \texttt{altitude\_sweep.csv} \\
+\addlinespace
+\texttt{speed\_sweep.py} & Detection rate vs.\ ground speed, plus a Laplacian blur metric per frame.  Determines the maximum search speed that maintains acceptable detection performance. & \texttt{speed\_sweep.csv} \\
+\addlinespace
+\texttt{gps\_accuracy.py} & GPS estimation error: compares the CV-derived target position against a known dummy location, logging per-frame error in metres. & \texttt{gps\_accuracy.csv} \\
+\addlinespace
+\texttt{gps\_drift.py} & GPS noise floor: records raw GPS position while the drone hovers stationary, computing CEP50 and CEP95 circular error statistics. & \texttt{gps\_drift.csv} \\
+\addlinespace
+\texttt{model\_compare.py} & Benchmarks all available \texttt{.tflite} models side-by-side: inference speed, detection rate, confidence distribution. & Terminal comparison \\
+\addlinespace
+\texttt{detection\_log.py} & General-purpose flight logger: records every detection (timestamp, pixel coordinates, confidence, altitude, GPS estimate) as a catch-all for post-flight analysis. & \texttt{detection\_log.csv} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{Diagnostics}\label{sec:diag-scripts}
+
+Diagnostics scripts provide real-time system health monitoring.  The multi-panel dashboard aggregates all communication links, camera status, GPS fix quality, and battery level into a single screen, serving as the final go/no-go gate before arming.
+
+\begin{itemize}
+    \item \textbf{\texttt{diagnostics.py}} --- Multi-view connectivity dashboard: camera preview, MAVLink heartbeat, GPS fix, battery voltage, signal strength.  Run as the last preflight check.
+    \item \textbf{\texttt{cube\_monitor.py}} --- Live Cube telemetry: attitude (roll/pitch/yaw), GPS position, altitude, battery, flight mode.  Used for debugging during bench and flight tests.
+    \item \textbf{\texttt{camera\_stream.py}} --- Basic MJPEG stream to a web browser at \texttt{http://PI\_IP:8090}.  Enables remote camera viewing from the ground station laptop.
+    \item \textbf{\texttt{camera\_stream\_fast.py}} --- Threaded MJPEG stream with reduced latency.  Preferred over the basic version for flight-day streaming.
+    \item \textbf{\texttt{camera\_stream\_h264.py}} --- H.264/HLS stream via FFmpeg.  Higher compression but increased latency; not used in practice.
+\end{itemize}
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{Script-to-Requirement Mapping}\label{sec:script-req-map}
+
+Table~\ref{tab:script-req-map} maps each test category to the mission requirements it verifies and the testing tier at which it operates.
+
+\begin{table}[H]
+\centering
+\caption{Test script categories mapped to mission requirements and verification tiers.}
+\label{tab:script-req-map}
+\small
+\begin{tabular}{@{}p{2.8cm}p{4.5cm}cp{3.8cm}@{}}
+\toprule
+\textbf{Category} & \textbf{Requirement Verified} & \textbf{Tier} & \textbf{Key Scripts} \\
+\midrule
+Hardware & AI inference $<$250\,ms; GPS fix; camera functional & 3 & benchmark, gps\_health \\
+\addlinespace
+Calibration & FOV accuracy; lens correction; localisation error & 3--4 & fov\_calibrate, lens\_calibrate, gps\_ground\_truth \\
+\addlinespace
+Flight 0a--0c & MAVLink command path; sensing pipeline; bench safety & 3 & cube\_commands, bench\_mission, feedback\_test \\
+\addlinespace
+Flight 1 & CV performance under real conditions; detection altitude & 4 & passive\_flight \\
+\addlinespace
+Flight 2 & Autonomous GPS navigation; arm/takeoff/land & 5 & waypoint\_test \\
+\addlinespace
+Flight 3--4 & Full mission: search, detect, centre, verify, land & 5 & auto\_detect, detect\_and\_center \\
+\addlinespace
+Experiments & Detection rate vs.\ altitude/speed; GPS accuracy; model selection & 4 & altitude\_sweep, speed\_sweep, gps\_accuracy \\
+\addlinespace
+Diagnostics & System health; communication integrity; preflight gate & 3--5 & diagnostics, cube\_monitor \\
+\addlinespace
+Laptop/Video & Model validation on real footage; FOV calibration; A/B comparison & 1 & video\_test, video\_test\_compare \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{What Was Tested on Real Hardware}\label{sec:tested-real}
+
+The following scripts were executed on the Raspberry Pi~5 with real peripherals during bench and field sessions:
+
+\begin{itemize}
+    \item \textbf{Bench (Pi + Cube + camera, no props):} \texttt{benchmark.py} (206.5\,ms mean inference, 4.8\,FPS), \texttt{gps\_health.py}, \texttt{0a\_cube\_commands.py}, \texttt{0b\_bench\_mission.py}, \texttt{fov\_calibrate.py} (5.46\,mm focal length), \texttt{lens\_calibrate.py} (RMS\,=\,0.399), \texttt{diagnostics.py}, \texttt{camera\_stream.py}.
+    \item \textbf{Field (Pi assembled on drone):} \texttt{passive\_watch.py} (passive detection during manual carry, GPS estimation validated at ground level), \texttt{capture\_training.py} (16~real training images collected).
+    \item \textbf{Laptop simulation (SITL):} All flight scripts 0a--4, full state machine, geofence enforcement, 20-scenario stress test (Table~\ref{tab:stress-results}), dry-run validation, DJI video analysis pipeline.
+\end{itemize}
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{Remaining Test Gaps}\label{sec:test-gaps}
+
+Table~\ref{tab:test-gaps} documents the tests that have not yet been executed on real hardware, mapped to the flight test progression.  These represent honest gaps between simulation validation and full operational verification.
+
+\begin{table}[H]
+\centering
+\caption{Tests not yet completed on real hardware.  All have passed in SITL simulation.}
+\label{tab:test-gaps}
+\small
+\begin{tabular}{@{}lp{5.5cm}p{5.0cm}@{}}
+\toprule
+\textbf{Flight Step} & \textbf{What Remains} & \textbf{Blocking Factor} \\
+\midrule
+Step 1: Passive flight & Full airborne passive detection (flown, not hand-carried) & Weather cancelled first flight day \\
+\addlinespace
+Step 2: Waypoint test & Autonomous GPS waypoint navigation on real hardware & Requires Step~1 pass \\
+\addlinespace
+Step 3: Auto-detect & AUTO pattern + AI-triggered GUIDED hover & Requires Step~2 pass \\
+\addlinespace
+Step 4: Detect \& centre & Full autonomous mission with velocity centering and landing & Requires Step~3 pass \\
+\addlinespace
+Day~1 experiments & Altitude sweep, speed sweep, GPS accuracy/drift CSV collection & Requires airborne flight \\
+\addlinespace
+Calibration & \texttt{alt\_test.py} (FOV at real altitude), \texttt{gps\_ground\_truth.py} (post-landing accuracy) & Requires airborne flight \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+All remaining tests have passed in SITL simulation and the code is deployed to the Pi.  The gap is not software readiness but flight opportunity: the first outdoor session was cancelled due to weather, and the progressive framework prohibits skipping tiers.  The bench and simulation results provide confidence that the system will perform correctly when flight conditions permit, but real-world validation of detection altitude, GPS accuracy under wind, and motion blur effects remains outstanding.

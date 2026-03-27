@@ -1,0 +1,483 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 3.3 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated by
+% biber as required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+
+\refsection{0}
+  \datalist[entry]{none/global//global/global/global}
+    \entry{ahep4}{report}{}{}
+      \name{author}{1}{}{%
+        {{hash=5a4083e715bf92a2ea150aa7daa5c95e}{%
+           family={{Engineering Council}},
+           familyi={E\bibinitperiod}}}%
+      }
+      \list{institution}{1}{%
+        {Engineering Council UK}%
+      }
+      \strng{namehash}{5a4083e715bf92a2ea150aa7daa5c95e}
+      \strng{fullhash}{5a4083e715bf92a2ea150aa7daa5c95e}
+      \strng{fullhashraw}{5a4083e715bf92a2ea150aa7daa5c95e}
+      \strng{bibnamehash}{5a4083e715bf92a2ea150aa7daa5c95e}
+      \strng{authorbibnamehash}{5a4083e715bf92a2ea150aa7daa5c95e}
+      \strng{authornamehash}{5a4083e715bf92a2ea150aa7daa5c95e}
+      \strng{authorfullhash}{5a4083e715bf92a2ea150aa7daa5c95e}
+      \strng{authorfullhashraw}{5a4083e715bf92a2ea150aa7daa5c95e}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{edition}{4th}
+      \field{note}{\url{https://www.engc.org.uk/ahep}}
+      \field{title}{The Accreditation of Higher Education Programmes ({AHEP4})}
+      \field{type}{techreport}
+      \field{year}{2020}
+    \endentry
+    \entry{rpi5}{misc}{}{}
+      \name{author}{1}{}{%
+        {{hash=0dac029e46904a2d35a186cfa0c1303c}{%
+           family={{Raspberry Pi Foundation}},
+           familyi={R\bibinitperiod}}}%
+      }
+      \strng{namehash}{0dac029e46904a2d35a186cfa0c1303c}
+      \strng{fullhash}{0dac029e46904a2d35a186cfa0c1303c}
+      \strng{fullhashraw}{0dac029e46904a2d35a186cfa0c1303c}
+      \strng{bibnamehash}{0dac029e46904a2d35a186cfa0c1303c}
+      \strng{authorbibnamehash}{0dac029e46904a2d35a186cfa0c1303c}
+      \strng{authornamehash}{0dac029e46904a2d35a186cfa0c1303c}
+      \strng{authorfullhash}{0dac029e46904a2d35a186cfa0c1303c}
+      \strng{authorfullhashraw}{0dac029e46904a2d35a186cfa0c1303c}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{https://www.raspberrypi.com/products/raspberry-pi-5/}}
+      \field{note}{Accessed: 2026}
+      \field{title}{{Raspberry Pi 5}}
+      \field{year}{2023}
+    \endentry
+    \entry{tflite}{misc}{}{}
+      \name{author}{1}{}{%
+        {{hash=8b36e9207c24c76e6719268e49201d94}{%
+           family={{Google}},
+           familyi={G\bibinitperiod}}}%
+      }
+      \strng{namehash}{8b36e9207c24c76e6719268e49201d94}
+      \strng{fullhash}{8b36e9207c24c76e6719268e49201d94}
+      \strng{fullhashraw}{8b36e9207c24c76e6719268e49201d94}
+      \strng{bibnamehash}{8b36e9207c24c76e6719268e49201d94}
+      \strng{authorbibnamehash}{8b36e9207c24c76e6719268e49201d94}
+      \strng{authornamehash}{8b36e9207c24c76e6719268e49201d94}
+      \strng{authorfullhash}{8b36e9207c24c76e6719268e49201d94}
+      \strng{authorfullhashraw}{8b36e9207c24c76e6719268e49201d94}
+      \field{sortinit}{3}
+      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{https://www.tensorflow.org/lite}}
+      \field{note}{Accessed: 2026}
+      \field{title}{{TensorFlow Lite}: Deploy Machine Learning Models on Mobile and Edge Devices}
+      \field{year}{2023}
+    \endentry
+    \entry{schon1983}{book}{}{}
+      \name{author}{1}{}{%
+        {{hash=ca8040a5b535cb27d8cc8f5b38a54cd9}{%
+           family={Schön},
+           familyi={S\bibinitperiod},
+           given={Donald\bibnamedelima A.},
+           giveni={D\bibinitperiod\bibinitdelim A\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {Basic Books}%
+      }
+      \strng{namehash}{ca8040a5b535cb27d8cc8f5b38a54cd9}
+      \strng{fullhash}{ca8040a5b535cb27d8cc8f5b38a54cd9}
+      \strng{fullhashraw}{ca8040a5b535cb27d8cc8f5b38a54cd9}
+      \strng{bibnamehash}{ca8040a5b535cb27d8cc8f5b38a54cd9}
+      \strng{authorbibnamehash}{ca8040a5b535cb27d8cc8f5b38a54cd9}
+      \strng{authornamehash}{ca8040a5b535cb27d8cc8f5b38a54cd9}
+      \strng{authorfullhash}{ca8040a5b535cb27d8cc8f5b38a54cd9}
+      \strng{authorfullhashraw}{ca8040a5b535cb27d8cc8f5b38a54cd9}
+      \field{sortinit}{4}
+      \field{sortinithash}{9381316451d1b9788675a07e972a12a7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{title}{The Reflective Practitioner: How Professionals Think in Action}
+      \field{year}{1983}
+    \endentry
+    \entry{leveson2011}{book}{}{}
+      \name{author}{1}{}{%
+        {{hash=a904242b95ac0658a69274092b012b49}{%
+           family={Leveson},
+           familyi={L\bibinitperiod},
+           given={Nancy\bibnamedelima G.},
+           giveni={N\bibinitperiod\bibinitdelim G\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {MIT Press}%
+      }
+      \strng{namehash}{a904242b95ac0658a69274092b012b49}
+      \strng{fullhash}{a904242b95ac0658a69274092b012b49}
+      \strng{fullhashraw}{a904242b95ac0658a69274092b012b49}
+      \strng{bibnamehash}{a904242b95ac0658a69274092b012b49}
+      \strng{authorbibnamehash}{a904242b95ac0658a69274092b012b49}
+      \strng{authornamehash}{a904242b95ac0658a69274092b012b49}
+      \strng{authorfullhash}{a904242b95ac0658a69274092b012b49}
+      \strng{authorfullhashraw}{a904242b95ac0658a69274092b012b49}
+      \field{sortinit}{5}
+      \field{sortinithash}{20e9b4b0b173788c5dace24730f47d8c}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{title}{Engineering a Safer World: Systems Thinking Applied to Safety}
+      \field{year}{2011}
+    \endentry
+    \entry{koopman2019safe}{book}{}{}
+      \name{author}{1}{}{%
+        {{hash=0180518be5acba53c0936c475b7ebeb0}{%
+           family={Koopman},
+           familyi={K\bibinitperiod},
+           given={Philip},
+           giveni={P\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {Carnegie Mellon University}%
+      }
+      \strng{namehash}{0180518be5acba53c0936c475b7ebeb0}
+      \strng{fullhash}{0180518be5acba53c0936c475b7ebeb0}
+      \strng{fullhashraw}{0180518be5acba53c0936c475b7ebeb0}
+      \strng{bibnamehash}{0180518be5acba53c0936c475b7ebeb0}
+      \strng{authorbibnamehash}{0180518be5acba53c0936c475b7ebeb0}
+      \strng{authornamehash}{0180518be5acba53c0936c475b7ebeb0}
+      \strng{authorfullhash}{0180518be5acba53c0936c475b7ebeb0}
+      \strng{authorfullhashraw}{0180518be5acba53c0936c475b7ebeb0}
+      \field{sortinit}{6}
+      \field{sortinithash}{b33bc299efb3c36abec520a4c896a66d}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{note}{Technical report}
+      \field{title}{How Safe Is Safe Enough? Measuring and Predicting Autonomous Vehicle Safety}
+      \field{year}{2019}
+    \endentry
+    \entry{sar_drones_review}{article}{}{}
+      \name{author}{4}{}{%
+        {{hash=185ef69aba0eb7953739aa40c35ae12f}{%
+           family={Silvagni},
+           familyi={S\bibinitperiod},
+           given={Mario},
+           giveni={M\bibinitperiod}}}%
+        {{hash=6caecedf408d2c7a1534c25e4fa180b2}{%
+           family={Tonoli},
+           familyi={T\bibinitperiod},
+           given={Andrea},
+           giveni={A\bibinitperiod}}}%
+        {{hash=18f5e9ab02dc369e4465696c3d552cb3}{%
+           family={Zenerino},
+           familyi={Z\bibinitperiod},
+           given={Enrico},
+           giveni={E\bibinitperiod}}}%
+        {{hash=387a1f8b4c5989acc0a87e7c915fb8d8}{%
+           family={Chiaberge},
+           familyi={C\bibinitperiod},
+           given={Marcello},
+           giveni={M\bibinitperiod}}}%
+      }
+      \strng{namehash}{7dad0d7a89601efcc634aa2d793e1ebd}
+      \strng{fullhash}{6f931786a89d0f88a6d8c98a77316da9}
+      \strng{fullhashraw}{6f931786a89d0f88a6d8c98a77316da9}
+      \strng{bibnamehash}{7dad0d7a89601efcc634aa2d793e1ebd}
+      \strng{authorbibnamehash}{7dad0d7a89601efcc634aa2d793e1ebd}
+      \strng{authornamehash}{7dad0d7a89601efcc634aa2d793e1ebd}
+      \strng{authorfullhash}{6f931786a89d0f88a6d8c98a77316da9}
+      \strng{authorfullhashraw}{6f931786a89d0f88a6d8c98a77316da9}
+      \field{sortinit}{7}
+      \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Geomatics, Natural Hazards and Risk}
+      \field{number}{1}
+      \field{title}{Multipurpose {UAV} for Search and Rescue Operations in Mountain Avalanche Events}
+      \field{volume}{8}
+      \field{year}{2017}
+      \field{pages}{18\bibrangedash 33}
+      \range{pages}{16}
+      \verb{doi}
+      \verb 10.1080/19475705.2016.1238852
+      \endverb
+    \endentry
+    \entry{goodrich2008sar}{inproceedings}{}{}
+      \name{author}{7}{}{%
+        {{hash=17e89dff3d93fe393718f6882ca6bc8a}{%
+           family={Goodrich},
+           familyi={G\bibinitperiod},
+           given={Michael\bibnamedelima A.},
+           giveni={M\bibinitperiod\bibinitdelim A\bibinitperiod}}}%
+        {{hash=afd9cb027c9b3ce9bcbd85ee379217d3}{%
+           family={Morse},
+           familyi={M\bibinitperiod},
+           given={Bryan\bibnamedelima S.},
+           giveni={B\bibinitperiod\bibinitdelim S\bibinitperiod}}}%
+        {{hash=f07a76efd57b95585c3da5e566b99acb}{%
+           family={Gerhardt},
+           familyi={G\bibinitperiod},
+           given={Damon},
+           giveni={D\bibinitperiod}}}%
+        {{hash=67fa1e23bf509abe1b188db505ce989d}{%
+           family={Cooper},
+           familyi={C\bibinitperiod},
+           given={Joseph\bibnamedelima L.},
+           giveni={J\bibinitperiod\bibinitdelim L\bibinitperiod}}}%
+        {{hash=9404eebbe5c52f5580a6f6515ebcbb80}{%
+           family={Quigley},
+           familyi={Q\bibinitperiod},
+           given={Morgan},
+           giveni={M\bibinitperiod}}}%
+        {{hash=4bc765d95775477675814c3e7c5538e4}{%
+           family={Adams},
+           familyi={A\bibinitperiod},
+           given={Julie\bibnamedelima A.},
+           giveni={J\bibinitperiod\bibinitdelim A\bibinitperiod}}}%
+        {{hash=924a3aa2dc0c45a6e875fab999b35d64}{%
+           family={Humphrey},
+           familyi={H\bibinitperiod},
+           given={Curtis},
+           giveni={C\bibinitperiod}}}%
+      }
+      \strng{namehash}{f87394a215a7ab6d509c442e5b396ab7}
+      \strng{fullhash}{bbfd4507898b0b7e53d8d4f4456b7373}
+      \strng{fullhashraw}{bbfd4507898b0b7e53d8d4f4456b7373}
+      \strng{bibnamehash}{f87394a215a7ab6d509c442e5b396ab7}
+      \strng{authorbibnamehash}{f87394a215a7ab6d509c442e5b396ab7}
+      \strng{authornamehash}{f87394a215a7ab6d509c442e5b396ab7}
+      \strng{authorfullhash}{bbfd4507898b0b7e53d8d4f4456b7373}
+      \strng{authorfullhashraw}{bbfd4507898b0b7e53d8d4f4456b7373}
+      \field{sortinit}{7}
+      \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{booktitle}{Journal of Field Robotics}
+      \field{title}{Supporting Wilderness Search and Rescue Using a Camera-Equipped Mini {UAV}}
+      \field{volume}{25}
+      \field{year}{2008}
+      \field{pages}{89\bibrangedash 110}
+      \range{pages}{22}
+    \endentry
+    \entry{belbin2010}{book}{}{}
+      \name{author}{1}{}{%
+        {{hash=0abdd74b0ee96aa91eb16f23f93dd53a}{%
+           family={Belbin},
+           familyi={B\bibinitperiod},
+           given={R.\bibnamedelimi Meredith},
+           giveni={R\bibinitperiod\bibinitdelim M\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {Butterworth-Heinemann}%
+      }
+      \strng{namehash}{0abdd74b0ee96aa91eb16f23f93dd53a}
+      \strng{fullhash}{0abdd74b0ee96aa91eb16f23f93dd53a}
+      \strng{fullhashraw}{0abdd74b0ee96aa91eb16f23f93dd53a}
+      \strng{bibnamehash}{0abdd74b0ee96aa91eb16f23f93dd53a}
+      \strng{authorbibnamehash}{0abdd74b0ee96aa91eb16f23f93dd53a}
+      \strng{authornamehash}{0abdd74b0ee96aa91eb16f23f93dd53a}
+      \strng{authorfullhash}{0abdd74b0ee96aa91eb16f23f93dd53a}
+      \strng{authorfullhashraw}{0abdd74b0ee96aa91eb16f23f93dd53a}
+      \field{sortinit}{8}
+      \field{sortinithash}{a231b008ebf0ecbe0b4d96dcc159445f}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{edition}{2nd}
+      \field{title}{Team Roles at Work}
+      \field{year}{2010}
+    \endentry
+    \entry{kolb1984}{book}{}{}
+      \name{author}{1}{}{%
+        {{hash=5089e249846f7339ecad82d42e130d74}{%
+           family={Kolb},
+           familyi={K\bibinitperiod},
+           given={David\bibnamedelima A.},
+           giveni={D\bibinitperiod\bibinitdelim A\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {Prentice-Hall}%
+      }
+      \strng{namehash}{5089e249846f7339ecad82d42e130d74}
+      \strng{fullhash}{5089e249846f7339ecad82d42e130d74}
+      \strng{fullhashraw}{5089e249846f7339ecad82d42e130d74}
+      \strng{bibnamehash}{5089e249846f7339ecad82d42e130d74}
+      \strng{authorbibnamehash}{5089e249846f7339ecad82d42e130d74}
+      \strng{authornamehash}{5089e249846f7339ecad82d42e130d74}
+      \strng{authorfullhash}{5089e249846f7339ecad82d42e130d74}
+      \strng{authorfullhashraw}{5089e249846f7339ecad82d42e130d74}
+      \field{sortinit}{9}
+      \field{sortinithash}{0a5ebc79d83c96b6579069544c73c7d4}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{title}{Experiential Learning: Experience as the Source of Learning and Development}
+      \field{year}{1984}
+    \endentry
+    \entry{tuckman1965}{article}{}{}
+      \name{author}{1}{}{%
+        {{hash=684381a556fe74d83a9f512740e8caa3}{%
+           family={Tuckman},
+           familyi={T\bibinitperiod},
+           given={Bruce\bibnamedelima W.},
+           giveni={B\bibinitperiod\bibinitdelim W\bibinitperiod}}}%
+      }
+      \strng{namehash}{684381a556fe74d83a9f512740e8caa3}
+      \strng{fullhash}{684381a556fe74d83a9f512740e8caa3}
+      \strng{fullhashraw}{684381a556fe74d83a9f512740e8caa3}
+      \strng{bibnamehash}{684381a556fe74d83a9f512740e8caa3}
+      \strng{authorbibnamehash}{684381a556fe74d83a9f512740e8caa3}
+      \strng{authornamehash}{684381a556fe74d83a9f512740e8caa3}
+      \strng{authorfullhash}{684381a556fe74d83a9f512740e8caa3}
+      \strng{authorfullhashraw}{684381a556fe74d83a9f512740e8caa3}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Psychological Bulletin}
+      \field{number}{6}
+      \field{title}{Developmental Sequence in Small Groups}
+      \field{volume}{63}
+      \field{year}{1965}
+      \field{pages}{384\bibrangedash 399}
+      \range{pages}{16}
+      \verb{doi}
+      \verb 10.1037/h0022100
+      \endverb
+    \endentry
+    \entry{gibbs1988}{book}{}{}
+      \name{author}{1}{}{%
+        {{hash=834aa6ef564b951669ce94b17e7992f7}{%
+           family={Gibbs},
+           familyi={G\bibinitperiod},
+           given={Graham},
+           giveni={G\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {Further Education Unit, Oxford Polytechnic}%
+      }
+      \strng{namehash}{834aa6ef564b951669ce94b17e7992f7}
+      \strng{fullhash}{834aa6ef564b951669ce94b17e7992f7}
+      \strng{fullhashraw}{834aa6ef564b951669ce94b17e7992f7}
+      \strng{bibnamehash}{834aa6ef564b951669ce94b17e7992f7}
+      \strng{authorbibnamehash}{834aa6ef564b951669ce94b17e7992f7}
+      \strng{authornamehash}{834aa6ef564b951669ce94b17e7992f7}
+      \strng{authorfullhash}{834aa6ef564b951669ce94b17e7992f7}
+      \strng{authorfullhashraw}{834aa6ef564b951669ce94b17e7992f7}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{title}{Learning by Doing: A Guide to Teaching and Learning Methods}
+      \field{year}{1988}
+    \endentry
+    \entry{ardupilot}{misc}{}{}
+      \name{author}{1}{}{%
+        {{hash=f17621b13747923872bd2100f81eb2d2}{%
+           family={{ArduPilot Development Team}},
+           familyi={A\bibinitperiod}}}%
+      }
+      \strng{namehash}{f17621b13747923872bd2100f81eb2d2}
+      \strng{fullhash}{f17621b13747923872bd2100f81eb2d2}
+      \strng{fullhashraw}{f17621b13747923872bd2100f81eb2d2}
+      \strng{bibnamehash}{f17621b13747923872bd2100f81eb2d2}
+      \strng{authorbibnamehash}{f17621b13747923872bd2100f81eb2d2}
+      \strng{authornamehash}{f17621b13747923872bd2100f81eb2d2}
+      \strng{authorfullhash}{f17621b13747923872bd2100f81eb2d2}
+      \strng{authorfullhashraw}{f17621b13747923872bd2100f81eb2d2}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{https://ardupilot.org/}}
+      \field{note}{Accessed: 2026}
+      \field{title}{{ArduPilot}: Open Source Autopilot}
+      \field{year}{2024}
+    \endentry
+    \entry{mavlink}{misc}{}{}
+      \name{author}{3}{}{%
+        {{hash=9c8a122e3af5eff832a3515e7c7185e3}{%
+           family={Meier},
+           familyi={M\bibinitperiod},
+           given={Lorenz},
+           giveni={L\bibinitperiod}}}%
+        {{hash=ece6c0a5687f238c8db515e64d3f883a}{%
+           family={Honegger},
+           familyi={H\bibinitperiod},
+           given={Dominik},
+           giveni={D\bibinitperiod}}}%
+        {{hash=501629493a5ead2d23ee597103478ce8}{%
+           family={Pollefeys},
+           familyi={P\bibinitperiod},
+           given={Marc},
+           giveni={M\bibinitperiod}}}%
+      }
+      \strng{namehash}{46ccaf5b5b0b08f822b9bd3b3c8cd676}
+      \strng{fullhash}{46ccaf5b5b0b08f822b9bd3b3c8cd676}
+      \strng{fullhashraw}{46ccaf5b5b0b08f822b9bd3b3c8cd676}
+      \strng{bibnamehash}{46ccaf5b5b0b08f822b9bd3b3c8cd676}
+      \strng{authorbibnamehash}{46ccaf5b5b0b08f822b9bd3b3c8cd676}
+      \strng{authornamehash}{46ccaf5b5b0b08f822b9bd3b3c8cd676}
+      \strng{authorfullhash}{46ccaf5b5b0b08f822b9bd3b3c8cd676}
+      \strng{authorfullhashraw}{46ccaf5b5b0b08f822b9bd3b3c8cd676}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{https://mavlink.io/}}
+      \field{note}{Accessed: 2026}
+      \field{title}{{MAVLink}: Micro Air Vehicle Communication Protocol}
+      \field{year}{2013}
+    \endentry
+    \entry{yolov8}{misc}{}{}
+      \name{author}{3}{}{%
+        {{hash=c5c5e5cd7f4f477f617289b32613deb0}{%
+           family={Jocher},
+           familyi={J\bibinitperiod},
+           given={Glenn},
+           giveni={G\bibinitperiod}}}%
+        {{hash=ec281637802454e8df4de72f3b1ee401}{%
+           family={Chaurasia},
+           familyi={C\bibinitperiod},
+           given={Ayush},
+           giveni={A\bibinitperiod}}}%
+        {{hash=b8739ebbf3f871d471b6720a02ed541f}{%
+           family={Qiu},
+           familyi={Q\bibinitperiod},
+           given={Jing},
+           giveni={J\bibinitperiod}}}%
+      }
+      \strng{namehash}{dde928f96d7839eed6effd0fbfbe5acc}
+      \strng{fullhash}{dde928f96d7839eed6effd0fbfbe5acc}
+      \strng{fullhashraw}{dde928f96d7839eed6effd0fbfbe5acc}
+      \strng{bibnamehash}{dde928f96d7839eed6effd0fbfbe5acc}
+      \strng{authorbibnamehash}{dde928f96d7839eed6effd0fbfbe5acc}
+      \strng{authornamehash}{dde928f96d7839eed6effd0fbfbe5acc}
+      \strng{authorfullhash}{dde928f96d7839eed6effd0fbfbe5acc}
+      \strng{authorfullhashraw}{dde928f96d7839eed6effd0fbfbe5acc}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{https://github.com/ultralytics/ultralytics}}
+      \field{note}{Accessed: 2026}
+      \field{title}{{Ultralytics YOLOv8}}
+      \field{year}{2023}
+    \endentry
+  \enddatalist
+\endrefsection
+\endinput
+

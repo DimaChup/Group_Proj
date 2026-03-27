@@ -1,0 +1,144 @@
+\section{Systems Engineering}
+\label{sec:systems_engineering}
+
+\subsection{V-Model Framework}
+
+We adopted a tailored V-model~\cite{forsberg1991relationship} as our systems engineering lifecycle, mapping the left side (decomposition and design) to our early simulation-based development and the right side (integration and verification) to our progressive hardware testing. The V-model is well-suited to safety-critical systems where requirements traceability and staged verification are essential~\cite{incose2015, blanchard2011systems}.
+
+\begin{table}[htbp]
+\centering
+\compactTable
+\caption{V-model mapping for the SAR drone project.}
+\label{tab:vmodel}
+\begin{tabularx}{\linewidth}{l X l X}
+\toprule
+\textbf{Left side} & \textbf{Activity} & \textbf{Right side} & \textbf{Verification} \\
+\midrule
+System requirements & Mission objectives, constraints, regulations & System validation & Full autonomous flight test \\
+Subsystem design & CV, autopilot, comms, ground station & Integration testing & Bench test (all subsystems, no props) \\
+Component design & TFLite model, state machine, planning algorithm & Component testing & Unit tests, simulation, benchmarks \\
+Implementation & Python code, hardware assembly & --- & --- \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+The iterative nature of our sprint methodology meant we traversed the V-model multiple times at increasing fidelity: first in pure simulation, then with hardware-in-the-loop (camera + SITL), and finally with the complete physical system.
+
+\subsection{Requirements}
+
+We defined requirements at three levels: system, subsystem, and component. \tabref{tab:requirements} presents the key system-level requirements.
+
+\begin{table}[htbp]
+\centering
+\compactTable
+\caption{System-level requirements.}
+\label{tab:requirements}
+\begin{tabularx}{\linewidth}{l X l}
+\toprule
+\textbf{ID} & \textbf{Requirement} & \textbf{Verification} \\
+\midrule
+SR-01 & The drone shall autonomously search a user-defined polygon at a configurable altitude & Simulation + flight test \\
+SR-02 & The onboard AI shall detect a casualty-sized target with $>$90\% recall from the search altitude & CV benchmark + field test \\
+SR-03 & A human operator shall confirm or reject each detection before the drone takes action & Ground station UI test \\
+SR-04 & The drone shall land at a safe offset ($\geq$5\,m) from a confirmed target & Simulation + GPS accuracy test \\
+SR-05 & An RC pilot shall be able to override autonomous control at any time via kill switch & RC override test \\
+SR-06 & The system shall comply with UK CAA regulations for the specific operational category~\cite{ukcaa, cap722} & Documentation review \\
+SR-07 & The system shall respect no-fly zone boundaries (SSSI geofence) & Simulation + parameter check \\
+SR-08 & All autonomous capabilities shall be validated through progressive testing before live flight & Test plan review \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Requirements were traced forward to design decisions, test cases, and verification evidence. For example, SR-02 drove the selection of YOLOv8n as the detection model (balancing accuracy and inference speed on the Pi), while SR-05 drove the implementation of RC override at every state in the finite state machine.
+
+\subsection{Design Trade Studies}
+
+We conducted multi-criteria decision analysis (MCDA) for key design choices, following Pugh's method~\cite{pugh1991total} with weighted scoring. We document three representative trade studies below.
+
+\subsubsection{Detection Model Selection}
+
+We evaluated three model architectures for onboard casualty detection:
+
+\begin{table}[htbp]
+\centering
+\compactTable
+\caption{Detection model trade study (1--5 scale, 5 = best).}
+\label{tab:model_trade}
+\begin{tabular}{l c c c c c}
+\toprule
+\textbf{Criterion} & \textbf{Weight} & \textbf{YOLOv8n} & \textbf{YOLOv8s} & \textbf{SSD MobileNet} & \textbf{Faster R-CNN} \\
+\midrule
+Inference speed on Pi & 0.30 & 4 & 3 & 5 & 1 \\
+Detection accuracy (mAP) & 0.30 & 4 & 5 & 3 & 5 \\
+Model size (TFLite) & 0.15 & 5 & 3 & 5 & 1 \\
+Ease of retraining & 0.15 & 5 & 5 & 3 & 3 \\
+Community/documentation & 0.10 & 5 & 5 & 4 & 4 \\
+\midrule
+\textbf{Weighted score} & & \textbf{4.35} & 3.95 & 3.95 & 2.50 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+YOLOv8n was selected for the best balance of speed and accuracy. Its TFLite export ran at 4.8 FPS on the Pi~5 (206\,ms per frame), which was sufficient for the drone's search speed of 3--5\,m/s.
+
+\subsubsection{Video Streaming Protocol}
+
+For live camera feed from the Pi to the ground station, we evaluated six streaming approaches:
+
+\begin{table}[htbp]
+\centering
+\compactTable
+\caption{Video streaming trade study.}
+\label{tab:stream_trade}
+\begin{tabular}{l c c c c}
+\toprule
+\textbf{Criterion} & \textbf{Weight} & \textbf{MJPEG/HTTP} & \textbf{H.264/GStreamer} & \textbf{WebRTC} \\
+\midrule
+Reliability in field & 0.35 & 5 & 3 & 3 \\
+Browser compatibility & 0.25 & 5 & 2 & 5 \\
+Dependencies required & 0.20 & 5 & 2 & 1 \\
+Latency & 0.10 & 3 & 5 & 5 \\
+Bandwidth efficiency & 0.10 & 2 & 5 & 5 \\
+\midrule
+\textbf{Weighted score} & & \textbf{4.55} & 2.85 & 3.30 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+MJPEG was chosen because reliability and simplicity outweighed latency for a passive monitoring application at 3--5 FPS. The stateless HTTP protocol meant any browser could connect without special codecs or software.
+
+\subsubsection{Companion Computer Selection}
+
+\begin{table}[htbp]
+\centering
+\compactTable
+\caption{Companion computer trade study.}
+\label{tab:companion_trade}
+\begin{tabular}{l c c c c}
+\toprule
+\textbf{Criterion} & \textbf{Weight} & \textbf{Raspberry Pi 5} & \textbf{Jetson Nano} & \textbf{Intel NUC} \\
+\midrule
+AI inference speed & 0.25 & 3 & 5 & 4 \\
+Weight / size & 0.25 & 5 & 4 & 1 \\
+Power consumption & 0.20 & 5 & 3 & 1 \\
+Cost & 0.15 & 5 & 3 & 2 \\
+Ecosystem / support & 0.15 & 5 & 4 & 3 \\
+\midrule
+\textbf{Weighted score} & & \textbf{4.50} & 3.90 & 2.05 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The Raspberry Pi~5~\cite{raspberrypi5} was selected for its excellent power-to-weight ratio, extensive ecosystem, and adequate CPU performance for TFLite inference. The Jetson Nano offered better GPU acceleration but at higher power draw and cost.
+
+\subsection{Configuration Management}
+
+All source code, configuration files, and documentation were managed in a single GitHub repository. We followed a branching strategy with:
+
+\begin{itemize}
+  \item A \textbf{main branch} (\texttt{MainOne2} through \texttt{MainOne8}) for stable, tested code.
+  \item \textbf{Feature branches} (\texttt{Working*}) for active development, merged only after testing.
+  \item \textbf{Tagged commits} at each milestone for rollback capability.
+\end{itemize}
+
+Configuration parameters (altitudes, speeds, thresholds, camera settings) were centralised in a single \texttt{config.py} file with automatic hardware detection, ensuring the same codebase ran on both laptops (simulation) and the Pi (real hardware) without code changes~\cite{chacon2014pro}.

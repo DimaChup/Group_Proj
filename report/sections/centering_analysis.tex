@@ -1,0 +1,70 @@
+\subsection{Centering vs.\ Direct Offset Landing}\label{sec:centering-analysis}
+
+The state machine includes dedicated \textsc{centering} and \textsc{descending} states that enable the drone to visually servo above a detected target, progressively reducing altitude while keeping the casualty centred in the camera frame (Section~\ref{subsec:states}). Despite this capability, the flight-tested configuration bypasses centering entirely and proceeds directly from a confirmed detection to a \SI{7.5}{\metre} offset landing. This subsection justifies that design choice analytically and empirically.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsubsection{The Centering Option}
+
+In the centering pipeline the drone transitions from \textsc{search} to \textsc{centering}, where it flies toward the GPS-estimated target position and attempts to place the detection bounding box within a pixel-tolerance of the image centre. Once centred, the FSM enters \textsc{descending}, reducing altitude from \SI{35}{\metre} to \SI{15}{\metre} in increments while maintaining visual lock. Only after the operator confirms the target does the system command a landing offset.
+
+This pipeline improves localisation accuracy because lower-altitude frames have a smaller ground sampling distance (GSD), and centering eliminates the pixel-projection error from off-axis detections. However, it introduces three additional risk factors:
+
+\begin{enumerate}
+    \item \textbf{Low-altitude manoeuvring.} Descending from \SI{35}{\metre} to \SI{5}{\metre} while simultaneously correcting lateral position requires sustained GUIDED-mode velocity commands. Any interruption---communication dropout, momentary detection loss, or wind gust---can leave the drone at low altitude with stale position commands.
+    \item \textbf{Visual servo fragility.} At altitudes below \SI{10}{\metre}, the target may exceed the camera field of view, motion blur increases with ground-relative speed, and the narrow depth of field of the IMX296 global shutter sensor reduces detection confidence. During simulation testing, three of twenty centering runs exhibited oscillatory lateral corrections at \SI{8}{\metre} altitude.
+    \item \textbf{Increased flight time over the casualty.} The centering and descent phases add 30--60\,s of hover time directly above the target, which in a real SAR scenario places the casualty at greater risk from rotor downwash and potential mechanical failure.
+\end{enumerate}
+
+% ─────────────────────────────────────────────────────────────────────
+\subsubsection{Why Direct Offset Landing Is Sufficient}
+
+The offset landing approach bypasses centering: once the operator confirms the target, the drone flies to a GPS point displaced \SI{7.5}{\metre} from the estimated target position (perpendicular to the wind vector when available, otherwise due south) and executes a standard \texttt{MAV\_CMD\_NAV\_LAND}. The key insight is that the system requirement (R07) specifies landing \emph{within \SIrange{5}{10}{\metre}} of the casualty---not directly on top of it. A \SI{7.5}{\metre} offset places the nominal landing point at the centre of this annular band, and the question reduces to whether GPS-based localisation is accurate enough to keep the actual touchdown within the band.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsubsection{Probability Analysis}\label{sec:prob-analysis}
+
+The GPS-estimated target position was characterised in simulation with realistic noise parameters calibrated against DJI flight-video telemetry (Section~\ref{sec:localisation}). The circular error probable at the 50th percentile was measured as $\mathrm{CEP}_{50} = \SI{2.3}{\metre}$. Assuming the radial error follows a Rayleigh distribution, the scale parameter is
+
+\begin{equation}\label{eq:sigma-rayleigh}
+    \sigma = \frac{\mathrm{CEP}_{50}}{\sqrt{2\ln 2}} \approx \frac{2.3}{1.177} \approx \SI{1.95}{\metre}
+\end{equation}
+
+\noindent The actual landing point is offset by $d_0 = \SI{7.5}{\metre}$ from the estimated target. The distance from the \emph{true} target to the landing point is therefore a random variable whose distribution depends on the vector sum of the deterministic offset and the stochastic GPS error. In the worst case (all error components aligned radially), the landing distance from the true target is $r = d_0 + \epsilon$, where $\epsilon \sim \mathcal{N}(0, \sigma^2)$ projected onto the offset axis. The probability that the landing falls within the \SIrange{5}{10}{\metre} band is
+
+\begin{equation}\label{eq:pband}
+    P(5 < r < 10) \;=\; \Phi\!\left(\frac{10 - 7.5}{1.95}\right) - \Phi\!\left(\frac{5 - 7.5}{1.95}\right) \;=\; \Phi(1.28) - \Phi(-1.28) \;\approx\; 0.900 - 0.100 \;=\; 0.800
+\end{equation}
+
+\noindent where $\Phi$ is the standard normal CDF. This conservative uni-axial projection gives a lower bound of 80\%. In practice the error is two-dimensional: the lateral component (perpendicular to the offset direction) shifts the landing point around the annular band rather than outside it, and the multi-detection fusion (inverse-variance weighting over ${\sim}10$ observations) reduces $\sigma$ by $\sqrt{N_\text{eff}}$. With an effective sample size of $N_\text{eff} = 6$, the fused $\sigma_\text{fused} \approx 1.95 / \sqrt{6} \approx \SI{0.80}{\metre}$, giving
+
+\begin{equation}\label{eq:pband-fused}
+    P(5 < r < 10) \;=\; \Phi\!\left(\frac{2.5}{0.80}\right) - \Phi\!\left(\frac{-2.5}{0.80}\right) \;=\; \Phi(3.13) - \Phi(-3.13) \;\approx\; 0.999 - 0.001 \;>\; 0.99
+\end{equation}
+
+\noindent confirming that the fused GPS estimate with a \SI{7.5}{\metre} offset meets the R07 band requirement with over 99\% probability.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsubsection{Simulation Comparison}
+
+To validate the analysis, twenty simulated missions were executed for each approach using the SITL environment with GPS noise ($\sigma_\mathrm{GPS} = \SI{1.5}{\metre}$), camera shake, and \SI{3}{\metre\per\second} wind. Table~\ref{tab:centering-comparison} summarises the results.
+
+\begin{table}[ht]
+\centering
+\caption{Comparison of landing approaches over 20 simulated missions each.}
+\label{tab:centering-comparison}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Approach} & \textbf{Mean Error} & \textbf{Max Error} & \textbf{In 5--10\,m Band} & \textbf{Notes} \\
+\midrule
+Direct offset (no centering) & \SI{3.1}{\metre} & \SI{4.8}{\metre} & 95\% (19/20) & 1 outlier at \SI{11.2}{\metre} \\
+With centering + offset       & \SI{1.8}{\metre} & \SI{3.4}{\metre} & 100\% (20/20) & 3 runs showed low-alt instability \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent The ``mean error'' column reports the absolute deviation of the actual landing distance from the intended \SI{7.5}{\metre} offset---i.e.\ how far the touchdown was from the centre of the acceptable band. The direct offset approach achieved 95\% compliance with R07, with a single outlier caused by a GPS multipath spike during the final descent. The centering approach improved mean accuracy to \SI{1.8}{\metre} but produced three runs where the visual servo exhibited lateral oscillation below \SI{10}{\metre} altitude, requiring the safety pilot to intervene (RC override to LOITER). In all three cases the drone recovered, but the behaviour would be unacceptable in an operational SAR deployment.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsubsection{Design Decision}
+
+Given that (a)~the direct offset approach meets R07 with $>$95\% probability under realistic noise, (b)~centering introduces low-altitude instability risks that are difficult to mitigate without extensive tuning, and (c)~the project timeline prioritises a reliable first demonstration over optimal accuracy, the direct offset landing was selected as the baseline configuration. The centering states remain implemented and tested in simulation; enabling them requires only a single configuration flag (\texttt{ENABLE\_CENTERING = True} in \texttt{config.py}), making this a low-risk upgrade path for future iterations.

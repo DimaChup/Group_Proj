@@ -1,0 +1,32 @@
+\section{Self-Assessment and Development}
+\label{sec:self_development}
+
+\subsection{Skills Developed}
+
+This project pushed me into unfamiliar domains. I learned MAVLink and ArduPilot~\cite{ardupilot,mavlink} from scratch---heartbeat negotiation, command acknowledgement, and autopilot configuration. Edge AI deployment (model export, TFLite~\cite{tflite} post-processing, Pi benchmarking) taught me that infrastructure around a model is where real complexity lies. Threading camera capture, inference, telemetry, and web streaming on a single-core Python process gave practical concurrency experience under GIL constraints. Field debugging on a Pi with no internet and limited screen space was perhaps the most underrated skill developed.
+
+\subsection{Time Management}
+
+Work was structured around weekly milestones: weeks 12--15 on simulation and the state machine, weeks 16--18 on Pi deployment, weeks 19--20 on field testing and retraining. A living ground-truth document, updated after every session, turned each ``What's Not Done Yet'' list into the next session's tasks. When weather cancelled our first flight, pre-planned bench tests kept the day productive.
+
+\subsection{Strengths and Weaknesses}
+
+My core strength is \textbf{rapid prototyping and system integration}---decomposing problems into bounded modules and integrating them quickly. The simulation-first methodology and living documentation scale directly to professional practice. I communicate well through demonstrations and visual tools, but less effectively in spontaneous verbal explanation.
+
+My primary weakness is \textbf{designing for collaboration}: I build systems optimised for one person's mental model rather than distributing work through simpler interfaces. I also \textbf{choose speed over inclusion}---building alone in two hours rather than onboarding a teammate in four. Effective for output, but it undermines team development. A third weakness is \textbf{delayed hardware testing}: weeks of laptop development before Pi deployment led to Python~3.13 incompatibilities and camera colour issues that cost days to resolve~\cite{koopman2019safe}.
+
+\subsection{Development Programme}
+
+Based on reflective analysis using Gibbs' cycle~\cite{gibbs1988} and Kolb's experiential learning model~\cite{kolb1984}, I identify three development actions:
+
+\begin{enumerate}
+  \item \textbf{Collaborative architecture}: define contribution points and interface contracts \textit{before} implementation. Success metric: teammates contributing meaningful code without direct guidance.
+  \item \textbf{Day-one hardware deployment}: run a trivial script on target hardware within week one to surface platform issues early.
+  \item \textbf{Concise communication}: adopt a ``one sentence, one diagram, one demo'' framework for architecture explanations.
+\end{enumerate}
+
+\subsection{Connection to Career Goals}
+
+I came to Bristol from Ukraine to develop robotics skills I can bring back to help my country. This project directly involves technologies with humanitarian and defence applications---autonomous search, AI detection~\cite{yolov8}, and edge computing for field-deployable systems. The skills developed---MAVLink integration, edge AI, safety-critical design~\cite{leveson2011}---transfer to autonomous systems Ukraine needs for mine clearance, reconnaissance, and disaster response.
+
+If I had to summarise this project's lesson: \textit{the quality of an autonomous system is determined not by its algorithms' cleverness, but by the rigour of its testing and the honesty of its failure analysis.}

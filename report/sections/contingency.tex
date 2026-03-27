@@ -1,0 +1,115 @@
+\section{Contingency Planning and Deliverable Tiers}\label{sec:contingency}
+
+Autonomous UAV missions introduce uncertainty at every layer---hardware, software, environmental, and regulatory. Rather than designing a single monolithic system that either works or does not, the project was structured around three deliverable tiers of increasing ambition, with explicit fallback paths between them. This section defines the minimum viable, target, and stretch deliverables, maps each to the brief requirements (R01--R12), and presents the contingency plans and pre-prepared test scripts that enable graceful degradation on flight day.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{Minimum Viable Deliverable}\label{sec:mvd}
+
+The minimum viable deliverable (MVD) satisfies the core brief requirements using the simplest operational mode: the human pilot retains manual control of the aircraft while the onboard system provides passive computer vision and telemetry logging. Table~\ref{tab:mvd} summarises the MVD components and their requirement coverage.
+
+\begin{table}[ht]
+  \centering\small
+  \caption{Minimum viable deliverable: components and requirement coverage.}\label{tab:mvd}
+  \begin{tabularx}{\linewidth}{@{}p{4.2cm}X c@{}}
+    \toprule
+    \textbf{Component} & \textbf{Description} & \textbf{Req.} \\
+    \midrule
+    Mission Planner AUTO waypoints & Pre-uploaded lawnmower waypoints executed by the Cube autopilot in AUTO mode. No custom Python code in the loop. & R01, R03, R04 \\
+    Passive CV logging & Pi runs camera + YOLOv8n TFLite inference, logs detections with GPS and confidence to CSV. Sends zero flight commands. & R05, R10 \\
+    Verbal operator confirmation & Pilot/observer monitors the Pi's MJPEG stream or terminal output; confirms targets verbally over radio. & R08 \\
+    RC kill switch & RC transmitter mode switch to \texttt{STABILIZE}/\texttt{LOITER} active at all times. ArduCopter RC failsafe provides independent backup. & R09 \\
+    Firmware geofence & Cube-level polygon geofence triggers \texttt{LOITER} on boundary breach. & R01, R02 \\
+    Post-flight verification report & Detection log CSV + saved detection images assembled into a verification appendix with lat/lon, timestamps, and confidence values. & R10, R12 \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+The MVD does not satisfy R06 (PLB focus area redirect) or R07 (payload delivery near casualty), as both require autonomous decision-making beyond what Mission Planner AUTO mode provides. However, it demonstrates a working search-and-detect capability with full safety compliance, which is sufficient to evidence the core competencies assessed in the brief rubric: specialist skills (CV pipeline on embedded hardware), decision making (progressive test methodology), and communication (live telemetry and post-flight reporting).
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{Target Deliverable}\label{sec:target}
+
+The target deliverable is the system described throughout this report: a fully autonomous mission orchestrated by the Python state machine on the Raspberry Pi companion computer. Table~\ref{tab:target} maps each capability to its requirement.
+
+\begin{table}[ht]
+  \centering\small
+  \caption{Target deliverable: full autonomous mission.}\label{tab:target}
+  \begin{tabularx}{\linewidth}{@{}p{4.2cm}X c@{}}
+    \toprule
+    \textbf{Capability} & \textbf{Description} & \textbf{Req.} \\
+    \midrule
+    Autonomous search pattern & Boustrophedon waypoints generated at runtime and executed in \texttt{GUIDED} mode with B\'{e}zier-smoothed turns. & R01, R03, R04, R05 \\
+    Three-layer geofence & Speed scalar field, repulsive vector field, and hard boundary cutoff enforce SSSI exclusion in software, backed by firmware geofence. & R01, R02 \\
+    Onboard AI detection & YOLOv8n TFLite inference at ${\sim}$5\,FPS triggers automatic transition to \textsc{Centering} state. Detection queue with spatial clustering filters duplicates. & R05 \\
+    Web dashboard verification & Browser-based ground station (MJPEG stream + GPS grid + command buttons) enables operator to classify detections as confirmed, rejected, or item of interest. & R08, R10 \\
+    \SI{7.5}{\metre} offset landing & After operator confirmation, the system averages GPS for 10\,s, selects an operator-chosen cardinal offset, approaches at low altitude, and lands. & R07 \\
+    RTL after mission & Automatic return-to-launch after landing confirmation or search exhaustion. & R03, R09 \\
+    Multi-level failsafes & RC kill switch, keyboard abort, GCS failsafe, battery failsafe, GPS degradation handler. & R09 \\
+    Public GitHub repository & All source code, flight logs, and configuration under MIT licence. & R12 \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+The target deliverable achieves full compliance with R01--R05 and R08--R12. Partial compliance with R06 is achieved through the focus area support module (Section~\ref{sec:focus-area}), which re-generates the search pattern over a smaller polygon when PLB coordinates are received. R07 compliance depends on the Tarot payload release mechanism integration, which is implemented in software (\texttt{SERVO\_CHANNEL}, \texttt{SERVO\_FULL\_PWM} in \texttt{config.py}) but requires field calibration of the servo PWM values.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{Stretch Goals}\label{sec:stretch}
+
+If the target deliverable is achieved with margin, several enhancements would extend the system's operational capability:
+
+\begin{itemize}
+  \item \textbf{Multi-target detection and classification.} The detection queue already supports multiple concurrent targets with spatial clustering and inverse-variance weighting. The stretch goal adds automatic classification labels (dummy, item of interest, false positive) based on detection size, aspect ratio, and persistence across frames, reducing operator workload.
+  \item \textbf{Live PLB focus area redirect (R06).} Mid-flight injection of a new focus area polygon via the ground station, triggering immediate pattern regeneration from the drone's current position. The \texttt{focus\_area.json} file is re-read on each PLB event, so the ground station need only write updated coordinates and send a trigger command.
+  \item \textbf{Payload release mechanism (R07).} Full integration of the Tarot double-throw servo for first aid kit delivery, including a two-stage release sequence (partial open at \SI{1300}{\micro\second} PWM, full release at \SI{1100}{\micro\second}) with altitude and position guards to prevent premature deployment.
+  \item \textbf{NCNN inference backend.} The NCNN export of the retrained YOLOv8n model is available in \texttt{cv\_models/sar\_v2\_1088/ncnn/} and is expected to achieve ${\sim}$15\,FPS on the Pi~5 CPU, tripling the current TFLite throughput of ${\sim}$5\,FPS and enabling detection during faster transit legs.
+  \item \textbf{Real-time GPS estimation on dashboard.} Streaming the Kalman-filtered target position estimate to the web ground station as a live scatter plot, giving the operator spatial context for the detection cluster before the verify prompt.
+\end{itemize}
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{Contingency Plans}\label{sec:contingencies}
+
+Table~\ref{tab:contingency} defines the primary failure scenarios, their detection criteria, and the pre-planned response. Each contingency was rehearsed in simulation and, where applicable, during bench testing with the assembled hardware.
+
+\begin{table}[htbp]
+  \centering\small
+  \caption{Contingency plans for flight day failure scenarios.}\label{tab:contingency}
+  \begin{tabularx}{\linewidth}{@{}p{2.6cm}p{3.0cm}X@{}}
+    \toprule
+    \textbf{Scenario} & \textbf{Detection} & \textbf{Response} \\
+    \midrule
+    No GPS lock & Satellites $<$ 6 or fix type $<$ 3D after 120\,s & Fall back to Mission Planner AUTO mode with pre-uploaded waypoints. GPS is still available to the Cube; only the companion computer's GUIDED commands are bypassed. \\
+    CV fails in field (no detections) & Zero detections after full search pass & Swap to COCO person detector (\texttt{models/human.tflite}, 80-class YOLOv8n, \SI{13}{\mega\byte}). If still no detections, reduce confidence threshold from 0.2 to 0.1 and repeat. \\
+    Pi crashes mid-flight & MAVLink heartbeat loss & ArduCopter GCS failsafe triggers RTL after heartbeat timeout (\texttt{FS\_GCS\_ENABLE}). Pilot monitors via RC telemetry. On the ground, restart script and resume from saved state. \\
+    Detection altitude too low & Detections only below \SI{20}{\metre} during passive flight test & Reduce \texttt{TARGET\_ALT} from \SI{35}{\metre} to \SI{20}{\metre} in \texttt{config.py}. Accept the doubled scan-line count and reduced coverage rate. \\
+    Wind exceeds limits & Sustained $>$\SI{8}{\metre\per\second} at altitude & Abort mission; command RTL. Wait for calmer conditions. ArduPilot \texttt{LOITER} mode holds position in moderate gusts. \\
+    Battery low mid-search & ArduCopter voltage threshold & Automatic RTL via battery failsafe (\texttt{FS\_BATT\_ENABLE}). Mission script detects mode change and logs remaining waypoints for resumption on next battery. \\
+    Model swapped but wrong format & TFLite interpreter fails to load & \texttt{preflight.py} catches model load errors before takeoff. Revert to known-good \texttt{best.tflite} (3.2\,MB baseline). \\
+    Geofence misconfigured & KML parse returns wrong vertex count & \texttt{config.py} validates loaded zone vertex counts against hardcoded fallbacks. Mismatch triggers a warning and uses fallback coordinates. \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{Test Script Mapping}\label{sec:test-mapping}
+
+Each contingency scenario has a corresponding test script that can be executed on-site to verify the fallback path before committing to autonomous flight. Table~\ref{tab:test-scripts} maps scenarios to scripts.
+
+\begin{table}[htbp]
+  \centering\small
+  \caption{Contingency-to-test-script mapping.}\label{tab:test-scripts}
+  \begin{tabularx}{\linewidth}{@{}p{2.4cm}p{3.8cm}X@{}}
+    \toprule
+    \textbf{Scenario} & \textbf{Script} & \textbf{What it proves} \\
+    \midrule
+    GPS lock failure & \texttt{tests/hardware/gps\_health.py} & Step-by-step GPS verification: satellite count, fix type, HDOP. Confirms whether GPS is usable before takeoff. \\
+    CV fails in field & \texttt{tests/hardware/benchmark.py} & Runs 50 inference cycles on a static image; reports detection rate and confidence. Use with each candidate model to find one that works. \\
+    Pi crash recovery & \texttt{preflight.py} & Full connectivity check: camera, Cube link, model load, GPS. Run after restart to confirm all subsystems are online. \\
+    Altitude too low & \texttt{tests/flight/1\_passive\_flight.py} & Passive detection during manual RC flight at multiple altitudes. Review log to determine minimum detection altitude. \\
+    Wind assessment & \texttt{tests/diagnostics/cube\_monitor.py} & Live telemetry dashboard showing wind estimate, ground speed, and attitude. Pilot can assess conditions before committing. \\
+    Model swap & \texttt{tests/hardware/detection\_snapshot\_test.py} & Single-frame detection on a static image with any \texttt{.tflite} model. Confirms the replacement model loads and detects correctly. \\
+    Full fallback to MVD & Mission Planner AUTO + \texttt{passive\_watch.py} & Pre-uploaded waypoints in AUTO mode; Pi runs passive CV with zero commands. The MVD configuration requires no custom flight code. \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+The progressive flight test methodology (Section~\ref{sec:testing}) ensures that each tier is validated before the next is attempted. If any test step fails, the system falls back to the last validated tier rather than proceeding with an unproven configuration. This approach---inspired by standard practice in aerospace verification and validation~\cite{rtca_do178c}---means that flight day always has a known-good fallback ready, even if the most ambitious capability is not yet proven in the field.

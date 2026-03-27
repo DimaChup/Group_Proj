@@ -1,0 +1,259 @@
+% streaming_architecture.tex — Video Streaming and Ground Station Architecture
+% Intended as a detailed design-rationale section (cross-references sec:groundstation)
+
+\section{Video Streaming and Ground Station Architecture}\label{sec:streaming-arch}
+
+The choice of video transport, concurrency model, and ground station topology has a
+disproportionate effect on operator situational awareness in small-UAS SAR operations.
+This section analyses the trade-offs that led to the current MJPEG-over-HTTP
+architecture and documents the alternatives that were evaluated and rejected.
+
+% ═══════════════════════════════════════════════════════════════════════
+\subsection{Streaming Protocol Selection}\label{sec:stream-protocol}
+
+Four candidate protocols were evaluated against five criteria relevant to a
+Raspberry~Pi companion computer operating over an ad-hoc WiFi link: glass-to-glass
+latency, browser compatibility, dependency footprint on the Pi, firewall
+transparency, and implementation complexity.
+
+\begin{table}[ht]
+\centering
+\caption{Comparison of video streaming protocols for companion-computer UAV telemetry.}
+\label{tab:stream-protocols}
+\small
+\begin{tabular}{@{}lccccl@{}}
+\toprule
+\textbf{Protocol} & \textbf{Latency} & \textbf{Browser} & \textbf{Pi deps} & \textbf{Firewall} & \textbf{Complexity} \\
+\midrule
+MJPEG/HTTP        & 50--100\,ms & Native \texttt{<img>} & None (stdlib) & TCP 8090 only & Trivial \\
+HLS (H.264)       & 2--6\,s     & Native \texttt{<video>} & FFmpeg required & TCP 80 only & Moderate \\
+RTP/RTSP          & 30--80\,ms  & Requires VLC/app & GStreamer or FFmpeg & UDP punch-through & Moderate \\
+WebRTC            & 30--60\,ms  & Native \texttt{RTCPeerConnection} & libnice, STUN/TURN & ICE negotiation & High \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{MJPEG over HTTP} was selected for the following reasons:
+
+\begin{enumerate}
+  \item \textbf{Zero external dependencies.} The server uses only Python's standard-library
+        \texttt{http.server} and \texttt{socketserver} modules. No FFmpeg binary, no
+        GStreamer pipeline, no native codec library needs to be cross-compiled for
+        \texttt{aarch64}. On a minimal Raspberry~Pi~OS image where every additional
+        package increases the attack surface and deployment friction, this is a decisive
+        advantage.
+
+  \item \textbf{Universal browser decoding.} Every modern browser decodes a
+        \texttt{multipart/x-mixed-replace} stream natively when assigned to an
+        \texttt{<img src="/stream">} element~\cite{munoz2016mjpeg}. No JavaScript media-source
+        extension, no WebSocket shim, and no codec negotiation is required. The same URL
+        works on a laptop, a tablet, and a phone without installing any application.
+
+  \item \textbf{SSH tunnel transparency.} During bench testing and early field trials, the
+        operator frequently connects to the Pi over an SSH tunnel
+        (\texttt{ssh -L 8090:localhost:8090 pi@\ldots}). Because MJPEG is plain HTTP,
+        the tunnel carries video without modification. HLS would also tunnel, but
+        RTP/RTSP requires UDP forwarding (non-trivial over SSH), and WebRTC's ICE
+        negotiation fails entirely inside a tunnel.
+
+  \item \textbf{Acceptable latency.} The MJPEG stream adds approximately one frame of
+        encoding delay (the \texttt{cv2.imencode} call takes $<$\,2\,ms for a
+        640$\times$480 JPEG at quality~85) plus one TCP segment of network delay.
+        Measured glass-to-glass latency on local WiFi is 50--100\,ms, well within the
+        requirements for operator-in-the-loop confirmation at the \textsc{verify} state,
+        where the drone is hovering and the operator has several seconds to respond.
+\end{enumerate}
+
+\textbf{HLS (H.264 over HTTP Live Streaming)} was rejected primarily on latency grounds.
+HLS segments video into 2--6\,second chunks; even with low-latency HLS extensions, the
+minimum achievable latency is approximately 1\,s~\cite{apple_hls}. For an operator
+deciding whether a detected blob is a casualty, a one-second delay is tolerable in
+isolation but compounds with inference latency and command round-trip time. HLS also
+requires FFmpeg to transcode the raw camera frames into H.264 segments, adding a
+dependency that must be compiled with hardware-codec support on the Pi---a fragile
+build step that would need to be repeated on every OS update.
+
+\textbf{RTP/RTSP} offers the lowest theoretical latency but requires a dedicated client
+application (VLC, GStreamer, or a custom player). This eliminates the possibility of
+opening the stream on an arbitrary device---precisely the scenario where a field
+coordinator needs to glance at the feed on their phone. Furthermore, RTP uses UDP,
+which is blocked by many institutional firewalls and cannot traverse a standard SSH
+tunnel without additional tooling (\texttt{socat} or a TURN relay).
+
+\textbf{WebRTC} provides browser-native low-latency video with adaptive bitrate, but its
+implementation complexity is disproportionate to the project's needs. A minimal WebRTC
+stack requires STUN/TURN server configuration, SDP offer/answer exchange, ICE candidate
+gathering, and a signalling channel---typically a WebSocket server. The
+\texttt{aiortc} Python library provides a pure-Python implementation, but it pulls in
+over 20~transitive dependencies and introduces an asyncio event loop that conflicts with
+the synchronous MAVLink polling model used throughout the codebase. For a single-viewer
+stream on a local network, WebRTC's peer-to-peer negotiation machinery solves a problem
+that does not exist.
+
+% ═══════════════════════════════════════════════════════════════════════
+\subsection{Threading Model and Frame Buffering}\label{sec:threading-model}
+
+The ground station server uses \texttt{socketserver.ThreadingMixIn} to spawn a new
+thread for each incoming HTTP connection. This design was chosen over three
+alternatives:
+
+\begin{itemize}
+  \item \textbf{Single-threaded sequential server}: would block the \texttt{/state} JSON
+        endpoint while a long-lived \texttt{/stream} connection is active. Since the
+        browser polls \texttt{/state} every 400\,ms for telemetry updates, blocking would
+        cause the dashboard to appear frozen.
+  \item \textbf{asyncio (\texttt{aiohttp})}: Python's \texttt{asyncio} model requires
+        all blocking calls to be wrapped in executors. The MAVLink
+        \texttt{recv\_match()} call, OpenCV's \texttt{imencode()}, and TFLite's
+        \texttt{invoke()} are all synchronous C-extension calls that cannot yield to an
+        event loop. Wrapping each in \texttt{loop.run\_in\_executor()} would add
+        complexity without measurable benefit at the concurrency level of one or two
+        simultaneous browser clients.
+  \item \textbf{Multi-process}: forking is unnecessary for I/O-bound HTTP serving and
+        would complicate shared state (telemetry, frame buffer) by requiring
+        inter-process communication.
+\end{itemize}
+
+The critical shared resource is the latest encoded JPEG frame. A \emph{latest-frame-wins}
+buffer replaces any unread frame with the newest one, ensuring that the stream always
+shows the most recent camera image rather than queuing stale frames behind a
+backlog~\cite{gamma1994design}. The implementation is a single \texttt{threading.Lock}
+protecting a byte-string reference:
+
+\begin{verbatim}
+# Producer (main loop, ~50 Hz):
+_, jpeg = cv2.imencode('.jpg', frame,
+                       [cv2.IMWRITE_JPEG_QUALITY, 85])
+with self._frame_lock:
+    self._stream_jpeg = jpeg.tobytes()
+
+# Consumer (HTTP handler, per-client thread):
+with self._frame_lock:
+    jpeg = self._stream_jpeg
+\end{verbatim}
+
+No queue is used. If the consumer reads slower than the producer, intermediate frames are
+silently dropped---this is the correct behaviour for live video, where showing the
+\emph{latest} frame is always preferable to playing back a delayed queue. The HTTP handler
+sleeps for 50\,ms between sends, capping the stream at approximately 20\,fps regardless
+of how fast the producer runs. This rate exceeds the inference throughput
+(${\sim}$\,5\,fps on the Pi) and is therefore never the bottleneck.
+
+% ═══════════════════════════════════════════════════════════════════════
+\subsection{Headless Operation}\label{sec:headless-design}
+
+The companion computer runs headless (no monitor, no X11 server) in all operational
+scenarios. OpenCV's default behaviour is to call \texttt{cv2.imshow()}, which crashes
+immediately on a system without a display server. Rather than conditionally guarding every
+GUI call throughout the codebase, the system applies a monkey-patch at import time when
+the \texttt{DISPLAY} environment variable is absent:
+
+\begin{verbatim}
+if not os.environ.get('DISPLAY'):
+    cv2.imshow    = lambda *a, **k: None
+    cv2.namedWindow = lambda *a, **k: None
+    cv2.waitKey   = lambda *a, **k: -1
+\end{verbatim}
+
+This three-line patch converts every GUI call into a no-op, allowing the same source file
+to run with a desktop display (laptop simulation) or over SSH (Pi deployment) without any
+code-path divergence. All visual output is redirected to the browser via the MJPEG stream,
+making the web dashboard the sole operator interface in production.
+
+Operator input in headless mode is accepted through three parallel channels that converge
+on a single command dispatcher: (i)~terminal keyboard polling via a dedicated
+\texttt{threading.Thread} that reads single characters from \texttt{stdin}; (ii)~browser
+buttons that issue \texttt{POST /command} requests; and (iii)~the same REST endpoint
+accessed programmatically (e.g.\ \texttt{curl -X POST \ldots}). All three routes call the
+same \texttt{handle\_command()} method, guaranteeing consistent behaviour regardless of
+input source~\cite{goodrich2007human}.
+
+% ═══════════════════════════════════════════════════════════════════════
+\subsection{Port Allocation and Service Separation}\label{sec:port-alloc}
+
+Three HTTP services coexist on the Pi during a typical flight:
+
+\begin{itemize}
+  \item \textbf{Port 8090} --- primary ground station (\texttt{pi\_flight.py}) or passive
+        observer (\texttt{passive\_watch.py}). Only one of these runs at a time; they
+        share the port because they serve the same role (camera stream plus telemetry) and
+        binding the same port prevents accidental co-execution.
+  \item \textbf{Port 8091} --- training data capture (\texttt{capture\_training.py}). This
+        service runs \emph{alongside} the primary ground station during manual flights to
+        record photos and video for model retraining. A separate port avoids contention on
+        the camera resource and allows the operator to open both dashboards in adjacent
+        browser tabs.
+  \item \textbf{Port 5762} --- MAVProxy TCP bridge to Mission Planner. This is not an HTTP
+        service but a raw MAVLink TCP stream; it is listed here because it shares the Pi's
+        network interface and must not collide with the HTTP ports.
+\end{itemize}
+
+Port 8090 was chosen because it lies outside the IANA well-known range (0--1023), does
+not conflict with common development servers (3000, 5000, 8000, 8080), and is easy to
+remember as ``80 + 10'' for the primary stream.
+
+% ═══════════════════════════════════════════════════════════════════════
+\subsection{Bandwidth Estimation}\label{sec:bandwidth}
+
+MJPEG transmits each frame as an independent JPEG image, forgoing inter-frame compression.
+The per-frame size depends on resolution, quality factor, and scene complexity. Empirical
+measurements on representative outdoor aerial imagery give:
+
+\begin{itemize}
+  \item \textbf{640$\times$480, quality 70}: 25--40\,KB per frame $\Rightarrow$ at 10\,fps,
+        approximately 2.0--3.2\,Mbps.
+  \item \textbf{640$\times$480, quality 85} (current setting): 40--60\,KB per frame
+        $\Rightarrow$ at 10\,fps, approximately 3.2--4.8\,Mbps.
+  \item \textbf{1456$\times$1088, quality 85}: 120--180\,KB per frame $\Rightarrow$ at
+        5\,fps, approximately 4.8--7.2\,Mbps.
+\end{itemize}
+
+On a dedicated 802.11n WiFi link (theoretical 72\,Mbps at MCS\,7, practical
+${\sim}$30\,Mbps), the current configuration consumes less than 15\% of available
+bandwidth. For deployment over a cellular (4G) backhaul---where uplink bandwidth may be
+limited to 5--10\,Mbps---the quality factor would need to be reduced to 50--60 or the
+resolution halved, both of which are single-parameter changes in \texttt{cv2.imencode}.
+
+The bandwidth penalty relative to H.264 is significant: an equivalent H.264 stream at the
+same resolution and frame rate would require approximately 1--2\,Mbps due to inter-frame
+prediction and entropy coding~\cite{wiegand2003h264}. This 3--5$\times$ overhead is
+the principal cost of the MJPEG approach, accepted in exchange for the dependency and
+latency advantages described in Section~\ref{sec:stream-protocol}. For the project's
+operational context---a short-range WiFi link within a few hundred metres---the overhead is
+well within the available capacity.
+
+% ═══════════════════════════════════════════════════════════════════════
+\subsection{Ground Station Alternatives Considered}\label{sec:gs-alternatives}
+
+Before building a custom ground station, four existing platforms were evaluated:
+
+\begin{enumerate}
+  \item \textbf{QGroundControl}~\cite{qgroundcontrol2020}: a mature, cross-platform GCS
+        with MAVLink telemetry, waypoint planning, and video streaming via RTSP. However,
+        it cannot display custom AI detection overlays, does not support GPS-projected
+        target clustering, and its plugin architecture requires C++ development. Integrating
+        the project's Python-based perception pipeline would have required either an IPC
+        bridge (adding latency and a failure mode) or reimplementing the detection logic
+        in C++.
+
+  \item \textbf{MAVProxy with map module}: a lightweight Python GCS that provides a
+        console and a 2D map. It has no video display capability whatsoever, making it
+        unsuitable for an operator who needs to visually confirm detections before
+        authorising descent.
+
+  \item \textbf{Custom desktop application (PyQt/Tkinter)}: would provide full control
+        over the UI but requires a display server, which is unavailable on the Pi. Running
+        the desktop app on the laptop and streaming video to it recreates the same
+        streaming problem without solving it. Furthermore, desktop frameworks are not
+        accessible from a phone or tablet in the field.
+
+  \item \textbf{DroneKit-Android}: an unmaintained SDK (last commit 2019) for building
+        Android GCS applications. Its abandonment, combined with the Android-only
+        restriction, made it unsuitable for a project that needed to run on any device
+        with a browser.
+\end{enumerate}
+
+The custom browser-based approach eliminates all of these limitations: the perception
+pipeline runs in-process (no IPC), the video stream carries AI overlays natively (no
+separate overlay layer), the interface works on any networked device, and the entire server
+is a single Python file with no dependencies beyond the standard library and OpenCV.

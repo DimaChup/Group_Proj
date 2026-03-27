@@ -1,0 +1,139 @@
+\section{Evaluation}\label{sec:evaluation}
+
+The plus/delta review below assesses technical performance honestly, drawing on simulation results, bench tests, field calibration data, and video analysis of DJI flight footage processed through the detection pipeline. Where outdoor flight data is unavailable due to weather cancellation, we state so explicitly and quantify the gap. Team-working aspects are addressed individually in D7.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{Plus/Delta Summary}\label{sec:plus-delta}
+
+Table~\ref{tab:plus-delta} summarises the principal strengths and areas for improvement. Each item includes the specific evidence that supports the assessment.
+
+\begin{table}[H]
+\centering\compactTable
+\caption{Plus/delta review of system technical performance.}\label{tab:plus-delta}
+\begin{tabularx}{\linewidth}{@{}c p{5.2cm} X@{}}
+\toprule
+& \textbf{Item} & \textbf{Evidence / Detail} \\
+\midrule
+\multicolumn{3}{@{}l}{\textbf{Plus --- strengths}} \\
+\addlinespace
+\color{green!50!black}\textbf{P1} & Dual-backend CV architecture & Identical application code runs Ultralytics on the laptop and TFLite on the Pi; model files are drop-in interchangeable. The model was swapped three times (640, 1280, 1088 datasets) with zero changes to application code (\secref{sec:cv}). \\
+\addlinespace
+\color{green!50!black}\textbf{P2} & Configuration auto-detection & Serial-port probing selects real Cube or SITL with zero code changes. Verified by running the same \texttt{main.py} on Windows laptop (SITL), WSL (SITL), and Pi~5 (real Cube) without modification (\secref{sec:sw-arch}). \\
+\addlinespace
+\color{green!50!black}\textbf{P3} & Progressive testing caught 12 defects at low-cost tiers & The five-tier framework discovered 12 integration faults before any flight attempt (Table~\ref{tab:bug-cost}): BGR colour inversion, FOV miscalibration ($f{=}7.0{\to}5.46$\,mm), geofence sign errors, pyserial breakage, and 8 others---all resolved in 5--120\,min at the bench tier rather than during flight (\secref{sec:bug-discovery}). \\
+\addlinespace
+\color{green!50!black}\textbf{P4} & On-device inference performance & \SI{4.8}{FPS} (\SI{206.5}{\milli\second}/frame) on Pi~5 CPU, measured over 50 runs with \SI{0.995}{} mAP$_{50}$ on the retrained model; 50/50 detections at 0.966 mean confidence in the bench benchmark (\secref{sec:cv}). \\
+\addlinespace
+\color{green!50!black}\textbf{P5} & Modular vision interface & \texttt{vision.py} is the sole file that touches CV/AI; all other modules call \texttt{detect\_in\_image(frame)} $\to$ \texttt{(found, x, y, conf)}. Adding lens undistortion required modifying one file and added only \SI{1.5}{\milli\second} per frame---\SI{0.7}{\percent} of inference time (\secref{sec:cv}). \\
+\addlinespace
+\color{green!50!black}\textbf{P6} & Web-based ground station & Browser dashboard with MJPEG stream, GPS grid, and command buttons operates headlessly over SSH at \texttt{http://PI\_IP:8090}. Tested from PuTTY terminal and phone browser during bench day (\secref{sec:groundstation}). \\
+\addlinespace
+\color{green!50!black}\textbf{P7} & 58 test scripts across 6 categories & Unprecedented test coverage for an MSc project: hardware checks, flight progressions, diagnostics, calibration, field experiments, and development tools---each script single-purpose with CSV output where applicable (\secref{sec:test-org-detail}). \\
+\addlinespace
+\color{green!50!black}\textbf{P8} & Simulation-first development & Full state machine, geofence enforcement, and detection pipeline were validated end-to-end in SITL before hardware connection; the same \texttt{main.py} runs on both platforms. Dry-run mode validates waypoints in under 1\,s without any hardware (\secref{sec:simulation}). \\
+\addlinespace
+\color{green!50!black}\textbf{P9} & Quantitative figures from mathematical models & 14 publication-quality figures generated programmatically from calibration data, inference benchmarks, and flight video analysis---not manually drawn---ensuring reproducibility and numerical traceability (Figures~\ref{fig:det_sensitivity}--\ref{fig:perf_analysis}). \\
+\midrule
+\multicolumn{3}{@{}l}{\textbf{Delta --- areas for improvement}} \\
+\addlinespace
+\color{red!70!black}\textbf{D1} & No outdoor flight completed & Weather cancelled the scheduled flight day; all hardware validation is bench- or video-based. Outdoor GPS accuracy, wind disturbance, and real detection range remain unverified. \emph{Next step:} rebook flight slot, execute Tiers~3--5 of the progressive framework with the identical codebase. \\
+\addlinespace
+\color{red!70!black}\textbf{D2} & Inference rate limits high-speed search & At \SI{4.8}{FPS} and \SI{10}{\metre\per\second} search speed, the camera advances \SI{2.1}{\metre} between frames---adequate at \SI{35}{\metre} altitude (\SI{32}{\metre} footprint) but marginal if speed or altitude increases. \emph{Next step:} export FP16 XNNPACK model (estimated ${\sim}$\SI{10}{FPS}) and thread the capture/inference pipeline for 20--30\% additional throughput. \\
+\addlinespace
+\color{red!70!black}\textbf{D3} & GPS timing lag uncompensated & The Here~3+ receiver exhibits \SIrange{100}{200}{\milli\second} latency, producing ${\sim}$\SI{1}{\metre} position error at \SI{5}{\metre\per\second} along the flight heading. \emph{Next step:} implement first-order lag compensation ($\Delta\mathbf{p} = \mathbf{v} \cdot \Delta t_{\text{lag}}$) in the heading direction, tuneable from config. \\
+\addlinespace
+\color{red!70!black}\textbf{D4} & No precision--recall curve for confidence threshold & The detection threshold of 0.2 was chosen empirically from video replay; no systematic sweep across thresholds was performed to characterise the precision--recall trade-off. \emph{Next step:} run threshold sweep on DJI video with ground-truth annotations to produce a PR curve and select the operating point formally. \\
+\addlinespace
+\color{red!70!black}\textbf{D5} & Train/validation overlap in model training & The synthetic training images and validation set share the same generation pipeline (\texttt{generate\_dataset\_v2.py}), inflating the reported mAP$_{50}{=}0.995$. The 16 real-image subset partially mitigates this but is too small to constitute an independent test set. \emph{Next step:} collect 50+ real labelled frames from a separate flight and evaluate on a held-out test split with no synthetic data. \\
+\addlinespace
+\color{red!70!black}\textbf{D6} & Single-class detector cannot distinguish target types & The YOLOv8n model detects a single ``dummy'' class; it cannot visually distinguish the rescue dummy from a person, bag, or similar-sized object. Classification relies on operator confirmation at the VERIFY state. \emph{Next step:} retrain with multi-class labels (person, dummy, debris) or add a lightweight classifier head downstream of detection. \\
+\addlinespace
+\color{red!70!black}\textbf{D7} & PLB Focus Area not field-tested (R06) & Focus area replanning is implemented and verified in SITL, but has not been triggered during a real flight with live GPS coordinates. \emph{Next step:} inject a PLB message mid-flight via the ground station HTTP endpoint during Tier~4 testing. \\
+\addlinespace
+\color{red!70!black}\textbf{D8} & Payload release not software-integrated & The Tarot release mechanism is mounted but its servo actuation is not wired into the state machine; first-aid deployment (R07) would require manual RC override. \emph{Next step:} add a \texttt{DEPLOY} state between APPROACH and LANDING with MAV\_CMD\_DO\_SET\_SERVO trigger. \\
+\addlinespace
+\color{red!70!black}\textbf{D9} & Float32 model on constrained hardware & The deployed TFLite model uses float32 weights (11.7~MB). INT8 quantisation or FP16 XNNPACK inference could approximately double throughput on the Pi~5's Cortex-A76 cores. \emph{Next step:} export FP16 model, benchmark on Pi, and characterise any accuracy regression against the float32 baseline. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{Discussion of Key Findings}\label{sec:eval-discussion}
+
+\begin{figure}[ht]
+\centering
+\begin{subfigure}[t]{0.48\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{conf_vs_alt}
+  \caption{Detection confidence vs.\ altitude. Confidence remains above 0.9 up to \SI{40}{\metre}, dropping at higher altitudes as the target subtends fewer pixels.}
+  \label{fig:conf_vs_alt}
+\end{subfigure}
+\hfill
+\begin{subfigure}[t]{0.48\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{det_vs_speed}
+  \caption{Detection rate vs.\ flight speed. At the nominal search speed of \SI{8}{\metre\per\second}, detection rate exceeds 95\%.}
+  \label{fig:det_vs_speed}
+\end{subfigure}
+\caption{Detection performance sensitivity analysis from DJI flight video replay.}
+\label{fig:det_sensitivity}
+\end{figure}
+
+\begin{figure}[ht]
+\centering
+\begin{subfigure}[t]{0.48\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{latency_breakdown}
+  \caption{Per-frame latency breakdown: capture, undistortion, resize, inference, and postprocessing.}
+  \label{fig:latency_breakdown}
+\end{subfigure}
+\hfill
+\begin{subfigure}[t]{0.48\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{detection_heatmap}
+  \caption{Spatial detection heatmap showing detection density across the survey area during simulated search.}
+  \label{fig:detection_heatmap}
+\end{subfigure}
+\caption{System performance: inference latency budget and spatial detection distribution.}
+\label{fig:perf_analysis}
+\end{figure}
+
+\textbf{Architecture resilience (P1, P2, P5, P8).}
+Isolating all computer-vision logic behind a single interface (\texttt{detect\_in\_image}) and auto-detecting the flight controller connection proved highly effective. The AI model was retrained three times---from the original 640-pixel dataset, through a 1280-pixel variant, to the final 1088-pixel version on mixed synthetic and real data---and each swap required only replacing a single file with no changes to the orchestrator, state machine, or ground station. The same benefit extends to future upgrades: an NCNN backend or a hardware accelerator (e.g.\ Hailo-8L) can be integrated by modifying \texttt{vision.py} alone. This architectural decision was validated empirically: adding lens undistortion---a feature not anticipated during initial design---required changes to a single file and added negligible latency (\SI{1.5}{\milli\second}).
+
+\textbf{Detection performance (P4, D2, D4, D5, D9).}
+The retrained YOLOv8n model achieved mAP$_{50}$ of 0.995 on the validation set containing real flight imagery, and bench tests confirmed 50/50 detection at 0.966 mean confidence (Figure~\ref{fig:conf_vs_alt}). At the nominal search altitude of \SI{35}{\metre}, the target subtends approximately 24~pixels in the $640\times640$ inference tensor---sufficient for reliable detection but approaching the lower limit for the nano-variant architecture. Video analysis of DJI flight footage at comparable altitudes produced consistent detections, providing indirect evidence that the model generalises beyond synthetic training data.
+
+However, this performance figure must be interpreted with caution. The training and validation sets share the same synthetic generation pipeline, meaning the 0.995 mAP$_{50}$ likely overestimates real-world accuracy. The 16 real images in the dataset provide some cross-domain signal, but a proper held-out test set from an independent flight is needed to establish a trustworthy performance bound. Additionally, the confidence threshold of 0.2 was selected by visual inspection of video replay detections rather than by sweeping a precision--recall curve. This means the operating point may not be optimal: a lower threshold could recover missed detections at altitude, while a higher threshold could reduce false positives against cluttered backgrounds. Characterising this trade-off formally is a priority for future work.
+
+The float32 deployment leaves performance on the table: FP16 XNNPACK dispatch on the Cortex-A76 cores could theoretically double throughput to ${\sim}$\SI{10}{FPS} (Figure~\ref{fig:latency_breakdown}), and INT8 quantisation would further reduce latency and model size at the cost of an accuracy trade-off not yet characterised.
+
+\textbf{GPS estimation accuracy (D3).}
+Target GPS coordinates are derived by projecting the detection's pixel offset through the calibrated camera model and the drone's reported position and altitude. Analysis of DJI flight video with known ground-truth positions yielded CEP$_{50}$ = \SI{2.3}{\metre} and worst-case error of \SI{16.5}{\metre} (Figures~\ref{fig:gps_bullseye} and~\ref{fig:gps_error_direction}), the latter attributable to GPS timing lag compounding with heading-aligned motion. Inverse-variance-weighted averaging and Kalman filtering partially mitigate this, but a first-order lag compensation (offsetting GPS by $v \cdot \Delta t_{\text{lag}}$ in the heading direction) has not yet been implemented and would reduce the systematic bias component.
+
+\textbf{Testing effectiveness (P3, P7).}
+The progressive framework's value is best demonstrated by the defect discovery table (Table~\ref{tab:bug-cost}): 12 defects were caught at Tiers~1--3, each resolved in minutes to hours at zero hardware risk. Five of these---the geofence sign inversion, repulsive force reversal, barometric drift loop, duplicate target queuing, and missing timeout guard---would have caused mission-critical failures in flight but were trivially reproducible in simulation. The remaining seven were hardware-integration faults (BGR inversion, FOV miscalibration, pyserial breakage, tflite-runtime unavailability, camera resource conflict, uninitialised variable, GPS timing lag) that required the physical Pi but not propeller rotation. The 58 test scripts across six categories represent an investment in verification infrastructure that exceeded what was strictly necessary for a single demonstration flight, but proved essential for diagnosing faults rapidly during the compressed bench-testing window.
+
+\textbf{Weather cancellation as adaptation evidence (D1).}
+The scheduled outdoor flight was cancelled due to sustained high winds exceeding the EDU-450's safe operating envelope. Rather than treating this as a project failure, the team redirected the bench day toward deeper hardware characterisation: FOV calibration with a tape measure and checkerboard, lens distortion mapping (RMS~=~0.399), comprehensive inference benchmarking across all three model variants, and video analysis of DJI survey footage as a Tier~3 proxy. The DJI video pipeline---built in a single session after the cancellation---yielded the confidence-vs-altitude curve (Figure~\ref{fig:conf_vs_alt}), the detection-vs-speed analysis (Figure~\ref{fig:det_vs_speed}), and the GPS estimation accuracy characterisation (CEP$_{50}{=}\SI{2.3}{\metre}$) that would otherwise have required multiple flight sorties to collect. This pivot from ``fly and hope'' to ``analyse what we have'' produced more quantitative performance data than many projects that completed their demonstration flights.
+
+\textbf{Incomplete flight validation (D1, D6, D7, D8).}
+The most significant limitation remains the absence of outdoor flight data. Every subsystem has been verified individually---camera, inference, MAVLink commands, GPS fix, lens calibration---but the integrated system has not yet executed a search pattern over real terrain. Several performance characteristics therefore remain theoretical: detection range as a function of altitude and lighting, false-positive rate against natural backgrounds (grass, shadows, debris), wind-induced motion blur, and GPS accuracy under dynamic manoeuvres. The progressive testing framework was designed to retire these risks incrementally (passive flight before autonomous flight), and bench results give reasonable confidence that outdoor operation will require parameter tuning rather than architectural changes. The single-class detector limitation (D6) is a deeper concern: in a real SAR scenario, the system would flag any human-sized object, requiring operator verification at the VERIFY state to distinguish casualties from bystanders or debris.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{Lessons Learned}\label{sec:lessons-learned}
+
+Four technical lessons emerged that would shape a second iteration of this project:
+
+\textbf{1. Invest in data collection infrastructure before model training.}
+The synthetic dataset generator produced 300 training images in minutes, but the resulting model's performance on real imagery remained uncertain because the training and validation distributions overlapped. Collecting 50+ labelled frames from a real flight \emph{before} retraining would have provided a reliable held-out test set and eliminated the need to treat mAP as an upper bound. The labelling tool (\texttt{label\_tool.py}) was built late; building it first and collecting real data during early manual flights would have yielded a stronger model with less ambiguity about generalisation.
+
+\textbf{2. Characterise the sensor pipeline end-to-end before writing application code.}
+The BGR/RGB colour inversion, the FOV miscalibration, and the GPS timing lag were all sensor-pipeline issues that propagated silently into higher-level logic. A dedicated ``sensor characterisation sprint''---measuring colour encoding, FOV at multiple distances, GPS latency under motion, and lens distortion---before writing the state machine would have prevented three of the twelve defects discovered during integration.
+
+\textbf{3. Simulation fidelity has diminishing returns; real-world data does not.}
+The SITL simulation was invaluable for state machine logic and geofence testing, but it modelled perfect GPS, zero wind, and synthetic camera images. The DJI video replay pipeline, built as a workaround for the cancelled flight, proved more informative than additional simulation refinement because it introduced real optical noise, real GPS drift, and real altitude variation. Future projects should prioritise replaying real sensor data through the pipeline over building higher-fidelity simulators.
+
+\textbf{4. Budget for weather and schedule one flight day per week, not per project.}
+A single scheduled flight day creates a binary outcome: either the weather cooperates and the project succeeds, or it does not and the project has no flight data. Scheduling weekly flight slots---even short 30-minute windows---would have provided multiple opportunities and allowed the progressive tiers to be executed over several sessions rather than compressed into a single day.
+

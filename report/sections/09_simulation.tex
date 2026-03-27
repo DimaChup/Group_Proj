@@ -1,10 +1,10 @@
 \section{Simulation Framework}\label{sec:simulation}
 
-Autonomous SAR drone development presents a fundamental tension: algorithms must be validated extensively before flight, yet real flights are expensive, weather-dependent, and risk hardware loss. This section describes the multi-fidelity simulation framework developed to address this challenge, enabling iterative refinement of the detection, estimation, and landing algorithms entirely on a laptop before any outdoor testing.
+Autonomous SAR drone development presents a fundamental tension: algorithms must be validated extensively before flight, yet real flights are expensive, weather-dependent, and risk hardware loss. A multi-fidelity simulation framework was therefore developed to enable iterative refinement of the detection, estimation, and landing algorithms entirely on a laptop before any outdoor testing.
 
 \subsection{Multi-Fidelity Approach}\label{sec:sim-fidelity}
 
-The project employs four simulation levels of increasing fidelity, following the simulation-first methodology advocated for robotic systems where hardware access is intermittent or costly \cite{shah2018}:
+The project employs four simulation levels of increasing fidelity, following the simulation-first methodology advocated for robotic systems where hardware access is intermittent or costly~\cite{shah2018}:
 
 \begin{enumerate}
     \item \textbf{Level~1: Interactive simulator} (\texttt{simple\_simulator.py}). A self-contained environment where the operator flies a virtual drone over a satellite image using keyboard controls. The same YOLOv8n model runs inference on a synthetically generated camera view. No autopilot software is required---MAVLink telemetry is simulated internally. This level tests the GPS estimation pipeline, multi-target clustering, visual servoing, and landing sequence with full ground-truth comparison.
@@ -81,9 +81,9 @@ This sequence was run hundreds of times during development, validating the estim
 
 \subsection{SITL Integration}\label{sec:sim-sitl}
 
-At Level~2, ArduPilot SITL replaces the keyboard-driven flight model with a full autopilot simulation. SITL runs the same C++ firmware as the Cube Orange+ flight controller, modelling vehicle dynamics, GPS receiver behaviour, barometric altitude, and RC input \cite{ardupilot2024}. The mission orchestrator connects via MAVLink over UDP (port~14550) and issues identical commands to those used in real flight: \texttt{MAV\_CMD\_NAV\_TAKEOFF}, guided waypoint navigation via \texttt{SET\_POSITION\_TARGET\_GLOBAL\_INT}, mode changes, and \texttt{MAV\_CMD\_NAV\_LAND}. Mission Planner connects simultaneously via a TCP bridge (port~5762) for monitoring and parameter adjustment.
+At Level~2, ArduPilot SITL replaces the keyboard-driven flight model with a full autopilot simulation. SITL runs the same C++ firmware as the Cube Orange+ flight controller, modelling vehicle dynamics, GPS receiver behaviour, barometric altitude, and RC input~\cite{ardupilot2024}. The mission orchestrator connects via MAVLink over UDP (port~14550) and issues identical commands to those used in real flight: \texttt{MAV\_CMD\_NAV\_TAKEOFF}, guided waypoint navigation via \texttt{SET\_POSITION\_TARGET\_GLOBAL\_INT}, mode changes, and \texttt{MAV\_CMD\_NAV\_LAND}. Mission Planner connects simultaneously via a TCP bridge (port~5762) for monitoring and parameter adjustment.
 
-The SITL home location is set to the actual flight site coordinates (51.423406\textdegree{}N, 2.671446\textdegree{}W), ensuring that the lawnmower search pattern, geofence boundaries, and SSSI no-fly zone are tested with real-world geometry. SITL's simulated GPS noise (${\sim}0.5$\,m) is smaller than real conditions (${\sim}2$--3\,m), but provides a baseline for verifying navigation logic.
+The SITL home location is set to the actual flight site coordinates (\SI{51.423406}{\degree}N, \SI{2.671446}{\degree}W), ensuring that the lawnmower search pattern, geofence boundaries, and SSSI no-fly zone are tested with real-world geometry. SITL's simulated GPS noise (${\sim}0.5$\,m) is smaller than real conditions (${\sim}2$--3\,m), but provides a baseline for verifying navigation logic.
 
 \subsection{Simulated Camera View}\label{sec:sim-camera}
 
@@ -101,7 +101,7 @@ This approach ensures that the detection model is exercised against realistic ba
 
 The video replay tool (\texttt{video\_test.py}) provides the highest-fidelity offline validation by running the detection model on recorded DJI flight footage. Each video frame is paired with its corresponding SRT telemetry entry, providing GPS coordinates, barometric altitude, and heading at 30\,fps resolution. The tool runs the full pixel-to-GPS estimation pipeline on each detection, accumulating observations, updating the Kalman filter, and building the same scatter plots used in the interactive simulator.
 
-Key features include a scale bar calibrated to the current altitude and FOV, a right-click measurement tool that reports ground distances in metres, and a side-by-side model comparison mode (\texttt{video\_test\_compare.py}) that toggles between two models on the same frame with a single keypress. The FOV was calibrated specifically for the cropped DJI video ($\text{HFOV} = 54.4^{\circ}$ at $1456 \times 1088$) by clicking the top and bottom of the dummy at nine different altitudes using a dedicated calibration tool.
+Key features include a scale bar calibrated to the current altitude and FOV, a right-click measurement tool that reports ground distances in metres, and a side-by-side model comparison mode (\texttt{video\_test\_compare.py}) that toggles between two models on the same frame with a single keypress. The FOV was calibrated specifically for the cropped DJI video ($\text{HFOV} = \SI{54.4}{\degree}$ at $1456 \times 1088$) by clicking the top and bottom of the dummy at nine different altitudes using a dedicated calibration tool.
 
 Analysis of 6854~frames from a real flight revealed a GPS timing lag of 100--200\,ms in the receiver, causing a ${\sim}1$\,m systematic offset along the direction of travel at 5\,m/s. This finding---which would have been nearly impossible to diagnose during a live flight---led to the identification of speed-dependent bias in the estimation pipeline and informed the design of the multi-pass averaging strategy described in Section~\ref{sec:localisation}.
 

@@ -1,6 +1,6 @@
 \section{Model Training and Dataset}\label{sec:training}
 
-Training a reliable aerial object detector for SAR requires data that closely represents the deployment domain---a mannequin viewed from altitude against a grassy field background. Obtaining large volumes of real labelled aerial imagery is expensive and weather-dependent, so a mixed-source strategy was adopted combining synthetic composites, real labelled frames, and hard negatives. This section describes the dataset construction, training configuration, and deployment workflow.
+Training a reliable aerial object detector for SAR requires data that closely represents the deployment domain---a mannequin viewed from altitude against a grassy field background. Obtaining large volumes of real labelled aerial imagery is expensive and weather-dependent, so a mixed-source strategy was adopted combining synthetic composites, real labelled frames, and hard negatives.
 
 \subsection{Training Data Strategy}\label{sec:training:strategy}
 
@@ -84,7 +84,7 @@ Table~\ref{tab:training_results} presents the validation metrics for the v2 mode
     \end{tabular}
 \end{table}
 
-A caveat applies: the training and validation splits use the same image directory (\texttt{train=val=images/}), so the reported metrics reflect in-sample performance and likely overstate true generalisation accuracy. This pragmatic choice was driven by the small dataset size---an 80/20 split would leave only 73 validation images, too few for stable metric estimation. The field-test results (Section~\ref{sec:results}) provide independent confirmation that the model generalises beyond the training distribution.
+A caveat applies: the training and validation splits use the same image directory (\texttt{train=val=images/}), so the reported metrics reflect in-sample performance and likely overstate true generalisation accuracy. This pragmatic choice was driven by the small dataset size---an 80/20 split would leave only 73 validation images, too few for stable metric estimation. The field-test results (Section~\ref{sec:evaluation}) provide independent confirmation that the model generalises beyond the training distribution.
 
 The exported TFLite model is 11.7\,MB (float32) and maintains the same input tensor shape $[1, 640, 640, 3]$ and output tensor shape $[1, 5, 8400]$ as the original model. Three model variants are archived in the \texttt{cv\_models/} directory: \texttt{sar\_v2\_1088} (current best), \texttt{sar\_640}, and \texttt{sar\_1280}, each containing TFLite, PyTorch, and NCNN exports along with training curves and confusion matrices for reproducibility.
 
@@ -98,7 +98,7 @@ cp cv_models/sar_v2_1088/best.tflite best.tflite
 
 No code changes, configuration edits, or dependency updates are needed. The \texttt{vision.py} module loads whichever \texttt{best.tflite} is present in the project root, and all downstream modules consume the same \texttt{(found, cx, cy, confidence)} interface regardless of which model generated the detection. If a model produces excessive false positives in the field, an alternative can be deployed in under 30 seconds. The \texttt{-{}-model} flag in \texttt{main.py} additionally allows runtime model selection without file copying, further streamlining field testing.
 
-An NCNN export is produced alongside each TFLite model, offering a potential ${\sim}3\times$ speedup on the Pi~5 ARM cores via NEON vectorisation (Section~\ref{sec:cv:future}).
+An NCNN export is produced alongside each TFLite model, offering a potential ${\sim}3\times$ speedup on the Pi~5 ARM cores via NEON vectorisation (Section~\ref{sec:cv}).
 
 \subsection{Limitations}\label{sec:training:limitations}
 
@@ -116,4 +116,4 @@ Several limitations of the current training pipeline should be acknowledged:
     \item \textbf{No partial occlusion.} The dataset contains no examples of a partially occluded target---for instance, a casualty partially hidden by vegetation, rocks, or terrain features---which is a common scenario in real wilderness SAR operations.
 \end{itemize}
 
-Despite these limitations, the trained model performed reliably during bench testing and video replay analysis across the altitude range of 15--50\,m (Section~\ref{sec:results}), and the modular deployment architecture allows rapid model replacement as improved datasets become available.
+Despite these limitations, the trained model performed reliably during bench testing and video replay analysis across the altitude range of 15--50\,m (Section~\ref{sec:evaluation}), and the modular deployment architecture allows rapid model replacement as improved datasets become available.

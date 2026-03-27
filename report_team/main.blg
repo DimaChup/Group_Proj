@@ -1,0 +1,19 @@
+[0] Config.pm:328> INFO - This is Biber 2.21
+[1] Config.pm:331> INFO - Logfile is 'main.blg'
+[231] biber-MSWIN64:342> INFO - === 
+[312] Biber.pm:421> INFO - Reading 'main.bcf'
+[534] Biber.pm:1002> INFO - Found 24 citekeys in bib section 0
+[555] Biber.pm:4487> INFO - Processing section 0
+[572] Biber.pm:4678> INFO - Looking for bibtex file 'references.bib' for section 0
+[670] bibtex.pm:1713> INFO - LaTeX decoding ...
+[746] bibtex.pm:1519> INFO - Found BibTeX data source 'references.bib'
+[1015] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'normalization = NFD' with 'normalization = prenormalized'
+[1015] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'variable = shifted' with 'variable = non-ignorable'
+[1015] Biber.pm:4307> INFO - Sorting list 'none/global//global/global/global' of type 'entry' with template 'none' and locale 'en-US'
+[1015] Biber.pm:4313> INFO - No sort tailoring available for locale 'en-US'
+[1041] bbl.pm:676> INFO - Writing 'main.bbl' with encoding 'UTF-8'
+[1059] bbl.pm:779> INFO - Output to main.bbl
+[1060] Biber.pm:132> WARN - ISBN '978-0-201-41639-0' in entry 'pugh1991total' is invalid - run biber with '--validate_datamodel' for details.
+[1060] Biber.pm:132> WARN - ISBN '978-1-63369-110-4' in entry 'katzenbach2015wisdom' is invalid - run biber with '--validate_datamodel' for details.
+[1060] Biber.pm:132> WARN - ISBN '978-1-56726-366-0' in entry 'hillson2009managing' is invalid - run biber with '--validate_datamodel' for details.
+[1060] Biber.pm:134> INFO - WARNINGS: 3

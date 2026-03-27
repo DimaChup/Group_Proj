@@ -1,0 +1,68 @@
+\section{Lessons Learned}
+\label{sec:lessons}
+
+\subsection{What Worked Well}
+
+\subsubsection{Simulation-First Development}
+
+The decision to build and test the entire system in simulation before any hardware was available was the single most impactful engineering choice we made. By the time the Raspberry Pi and flight controller arrived, we had a working state machine, search pattern generator, detection pipeline, and ground station --- all validated through hundreds of simulated missions. Hardware integration became a matter of configuration rather than debugging. We strongly recommend this approach for any team working on autonomous systems with limited hardware access.
+
+\subsubsection{Modular Architecture with Clean Interfaces}
+
+Isolating the vision system behind a single function (\texttt{detect\_in\_image(frame) -> (found, x, y, conf)}) meant that five people could work on the project simultaneously without merge conflicts. The CV developer changed models, preprocessing, and backends multiple times without any other team member needing to update their code. The dual-backend system (Ultralytics on laptops, TFLite on Pi) was particularly effective: it let us develop and test on any platform and deploy to the Pi with zero code changes.
+
+\subsubsection{Progressive Test Strategy}
+
+The numbered test progression (0a through 4) prevented us from making the common mistake of attempting a full autonomous flight before validating individual components. When issues arose (e.g.\ the camera colour bug), they were caught in controlled bench tests rather than mid-flight. The strict ``never skip a step'' rule, while sometimes frustrating when progress felt slow, saved us from potential hardware damage.
+
+\subsubsection{Decision Documentation}
+
+Recording design decisions in a structured format (DD-01 through DD-10) proved valuable beyond the immediate project. When writing the report, we had ready-made justifications with context, alternatives considered, and rationale. When new team members had questions about ``why do we do it this way?'', we could point them to the relevant DD entry rather than reconstructing the reasoning from memory.
+
+\subsubsection{Comprehensive Test Script Library}
+
+The 40+ test scripts, organised by category and purpose, served as both verification tools and documentation. Each script answered a specific question (``does the GPS work?'', ``how fast is inference?'', ``can we detect from 25\,m?'') and produced quantitative output. This library was particularly valuable on field days, where limited time made it essential to run the right test efficiently.
+
+\subsection{What Could Be Improved}
+
+\subsubsection{Earlier Hardware Integration}
+
+While simulation-first was the right strategy, we could have integrated hardware earlier in the project. The Pi, camera, and Cube were available for several weeks before we assembled and tested them together. Earlier integration would have given us more time to discover and resolve issues like the camera colour bug and the Python~3.13 serial compatibility problem.
+
+\subsubsection{More Structured Sprint Ceremonies}
+
+Our informal sprint methodology worked adequately for a five-person team, but we occasionally lost track of individual progress between meetings. A more disciplined approach --- brief daily standups, even via text --- would have helped identify blockers sooner. The \texttt{GROUP\_STATUS.md} document was useful but only effective when team members remembered to update it.
+
+\subsubsection{Cross-Training Depth}
+
+Despite our knowledge transfer efforts, certain critical capabilities remained concentrated in one person. The AI pipeline and MAVLink protocol were primarily understood by one team member, creating a bus factor of one for those subsystems. More structured pair programming sessions earlier in the project would have distributed this knowledge more effectively.
+
+\subsubsection{Flight Testing Time}
+
+Weather cancellation reduced our available outdoor testing to a single field day, which was used primarily for bench testing and calibration rather than flight. In hindsight, we should have booked multiple flight slots early in the project to create scheduling resilience. We also underestimated the logistical overhead of field testing (transport, setup, battery management, weather monitoring).
+
+\subsubsection{Scope Management}
+
+The project accumulated a substantial feature backlog (16 items in \texttt{NICE\_TO\_HAVE.md}) that sometimes distracted from core deliverables. While having a structured backlog prevented uncontrolled scope creep, we should have been more disciplined about deferring non-essential features earlier. For example, the NFZ geofence with three avoidance strategies (DD-10) was an impressive engineering exercise but consumed development time that could have been spent on additional flight testing.
+
+\subsection{Recommendations for Future Teams}
+
+Based on our experience, we offer the following recommendations for future groups undertaking similar autonomous systems projects:
+
+\begin{enumerate}
+  \item \textbf{Start with simulation, but integrate hardware as soon as it arrives.} Do not wait for perfect software before testing on real hardware --- the bugs you find in integration are different from the bugs you find in simulation.
+
+  \item \textbf{Book multiple flight/test slots early.} Weather, equipment failures, and scheduling conflicts will cancel at least one session. Plan for it.
+
+  \item \textbf{Document decisions as you make them.} A structured decision log is far more useful than meeting minutes. Future you (and your report) will thank present you.
+
+  \item \textbf{Define interfaces before dividing work.} Agree on function signatures, data formats, and communication protocols at the start. This enables truly parallel development.
+
+  \item \textbf{Build a test script for every component.} Individual, purpose-built test scripts are more valuable than a single ``test everything'' script. They are faster to run, easier to debug, and serve as living documentation.
+
+  \item \textbf{Use progressive testing religiously.} The temptation to skip steps is strong when deadlines loom. Resist it. A crashed drone sets the project back weeks; a methodical test progression costs hours.
+
+  \item \textbf{Version control everything.} Code, configuration, documentation, design decisions, meeting notes --- all in the same repository. Context switching between tools loses information.
+
+  \item \textbf{Invest in developer experience.} Time spent making the codebase easy to work with (clear file structure, auto-detection of hardware, comprehensive \texttt{--help} flags, readable error messages) pays dividends throughout the project.
+\end{enumerate}

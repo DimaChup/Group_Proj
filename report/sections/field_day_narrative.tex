@@ -1,0 +1,116 @@
+\section{Field Day: Adaptation Under Uncertainty}\label{sec:field-day}
+
+On 11~March~2026 the team arrived at the designated test site with the full hardware stack assembled for the first time outside the lab: Raspberry~Pi~5, Cube~Orange autopilot, IMX296 global-shutter camera, and the airframe with propellers fitted. The objective was to progress through Tiers~3--5 of the progressive testing framework (Section~\ref{sec:five-tier})---bench verification, passive flight with manual RC, and, conditions permitting, first autonomous waypoint flight. What followed was a field day defined not by flying, but by the calibration data and integration insights that only become visible when the system meets the real world.
+
+\subsection{Setup: Three Terminals, One Aircraft}\label{sec:field-setup}
+
+All interaction with the Pi was conducted remotely from a laptop via SSH (PuTTY), supplemented by the Pi's own screen for scripts requiring a display. The three-terminal workflow---established within the first twenty minutes and used for the remainder of the day---became the standard operating procedure for all subsequent field sessions:
+
+\begin{description}
+    \item[Terminal~1 --- mavproxy:] Launched first, always. The MAVLink router forwarded Cube telemetry from the UART link (\texttt{/dev/ttyAMA0} at 921\,600~baud) to two UDP outputs: port~14550 for flight and detection scripts, port~14551 for the live diagnostics dashboard. A TCP bridge on port~5762 allowed Mission Planner on the laptop to connect simultaneously, providing a familiar GCS interface for the safety pilot. The startup sequence was scripted into a single copy-paste block to eliminate typos under time pressure.
+
+    \item[Terminal~2 --- diagnostics:] The multi-panel diagnostics script displayed camera frame rate, AI model status, Cube heartbeat, GPS satellite count, and battery voltage on the Pi's screen. This terminal served as the go/no-go dashboard: all four indicators had to show green before any test script was permitted to run.
+
+    \item[Terminal~3 --- scripts:] Calibration, benchmark, and detection scripts were executed sequentially from PuTTY. Browser-based camera streams (\texttt{http://PI\_IP:8090}) provided live video to the laptop without requiring a display server on the Pi, confirming that the headless architecture designed in simulation translated directly to field use.
+\end{description}
+
+Two integration issues surfaced immediately. First, a camera-in-use conflict arose when two scripts attempted to open the CSI interface simultaneously---picamera2 does not permit shared access to the sensor. The fix was procedural: a strict single-script-at-a-time rule, enforced by a \texttt{sudo pkill -f libcamera} guard before each script launch. Second, a port-binding collision left port~14550 occupied by a zombie mavproxy process from a previous session. Adding a \texttt{sudo pkill -f mavproxy; sleep 2} preamble to the startup sequence resolved this permanently. Neither issue required code changes; both were captured in the field quick-reference sheet for future sessions.
+
+\subsection{What We Tested}\label{sec:field-tests}
+
+With connectivity established, the team worked through the bench-test checklist in order:
+
+\begin{enumerate}
+    \item \textbf{Camera verification.} The Pi camera delivered 640$\times$480 frames at the expected rate. The MJPEG stream to the laptop browser confirmed correct colour rendering---a non-trivial validation, given the colour-channel discovery described below.
+    \item \textbf{Cube heartbeat and telemetry.} The diagnostics dashboard confirmed a stable MAVLink heartbeat, GPS satellite count (initially 0 indoors, rising to 7 near a window), and battery voltage within limits. Mode changes issued from Mission Planner propagated to the Pi's telemetry stream within one heartbeat period.
+    \item \textbf{AI inference.} The TFLite model loaded successfully on the Pi~5 and produced detections on a test image within 210~ms---consistent with Docker-based estimates from Tier~2 testing.
+    \item \textbf{FOV calibration.} See Section~\ref{sec:field-fov}.
+    \item \textbf{Lens distortion calibration.} See Section~\ref{sec:field-lens}.
+    \item \textbf{Full benchmark.} See Section~\ref{sec:field-benchmark}.
+\end{enumerate}
+
+\subsection{FOV Calibration: Catching a 22\% Error}\label{sec:field-fov}
+
+The most consequential discovery of the field day was a systematic error in the focal length parameter. The configuration file had carried a default value of $f = 7.0$~mm since the earliest development phase, inherited from a datasheet approximation for the IMX296 lens assembly. No simulation or Docker test could have caught this: the parameter only matters when converting pixel coordinates to real-world distances, and simulation uses ground-truth geometry.
+
+Calibration was straightforward. The camera was held pointing vertically downward at exactly 1.0~m above a tape measure laid on a flat surface. The browser stream showed 92~cm of the tape measure edge-to-edge. Applying the thin-lens model:
+
+\begin{equation}
+    f = \frac{W_{\text{sensor}} \times d}{W_{\text{visible}}} = \frac{5.02~\text{mm} \times 1000~\text{mm}}{920~\text{mm}} = 5.46~\text{mm}
+    \label{eq:fov-field}
+\end{equation}
+
+The corrected value is 22\% lower than the 7.0~mm default. In operational terms, the old value would have \emph{underestimated} the camera's ground footprint, causing the GPS estimation module to place detected targets closer to the drone's nadir than they actually were. At 10~m altitude this corresponds to a systematic error of approximately 2~m; at 30~m search altitude, the error would have reached 6~m---large enough to place the drone outside visual contact with the target during the centering phase. The corrected value was committed to the configuration repository within minutes of measurement, and every subsequent GPS estimate benefited immediately.
+
+This single calibration justified the field day. It demonstrated a failure mode that no amount of simulation could have revealed, and it underscored the value of the progressive testing philosophy: measure real hardware before trusting derived quantities.
+
+\subsection{Camera Colour Discovery}\label{sec:field-colour}
+
+A subtler hardware-specific behaviour was identified during camera verification. The IMX296 sensor, when configured for \texttt{RGB888} output via picamera2, delivers pixel data in BGR channel order---the opposite of what the format label implies. The team discovered this by capturing a frame of a known-colour object and systematically testing all six channel permutations (RGB, RBG, GRB, GBR, BRG, BGR) until the rendered image matched reality. The original codebase had included a \texttt{cv2.cvtColor(frame, COLOR\_RGB2BGR)} conversion that, counterintuitively, \emph{doubled} the error by swapping channels that were already in the order OpenCV expects.
+
+Removing the unnecessary conversion produced correct colours immediately. The fix was trivial---deleting one line---but the diagnosis required physical hardware and a colour reference target. Like the FOV calibration, this was a defect invisible to simulation.
+
+\subsection{Lens Calibration}\label{sec:field-lens}
+
+Lens distortion was characterised using a printed checkerboard target: a 14$\times$9 grid (13$\times$8 inner corners) with 28~mm squares, sourced from calib.io. Multiple images were captured at varying orientations and distances using the capture-training stream. The calibration script initially failed to detect corners reliably; adding OpenCV's robust detection flags and a \texttt{findChessboardCornersSB} fallback resolved the issue.
+
+The resulting calibration achieved an RMS reprojection error of 0.399~pixels. The camera matrix and distortion coefficients were saved as a NumPy archive on the Pi. Undistortion was integrated into the vision module using precomputed remap lookup tables (\texttt{cv2.remap}), adding 1.5~ms per frame---negligible against the 206~ms inference cost. Because all detection scripts call the same vision module, the correction propagated automatically to every downstream tool without modification.
+
+\subsection{Benchmark Results}\label{sec:field-benchmark}
+
+The inference benchmark ran 50 passes of the YOLOv8n TFLite model (float32, 3.2~MB) on a static test image containing the dummy target. The results confirmed that the Pi~5 with the XNNPACK CPU delegate delivers consistent, operationally adequate performance:
+
+\begin{itemize}
+    \item \textbf{Average latency:} 206.5~ms without undistortion, 208.0~ms with (difference within measurement noise).
+    \item \textbf{Effective frame rate:} 4.8~FPS.
+    \item \textbf{Detection rate:} 50/50 (100\%).
+    \item \textbf{Mean confidence:} 0.966 without undistortion, 0.958 with.
+\end{itemize}
+
+At 4.8~FPS and a search speed of 10~m/s, the drone covers approximately 2~m between frames. At 35~m altitude the camera footprint spans roughly 32~m along track, so each ground point appears in approximately 15 consecutive frames. Even a pessimistic 50\% detection rate under flight conditions would yield 7--8 detection opportunities per target---sufficient for reliable triggering.
+
+\subsection{Weather Cancellation and the Go/No-Go Decision}\label{sec:field-weather}
+
+By mid-afternoon the bench testing programme was complete, but the weather had deteriorated steadily. Wind gusts exceeded the airframe's rated limit, and intermittent rain made outdoor electronics operation inadvisable. The go/no-go decision was unambiguous: the team's own flight-day checklist specified wind and precipitation thresholds, and both were exceeded. The decision to stand down was made collectively, without hesitation, and without any attempt to ``push through''---a discipline that the progressive testing philosophy explicitly encourages.
+
+The cancellation was disappointing but not damaging. The bench tests had already validated Tier~3 of the testing framework in full. No flight-critical subsystem remained untested at the bench level, and the calibration data obtained during the day would have been impossible to collect during a time-pressured flight session.
+
+\subsection{The Pivot: Evidence-Based Adaptation}\label{sec:field-pivot}
+
+Rather than treating the cancelled flight as lost time, the team reframed the day as an intensive calibration and integration session. The concrete outputs were:
+
+\begin{enumerate}
+    \item \textbf{FOV correction} ($f = 5.46$~mm, eliminating a 22\% systematic GPS error);
+    \item \textbf{Lens calibration} (RMS = 0.399~px, integrated at 1.5~ms cost);
+    \item \textbf{Inference benchmark} (206.5~ms, 4.8~FPS, 100\% detection at 0.966 confidence);
+    \item \textbf{Colour-channel fix} (BGR output confirmed, unnecessary conversion removed);
+    \item \textbf{Connectivity verification} (three-terminal workflow validated, camera/Cube/GPS all healthy);
+    \item \textbf{Field quick-reference sheet} (copy-paste commands for every step, removing internet dependency).
+\end{enumerate}
+
+Each of these outputs fed directly into subsequent development. The FOV correction improved every GPS estimate computed thereafter. The lens calibration was automatically applied by every script that calls the vision module. The benchmark data informed the decision to prioritise FP16 quantisation and threaded pipelining as the most cost-effective inference acceleration paths. The field quick-reference sheet reduced setup time at the next session from exploratory debugging to a five-minute copy-paste sequence.
+
+This pivot illustrates a broader principle: in safety-critical robotics development, a day spent measuring is never a day wasted. The progressive testing framework is designed precisely so that each tier produces value independently of whether the next tier is reached. The bench-test data collected on 11~March would have been needed regardless of weather; obtaining it on a day when flight was impossible simply reordered the schedule without losing any information.
+
+\subsection{DJI Video Analysis: A Flight-Data Proxy}\label{sec:field-dji}
+
+To extract flight-representative data despite the cancellation, the team conducted a post-hoc analysis using DJI Mavic footage recorded over the same test site at altitudes between 15 and 50~m during a previous reconnaissance visit. The 30~fps video ($1456 \times 1088$, cropped from 4K) was replayed through the full detection pipeline, with SRT telemetry providing per-frame altitude and GPS position.
+
+This analysis yielded two key results. First, the retrained model (mAP$_{50}$ = 0.995) detected the dummy across the entire altitude range, confirming that the training dataset---300 synthetic images, 16 real labelled frames, and 50 negatives at native $1456 \times 1088$ resolution---generalised to real flight conditions. Second, GPS target estimates computed from pixel coordinates and telemetry data produced a CEP50 of 2.3~m, with a maximum outlier of 16.5~m during a high-speed pass at 50~m altitude. The scatter distribution exhibited a characteristic diagonal elongation aligned with the flight direction, which timing analysis attributed to 100--200~ms GPS receiver latency---an error of 1--2~m at 10~m/s search speed. This systematic bias was subsequently addressed in software through spatial clustering with inverse-variance weighting: by averaging estimates from multiple passes, the cluster centroid converges on the true target position regardless of the per-frame lag.
+
+The DJI analysis also revealed a methodological trap. SRT telemetry files contain one entry per native-rate frame (6\,854 entries for the 30~fps recording). Downsampled video variants (e.g.\ 6~fps) contain fewer frames but index into the same SRT file, producing a frame-to-telemetry mismatch that silently corrupts altitude and GPS readings. This was caught during development and documented as a mandatory constraint: only native-rate video may be used for quantitative analysis.
+
+\subsection{Lessons for the Next Field Day}\label{sec:field-lessons}
+
+The 11~March experience produced a concrete list of procedural and technical improvements for subsequent sessions:
+
+\begin{enumerate}
+    \item \textbf{Pre-stage the startup sequence.} The three-terminal workflow and field quick-reference sheet eliminated the ad-hoc debugging that consumed the first hour. Future sessions begin with a copy-paste startup, not improvisation.
+    \item \textbf{Calibrate before flying.} FOV and lens calibration should be the first activities at any new site, before propellers are fitted. The 22\% focal-length error would have silently corrupted every autonomous GPS estimate had it not been caught.
+    \item \textbf{Carry colour and dimensional references.} A printed colour chart and a tape measure are minimal-weight additions to the field kit that enable in-situ validation of camera output and FOV.
+    \item \textbf{Prepare fallback test plans.} The pivot to bench-only testing was smooth because calibration and benchmark scripts were already written and tested. Future field days should always carry a ``no-fly'' test programme that maximises data collection from ground-based activities.
+    \item \textbf{Record everything for post-hoc analysis.} The DJI video, captured weeks earlier for a different purpose, became the most data-rich asset of the field day. Every future flight---even manual reconnaissance---should record video with telemetry for later replay through the detection pipeline.
+    \item \textbf{Respect the go/no-go checklist.} The decision to cancel was the right one. The checklist exists to remove ego from the decision; following it without negotiation is a team discipline, not a failure.
+\end{enumerate}
+
+The field day demonstrated that the progressive testing philosophy is not merely a risk-management strategy but an information-maximisation strategy. By treating each tier as independently valuable, the team extracted six quantitative outputs from a session that produced zero seconds of flight time. Every one of those outputs improved the system's readiness for the flight that weather denied.

@@ -1,0 +1,44 @@
+\subsection{STEEPLE Analysis}\label{sec:steeple}
+
+The design of the SAR drone system was shaped by a range of external factors spanning social need, technological capability, economic constraint, environmental responsibility, political context, legal compliance, and ethical obligation. Table~\ref{tab:steeple} summarises the seven STEEPLE dimensions and their principal influence on the system architecture; the remainder of this subsection expands on each.
+
+\begin{table}[htbp]
+\centering
+\caption{STEEPLE analysis summary for the autonomous SAR drone system.}
+\label{tab:steeple}
+\small
+\begin{tabular}{p{2.2cm}p{5.0cm}p{5.3cm}}
+\toprule
+\textbf{Factor} & \textbf{Key Consideration} & \textbf{Design Influence} \\
+\midrule
+Social & Volunteer SAR teams face resource and coverage gaps & Low-cost, easy-to-deploy platform requiring minimal training \\
+Technological & Edge AI on embedded hardware; open autopilot ecosystem & Raspberry Pi~5 + YOLOv8n/TFLite; ArduPilot GUIDED mode \\
+Economic & University budget; no recurring cloud costs & Sub-\pounds500 compute stack; fully open-source software \\
+Environmental & SSSI wildlife sensitivity; battery lifecycle & Software geofence with graduated speed reduction; electric propulsion \\
+Political & UK push for civilian drone adoption; dual-use technology heritage & Alignment with CAA innovation sandbox; transparent open-source release \\
+Legal & CAA Open Category A3; VLOS mandate; GDPR & Operator-in-the-loop verification; on-device inference; MIT licence \\
+Ethical & Autonomous decisions affecting human life; privacy of bystanders & Human confirmation before descent; no persistent image storage \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Social.}
+In the United Kingdom, mountain and lowland search-and-rescue operations are conducted predominantly by volunteer teams whose resources are finite. A single missing-person search can require dozens of volunteers covering terrain on foot for hours or days~\cite{sarh2024stats}. Aerial survey with a low-cost autonomous drone can reduce the time to first detection from hours to minutes, directly improving casualty survival rates in time-critical scenarios such as hypothermia or traumatic injury. The system was therefore designed around accessibility: the hardware is a standard educational hexacopter (Hexsoon EDU-450) with a commodity companion computer, and the entire software stack is open-source under an MIT licence (R12), enabling volunteer organisations to replicate the platform without proprietary dependencies.
+
+\paragraph{Technological.}
+The Raspberry Pi~5 was selected as the companion computer because it provides sufficient processing power for real-time YOLOv8n inference via TFLite at approximately 4.8~FPS~\cite{yolov8}, while consuming under 10\,W and fitting within the drone's payload budget. The IMX296 global-shutter camera eliminates rolling-shutter distortion during flight, which is critical for reliable bounding-box localisation at speed. The ArduPilot open-source autopilot ecosystem~\cite{ardupilot} provides a mature, flight-proven GUIDED-mode interface over MAVLink, allowing the companion computer to issue waypoint and velocity commands without modifying firmware. All inference runs on-device; no cloud connectivity is required during the mission, eliminating latency and single-point-of-failure concerns associated with cellular or satellite uplinks.
+
+\paragraph{Economic.}
+The total cost of the compute and sensing subsystem --- Raspberry Pi~5 (\pounds80), IMX296 camera module (\pounds50), and SD card (\pounds20) --- is under \pounds150, an order of magnitude below commercial SAR drone payloads. The software stack (Python, OpenCV, ArduPilot, YOLOv8) is entirely open-source, incurring no licence fees. Model training was performed on free-tier Google Colab GPU instances using a 366-image synthetic and real dataset generated with project tooling. The absence of cloud inference costs means the marginal cost per mission is limited to battery charging, making the system viable for resource-constrained volunteer organisations.
+
+\paragraph{Environmental.}
+The search area is adjacent to a Site of Special Scientific Interest (SSSI) designated as a no-fly zone to protect nesting bird populations. This constraint directly motivated the three-layer software geofence described in Section~\ref{sec:geofencing}: a graduated speed-reduction field within 20\,m of the SSSI boundary, a repulsive velocity vector near the boundary, and a hard cutoff that reverts to manual control upon incursion. The electric propulsion system produces lower acoustic emissions than internal-combustion alternatives, reducing disturbance to wildlife. The system's relatively short flight time (approximately 15--20 minutes on a single battery) inherently limits the duration of any environmental exposure. End-of-life considerations are mitigated by the use of standard, widely-recycled lithium-polymer cells and a modular hardware architecture that permits component-level replacement rather than whole-system disposal.
+
+\paragraph{Political.}
+UK government policy has increasingly encouraged the adoption of unmanned aircraft for public-safety applications, with the CAA's Innovation Hub facilitating trials of beyond-visual-line-of-sight (BVLOS) operations for emergency services~\cite{caa2024uas}. The project aligns with this policy trajectory by demonstrating that effective SAR capability can be achieved within the constraints of current regulations, using commercially available hardware. The underlying technologies --- GPS-guided autonomous navigation, computer vision for target detection --- have their origins in military reconnaissance systems; the open-source, transparent nature of the project (public GitHub repository, MIT licence) ensures that this civilian application is fully auditable and free from proprietary or classified dependencies.
+
+\paragraph{Legal.}
+The system is designed to operate within the CAA Open Category, sub-category A3, which permits flights in areas with a low likelihood of encountering uninvolved persons, at a maximum altitude of 120\,m AGL, and within visual line of sight (VLOS) of a designated pilot~\cite{caa2024uas}. The project's operational altitude of 30--50\,m and the presence of a safety pilot with RC override authority (R09, R11) satisfy these requirements. All AI inference is performed on-device; raw imagery is not transmitted over any network, and detection logs record only bounding-box coordinates and confidence scores rather than identifiable facial features, thereby minimising data-protection risk under the UK GDPR. The MIT licence applied to the codebase (R12) permits unrestricted reuse, modification, and redistribution, supporting reproducibility and peer review.
+
+\paragraph{Ethical.}
+The most consequential ethical consideration is the role of autonomy in decisions that affect human life. The system deliberately implements an operator-in-the-loop verification stage: upon detecting a potential casualty, the drone descends to a confirmation altitude and presents the operator with a live video feed and detection overlay. The operator must explicitly confirm (\texttt{Y}) or reject (\texttt{N}) before the system proceeds to approach and land. This design rejects fully autonomous target confirmation, accepting a modest increase in mission time in exchange for a decisive reduction in the risk of false-positive actions --- such as landing near an uninvolved hiker or abandoning a genuine casualty due to a false negative. Detection classifications (confirmed, interest, false positive) are logged with timestamps and GPS coordinates to provide a transparent audit trail. Privacy is further protected by the absence of persistent image storage: frames are processed in memory and discarded after inference, with only annotated detection snapshots retained for post-mission review.

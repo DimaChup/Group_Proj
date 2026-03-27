@@ -1,0 +1,101 @@
+\section{MAVLink Communication Architecture}\label{sec:comms}
+
+The companion computer (Raspberry Pi~5) communicates with the CubePilot Orange flight controller via the MAVLink~v2 protocol. This section describes the communication topology, the software bridge that enables multi-consumer telemetry, and the failsafe mechanisms that ensure safe behaviour when the link degrades.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{The Python 3.13 Serial Problem}\label{sec:serial-problem}
+
+The Pi runs Python~3.13, which introduced a regression in the \texttt{pyserial} library: blocking serial reads on \texttt{/dev/ttyAMA0} return corrupted or zero-length data intermittently, making direct UART communication with the Cube unreliable. Early integration testing revealed that \texttt{pymavlink}'s serial backend---which depends on \texttt{pyserial}---dropped approximately one in five MAVLink frames, causing heartbeat timeouts and command acknowledgement failures. Rather than downgrading the entire Pi environment to Python~3.11, a UDP bridge architecture was adopted.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{MAVProxy Bridge Architecture}\label{sec:mavproxy-bridge}
+
+MAVProxy~\cite{mavproxy} is a lightweight, command-line MAVLink ground station that runs as a background daemon on the Pi. It opens the UART serial port using its own C-level I/O routines (bypassing \texttt{pyserial}), parses the incoming MAVLink byte stream, and re-publishes each message to multiple UDP and TCP endpoints. The daemon is started once at boot and remains running for the duration of the flight:
+
+\begin{verbatim}
+mavproxy.py --master=/dev/ttyAMA0 --baudrate=921600 \
+    --streamrate=10                                 \
+    --out=udpout:127.0.0.1:14550                    \
+    --out=udpout:127.0.0.1:14551                    \
+    --out=tcpin:0.0.0.0:5762
+\end{verbatim}
+
+\noindent This single command establishes the three-consumer topology shown in Figure~\ref{fig:comms-topology}: the mission script receives telemetry on UDP~14550, the diagnostics dashboard on UDP~14551, and Mission Planner connects from the ground-station laptop over TCP~5762 via Wi-Fi. All three consumers receive the full MAVLink message stream simultaneously, and any of them can inject commands back into the link via the same socket. The Pi's mission script (\texttt{main.py}) opens its connection as \texttt{udpin:0.0.0.0:14550}, receiving datagrams published by MAVProxy with sub-millisecond local loopback latency.
+
+\begin{figure}[ht]
+  \centering
+  \begin{minipage}{0.85\linewidth}
+  \small
+  \begin{verbatim}
+   Cube Orange (TELEM2)
+        |
+   UART /dev/ttyAMA0 @ 921600 baud
+        |
+   [ MAVProxy daemon ]
+        |
+        +-- udpout:127.0.0.1:14550 --> main.py / pi_flight.py
+        |
+        +-- udpout:127.0.0.1:14551 --> diagnostics.py (monitoring)
+        |
+        +-- tcpin:0.0.0.0:5762 ------> Mission Planner (Wi-Fi)
+  \end{verbatim}
+  \end{minipage}
+  \caption{MAVLink communication topology. MAVProxy bridges the UART serial link to three independent consumers over localhost UDP and network TCP. All consumers receive the full telemetry stream; any can inject commands.}
+  \label{fig:comms-topology}
+\end{figure}
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{Connection Auto-Detection}\label{sec:auto-detect}
+
+The configuration module (\texttt{config.py}) implements a four-tier auto-detection cascade so that the same codebase runs unmodified on the Pi, in WSL simulation, and on a Windows development laptop:
+
+\begin{enumerate}
+  \item \textbf{Environment variable override.} If \texttt{DRONE\_CONN} is set, it is used verbatim, enabling arbitrary connection strings for testing.
+  \item \textbf{Serial port detection.} If \texttt{/dev/ttyAMA0}, \texttt{/dev/ttyACM0}, or \texttt{/dev/ttyUSB0} exists, the code infers it is running on the Pi and selects \texttt{udpin:0.0.0.0:14550}---the MAVProxy UDP endpoint---rather than opening the serial port directly.
+  \item \textbf{WSL gateway.} On Linux with a Microsoft kernel signature, the default gateway IP is extracted and a TCP connection to port~5762 on the Windows host is used, reaching the SITL instance running under Mission Planner.
+  \item \textbf{Localhost fallback.} On Windows, \texttt{tcp:127.0.0.1:5762} connects to a local SITL.
+\end{enumerate}
+
+\noindent This cascade eliminates platform-specific configuration files: the developer pushes code to GitHub, pulls on the Pi, and the correct connection is selected automatically at import time.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{MAVLink Message Protocol}\label{sec:mavlink-protocol}
+
+The system uses a subset of the MAVLink~v2 Common message set~\cite{mavlink2}. Table~\ref{tab:mavlink-messages} summarises the messages exchanged during a typical mission.
+
+\begin{table}[ht]
+  \centering\compactTable
+  \caption{MAVLink messages used by the mission software.}\label{tab:mavlink-messages}
+  \begin{tabularx}{\linewidth}{@{}l l X@{}}
+    \toprule
+    \textbf{Message / Command} & \textbf{Direction} & \textbf{Purpose} \\
+    \midrule
+    \texttt{HEARTBEAT}                        & Cube $\to$ Pi & Liveness signal (\SI{1}{\hertz}). Records flight mode; warns if mode deviates from GUIDED. \\
+    \texttt{GLOBAL\_POSITION\_INT}            & Cube $\to$ Pi & Fused GPS position, relative altitude, and velocity at \SI{10}{\hertz}. \\
+    \texttt{ATTITUDE}                         & Cube $\to$ Pi & Roll, pitch, yaw at \SI{10}{\hertz}; yaw is used for pixel-to-GPS projection. \\
+    \texttt{GPS\_RAW\_INT}                    & Cube $\to$ Pi & Raw fix type and satellite count for degradation monitoring. \\
+    \texttt{SET\_POSITION\_TARGET\_GLOBAL\_INT} & Pi $\to$ Cube & Waypoint command in WGS\,84 (relative-altitude frame). Used for all navigation. \\
+    \texttt{SET\_POSITION\_TARGET\_LOCAL\_NED}  & Pi $\to$ Cube & Body-frame velocity command for visual servoing and NFZ repulsion. \\
+    \texttt{MAV\_CMD\_DO\_SET\_MODE}          & Pi $\to$ Cube & Mode changes (GUIDED, RTL, LAND). \\
+    \texttt{MAV\_CMD\_COMPONENT\_ARM\_DISARM} & Pi $\to$ Cube & Arm/disarm motors. \\
+    \texttt{MAV\_CMD\_NAV\_TAKEOFF}           & Pi $\to$ Cube & Autonomous takeoff to specified altitude. \\
+    \texttt{COMMAND\_ACK}                     & Cube $\to$ Pi & Acknowledgement of long commands (arm, mode, takeoff). \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+Position commands use the \texttt{MAV\_FRAME\_GLOBAL\_RELATIVE\_ALT\_INT} frame, which expresses latitude and longitude as fixed-point integers ($\times 10^7$) and altitude relative to the take-off point. Velocity commands for visual servoing are issued in body frame (\texttt{MAV\_FRAME\_LOCAL\_NED}) with a rotation from body to NED applied in software using the current yaw angle. A \texttt{NavigationController} wrapper validates all outbound commands, rejecting NaN coordinates or altitudes outside the \SIrange{0}{400}{\metre} safety band before transmission.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{Link Loss Detection and Recovery}\label{sec:link-loss}
+
+Two independent watchdogs protect against communication failures:
+
+\paragraph{Heartbeat timeout.} The mission script timestamps each \texttt{HEARTBEAT} message from the autopilot. If the \texttt{recv\_match} call raises a \texttt{ConnectionResetError}, \texttt{BrokenPipeError}, or \texttt{OSError}, the software immediately sends a best-effort \texttt{MAV\_CMD\_DO\_SET\_MODE} for RTL (Return to Launch) and transitions to the terminal \texttt{DONE} state. Even if this command fails to reach the Cube, ArduCopter's own GCS failsafe (\texttt{FS\_GCS\_ENABLE}) triggers an independent RTL after \SI{5}{\second} of missing heartbeats from the companion computer, providing a hardware-level safety net.
+
+\paragraph{GPS degradation monitor.} The \texttt{GPS\_RAW\_INT} stream is monitored continuously. If the fix type drops below 3D~fix or the satellite count falls below~6 for more than \SI{5}{\second}, the software commands an emergency RTL and transitions to the \texttt{LANDING} state. A throttled warning is printed every \SI{3}{\second} during degradation, displaying a countdown to RTL so the operator can intervene via the RC kill switch if appropriate.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{Latency Characteristics}\label{sec:latency}
+
+The communication chain introduces three sources of latency: UART serialisation, MAVProxy forwarding, and UDP loopback. At \SI{921600}{baud}, a typical 32-byte MAVLink~v2 frame requires approximately \SI{0.35}{\milli\second} for serial transmission. MAVProxy's forwarding loop adds less than \SI{1}{\milli\second} of buffering overhead, and localhost UDP delivery is effectively instantaneous. The total one-way latency from Cube to Python script is therefore on the order of \SIrange{1}{2}{\milli\second}---well within the requirements of the \SI{4.8}{FPS} detection loop, where each decision cycle spans approximately \SI{210}{\milli\second} (dominated by TFLite inference). The MAVLink telemetry stream rate is configured to \SI{10}{\hertz} via MAVProxy's \texttt{--streamrate} flag, ensuring that GPS position and attitude updates arrive at least twice per inference frame.

@@ -1,0 +1,123 @@
+\section{Testing and Validation}
+\label{sec:testing}
+
+\subsection{Testing Philosophy}
+
+Our testing approach was guided by one principle: \textit{never skip a step}. Each test level introduces exactly one new variable, so that if a test fails, the cause is immediately identifiable as the newly introduced element~\cite{koopman2016challenges, myers2011art}. This progressive escalation mirrors NASA's UAS verification methodology~\cite{nasa2015vv} and is formalised in design decision DD-07.
+
+\subsection{Five-Level Test Progression}
+
+\begin{table}[htbp]
+\centering
+\compactTable
+\caption{Progressive test levels. Each level builds on the previous.}
+\label{tab:test_levels}
+\begin{tabularx}{\linewidth}{c l X l}
+\toprule
+\textbf{Level} & \textbf{Name} & \textbf{What It Proves} & \textbf{Risk Introduced} \\
+\midrule
+0 & Mission Planner AUTO & Cube, GPS, motors, RTL all work. No custom code involved. & Propellers spinning \\
+1 & Waypoint test script & Our MAVLink commands (arm, takeoff, goto, land) work on real hardware. No camera. & Custom flight commands \\
+2 & Manual flight + passive CV & CV detects dummy from altitude in real outdoor conditions. Pi sends zero commands. & CV in real environment \\
+3 & Autonomous search, log only & Full search pattern autonomous, CV detects and logs but never triggers action. & Autonomous navigation \\
+4 & Full autonomous mission & Everything enabled: search, detect, centre, descend, verify, land. & Autonomous decision-making \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Test Script Organisation}
+
+We developed over 40 test scripts, organised into purpose-driven directories:
+
+\begin{table}[htbp]
+\centering
+\compactTable
+\caption{Test script categories and their purposes.}
+\label{tab:test_scripts}
+\begin{tabularx}{\linewidth}{l l X}
+\toprule
+\textbf{Directory} & \textbf{Question Answered} & \textbf{Examples} \\
+\midrule
+\texttt{tests/hardware/} & Does this component work? & \texttt{benchmark.py}, \texttt{gps\_test.py}, \texttt{buzzer\_test.py} \\
+\texttt{tests/flight/} & Can it fly? & \texttt{0a\_cube\_commands.py} through \texttt{4\_detect\_and\_center.py} \\
+\texttt{tests/diagnostics/} & Is it working now? & \texttt{diagnostics.py}, \texttt{cube\_monitor.py}, \texttt{camera\_stream.py} \\
+\texttt{tests/calibration/} & Are the numbers right? & \texttt{fov\_calibrate.py}, \texttt{lens\_calibrate.py}, \texttt{gps\_ground\_truth.py} \\
+\texttt{tests/day\_1\_experiments/} & What does the data show? & \texttt{altitude\_sweep.py}, \texttt{speed\_sweep.py}, \texttt{gps\_accuracy.py} \\
+\texttt{tests/laptop/} & Development tools & \texttt{video\_test.py}, \texttt{test\_tflite.py}, \texttt{debug\_tflite.py} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+The flight test scripts were explicitly numbered (0a through 4) to enforce ordering. Each script's header documented prerequisites, what it tests, and how to interpret results.
+
+\subsection{Integration Testing}
+
+We defined four formal integration checkpoints, each requiring all prerequisite workstream tasks to pass before proceeding:
+
+\begin{enumerate}
+  \item \textbf{Integration 1 --- Pi Works}: Camera detection + Cube telemetry working simultaneously on the Pi (workstreams A1--A4 + B1).
+  \item \textbf{Integration 2 --- Full System on Bench}: Real camera + simulated flight via SITL + ground station connected (workstreams A + B + D).
+  \item \textbf{Integration 3 --- Ground Test}: Full state machine on real Cube hardware, no propellers, all failsafes verified (workstreams A + B + C + E).
+  \item \textbf{Integration 4 --- Flight}: Complete autonomous mission with propellers (all workstreams).
+\end{enumerate}
+
+\subsection{Verification and Validation (V\&V)}
+
+\subsubsection{Verification}
+
+Verification --- confirming the system was built correctly --- was performed through:
+
+\begin{itemize}
+  \item \textbf{Simulation testing}: hundreds of end-to-end missions in SITL, validating state transitions, waypoint following, detection triggering, and landing logic.
+  \item \textbf{Code review}: pull requests reviewed by at least one other team member before merging to the main branch.
+  \item \textbf{Benchmarking}: quantitative performance measurement (inference speed, detection rate, GPS estimation accuracy) against defined thresholds.
+  \item \textbf{Preflight checker}: automated script (\texttt{preflight.py}) that verified camera, AI model, and Cube connectivity before every test session.
+\end{itemize}
+
+\subsubsection{Validation}
+
+Validation --- confirming we built the right system --- was performed through:
+
+\begin{itemize}
+  \item \textbf{Demonstration to supervisors}: showing the simulator and bench test results confirmed alignment with project objectives.
+  \item \textbf{Video analysis}: replaying DJI flight footage through our detection pipeline validated that the CV system would perform in realistic conditions (\texttt{tests/laptop/video\_test.py}).
+  \item \textbf{Field testing}: bench tests at Fenswood Farm with the complete hardware stack validated real-world performance of FOV calculations, lens calibration, and detection from altitude.
+\end{itemize}
+
+\subsection{Key Test Results}
+
+\begin{table}[htbp]
+\centering
+\compactTable
+\caption{Summary of key test results.}
+\label{tab:test_results}
+\begin{tabularx}{\linewidth}{X l l}
+\toprule
+\textbf{Test} & \textbf{Result} & \textbf{Requirement} \\
+\midrule
+TFLite inference speed (Pi 5) & 206.5\,ms / 4.8 FPS & $<$200\,ms (marginal) \\
+Detection rate (benchmark, 50 runs) & 50/50 (100\%) & $>$90\% \\
+Detection confidence (benchmark) & 0.966 mean & $>$0.4 threshold \\
+Lens undistortion overhead & +1.5\,ms & Negligible \\
+Retrained model mAP50 & 0.995 & $>$0.9 \\
+FOV calibration accuracy & 1.7--1.9\,m measured vs 1.8\,m actual & $<$10\% error \\
+GPS estimation (simulation) & $\sim$0.5\,m error after centring & $<$5\,m \\
+GPS estimation (DJI video replay) & CEP50 = 2.3\,m & $<$5\,m \\
+State machine (simulation) & All 11 states + 32 transitions verified & Complete coverage \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Experiment Design for Flight Day}
+
+We designed structured experiments for flight testing, each with predefined data collection protocols and CSV output:
+
+\begin{itemize}
+  \item \textbf{Altitude sweep}: detection rate vs altitude in 5\,m increments (10--35\,m) to determine maximum reliable detection height.
+  \item \textbf{Speed sweep}: detection rate vs drone speed with blur metric to determine maximum search speed.
+  \item \textbf{GPS accuracy}: estimated target position vs known GPS coordinates to validate the projection mathematics.
+  \item \textbf{GPS drift}: stationary noise measurement (CEP50, CEP95) to characterise baseline GPS uncertainty.
+  \item \textbf{Model comparison}: side-by-side benchmark of all available TFLite models under identical conditions.
+\end{itemize}
+
+These experiments were implemented as standalone Python scripts in \texttt{tests/day\_1\_experiments/}, each producing CSV files for post-flight analysis. All scripts were passive observers that sent zero commands to the flight controller, ensuring data collection could not endanger the aircraft.

@@ -1,0 +1,76 @@
+\section{Risk Management}
+\label{sec:risk_management}
+
+\subsection{Approach}
+
+We adopted a structured risk management process aligned with ISO~31000 principles~\cite{iso31000}, using a risk register that was reviewed at each sprint planning meeting. Risks were assessed on a 5$\times$5 likelihood--impact matrix, with mitigation strategies defined for all risks rated medium or above~\cite{hillson2009managing}.
+
+\subsection{Risk Register}
+
+\tabref{tab:risks} presents the key risks identified throughout the project, their initial ratings, mitigations applied, and residual ratings.
+
+\begin{table}[htbp]
+\centering
+\compactTable
+\caption{Risk register. L = Likelihood (1--5), I = Impact (1--5), R = Risk score (L$\times$I).}
+\label{tab:risks}
+\begin{tabularx}{\linewidth}{l X c c c X c}
+\toprule
+\textbf{ID} & \textbf{Risk} & \textbf{L} & \textbf{I} & \textbf{R} & \textbf{Mitigation} & \textbf{Residual} \\
+\midrule
+R1 & AI fails to detect dummy from search altitude & 3 & 5 & 15 & Retrained model on real aerial data; adjustable altitude and confidence threshold & 6 \\
+R2 & Pi inference too slow for flight speed & 3 & 4 & 12 & Benchmarked at 4.8 FPS; search speed reduced to match; threaded pipeline option & 4 \\
+R3 & GPS estimation error exceeds 5\,m & 3 & 3 & 9 & Inverse variance weighting, multi-pass averaging, Kalman filter; 7.5\,m offset landing for margin & 4 \\
+R4 & Weather cancels flight testing & 4 & 4 & 16 & Scheduled backup dates; maximised bench testing value; indoor validation of all software & 8 \\
+R5 & Hardware damage during testing & 2 & 5 & 10 & Progressive test plan (no skipping steps); RC kill switch always active; tethered hover before free flight & 4 \\
+R6 & Team member unavailable & 3 & 3 & 9 & Cross-training via pair programming; comprehensive documentation; modular code with clear interfaces & 4 \\
+R7 & Serial communication failure (Pi--Cube) & 3 & 4 & 12 & MAVProxy UDP bridge bypasses Python 3.13 serial bug; tested early in project & 3 \\
+R8 & Drone enters SSSI no-fly zone & 2 & 5 & 10 & Software geofence with 20\,m buffer; speed-cap near boundary; auto-switch to manual if breached & 3 \\
+R9 & Camera colour calibration incorrect & 3 & 3 & 9 & Empirically tested all 6 RGB permutations; documented BGR finding; lens calibration applied & 2 \\
+R10 & Scope creep delays core deliverables & 3 & 3 & 9 & Fixed core feature set early; deferred enhancements to \texttt{NICE\_TO\_HAVE.md} backlog & 4 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Risk Mitigation Strategies}
+
+Several cross-cutting strategies addressed multiple risks simultaneously:
+
+\subsubsection{Simulation-First Development}
+
+The most effective risk mitigation was developing and testing the entire system in simulation before touching real hardware. By the time we connected the Pi to the Cube flight controller, the state machine had already been validated through hundreds of simulated missions. This approach --- consistent with NASA's progressive V\&V methodology for UAS~\cite{nasa2015vv} --- meant that hardware testing focused on \textit{integration} rather than debugging logic errors.
+
+\subsubsection{Progressive Test Escalation}
+
+We defined five test levels, each introducing exactly one new variable (\secref{sec:testing}). This strategy directly mitigated R5 (hardware damage) by ensuring untested code never controlled a live aircraft, and R1 (detection failure) by calibrating CV performance in controlled conditions before flight.
+
+\subsubsection{Multiple Model Variants}
+
+To mitigate R1, we maintained three trained model variants (\texttt{cv\_models/sar\_v2\_1088}, \texttt{sar\_640}, \texttt{sar\_1280}) plus a generic COCO person detector as a fallback. All models were drop-in replacements with identical input/output shapes. On flight day, swapping models required a single file copy and script restart --- no code changes.
+
+\subsubsection{Dual Communication Path}
+
+To mitigate R7, the MAVProxy bridge provided a battle-tested serial-to-UDP gateway, simultaneously solving the Python~3.13 serial compatibility issue and enabling Mission Planner connectivity via TCP. This architectural decision (DD-04) turned a blocking risk into a feature.
+
+\subsection{Risk Events That Materialised}
+
+Two risks materialised during the project:
+
+\begin{enumerate}
+  \item \textbf{R4 (Weather)}: Our first scheduled flight day was cancelled due to high winds. We used the field day for bench testing, FOV calibration, and lens calibration instead, extracting substantial value from the trip despite not flying.
+  \item \textbf{R9 (Camera colour)}: The IMX296 sensor output BGR data despite being labelled RGB888 by picamera2. We discovered this empirically by testing all six channel permutations. The fix (removing an unnecessary \texttt{cvtColor} call) was trivial once diagnosed, but would have caused detection failures if not caught during bench testing.
+\end{enumerate}
+
+Both events were handled without schedule impact because our mitigations were already in place.
+
+\subsection{Regulatory Compliance}
+
+Operating a UAV in UK airspace required compliance with UK CAA regulations~\cite{ukcaa, cap722} and the JARUS SORA framework~\cite{sora}. Key compliance measures included:
+
+\begin{itemize}
+  \item Flight within the university's approved operational area at Fenswood Farm.
+  \item Qualified pilot with appropriate CAA registration.
+  \item Risk assessment submitted and approved before each flight session.
+  \item SSSI no-fly zone respected via software geofence with graduated speed reduction.
+  \item RC override available at all times; operator-in-the-loop for all landing decisions.
+\end{itemize}

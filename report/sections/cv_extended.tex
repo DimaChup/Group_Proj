@@ -1,0 +1,375 @@
+% cv_extended.tex — Extended Computer Vision analysis
+% Covers: detection pipeline, benchmarks, mission runtime, training results,
+%         altitude analysis, dual backend, model swapping.
+% Insert via \input{sections/cv_extended} in an appendix slot.
+
+\section{Computer Vision: Extended Analysis}\label{app:cv-extended}
+
+This appendix provides a comprehensive treatment of the onboard computer vision subsystem, extending the pipeline summary in Section~\ref{sec:cv} with timing breakdowns, benchmark methodology, mission-level detection probability analysis, altitude-dependent performance modelling, and the multi-backend architecture that enables platform-transparent deployment.
+
+% ═══════════════════════════════════════════════════════════════
+\subsection{Detection Pipeline: Step-by-Step Timing}\label{app:cv:pipeline}
+
+Every iteration of the main loop executes the detection pipeline in \texttt{vision.py} through six sequential stages.  Figure~\ref{fig:cv_pipeline} illustrates the data flow; Table~\ref{tab:pipeline_timing} provides measured timing for each stage on the Raspberry Pi~5.
+
+\begin{table}[ht]
+  \centering
+  \caption{Per-stage timing breakdown for the detection pipeline on Raspberry Pi~5 (mean of 50 runs, YOLOv8n FP32, XNNPACK 4-thread).}\label{tab:pipeline_timing}
+  \begin{tabular}{@{}r l c l@{}}
+    \toprule
+    \textbf{Stage} & \textbf{Operation} & \textbf{Time (ms)} & \textbf{Notes} \\
+    \midrule
+    1 & Camera capture (picamera2) & $\sim$2 & CSI-2 DMA, $1456\!\times\!1088$ BGR \\
+    2 & Lens undistortion (\texttt{cv2.remap}) & 1.5 & Precomputed maps, RMS\,=\,0.399\,px \\
+    3 & Preprocessing (cvtColor + resize + norm.) & $\sim$3.5 & BGR$\to$RGB, bilinear to $640\!\times\!640$, $\div 255$ \\
+    4 & TFLite inference (XNNPACK) & $\sim$196 & 4 threads on Cortex-A76 cores \\
+    5 & Postprocessing (confidence filter + NMS) & $\sim$2 & Greedy single-target selection \\
+    6 & Bounding box overlay (\texttt{cv2.rectangle}) & $<$1 & Drawn onto original frame \\
+    \midrule
+    & \textbf{Total (with undistortion)} & \textbf{$\sim$208} & \textbf{4.8\,FPS effective} \\
+    & \textbf{Total (without undistortion)} & \textbf{$\sim$206.5} & \textbf{Undistortion cost: +1.5\,ms} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsubsection{Stage 1: Camera Capture}
+
+The IMX296 global shutter sensor captures frames at $1456 \times 1088$ pixels via CSI-2 using \texttt{picamera2}.  A critical hardware-specific detail: despite being configured as \texttt{RGB888}, the IMX296 outputs data in BGR channel order---identical to OpenCV's native format.  This was confirmed empirically by testing all six channel permutations against known colour targets.  Consequently, no \texttt{cv2.cvtColor(frame, cv2.COLOR\_RGB2BGR)} conversion is applied, saving approximately \SI{1.2}{\milli\second} per frame and avoiding a subtle but mission-critical colour inversion that would degrade detection accuracy.
+
+At startup, 10 frames are discarded to allow the auto-white-balance (AWB) and auto-exposure algorithms to converge.  The camera can be configured for preset AWB modes (daylight, cloudy, indoor) or fixed manual colour gains via \texttt{config.py}, depending on lighting conditions.
+
+\subsubsection{Stage 2: Lens Undistortion}
+
+If a lens calibration file (\texttt{calibration\_data.npz}) is present, precomputed remap matrices are loaded at initialisation via \texttt{cv2.initUndistortRectifyMap()}.  Per-frame undistortion uses \texttt{cv2.remap()} with bilinear interpolation, costing \SI{1.5}{\milli\second}---less than 1\% of the total pipeline latency.  The calibration was performed using a 14$\times$9 checkerboard (13$\times$8 inner corners, \SI{28}{\milli\metre} square size), achieving an RMS reprojection error of 0.399 pixels.  This corrects barrel distortion from the wide-angle lens, which otherwise displaces peripheral detections by up to 8 pixels, corresponding to approximately \SI{0.7}{\metre} GPS error at \SI{35}{\metre} altitude.
+
+\subsubsection{Stage 3: Preprocessing}
+
+The undistorted $1456 \times 1088$ BGR frame is converted to RGB (\texttt{cv2.cvtColor}), resized to $640 \times 640$ via bilinear interpolation (\texttt{cv2.resize}), cast to \texttt{float32}, and normalised to $[0, 1]$ by dividing by 255.  The result is expanded to a batch tensor of shape $[1, 640, 640, 3]$.
+
+Direct resize (without letterboxing) was chosen over the alternative of maintaining aspect ratio with padding for three reasons: (1)~the aspect ratio of the IMX296 sensor ($4{:}3$) is close to square, so the distortion introduced by non-uniform scaling is modest (${\sim}7\%$ vertical stretch); (2)~letterboxing wastes ${\sim}14\%$ of the $640 \times 640$ input area on grey padding, reducing the effective resolution available for small-target detection; (3)~the coordinate rescaling from model output back to original frame dimensions is a simple linear map, avoiding the padding-offset arithmetic that introduces rounding errors.
+
+\subsubsection{Stage 4: TFLite Inference}
+
+The preprocessed tensor is passed to the TFLite interpreter, which invokes the XNNPACK delegate with four threads (one per Cortex-A76 core).  This stage dominates the pipeline at \SI{196}{\milli\second} (94\% of total latency).
+
+The YOLOv8n architecture produces an output tensor of shape $[1, 5, 8400]$, where:
+\begin{itemize}
+    \item \textbf{8400} is the total number of anchor-free detection candidates, arising from three feature pyramid network (FPN) scales: $80 \times 80 = 6400$ candidates at the finest scale (detecting small objects), $40 \times 40 = 1600$ at medium scale, and $20 \times 20 = 400$ at the coarsest scale (detecting large objects).
+    \item \textbf{5} encodes $[x_\mathrm{centre}, y_\mathrm{centre}, w, h, \mathrm{class\_conf}]$ for a single-class model.  For multi-class models (e.g.\ the 80-class COCO backup model), this dimension extends to $4 + C$ where $C$ is the number of classes.
+\end{itemize}
+
+The output tensor is transposed from $[1, 5, 8400]$ to $[8400, 5]$ for row-wise iteration during postprocessing.
+
+\subsubsection{Stage 5: Postprocessing}
+
+The postprocessing stage applies a confidence threshold of 0.2 (configurable via \texttt{config.py}) and selects the single highest-confidence detection.  This threshold was deliberately set well below the typical YOLO default of 0.5 for a critical operational reason: in a search-and-rescue context, a \emph{missed detection is irrecoverable}---the drone may never revisit that ground patch---while a \emph{false positive} is filtered by the human operator at the VERIFY stage and costs only a brief investigation diversion.  The asymmetric cost of errors therefore favours high recall (low threshold) over high precision (high threshold).
+
+For the custom single-class model, no non-maximum suppression (NMS) is required because the system uses a greedy best-detection strategy: a single target per frame is sufficient for the state machine's decision logic.  When the Ultralytics backend is used (laptop development), NMS is handled internally by the framework.
+
+Coordinates are rescaled from the $640 \times 640$ model space to the original $1456 \times 1088$ frame dimensions via simple multiplication: $x_\mathrm{frame} = x_\mathrm{model} \times (1456 / 640)$.
+
+\subsubsection{Stage 6: Visualisation}
+
+A green bounding box with a confidence label (e.g.\ ``\texttt{AI 0.97 [dummy]}'') is drawn onto the original frame using \texttt{cv2.rectangle} and \texttt{cv2.putText}.  This annotated frame is simultaneously served to the ground station MJPEG stream and (in non-headless mode) displayed locally via \texttt{cv2.imshow}.
+
+% ═══════════════════════════════════════════════════════════════
+\subsection{Comprehensive Benchmark Results}\label{app:cv:benchmarks}
+
+Table~\ref{tab:cv_benchmarks} presents the full benchmark results from the Pi~5, measured using the standardised protocol described in Section~\ref{sec:cv:inference:method} (5 warm-up frames discarded, 50 timed passes, \texttt{time.perf\_counter()}).
+
+\begin{table}[ht]
+  \centering
+  \caption{Inference benchmarks on Raspberry Pi~5 (Cortex-A76 $\times$4 at \SI{2.4}{\giga\hertz}, XNNPACK 4-thread, active cooler, no desktop environment).}\label{tab:cv_benchmarks}
+  \begin{tabular}{@{}l c c c c c c@{}}
+    \toprule
+    \textbf{Model} & \textbf{Size} & \textbf{Undistort} & \textbf{Mean (ms)} & \textbf{FPS} & \textbf{Det. rate} & \textbf{Mean conf.} \\
+    \midrule
+    best.tflite (YOLOv8n custom)     & 3.2\,MB  & No  & 206.5 & 4.8 & 50/50 (100\%) & 0.966 \\
+    best.tflite (YOLOv8n custom)     & 3.2\,MB  & Yes & 208.0 & 4.8 & 50/50 (100\%) & 0.958 \\
+    sar\_v2\_1088 (retrained v2)     & 11.7\,MB & No  & 206.8 & 4.8 & 50/50 (100\%) & 0.971 \\
+    human.tflite (COCO 80-class)     & 13.0\,MB & No  & 207.2 & 4.8 & 43/50 (86\%) & 0.724 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Several observations warrant discussion:
+
+\paragraph{Inference time is model-size-independent.}
+All three models produce nearly identical inference latencies (206--208\,ms) despite a $4\times$ size difference (3.2\,MB vs 13.0\,MB).  This confirms that YOLOv8n inference is compute-bound (limited by NEON multiply-accumulate throughput) rather than memory-bound (limited by weight loading from DRAM).  The model architecture---not the weight count per class---determines latency, because all three models share the identical YOLOv8n backbone; only the final classification head differs.
+
+\paragraph{Undistortion overhead is negligible.}
+Enabling lens undistortion adds only \SI{1.5}{\milli\second} ($<$1\% overhead), confirming that precomputed remap matrices are an efficient correction strategy.  The slight confidence decrease with undistortion (0.966 $\to$ 0.958) is within measurement noise and does not affect detection rate.
+
+\paragraph{Custom model vastly outperforms generic COCO.}
+The custom SAR model achieves 100\% detection rate with 0.966 mean confidence, compared to 86\% and 0.724 for the generic COCO person detector.  This validates the domain-specific retraining strategy (Section~\ref{sec:training}): a model trained on aerial views of a mannequin against grassy backgrounds significantly outperforms a general-purpose detector trained on ground-level person images.  The COCO model is retained as a backup for scenarios where the target is a standing human rather than a prone mannequin.
+
+\paragraph{Timing stability.}
+The standard deviation of per-frame latency was \SI{3.2}{\milli\second} ($\sigma / \mu = 1.5\%$), indicating highly reproducible timing.  No thermal throttling was observed during the 50-frame test window with the official Pi~5 active cooler.
+
+% ═══════════════════════════════════════════════════════════════
+\subsection{Mission Runtime Analysis}\label{app:cv:runtime}
+
+The practical question for mission planning is not ``what is the per-frame detection rate?'' but rather ``what is the probability of detecting a target during a single flyover of the search swath?''  This subsection models that probability using the benchmark data and mission geometry.
+
+\subsubsection{Ground Footprint Geometry}
+
+At search altitude $h$, the camera's ground footprint is determined by the horizontal and vertical fields of view:
+\begin{align}
+    W_g &= 2h \tan\!\left(\frac{\theta_H}{2}\right) \label{eq:footprint_w} \\
+    L_g &= 2h \tan\!\left(\frac{\theta_V}{2}\right) \label{eq:footprint_l}
+\end{align}
+where $\theta_H = 2\arctan(w_s / 2f) \approx 49.3^{\circ}$ is the horizontal FOV (sensor width $w_s = \SI{5.02}{\milli\metre}$, focal length $f = \SI{5.46}{\milli\metre}$) and $\theta_V \approx 37.9^{\circ}$ is the vertical FOV.
+
+Table~\ref{tab:footprint} gives the ground footprint at key operational altitudes.
+
+\begin{table}[ht]
+  \centering
+  \caption{Camera ground footprint and target size at operational altitudes (IMX296, $f = \SI{5.46}{\milli\metre}$, $1456\!\times\!1088$ sensor).}\label{tab:footprint}
+  \begin{tabular}{@{}c c c c c@{}}
+    \toprule
+    \textbf{Altitude (m)} & $W_g$ \textbf{(m)} & $L_g$ \textbf{(m)} & \textbf{Dummy px} & \textbf{GSD (mm/px)} \\
+    \midrule
+    10  & 9.2  & 6.9  & 285  & 6.3 \\
+    15  & 13.8 & 10.3 & 190  & 9.5 \\
+    20  & 18.4 & 13.8 & 142  & 12.7 \\
+    25  & 23.0 & 17.2 & 114  & 15.8 \\
+    30  & 27.6 & 20.7 & 95   & 19.0 \\
+    35  & 32.2 & 24.1 & 81   & 22.1 \\
+    40  & 36.8 & 27.6 & 71   & 25.3 \\
+    50  & 46.0 & 34.5 & 57   & 31.6 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The ``Dummy px'' column shows the number of pixels subtended by a \SI{1.8}{\metre} target along the vertical axis of the $640 \times 640$ model input (computed as $1.8 / \mathrm{GSD} \times 640 / 1088$, accounting for the resize from $1088$ to $640$ rows).  The ground sampling distance (GSD) is $L_g / 1088$.
+
+\subsubsection{Frames per Flyover}
+
+At search speed $v$ and frame rate $r$, the along-track distance between consecutive frames is $d_f = v / r$.  The number of frames in which a stationary target remains within the field of view during a single pass is:
+\begin{equation}
+    N_\mathrm{frames} = \frac{L_g}{d_f} = \frac{L_g \cdot r}{v}
+    \label{eq:frames_per_flyover}
+\end{equation}
+
+Table~\ref{tab:frames_flyover} evaluates this for the operational speed and altitude envelope.
+
+\begin{table}[ht]
+  \centering
+  \caption{Frames per flyover and detection probability for a target within the search swath.  $p_d$ = single-frame detection probability; $P_\mathrm{miss}$ = $(1 - p_d)^N$; $P_\mathrm{detect}$ = $1 - P_\mathrm{miss}$.}\label{tab:frames_flyover}
+  \begin{tabular}{@{}c c c c c c@{}}
+    \toprule
+    \textbf{Alt. (m)} & \textbf{Speed (m/s)} & $N_\mathrm{frames}$ & $p_d$ & $P_\mathrm{detect}$ & \textbf{Note} \\
+    \midrule
+    35 &  6 & 19.3 & 0.90 & $>$0.9999 & Slow search \\
+    35 &  8 & 14.5 & 0.90 & $>$0.9999 & Normal search \\
+    35 & 10 & 11.6 & 0.90 & 0.9997 & Default \texttt{SEARCH\_SPEED} \\
+    35 & 15 &  7.7 & 0.90 & 0.9974 & Transit speed \\
+    50 & 10 & 16.6 & 0.70 & 0.9998 & High altitude \\
+    50 & 15 & 11.0 & 0.70 & 0.9983 & High alt + fast \\
+    20 & 10 &  6.6 & 0.98 & $>$0.9999 & Low altitude pass \\
+    15 &  5 &  9.9 & 0.99 & $>$0.9999 & Centering descent \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\paragraph{Key finding.}
+Even in the worst operational case (50\,m altitude at 15\,m/s transit speed, with a conservative 70\% single-frame detection probability), the cumulative detection probability across the 11-frame flyover window exceeds 99.8\%.  At the nominal search configuration (35\,m, 10\,m/s), the system achieves effectively certain detection ($P > 99.97\%$) with 11.6 frames per target.
+
+The lawnmower pattern further improves robustness: adjacent passes overlap by 20\% (configurable via \texttt{planning.py}), so targets near the swath edge receive a second observation window.  The probability of missing a target across two overlapping passes at nominal conditions is $(1 - 0.9997)^2 \approx 10^{-7}$.
+
+\subsubsection{Frame Overlap Analysis}
+
+At 4.8\,FPS and 10\,m/s, consecutive frames are separated by $10/4.8 = \SI{2.08}{\metre}$ along-track.  The along-track footprint at \SI{35}{\metre} is \SI{24.1}{\metre}, giving a frame-to-frame overlap of:
+\begin{equation}
+    \mathrm{Overlap} = 1 - \frac{d_f}{L_g} = 1 - \frac{2.08}{24.1} = 91.4\%
+\end{equation}
+
+This high overlap means that a target appears in many consecutive frames, providing the state machine with multiple opportunities to trigger the CENTERING sequence.  The \texttt{-{}-smart-detect} mode exploits this by requiring $k = 3$ consecutive positive detections before committing to investigation, effectively implementing a temporal majority-vote filter that suppresses transient false positives at a cost of only $3 \times 208 = \SI{0.6}{\second}$ delay (\SI{6.2}{\metre} of travel at 10\,m/s).
+
+% ═══════════════════════════════════════════════════════════════
+\subsection{Detection Performance vs Altitude}\label{app:cv:altitude}
+
+The critical operational question is: ``at what altitude does detection become unreliable?''  This is modelled using the thin-lens equation to predict the target's apparent size in pixels, combined with empirically observed confidence behaviour from video replay analysis.
+
+\subsubsection{Pixel Size Model}
+
+The apparent height of a target of real height $H_t = \SI{1.8}{\metre}$ in the $640 \times 640$ model input at altitude $h$ is:
+\begin{equation}
+    p_t = \frac{H_t \cdot f \cdot 640}{w_s \cdot h \cdot (W_\mathrm{native} / H_\mathrm{native})}
+    \label{eq:target_pixels}
+\end{equation}
+where $f = \SI{5.46}{\milli\metre}$, $w_s = \SI{5.02}{\milli\metre}$, and the aspect-ratio correction term accounts for the non-square resize from $1456 \times 1088$ to $640 \times 640$.
+
+\subsubsection{Altitude Performance Table}
+
+Table~\ref{tab:altitude_performance} combines the pixel-size model with confidence data extracted from DJI video replay analysis (Section~\ref{sec:localisation}) and bench testing.
+
+\begin{table}[ht]
+  \centering
+  \caption{Detection performance vs altitude for a \SI{1.8}{\metre} mannequin target.  Pixel size is in the $640\!\times\!640$ model input; confidence and detection rate are empirically observed or interpolated from video replay data.}\label{tab:altitude_performance}
+  \begin{tabular}{@{}c c c c l@{}}
+    \toprule
+    \textbf{Altitude (m)} & \textbf{Target (px)} & \textbf{Confidence} & \textbf{Det. rate} & \textbf{Assessment} \\
+    \midrule
+    10  & 144 & 0.98 & 100\% & Excellent --- target fills $>$22\% of frame height \\
+    15  & 96  & 0.97 & 100\% & Excellent --- verify altitude \\
+    20  & 72  & 0.96 & 100\% & Very good --- still large and clear \\
+    25  & 57  & 0.94 & 98\%  & Good --- typical low search altitude \\
+    30  & 48  & 0.92 & 96\%  & Good --- reliable detection \\
+    35  & 41  & 0.90 & 95\%  & Good --- nominal search altitude \\
+    40  & 36  & 0.85 & 90\%  & Marginal --- approaching limits \\
+    50  & 29  & 0.70 & 75\%  & Degraded --- single-pass detection unreliable \\
+    60  & 24  & 0.45 & 50\%  & Poor --- near threshold \\
+    70  & 20  & 0.30 & 30\%  & Unreliable --- below practical threshold \\
+    80  & 18  & $<$0.20 & $<$15\% & Not viable --- below confidence threshold \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\paragraph{Operational envelope.}
+The data confirms that \SI{35}{\metre} (the configured \texttt{TARGET\_ALT}) sits comfortably within the reliable detection zone (95\% per-frame, $>$99.97\% per-flyover).  The altitude ceiling for reliable single-pass detection is approximately \SI{40}{\metre}; above this, multi-pass coverage from the lawnmower pattern provides the necessary redundancy.  The theoretical floor for detection (${\sim}\SI{70}{\metre}$) corresponds to the target subtending approximately 20 pixels---below the YOLOv8n smallest feature scale ($80 \times 80$ grid, where each cell covers an $8 \times 8$ region of the input).
+
+\paragraph{Confidence versus pixel size relationship.}
+Figure~\ref{fig:conf_vs_alt} shows the empirically measured confidence as a function of altitude.  The relationship follows an approximately sigmoidal curve in log-altitude space, with a sharp transition between reliable detection ($>$0.9) and unreliable detection ($<$0.5) occurring over a narrow altitude band (\SIrange{40}{60}{\metre}).  This sharp transition is characteristic of anchor-free detectors operating near their minimum detectable object size.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.75\textwidth]{conf_vs_alt}
+\caption{Detection confidence vs altitude for the YOLOv8n custom model.  Error bars represent the interquartile range from video replay analysis.  The dashed line marks the 0.2 confidence threshold.}
+\label{fig:conf_vs_alt}
+\end{figure}
+
+% ═══════════════════════════════════════════════════════════════
+\subsection{Model Training Results}\label{app:cv:training}
+
+The retrained v2 model (\texttt{sar\_v2\_1088}) was trained on Google Colab (NVIDIA T4 GPU) for 150 epochs using the mixed dataset described in Section~\ref{sec:training}.  Table~\ref{tab:training_results} summarises the final evaluation metrics.
+
+\begin{table}[ht]
+  \centering
+  \caption{Training evaluation metrics for the YOLOv8n SAR detector (v2, trained at $1088 \times 1088$, evaluated on validation split).}\label{tab:training_results}
+  \begin{tabular}{@{}l c l@{}}
+    \toprule
+    \textbf{Metric} & \textbf{Value} & \textbf{Interpretation} \\
+    \midrule
+    mAP$_{50}$         & 0.995 & Near-perfect at IoU $\geq 0.50$ \\
+    mAP$_{50{:}95}$    & 0.893 & Strong across IoU thresholds \\
+    Precision          & 0.989 & Very low false positive rate \\
+    Recall             & 0.995 & Near-zero missed detections \\
+    F1 score           & 0.992 & Balanced precision-recall \\
+    \midrule
+    Training time      & 47\,min & 150 epochs on T4 GPU \\
+    Best epoch         & 127 & Selected by early stopping (patience=30) \\
+    Final model size   & 11.7\,MB (TFLite FP32) & Input $[1,640,640,3]$, output $[1,5,8400]$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\paragraph{Confusion matrix analysis.}
+The single-class confusion matrix on the validation set shows 99.5\% true positive rate and 0.5\% false negative rate.  No false positives were recorded on the 50-image negative set (background frames without mannequin), confirming that the negative-mining strategy successfully suppresses hallucinated detections on shadows, paths, and field markings that plagued the v1 model.
+
+\paragraph{Comparison with v1.}
+The v1 model (trained on 200 synthetic images at $640 \times 640$ from a single satellite background) achieved mAP$_{50}$ = 0.94 and suffered frequent false positives on high-contrast terrain features.  The v2 improvements---real-flight backgrounds, native-resolution training, altitude-correct scaling, and explicit negatives---closed the domain gap and improved mAP$_{50}$ by 5.5 percentage points while eliminating the false positive problem.
+
+\paragraph{Export and deployment.}
+The trained \texttt{best.pt} weights were exported to TFLite (float32) via \texttt{yolo export format=tflite}, producing the same $[1, 640, 640, 3]$ input and $[1, 5, 8400]$ output shape as the v1 model.  This ensures drop-in compatibility: deploying the v2 model on the Pi requires only copying the \texttt{.tflite} file---no code changes, no configuration changes, no recompilation.
+
+% ═══════════════════════════════════════════════════════════════
+\subsection{Dual Backend Architecture}\label{app:cv:backends}
+
+The \texttt{VisionSystem} class in \texttt{vision.py} implements a three-tier backend selection strategy that automatically adapts to the available runtime environment.  This design enables the same codebase to run on a development laptop with full Ultralytics/PyTorch, a Raspberry Pi with lightweight TFLite, or an optimised ARM deployment with NCNN---without any code changes or conditional imports in the calling modules.
+
+\subsubsection{Backend Selection Logic}
+
+At import time, \texttt{vision.py} probes for available backends in priority order:
+
+\begin{enumerate}
+    \item \textbf{NCNN} (if \texttt{-{}-backend ncnn} flag is set and the \texttt{ncnn} package is installed).  This backend provides the fastest ARM inference (${\sim}$15\,FPS projected) through hand-tuned NEON assembly kernels, but requires manual compilation on Python~3.13/aarch64 and was therefore not used during field testing.
+    \item \textbf{Ultralytics YOLO} (if the \texttt{ultralytics} package is importable).  This is the default on the development laptop, providing the richest feature set (built-in NMS, class name mapping, training integration) at the cost of a large dependency footprint ($>$\SI{800}{\mega\byte}).
+    \item \textbf{TFLite} (if \texttt{tflite-runtime}, \texttt{ai-edge-litert}, or \texttt{tensorflow.lite} is available).  This is the production backend on the Pi, adding only ${\sim}$\SI{5}{\mega\byte} to the deployment.  On Python~3.13, the legacy \texttt{tflite-runtime} package is unavailable; the system falls back to \texttt{ai-edge-litert} (Google's successor package).
+\end{enumerate}
+
+All three backends consume the same \texttt{.tflite} model file (or equivalent format) and produce output through the identical \texttt{detect\_in\_image(frame)} $\to$ \texttt{(found, cx, cy, confidence)} interface.  The calling code---state machine, GPS estimation, ground station---is entirely backend-agnostic.
+
+\subsubsection{Backend Abstraction Benefits}
+
+This architecture provides three concrete benefits:
+
+\begin{itemize}
+    \item \textbf{Development-production parity.}  Detections observed during laptop simulation are reproduced identically on the Pi (modulo floating-point precision differences between CPU architectures), because the model weights and preprocessing pipeline are shared.
+    \item \textbf{Graceful degradation.}  If the preferred backend fails to load (e.g.\ missing NCNN compilation), the system automatically falls back to the next available option rather than crashing.  A missing model file produces a clear warning (``Detection DISABLED --- mission will fly but never detect targets'') rather than a silent failure.
+    \item \textbf{A/B testing.}  Different backends can be compared on identical input frames using the \texttt{-{}-backend} flag, enabling systematic evaluation of accuracy and latency trade-offs during development.
+\end{itemize}
+
+% ═══════════════════════════════════════════════════════════════
+\subsection{Model Swapping and Field Deployment}\label{app:cv:swapping}
+
+A key operational requirement is the ability to swap detection models in the field without modifying code or restarting the mission planning workflow.  Two mechanisms are provided:
+
+\paragraph{File-copy swap.}
+All scripts read their model from a single path: \texttt{best.tflite} in the project root.  Swapping models is a single copy command:
+\begin{lstlisting}[language=bash,numbers=none]
+cp cv_models/sar_v2_1088/best.tflite best.tflite
+\end{lstlisting}
+Three model variants are maintained in the \texttt{cv\_models/} directory, each with TFLite, PyTorch (\texttt{.pt}), and NCNN exports:
+
+\begin{table}[ht]
+  \centering
+  \caption{Available model variants for field deployment.}\label{tab:model_variants}
+  \begin{tabular}{@{}l c c l@{}}
+    \toprule
+    \textbf{Model} & \textbf{Size} & \textbf{Classes} & \textbf{Use case} \\
+    \midrule
+    \texttt{sar\_v2\_1088} & 11.7\,MB & 1 (dummy) & Primary: retrained on real + synthetic data \\
+    \texttt{sar\_640}       & 3.2\,MB  & 1 (dummy) & Baseline: original training at $640\!\times\!640$ \\
+    \texttt{human.tflite}   & 13.0\,MB & 80 (COCO) & Backup: generic person detector \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\paragraph{CLI flag swap.}
+The \texttt{-{}-model} flag overrides the default model path at launch:
+\begin{lstlisting}[language=bash,numbers=none]
+python main.py --model models/human.tflite
+\end{lstlisting}
+This enables rapid A/B testing during flight day without touching the filesystem.
+
+\paragraph{Zero-code-change guarantee.}
+All TFLite models share the same input tensor shape $[1, 640, 640, 3]$ and output shape $[1, 5, 8400]$ (or $[1, 4+C, 8400]$ for multi-class).  The \texttt{\_pick\_best\_detection()} method in \texttt{vision.py} handles both single-class and multi-class outputs transparently by scanning the class dimension and selecting the maximum confidence.  For multi-class models, the \texttt{COCO\_NAMES} dictionary maps class indices to human-readable labels (e.g.\ ``person'', ``car'') for the bounding box overlay.
+
+% ═══════════════════════════════════════════════════════════════
+\subsection{Detection Speed vs Drone Speed}\label{app:cv:speed}
+
+At higher search speeds, two effects degrade detection quality: (1)~fewer frames per flyover, reducing the cumulative detection probability; and (2)~increased motion blur, reducing per-frame confidence.
+
+\paragraph{Frames per flyover.}
+Equation~\ref{eq:frames_per_flyover} shows that $N_\mathrm{frames} \propto 1/v$.  At the maximum transit speed of \SI{15}{\metre\per\second}, the flyover window at \SI{35}{\metre} altitude shrinks to 7.7 frames---still sufficient for $P_\mathrm{detect} > 99.7\%$ (Table~\ref{tab:frames_flyover}).
+
+\paragraph{Motion blur.}
+At \SI{10}{\metre\per\second} and 4.8\,FPS, each frame integrates over $10 / 4.8 = \SI{2.08}{\metre}$ of ground motion.  With the IMX296's global shutter and a typical exposure time of ${\sim}\SI{2}{\milli\second}$ (auto-exposure at outdoor illumination levels), the motion smear is $0.002 \times 10 = \SI{0.02}{\metre}$---less than 1 pixel at \SI{35}{\metre} altitude (GSD = \SI{22.1}{\milli\metre}/px).  The global shutter eliminates the rolling-shutter ``jello'' artefact that would otherwise cause geometric distortion of the target at speed, making the IMX296 an ideal choice for aerial detection from a moving platform.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.75\textwidth]{det_vs_speed}
+\caption{Detection probability per flyover vs drone speed at \SI{35}{\metre} altitude, for single-frame detection rates of 0.70, 0.85, and 0.95.  Even at 15\,m/s, the probability exceeds 99\% for $p_d \geq 0.85$.}
+\label{fig:det_vs_speed}
+\end{figure}
+
+\paragraph{Altitude-dependent speed scheduling.}
+To balance coverage rate against detection reliability, \texttt{config.py} implements a linear speed schedule: \SI{6}{\metre\per\second} below \SI{20}{\metre} (maximising frame count during low-altitude centering) and \SI{10}{\metre\per\second} above \SI{50}{\metre} (maximising area coverage during high-altitude search).  This is configured via \texttt{speed\_for\_altitude()} and ensures that the detection frame budget remains above 10 frames per flyover at all operational altitudes.
+
+% ═══════════════════════════════════════════════════════════════
+\subsection{Inference Latency Breakdown}\label{app:cv:latency}
+
+Figure~\ref{fig:latency_breakdown} presents the latency breakdown as a stacked bar chart, emphasising that model inference dominates the pipeline at 94\% of total time.  This has two implications for optimisation:
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.65\textwidth]{latency_breakdown}
+\caption{Latency breakdown of the detection pipeline.  Model inference (XNNPACK, 4-thread) accounts for 94\% of total latency; all other stages are negligible in comparison.}
+\label{fig:latency_breakdown}
+\end{figure}
+
+\begin{enumerate}
+    \item \textbf{Optimising non-inference stages yields negligible gains.}  Even eliminating all preprocessing, undistortion, and postprocessing entirely would improve throughput from 4.8 to 5.1\,FPS---a 6\% improvement.  Meaningful speedups require reducing inference time itself, via backend change (NCNN), quantisation (FP16), or hardware acceleration (Hailo-8L NPU).
+    \item \textbf{The pipeline is naturally suited to pipelining.}  Because inference occupies 94\% of the time on the XNNPACK threads, the main thread could capture the next frame during inference with minimal contention.  However, as discussed in Section~\ref{sec:cv:inference:pipeline}, this optimisation was deferred due to shared-state complexity in the safety-critical flight loop.
+\end{enumerate}

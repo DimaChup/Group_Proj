@@ -1,0 +1,104 @@
+\section{Project Management}
+\label{sec:project_management}
+
+\subsection{Management Philosophy}
+
+We adopted a hybrid project management approach combining traditional plan-driven methods with agile practices, a strategy well-suited to hardware-software projects with fixed deadlines~\cite{pmbok2021, boehm1988spiral}. The academic calendar imposed a hard deadline, making a purely agile approach risky; however, the exploratory nature of integrating AI with flight hardware demanded iterative development cycles. Our solution was to use a traditional work breakdown structure (WBS) and milestone plan for high-level scheduling, while executing work in informal two-week sprints with regular check-ins.
+
+\subsection{Work Breakdown Structure}
+
+We decomposed the project into five parallel workstreams, each with clearly defined deliverables and integration points:
+
+\begin{table}[htbp]
+\centering
+\compactTable
+\caption{Work breakdown structure -- top-level workstreams.}
+\label{tab:wbs}
+\begin{tabularx}{\linewidth}{l l X l}
+\toprule
+\textbf{Stream} & \textbf{Owner} & \textbf{Scope} & \textbf{Hardware?} \\
+\midrule
+A: Computer Vision & Dima & Camera, AI model, TFLite inference on Pi & Pi + Camera \\
+B: Hardware \& Connectivity & [Member 4] & Wiring, serial link, GPS, RC binding & All hardware \\
+C: Search Logic & Robin & Lawnmower planning, state machine, algorithms & No (simulation) \\
+D: Ground Station & Dima / Robin & Mission Planner, SSH, web dashboard, operator UI & Telemetry radio \\
+E: Safety \& Testing & All & Preflight checks, failsafes, progressive test plan & All hardware \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Each workstream was further divided into numbered tasks (e.g.\ A1: camera works on Pi, A2: AI detection works on Pi, etc.), producing approximately 25 discrete work packages. Streams A and B required physical hardware and could only begin once components arrived; Streams C and D could proceed immediately using laptop simulation and SITL (Software-In-The-Loop)~\cite{ardupilot2024}.
+
+\subsection{Timeline and Milestones}
+
+The project spanned approximately 12 weeks from initial planning to final demonstration. \tabref{tab:milestones} summarises the key milestones.
+
+\begin{table}[htbp]
+\centering
+\compactTable
+\caption{Project milestones and target dates.}
+\label{tab:milestones}
+\begin{tabularx}{\linewidth}{l l X l}
+\toprule
+\textbf{ID} & \textbf{Week} & \textbf{Milestone} & \textbf{Status} \\
+\midrule
+M1 & 1--2 & Requirements defined, WBS agreed, roles assigned & Complete \\
+M2 & 2--3 & Simulation working end-to-end (state machine + CV + search pattern) & Complete \\
+M3 & 4--5 & Pi hardware verified: camera, TFLite inference, Cube serial link & Complete \\
+M4 & 5--6 & Integration 1: Pi runs detection + Cube telemetry simultaneously & Complete \\
+M5 & 6--7 & Ground station operational (web dashboard, Mission Planner connected) & Complete \\
+M6 & 7--8 & Integration 2: full bench test with real camera + simulated flight & Complete \\
+M7 & 8--9 & Model retrained on real flight video data (v2, mAP50 = 0.995) & Complete \\
+M8 & 9--10 & Field day: bench tests, FOV calibration, passive flight observation & Complete \\
+M9 & 11--12 & Final demonstration and report submission & Complete \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Sprint Methodology}
+
+Within the milestone framework, we operated in informal two-week sprints inspired by Scrum~\cite{schwaber1997scrum}. Each sprint followed a lightweight cycle:
+
+\begin{enumerate}
+  \item \textbf{Sprint planning} (group meeting): review progress against milestones, assign tasks for the next two weeks, identify blockers.
+  \item \textbf{Execution}: individual or pair work on assigned tasks. Code changes pushed to feature branches on GitHub.
+  \item \textbf{Integration checkpoint}: at the end of each sprint, we merged completed work into the main branch and ran integration tests.
+  \item \textbf{Retrospective} (brief, often informal): what went well, what to improve, any new risks.
+\end{enumerate}
+
+We did not use formal story points or velocity tracking; the small team size (five members) and direct communication made heavyweight agile tooling unnecessary. Instead, we maintained a shared status document (\texttt{GROUP\_STATUS.md}) in the repository that tracked each member's current tasks, blockers, and completed work.
+
+\subsection{Tool Chain}
+
+\begin{table}[htbp]
+\centering
+\compactTable
+\caption{Tools used for project management and development.}
+\label{tab:tools}
+\begin{tabularx}{\linewidth}{l X}
+\toprule
+\textbf{Tool} & \textbf{Purpose} \\
+\midrule
+GitHub & Version control, branch management, code review, issue tracking \\
+Git branches & Feature isolation (\texttt{MainOne2}--\texttt{MainOne8}, \texttt{Working*} branches) \\
+Group chat & Day-to-day communication, quick decisions \\
+Weekly meetings & Sprint planning, integration checkpoints, design reviews \\
+Mission Planner & Flight controller configuration, telemetry monitoring, geofence setup \\
+Google Colab & GPU-accelerated model training (YOLOv8 retraining) \\
+Overleaf / \LaTeX & Collaborative report writing \\
+Project dashboard & Custom React web app for WBS tracking and SE visualisation \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Scheduling Challenges}
+
+The primary scheduling challenge was the dependency between software development and hardware availability. Streams A and B could not begin until the Raspberry Pi, camera module, and Cube flight controller were physically available. We mitigated this by:
+
+\begin{itemize}
+  \item \textbf{Simulation-first development}: the entire state machine, search pattern generator, and detection pipeline were developed and tested in simulation on laptops before any hardware arrived. When the Pi became available, the same code ran with minimal configuration changes.
+  \item \textbf{Dual-backend vision system}: \texttt{vision.py} was designed with automatic backend detection --- Ultralytics (PyTorch) on laptops, TFLite on the Pi --- so that CV development could proceed on any platform.
+  \item \textbf{Docker-based Pi simulation}: a Dockerfile replicated the Pi's lightweight dependency stack, allowing us to verify that TFLite models loaded correctly on an ARM-like environment before physical Pi testing.
+\end{itemize}
+
+Weather also constrained field testing. Our first scheduled flight day was cancelled due to high winds, reducing the available outdoor test time and forcing us to maximise the value of bench testing and indoor validation.

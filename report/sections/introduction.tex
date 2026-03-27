@@ -1,0 +1,54 @@
+% Introduction — EXCLUDED from 15-page count
+% Contains: context, background, Company description, member bios/roles, contributions
+
+\section{Introduction}\label{sec:intro}
+
+\subsection{Context and Background}\label{sec:context}
+
+Search and rescue (SAR) operations in wilderness and mountain environments are critically time-sensitive. The \textit{golden hour}---the window within which medical intervention most significantly improves survival outcomes---places severe pressure on response teams to locate casualties rapidly~\cite{goodrich2008}. In the United Kingdom, mountain rescue teams responded to over 3{,}000 incidents in 2023, with search phases often lasting several hours across terrain that is difficult or dangerous to traverse on foot~\cite{mra2023}.
+
+The challenge is fundamentally one of coverage rate. A ground search team of ten members can sweep approximately $0.1$--$0.5$\,km$^{2}$/hr depending on terrain complexity, whereas a single UAV at 30\,m altitude with a \ang{60} field of view can survey a 35\,m-wide swath at 5\,m/s, covering approximately $0.6$\,km$^{2}$/hr---an order-of-magnitude improvement per searcher deployed~\cite{goodrich2008, murphy2014}. Recent advances in lightweight object detection models, particularly the YOLO family~\cite{yolohistory, yolov8}, have made it feasible to run real-time inference on edge devices such as the Raspberry Pi, enabling fully onboard detection without dependence on a ground-station data link~\cite{edgeai}.
+
+This project addresses the gap between expensive commercial SAR platforms (\pounds5\,000--\pounds30\,000) that require continuous video downlinks and ground-based operators, and research prototypes using GPU-class computers that are too heavy or power-hungry for adoption by volunteer rescue organisations. The specific objective is to demonstrate that a \textit{low-cost, fully autonomous} SAR drone can be built using commodity hardware---a Raspberry Pi as the onboard computer and an RGB camera as the sole sensor---with all detection and decision-making performed onboard.
+
+\subsection{Mission Scenario}\label{sec:scenario}
+
+A lost hiker in Fenswood Wilderness activates a Personal Locator Beacon (PLB) 5--15 minutes into the search, providing a Focus Area. The search region contains a Site of Special Scientific Interest (SSSI) designated as a no-fly zone. The drone must search the designated area, identify the casualty, land within 10\,m (but not within 5\,m) to deploy a first aid kit, then return to the take-off location. Twelve requirements (R01--R12) govern the mission, verified in Section~\ref{sec:reqverif}.
+
+\subsection{Company Description}\label{sec:company}
+
+The project was undertaken by Company~X, a team of five MSc students at the University of Bristol as part of the AENGM0074 Group Design Project module during the Spring 2026 term.
+
+\subsection{Team Members, Roles, and Contributions}\label{sec:team}
+
+% ──────────────────────────────────────────────────────────────
+% TODO: Replace placeholder entries with actual team member details
+% ──────────────────────────────────────────────────────────────
+
+\begin{description}[style=nextline, leftmargin=0pt, labelwidth=0pt]
+
+\item[\textbf{Member 1} --- Software Lead / Systems Integration]
+\textit{Background:} MSc Robotics. \\
+\textit{Contributions:} Designed and implemented the full software stack: state machine, computer vision pipeline, path planning, ground station, simulation framework, GPS estimation, geofence enforcement, and progressive testing methodology. Retrained the YOLOv8n model on mixed synthetic/real data. Developed all 41 test scripts and the video analysis pipeline.
+
+\item[\textbf{Member 2} --- Role]
+\textit{Background:} MSc programme. \\
+\textit{Contributions:} \textit{[To be filled in by team.]}
+
+\item[\textbf{Member 3} --- Role]
+\textit{Background:} MSc programme. \\
+\textit{Contributions:} \textit{[To be filled in by team.]}
+
+\item[\textbf{Member 4} --- Role]
+\textit{Background:} MSc programme. \\
+\textit{Contributions:} \textit{[To be filled in by team.]}
+
+\item[\textbf{Member 5} --- Role]
+\textit{Background:} MSc programme. \\
+\textit{Contributions:} \textit{[To be filled in by team.]}
+
+\end{description}
+
+\subsection{Report Structure}\label{sec:report-structure}
+
+The remainder of this report follows the structure required by the module brief. Section~\ref{sec:rationale} presents the design rationale including STEEPLE considerations. Section~\ref{sec:sysdesc} describes the system architecture, computer vision pipeline, localisation, ground station, and simulation framework. Section~\ref{sec:reqverif} maps each of the twelve requirements to verification evidence. Section~\ref{sec:evaluation} evaluates the system's technical performance using a plus/delta analysis. Appendices provide the full state transition table, configuration parameters, model training details, safety analysis, and directions for future work.
