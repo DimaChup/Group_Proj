@@ -156,7 +156,7 @@ Altitude progression from 35 m default:
 | Pass | Altitude | Speed | Ground width | Effect |
 |------|----------|-------|-------------|--------|
 | 1 (initial) | 35.0 m | 8.0 m/s | ~32.2 m | Fewest scan lines, fastest |
-| 2 (rescan 1) | 28.0 m | 7.1 m/s | ~25.7 m | More lines, better GSD |
+| 2 (rescan 1) | 28.0 m | 7.1 m/s | ~25.7 m | More lines, better GSD (Ground Sample Distance) |
 | 3 (rescan 2) | 22.4 m | 6.3 m/s | ~20.6 m | Most lines, best detection |
 
 Each lower pass narrows the footprint (more scan lines) but increases target pixel size
@@ -471,7 +471,7 @@ When investigating a target, only detections within `DETECT_LOCK_RADIUS_M = 5 m`
 locked position refine the estimate. Detections outside 5 m are treated as separate
 targets and queued.
 
-**Why 5 m:** GPS has a CEP of 2-3 m. The same stationary object's estimated position
+**Why 5 m:** GPS has a CEP (Circular Error Probable, 50th percentile) of 2-3 m. The same stationary object's estimated position
 varies by up to 3 m between readings. 5 m comfortably encompasses this noise while
 distinguishing objects that are physically separate.
 
@@ -642,7 +642,7 @@ artefacts during motion:
 | Artefact | Cause | Impact on detection |
 |----------|-------|---------------------|
 | Skew (leaning buildings) | Horizontal motion during row-sequential readout | Distorts bounding boxes |
-| Wobble (jello effect) | Vibration during readout | Oscillating object shapes, confuses NMS |
+| Wobble (jello effect) | Vibration during readout | Oscillating object shapes, confuses NMS (Non-Maximum Suppression) |
 | Partial exposure | Flash or sudden lighting change during readout | Inconsistent brightness across frame |
 
 The global shutter eliminates all three. The only remaining blur source is translational
@@ -753,7 +753,7 @@ range of 20-50 m keeps the dummy at 34-84 px -- comfortably above the detection 
 YOLOv8n (nano) was selected as the optimal trade-off between accuracy and inference speed
 on the Raspberry Pi 5's Cortex-A76 CPU:
 
-| Variant | Parameters | FLOPs (B) | COCO mAP50 | TFLite Size | Expected Pi 5 FPS |
+| Variant | Parameters | FLOPs (B) | COCO mAP50 (mean Average Precision at IoU 0.5) | TFLite Size | Expected Pi 5 FPS |
 |---------|:----------:|:---------:|:----------:|:-----------:|:-----------------:|
 | **YOLOv8n (chosen)** | 3.2 M | 8.7 | 37.3 | 3.2-11.7 MB | **4.8** (measured) |
 | YOLOv8s | 11.2 M | 28.6 | 44.9 | ~23 MB | ~1.5 (estimated) |
@@ -1065,46 +1065,8 @@ Consecutive frames overlap by **93%**, providing substantial redundancy for dete
 
 ### 6.9 GPS Estimation from Detection
 
-#### 6.9.1 Method
-
-When a detection occurs, the target's GPS position is estimated by projecting the pixel
-offset from frame centre through the camera model:
-
-```
-offset_x_m = (pixel_x - IMAGE_W/2) * GSD
-offset_y_m = (pixel_y - IMAGE_H/2) * GSD
-offset_north = offset_x_m * cos(yaw) - offset_y_m * sin(yaw)
-offset_east  = offset_x_m * sin(yaw) + offset_y_m * cos(yaw)
-target_lat = drone_lat + offset_north / 111320
-target_lon = drone_lon + offset_east / (111320 * cos(drone_lat))
-```
-
-This requires the drone's current GPS position, altitude (for GSD), and heading (yaw) to
-rotate the pixel offset into the geographic frame.
-
-#### 6.9.2 Measured Accuracy
-
-Analysis of 143 GPS estimates from DJI flight video replay (`video_test.py`):
-
-| Metric | Value |
-|--------|-------|
-| CEP50 (50% circular error probable) | 2.3 m |
-| Maximum error | 16.5 m |
-| Error distribution | Diagonal spread along flight direction |
-
-#### 6.9.3 Error Sources
-
-| Source | Magnitude | Mechanism |
-|--------|-----------|-----------|
-| **GPS receiver latency (dominant)** | ~1 m at 6 m/s | 100-200 ms lag; drone has moved since GPS fix was taken |
-| GPS position noise | 2-3 m CEP50 | Civilian GPS accuracy limit |
-| Yaw uncertainty | ~1.2 m at edge | Magnetometer +/-2-5 deg; `lateral_error = footprint_W/2 * sin(3 deg)` |
-| Altitude error | 14% GSD error | GPS altitude +/-5 m; changes pixel-to-metre scaling |
-| Lens distortion (corrected) | Sub-pixel | Barrel distortion at frame edges, corrected by calibration |
-
-The GPS receiver latency creates a characteristic diagonal spread in the scatter plot --
-estimates are biased along the direction of travel because the drone has moved 0.6-2.0 m
-since the GPS fix was recorded.
+See Section 5 for the full GPS estimation pipeline and error budget. Key result:
+CEP50 = 2.3 m from DJI flight video analysis (143 estimates, max outlier 16.5 m).
 
 #### 6.9.4 Bullseye Scatter Plot Visualisation
 
