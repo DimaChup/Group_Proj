@@ -494,6 +494,30 @@ class StateHandlersMixin:
 
     def _handle_verify(self, target_found, px_u, px_v, key):
         self.waiting_for_confirmation = True
+        elapsed_v = time.time() - self.state_start_time
+        remaining = 120 - elapsed_v
+        self._verify_remaining = remaining  # exposed for HUD countdown
+
+        if remaining <= 0:
+            print("WARNING: VERIFY timeout (120s). No operator response — rejecting.")
+            self.rejected_targets.append((self.target_lat, self.target_lon))
+            self.waiting_for_confirmation = False
+            self._set_state(State.SEARCH)
+            return
+
+        # Periodic terminal warnings so operator knows time is running out
+        _lw = getattr(self, '_verify_last_warn', -1)
+        if elapsed_v >= 100 and int(elapsed_v / 10) != int(_lw / 10):
+            print(f"  VERIFY: {remaining:.0f}s remaining — press Y/N/I!")
+            self._verify_last_warn = elapsed_v
+        elif elapsed_v >= 90 and _lw < 90:
+            print(f"  VERIFY: {remaining:.0f}s remaining — press Y/N/I!")
+            self._verify_last_warn = elapsed_v
+        elif elapsed_v >= 60 and _lw < 60:
+            print(f"  VERIFY: {remaining:.0f}s remaining — press Y/N/I!")
+            self._verify_last_warn = elapsed_v
+
+        self.nav.send_global_target(self.target_lat, self.target_lon, self.alt)waiting_for_confirmation = True
         if time.time() - self.state_start_time > 120:
             print("WARNING: VERIFY timeout (120s). No operator response — rejecting.")
             self.rejected_targets.append((self.target_lat, self.target_lon))
