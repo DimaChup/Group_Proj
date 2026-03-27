@@ -67,7 +67,7 @@ The inference benchmark ran 50 passes of the YOLOv8n TFLite model (float32, 3.2~
     \item \textbf{Mean confidence:} 0.966 without undistortion, 0.958 with.
 \end{itemize}
 
-At 4.8~FPS and a search speed of 10~m/s, the drone covers approximately 2~m between frames. At 35~m altitude the camera footprint spans roughly 32~m along track, so each ground point appears in approximately 15 consecutive frames. Even a pessimistic 50\% detection rate under flight conditions would yield 7--8 detection opportunities per target---sufficient for reliable triggering.
+At 4.8~FPS and a nominal search speed of 8~m/s (altitude-dependent schedule at 35~m), the drone covers approximately 1.7~m between frames. At 35~m altitude the camera footprint spans roughly 32~m along track, so each ground point appears in approximately 15 consecutive frames. Even a pessimistic 50\% detection rate under flight conditions would yield 7--8 detection opportunities per target---sufficient for reliable triggering.
 
 \subsection{Weather Cancellation and the Go/No-Go Decision}\label{sec:field-weather}
 

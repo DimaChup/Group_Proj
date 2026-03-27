@@ -44,7 +44,7 @@ The interactive simulator provides six configurable noise parameters that allow 
 
     \item \textbf{Camera shake} (0--15\,px): altitude-dependent angular jitter modelling motor vibration. Detection confidence degrades below 0.5 at shake levels above 10\,px (equivalent to ${\sim}40$\,cm ground displacement at 10\,m altitude), indicating the boundary at which the detector's performance is compromised.
 
-    \item \textbf{Inference throttle} (1--30\,FPS): limiting CV throughput to the Pi's measured 4\,FPS reveals that at a search speed of 5\,m/s and 30\,m altitude, the camera footprint advances ${\sim}1.25$\,m between frames---well within the ${\sim}24$\,m ground footprint width---providing approximately 19 frames of target visibility per flyover pass.
+    \item \textbf{Inference throttle} (1--30\,FPS): limiting CV throughput to the Pi's measured 4\,FPS reveals that at a search speed of 8\,m/s and 35\,m altitude, the camera footprint advances ${\sim}1.67$\,m between frames---well within the ${\sim}32$\,m ground footprint width---providing approximately 14 frames of target visibility per flyover pass.
 
     \item \textbf{Altitude noise}, \textbf{yaw jitter}, and \textbf{FOV calibration error}: compound noise conditions that stress the coordinate transform under worst-case assumptions. A 10\% FOV error produces a proportional 10\% bias in all GPS estimates, confirming the importance of the bench calibration (Section~\ref{sec:fov-results}).
 \end{enumerate}
@@ -59,7 +59,7 @@ Recorded DJI flight footage provides the highest-fidelity offline validation ava
 \begin{itemize}
     \item \textbf{Detection under real conditions.} The retrained YOLOv8n model (Section~\ref{sec:cv}) detected the dummy in 87\% of frames where the target occupied more than $20 \times 20$\,px, with a mean confidence of 0.82. Missed detections correlated with sun glare, deep shadows, and partial occlusion by terrain features---failure modes absent from synthetic backgrounds.
 
-    \item \textbf{GPS estimation accuracy.} Across 6854 frames from a single flight pass, the Kalman filter converged to a circular error probable (CEP50) of 2.3\,m, with a maximum single-observation error of 16.5\,m. The CEP50 is consistent with the compound uncertainty of the GPS receiver (${\sim}2$\,m), FOV calibration (${\sim}5$\%), and the discovered 100--200\,ms GPS timing lag that introduces a speed-dependent directional bias of ${\sim}1$\,m at 5\,m/s.
+    \item \textbf{GPS estimation accuracy.} Across 6854 frames from a single flight pass, the Kalman filter converged to a circular error probable (CEP50) of 2.3\,m, with a maximum single-observation error of 16.5\,m. The CEP50 is consistent with the compound uncertainty of the GPS receiver (${\sim}2$\,m), FOV calibration (${\sim}5$\%), and the discovered 100--200\,ms GPS timing lag that introduces a speed-dependent directional bias of ${\sim}1.6$\,m at 8\,m/s.
 
     \item \textbf{GPS timing lag discovery.} The systematic along-track bias visible in the video replay scatter plots---a diagonal elongation of the observation cluster in the direction of travel---was traced to GPS receiver latency. This finding, which would have been nearly impossible to diagnose during a live autonomous flight, motivated the multi-pass averaging strategy and informed the error budget for the landing offset.
 \end{itemize}
@@ -97,7 +97,7 @@ Despite the multi-fidelity approach, several properties remain untestable in sim
 \begin{itemize}
     \item \textbf{Wind and turbulence.} No simulation level models wind effects on the airframe. Wind-induced position drift during visual servoing and GPS lock phases will degrade estimation accuracy and may trigger geofence warnings near boundary edges. SITL offers a wind parameter, but the interaction with camera stabilisation and detection reliability is unvalidated.
 
-    \item \textbf{Motion blur at speed.} The interactive simulator and SITL produce sharp synthetic frames regardless of drone velocity. Real flight at 5\,m/s with a 200\,ms exposure could produce motion blur of ${\sim}1$\,m ground equivalent, potentially reducing detection confidence. The DJI video provides partial evidence (recorded at a different airspeed and camera system), but the IMX296 global shutter should mitigate this for the project hardware.
+    \item \textbf{Motion blur at speed.} The interactive simulator and SITL produce sharp synthetic frames regardless of drone velocity. Real flight at 8\,m/s with a 200\,ms exposure could produce motion blur of ${\sim}1.6$\,m ground equivalent, potentially reducing detection confidence. The DJI video provides partial evidence (recorded at a different airspeed and camera system), but the IMX296 global shutter should mitigate this for the project hardware.
 
     \item \textbf{Real GPS accuracy.} SITL GPS noise (${\sim}0.5$\,m) is optimistic. Real open-sky receivers typically exhibit 2--3\,m CEP, with occasional multipath excursions to 5--10\,m near buildings or terrain. The DJI video analysis (CEP50 = 2.3\,m) provides the best available estimate, but was recorded with a different GPS receiver.
 

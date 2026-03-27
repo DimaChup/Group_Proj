@@ -9,7 +9,7 @@ Shows:
   - Drone trajectory deflection example
   - Two-panel: without vs with geofence
 
-Output: report/figs/geofence_diagram.pdf
+Output: report/figs/geofence_diagram.pdf + .png
 Dependencies: numpy, matplotlib (no shapely needed)
 """
 
@@ -17,7 +17,7 @@ import numpy as np
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from matplotlib.patches import Polygon as MplPolygon
+from matplotlib.patches import Polygon as MplPolygon, FancyArrowPatch
 from matplotlib.lines import Line2D
 from matplotlib.path import Path as MplPath
 import matplotlib.patheffects as pe
@@ -83,19 +83,16 @@ takeoff_m = np.array(gps_to_m(*TAKEOFF_GPS))
 # ── Pure-numpy polygon buffering ───────────────────────────────────
 
 def buffer_polygon_numpy(coords, distance, n_arc=8):
-    """Buffer a polygon outward by distance metres using offset edges + arc joins.
-
-    Pure numpy implementation -- no shapely needed.
-    """
+    """Buffer a polygon outward by distance metres using offset edges + arc joins."""
     n = len(coords)
     centroid = coords.mean(axis=0)
 
-    # Ensure counter-clockwise winding (outward normals point away from centroid)
+    # Ensure counter-clockwise winding
     cross_sum = 0.0
     for i in range(n):
         j = (i + 1) % n
         cross_sum += (coords[j, 0] - coords[i, 0]) * (coords[j, 1] + coords[i, 1])
-    if cross_sum > 0:  # clockwise -- reverse
+    if cross_sum > 0:
         coords = coords[::-1]
 
     # Compute outward normals for each edge
@@ -103,33 +100,26 @@ def buffer_polygon_numpy(coords, distance, n_arc=8):
     for i in range(n):
         j = (i + 1) % n
         edge = coords[j] - coords[i]
-        normal = np.array([edge[1], -edge[0]])  # rotate 90 deg CW
+        normal = np.array([edge[1], -edge[0]])
         norm_len = np.linalg.norm(normal)
         if norm_len > 1e-10:
             normal /= norm_len
-        # Check normal points outward (away from centroid)
         mid = (coords[i] + coords[j]) / 2
         if np.dot(normal, mid - centroid) < 0:
             normal = -normal
         normals.append(normal)
 
-    # Build buffered polygon: offset each vertex + arc at corners
+    # Build buffered polygon
     buffered = []
     for i in range(n):
         prev_i = (i - 1) % n
-        n1 = normals[prev_i]  # normal of incoming edge
-        n2 = normals[i]       # normal of outgoing edge
-
-        # Offset vertex along both normals
+        n1 = normals[prev_i]
+        n2 = normals[i]
         p = coords[i]
         p1 = p + n1 * distance
         p2 = p + n2 * distance
-
-        # Arc from n1 to n2 around vertex
         angle1 = np.arctan2(n1[1], n1[0])
         angle2 = np.arctan2(n2[1], n2[0])
-
-        # Go the short way around (outward arc)
         diff = angle2 - angle1
         if diff > np.pi:
             diff -= 2 * np.pi
@@ -137,34 +127,17 @@ def buffer_polygon_numpy(coords, distance, n_arc=8):
             diff += 2 * np.pi
 
         if abs(diff) < 0.05:
-            # Nearly parallel -- just add the midpoint
             buffered.append((p1 + p2) / 2)
         elif diff > 0:
-            # Convex corner -- add arc
             for k in range(n_arc + 1):
                 t = k / n_arc
                 angle = angle1 + t * diff
                 buffered.append(p + distance * np.array([np.cos(angle), np.sin(angle)]))
         else:
-            # Concave corner -- add intersection or just the two points
             buffered.append(p1)
             buffered.append(p2)
 
     return np.array(buffered)
-
-
-def point_in_polygon(px, py, poly):
-    """Ray-casting point-in-polygon test. Returns True if (px, py) is inside poly."""
-    n = len(poly)
-    inside = False
-    j = n - 1
-    for i in range(n):
-        xi, yi = poly[i]
-        xj, yj = poly[j]
-        if ((yi > py) != (yj > py)) and (px < (xj - xi) * (py - yi) / (yj - yi) + xi):
-            inside = not inside
-        j = i
-    return inside
 
 
 # Buffer zones
@@ -174,19 +147,20 @@ sssi_slow = buffer_polygon_numpy(sssi_m.copy(), NFZ_SLOW_ZONE_M)
 
 # ── Colour palette ─────────────────────────────────────────────────
 
-COL_FLIGHT = "#3B82F6"      # blue
-COL_SEARCH = "#22C55E"      # green
-COL_SSSI = "#DC2626"        # red
-COL_SSSI_FILL = "#FCA5A5"   # light red
-COL_HARD = "#991B1B"        # dark red
-COL_REPULSIVE = "#EA580C"   # orange-red
-COL_SLOW = "#F97316"        # orange
-COL_DRONE = "#6366F1"       # indigo
-COL_ARROW = "#B91C1C"       # dark red for arrows
+COL_FLIGHT = "#2563EB"       # bright blue
+COL_SEARCH = "#16A34A"       # green
+COL_SSSI = "#DC2626"         # red
+COL_SSSI_FILL = "#FCA5A5"    # light red
+COL_HARD = "#7F1D1D"         # very dark red
+COL_REPULSIVE = "#EA580C"    # orange-red
+COL_SLOW = "#F59E0B"         # amber/orange
+COL_DRONE = "#4F46E5"        # indigo
+COL_ARROW = "#B91C1C"        # dark red for arrows
 COL_BG = "#FAFAF9"
+COL_VIOLATION = "#EF4444"    # bright red for violations
 
 
-def _compute_outward_normals(poly):
+def _compute_outward_normals(poly, samples_per_edge=2):
     """Compute outward-pointing unit normals at sampled boundary points."""
     n = len(poly)
     centroid = poly.mean(axis=0)
@@ -201,14 +175,12 @@ def _compute_outward_normals(poly):
         edge_len = np.linalg.norm(edge)
         if edge_len < 1e-6:
             continue
-        # Outward normal
         normal = np.array([edge[1], -edge[0]])
         normal /= np.linalg.norm(normal)
         mid = (p1 + p2) / 2
         if np.dot(normal, mid - centroid) < 0:
             normal = -normal
-        # Sample at 1/3 and 2/3 along edge
-        for frac in [0.33, 0.67]:
+        for frac in np.linspace(0.2, 0.8, samples_per_edge):
             pt = p1 + frac * edge
             points.append(pt)
             normals.append(normal)
@@ -216,131 +188,170 @@ def _compute_outward_normals(poly):
     return np.array(points), np.array(normals)
 
 
-def draw_main_panel(ax, show_geofence=True, show_path=True, title=""):
-    """Draw the field layout with optional geofence layers."""
-    ax.set_facecolor(COL_BG)
+def _draw_zones(ax):
+    """Draw the three protection zones with distinct visual styles."""
+    # Layer 3: Speed ramp zone (outermost) - amber dashed
+    slow_patch = MplPolygon(sssi_slow, closed=True, fill=True,
+                            facecolor="#FEF3C7", edgecolor=COL_SLOW,
+                            linewidth=1.8, linestyle=(0, (8, 4)), alpha=0.45,
+                            label="Speed Ramp Zone")
+    ax.add_patch(slow_patch)
 
-    # Flight area
-    fa = MplPolygon(flight_m, closed=True, fill=False,
-                    edgecolor=COL_FLIGHT, linewidth=1.5, linestyle="--")
-    ax.add_patch(fa)
+    # Layer 2: Repulsive force zone - orange dashed
+    rep_patch = MplPolygon(sssi_repulsive, closed=True, fill=True,
+                           facecolor="#FFEDD5", edgecolor=COL_REPULSIVE,
+                           linewidth=2.0, linestyle=(0, (5, 3)), alpha=0.55,
+                           label="Repulsive Zone")
+    ax.add_patch(rep_patch)
 
-    # Search area
-    sa = MplPolygon(search_m, closed=True, fill=False,
-                    edgecolor=COL_SEARCH, linewidth=2.0, linestyle="-")
-    ax.add_patch(sa)
+    # Layer 1: Hard boundary (innermost buffer) - dark red solid
+    hard_patch = MplPolygon(sssi_hard, closed=True, fill=True,
+                            facecolor="#FEE2E2", edgecolor=COL_HARD,
+                            linewidth=2.5, linestyle="-", alpha=0.7,
+                            label="Hard Boundary")
+    ax.add_patch(hard_patch)
 
-    if show_geofence:
-        # Layer 3: Speed ramp zone (outermost)
-        slow_patch = MplPolygon(sssi_slow, closed=True, fill=True,
-                                facecolor="#FFF7ED", edgecolor=COL_SLOW,
-                                linewidth=1.2, linestyle="--", alpha=0.6)
-        ax.add_patch(slow_patch)
 
-        # Layer 2: Repulsive force zone
-        rep_patch = MplPolygon(sssi_repulsive, closed=True, fill=True,
-                               facecolor="#FEF2F2", edgecolor=COL_REPULSIVE,
-                               linewidth=1.2, linestyle="--", alpha=0.6)
-        ax.add_patch(rep_patch)
-
-        # Layer 1: Hard boundary (innermost buffer)
-        hard_patch = MplPolygon(sssi_hard, closed=True, fill=True,
-                                facecolor="#FEE2E2", edgecolor=COL_HARD,
-                                linewidth=2.0, linestyle="-", alpha=0.7)
-        ax.add_patch(hard_patch)
-
-    # SSSI polygon (hatched)
+def _draw_sssi(ax):
+    """Draw the SSSI polygon prominently with hatching."""
     sssi_patch = MplPolygon(sssi_m, closed=True, fill=True,
                             facecolor=COL_SSSI_FILL, edgecolor=COL_SSSI,
-                            linewidth=2.5, hatch="///", alpha=0.8)
+                            linewidth=3.0, hatch="////", alpha=0.85)
     ax.add_patch(sssi_patch)
 
-    # SSSI label
+    # Bold SSSI label
     cx = np.mean(sssi_m[:, 0])
     cy = np.mean(sssi_m[:, 1])
     ax.text(cx, cy, "SSSI\nNo-Fly\nZone", ha="center", va="center",
-            fontsize=9, fontweight="bold", color=COL_HARD,
-            path_effects=[pe.withStroke(linewidth=3, foreground="white")])
+            fontsize=10, fontweight="bold", color="#7F1D1D",
+            path_effects=[pe.withStroke(linewidth=4, foreground="white")])
+
+
+def _draw_field(ax):
+    """Draw flight area and search area boundaries."""
+    fa = MplPolygon(flight_m, closed=True, fill=False,
+                    edgecolor=COL_FLIGHT, linewidth=2.0, linestyle="--",
+                    zorder=3)
+    ax.add_patch(fa)
+
+    sa = MplPolygon(search_m, closed=True, fill=False,
+                    edgecolor=COL_SEARCH, linewidth=2.5, linestyle="-",
+                    zorder=3)
+    ax.add_patch(sa)
 
     # Takeoff marker
-    ax.plot(*takeoff_m, "^", color=COL_DRONE, markersize=10, zorder=10)
+    ax.plot(*takeoff_m, "^", color=COL_DRONE, markersize=12, zorder=10,
+            markeredgecolor="white", markeredgewidth=1.5)
     ax.annotate("Take-Off", takeoff_m, textcoords="offset points",
-                xytext=(8, -12), fontsize=7, color=COL_DRONE, fontweight="bold")
+                xytext=(10, -14), fontsize=8, color=COL_DRONE, fontweight="bold",
+                path_effects=[pe.withStroke(linewidth=2, foreground="white")])
 
-    if show_geofence and show_path:
-        _draw_repulsive_arrows(ax)
-        _draw_drone_path(ax)
 
+def _set_axes(ax, title):
+    """Configure axes bounds and labels."""
+    ax.set_facecolor(COL_BG)
     ax.set_aspect("equal")
-    ax.set_xlabel("East (m)", fontsize=9)
-    ax.set_ylabel("North (m)", fontsize=9)
-    ax.set_title(title, fontsize=11, fontweight="bold", pad=10)
+    ax.set_xlabel("East (m)", fontsize=10)
+    ax.set_ylabel("North (m)", fontsize=10)
+    ax.set_title(title, fontsize=12, fontweight="bold", pad=12)
     ax.tick_params(labelsize=8)
 
-    # Bounds with padding
     all_pts = np.vstack([flight_m, search_m, sssi_m])
-    pad = 30
+    pad = 35
     ax.set_xlim(all_pts[:, 0].min() - pad, all_pts[:, 0].max() + pad)
     ax.set_ylim(all_pts[:, 1].min() - pad, all_pts[:, 1].max() + pad)
 
 
 def _draw_repulsive_arrows(ax):
-    """Draw repulsive force arrows pointing away from SSSI boundary."""
-    points, normals = _compute_outward_normals(sssi_m)
+    """Draw bold repulsive force arrows pointing away from SSSI boundary.
+
+    Uses the buffered hard-boundary polygon (3m offset) as the base, so
+    arrows start cleanly outside the SSSI hatching area.
+    """
+    # Use the hard boundary (3m buffer) as base for cleaner arrow origins
+    points, normals = _compute_outward_normals(sssi_hard, samples_per_edge=3)
+
+    # Also check that arrow tip stays inside the slow zone (for visual neatness)
+    sssi_path = MplPath(np.vstack([sssi_m, sssi_m[0:1]]))
 
     for pt, normal in zip(points, normals):
-        start_offset = NFZ_HARD_BOUNDARY_M + 3
-        arrow_len = 14
+        start_offset = 4
+        arrow_len = 12
         sx = pt[0] + normal[0] * start_offset
         sy = pt[1] + normal[1] * start_offset
-        ex = sx + normal[0] * arrow_len
-        ey = sy + normal[1] * arrow_len
 
-        ax.annotate("", xy=(ex, ey), xytext=(sx, sy),
+        # Skip arrows whose start is inside the SSSI (concave polygon issue)
+        if sssi_path.contains_point([sx, sy]):
+            continue
+
+        dx = normal[0] * arrow_len
+        dy = normal[1] * arrow_len
+
+        ax.annotate("", xy=(sx + dx, sy + dy), xytext=(sx, sy),
                     arrowprops=dict(arrowstyle="-|>", color=COL_ARROW,
-                                    lw=2.0, mutation_scale=16),
-                    zorder=5)
+                                    lw=2.5, mutation_scale=20,
+                                    shrinkA=0, shrinkB=0),
+                    zorder=7)
 
 
-def _draw_drone_path(ax):
-    """Draw an example drone trajectory being deflected by the repulsive force."""
+def _draw_drone_path_deflected(ax):
+    """Draw drone trajectory being deflected by the repulsive force, with
+    a ghost straight-line 'would have gone' path for contrast."""
     sssi_centroid = np.mean(sssi_m, axis=0)
 
-    t = np.linspace(0, 1, 80)
+    t = np.linspace(0, 1, 100)
 
-    # Path stays inside flight area: approaches SSSI from the east, curves north
-    start = sssi_centroid + np.array([50, -30])
-    end = sssi_centroid + np.array([40, 60])
-    ctrl = sssi_centroid + np.array([28, 15])
+    # Deflected path: approaches SSSI from south-east, curves north around it
+    start = sssi_centroid + np.array([70, -50])
+    end = sssi_centroid + np.array([50, 80])
+    ctrl = sssi_centroid + np.array([35, 15])
 
     # Quadratic Bezier
     path_x = (1-t)**2 * start[0] + 2*(1-t)*t * ctrl[0] + t**2 * end[0]
     path_y = (1-t)**2 * start[1] + 2*(1-t)*t * ctrl[1] + t**2 * end[1]
 
-    ax.plot(path_x, path_y, color=COL_DRONE, linewidth=2.5, linestyle="-",
-            zorder=8, alpha=0.9)
+    # Ghost line: where it WOULD have gone without geofence (straight, dashed)
+    ax.plot([start[0], end[0]], [start[1], end[1]],
+            color="#9CA3AF", linewidth=1.8, linestyle=(0, (4, 4)), alpha=0.6, zorder=5)
+    # Place label near the start of the ghost line, away from SSSI
+    ax.text(start[0] - 5, start[1] + 10,
+            "Without\ngeofence", ha="right", va="bottom", fontsize=7,
+            color="#6B7280", fontstyle="italic",
+            bbox=dict(boxstyle="round,pad=0.2", facecolor="white", alpha=0.8,
+                      edgecolor="#9CA3AF", linewidth=0.5))
 
-    # Drone dots along path
-    for idx in [0, 20, 40, 60, 78]:
-        ax.plot(path_x[idx], path_y[idx], "o", color=COL_DRONE, markersize=6,
-                zorder=9, markeredgecolor="white", markeredgewidth=1.0)
+    # Deflected path - bold indigo with white outline for clarity
+    ax.plot(path_x, path_y, color="white", linewidth=5.0, linestyle="-",
+            zorder=7, alpha=0.8)  # white outline
+    ax.plot(path_x, path_y, color=COL_DRONE, linewidth=3.0, linestyle="-",
+            zorder=8, alpha=0.95)
 
-    # Direction arrows at two points along path
-    for mid in [25, 55]:
-        ax.annotate("", xy=(path_x[mid+4], path_y[mid+4]),
+    # Drone position dots
+    for idx in [0, 25, 50, 75, 98]:
+        ax.plot(path_x[idx], path_y[idx], "o", color=COL_DRONE, markersize=8,
+                zorder=9, markeredgecolor="white", markeredgewidth=2.0)
+
+    # Direction arrows along the path
+    for mid in [18, 48, 72]:
+        ax.annotate("", xy=(path_x[mid+6], path_y[mid+6]),
                     xytext=(path_x[mid], path_y[mid]),
-                    arrowprops=dict(arrowstyle="-|>", color=COL_DRONE, lw=2.5),
+                    arrowprops=dict(arrowstyle="-|>", color=COL_DRONE, lw=3.0,
+                                    mutation_scale=18),
                     zorder=9)
 
-    ax.annotate("Drone path\n(deflected by\nrepulsive force)",
-                xy=(path_x[45], path_y[45]),
-                textcoords="offset points", xytext=(15, 5),
-                fontsize=7.5, color=COL_DRONE, fontstyle="italic", fontweight="bold",
-                path_effects=[pe.withStroke(linewidth=3, foreground="white")])
+    # Label with clear background
+    ax.annotate("Deflected\ntrajectory",
+                xy=(path_x[75], path_y[75]),
+                textcoords="offset points", xytext=(22, 12),
+                fontsize=9, color=COL_DRONE, fontstyle="italic", fontweight="bold",
+                bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.85,
+                          edgecolor=COL_DRONE, linewidth=0.8),
+                arrowprops=dict(arrowstyle="-|>", color=COL_DRONE, lw=1.2),
+                zorder=10)
 
 
 def _draw_lawnmower_through_sssi(ax):
-    """Draw a simple lawnmower pattern that crosses the SSSI (no-geofence case)."""
+    """Draw a lawnmower pattern that crosses the SSSI (no-geofence case)."""
     y_min = search_m[:, 1].min() + 5
     y_max = search_m[:, 1].max() - 5
     x_min = search_m[:, 0].min() + 5
@@ -357,28 +368,54 @@ def _draw_lawnmower_through_sssi(ax):
             path_x.extend([x_max, x_min])
             path_y.extend([y, y])
 
-    ax.plot(path_x, path_y, color=COL_DRONE, linewidth=1.5, alpha=0.7, zorder=6)
+    # Draw the full path in indigo first
+    ax.plot(path_x, path_y, color=COL_DRONE, linewidth=1.8, alpha=0.5, zorder=6)
 
-    # Mark violations: test multiple sample points along each segment
+    # Mark violations: test sample points along each segment
     sssi_path = MplPath(np.vstack([sssi_m, sssi_m[0:1]]))
+    violation_count = 0
     for i in range(0, len(path_x)-1):
-        # Sample 20 points along each segment
-        xs_seg = np.linspace(path_x[i], path_x[i+1], 20)
-        ys_seg = np.linspace(path_y[i], path_y[i+1], 20)
+        xs_seg = np.linspace(path_x[i], path_x[i+1], 30)
+        ys_seg = np.linspace(path_y[i], path_y[i+1], 30)
         inside = sssi_path.contains_points(np.column_stack([xs_seg, ys_seg]))
         if np.any(inside):
-            # Draw the violating segment thicker and red
+            # Draw the violating segment thick and red
             ax.plot([path_x[i], path_x[i+1]], [path_y[i], path_y[i+1]],
-                    color="#EF4444", linewidth=4.0, alpha=0.9, zorder=7)
-            # Big X markers where it enters SSSI
+                    color=COL_VIOLATION, linewidth=5.0, alpha=0.9, zorder=7)
+            # Big X markers at violation points
             mx = (path_x[i] + path_x[i+1]) / 2
             my = (path_y[i] + path_y[i+1]) / 2
-            ax.plot(mx, my, "X", color="#DC2626", markersize=14,
-                    markeredgewidth=3, markeredgecolor="white", zorder=8)
+            ax.plot(mx, my, "X", color="#B91C1C", markersize=16,
+                    markeredgewidth=3.5, markeredgecolor="white", zorder=8)
+            violation_count += 1
+
+    # Add danger annotation in upper-right area of panel (a), pointing to a violation
+    if violation_count > 0:
+        # Find a middle violation point
+        viol_pts = []
+        for i in range(0, len(path_x)-1):
+            xs_seg = np.linspace(path_x[i], path_x[i+1], 20)
+            ys_seg = np.linspace(path_y[i], path_y[i+1], 20)
+            inside = sssi_path.contains_points(np.column_stack([xs_seg, ys_seg]))
+            if np.any(inside):
+                viol_pts.append(((path_x[i] + path_x[i+1]) / 2,
+                                 (path_y[i] + path_y[i+1]) / 2))
+        if viol_pts:
+            # Pick middle violation for annotation target
+            vp = viol_pts[len(viol_pts) // 2]
+            ax.annotate(f"{violation_count} path segments\nenter SSSI",
+                        xy=vp, textcoords="offset points",
+                        xytext=(60, 35), fontsize=8.5, color="#B91C1C",
+                        fontweight="bold",
+                        bbox=dict(boxstyle="round,pad=0.3", facecolor="#FEF2F2",
+                                  edgecolor="#B91C1C", linewidth=1.0, alpha=0.95),
+                        arrowprops=dict(arrowstyle="-|>", color="#B91C1C", lw=1.5,
+                                        connectionstyle="arc3,rad=0.2"),
+                        zorder=10)
 
 
 def _draw_lawnmower_avoiding_sssi(ax):
-    """Draw a lawnmower pattern that avoids the SSSI with geofence (used on right panel)."""
+    """Draw a lawnmower pattern that avoids the SSSI with geofence."""
     y_min = search_m[:, 1].min() + 5
     y_max = search_m[:, 1].max() - 5
     x_min = search_m[:, 0].min() + 5
@@ -387,7 +424,6 @@ def _draw_lawnmower_avoiding_sssi(ax):
     spacing = 18
     ys = np.arange(y_min, y_max, spacing)
 
-    # Use matplotlib Path to test point-in-polygon for the buffer zone
     sssi_buf_path = MplPath(np.vstack([sssi_slow, sssi_slow[0:1]]))
 
     for i, y in enumerate(ys):
@@ -396,7 +432,6 @@ def _draw_lawnmower_avoiding_sssi(ax):
         else:
             xs = np.linspace(x_max, x_min, 200)
 
-        # Find segments outside the buffer
         inside = sssi_buf_path.contains_points(np.column_stack([xs, np.full_like(xs, y)]))
         seg_xs, seg_ys = [], []
         for j, (x, is_in) in enumerate(zip(xs, inside)):
@@ -405,19 +440,19 @@ def _draw_lawnmower_avoiding_sssi(ax):
                 seg_ys.append(y)
             else:
                 if len(seg_xs) > 1:
-                    ax.plot(seg_xs, seg_ys, color=COL_DRONE, linewidth=1.5, alpha=0.7, zorder=6)
+                    ax.plot(seg_xs, seg_ys, color=COL_DRONE, linewidth=2.0, alpha=0.7, zorder=6)
                 seg_xs, seg_ys = [], []
         if len(seg_xs) > 1:
-            ax.plot(seg_xs, seg_ys, color=COL_DRONE, linewidth=1.5, alpha=0.7, zorder=6)
+            ax.plot(seg_xs, seg_ys, color=COL_DRONE, linewidth=2.0, alpha=0.7, zorder=6)
 
 
-# ── Speed profile inset ────────────────────────────────────────────
+# ── Speed profile ─────────────────────────────────────────────────
 
 def draw_speed_inset(ax):
     """Draw speed vs distance-from-NFZ profile."""
     ax.set_facecolor("#FAFAF9")
 
-    dist = np.linspace(0, NFZ_SLOW_ZONE_M + 10, 200)
+    dist = np.linspace(0, NFZ_SLOW_ZONE_M + 10, 300)
     speed = np.zeros_like(dist)
 
     for i, d in enumerate(dist):
@@ -429,87 +464,144 @@ def draw_speed_inset(ax):
         else:
             speed[i] = SEARCH_SPEED_MPS
 
-    ax.fill_between(dist, 0, speed, alpha=0.15, color=COL_REPULSIVE)
-    ax.plot(dist, speed, color=COL_REPULSIVE, linewidth=2)
+    # Fill zones with distinct colours
+    # Zone 1: MANUAL (0 to 3m)
+    mask_manual = dist < NFZ_HARD_BOUNDARY_M
+    ax.fill_between(dist, 0, speed, where=mask_manual,
+                    alpha=0.25, color=COL_HARD, zorder=2)
+    # Zone 2: Speed ramp (3 to 20m)
+    mask_ramp = (dist >= NFZ_HARD_BOUNDARY_M) & (dist < NFZ_SLOW_ZONE_M)
+    ax.fill_between(dist, 0, speed, where=mask_ramp,
+                    alpha=0.15, color=COL_REPULSIVE, zorder=2)
+    # Zone 3: Normal (20m+)
+    mask_normal = dist >= NFZ_SLOW_ZONE_M
+    ax.fill_between(dist, 0, speed, where=mask_normal,
+                    alpha=0.08, color=COL_SEARCH, zorder=2)
 
-    # Zone boundaries
-    ax.axvline(NFZ_HARD_BOUNDARY_M, color=COL_HARD, linewidth=1.5, linestyle=":",
-               label=f"Hard ({NFZ_HARD_BOUNDARY_M:.0f} m)")
-    ax.axvline(NFZ_SLOW_ZONE_M, color=COL_SLOW, linewidth=1.5, linestyle=":",
-               label=f"Slow zone ({NFZ_SLOW_ZONE_M:.0f} m)")
+    # Speed line
+    ax.plot(dist, speed, color=COL_REPULSIVE, linewidth=2.5, zorder=5)
 
-    # Zone labels
-    ax.text(NFZ_HARD_BOUNDARY_M / 2, SEARCH_SPEED_MPS * 0.85, "AUTO\n$\\rightarrow$\nMANUAL",
-            ha="center", va="center", fontsize=6, color=COL_HARD, fontweight="bold",
-            bbox=dict(boxstyle="round,pad=0.2", facecolor="white", alpha=0.8))
-    ax.text((NFZ_HARD_BOUNDARY_M + NFZ_SLOW_ZONE_M) / 2, SEARCH_SPEED_MPS * 0.55,
-            "Speed\nRamp", ha="center", va="center", fontsize=6,
-            color=COL_REPULSIVE, fontweight="bold",
-            bbox=dict(boxstyle="round,pad=0.2", facecolor="white", alpha=0.8))
-    ax.text(NFZ_SLOW_ZONE_M + 5, SEARCH_SPEED_MPS * 0.85, "Normal\nSpeed",
-            ha="center", va="center", fontsize=6, color=COL_SEARCH, fontweight="bold")
+    # Zone boundary lines
+    ax.axvline(NFZ_HARD_BOUNDARY_M, color=COL_HARD, linewidth=2.0, linestyle=":",
+               label=f"Hard boundary ({NFZ_HARD_BOUNDARY_M:.0f} m)", zorder=3)
+    ax.axvline(NFZ_SLOW_ZONE_M, color=COL_SLOW, linewidth=2.0, linestyle=":",
+               label=f"Slow zone edge ({NFZ_SLOW_ZONE_M:.0f} m)", zorder=3)
 
-    # Speed annotations
-    ax.annotate(f"{SEARCH_SPEED_MPS:.0f} m/s", xy=(NFZ_SLOW_ZONE_M + 2, SEARCH_SPEED_MPS),
-                fontsize=7, color="#374151")
+    # Zone labels with background boxes
+    ax.text(NFZ_HARD_BOUNDARY_M / 2, SEARCH_SPEED_MPS * 0.75,
+            "MANUAL\nmode",
+            ha="center", va="center", fontsize=7, color=COL_HARD, fontweight="bold",
+            bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.9,
+                      edgecolor=COL_HARD, linewidth=0.8))
+    ax.text((NFZ_HARD_BOUNDARY_M + NFZ_SLOW_ZONE_M) / 2, SEARCH_SPEED_MPS * 0.5,
+            "Speed\nRamp",
+            ha="center", va="center", fontsize=7, color=COL_REPULSIVE, fontweight="bold",
+            bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.9,
+                      edgecolor=COL_REPULSIVE, linewidth=0.8))
+    ax.text(NFZ_SLOW_ZONE_M + 5, SEARCH_SPEED_MPS * 0.75,
+            "Normal\nspeed",
+            ha="center", va="center", fontsize=7, color=COL_SEARCH, fontweight="bold",
+            bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.9,
+                      edgecolor=COL_SEARCH, linewidth=0.8))
+
+    # Speed annotations with lines
+    ax.annotate(f"{SEARCH_SPEED_MPS:.0f} m/s",
+                xy=(NFZ_SLOW_ZONE_M + 2, SEARCH_SPEED_MPS),
+                fontsize=8, color="#374151", fontweight="bold",
+                path_effects=[pe.withStroke(linewidth=2, foreground="white")])
     ax.annotate(f"{NFZ_ZONE_MAX_SPEED_MPS:.0f} m/s",
-                xy=(NFZ_SLOW_ZONE_M - 1, NFZ_ZONE_MAX_SPEED_MPS),
-                fontsize=7, color="#374151", ha="right")
+                xy=(NFZ_SLOW_ZONE_M - 1, NFZ_ZONE_MAX_SPEED_MPS + 0.3),
+                fontsize=7.5, color="#374151", ha="right")
     ax.annotate(f"{NFZ_MIN_SPEED_MPS} m/s",
-                xy=(NFZ_HARD_BOUNDARY_M + 1, NFZ_MIN_SPEED_MPS + 0.3),
-                fontsize=7, color="#374151")
+                xy=(NFZ_HARD_BOUNDARY_M + 1.5, NFZ_MIN_SPEED_MPS + 0.5),
+                fontsize=7.5, color="#374151")
 
-    ax.set_xlabel("Distance from NFZ boundary (m)", fontsize=8)
-    ax.set_ylabel("Max speed (m/s)", fontsize=8)
-    ax.set_title("(c) Speed Reduction Profile", fontsize=9, fontweight="bold")
+    # Horizontal reference lines
+    ax.axhline(SEARCH_SPEED_MPS, color="#D1D5DB", linewidth=0.8, linestyle="--", zorder=1)
+    ax.axhline(NFZ_ZONE_MAX_SPEED_MPS, color="#D1D5DB", linewidth=0.8, linestyle="--", zorder=1)
+
+    ax.set_xlabel("Distance from NFZ boundary (m)", fontsize=9)
+    ax.set_ylabel("Max speed (m/s)", fontsize=9)
+    ax.set_title("(c) Speed Reduction Profile", fontsize=11, fontweight="bold")
     ax.set_xlim(0, NFZ_SLOW_ZONE_M + 12)
-    ax.set_ylim(0, SEARCH_SPEED_MPS + 1)
-    ax.tick_params(labelsize=7)
-    ax.legend(fontsize=6, loc="lower right")
-    ax.grid(True, alpha=0.3)
+    ax.set_ylim(0, SEARCH_SPEED_MPS + 1.5)
+    ax.tick_params(labelsize=8)
+    ax.legend(fontsize=7, loc="center right")
+    ax.grid(True, alpha=0.2, zorder=0)
 
 
 # ── Main figure ────────────────────────────────────────────────────
 
 fig = plt.figure(figsize=(14, 10), dpi=150)
 
-gs = fig.add_gridspec(2, 2, height_ratios=[2.2, 1], hspace=0.30, wspace=0.25,
-                      left=0.06, right=0.97, top=0.93, bottom=0.05)
+gs = fig.add_gridspec(2, 2, height_ratios=[2.2, 1], hspace=0.32, wspace=0.28,
+                      left=0.06, right=0.97, top=0.92, bottom=0.06)
 
-# Top-left: Without geofence
+# ── Panel (a): Without geofence ───────────────────────────────────
 ax1 = fig.add_subplot(gs[0, 0])
-draw_main_panel(ax1, show_geofence=False, show_path=False,
-                title="(a) Without Geofence")
+_draw_field(ax1)
+_draw_sssi(ax1)
 _draw_lawnmower_through_sssi(ax1)
+_set_axes(ax1, "(a) Without Geofence")
+
+# Warning banner at bottom
 ax1.text(0.5, 0.02, "Lawnmower path crosses SSSI boundary",
-         transform=ax1.transAxes, ha="center", fontsize=8,
-         color="#EF4444", fontstyle="italic", fontweight="bold",
-         bbox=dict(boxstyle="round,pad=0.3", facecolor="#FEF2F2", edgecolor="#EF4444",
-                   alpha=0.9))
+         transform=ax1.transAxes, ha="center", fontsize=9,
+         color=COL_VIOLATION, fontstyle="italic", fontweight="bold",
+         bbox=dict(boxstyle="round,pad=0.4", facecolor="#FEF2F2",
+                   edgecolor=COL_VIOLATION, linewidth=1.5, alpha=0.95))
 
-# Top-right: With geofence (full diagram)
+# ── Panel (b): With geofence ─────────────────────────────────────
 ax2 = fig.add_subplot(gs[0, 1])
-draw_main_panel(ax2, show_geofence=True, show_path=True,
-                title="(b) With Three-Layer Geofence Protection")
+_draw_field(ax2)
+_draw_zones(ax2)
+_draw_sssi(ax2)
+_draw_repulsive_arrows(ax2)
+_draw_drone_path_deflected(ax2)
+_set_axes(ax2, "(b) With Three-Layer Geofence Protection")
 
-# Bottom-left: Speed profile
+# Legend
+legend_elements = [
+    Line2D([0], [0], color=COL_FLIGHT, linewidth=2.0, linestyle="--",
+           label="Flight Area"),
+    Line2D([0], [0], color=COL_SEARCH, linewidth=2.5,
+           label="Search Area"),
+    MplPolygon([(0,0)], closed=True, facecolor=COL_SSSI_FILL, edgecolor=COL_SSSI,
+               linewidth=2.5, hatch="////", label="SSSI (No-Fly Zone)"),
+    Line2D([0], [0], color=COL_SLOW, linewidth=1.8, linestyle="--",
+           label=f"Speed Ramp ({NFZ_SLOW_ZONE_M:.0f} m)"),
+    Line2D([0], [0], color=COL_REPULSIVE, linewidth=2.0, linestyle="--",
+           label=f"Repulsive Zone ({NFZ_INNER_RANGE_M:.0f} m)"),
+    Line2D([0], [0], color=COL_HARD, linewidth=2.5,
+           label=f"Hard Boundary ({NFZ_HARD_BOUNDARY_M:.0f} m)"),
+    Line2D([0], [0], color=COL_DRONE, linewidth=3.0,
+           label="Drone trajectory"),
+    Line2D([0], [0], color=COL_ARROW, linewidth=2.0, marker=">", markersize=8,
+           linestyle="none", label="Repulsive force"),
+]
+
+ax2.legend(handles=legend_elements, loc="lower left", fontsize=7.5,
+           framealpha=0.95, edgecolor="#9CA3AF", fancybox=True,
+           borderpad=0.8, handlelength=2.0)
+
+# ── Panel (c): Speed profile ─────────────────────────────────────
 ax3 = fig.add_subplot(gs[1, 0])
 draw_speed_inset(ax3)
 
-# Bottom-right: Protection layers summary table
+# ── Panel (d): Protection layer summary table ─────────────────────
 ax4 = fig.add_subplot(gs[1, 1])
 ax4.axis("off")
 
 summary_text = [
     ("Layer", "Distance", "Action", "Mechanism"),
-    ("1. Speed Ramp", f"< {NFZ_SLOW_ZONE_M:.0f} m", f"{NFZ_MIN_SPEED_MPS}--{NFZ_ZONE_MAX_SPEED_MPS} m/s",
-     "Linear speed cap"),
-    ("2. Repulsive Force", f"< {NFZ_INNER_RANGE_M:.0f} m", f"{NFZ_PUSH_SPEED_MPS:.0f} m/s push",
-     "Potential-field vector"),
-    ("3. Auto-MANUAL", f"< {NFZ_HARD_BOUNDARY_M:.0f} m", "Full stop",
-     "Mode switch to MANUAL"),
-    ("0. Waypoint Filter", f"< 30 m", "Skip waypoint",
-     "Plan-time removal"),
+    ("1. Speed Ramp", f"< {NFZ_SLOW_ZONE_M:.0f} m",
+     f"{NFZ_MIN_SPEED_MPS}--{NFZ_ZONE_MAX_SPEED_MPS} m/s", "Linear speed cap"),
+    ("2. Repulsive Force", f"< {NFZ_INNER_RANGE_M:.0f} m",
+     f"{NFZ_PUSH_SPEED_MPS:.0f} m/s push", "Potential-field vector"),
+    ("3. Auto-MANUAL", f"< {NFZ_HARD_BOUNDARY_M:.0f} m",
+     "Full stop", "Mode switch to MANUAL"),
+    ("0. Waypoint Filter", f"< 30 m",
+     "Skip waypoint", "Plan-time removal"),
 ]
 
 table = ax4.table(
@@ -520,43 +612,24 @@ table = ax4.table(
     colWidths=[0.22, 0.18, 0.25, 0.30],
 )
 table.auto_set_font_size(False)
-table.set_fontsize(8)
-table.scale(1.0, 1.6)
+table.set_fontsize(8.5)
+table.scale(1.0, 1.7)
 
 for j in range(4):
     cell = table[0, j]
     cell.set_facecolor("#1F2937")
-    cell.set_text_props(color="white", fontweight="bold")
+    cell.set_text_props(color="white", fontweight="bold", fontsize=9)
 
-row_colors = ["#FFF7ED", "#FEF2F2", "#FEE2E2", "#F0F9FF"]
+row_colors = ["#FFF7ED", "#FEF2F2", "#FEE2E2", "#EFF6FF"]
 for i in range(1, 5):
     for j in range(4):
         table[i, j].set_facecolor(row_colors[i-1])
         table[i, j].set_edgecolor("#D1D5DB")
 
-ax4.set_title("(d) Protection Layer Summary", fontsize=10, fontweight="bold", pad=15)
+ax4.set_title("(d) Protection Layer Summary", fontsize=11, fontweight="bold", pad=18)
 
-# Legend for top-right plot
-legend_elements = [
-    Line2D([0], [0], color=COL_FLIGHT, linewidth=1.5, linestyle="--", label="Flight Area"),
-    Line2D([0], [0], color=COL_SEARCH, linewidth=2.0, label="Search Area"),
-    MplPolygon([(0,0)], closed=True, facecolor=COL_SSSI_FILL, edgecolor=COL_SSSI,
-               linewidth=2, hatch="///", label="SSSI (No-Fly)"),
-    Line2D([0], [0], color=COL_SLOW, linewidth=1.2, linestyle="--",
-           label=f"Speed Ramp Zone ({NFZ_SLOW_ZONE_M:.0f} m)"),
-    Line2D([0], [0], color=COL_REPULSIVE, linewidth=1.2, linestyle="--",
-           label=f"Repulsive Force ({NFZ_INNER_RANGE_M:.0f} m)"),
-    Line2D([0], [0], color=COL_HARD, linewidth=2.0,
-           label=f"Auto-MANUAL ({NFZ_HARD_BOUNDARY_M:.0f} m)"),
-    Line2D([0], [0], color=COL_DRONE, linewidth=2.0, label="Drone trajectory"),
-    Line2D([0], [0], color=COL_ARROW, linewidth=1.5, marker=">", markersize=6,
-           label="Repulsive force vectors"),
-]
-
-ax2.legend(handles=legend_elements, loc="lower right", fontsize=7,
-           framealpha=0.9, edgecolor="#D1D5DB", fancybox=True)
-
-fig.suptitle("Geofence / NFZ Protection System", fontsize=14, fontweight="bold", y=0.97)
+# Suptitle
+fig.suptitle("Geofence / NFZ Protection System", fontsize=15, fontweight="bold", y=0.97)
 
 # Save
 out_path = r"c:\Users\Bristol\Desktop\AI for Robotics\v3\report\figs\geofence_diagram.pdf"

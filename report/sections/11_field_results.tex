@@ -52,7 +52,7 @@ With undistortion    & 208.0 & 4.8 & 50/50 & 0.958 \\
 \end{tabular}
 \end{table}
 
-The 1.5~ms overhead from lens undistortion is within measurement noise and does not reduce the effective frame rate. A detection rate of 100\% with a mean confidence of 0.966 confirms that the model produces reliable detections on the target hardware. At 4.8~FPS the system processes approximately one frame every 208~ms, which is sufficient for a drone travelling at the configured search speed of 10~m/s---covering roughly 2~m between frames, well within the camera's ground footprint at 15--35~m altitude.
+The 1.5~ms overhead from lens undistortion is within measurement noise and does not reduce the effective frame rate. A detection rate of 100\% with a mean confidence of 0.966 confirms that the model produces reliable detections on the target hardware. At 4.8~FPS the system processes approximately one frame every 208~ms, which is sufficient for a drone travelling at the nominal search speed of 8~m/s (altitude-dependent schedule at 35~m)---covering roughly 1.7~m between frames, well within the camera's ground footprint at 15--35~m altitude.
 
 Research into inference acceleration identified several viable paths for future work: FP16 XNNPACK quantisation (estimated ${\sim}10$~FPS on the Pi~5's native FP16 pipeline), threaded capture--inference pipelining ($+$20--30\%), NCNN backend~\cite{ncnn} (${\sim}15$~FPS), and overclocking to 2.8~GHz ($+$15\%). INT8 quantisation and Coral TPU acceleration were ruled out due to platform incompatibility with the Pi~5~\cite{edgeai}.
 
@@ -62,7 +62,7 @@ To supplement the bench tests, a post-hoc analysis was performed on DJI Mavic fl
 
 \subsubsection{Detection Performance}
 
-The retrained model (mAP$_{50}$ = 0.995 on validation data) successfully detected the dummy target across the full altitude range captured in the video. The FOV for the cropped DJI frame was independently calibrated at $54.4^{\circ}$~HFOV (focal length $1416 \pm 41$~px) using nine measurements of the known 1.8~m dummy at different altitudes; the dummy consistently measured 1.7--1.9~m across all samples, validating the calibration.
+The retrained model (mAP$_{50}$ = 0.995 on validation data) successfully detected the dummy target across the full altitude range captured in the video. The FOV for the cropped DJI video frame (distinct from the \SI{49.3}{\degree} HFOV of the onboard Pi IMX296 camera) was independently calibrated at $54.4^{\circ}$~HFOV (focal length $1416 \pm 41$~px) using nine measurements of the known 1.8~m dummy at different altitudes; the dummy consistently measured 1.7--1.9~m across all samples, validating the calibration.
 
 A comparative analysis tool enabled live model switching on the same video frames, confirming that the retrained model offered improved detection consistency over the baseline, particularly at higher altitudes where the target occupies fewer pixels.
 
@@ -75,7 +75,7 @@ Each detection was converted to a GPS estimate using the geo-transformation modu
     \item \textbf{Maximum error} = 16.5~m (a single outlier during a high-speed pass at 50~m altitude).
 \end{itemize}
 
-The scatter distribution exhibited a characteristic diagonal elongation aligned with the flight direction, attributable to GPS receiver latency~\cite{misra2006global}. Analysis of the timing offset between telemetry updates and frame timestamps revealed a systematic lag of 100--200~ms. At the configured search speed of 10~m/s, this lag introduces an along-track displacement of 1.0--2.0~m per detection. The effect is mitigated by spatial clustering: the mission software aggregates detections from multiple passes using inverse-variance-weighted averaging, and the median of a cluster converges on the true target position as the number of observations increases.
+The scatter distribution exhibited a characteristic diagonal elongation aligned with the flight direction, attributable to GPS receiver latency~\cite{misra2006global}. Analysis of the timing offset between telemetry updates and frame timestamps revealed a systematic lag of 100--200~ms. At the nominal search speed of 8~m/s, this lag introduces an along-track displacement of 0.8--1.6~m per detection. The effect is mitigated by spatial clustering: the mission software aggregates detections from multiple passes using inverse-variance-weighted averaging, and the median of a cluster converges on the true target position as the number of observations increases.
 
 \subsection{Dry-Run Validation}\label{sec:dry-run-results}
 
@@ -85,7 +85,7 @@ For the designated survey area, the dry-run produced the following outputs:
 
 \begin{itemize}
     \item \textbf{18~waypoints} covering the survey polygon in a lawnmower pattern at 35~m altitude with lane spacing derived from the camera footprint and a 20\% overlap margin;
-    \item \textbf{Estimated search time} of approximately 1.1~min at the configured search speed of 10~m/s, plus transit to and from the survey area at 15~m/s;
+    \item \textbf{Estimated search time} of approximately 1.1~min at the nominal search speed of 8~m/s (altitude-dependent schedule at 35~m), plus transit to and from the survey area at 15~m/s;
     \item A \textbf{state-machine walkthrough}: INIT $\rightarrow$ CONNECTING $\rightarrow$ ARMING (GPS fix $\geq$ 3, satellites $\geq$ 6) $\rightarrow$ TAKEOFF (35~m) $\rightarrow$ SEARCH (18~waypoints) $\rightarrow$ CENTERING $\rightarrow$ DESCENDING (15~m) $\rightarrow$ VERIFY $\rightarrow$ LANDING;
     \item A \textbf{map visualisation} overlaying the generated waypoints and connecting legs on the satellite image.
 \end{itemize}

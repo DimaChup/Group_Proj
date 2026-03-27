@@ -173,18 +173,18 @@ Table~\ref{tab:frames_flyover} evaluates this for the operational speed and alti
 \end{table}
 
 \paragraph{Key finding.}
-Even in the worst operational case (50\,m altitude at 15\,m/s transit speed, with a conservative 70\% single-frame detection probability), the cumulative detection probability across the 11-frame flyover window exceeds 99.8\%.  At the nominal search configuration (35\,m, 10\,m/s), the system achieves effectively certain detection ($P > 99.97\%$) with 11.6 frames per target.
+Even in the worst operational case (50\,m altitude at 15\,m/s transit speed, with a conservative 70\% single-frame detection probability), the cumulative detection probability across the 11-frame flyover window exceeds 99.8\%.  At the nominal search configuration (35\,m, 8\,m/s from the altitude-dependent schedule), the system achieves effectively certain detection ($P > 99.99\%$) with 14.5 frames per target.
 
 The lawnmower pattern further improves robustness: adjacent passes overlap by 20\% (configurable via \texttt{planning.py}), so targets near the swath edge receive a second observation window.  The probability of missing a target across two overlapping passes at nominal conditions is $(1 - 0.9997)^2 \approx 10^{-7}$.
 
 \subsubsection{Frame Overlap Analysis}
 
-At 4.8\,FPS and 10\,m/s, consecutive frames are separated by $10/4.8 = \SI{2.08}{\metre}$ along-track.  The along-track footprint at \SI{35}{\metre} is \SI{24.1}{\metre}, giving a frame-to-frame overlap of:
+At 4.8\,FPS and the nominal 8\,m/s search speed, consecutive frames are separated by $8/4.8 = \SI{1.67}{\metre}$ along-track.  The along-track footprint at \SI{35}{\metre} is \SI{24.1}{\metre}, giving a frame-to-frame overlap of:
 \begin{equation}
-    \mathrm{Overlap} = 1 - \frac{d_f}{L_g} = 1 - \frac{2.08}{24.1} = 91.4\%
+    \mathrm{Overlap} = 1 - \frac{d_f}{L_g} = 1 - \frac{1.67}{24.1} = 93.1\%
 \end{equation}
 
-This high overlap means that a target appears in many consecutive frames, providing the state machine with multiple opportunities to trigger the CENTERING sequence.  The \texttt{-{}-smart-detect} mode exploits this by requiring $k = 3$ consecutive positive detections before committing to investigation, effectively implementing a temporal majority-vote filter that suppresses transient false positives at a cost of only $3 \times 208 = \SI{0.6}{\second}$ delay (\SI{6.2}{\metre} of travel at 10\,m/s).
+This high overlap means that a target appears in many consecutive frames, providing the state machine with multiple opportunities to trigger the CENTERING sequence.  The \texttt{-{}-smart-detect} mode exploits this by requiring $k = 3$ consecutive positive detections before committing to investigation, effectively implementing a temporal majority-vote filter that suppresses transient false positives at a cost of only $3 \times 208 = \SI{0.6}{\second}$ delay (\SI{5.0}{\metre} of travel at 8\,m/s).
 
 % ═══════════════════════════════════════════════════════════════
 \subsection{Detection Performance vs Altitude}\label{app:cv:altitude}
@@ -237,6 +237,16 @@ Figure~\ref{fig:conf_vs_alt} shows the empirically measured confidence as a func
 \includegraphics[width=0.75\textwidth]{conf_vs_alt}
 \caption{Detection confidence vs altitude for the YOLOv8n custom model.  Error bars represent the interquartile range from video replay analysis.  The dashed line marks the 0.2 confidence threshold.}
 \label{fig:conf_vs_alt}
+\end{figure}
+
+\paragraph{Combined detection envelope.}
+Figure~\ref{fig:detection_envelope} overlays the altitude-dependent confidence curve with the motion blur degradation model, producing a combined detection envelope that accounts for both target size reduction and image quality loss. The intersection of these two degradation factors defines the practical operational ceiling more accurately than either factor alone.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.85\textwidth]{detection_envelope}
+\caption{Combined detection envelope showing confidence degradation from both altitude (target pixel size reduction) and motion blur at \SI{10}{\metre\per\second}. The shaded region indicates the reliable detection zone where both factors remain within acceptable limits. The nominal search altitude of \SI{35}{\metre} sits comfortably within this envelope.}
+\label{fig:detection_envelope}
 \end{figure}
 
 % ═══════════════════════════════════════════════════════════════
@@ -346,6 +356,15 @@ Equation~\ref{eq:frames_per_flyover} shows that $N_\mathrm{frames} \propto 1/v$.
 
 \paragraph{Motion blur.}
 At \SI{10}{\metre\per\second} and 4.8\,FPS, each frame integrates over $10 / 4.8 = \SI{2.08}{\metre}$ of ground motion.  With the IMX296's global shutter and a typical exposure time of ${\sim}\SI{2}{\milli\second}$ (auto-exposure at outdoor illumination levels), the motion smear is $0.002 \times 10 = \SI{0.02}{\metre}$---less than 1 pixel at \SI{35}{\metre} altitude (GSD = \SI{22.1}{\milli\metre}/px).  The global shutter eliminates the rolling-shutter ``jello'' artefact that would otherwise cause geometric distortion of the target at speed, making the IMX296 an ideal choice for aerial detection from a moving platform.
+
+Figure~\ref{fig:blur_vs_altitude} quantifies pixel motion blur as a function of altitude for several speed and exposure combinations, confirming that the IMX296's short exposure times keep blur well below one pixel across the entire operational envelope.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.85\textwidth]{blur_vs_altitude}
+\caption{Pixel motion blur vs.\ altitude at different flight speeds and exposure times. At the nominal search configuration (\SI{10}{\metre\per\second}, \SI{2}{\milli\second} exposure), blur remains below 1\,px for all altitudes above \SI{15}{\metre}. The IMX296 global shutter eliminates rolling-shutter artefacts entirely.}
+\label{fig:blur_vs_altitude}
+\end{figure}
 
 \begin{figure}[ht]
 \centering

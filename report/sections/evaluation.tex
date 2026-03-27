@@ -7,7 +7,7 @@ The plus/delta review below assesses technical performance honestly, drawing on 
 
 Table~\ref{tab:plus-delta} summarises the principal strengths and areas for improvement. Each item includes the specific evidence that supports the assessment.
 
-\begin{table}[H]
+\begin{table}[ht!]
 \centering\compactTable
 \caption{Plus/delta review of system technical performance.}\label{tab:plus-delta}
 \begin{tabularx}{\linewidth}{@{}c p{5.2cm} X@{}}
@@ -38,9 +38,9 @@ Table~\ref{tab:plus-delta} summarises the principal strengths and areas for impr
 \addlinespace
 \color{red!70!black}\textbf{D1} & No outdoor flight completed & Weather cancelled the scheduled flight day; all hardware validation is bench- or video-based. Outdoor GPS accuracy, wind disturbance, and real detection range remain unverified. \emph{Next step:} rebook flight slot, execute Tiers~3--5 of the progressive framework with the identical codebase. \\
 \addlinespace
-\color{red!70!black}\textbf{D2} & Inference rate limits high-speed search & At \SI{4.8}{FPS} and \SI{10}{\metre\per\second} search speed, the camera advances \SI{2.1}{\metre} between frames---adequate at \SI{35}{\metre} altitude (\SI{32}{\metre} footprint) but marginal if speed or altitude increases. \emph{Next step:} export FP16 XNNPACK model (estimated ${\sim}$\SI{10}{FPS}) and thread the capture/inference pipeline for 20--30\% additional throughput. \\
+\color{red!70!black}\textbf{D2} & Inference rate limits high-speed search & At \SI{4.8}{FPS} and the nominal \SI{8}{\metre\per\second} search speed (altitude-dependent schedule at 35\,m), the camera advances \SI{1.7}{\metre} between frames---adequate at \SI{35}{\metre} altitude (\SI{32}{\metre} footprint) but marginal if speed or altitude increases. \emph{Next step:} export FP16 XNNPACK model (estimated ${\sim}$\SI{10}{FPS}) and thread the capture/inference pipeline for 20--30\% additional throughput. \\
 \addlinespace
-\color{red!70!black}\textbf{D3} & GPS timing lag uncompensated & The Here~3+ receiver exhibits \SIrange{100}{200}{\milli\second} latency, producing ${\sim}$\SI{1}{\metre} position error at \SI{5}{\metre\per\second} along the flight heading. \emph{Next step:} implement first-order lag compensation ($\Delta\mathbf{p} = \mathbf{v} \cdot \Delta t_{\text{lag}}$) in the heading direction, tuneable from config. \\
+\color{red!70!black}\textbf{D3} & GPS timing lag uncompensated & The Here~3+ receiver exhibits \SIrange{100}{200}{\milli\second} latency, producing ${\sim}$\SI{1.6}{\metre} position error at \SI{8}{\metre\per\second} along the flight heading. \emph{Next step:} implement first-order lag compensation ($\Delta\mathbf{p} = \mathbf{v} \cdot \Delta t_{\text{lag}}$) in the heading direction, tuneable from config. \\
 \addlinespace
 \color{red!70!black}\textbf{D4} & No precision--recall curve for confidence threshold & The detection threshold of 0.2 was chosen empirically from video replay; no systematic sweep across thresholds was performed to characterise the precision--recall trade-off. \emph{Next step:} run threshold sweep on DJI video with ground-truth annotations to produce a PR curve and select the operating point formally. \\
 \addlinespace
@@ -136,4 +136,7 @@ The SITL simulation was invaluable for state machine logic and geofence testing,
 
 \textbf{4. Budget for weather and schedule one flight day per week, not per project.}
 A single scheduled flight day creates a binary outcome: either the weather cooperates and the project succeeds, or it does not and the project has no flight data. Scheduling weekly flight slots---even short 30-minute windows---would have provided multiple opportunities and allowed the progressive tiers to be executed over several sessions rather than compressed into a single day.
+
+\paragraph{Summary.}
+The evaluation demonstrates a system that is architecturally sound and quantitatively characterised, but incompletely validated due to the absence of outdoor flight data. The nine plus items reflect deliberate engineering decisions---modular vision, progressive testing, simulation-first development---that would transfer directly to a second iteration. The nine delta items are predominantly \emph{operational gaps} (no flight, uncompensated GPS lag, uncharacterised threshold) rather than \emph{architectural deficiencies}, suggesting that the remaining risk is in parameter tuning and environmental validation rather than fundamental redesign. The progressive testing framework has retired the highest-risk integration faults at zero hardware cost; the remaining tiers (passive flight, autonomous flight) require only scheduling and favourable weather.
 

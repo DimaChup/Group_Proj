@@ -86,6 +86,8 @@ Nine samples were collected across altitudes from \SI{15}{\metre} to \SI{50}{\me
     \theta_{\text{HFOV}} = 2\arctan\!\left(\frac{1456}{2 \times 1416}\right) = 54.4^{\circ}
 \end{equation}
 
+\noindent This DJI video HFOV ($54.4^{\circ}$) is distinct from the onboard Pi IMX296 camera HFOV ($49.3^{\circ}$, Section~\ref{sec:fov-results}); the two values correspond to different cameras with different optics.
+
 As a consistency check, the dummy height was back-calculated at each sample altitude using the calibrated focal length; all nine measurements fell within \SIrange{1.7}{1.9}{\metre}, confirming the calibration against the known \SI{1.8}{\metre} ground truth. This calibrated value replaced a hardcoded $73^{\circ}$ assumption, which would have underestimated the focal length by 34\% and corrupted every GPS estimate derived from the DJI analysis footage.
 
 % ─────────────────────────────────────────────────────────────────────

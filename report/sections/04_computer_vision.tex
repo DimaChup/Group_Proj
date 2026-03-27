@@ -105,13 +105,13 @@ All benchmarks were conducted on the Raspberry Pi~5 (Broadcom BCM2712, quad-core
     \end{tabular}
 \end{table}
 
-The 1.5\,ms undistortion overhead is negligible relative to the 206.5\,ms inference time, confirming that lens correction can be enabled unconditionally without impacting the effective frame rate. At 4.8\,FPS and a search speed of 5\,m/s, the drone advances approximately 1.04\,m between frames. The horizontal ground footprint at altitude $h$ is
+The 1.5\,ms undistortion overhead is negligible relative to the 206.5\,ms inference time, confirming that lens correction can be enabled unconditionally without impacting the effective frame rate. At 4.8\,FPS and the nominal search speed of 8\,m/s (altitude-dependent schedule at 35\,m), the drone advances approximately 1.67\,m between frames. The horizontal ground footprint at altitude $h$ is
 \begin{equation}\label{eq:fov_footprint}
     W_{\text{ground}} = 2\,h\,\tan\!\left(\frac{\theta_{\text{HFOV}}}{2}\right),
     \qquad
     \theta_{\text{HFOV}} = 2\arctan\!\left(\frac{s_w}{2f}\right),
 \end{equation}
-where $s_w = 5.02$\,mm is the sensor width and $f = 5.46$\,mm is the calibrated focal length, giving $\theta_{\text{HFOV}} \approx 49.4^{\circ}$ and $W_{\text{ground}} \approx 27.6$\,m at $h=30$\,m. Adjacent frames therefore overlap by approximately 96\%, providing 11--17 detection opportunities per target during a single flyover.
+where $s_w = 5.02$\,mm is the sensor width and $f = 5.46$\,mm is the calibrated focal length, giving $\theta_{\text{HFOV}} \approx 49.4^{\circ}$ and $W_{\text{ground}} \approx 27.6$\,m at $h=30$\,m (or ${\sim}32.2$\,m at the nominal $h=35$\,m search altitude). Adjacent frames therefore overlap by approximately 96\%, providing 11--17 detection opportunities per target during a single flyover.
 
 The retrained v2 model (\texttt{sar\_v2\_1088}, 11.7\,MB float32) achieves identical inference latency to the original 3.2\,MB model because TFLite input dimensions remain $640 \times 640 \times 3$; the larger file size reflects additional feature map weights from higher-resolution training rather than architectural changes.
 

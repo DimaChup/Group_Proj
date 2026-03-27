@@ -951,6 +951,40 @@
       \verb 10.1109/CVPRW.2018.00143
       \endverb
     \endentry
+    \entry{bochkovskiy2020yolov4}{article}{}{}
+      \name{author}{3}{}{%
+        {{hash=c0b2fdc20c37a4bd8d817822d374f809}{%
+           family={Bochkovskiy},
+           familyi={B\bibinitperiod},
+           given={Alexey},
+           giveni={A\bibinitperiod}}}%
+        {{hash=053d491932411950eccf2bb9a1025d11}{%
+           family={Wang},
+           familyi={W\bibinitperiod},
+           given={Chien-Yao},
+           giveni={C\bibinithyphendelim Y\bibinitperiod}}}%
+        {{hash=c81478c691c1bc1cc01404c44b5bd5bf}{%
+           family={Liao},
+           familyi={L\bibinitperiod},
+           given={Hong-Yuan\bibnamedelima Mark},
+           giveni={H\bibinithyphendelim Y\bibinitperiod\bibinitdelim M\bibinitperiod}}}%
+      }
+      \strng{namehash}{cf5dc5f8f26df49f548c03581fb80644}
+      \strng{fullhash}{cf5dc5f8f26df49f548c03581fb80644}
+      \strng{fullhashraw}{cf5dc5f8f26df49f548c03581fb80644}
+      \strng{bibnamehash}{cf5dc5f8f26df49f548c03581fb80644}
+      \strng{authorbibnamehash}{cf5dc5f8f26df49f548c03581fb80644}
+      \strng{authornamehash}{cf5dc5f8f26df49f548c03581fb80644}
+      \strng{authorfullhash}{cf5dc5f8f26df49f548c03581fb80644}
+      \strng{authorfullhashraw}{cf5dc5f8f26df49f548c03581fb80644}
+      \field{sortinit}{3}
+      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{arXiv preprint arXiv:2004.10934}
+      \field{title}{{YOLOv4}: Optimal Speed and Accuracy of Object Detection}
+      \field{year}{2020}
+    \endentry
     \entry{shrivastava2016training}{inproceedings}{}{}
       \name{author}{3}{}{%
         {{hash=7244177886497a3743e18fc63c2efcad}{%
@@ -1049,40 +1083,6 @@
       \field{title}{{Microsoft COCO}: Common Objects in Context}
       \field{year}{2014}
     \endentry
-    \entry{bochkovskiy2020yolov4}{article}{}{}
-      \name{author}{3}{}{%
-        {{hash=c0b2fdc20c37a4bd8d817822d374f809}{%
-           family={Bochkovskiy},
-           familyi={B\bibinitperiod},
-           given={Alexey},
-           giveni={A\bibinitperiod}}}%
-        {{hash=053d491932411950eccf2bb9a1025d11}{%
-           family={Wang},
-           familyi={W\bibinitperiod},
-           given={Chien-Yao},
-           giveni={C\bibinithyphendelim Y\bibinitperiod}}}%
-        {{hash=c81478c691c1bc1cc01404c44b5bd5bf}{%
-           family={Liao},
-           familyi={L\bibinitperiod},
-           given={Hong-Yuan\bibnamedelima Mark},
-           giveni={H\bibinithyphendelim Y\bibinitperiod\bibinitdelim M\bibinitperiod}}}%
-      }
-      \strng{namehash}{cf5dc5f8f26df49f548c03581fb80644}
-      \strng{fullhash}{cf5dc5f8f26df49f548c03581fb80644}
-      \strng{fullhashraw}{cf5dc5f8f26df49f548c03581fb80644}
-      \strng{bibnamehash}{cf5dc5f8f26df49f548c03581fb80644}
-      \strng{authorbibnamehash}{cf5dc5f8f26df49f548c03581fb80644}
-      \strng{authornamehash}{cf5dc5f8f26df49f548c03581fb80644}
-      \strng{authorfullhash}{cf5dc5f8f26df49f548c03581fb80644}
-      \strng{authorfullhashraw}{cf5dc5f8f26df49f548c03581fb80644}
-      \field{sortinit}{3}
-      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
-      \field{labelnamesource}{author}
-      \field{labeltitlesource}{title}
-      \field{journaltitle}{arXiv preprint arXiv:2004.10934}
-      \field{title}{{YOLOv4}: Optimal Speed and Accuracy of Object Detection}
-      \field{year}{2020}
-    \endentry
     \entry{ardupilot_failsafe}{misc}{}{}
       \name{author}{1}{}{%
         {{hash=002e4a64dbc1404d94eef1845911c190}{%
@@ -1098,8 +1098,8 @@
       \strng{authorfullhash}{002e4a64dbc1404d94eef1845911c190}
       \strng{authorfullhashraw}{002e4a64dbc1404d94eef1845911c190}
       \field{extraname}{2}
-      \field{sortinit}{3}
-      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
+      \field{sortinit}{4}
+      \field{sortinithash}{9381316451d1b9788675a07e972a12a7}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{howpublished}{\url{https://ardupilot.org/copter/docs/failsafe-landing-page.html}}
@@ -1194,8 +1194,8 @@
       \strng{authorfullhash}{002e4a64dbc1404d94eef1845911c190}
       \strng{authorfullhashraw}{002e4a64dbc1404d94eef1845911c190}
       \field{extraname}{3}
-      \field{sortinit}{4}
-      \field{sortinithash}{9381316451d1b9788675a07e972a12a7}
+      \field{sortinit}{5}
+      \field{sortinithash}{20e9b4b0b173788c5dace24730f47d8c}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{howpublished}{\url{https://ardupilot.org/dev/docs/sitl-simulator-software-in-the-loop.html}}
@@ -1220,8 +1220,8 @@
       \strng{authornamehash}{72f826272be1a819ed284b8ed8310d76}
       \strng{authorfullhash}{72f826272be1a819ed284b8ed8310d76}
       \strng{authorfullhashraw}{72f826272be1a819ed284b8ed8310d76}
-      \field{sortinit}{4}
-      \field{sortinithash}{9381316451d1b9788675a07e972a12a7}
+      \field{sortinit}{5}
+      \field{sortinithash}{20e9b4b0b173788c5dace24730f47d8c}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{note}{Describes progressive V\&V methodology for UAS: simulation, hardware-in-the-loop, limited flight envelope, full mission}
@@ -1307,8 +1307,8 @@
       \strng{authornamehash}{431df6603cfa4e1eba84d547576caf59}
       \strng{authorfullhash}{431df6603cfa4e1eba84d547576caf59}
       \strng{authorfullhashraw}{431df6603cfa4e1eba84d547576caf59}
-      \field{sortinit}{5}
-      \field{sortinithash}{20e9b4b0b173788c5dace24730f47d8c}
+      \field{sortinit}{6}
+      \field{sortinithash}{b33bc299efb3c36abec520a4c896a66d}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{edition}{2nd}
@@ -1455,8 +1455,8 @@
       \strng{authornamehash}{60eb8d45be9d229e002a480ee0210a09}
       \strng{authorfullhash}{60eb8d45be9d229e002a480ee0210a09}
       \strng{authorfullhashraw}{60eb8d45be9d229e002a480ee0210a09}
-      \field{sortinit}{6}
-      \field{sortinithash}{b33bc299efb3c36abec520a4c896a66d}
+      \field{sortinit}{7}
+      \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{howpublished}{\url{https://hailo.ai/products/ai-accelerators/hailo-8l-ai-accelerator/}}
@@ -1526,8 +1526,8 @@
       \strng{authorfullhash}{bcb14e4c414be7c5da3dade4fb2afa62}
       \strng{authorfullhashraw}{bcb14e4c414be7c5da3dade4fb2afa62}
       \field{extraname}{2}
-      \field{sortinit}{6}
-      \field{sortinithash}{b33bc299efb3c36abec520a4c896a66d}
+      \field{sortinit}{7}
+      \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{booktitle}{Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition Workshops (CVPRW)}
@@ -1563,8 +1563,8 @@
       \strng{authornamehash}{de8d65ad902d2f2d1f168a5a5c106441}
       \strng{authorfullhash}{de8d65ad902d2f2d1f168a5a5c106441}
       \strng{authorfullhashraw}{de8d65ad902d2f2d1f168a5a5c106441}
-      \field{sortinit}{6}
-      \field{sortinithash}{b33bc299efb3c36abec520a4c896a66d}
+      \field{sortinit}{7}
+      \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{booktitle}{Proceedings of the IEEE Aerospace Conference}
@@ -1591,8 +1591,8 @@
       \strng{authorfullhash}{2480ef2f25ba65e0fb108373831027c8}
       \strng{authorfullhashraw}{2480ef2f25ba65e0fb108373831027c8}
       \field{extraname}{2}
-      \field{sortinit}{6}
-      \field{sortinithash}{b33bc299efb3c36abec520a4c896a66d}
+      \field{sortinit}{7}
+      \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{howpublished}{\url{https://publicapps.caa.co.uk/modalapplication.aspx?catid=1\&pagetype=65\&appid=11\&mode=detail\&id=13177}}
@@ -1754,8 +1754,8 @@
       \strng{authornamehash}{dad0d2c96f02ee012f6346bcd4837e84}
       \strng{authorfullhash}{dad0d2c96f02ee012f6346bcd4837e84}
       \strng{authorfullhashraw}{dad0d2c96f02ee012f6346bcd4837e84}
-      \field{sortinit}{8}
-      \field{sortinithash}{a231b008ebf0ecbe0b4d96dcc159445f}
+      \field{sortinit}{9}
+      \field{sortinithash}{0a5ebc79d83c96b6579069544c73c7d4}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{howpublished}{\url{https://qgroundcontrol.com/}}
@@ -1790,8 +1790,8 @@
       \strng{authornamehash}{73fb67b51b99fa2f995264339b36633c}
       \strng{authorfullhash}{73fb67b51b99fa2f995264339b36633c}
       \strng{authorfullhashraw}{73fb67b51b99fa2f995264339b36633c}
-      \field{sortinit}{8}
-      \field{sortinithash}{a231b008ebf0ecbe0b4d96dcc159445f}
+      \field{sortinit}{9}
+      \field{sortinithash}{0a5ebc79d83c96b6579069544c73c7d4}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{edition}{3rd}
@@ -1816,8 +1816,8 @@
       \strng{authorfullhash}{905a0fe021951b4ebc06e4e1bb70bd26}
       \strng{authorfullhashraw}{905a0fe021951b4ebc06e4e1bb70bd26}
       \field{extraname}{2}
-      \field{sortinit}{8}
-      \field{sortinithash}{a231b008ebf0ecbe0b4d96dcc159445f}
+      \field{sortinit}{9}
+      \field{sortinithash}{0a5ebc79d83c96b6579069544c73c7d4}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{journaltitle}{Journal of Basic Engineering}
@@ -1830,6 +1830,31 @@
       \verb{doi}
       \verb 10.1115/1.3662552
       \endverb
+    \endentry
+    \entry{rtca_do178c}{report}{}{}
+      \name{author}{1}{}{%
+        {{hash=480a1742b88f14cb66caf8ae6e9cf283}{%
+           family={{RTCA}},
+           familyi={R\bibinitperiod}}}%
+      }
+      \list{institution}{1}{%
+        {RTCA Inc.}%
+      }
+      \strng{namehash}{480a1742b88f14cb66caf8ae6e9cf283}
+      \strng{fullhash}{480a1742b88f14cb66caf8ae6e9cf283}
+      \strng{fullhashraw}{480a1742b88f14cb66caf8ae6e9cf283}
+      \strng{bibnamehash}{480a1742b88f14cb66caf8ae6e9cf283}
+      \strng{authorbibnamehash}{480a1742b88f14cb66caf8ae6e9cf283}
+      \strng{authornamehash}{480a1742b88f14cb66caf8ae6e9cf283}
+      \strng{authorfullhash}{480a1742b88f14cb66caf8ae6e9cf283}
+      \strng{authorfullhashraw}{480a1742b88f14cb66caf8ae6e9cf283}
+      \field{sortinit}{9}
+      \field{sortinithash}{0a5ebc79d83c96b6579069544c73c7d4}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{title}{DO-178C: Software Considerations in Airborne Systems and Equipment Certification}
+      \field{type}{techreport}
+      \field{year}{2011}
     \endentry
     \entry{mavproxy}{misc}{}{}
       \name{author}{1}{}{%
@@ -1910,7 +1935,6 @@
   \missing{arm_a76}
   \missing{brown1966decentering}
   \missing{gamma1994design}
-  \missing{rtca_do178c}
   \missing{wiegand2003h264}
 \endrefsection
 \endinput

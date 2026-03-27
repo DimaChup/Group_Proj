@@ -5,7 +5,14 @@
 
 \section{System Description}\label{sec:sysdesc}
 
-The final system comprises a hardware platform, five software layers, a computer vision pipeline, a target localisation subsystem, a browser-based ground station, and a multi-fidelity simulation framework.
+The final system comprises a hardware platform, five software layers, a computer vision pipeline, a target localisation subsystem, a browser-based ground station, and a multi-fidelity simulation framework. Figure~\ref{fig:mission_overview} shows the complete mission plan overlaid on the Fenswood Farm site.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\linewidth]{mission_overview}
+\caption{Mission overview on the Fenswood Farm site. The lawnmower search pattern covers the designated survey polygon at \SI{35}{\metre} altitude, with the take-off point, return-to-launch path, and SSSI no-fly zone boundary shown. The flight area boundary constrains all autonomous waypoints.}
+\label{fig:mission_overview}
+\end{figure}
 
 % ═══════════════════════════════════════════════════════════════
 \subsection{Hardware Platform}\label{sec:hw}
@@ -79,6 +86,16 @@ The system comprises eleven Python modules totalling approximately 4\,400 lines 
 
 The data pipeline traverses five stages per iteration: (1)~capture frame and apply lens undistortion; (2)~resize to $640\times640$, normalise, run YOLOv8n inference; (3)~convert pixel detection to GPS estimate; (4)~dispatch current state handler; (5)~enforce geofence constraints. Geofencing always runs \emph{after} the state handler, so waypoint commands can be overridden by repulsive velocities.
 
+\paragraph{Geofence enforcement.}
+The geofence module implements three nested protection layers (Figure~\ref{fig:geofence_diagram}): the SSSI no-fly zone (hard boundary---entering triggers automatic MANUAL mode), the flight area polygon (soft boundary---repulsive velocity pushes the drone inward), and a \SI{10}{\metre} buffer zone surrounding the SSSI where repulsive forces activate proportionally to proximity. The repulsive offset is computed using \texttt{cv2.pointPolygonTest} for signed distance and applied as a velocity correction after the state handler's waypoint command, ensuring that no state can inadvertently fly into restricted airspace.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\linewidth]{geofence_diagram}
+\caption{Four-panel geofence protection visualisation. (a)~Three nested boundaries: SSSI no-fly zone, buffer zone, and flight area polygon. (b)~Repulsive force field that deflects the drone away from the SSSI boundary. (c)~Waypoint correction: the commanded waypoint (red) is shifted to a safe position (green) by the repulsive offset. (d)~Emergency mode switch when the drone enters the SSSI zone.}
+\label{fig:geofence_diagram}
+\end{figure}
+
 % ═══════════════════════════════════════════════════════════════
 \subsection{Computer Vision Pipeline}\label{sec:cv}
 
@@ -99,7 +116,7 @@ The vision subsystem is encapsulated in \texttt{vision.py}, exposing a single in
 
 \paragraph{Smart detection mode.} An optional \texttt{-{}-smart-detect} flag requires $k$ consecutive positive frames before triggering investigation (default $k=3$), suppressing transient false positives at a 0.6\,s delay.
 
-\paragraph{Performance.} On the Pi~5 with XNNPACK CPU delegate: 206.5\,ms per frame (4.8\,FPS), 100\% detection rate, 0.966 mean confidence. At 5\,m/s search speed, adjacent frames overlap by ${\sim}96\%$, providing 11--17 detection opportunities per target during a single flyover.
+\paragraph{Performance.} On the Pi~5 with XNNPACK CPU delegate: 206.5\,ms per frame (4.8\,FPS), 100\% detection rate, 0.966 mean confidence. At the nominal search speed of 8\,m/s (altitude-dependent schedule at 35\,m), adjacent frames overlap by ${\sim}91\%$, providing 11--17 detection opportunities per target during a single flyover.
 
 % ═══════════════════════════════════════════════════════════════
 \subsection{Search Pattern Generation}\label{sec:search-pattern}

@@ -11,7 +11,7 @@ Before every flight the crew executes a structured start-up sequence:
   \item The pilot powers the Hexsoon EDU-450 and verifies that the Cube Orange obtains a 3D GPS fix with at least six satellites.
   \item On the Raspberry Pi~5 companion computer, the operator starts \texttt{mavproxy} over the serial link to the Cube (\SI{921600}{baud}), with two UDP outputs: port~14550 for the mission script and port~14551 for a diagnostics monitor. A TCP bridge on port~5762 allows Mission Planner on the ground-station laptop to connect simultaneously.
   \item The operator runs \texttt{preflight.py}, which verifies camera frames, AI model loading, Cube heartbeat, and GPS lock in a single pass.
-  \item The operator opens the browser-based ground station at \texttt{http://PI\_IP:8090}, which provides a live MJPEG video stream, a 2D GPS grid, detection cluster markers, and command buttons (Section~\ref{sec:ground-station}).
+  \item The operator opens the browser-based ground station at \texttt{http://PI\_IP:8090}, which provides a live MJPEG video stream, a 2D GPS grid, detection cluster markers, and command buttons (Section~\ref{sec:groundstation}).
   \item The mission script (\texttt{main.py}) is launched. It loads the survey polygon, flight boundary, SSSI no-fly zone, and take-off location from the course KML file, generates the lawnmower search pattern, and enters the \textsc{Init} state.
 \end{enumerate}
 
@@ -43,7 +43,7 @@ The drone executes the boustrophedon search pattern at \SI{35}{\metre} altitude.
 % ─────────────────────────────────────────────────────────────────────
 \subsection{Detection and Queuing}\label{sec:mf-detection}
 
-When the vision system detects a target, the pixel coordinates are converted to a GPS estimate using the drone's current position, altitude, and heading (Section~\ref{sec:target-localisation}). The estimate is then filtered through three validity checks:
+When the vision system detects a target, the pixel coordinates are converted to a GPS estimate using the drone's current position, altitude, and heading (Section~\ref{sec:localisation}). The estimate is then filtered through three validity checks:
 
 \begin{itemize}
   \item \textbf{NFZ check} --- detections whose estimated GPS falls inside the SSSI polygon are discarded.

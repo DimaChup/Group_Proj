@@ -91,7 +91,7 @@ The target is assumed stationary (casualty on the ground), so the state transiti
 Several factors limit the achievable localisation accuracy:
 
 \begin{itemize}
-  \item \textbf{Receiver latency.} Consumer-grade GPS receivers exhibit \SIrange{100}{200}{\milli\second} of position latency~\cite{misra2006global}. At a search speed of \SI{5}{\metre\per\second}, this introduces up to \SI{1}{\metre} of along-track bias in every observation.
+  \item \textbf{Receiver latency.} Consumer-grade GPS receivers exhibit \SIrange{100}{200}{\milli\second} of position latency~\cite{misra2006global}. At a search speed of \SI{8}{\metre\per\second}, this introduces up to \SI{1.6}{\metre} of along-track bias in every observation.
   \item \textbf{GPS multipath and drift.} Even with a clear sky view, single-frequency L1 receivers have a circular error probable (CEP) of \SIrange{2}{3}{\metre}~\cite{kaplan2017understanding}. This noise is largely isotropic and averages out with sufficient observations, but individual estimates can deviate by \SI{5}{\metre} or more.
   \item \textbf{Altitude uncertainty.} Barometric altitude is used for the GSD calculation. Barometric drift of $\pm\SI{1}{\metre}$ at \SI{35}{\metre} induces a ${\sim}3\%$ GSD error, shifting the ground projection by up to \SI{0.5}{\metre} for edge-of-frame detections.
   \item \textbf{Heading uncertainty.} The rotation from body frame to North--East (Equation~\ref{eq:ne-offset}) depends on the magnetometer heading. A $\pm\SI{5}{\degree}$ compass error at \SI{35}{\metre} altitude displaces the estimate by up to \SI{1.4}{\metre} for targets at the image edge.
@@ -107,7 +107,7 @@ The localisation pipeline was validated by replaying recorded DJI flight video (
 
 \begin{table}[ht]
   \centering
-  \caption{Target localisation accuracy from DJI video replay (\SI{54.4}{\degree} HFOV, \SIrange{15}{50}{\metre} altitude range).}
+  \caption{Target localisation accuracy from DJI video replay (DJI camera \SI{54.4}{\degree} HFOV, \SIrange{15}{50}{\metre} altitude range).}
   \label{tab:localisation-accuracy}
   \begin{tabular}{lc}
     \toprule

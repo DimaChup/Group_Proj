@@ -157,7 +157,7 @@ The boustrophedon pattern, combined with minimum-area bounding rectangle angle a
 % ─────────────────────────────────────────────────────────────────────
 \subsection{Flight Parameters}\label{sec:flight-params}
 
-Table~\ref{tab:flight-params} summarises the key parameters governing the search flight. The search altitude of \SI{35}{\metre} was chosen as a compromise between detection range (the YOLOv8n model reliably detects a prone mannequin from this height---see Section~\ref{sec:detection}) and ground coverage rate. An altitude-dependent speed schedule linearly interpolates between \SI{6}{\metre\per\second} at \SI{20}{\metre} and \SI{10}{\metre\per\second} at \SI{50}{\metre}, reducing motion blur at lower altitudes where spatial resolution is highest.
+Table~\ref{tab:flight-params} summarises the key parameters governing the search flight. The search altitude of \SI{35}{\metre} was chosen as a compromise between detection range (the YOLOv8n model reliably detects a prone mannequin from this height---see Section~\ref{sec:cv}) and ground coverage rate. An altitude-dependent speed schedule linearly interpolates between \SI{6}{\metre\per\second} at \SI{20}{\metre} and \SI{10}{\metre\per\second} at \SI{50}{\metre}, reducing motion blur at lower altitudes where spatial resolution is highest.
 
 \begin{table}[ht]
   \centering\compactTable
