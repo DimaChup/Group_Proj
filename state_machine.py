@@ -517,13 +517,6 @@ class StateHandlersMixin:
             print(f"  VERIFY: {remaining:.0f}s remaining — press Y/N/I!")
             self._verify_last_warn = elapsed_v
 
-        self.nav.send_global_target(self.target_lat, self.target_lon, self.alt)waiting_for_confirmation = True
-        if time.time() - self.state_start_time > 120:
-            print("WARNING: VERIFY timeout (120s). No operator response — rejecting.")
-            self.rejected_targets.append((self.target_lat, self.target_lon))
-            self.waiting_for_confirmation = False
-            self._set_state(State.SEARCH)
-            return
         self.nav.send_global_target(self.target_lat, self.target_lon, self.alt)
         if getattr(self, '_gps_avg_samples', None) is not None:
             self._gps_avg_samples.append((self.lat, self.lon))
@@ -640,21 +633,33 @@ class StateHandlersMixin:
 
     def _handle_landing(self, target_found, px_u, px_v, key):
         from pymavlink import mavutil
-        if self.alt < 0.3:
+
+        TOUCHDOWN_ALT = 0.5          # m — baro can drift ~0.2m, so 0.3 was too tight
+        TOUCHDOWN_TICKS = 5          # consecutive ticks below threshold
+        LANDING_TIMEOUT_S = 90.0     # absolute timeout — force disarm if exceeded
+
+        # --- ArduPilot LAND mode auto-disarms on touchdown (accelerometer-based).
+        #     If motors are already disarmed, we are definitely on the ground. ---
+        if self._land_cmd_sent and not self.master.motors_armed():
+            self._finish_landing("ArduPilot auto-disarmed — touchdown confirmed.")
+            return
+
+        # --- Altitude-based touchdown detection ---
+        if self.alt < TOUCHDOWN_ALT:
             self._touchdown_count = getattr(self, '_touchdown_count', 0) + 1
         else:
             self._touchdown_count = 0
-        if self._touchdown_count >= 3:
-            print("Touchdown. Disarming.")
+
+        if self._touchdown_count >= TOUCHDOWN_TICKS:
+            print("Touchdown (alt stable below threshold). Disarming.")
             self.master.mav.command_long_send(
                 self.master.target_system, self.master.target_component,
                 mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0, 0, 0, 0, 0, 0, 0, 0)
-            s = 111132.0
-            self.final_dist = math.sqrt(((self.lat - self.home_lat) * s) ** 2 +
-                                        ((self.lon - self.home_lon) * s * math.cos(math.radians(self.lat))) ** 2)
-            print(f"MISSION COMPLETE. Landed {self.final_dist:.2f}m from home.")
-            self._set_state(State.DONE)
-        elif not getattr(self, '_land_cmd_sent', False):
+            self._finish_landing("Touchdown detected via altimeter.")
+            return
+
+        # --- Send LAND command (first time only) ---
+        if not getattr(self, '_land_cmd_sent', False):
             self.master.mav.command_long_send(
                 self.master.target_system, self.master.target_component,
                 mavutil.mavlink.MAV_CMD_NAV_LAND, 0, 0, 0, 0, 0,
@@ -663,23 +668,43 @@ class StateHandlersMixin:
             self._land_cmd_time = time.time()
             self._land_retries = 0
             print("  MAV_CMD_NAV_LAND sent")
-        elif self._land_cmd_sent:
-            elapsed = time.time() - getattr(self, '_land_cmd_time', time.time())
-            if elapsed > 5.0 and self.alt > 1.0:
-                self._land_retries = getattr(self, '_land_retries', 0) + 1
-                if self._land_retries >= 5:
-                    print("WARNING: LAND failed after 5 retries. Force disarming.")
-                    self.master.mav.command_long_send(
-                        self.master.target_system, self.master.target_component,
-                        mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0, 0, 21196, 0, 0, 0, 0, 0)
-                    self._set_state(State.DONE)
-                    return
-                print(f"  LAND not descending — retrying ({self._land_retries}/5)")
+            return
+
+        # --- Absolute landing timeout (covers baro-drift deadlock) ---
+        total_elapsed = time.time() - self._land_cmd_time
+        if total_elapsed > LANDING_TIMEOUT_S:
+            print(f"WARNING: Landing timeout ({LANDING_TIMEOUT_S}s). Force disarming.")
+            self.master.mav.command_long_send(
+                self.master.target_system, self.master.target_component,
+                mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0, 0, 21196, 0, 0, 0, 0, 0)
+            self._finish_landing(f"Forced disarm after {LANDING_TIMEOUT_S}s timeout.")
+            return
+
+        # --- Retry LAND command if not descending ---
+        retry_elapsed = time.time() - getattr(self, '_last_land_retry', self._land_cmd_time)
+        if retry_elapsed > 5.0 and self.alt > 1.0:
+            self._land_retries = getattr(self, '_land_retries', 0) + 1
+            if self._land_retries >= 5:
+                print("WARNING: LAND failed after 5 retries. Force disarming.")
                 self.master.mav.command_long_send(
                     self.master.target_system, self.master.target_component,
-                    mavutil.mavlink.MAV_CMD_NAV_LAND, 0, 0, 0, 0, 0,
-                    self.home_lat, self.home_lon, 0)
-                self._land_cmd_time = time.time()
+                    mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0, 0, 21196, 0, 0, 0, 0, 0)
+                self._finish_landing("Forced disarm after 5 LAND retries.")
+                return
+            print(f"  LAND not descending — retrying ({self._land_retries}/5)")
+            self.master.mav.command_long_send(
+                self.master.target_system, self.master.target_component,
+                mavutil.mavlink.MAV_CMD_NAV_LAND, 0, 0, 0, 0, 0,
+                self.home_lat, self.home_lon, 0)
+            self._last_land_retry = time.time()
+
+    def _finish_landing(self, reason):
+        """Common landing completion: compute distance, log, transition to DONE."""
+        s = 111132.0
+        self.final_dist = math.sqrt(((self.lat - self.home_lat) * s) ** 2 +
+                                    ((self.lon - self.home_lon) * s * math.cos(math.radians(self.lat))) ** 2)
+        print(f"MISSION COMPLETE — {reason} Landed {self.final_dist:.2f}m from home.")
+        self._set_state(State.DONE)
 
     # -- PLB beacon redirect --
 
