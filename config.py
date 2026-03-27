@@ -124,17 +124,37 @@ NFZ_PUSH_SPEED_MPS = 3.0       # Constant repulsive push speed
 # ============================================================
 #  SEARCH AREA — zones loaded from KML
 # ============================================================
-# Fallback polygon (overwritten by load_kml_zones if KML found)
+# Fallback coordinates from AENGM0074.kml (overwritten by load_kml_zones if KML found)
+# These MUST match the KML — wrong fallback = wrong search area or missing geofence.
 SEARCH_AREA_GPS = [
-    (51.42530, -2.67260),
-    (51.42530, -2.67180),
-    (51.42480, -2.67180),
-    (51.42480, -2.67260),
+    (51.42326956502679, -2.670948345438704),
+    (51.42287025017865, -2.670045428650557),
+    (51.42336622593724, -2.668169295906676),
+    (51.42421477437771, -2.668809768621569),
+    (51.42354069739116, -2.671277780473196),
 ]
-FLIGHT_AREA_GPS = []
-SSSI_GPS = []
-TAKEOFF_GPS = None
-FOCUS_AREA_GPS = []
+FLIGHT_AREA_GPS = [
+    (51.42342595349562, -2.671720766408759),
+    (51.42124623420381, -2.670134027271237),
+    (51.42244011936099, -2.66568781888585),
+    (51.42469179370701, -2.667060227266051),
+]
+SSSI_GPS = [
+    (51.42353586816967, -2.671451754138619),
+    (51.42215640321154, -2.669768242108598),
+    (51.42267105383615, -2.667705438815299),
+    (51.42335592245168, -2.668164601092489),
+    (51.42286082606338, -2.670043418345824),
+    (51.42326667015552, -2.670965419051837),
+    (51.42356862274763, -2.671324297543731),
+]
+TAKEOFF_GPS = (51.42340640206451, -2.671446029622069)
+FOCUS_AREA_GPS = [
+    (51.42330493862503, -2.669823704225677),
+    (51.42344370699984, -2.669496195078445),
+    (51.42352782091507, -2.669800245046278),
+    (51.42334972740506, -2.67001828046102),
+]
 
 REJECTED_TARGET_RADIUS_M = 5.0  # Skip detections near rejected/IOI targets
 MAX_RESCAN_PASSES = 3            # Altitude-drop rescan passes before giving up
@@ -153,6 +173,15 @@ CONE_FILE = "assets/cone.png"
 MAP_WIDTH_METERS = 480.0
 REF_LAT = 51.425106             # Map top-left corner (do NOT change)
 REF_LON = -2.672257             # Map top-left corner (do NOT change)
+
+
+# ============================================================
+#  PAYLOAD SERVO — release mechanism (Tarot double-throw)
+# ============================================================
+SERVO_CHANNEL = 9               # Cube AUX output channel (check SERVOx_FUNCTION in MP)
+SERVO_CLOSE_PWM = 1500          # PWM to hold / re-latch
+SERVO_PARTIAL_PWM = 1300        # Stage 1: partial release
+SERVO_FULL_PWM = 1100           # Stage 2: full release
 
 
 # ============================================================
