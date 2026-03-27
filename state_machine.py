@@ -28,6 +28,7 @@ class StateHandlersMixin:
     # -- State transition --
 
     def _set_state(self, new_state):
+        old_state = self.state
         self.state = new_state
         self.state_start_time = time.time()
         self._arming_timeout_warned = False
@@ -37,6 +38,11 @@ class StateHandlersMixin:
         self._land_cmd_sent = False
         self._verify_last_warn = -1
         self._verify_remaining = None
+        elapsed = time.time() - getattr(self, '_mission_start_time', time.time())
+        mins, secs = int(elapsed // 60), int(elapsed % 60)
+        print(f"\n{'='*60}")
+        print(f"  STATE: {old_state} --> {new_state}  [T+{mins:02d}:{secs:02d}]")
+        print(f"{'='*60}")
 
     # -- Helpers --
 

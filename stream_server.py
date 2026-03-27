@@ -1,23 +1,26 @@
 """Lightweight HTTP server for MJPEG streaming and operator commands.
 
-Provides four endpoints on a single port (default 8090):
+Provides five endpoints on a single port (default 8090):
 
     /          Dashboard HTML with live video, operator buttons, and keyboard proxy.
     /stream    MJPEG multipart stream (resized + JPEG-encoded from the latest frame).
     /snapshot  Single JPEG capture of the current frame.
     /cmd?key=  Command injection — enqueues a keycode for the mission state machine.
+    /status    JSON telemetry snapshot (state, alt, GPS, confidence, etc.).
 
 Typical usage::
 
-    from stream_server import set_stream_frame, start_stream_server, cmd_queue
+    from stream_server import set_stream_frame, set_telemetry, start_stream_server, cmd_queue
 
     server = start_stream_server(port=8090)
     set_stream_frame(bgr_numpy_array)   # call from any thread
+    set_telemetry(state="SEARCH", alt=30.0, lat=51.42, lon=-2.67, ...)
     key_code = cmd_queue.get()           # blocks until an operator presses a button
 
 Thread safety
 -------------
 * ``set_stream_frame`` / ``get_stream_frame`` are guarded by ``_stream_lock``.
+* ``set_telemetry`` / ``get_telemetry`` are guarded by ``_telemetry_lock``.
 * ``cmd_queue`` is a stdlib ``queue.Queue`` (inherently thread-safe).
 * ``_ThreadingHTTP`` spawns a daemon thread per connection so concurrent
   ``/stream`` clients do not block each other or the ``/cmd`` endpoint.
@@ -25,6 +28,7 @@ Thread safety
   before the server thread starts, then read-only — no lock required.
 """
 
+import json as _json
 import time
 import threading
 import queue
