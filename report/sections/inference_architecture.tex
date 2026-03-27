@@ -117,4 +117,11 @@ Table~\ref{tab:inference_roadmap} summarises the measured baseline and projected
   \end{tabular}
 \end{table}
 
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.85\linewidth]{benchmark_comparison}
+  \caption{Inference backend comparison on Raspberry Pi~5 for YOLOv8n ($640\times640$ input). TFLite with XNNPACK provides the measured production baseline at 4.8\,FPS; NCNN and FP16 projections indicate viable paths to real-time performance.}
+  \label{fig:benchmark-comparison}
+\end{figure}
+
 The measured 4.8\,FPS baseline, while modest in absolute terms, is sufficient for the current mission profile.  At the nominal search speed of \SI{8}{\metre\per\second} and altitude of \SI{35}{\metre}, the ground-sample distance between consecutive frames is \SI{1.67}{\metre}---less than 6\% of the \SI{32.2}{\metre} horizontal field of view---ensuring that any target within the search swath is observed in at least 14 consecutive frames.  The projected NCNN and FP16 improvements represent viable paths to real-time performance for higher-speed search profiles or lower-altitude missions where the detection window is shorter.

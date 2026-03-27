@@ -256,9 +256,9 @@ Status key:
 
 ### Personal Reflections
 
-- [~] **Edward and user focused on CV together** (for personal reflections report)
-  - Where: `report/personal/` directory exists with sections 01-05 (introduction, design/problem-solving, societal/environmental, teamwork/leadership, self-development)
-  - Quality: UNKNOWN -- not checked in detail. Personal report exists as separate document. User mentioned Edward collaboration on CV as a point to highlight.
+- [x] **Edward and user focused on CV together** (for personal reflections report)
+  - Where: `report/personal/` directory exists with sections 01-05. Edward collaboration is mentioned in `02_design_problem_solving.tex` and `04_teamwork_leadership.tex`.
+  - Quality: VERIFIED. Edward collaboration on CV is present in the personal report.
 
 ---
 
@@ -266,8 +266,8 @@ Status key:
 
 ### No AI Mentions
 
-- [~] **No AI mentions anywhere** ("don't mention Claude, AI assistant, LLM anywhere in the report")
-  - Status: NEEDS VERIFICATION. Report text appears professionally written without AI attribution. However, a full text search for "AI", "Claude", "LLM", "language model", "generated" should be done to verify no accidental mentions. Note: "AI" appears legitimately in context of "AI-based detection" which is the project topic.
+- [x] **No AI mentions anywhere** ("don't mention Claude, AI assistant, LLM anywhere in the report")
+  - Status: VERIFIED. Full text search for "Claude", "LLM", "language model", "AI assistant", "chatbot" across all .tex files returned zero matches. "AI" appears only legitimately in context of "AI-based detection" (the project topic). "generated" appears only in legitimate contexts (dataset generation, waypoints generated). No AI attribution anywhere.
 
 ### Rubric & Scoring
 
@@ -283,9 +283,9 @@ Status key:
 
 ### Design Summary for Teammate
 
-- [~] **Design Summary v2 for teammate**
-  - Status: User asked for a summary document for a teammate. Not clear if this was a separate deliverable or part of the report content.
-  - Where: Not a distinct file. The `system_description.tex` and `design_rationale.tex` serve this purpose within the report.
+- [x] **Design Summary v2 for teammate**
+  - Where: `docs/DESIGN_SUMMARY_v2.md` exists as a standalone file. Also served by `system_description.tex` and `design_rationale.tex` within the report.
+  - Quality: VERIFIED. Separate document exists at `docs/DESIGN_SUMMARY_v2.md`.
 
 ### Report Organisation
 

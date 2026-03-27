@@ -238,6 +238,20 @@ The six steps above form a directed acyclic graph of parameter dependencies, whe
   \label{fig:optimization-network}
 \end{figure}
 
-\noindent Every parameter is traceable to a physical measurement (target dimensions, sensor specifications, inference benchmarks) or a regulatory constraint (altitude ceiling, NFZ boundaries). Figure~\ref{fig:optimization-network} visualises this dependency chain.
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.85\linewidth]{sensitivity_matrix}
+  \caption{Sensitivity matrix showing the influence of each input parameter on every derived quantity. Darker cells indicate stronger coupling, revealing which measurements most critically affect mission performance.}
+  \label{fig:sensitivity-matrix}
+\end{figure}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.85\linewidth]{sensitivity_spider}
+  \caption{Spider plot of normalised parameter sensitivities. Each axis represents a derived performance metric; the polygon area indicates the overall sensitivity footprint of the design point.}
+  \label{fig:sensitivity-spider}
+\end{figure}
+
+\noindent Every parameter is traceable to a physical measurement (target dimensions, sensor specifications, inference benchmarks) or a regulatory constraint (altitude ceiling, NFZ boundaries). Figures~\ref{fig:sensitivity-matrix} and~\ref{fig:sensitivity-spider} quantify these inter-parameter sensitivities, while Figure~\ref{fig:optimization-network} visualises the dependency chain.
 No parameter was assumed or rounded for convenience.
 The chain can be re-evaluated instantly if any input changes---for example, a faster inference backend would relax the speed constraint, and a different target size would shift the altitude ceiling---making the design robust to future system upgrades.

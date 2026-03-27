@@ -226,6 +226,13 @@ Table~\ref{tab:altitude_performance} combines the pixel-size model with confiden
   \end{tabular}
 \end{table}
 
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.85\linewidth]{altitude_detection_table}
+  \caption{Detection performance as a function of altitude for the YOLOv8n custom model against a \SI{1.8}{\metre} mannequin target. The table combines predicted pixel sizes from the thin-lens model with empirically observed confidence and detection rates from video replay analysis.}
+  \label{fig:altitude-detection-table}
+\end{figure}
+
 \paragraph{Operational envelope.}
 The data confirms that \SI{35}{\metre} (the configured \texttt{TARGET\_ALT}) sits comfortably within the reliable detection zone (95\% per-frame, $>$99.97\% per-flyover).  The altitude ceiling for reliable single-pass detection is approximately \SI{40}{\metre}; above this, multi-pass coverage from the lawnmower pattern provides the necessary redundancy.  The theoretical floor for detection (${\sim}\SI{70}{\metre}$) corresponds to the target subtending approximately 18 model-input pixels (41 sensor pixels)---near the YOLOv8n smallest feature scale ($80 \times 80$ grid, where each cell covers an $8 \times 8$ region of the input).
 

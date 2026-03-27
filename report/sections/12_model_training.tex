@@ -144,6 +144,13 @@ Training completed in approximately 45 minutes on the T4 GPU. The loss curves ex
 
 A batch size of 8 was the maximum that fitted within the T4's 16\,GB VRAM at the $1088\!\times\!1088$ training resolution. Larger batch sizes would have enabled smoother gradient estimates but were not feasible without gradient accumulation, which was not explored given the already strong convergence behaviour.
 
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.85\linewidth]{training_curves}
+  \caption{Training and validation loss curves over 150 epochs. Rapid convergence occurs in epochs 1--30 as COCO-pretrained features adapt to the aerial SAR domain, followed by gradual refinement and plateau from epoch 80 onwards with no overfitting trend.}
+  \label{fig:training-curves}
+\end{figure}
+
 \subsection{Results}\label{sec:training:results}
 
 Table~\ref{tab:training_results} presents the validation metrics for the v2 model compared to the original v1 baseline. The v2 model achieves near-perfect detection performance on the validation set.
@@ -161,6 +168,13 @@ Table~\ref{tab:training_results} presents the validation metrics for the v2 mode
         \bottomrule
     \end{tabular}
 \end{table}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.85\linewidth]{confusion_matrix}
+  \caption{Normalised confusion matrix for the v2 model on the validation set. The single-class detector achieves near-perfect discrimination between the mannequin target and background, with negligible false-positive and false-negative rates.}
+  \label{fig:confusion-matrix}
+\end{figure}
 
 A caveat applies: the training and validation splits use the same image directory (\texttt{train=val=images/}), so the reported metrics reflect in-sample performance and likely overstate true generalisation accuracy. This pragmatic choice was driven by the small dataset size---an 80/20 split would leave only 73 validation images, too few for stable metric estimation. The field-test results (Section~\ref{sec:evaluation}) provide independent confirmation that the model generalises beyond the training distribution. The model export and deployment pipeline is described in Sections~\ref{sec:training:export} and~\ref{sec:training:deployment}.
 
