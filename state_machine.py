@@ -14,13 +14,6 @@ from navigation import NavigationController
 import config
 import time
 import math
-import sys
-
-# These module-level constants are imported from main.py's namespace.
-# The mixin accesses them via the module globals that main.py sets up.
-# We import them lazily to avoid circular imports.
-_REAL_CANVAS_SIZE = 4800
-_SIM_SPEED = None  # set at runtime from main module
 
 
 def _get_main_globals():
@@ -53,7 +46,7 @@ class StateHandlersMixin:
     # ── State transition ──────────────────────────────────────────────
 
     def _set_state(self, new_state):
-        """Change state and reset state timer (FIX 5: state timeouts)."""
+        """Change state and reset state timer."""
         self.state = new_state
         self.state_start_time = time.time()
         # Reset per-state timeout warnings
@@ -150,7 +143,7 @@ class StateHandlersMixin:
                     self.master,
                     no_turn=True,
                     get_yaw=lambda: self.yaw)
-                self.connect_start_time = time.time()  # FIX 4: start heartbeat timeout
+                self.connect_start_time = time.time()  # Start heartbeat timeout
                 self._set_state(State.CONNECTING)
             except Exception as e:
                 print(f"Connection fail: {e}")
@@ -160,7 +153,7 @@ class StateHandlersMixin:
         from pymavlink import mavutil
         g = _get_main_globals()
         SIM_SPEED = g['SIM_SPEED']
-        # FIX 4: Heartbeat timeout warning
+        # Heartbeat timeout warning
         if self.connect_start_time > 0 and self.last_heartbeat == 0:
             elapsed = time.time() - self.connect_start_time
             if elapsed > 15 and int(elapsed) % 15 == 0 and time.time() - self.last_req > 5:
@@ -181,13 +174,13 @@ class StateHandlersMixin:
 
     def _handle_arming(self, target_found, px_u, px_v, key):
         from pymavlink import mavutil
-        # FIX 5: Arming timeout warning
+        # Arming timeout warning
         arming_elapsed = time.time() - self.state_start_time
         if arming_elapsed > 120 and not self._arming_timeout_warned:
             print("ARMING TIMEOUT: Pre-arm checks may be failing. Check Mission Planner for details.")
             self._arming_timeout_warned = True
 
-        # FIX 1: Wait for GPS fix before attempting to arm
+        # Wait for GPS fix before attempting to arm
         if not self.gps_fix_ok:
             gps_msg = self.master.recv_match(type='GPS_RAW_INT', blocking=False)
             if gps_msg:
@@ -195,7 +188,7 @@ class StateHandlersMixin:
                 sats = gps_msg.satellites_visible
                 if fix_type >= 3 and sats >= 6:
                     self.gps_fix_ok = True
-                    # FIX 2: Update position from real GPS (replaces config REF_LAT/REF_LON)
+                    # Update position from real GPS (replaces config REF_LAT/REF_LON)
                     self.lat = gps_msg.lat / 1e7
                     self.lon = gps_msg.lon / 1e7
                     # Update home position to actual takeoff location (not config)
@@ -280,11 +273,11 @@ class StateHandlersMixin:
                 print(f"Flying {len(self.pre_waypoints)} transit waypoints first.")
                 self.pre_wp_index = 0
                 self._set_state(State.PRE_WAYPOINTS)
-                self.last_speed_req = 0
+                self.nav.last_speed_req = 0  # Reset speed throttle for immediate set_speed()
             elif self.waypoints:
                 print(f"Path generated. Transiting to start point: {self.waypoints[0]}")
                 self._set_state(State.TRANSIT_TO_SEARCH)
-                self.last_speed_req = 0
+                self.nav.last_speed_req = 0  # Reset speed throttle for immediate set_speed()
             else:
                 print("No Waypoints generated.")
                 self._set_state(State.HOVER)
@@ -731,7 +724,7 @@ class StateHandlersMixin:
                 self.master.target_system, self.master.target_component,
                 mavutil.mavlink.MAV_CMD_NAV_LAND, 0,
                 0, 0, 0, 0,
-                int(self.home_lat * 1e7), int(self.home_lon * 1e7), 0)
+                self.home_lat, self.home_lon, 0)  # command_long takes float degrees
             self._land_cmd_sent = True
             self._land_cmd_time = time.time()
             self._land_retries = 0
@@ -754,7 +747,7 @@ class StateHandlersMixin:
                     self.master.target_system, self.master.target_component,
                     mavutil.mavlink.MAV_CMD_NAV_LAND, 0,
                     0, 0, 0, 0,
-                    int(self.home_lat * 1e7), int(self.home_lon * 1e7), 0)
+                    self.home_lat, self.home_lon, 0)  # float degrees
                 self._land_cmd_time = time.time()
 
     # ── PLB beacon redirect ────────────────────────────────────────────
