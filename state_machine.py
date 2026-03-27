@@ -35,6 +35,8 @@ class StateHandlersMixin:
         self._centering_timeout_warned = False
         self._descending_timeout_warned = False
         self._land_cmd_sent = False
+        self._verify_last_warn = -1
+        self._verify_remaining = None
 
     # -- Helpers --
 
@@ -154,7 +156,7 @@ class StateHandlersMixin:
         from pymavlink import mavutil
         arming_elapsed = time.time() - self.state_start_time
         if arming_elapsed > 120 and not self._arming_timeout_warned:
-            print("ARMING TIMEOUT: Pre-arm checks may be failing. Check Mission Planner.")
+            print("ARMING TIMEOUT (120s): Cannot arm. Common causes: no GPS fix, safety switch not pressed, RC failsafe active. Open Mission Planner Messages tab for pre-arm failure reason.")
             self._arming_timeout_warned = True
 
         if not self.gps_fix_ok:
@@ -218,7 +220,7 @@ class StateHandlersMixin:
             return
 
         if time.time() - self.state_start_time > 60 and not self._takeoff_timeout_warned:
-            print("TAKEOFF TIMEOUT: Drone may not be climbing. Check motors and GPS.")
+            print("TAKEOFF TIMEOUT (60s): Not reaching target altitude. Check propellers are spinning, GPS lock is valid, and no physical obstructions. Current alt logged in HUD.")
             self._takeoff_timeout_warned = True
 
         if self.alt >= config.TARGET_ALT * 0.90:
@@ -384,7 +386,7 @@ class StateHandlersMixin:
             current_alt = self._current_search_alt()
             new_alt = max(config.RESCAN_ALT_FLOOR_M, current_alt * config.RESCAN_ALT_FACTOR)
             if new_alt <= config.RESCAN_ALT_FLOOR_M:
-                print(f"WARNING: Rescan altitude hit {config.RESCAN_ALT_FLOOR_M}m floor. Ending mission.")
+                print(f"WARNING: Rescan altitude floor reached ({config.RESCAN_ALT_FLOOR_M}m). All rescan passes exhausted without confirmed target. Ending mission -- consider lowering RESCAN_ALT_FLOOR_M in config.py or improving detection model.")
                 self._set_state(State.DONE)
                 return
             self.rescan_pass += 1
@@ -446,7 +448,7 @@ class StateHandlersMixin:
         center_verify = getattr(_main, 'CENTER_VERIFY', False)
 
         if time.time() - self.state_start_time > 60 and not self._centering_timeout_warned:
-            print("CENTERING TIMEOUT: Lost target or can't converge. Resuming search.")
+            print("CENTERING TIMEOUT (60s): Could not reach target GPS within 1m. Target may have moved or GPS estimate was inaccurate. Resuming search pattern.")
             self._centering_timeout_warned = True
             self._set_state(State.SEARCH)
             return
@@ -520,7 +522,7 @@ class StateHandlersMixin:
 
     def _handle_hover(self, target_found, px_u, px_v, key):
         if time.time() - self.state_start_time > 60.0:
-            print("HOVER TIMEOUT (60s): No waypoints. Ending mission.")
+            print("HOVER TIMEOUT (60s): Stuck in HOVER with no waypoints to fly. This usually means the search pattern was not generated. Check SEARCH_AREA_GPS in config.py or search_area.json. Ending mission.")
             self._set_state(State.DONE)
 
     def _handle_approach(self, target_found, px_u, px_v, key):
@@ -859,10 +861,8 @@ class StateHandlersMixin:
             if not self._is_inside_nfz(self.target_lat, self.target_lon) and \
                not self._is_outside_search_area(self.target_lat, self.target_lon) and \
                not self._is_near_known(self.target_lat, self.target_lon):
-                if not hasattr(self, '_detect_queue'):
-                    self._detect_queue = []
                 conf = getattr(self, 'current_conf', 0.5)
-                self._detect_queue.append((self.target_lat, self.target_lon, conf))
+                self._enqueue_detection(self.target_lat, self.target_lon, conf)
                 print(f"[MANUAL] Detection queued at ({self.target_lat:.6f}, {self.target_lon:.6f})")
             self.target_lat = self.target_lon = 0
         if self.state == State.MANUAL and self.master:
