@@ -60,6 +60,35 @@ def get_stream_frame():
         return _stream_frame
 
 
+# -- Thread-safe telemetry buffer --------------------------------------------
+
+_telemetry: dict = {}
+_telemetry_lock = threading.Lock()
+
+
+def set_telemetry(**kwargs):
+    """Update telemetry fields from the mission loop.
+
+    Call with keyword arguments, e.g.::
+
+        set_telemetry(state="SEARCH", alt=30.0, lat=51.42, lon=-2.67,
+                      speed=4.2, conf=0.87, wp_index=3, wp_total=12,
+                      gps_fix=3, gps_sats=14, waiting=False,
+                      selecting_side=False, verify_timeout=None)
+
+    Only the supplied keys are updated; missing keys keep their previous
+    values.  This lets callers push partial updates cheaply.
+    """
+    with _telemetry_lock:
+        _telemetry.update(kwargs)
+
+
+def get_telemetry() -> dict:
+    """Return a shallow copy of the current telemetry dict."""
+    with _telemetry_lock:
+        return dict(_telemetry)
+
+
 # -- Command queue -----------------------------------------------------------
 
 cmd_queue: queue.Queue = queue.Queue()
@@ -87,6 +116,8 @@ class StreamHandler(BaseHTTPRequestHandler):
             self._serve_stream()
         elif self.path == '/snapshot':
             self._serve_snapshot()
+        elif self.path == '/status':
+            self._serve_status()
         elif self.path.startswith('/cmd?key='):
             self._serve_cmd()
         elif self.path == '/':
@@ -163,6 +194,20 @@ class StreamHandler(BaseHTTPRequestHandler):
         self.send_header('Content-Length', str(len(data)))
         self.end_headers()
         self.wfile.write(data)
+
+    # -- Telemetry JSON endpoint -----------------------------------------------
+
+    def _serve_status(self):
+        """Return current telemetry as JSON for the dashboard overlay."""
+        data = get_telemetry()
+        body = _json.dumps(data).encode()
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/json')
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Cache-Control', 'no-cache')
+        self.send_header('Content-Length', str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
 
     # -- Command endpoint ----------------------------------------------------
 

@@ -217,6 +217,7 @@ class VisualFlightMission(StateHandlersMixin):
         # State & telemetry
         self.state = State.INIT
         self.previous_state = State.HOVER
+        self._mission_start_time = time.time()
         self.state_start_time = time.time()
         self.connect_start_time = 0
         self.gps_fix_ok = False
@@ -421,7 +422,6 @@ class VisualFlightMission(StateHandlersMixin):
         self.target_lat, self.target_lon = calculate_target_from_pixels(
             u, v, self.alt, self.yaw, self.lat, self.lon,
             config.IMAGE_W, config.IMAGE_H, config.SENSOR_WIDTH_MM, config.FOCAL_LENGTH_MM)
-        print(f"[VISION] Target GPS: {self.target_lat:.6f}, {self.target_lon:.6f}")
 
     def calculate_landing_spot(self, direction_key):
         self.landing_lat, self.landing_lon = landing_offset_7_5m(
