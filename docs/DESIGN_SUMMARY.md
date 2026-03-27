@@ -178,7 +178,68 @@ proportionally worse (higher angular rate). Slower speeds preserve frame quality
 higher altitudes, blur is less severe, so faster speeds are acceptable. At 35 m default:
 8.0 m/s.
 
-### 2.7 Focus Area (PLB Beacon Redirect)
+### 2.7 Energy-Aware Path Planning
+
+An energy simulation (`analysis/path_optimization/`) evaluated the lawnmower pattern
+across 216 configurations (6 altitudes x 36 angles), accounting for momentum at U-turns,
+NFZ slowdown zones, and altitude-dependent speed.
+
+**Energy model:**
+
+```
+P_total = P_hover + P_drag = 150 W + 50 W * (v / 5)^2
+```
+
+Each U-turn incurs a 2-second deceleration/reacceleration penalty (momentum cost). The
+SSSI no-fly zone is adjacent to the search area, so scan lines that pass near the NFZ
+boundary trigger the speed cap (Section 3.3), adding approximately 45% time penalty on
+affected segments.
+
+**Scan angle:** The optimal scan angle is 65-75 degrees, aligning with the polygon's
+longest dimension (NE-SW axis). This minimises the number of U-turns and total path
+length.
+
+**Altitude vs energy:**
+
+| Altitude | Scan lines | Time | Energy |
+|----------|-----------|------|--------|
+| 50 m | 6 | 1.8 min | 8.3 Wh |
+| 35 m | 9 | 3.3 min | 12.6 Wh |
+
+Higher altitude means fewer scan lines, fewer U-turns, and faster speed (10 m/s at 50 m
+vs 8 m/s at 35 m). The energy cost at 35 m is 52% higher than at 50 m for the same area.
+
+**Decision:** Start at 50 m for the fastest initial sweep. If the target is missed, rescan
+at lower altitudes (40 m, 32 m) where pixel size improves. This "start high, drop on miss"
+strategy optimises for the common case (target found on first pass) while retaining
+fallback thoroughness.
+
+**Future work:** Full momentum simulation with wind model, path smoothing at U-turns to
+reduce deceleration penalty.
+
+### 2.8 Altitude Justification (Why 50 m)
+
+The choice of 50 m as the initial search altitude is driven by five factors:
+
+1. **Detection threshold:** At 50 m, the dummy is 34 pixels tall in the model's 640x640
+   input -- well above the empirical 20-pixel detection threshold. The critical altitude
+   (where the dummy drops below 20 px) is 62.7 m.
+
+2. **Motion blur:** At 10 m/s and 50 m altitude, motion blur is 0.3 pixels per frame
+   exposure -- negligible, thanks to the IMX296 global shutter sensor.
+
+3. **Scan efficiency:** 50 m requires 33% fewer scan lines than 35 m (6 vs 9 lines),
+   covering the same area in roughly half the time and energy.
+
+4. **Speed advantage:** The altitude-speed curve (Section 2.6) allows 10 m/s at 50 m vs
+   8 m/s at 35 m -- a 25% speed increase.
+
+5. **Rescan safety net:** If the first pass at 50 m misses the target, rescanning at 40 m
+   then 32 m catches it with progressively better pixel resolution. The cost of starting
+   high is one fast pass; the cost of starting low is spending the entire flight at slower
+   speed with more scan lines.
+
+### 2.9 Focus Area (PLB Beacon Redirect)
 
 When a Personal Locator Beacon signal is received (B key or `--beacon-delay N`), the
 search redirects to a smaller polygon:
@@ -447,14 +508,36 @@ object (different scales) would flood the queue. Over multiple frames, different
 objects naturally emerge as separate queue entries because the drone's movement changes
 which object scores highest.
 
-### 4.8 `--smart-detect` (Optional Multi-Frame Confirmation)
+### 4.8 Cost Asymmetry Analysis
+
+The detection strategy is shaped by a fundamental cost asymmetry between false positives
+and missed targets:
+
+| Outcome | Cost | Time |
+|---------|------|------|
+| **False positive investigated** | Fly to location (10-15 s), operator presses N (2 s), resume search | ~20 s |
+| **Missed real target** | Entire rescan pass at lower altitude | 2-5 minutes |
+
+The cost ratio is approximately **10:1** in favour of erring on the detection side. This
+asymmetry justifies two design choices:
+
+1. **Low confidence threshold (0.2):** Catches weak detections that may be real targets
+   viewed at oblique angles or partially occluded. The deduplication system (rejection
+   radius, NFZ filter, boundary filter) prevents false positives from compounding.
+
+2. **Single-frame trigger (no `--smart-detect` by default):** A target at the edge of the
+   camera swath may appear in only 1-2 frames. Requiring 3 consecutive detections would
+   miss these entirely, costing a full rescan pass. One false investigation (20 s) is
+   cheaper than one missed target (2-5 min).
+
+### 4.9 `--smart-detect` (Optional Multi-Frame Confirmation)
 
 When active, requires `DETECT_CONFIRM_FRAMES = 3` consecutive detections before queuing.
 Reduces false positives but risks missing edge-of-swath targets that appear in only 1-2
 frames. **Off by default** because investigating a false positive costs ~10 seconds
 (press N), while missing a real target costs a full rescan pass.
 
-### 4.9 Confidence Threshold: 0.2
+### 4.10 Confidence Threshold: 0.2
 
 `CONFIDENCE_THRESHOLD = 0.2` in `config.py`.
 
@@ -713,6 +796,81 @@ closes, the drone climbs to search altitude, and transitions to `RETURN_TRANSIT`
 | 3 m | Tight, matches GPS CEP | Same object re-investigated from adjacent scan lines (3-4 m shift) |
 | **5 m (chosen)** | Encompasses viewing angle variation | Sweet spot |
 | 10 m | Aggressive suppression | Masks distinct objects 7+ m apart |
+
+### 9.7 50 m vs 35 m Start Altitude
+
+| | 50 m (chosen) | 35 m |
+|---|---|---|
+| **Scan lines** | 6 | 9 (50% more) |
+| **Time** | 1.8 min | 3.3 min |
+| **Energy** | 8.3 Wh | 12.6 Wh (52% more) |
+| **Target pixel size** | 34 px | 49 px |
+| **Speed** | 10 m/s | 8 m/s |
+| **Decision** | Start high for fastest initial sweep. 34 px is above the 20 px detection threshold. Rescan at lower altitude if missed. |
+
+### 9.8 Energy vs Thoroughness
+
+Fewer scan lines save energy and time but reduce overlap between passes. At 50 m with 0%
+explicit overlap, the diagonal realignment provides the coverage bonus (Section 2.3). The
+tradeoff is acceptable because the rescan mechanism (Section 2.5) catches misses at lower
+altitude. Spending extra energy on a thorough first pass is wasteful if the target is found
+on pass 1 (the common case).
+
+### 9.9 NFZ Scalar Field Zone Width (20 m)
+
+| Width | Behaviour | Problem |
+|-------|-----------|---------|
+| 10 m | Speed ramp from 3 m/s to 0.3 m/s over 10 m | Marginal stopping distance at 10 m/s approach |
+| **20 m (chosen)** | 2x worst-case stopping distance | Smooth deceleration, ample margin |
+| 30 m | Very conservative | Wastes 30% of scan lines in slow zone, excessive time penalty |
+
+The 20 m zone provides roughly 2x the stopping distance at maximum search speed (10 m/s),
+accounting for GPS lag and wind gusts. Wider zones eat into the search area; narrower zones
+risk overshoot.
+
+### 9.10 Why U-Turns Are Not Smoothed by Default
+
+Smoothing U-turns (e.g., Dubins paths or arc transitions) would reduce the 2-second
+deceleration/reacceleration penalty per turn. However:
+
+- At 6-9 scan lines, there are only 5-8 U-turns total -- saving 2 s each = 10-16 s
+- Implementing smooth turns adds complexity to `planning.py` and the waypoint format
+- ArduCopter's WP_NAVALT_TURN parameter already provides some corner smoothing
+- The energy saving is minimal compared to the altitude choice (Section 9.7)
+
+Not worth the complexity for a single-digit second improvement.
+
+---
+
+## 10. What We Are Still Working On
+
+These are active or planned improvements that have not yet been implemented:
+
+1. **Full momentum-aware path optimisation:** The current energy model (Section 2.7) uses
+   a fixed 2-second U-turn penalty. A full simulation would model acceleration/deceleration
+   profiles, wind resistance, and bank angle constraints to find truly optimal scan
+   parameters.
+
+2. **NCNN backend testing on Pi:** NCNN export is available in
+   `cv_models/sar_v2_1088/ncnn/` and is expected to reach ~15 FPS on the Pi 5 (3x current
+   TFLite speed). Needs on-device benchmarking and validation that detection quality is
+   preserved.
+
+3. **INT8 quantisation:** Quantising the TFLite model from float32 to INT8 would halve
+   model size and may improve inference speed on the Pi's CPU. Requires a representative
+   calibration dataset to avoid accuracy loss.
+
+4. **Multi-class detection:** The current model detects a single class (dummy). Extending
+   to dummy + person + cone would allow the system to distinguish between casualty types
+   and reduce false positives from non-target objects.
+
+5. **Adaptive search:** After the first pass, use detection heatmaps and terrain features
+   to focus subsequent passes on high-probability regions rather than repeating the full
+   lawnmower pattern.
+
+6. **Wind compensation in GPS estimation:** The GPS timing lag (Section 5.4) causes
+   along-track error proportional to speed. Compensating by offsetting the GPS position
+   by `speed * lag` in the heading direction would reduce CEP by an estimated 30-50%.
 
 ---
 
