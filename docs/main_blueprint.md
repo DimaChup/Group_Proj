@@ -1,58 +1,54 @@
-# main.py Blueprint (908 lines) — Mission Orchestrator
+# main.py Blueprint (687 lines) — Mission Orchestrator
 
-> This is a MAP, not a copy of code. Use it to navigate main.py without reading 900+ lines.
+> This is a MAP, not a copy of code. Use it to navigate main.py without reading 687 lines.
 > Update this file whenever main.py changes structurally.
 
 ## Section Map
 
 | Section | Lines | Purpose |
 |---------|-------|---------|
-| Imports + config check | 1-35 | Standard lib + project modules |
-| CLI flags | 37-62 | `--model`, `--dry-run`, `--stream-*`, `--no-stream`, `--headless` |
-| Stream/queue globals | 69-109 | `_stream_frame`, `_stream_lock`, `_cmd_queue`, HEADLESS detection, terminal input thread |
-| HTTP handler | 111-193 | `_StreamHandler`: `/stream` (MJPEG), `/cmd?key=` (Y/N/M/E/W/S), `/` (dashboard HTML) |
-| Stream server | 195-219 | ThreadingHTTP on port 8090 |
-| `__init__` | 222-296 | SimulationEnvironment or real setup, VisionSystem, PathPlanner, telemetry vars, CSV logger |
-| `_setup_real_search_area` | 298-326 | Load from `search_area.json` -> `config.SEARCH_AREA_GPS` -> empty fallback |
-| `update_telemetry` | 328-359 | Parse GLOBAL_POSITION_INT, ATTITUDE, HEARTBEAT; RC failsafe detection |
-| `calculate_target_gps` | 361-376 | Pixel (u,v) -> GPS via GSD + yaw rotation |
-| `update_dashboard` | 378-455 | Frame capture, CV detection, HUD overlay, god view composite, stream update |
-| `set_speed` | 457-462 | MAV_CMD_DO_CHANGE_SPEED (3s throttle) |
-| `calculate_landing_spot` | 464-481 | 7.5m offset in N/S/E/W direction |
-| `run()` | 483-746 | Main loop: telemetry -> dashboard -> key input -> state machine |
-| State: INIT -> CONNECTING | 538-560 | Connect, wait heartbeat, request data stream |
-| State: ARMING | 562-618 | GPS fix check (type>=3, sats>=6), set GUIDED, arm |
-| State: TAKEOFF | 620-643 | Climb to TARGET_ALT, generate waypoints |
-| State: TRANSIT -> SEARCH | 645-674 | Fly waypoints, detect -> CENTERING |
-| State: CENTERING -> DESCENDING | 676-699 | Fly to target, descend to VERIFY_ALT |
-| State: VERIFY | 700-709 | Wait Y/N input (terminal, browser, or cv2) |
-| State: APPROACH -> LANDING -> DONE | 711-730 | Fly to landing spot, land, report error |
-| Key input handling | 508-535, 732-746 | M=manual, Y/N=verify, N/E/W/S=landing side, ESC=quit |
-| `_dry_run` | 774-900 | No-fly visualization: pattern, timing estimates, map display |
+| Imports + config check | 1-27 | Standard lib + project modules |
+| CLI flags & config | 29-57 | `--model`, `--dry-run`, `--transit`, `--speed`, `--alt`, `--beacon-delay`, `--no-nfz`, etc. |
+| HEADLESS detection | 59-67 | Auto-detect display availability |
+| `_terminal_input_thread` | 69-82 | Terminal key input (PuTTY/SSH), feeds `stream_cmd_queue` |
+| `_draw_servo_animation` | 85-138 | Payload drop animation (bottom-right corner during HOVER_TARGET) |
+| `__init__` | 143-254 | SimulationEnvironment or real setup, VisionSystem, geofence, planner, telemetry vars, CSV logger |
+| `_load_waypoints_json` | 256-262 | Static: load JSON waypoints (supports dict and list formats) |
+| `_load_transit_from_file` | 264-273 | Load transit waypoints from JSON for simulation preload |
+| `_setup_real_search_area` | 275-291 | Load from `search_area.json` -> config GPS -> fallback |
+| `update_telemetry` | 293-319 | Parse GLOBAL_POSITION_INT, ATTITUDE, HEARTBEAT; RC failsafe detection |
+| `calculate_target_gps` | 321-327 | Pixel (u,v) -> GPS via gps_utils wrapper |
+| `calculate_landing_spot` | 329-332 | 7.5m offset via gps_utils wrapper |
+| `update_dashboard` | 334-428 | Frame capture, CV detection, HUD overlay, servo animation, composite view |
+| `run()` | 430-508 | Main loop: telemetry -> dashboard -> keys -> state dispatch -> geofence -> done |
+| `_enforce_geofence` | 510-541 | NFZ hard boundary -> MANUAL, speed cap ramp, inner polygon repulsion |
+| `on_dashboard_mouse` | 543-546 | Zoom via mousewheel (simulation only) |
+| `_dry_run` | 549-630 | No-fly visualization: pattern stats, state walkthrough, map display |
+| `__main__` | 633-687 | Entry point: DRY_RUN or mission.run() with error handling |
 
 ## State Machine Flow
 
 ```
-INIT -> CONNECTING -> ARMING -> TAKEOFF -> TRANSIT_TO_SEARCH -> SEARCH
-                                                                  |
-                                          detect target           v
-                                                            CENTERING
-                                                                  |
-                                                                  v
-                                                            DESCENDING
-                                                                  |
-                                                                  v
-                                                              VERIFY
-                                                             /      \
-                                                          Y           N
-                                                         /             \
-                                              select side          back to SEARCH
-                                             (N/E/W/S)
-                                                  |
-                                                  v
-                                              APPROACH -> LANDING -> DONE
+INIT -> CONNECTING -> ARMING -> TAKEOFF -> PRE_WAYPOINTS -> TRANSIT_TO_SEARCH -> SEARCH
+                                                                                   |
+                                                         detect target             v
+                                                                             CENTERING
+                                                                                   |
+                                                                                   v
+                                                                             DESCENDING
+                                                                                   |
+                                                                                   v
+                                                                               VERIFY
+                                                                              /      \
+                                                                           Y           N
+                                                                          /             \
+                                                               select side          RETURN_TO_SEARCH
+                                                              (N/E/W/S)
+                                                                   |
+                                                                   v
+                                                    APPROACH -> HOVER_TARGET -> RETURN_TRANSIT -> RETURN_HOME -> LANDING -> DONE
 
-Any state: M -> MANUAL -> M -> resume previous state
+Any state: M -> MANUAL -> M -> RETURN_FROM_MANUAL -> resume
 ```
 
 ## Key Instance Variables
@@ -63,66 +59,40 @@ Any state: M -> MANUAL -> M -> resume previous state
 | `self.eyes` | `VisionSystem` | Camera + AI detection (dual backend) |
 | `self.planner` | `PathPlanner` | Lawnmower search pattern generator |
 | `self.geo` | `GeoTransformer` | GPS <-> pixel coordinate conversion |
+| `self.nav` | `NavigationController` | Velocity/position commands to Cube |
+| `self.geofence` | `NFZGeofence` or None | SSSI no-fly zone enforcement |
 | `self.waypoints` | `list[(lat, lon)]` | Generated lawnmower waypoints |
+| `self.pre_waypoints` | `list[(lat, lon)]` | Transit waypoints (before search) |
 | `self.target_lat/lon` | `float` | Detected target GPS position |
 | `self.landing_lat/lon` | `float` | 7.5m offset landing spot |
 | `self.state` | `State` enum | Current state machine state |
-| `_cmd_queue` | `queue.Queue` | Thread-safe queue for browser/terminal keys |
 
-## Input Methods (headless support)
-
-Three parallel input paths, all feed into `_cmd_queue`:
-
-1. **cv2.waitKey** — display mode (laptop with monitor)
-2. **Terminal keypresses** — `_terminal_input_thread` for PuTTY/SSH
-3. **Browser buttons** — `http://localhost:8090` via `/cmd?key=` endpoint
-
-## Web Dashboard (port 8090)
-
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/` | GET | HTML dashboard page with buttons |
-| `/stream` | GET | MJPEG video stream (multipart) |
-| `/cmd?key=X` | GET | Send command key (Y, N, M, E, W, S) |
-
-## Dependencies on Other Modules
+## Dependencies
 
 ```
 main.py
-  |-- config.py        All settings (altitudes, speeds, connection strings)
-  |-- states.py        State enum definition
-  |-- utils.py         GeoTransformer (GPS <-> pixel math)
-  |-- vision.py        VisionSystem.detect_in_image(frame) -> (found, x, y, conf)
-  |-- planning.py      PathPlanner.generate_waypoints(polygon) -> [(lat, lon)]
-  |-- simulation.py    SimulationEnvironment (laptop-only, map.jpg based)
+  |-- config.py        All settings
+  |-- states.py        State enum
+  |-- utils.py         GeoTransformer
+  |-- vision.py        VisionSystem
+  |-- planning.py      PathPlanner
+  |-- state_machine.py StateHandlersMixin (all state handlers)
+  |-- navigation.py    NavigationController
+  |-- stream_server.py HTTP stream + cmd queue
+  |-- gps_utils.py     GPS math (target from pixels, landing offset)
+  |-- geofence.py      NFZGeofence (optional)
+  |-- simulator/       SimulationEnvironment (SIM mode only)
 ```
-
-## CLI Flags
-
-| Flag | Default | Purpose |
-|------|---------|---------|
-| `--model PATH` | `best.tflite` | Use alternate TFLite model |
-| `--dry-run` | off | Visualize pattern without flying (no Cube needed) |
-| `--stream-port N` | 8090 | HTTP stream port |
-| `--stream-quality N` | 60 | MJPEG JPEG quality (0-100) |
-| `--no-stream` | off | Disable HTTP stream server |
-| `--headless` | auto | Force headless mode (no cv2.imshow) |
-
-## Known Issues
-
-- `run()` is 264 lines — should be split into per-state handler methods
-- Hardcoded 0.62 latitude scale factor (Bristol-specific, should use `cos(lat)`)
-- HTML injection possible in stream page (CLI args not escaped)
-- `calculate_target_gps` uses simplified flat-earth projection (adequate for <1km range)
 
 ## Modification Guide
 
 | To change... | Edit... |
 |--------------|---------|
-| Add a new state | `states.py` (enum) + `run()` state machine block |
-| Change detection logic | `vision.py` only (main.py just calls `detect_in_image`) |
-| Change search pattern | `planning.py` only (main.py just calls `generate_waypoints`) |
+| Add a new state | `states.py` + `state_machine.py` + dispatch table in `run()` |
+| Change detection logic | `vision.py` only |
+| Change search pattern | `planning.py` only |
 | Change altitudes/speeds | `config.py` only |
-| Add new browser command | `_StreamHandler` (HTML button + `/cmd` handler) + key handling in `run()` |
-| Change landing offset | `calculate_landing_spot` (~line 464) |
-| Add new CLI flag | argparse block (~line 37) |
+| Change HUD layout | `update_dashboard()` (~line 334) |
+| Change landing offset | `gps_utils.py` |
+| Add new CLI flag | CLI block (~line 29) |
+| Change geofence behavior | `_enforce_geofence()` (~line 510) or `geofence.py` |
