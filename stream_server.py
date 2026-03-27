@@ -1,57 +1,82 @@
-# stream_server.py — HTTP streaming server module
-# Extracted from main.py: MJPEG stream, dashboard HTML, command endpoint.
-# Usage:
-#   from stream_server import set_stream_frame, start_stream_server, cmd_queue
-#   start_stream_server(port=8090, stream_w=320, stream_h=240, stream_fps=5, stream_quality=50)
-#   set_stream_frame(frame)          # numpy BGR frame (will be resized + JPEG-encoded)
-#   key_code = cmd_queue.get()       # int keycode from browser buttons / keyboard proxy
+"""Lightweight HTTP server for MJPEG streaming and operator commands.
+
+Provides four endpoints on a single port (default 8090):
+
+    /          Dashboard HTML with live video, operator buttons, and keyboard proxy.
+    /stream    MJPEG multipart stream (resized + JPEG-encoded from the latest frame).
+    /snapshot  Single JPEG capture of the current frame.
+    /cmd?key=  Command injection — enqueues a keycode for the mission state machine.
+
+Typical usage::
+
+    from stream_server import set_stream_frame, start_stream_server, cmd_queue
+
+    server = start_stream_server(port=8090)
+    set_stream_frame(bgr_numpy_array)   # call from any thread
+    key_code = cmd_queue.get()           # blocks until an operator presses a button
+
+Thread safety
+-------------
+* ``set_stream_frame`` / ``get_stream_frame`` are guarded by ``_stream_lock``.
+* ``cmd_queue`` is a stdlib ``queue.Queue`` (inherently thread-safe).
+* ``_ThreadingHTTP`` spawns a daemon thread per connection so concurrent
+  ``/stream`` clients do not block each other or the ``/cmd`` endpoint.
+* Module-level ``_cfg_*`` settings are written once in ``start_stream_server``
+  before the server thread starts, then read-only — no lock required.
+"""
 
 import time
 import threading
 import queue
+
 import cv2
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from socketserver import ThreadingMixIn
 
-# ---------------------------------------------------------------------------
-# Thread-safe frame buffer
-# ---------------------------------------------------------------------------
+# -- Thread-safe frame buffer ------------------------------------------------
+
 _stream_frame = None
 _stream_lock = threading.Lock()
 
 
 def set_stream_frame(frame):
-    """Store a new BGR numpy frame for the stream (thread-safe)."""
+    """Replace the current frame with *frame* (BGR ``numpy.ndarray``).
+
+    Called by the main mission loop from any thread.  The frame is stored
+    as-is; resizing and JPEG encoding happen lazily inside the handler.
+    """
     global _stream_frame
     with _stream_lock:
         _stream_frame = frame
 
 
 def get_stream_frame():
-    """Return the latest BGR numpy frame (or None)."""
+    """Return the latest BGR frame, or ``None`` if nothing has been published."""
     with _stream_lock:
         return _stream_frame
 
 
-# ---------------------------------------------------------------------------
-# Command queue — browser buttons / HTTP /cmd feed key codes here
-# ---------------------------------------------------------------------------
-cmd_queue = queue.Queue()
+# -- Command queue -----------------------------------------------------------
 
-# ---------------------------------------------------------------------------
-# Stream settings (set by start_stream_server, read by handler)
-# ---------------------------------------------------------------------------
-_cfg_stream_w = 320
-_cfg_stream_h = 240
-_cfg_stream_fps = 5
-_cfg_stream_quality = 50
+cmd_queue: queue.Queue = queue.Queue()
+"""Operator key-codes (``int``) from browser buttons or the ``/cmd`` endpoint.
+
+Consumers should call ``cmd_queue.get(timeout=...)`` to avoid blocking
+indefinitely.
+"""
+
+# -- Stream configuration (written once, then read-only) ---------------------
+
+_cfg_stream_w: int = 320
+_cfg_stream_h: int = 240
+_cfg_stream_fps: int = 5
+_cfg_stream_quality: int = 50
 
 
-# ---------------------------------------------------------------------------
-# HTTP handler
-# ---------------------------------------------------------------------------
+# -- HTTP request handler ----------------------------------------------------
+
 class StreamHandler(BaseHTTPRequestHandler):
-    """Serves /, /stream, /snapshot, /cmd endpoints."""
+    """Route ``GET`` requests to the four public endpoints."""
 
     def do_GET(self):
         if self.path == '/stream':
@@ -66,27 +91,40 @@ class StreamHandler(BaseHTTPRequestHandler):
             self.send_response(404)
             self.end_headers()
 
-    # -- MJPEG multipart stream ------------------------------------------
+    # -- MJPEG multipart stream ----------------------------------------------
+
     def _serve_stream(self):
+        """Push JPEG frames as a ``multipart/x-mixed-replace`` stream.
+
+        Disconnects automatically after 30 s of no frames or if the client
+        drops the connection.
+        """
         self.send_response(200)
-        self.send_header('Content-Type', 'multipart/x-mixed-replace; boundary=frame')
+        self.send_header('Content-Type',
+                         'multipart/x-mixed-replace; boundary=frame')
         self.end_headers()
-        _no_frame_count = 0
+
+        idle_ticks = 0
         while True:
             with _stream_lock:
                 f = _stream_frame
             if f is None:
-                _no_frame_count += 1
-                if _no_frame_count > 300:  # 30 seconds with no frames
+                idle_ticks += 1
+                if idle_ticks > 300:          # 300 * 0.1 s = 30 s timeout
                     break
                 time.sleep(0.1)
                 continue
-            _no_frame_count = 0
+            idle_ticks = 0
+
             small = cv2.resize(f, (_cfg_stream_w, _cfg_stream_h))
-            ret, jpeg = cv2.imencode('.jpg', small, [cv2.IMWRITE_JPEG_QUALITY, _cfg_stream_quality])
+            ret, jpeg = cv2.imencode(
+                '.jpg', small,
+                [cv2.IMWRITE_JPEG_QUALITY, _cfg_stream_quality],
+            )
             if not ret or jpeg is None:
                 time.sleep(0.1)
                 continue
+
             data = jpeg.tobytes()
             try:
                 self.wfile.write(b'--frame\r\n')
@@ -96,18 +134,25 @@ class StreamHandler(BaseHTTPRequestHandler):
                 self.wfile.write(b'\r\n')
             except (BrokenPipeError, ConnectionResetError):
                 break
+
             time.sleep(1.0 / _cfg_stream_fps)
 
-    # -- Single JPEG snapshot --------------------------------------------
+    # -- Single JPEG snapshot ------------------------------------------------
+
     def _serve_snapshot(self):
+        """Return one JPEG frame, or 503 if no frame is available yet."""
         with _stream_lock:
             f = _stream_frame
         if f is None:
             self.send_response(503)
             self.end_headers()
             return
+
         small = cv2.resize(f, (_cfg_stream_w, _cfg_stream_h))
-        _, jpeg = cv2.imencode('.jpg', small, [cv2.IMWRITE_JPEG_QUALITY, _cfg_stream_quality])
+        _, jpeg = cv2.imencode(
+            '.jpg', small,
+            [cv2.IMWRITE_JPEG_QUALITY, _cfg_stream_quality],
+        )
         data = jpeg.tobytes()
         self.send_response(200)
         self.send_header('Content-Type', 'image/jpeg')
@@ -115,8 +160,13 @@ class StreamHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(data)
 
-    # -- Command endpoint (/cmd?key=y) -----------------------------------
+    # -- Command endpoint ----------------------------------------------------
+
     def _serve_cmd(self):
+        """Parse ``/cmd?key=<char>`` and enqueue the keycode.
+
+        Valid keys: ``y``, ``n``, ``e``, ``w``, ``s``, ``m``.
+        """
         parts = self.path.split('key=')
         if len(parts) < 2 or not parts[1]:
             self.send_response(400)
@@ -124,6 +174,7 @@ class StreamHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(b'{"ok":false,"error":"missing key parameter"}')
             return
+
         key_char = parts[1][0].lower()
         valid = {'y', 'n', 'e', 'w', 's', 'm'}
         if key_char in valid:
@@ -131,73 +182,124 @@ class StreamHandler(BaseHTTPRequestHandler):
             resp = f'{{"ok":true,"key":"{key_char}"}}'
         else:
             resp = f'{{"ok":false,"error":"invalid key: {key_char}"}}'
+
         self.send_response(200)
         self.send_header('Content-Type', 'application/json')
         self.send_header('Access-Control-Allow-Origin', '*')
         self.end_headers()
         self.wfile.write(resp.encode())
 
-    # -- Dashboard HTML --------------------------------------------------
+    # -- Dashboard HTML ------------------------------------------------------
+
     def _serve_html(self):
-        html = '''<html><head><style>
-body{background:#111;color:#fff;font-family:monospace;text-align:center;margin:0;padding:10px}
-img{max-width:100%;border:2px solid #0f0;margin:10px 0}
-.btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:10px 0}
-.btn{padding:12px 24px;font-size:16px;font-weight:bold;border:none;border-radius:6px;cursor:pointer;
-  font-family:monospace;min-width:80px}
-.btn-y{background:#2ecc71;color:#000}.btn-n{background:#e74c3c;color:#fff}
-.btn-dir{background:#3498db;color:#fff}.btn-m{background:#f39c12;color:#000}
-.info{color:#aaa;font-size:12px}
-#status{color:#0f0;margin:5px 0;min-height:20px}
-</style></head><body>
-<h2>SAR Drone Mission Feed</h2>
-<img src="/stream" alt="Video Stream">
-<div id="status"></div>
-<p class="info">VERIFY: press Y (confirm) or N (reject). Then select landing side: N/E/W/S</p>
-<div class="btns">
-  <button class="btn btn-y" onclick="cmd('y')">Y Confirm</button>
-  <button class="btn btn-n" onclick="cmd('n')">N Reject</button>
-  <button class="btn btn-m" onclick="cmd('m')">M Manual</button>
-</div>
-<p class="info">Landing direction (after Y):</p>
-<div class="btns">
-  <button class="btn btn-dir" onclick="cmd('n')">North</button>
-  <button class="btn btn-dir" onclick="cmd('e')">East</button>
-  <button class="btn btn-dir" onclick="cmd('s')">South</button>
-  <button class="btn btn-dir" onclick="cmd('w')">West</button>
-</div>
-<p class="info">''' + f'{_cfg_stream_w}x{_cfg_stream_h} | {_cfg_stream_fps} fps | Quality {_cfg_stream_quality}%' + '''</p>
-<script>
-function cmd(k){fetch('/cmd?key='+k).then(r=>r.json()).then(d=>{
-  document.getElementById('status').textContent='Sent: '+k.toUpperCase()+' ('+new Date().toLocaleTimeString()+')';
-}).catch(e=>{document.getElementById('status').textContent='Error: '+e})}
-document.addEventListener('keydown',e=>{
-  if(['y','n','e','w','s','m'].includes(e.key.toLowerCase()))cmd(e.key.toLowerCase());
-});
-</script></body></html>'''
+        """Serve the single-page operator dashboard."""
+        html = _build_dashboard_html()
         self.send_response(200)
         self.send_header('Content-Type', 'text/html')
         self.end_headers()
         self.wfile.write(html.encode())
 
+    # -- Logging -------------------------------------------------------------
+
     def log_message(self, format, *args):
-        pass  # Silence per-request logs
+        """Suppress per-request log spam from BaseHTTPRequestHandler."""
+        pass
 
 
-# ---------------------------------------------------------------------------
-# Server lifecycle
-# ---------------------------------------------------------------------------
+# -- Dashboard HTML template -------------------------------------------------
+
+def _build_dashboard_html() -> str:
+    """Return the operator dashboard as a self-contained HTML string.
+
+    The page embeds the ``/stream`` MJPEG feed, operator buttons (Y/N/M and
+    compass directions for landing), and a keyboard listener that mirrors
+    physical key-presses to ``/cmd``.
+    """
+    return (
+        "<!DOCTYPE html><html><head><meta charset='utf-8'>"
+        "<title>SAR Drone</title><style>"
+        "body{background:#111;color:#fff;font-family:monospace;"
+        "text-align:center;margin:0;padding:10px}"
+        "img{max-width:100%;border:2px solid #0f0;margin:10px 0}"
+        ".btns{display:flex;gap:8px;justify-content:center;"
+        "flex-wrap:wrap;margin:10px 0}"
+        ".btn{padding:12px 24px;font-size:16px;font-weight:bold;"
+        "border:none;border-radius:6px;cursor:pointer;"
+        "font-family:monospace;min-width:80px}"
+        ".btn-y{background:#2ecc71;color:#000}"
+        ".btn-n{background:#e74c3c;color:#fff}"
+        ".btn-dir{background:#3498db;color:#fff}"
+        ".btn-m{background:#f39c12;color:#000}"
+        ".info{color:#aaa;font-size:12px}"
+        "#status{color:#0f0;margin:5px 0;min-height:20px}"
+        "</style></head><body>"
+        "<h2>SAR Drone Mission Feed</h2>"
+        '<img src="/stream" alt="Video Stream">'
+        '<div id="status"></div>'
+        '<p class="info">VERIFY: press Y (confirm) or N (reject). '
+        "Then select landing side: N/E/W/S</p>"
+        '<div class="btns">'
+        """<button class="btn btn-y" onclick="cmd('y')">Y Confirm</button>"""
+        """<button class="btn btn-n" onclick="cmd('n')">N Reject</button>"""
+        """<button class="btn btn-m" onclick="cmd('m')">M Manual</button>"""
+        "</div>"
+        '<p class="info">Landing direction (after Y):</p>'
+        '<div class="btns">'
+        """<button class="btn btn-dir" onclick="cmd('n')">North</button>"""
+        """<button class="btn btn-dir" onclick="cmd('e')">East</button>"""
+        """<button class="btn btn-dir" onclick="cmd('s')">South</button>"""
+        """<button class="btn btn-dir" onclick="cmd('w')">West</button>"""
+        "</div>"
+        f'<p class="info">{_cfg_stream_w}x{_cfg_stream_h} | '
+        f"{_cfg_stream_fps} fps | Quality {_cfg_stream_quality}%</p>"
+        "<script>"
+        "function cmd(k){fetch('/cmd?key='+k).then(r=>r.json()).then(d=>{"
+        "document.getElementById('status').textContent="
+        "'Sent: '+k.toUpperCase()+' ('+new Date().toLocaleTimeString()+')';"
+        "}).catch(e=>{document.getElementById('status').textContent='Error: '+e})}"
+        "document.addEventListener('keydown',e=>{"
+        "if(['y','n','e','w','s','m'].includes(e.key.toLowerCase()))"
+        "cmd(e.key.toLowerCase());});"
+        "</script></body></html>"
+    )
+
+
+# -- Server lifecycle --------------------------------------------------------
+
 class _ThreadingHTTP(ThreadingMixIn, HTTPServer):
+    """HTTPServer that spawns a daemon thread per request.
+
+    ``daemon_threads = True`` ensures all handler threads die when the main
+    process exits.  ``allow_reuse_address = True`` prevents ``Address already
+    in use`` errors on rapid restart.
+    """
     daemon_threads = True
     allow_reuse_address = True
 
 
-def start_stream_server(port=8090, host='0.0.0.0',
-                        stream_w=320, stream_h=240,
-                        stream_fps=5, stream_quality=50):
-    """Create and start the MJPEG streaming server in a daemon thread.
+def start_stream_server(port: int = 8090, host: str = '0.0.0.0',
+                        stream_w: int = 320, stream_h: int = 240,
+                        stream_fps: int = 5, stream_quality: int = 50):
+    """Start the MJPEG streaming server on a background daemon thread.
 
-    Returns the server object (call server.shutdown() to stop), or None on error.
+    Parameters
+    ----------
+    port : int
+        TCP port to bind (default 8090).
+    host : str
+        Bind address (default ``0.0.0.0`` = all interfaces).
+    stream_w, stream_h : int
+        Resolution to resize frames to before JPEG encoding.
+    stream_fps : int
+        Target frame rate for the ``/stream`` endpoint.
+    stream_quality : int
+        JPEG quality percentage (1--100).
+
+    Returns
+    -------
+    HTTPServer or None
+        The running server instance (call ``server.shutdown()`` to stop),
+        or ``None`` if the port could not be bound.
     """
     global _cfg_stream_w, _cfg_stream_h, _cfg_stream_fps, _cfg_stream_quality
     _cfg_stream_w = stream_w
@@ -207,18 +309,22 @@ def start_stream_server(port=8090, host='0.0.0.0',
 
     try:
         server = _ThreadingHTTP((host, port), StreamHandler)
-        server_thread = threading.Thread(target=server.serve_forever, daemon=True)
-        server_thread.start()
-        # Get IP for display
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+
         pi_ip = "localhost"
         try:
             import subprocess
-            result = subprocess.run(['hostname', '-I'], capture_output=True, text=True, timeout=3)
+            result = subprocess.run(
+                ['hostname', '-I'],
+                capture_output=True, text=True, timeout=3,
+            )
             pi_ip = result.stdout.strip().split()[0]
         except Exception:
             pass
+
         print(f"[STREAM] Live feed: http://{pi_ip}:{port}/")
-        print(f"[STREAM] Settings: {stream_w}x{stream_h} @ {stream_fps}fps, quality {stream_quality}%")
+        print(f"[STREAM] Settings: {stream_w}x{stream_h} "
+              f"@ {stream_fps}fps, quality {stream_quality}%")
         return server
     except Exception as e:
         print(f"[STREAM] Failed to start: {e}")
