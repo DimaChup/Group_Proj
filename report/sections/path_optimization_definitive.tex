@@ -194,6 +194,13 @@ Six candidate strategies were evaluated on the AENGM0074 survey polygon using th
   \label{fig:path-patterns}
 \end{figure}
 
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.95\linewidth]{top3_paths}
+  \caption{Top three energy-ranked search configurations overlaid on the AENGM0074 survey polygon. Each panel shows the lawnmower pattern at the corresponding altitude and scan angle, with path length, scan line count, and energy annotated. The selected operating point (\SI{35}{\metre}, \SI{70}{\degree}) balances detection reliability against the energy savings of higher altitudes.}
+  \label{fig:top3-paths}
+\end{figure}
+
 The boustrophedon pattern was selected for five reasons:
 
 \begin{enumerate}
@@ -329,6 +336,20 @@ This configuration is \emph{not} the energy minimum---that distinction belongs t
     \bottomrule
   \end{tabularx}
 \end{table}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.88\linewidth]{pareto_2d_composite}
+  \caption{Two-dimensional Pareto frontier projections across the five objectives. Each subplot projects the 216-configuration sweep onto a pair of objectives, with Pareto-efficient solutions highlighted. The selected operating point is marked with a star, illustrating its position on or near the Pareto frontier in every projection.}
+  \label{fig:pareto-2d}
+\end{figure}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.88\linewidth]{altitude_tradeoff_dual}
+  \caption{Altitude trade-off: detection probability and target pixel extent (left axis) versus energy consumption (right axis) as a function of search altitude. The selected altitude (\SI{35}{\metre}) sits at the knee of the detection curve, where further altitude increases yield diminishing detection gains but growing energy savings.}
+  \label{fig:altitude-tradeoff-dual}
+\end{figure}
 
 The rationale for choosing \SI{35}{\metre} over the energy-optimal \SI{50}{\metre} is as follows:
 

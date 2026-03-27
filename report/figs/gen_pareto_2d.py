@@ -119,10 +119,10 @@ def mark(idx, label, marker, color, offset, fontsize=9):
                 color=color,
                 arrowprops=dict(arrowstyle="-", color=color, lw=0.8))
 
-mark(selected, "Selected\n(35 m, 8 m/s)", "*", "#2166ac", (-75, 18), fontsize=10)
-mark(fastest, "Fastest\n(50 m, 14 m/s)", "D", "#d6604d", (-15, -28))
-mark(efficient, "Energy-optimal\n(50 m, 6 m/s)", "s", "#1b7837", (-85, -20))
-mark(best_det, "Best detection\n(20 m, 6 m/s)", "^", "#762a83", (-25, 18))
+mark(selected, "Selected\n(35 m, 8 m/s)", "*", "#2166ac", (-90, 25), fontsize=10)
+mark(fastest, "Fastest\n(50 m, 14 m/s)", "D", "#d6604d", (-20, -30))
+mark(efficient, "Energy-optimal\n(50 m, 6 m/s)", "s", "#1b7837", (-100, -8))
+mark(best_det, "Best detection\n(20 m, 6 m/s)", "^", "#762a83", (-110, 10))
 
 # Ideal point
 ax.scatter(1.0, 0.0, marker="x", s=120, c="gold", lw=2, zorder=5)

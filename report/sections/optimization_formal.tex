@@ -186,6 +186,20 @@ The five decision variables do not affect the objectives independently. Table~\r
   \end{tabularx}
 \end{table}
 
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.88\linewidth]{n2_diagram}
+  \caption{N$^2$ diagram of the search optimisation subsystem. Diagonal blocks represent the five decision variables; off-diagonal cells show the data or coupling flowing between each variable pair. The diagram reveals that altitude feeds into every other subsystem, confirming its status as the most coupled variable.}
+  \label{fig:n2-diagram}
+\end{figure}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.88\linewidth]{objective_conflict}
+  \caption{Objective conflict matrix illustrating the pairwise trade-offs between the five optimisation objectives. Green cells indicate aligned objectives (improving one improves the other); red cells indicate conflicting objectives (improving one degrades the other). The detection--energy conflict is the dominant trade-off driving the altitude selection.}
+  \label{fig:objective-conflict}
+\end{figure}
+
 \noindent Three observations follow from the coupling structure:
 
 \begin{enumerate}

@@ -266,6 +266,20 @@ The six steps above form a directed acyclic graph of parameter dependencies, whe
   \label{fig:alt-speed-tradeoff}
 \end{figure}
 
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.88\linewidth]{function_chain}
+  \caption{Function chain diagram tracing the flow from physical inputs (target size, sensor parameters, inference rate) through intermediate quantities (GSD, pixel extent, dwell time) to the five mission performance objectives. Each arrow represents a functional dependency with the governing equation labelled.}
+  \label{fig:function-chain}
+\end{figure}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.88\linewidth]{tornado_sensitivity}
+  \caption{Tornado diagram showing the sensitivity of the composite mission score to $\pm$20\% perturbations in each input parameter. Altitude and inference FPS have the largest influence, confirming that the detection--energy trade-off dominates. Parameters are sorted by total bar length (influence magnitude).}
+  \label{fig:tornado-sensitivity}
+\end{figure}
+
 \noindent Every parameter is traceable to a physical measurement (target dimensions, sensor specifications, inference benchmarks) or a regulatory constraint (altitude ceiling, NFZ boundaries). Figures~\ref{fig:sensitivity-matrix} and~\ref{fig:sensitivity-spider} quantify single-variable sensitivities, Figure~\ref{fig:coupling-matrix} reveals pairwise interactions, and Figure~\ref{fig:alt-speed-tradeoff} maps the dominant altitude--speed trade-off space. Figure~\ref{fig:optimization-network} visualises the full dependency chain.
 No parameter was assumed or rounded for convenience.
 The chain can be re-evaluated instantly if any input changes---for example, a faster inference backend would relax the speed constraint, and a different target size would shift the altitude ceiling---making the design robust to future system upgrades.

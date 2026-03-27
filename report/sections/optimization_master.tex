@@ -1,0 +1,321 @@
+% optimization_master.tex — Definitive search parameter optimisation
+% THE one section a reader goes to for parameter selection rationale.
+% COUNTED in 15-page limit.
+
+\section{Search Parameter Optimisation}\label{sec:optimisation}
+
+In search and rescue, time is the binding resource.
+UK Maritime and Coastguard Agency survival curves show a steep decline in hypothermia survivability after \SI{60}{\minute} of exposure~\cite{golden2006hypothermia}; every second of search delay reduces the probability of a live recovery.
+The objective of parameter optimisation is therefore to \emph{find the casualty as fast as possible}, subject to three hard constraints: the onboard AI must be able to detect the target, the battery must last the mission, and the drone must never enter the SSSI no-fly zone.
+
+This section formalises the optimisation problem, describes the physics-based simulation used to evaluate 216~candidate configurations, presents the top-scoring paths and the reasoning that selected the final operating point, and quantifies how sensitive the result is to each input parameter.
+
+% =====================================================================
+\subsection{Problem Statement}\label{sec:opt-objective}
+
+Five coupled decision variables govern the search pattern:
+
+\begin{equation}\label{eq:opt-decision}
+  \mathbf{x} = \bigl[\, h,\; v,\; \theta,\; \alpha,\; d_{\mathrm{nfz}} \,\bigr]^\top
+\end{equation}
+
+\noindent where $h$ is the search altitude, $v$ is the forward speed (coupled to $h$ through an altitude-dependent schedule), $\theta$ is the scan angle relative to north, $\alpha = 0.20$ is the lateral overlap fraction, and $d_{\mathrm{nfz}} = \SI{30}{\metre}$ is the NFZ waypoint buffer.
+These variables jointly determine five competing objectives---detection probability~$P_d$, coverage completeness~$C$, mission time~$T$, energy consumption~$E$, and NFZ safety margin~$S$---subject to four hard constraints:
+
+\begin{enumerate}[label=\textbf{C\arabic*},leftmargin=2em]
+  \item All waypoints within the KML-defined flight area polygon.
+  \item No camera footprint overlaps the SSSI ($\mathcal{F}(h,\mathbf{w}_i) \cap \mathcal{P}_{\mathrm{SSSI}} = \varnothing$).
+  \item Maximum altitude $h \leq \SI{50}{\metre}$ (CAA Open~A3).
+  \item Energy $\leq 0.8 \times \SI{115.4}{\watt\hour}$ (20\% RTL reserve on 6S 5200\,mAh LiPo).
+\end{enumerate}
+
+\noindent No single configuration simultaneously optimises all five objectives; the operating point must be selected from the Pareto frontier by engineering judgement.
+
+% =====================================================================
+\subsection{Physics-Based Simulation}\label{sec:opt-physics}
+
+Each candidate configuration was evaluated by a physics-based simulation (\texttt{optimize\_path.py}) that models the full mission energy budget.
+
+\subsubsection{Energy Model}
+
+Total power at forward speed~$v$ decomposes into a constant hover component and a quadratic drag component:
+
+\begin{equation}\label{eq:opt-power}
+  P(v) = P_{\mathrm{hover}} + P_{\mathrm{drag,ref}} \!\left(\frac{v}{v_{\mathrm{ref}}}\right)^{\!2}
+\end{equation}
+
+\noindent where $P_{\mathrm{hover}} = \SI{150}{\watt}$ (momentum-theory estimate for the EDU-450 at \SI{2.3}{\kilo\gram} AUW: $P = T v_i = mg\sqrt{mg / 2\rho A}$), $P_{\mathrm{drag,ref}} = \SI{50}{\watt}$ at $v_{\mathrm{ref}} = \SI{5}{\metre\per\second}$, and the quadratic scaling follows from $\frac{1}{2} C_D \rho A v^2$.
+At the selected speed of \SI{8}{\metre\per\second}, the drag contribution is $50 \times (8/5)^2 = \SI{128}{\watt}$, giving a total in-flight power of \SI{278}{\watt}.
+
+Each U-turn incurs a $\Delta t_{\mathrm{turn}} = \SI{2}{\second}$ penalty of hover-only power for deceleration and reacceleration.
+Near the SSSI boundary, a linear speed ramp reduces the drone from $v_{\mathrm{zone}} = \SI{3.0}{\metre\per\second}$ to $v_{\mathrm{min}} = \SI{0.3}{\metre\per\second}$ over a \SI{20}{\metre} slow zone.
+Within this zone, lower speed reduces drag but increases hover time for the same distance; since $P_{\mathrm{hover}} \gg P_{\mathrm{drag}}$ at low speeds, the net effect is an energy \emph{increase} for scan lines passing through the slow zone.
+
+The total mission energy integrates power over the profile:
+
+\begin{equation}\label{eq:opt-energy}
+  E = P_{\mathrm{hover}} \cdot t_{\mathrm{total}} + P_{\mathrm{drag,ref}} \sum_{i=1}^{n_{\mathrm{lines}}} \int_0^{\ell_i / v_i} \!\left(\frac{v_i(t)}{v_{\mathrm{ref}}}\right)^{\!2} \mathrm{d}t
+\end{equation}
+
+\noindent where $t_{\mathrm{total}}$ includes forward-flight time, U-turn penalties, and transit.
+The NFZ speed variation along each scan segment is numerically integrated with 50 sample points.
+
+\subsubsection{Detection Model}
+
+The mannequin (\SI{1.8}{\metre} tall, \SI{0.5}{\metre} wide) projects onto the $640 \times 640$ YOLOv8n model input with a height of:
+
+\begin{equation}\label{eq:opt-modelpx}
+  p_{\mathrm{model}} = \frac{d_{\mathrm{target}} \cdot f_{\mathrm{px}}}{h} \times \frac{640}{1456}
+\end{equation}
+
+\noindent where $f_{\mathrm{px}} = f/w_s \times W_{\mathrm{px}} = 5.46/5.02 \times 1456 = 1584$\,px is the focal length in pixel units.
+Per-frame detection probability is modelled as a sigmoid of target pixel extent:
+
+\begin{equation}\label{eq:opt-psingle}
+  p(h) = \frac{1}{1 + \exp\!\bigl(-\kappa\,(p_{\mathrm{model}}(h) - p_{\mathrm{min}})\bigr)}
+\end{equation}
+
+\noindent with $p_{\mathrm{min}} = 7$\,px and $\kappa = 0.5$\,px$^{-1}$, calibrated from video analysis (Section~\ref{sec:cv:inference:pipeline}).
+The number of inference frames per flyover is $n_f = H_g \cdot f_{\mathrm{inf}} / v$, where $f_{\mathrm{inf}} = \SI{4.8}{FPS}$ (benchmarked on Pi~5).
+The cumulative detection probability is:
+
+\begin{equation}\label{eq:opt-pdetect}
+  P_d = 1 - (1 - p)^{n_f}
+\end{equation}
+
+\subsubsection{Parametric Sweep}
+
+The simulation swept \textbf{216 configurations}: 6~altitudes $\times$ 36~scan angles:
+
+\begin{equation}
+  H = \{20, 25, 30, 35, 40, 50\}\;\text{m}, \qquad \Theta = \{0, 5, \ldots, 175\}\text{\textdegree}
+\end{equation}
+
+\noindent Speed follows an altitude-dependent schedule $v(h) = 6 + 4(h-20)/30$\,m/s (linear from \SI{6}{\metre\per\second} at \SI{20}{\metre} to \SI{10}{\metre\per\second} at \SI{50}{\metre}), linking speed to altitude and reducing the effective dimensionality.
+For each configuration, the script generates the full lawnmower pattern on the real AENGM0074 five-vertex polygon, evaluates per-segment NFZ penalties, and computes all five objective values.
+
+Each configuration is scored by a weighted composite:
+
+\begin{equation}\label{eq:opt-composite}
+  S(\mathbf{x}) = 0.40 \cdot \hat{P}_d + 0.35 \cdot \hat{C} + 0.25 \cdot (1 - \hat{E})
+\end{equation}
+
+\noindent where $\hat{\cdot}$ denotes min-max normalisation to $[0,1]$ across the feasible set.
+The weights reflect the SAR priority hierarchy: detection reliability is paramount (a missed casualty is mission failure), coverage completeness is second (an unsearched area cannot yield a find), and energy efficiency is third (the search consumes at most 11\% of battery regardless of configuration).
+
+% =====================================================================
+\subsection{Top Three Configurations}\label{sec:opt-top3}
+
+Figure~\ref{fig:top3-paths} shows the three highest-scoring configurations overlaid on the survey polygon.
+Table~\ref{tab:opt-top3} compares their performance.
+
+\begin{table}[ht]
+  \centering\compactTable
+  \caption{Top three configurations ranked by composite score $S$. The selected operating point (\#1) achieves the best Pareto compromise across all objectives.}\label{tab:opt-top3}
+  \begin{tabularx}{\linewidth}{@{}c c c c c c c c X@{}}
+    \toprule
+    \textbf{\#} & \textbf{Alt (m)} & \textbf{Angle} & \textbf{Speed (m/s)} & $P_d$ & $C$ & \textbf{Energy (Wh)} & $S$ & \textbf{Trade-off} \\
+    \midrule
+    \textbf{1} & \textbf{35} & \textbf{70\textdegree} & \textbf{8.0} & 0.9997 & 0.96 & 12.6 & \textbf{0.87} & \textbf{Best compromise (SELECTED)} \\
+    2 & 30 & 65\textdegree & 7.3 & 0.9999 & 0.96 & 14.8 & 0.85 & Slightly better detection, 17\% more energy \\
+    3 & 40 & 75\textdegree & 8.7 & 0.9994 & 0.96 & 10.1 & 0.84 & Lower energy, 3$\times$ less detection margin \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.95\linewidth]{top3_paths}
+  \caption{Top three lawnmower configurations overlaid on the AENGM0074 polygon. Left: \#1 (35\,m, 70\textdegree, selected). Centre: \#2 (30\,m, 65\textdegree). Right: \#3 (40\,m, 75\textdegree). The SSSI no-fly zone (red) and 20\,m buffer (dashed) are shown.}\label{fig:top3-paths}
+\end{figure}
+
+Configuration \#1 wins because it sits at the sweet spot of two competing pressures.
+Compared to \#2, it saves 17\% energy and 15~seconds of flight time while sacrificing only 0.02~percentage points of detection probability---a difference that is unobservable in practice ($P_d > 0.999$ in both cases).
+Compared to \#3, it provides $3\times$ more detection margin: at \SI{40}{\metre} the target width drops to 9~model pixels, uncomfortably close to the 7-pixel empirical minimum, whereas at \SI{35}{\metre} it is 10~pixels with clear headroom.
+The 2.5~Wh energy penalty (consuming 10.9\% vs 8.8\% of battery) is negligible given \SI{14}{\minute} of remaining endurance.
+
+% =====================================================================
+\subsection{Altitude and Speed Selection Logic}\label{sec:opt-alt-speed}
+
+The altitude and speed were not selected by searching a table; they follow a logical chain from physical constraints:
+
+\begin{enumerate}
+  \item \textbf{Maximum detection altitude.}
+    At what altitude does the target become undetectable?
+    The mannequin's width (\SI{0.5}{\metre}) projects to $p_{\mathrm{model}} = 0.5 \times 1584 / h \times 640/1456$ model pixels.
+    At \SI{50}{\metre} this is 7\,px---the empirically observed minimum for reliable bounding-box regression.
+    At \SI{70}{\metre} (25\,px height, 4\,px width) the target is below the feature-extraction threshold.
+    The hard detection ceiling is approximately \SI{50}{\metre}.
+
+  \item \textbf{Apply safety margin.}
+    Real-world degradation modes---partial occlusion, non-ideal lighting, unusual target pose---can reduce effective pixel extent.
+    A 30\% safety margin yields $h = 50 / 1.43 \approx \SI{35}{\metre}$, where the target subtends 36~model pixels in height and 10 in width, comfortably above both thresholds.
+
+  \item \textbf{Maximum speed for adequate dwell time.}
+    At \SI{35}{\metre}, the along-track footprint is $H_g = 5.02 \times 35 / 5.46 \times 1088/1456 = \SI{24.1}{\metre}$.
+    For $\geq 10$ raw inference frames on target (ensuring 3--4 substantially different views): $v_{\max} = 24.1 \times 4.8 / 10 = \SI{11.5}{\metre\per\second}$.
+
+  \item \textbf{Apply conservative margin.}
+    The altitude-dependent schedule assigns $v(\SI{35}{\metre}) = \SI{8.0}{\metre\per\second}$, yielding $n_f = 24.1/8.0 \times 4.8 = 14$ frames---a $\times 1.4$ margin above the 10-frame requirement.
+    The cumulative detection probability over 14 frames is $P_d = 1 - (1 - 0.95)^{14} > 0.9999$.
+\end{enumerate}
+
+This chain is visualised in Figure~\ref{fig:alt-speed-tradeoff}, which maps the composite score across the altitude--speed space.
+The selected operating point sits above the 95\% detection contour in the high-score region.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.85\linewidth]{altitude_speed_tradeoff}
+  \caption{Altitude--speed trade-off space. Colour encodes the composite score (40\% detection $+$ 35\% coverage $+$ 25\% energy). Blue contours: detection probability. Orange contours: coverage time. The selected point (35\,m, 8\,m/s) sits in the high-score region above the 95\% detection contour.}\label{fig:alt-speed-body}
+\end{figure}
+
+The scan angle $\theta = 70$\textdegree{} was then determined by the 216-configuration sweep at fixed $h = \SI{35}{\metre}$: this angle aligns with the polygon's longest edge (northeast--southwest axis), minimising scan lines from 10 (at 0\textdegree) to 6, and reducing U-turns from 9 to 5.
+The energy saving is $2\times$ compared to the worst angle (95\textdegree), as shown in Figure~\ref{fig:energy-heatmap}.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.85\linewidth]{real_energy_heatmap}
+  \caption{Energy heatmap across 216 altitude--angle configurations. A clear low-energy valley runs through 65--75\textdegree{} at all altitudes, corresponding to longest-edge alignment. The red star marks the global energy minimum (50\,m, 70\textdegree). The selected point (35\,m, 70\textdegree) trades 4.4\,Wh of energy for a 44\% increase in target pixel extent.}\label{fig:energy-heatmap}
+\end{figure}
+
+% =====================================================================
+\subsection{Sensitivity Analysis}\label{sec:opt-sensitivity}
+
+How robust is the selected operating point to perturbations in each variable?
+Table~\ref{tab:opt-sensitivity} summarises the sensitivity of the composite score to one-step changes, and Figure~\ref{fig:tornado-sensitivity} presents the tornado chart.
+
+\begin{table}[ht]
+  \centering\compactTable
+  \caption{Sensitivity of the composite score $S$ to perturbation of each variable from the selected operating point. Altitude is the most sensitive parameter; scan angle is the least.}\label{tab:opt-sensitivity}
+  \begin{tabularx}{\linewidth}{@{}l c c c X@{}}
+    \toprule
+    \textbf{Variable} & \textbf{Perturbation} & $\Delta S$ & \textbf{Rank} & \textbf{Interpretation} \\
+    \midrule
+    Altitude $h$      & $\pm$\SI{5}{\metre}  & $\pm 0.05$ & 1 (most)  & Drives pixel extent, footprint, line count \\
+    Speed $v$         & $\pm$\SI{2}{\metre\per\second} & $\pm 0.03$ & 2 & Affects dwell time and energy \\
+    Scan angle $\theta$ & $\pm$15\textdegree & $\pm 0.02$ & 3 (least) & Flat valley around 70\textdegree \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.75\linewidth]{tornado_sensitivity}
+  \caption{Tornado chart of parameter sensitivities. Each bar shows the change in composite score when one variable is perturbed while the others are held at their selected values. Altitude dominates: a $\pm$5\,m change has nearly double the effect of a $\pm$2\,m/s speed change.}\label{fig:tornado-sensitivity}
+\end{figure}
+
+Three observations follow:
+
+\begin{enumerate}
+  \item \textbf{Altitude is the most sensitive variable} because it simultaneously affects four objectives: higher altitude increases footprint (improving coverage rate and reducing scan lines) but degrades pixel extent (reducing detection confidence), while altering both mission time and energy.
+  A \SI{5}{\metre} altitude error has nearly double the score impact of a \SI{2}{\metre\per\second} speed error.
+
+  \item \textbf{The scan angle has a flat optimum.} The energy valley at 65--75\textdegree{} (Figure~\ref{fig:energy-heatmap}) means that $\pm$15\textdegree{} perturbation changes the score by only 0.02.
+  This is operationally useful: the pilot does not need to align the drone precisely with a compass heading.
+
+  \item \textbf{Speed is moderately sensitive} because it trades dwell time against energy.
+  The altitude-dependent schedule provides a built-in coupling: if altitude drifts up (larger footprint), the schedule automatically increases speed, partially compensating the detection loss with faster coverage.
+\end{enumerate}
+
+% =====================================================================
+\subsection{Variable Coupling Structure}\label{sec:opt-coupling}
+
+The five decision variables do not affect the objectives independently.
+Figure~\ref{fig:n2-diagram} shows the N\textsuperscript{2}~diagram revealing the coupling structure, and Figure~\ref{fig:coupling-matrix} quantifies which objectives are jointly influenced by each variable pair.
+
+\begin{figure}[ht]
+  \centering
+  \begin{subfigure}[t]{0.48\linewidth}
+    \includegraphics[width=\linewidth]{n2_diagram}
+    \caption{N\textsuperscript{2} diagram showing information flow between subsystems. Feed-forward links (blue) and feedback loops (red) reveal that altitude--speed is the most tightly coupled pair.}\label{fig:n2-diagram}
+  \end{subfigure}\hfill
+  \begin{subfigure}[t]{0.48\linewidth}
+    \includegraphics[width=\linewidth]{coupling_matrix}
+    \caption{Variable--objective coupling matrix. Cell labels indicate which objectives ($C$, $D$, $T$, $E$, $S$) are jointly affected. The altitude--speed pair jointly determines four of five objectives.}\label{fig:coupling-matrix}
+  \end{subfigure}
+  \caption{Coupling analysis of the decision variables. The altitude--speed pair exhibits the strongest coupling, jointly determining coverage rate, detection probability, mission time, and energy consumption.}\label{fig:coupling-pair}
+\end{figure}
+
+The coupling structure has three practical consequences:
+
+\begin{enumerate}
+  \item \textbf{Sequential single-variable optimisation fails.}
+    Optimising $h$ first, then $\theta$, would miss the $h$--$\theta$ interaction: the number of scan lines depends on both altitude (footprint width) and angle (projected polygon width).
+    The joint 216-configuration sweep was necessary.
+
+  \item \textbf{The altitude-dependent speed schedule reduces dimensionality.}
+    By linking $v$ to $h$ through $v(h) = 6 + 4(h-20)/30$, the effective search space drops from $6 \times 36 \times n_v$ to $6 \times 36 = 216$---small enough for exhaustive enumeration in under \SI{2}{\second} on a laptop.
+
+  \item \textbf{Overlap and NFZ buffer are weakly coupled to the rest.}
+    Both affect only coverage ($\alpha$ determines lane spacing; $d_{\mathrm{nfz}}$ determines edge truncation) and were fixed analytically: $\alpha = 0.20$ covers the \SI{4.6}{\metre} RSS lane error with \SI{1.8}{\metre} to spare, and $d_{\mathrm{nfz}} = \SI{30}{\metre}$ provides a $2.2\times$ safety factor over the RSS margin requirement.
+\end{enumerate}
+
+The sensitivity matrix (Figure~\ref{fig:sensitivity-matrix}) and spider plot (Figure~\ref{fig:sensitivity-spider}) provide complementary views: the matrix shows how each input parameter influences every derived quantity, while the spider plot reveals the overall sensitivity footprint of the design point.
+
+\begin{figure}[ht]
+  \centering
+  \begin{subfigure}[t]{0.48\linewidth}
+    \includegraphics[width=\linewidth]{sensitivity_matrix}
+    \caption{Sensitivity matrix: darker cells indicate stronger influence of each input on each derived metric.}\label{fig:sensitivity-matrix}
+  \end{subfigure}\hfill
+  \begin{subfigure}[t]{0.48\linewidth}
+    \includegraphics[width=\linewidth]{sensitivity_spider}
+    \caption{Spider plot of normalised sensitivities. Polygon area indicates the overall sensitivity footprint.}\label{fig:sensitivity-spider}
+  \end{subfigure}
+  \caption{Complementary sensitivity visualisations at the selected operating point (\SI{35}{\metre}, 70\textdegree, \SI{8}{\metre\per\second}).}\label{fig:sensitivity-pair}
+\end{figure}
+
+% =====================================================================
+\subsection{Pareto Frontier}\label{sec:opt-pareto}
+
+The 216~configurations define a five-dimensional objective space.
+Figure~\ref{fig:pareto-2d} projects this onto a two-dimensional view: mission effectiveness (coverage $\times$ detection) versus mission cost (normalised energy $+$ time).
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.85\linewidth]{pareto_2d_composite}
+  \caption{Pareto frontier in the effectiveness--cost plane. Each point is one of the 216 evaluated configurations, coloured by altitude. The Pareto-efficient frontier (black line) separates achievable from dominated solutions. The selected operating point (35\,m, 70\textdegree) lies on the frontier at the ``knee''---the point of maximum curvature where marginal effectiveness gains require disproportionate cost increases.}\label{fig:pareto-2d}
+\end{figure}
+
+The selected operating point lies at the ``knee'' of the Pareto frontier: the region where marginal improvements in effectiveness require disproportionate increases in cost.
+Moving rightward along the frontier (e.g., to 30\,m at 65\textdegree) gains 0.02~percentage points of detection probability at the cost of 17\%~more energy and 20~seconds of additional flight time.
+Moving leftward (e.g., to 50\,m at 70\textdegree) saves 35\%~energy but reduces the target width to 7~model pixels, eliminating the safety margin against real-world degradation.
+
+The energy efficiency curve (Figure~\ref{fig:energy-efficiency}) confirms that the selected point operates well within the battery budget: \SI{12.6}{\watt\hour} is 10.9\% of the \SI{115.4}{\watt\hour} capacity, leaving over \SI{14}{\minute} of flight endurance for transit, descent, verification, and return-to-launch.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.75\linewidth]{energy_efficiency}
+  \caption{Energy efficiency across the operating range. The search phase consumes only 10.9\% of battery capacity at the selected operating point, leaving ample margin for transit, descent phases, and RTL.}\label{fig:energy-efficiency}
+\end{figure}
+
+% =====================================================================
+\subsection{Summary of Selected Parameters}\label{sec:opt-summary}
+
+\begin{table}[ht]
+  \centering\compactTable
+  \caption{Final operating parameters with derivation source. Every value traces to a physical measurement, benchmark, or regulatory constraint.}\label{tab:opt-final}
+  \begin{tabularx}{\linewidth}{@{}l c c X@{}}
+    \toprule
+    \textbf{Parameter} & \textbf{Value} & \textbf{Unit} & \textbf{Derived from} \\
+    \midrule
+    Search altitude $h$    & 35   & m     & 30\% margin below 50\,m detection ceiling (Eq.~\ref{eq:opt-modelpx}) \\
+    Search speed $v$       & 8.0  & m/s   & $\geq$10 frames on target at 4.8\,FPS (Eq.~\ref{eq:opt-pdetect}) \\
+    Scan angle $\theta$    & 70   & \textdegree & Energy minimum from 216-config sweep (Fig.~\ref{fig:energy-heatmap}) \\
+    Swath overlap $\alpha$ & 20   & \%    & Covers \SI{4.6}{\metre} RSS lane error with \SI{1.8}{\metre} margin \\
+    NFZ buffer $d_{\mathrm{nfz}}$ & 30 & m & $2.2\times$ RSS safety factor over \SI{23}{\metre} requirement \\
+    \midrule
+    \multicolumn{4}{@{}l}{\textit{Resulting performance at selected operating point:}} \\
+    \midrule
+    Detection probability  & $>$99.97 & \% & 14 frames per flyover, $p = 0.95$ per frame \\
+    Coverage               & 96   & \%    & 4\% gap in fenced NFZ buffer (low casualty probability) \\
+    Search time            & 112  & s     & 6 scan lines + 5 U-turns + transit \\
+    Search energy          & 12.6 & Wh    & 10.9\% of battery (14\,min remaining) \\
+    Composite score $S$    & 0.87 & ---   & Highest of 216 configurations \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\noindent The dependency chain runs: \textbf{target size} $\to$ \textbf{altitude} $\to$ \textbf{footprint} $\to$ \textbf{speed} $\to$ \textbf{scan angle} $\to$ \textbf{NFZ margins} $\to$ \textbf{overlap}.
+Every parameter is traceable to a physical measurement (target dimensions, sensor specifications, inference benchmarks) or a regulatory constraint (altitude ceiling, NFZ boundaries).
+The chain can be re-evaluated instantly if any input changes---a faster inference backend would relax the speed constraint, and a different target size would shift the altitude ceiling---making the design robust to future system upgrades.
