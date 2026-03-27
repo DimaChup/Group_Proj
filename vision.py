@@ -269,7 +269,8 @@ class VisionSystem:
             self._conf_thresh = DEFAULT_CONF_THRESHOLD
 
         if not os.path.exists(model_path):
-            print(f"[VISION] Model file not found: {model_path}")
+            print(f"[VISION] WARNING: Model file not found: {model_path}")
+            print(f"[VISION] Detection DISABLED — mission will fly but never detect targets")
             return
 
         # Try backends in priority order: NCNN -> Ultralytics -> TFLite
@@ -409,6 +410,11 @@ class VisionSystem:
             ``self.last_class_name`` with the winning detection's metadata.
         """
         if frame is None or not self.using_ai:
+            return False, 0, 0, 0.0
+
+        # Safety: if using_ai was force-set but no backend actually loaded,
+        # return gracefully instead of crashing.
+        if not self._use_ncnn and not self._use_tflite_direct and self.model is None:
             return False, 0, 0, 0.0
 
         frame = self.undistort(frame)

@@ -127,7 +127,7 @@ class StateHandlersMixin:
                 self.connect_start_time = time.time()
                 self._set_state(State.CONNECTING)
             except Exception as e:
-                print(f"Connection fail: {e}")
+                print(f"[ERROR] Connection to {config.CONNECTION_STR} failed: {e}. Check mavproxy is running and port is correct.")
             self.last_req = time.time()
 
     def _handle_connecting(self, target_found, px_u, px_v, key):
@@ -359,12 +359,12 @@ class StateHandlersMixin:
                 self._consecutive_detect_count += 1
                 if self._consecutive_detect_count >= config.DETECT_CONFIRM_FRAMES:
                     print(f"[SMART] Confirmed ({self._consecutive_detect_count} frames) at ({self.target_lat:.6f}, {self.target_lon:.6f}) conf={conf:.2f}")
-                    self._detect_queue.append((self.target_lat, self.target_lon, conf))
+                    self._enqueue_detection(self.target_lat, self.target_lon, conf)
                     self._consecutive_detect_count = 0
             else:
                 if not self._is_near_known(self.target_lat, self.target_lon):
                     print("TARGET DETECTED!")
-                    self._detect_queue.append((self.target_lat, self.target_lon, conf))
+                    self._enqueue_detection(self.target_lat, self.target_lon, conf)
         else:
             self._consecutive_detect_count = 0
 
@@ -599,6 +599,13 @@ class StateHandlersMixin:
             self._set_state(State.RETURN_HOME)
 
     def _handle_return_home(self, target_found, px_u, px_v, key):
+        # Guard: if GPS never fixed, home_lat/lon may be config defaults rather
+        # than the actual takeoff position.  Land in place instead of flying to
+        # a potentially wrong location.
+        if not getattr(self, 'gps_fix_ok', False):
+            print("WARNING: GPS never fixed — home position unknown. Landing in place.")
+            self._set_state(State.LANDING)
+            return
         self.nav.set_speed(config.TRANSIT_SPEED_MPS)
         if time.time() - self.last_req > 2.0:
             self.nav.send_global_target(self.home_lat, self.home_lon, config.TARGET_ALT)

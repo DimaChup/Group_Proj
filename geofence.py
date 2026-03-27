@@ -100,8 +100,9 @@ class NFZGeofence:
                 * ``distance_m`` -- perpendicular distance to the
                   nearest boundary edge, in metres (always >= 0).
                 * ``is_inside`` -- *True* when the point is inside
-                  the NFZ polygon.  If no polygon is configured,
-                  returns ``(inf, False)``.
+                  the NFZ polygon **or exactly on the boundary**.
+                  If no polygon is configured, returns
+                  ``(inf, False)``.
         """
         contour = self._get_contour()
         if contour is None:
@@ -113,7 +114,8 @@ class NFZGeofence:
         # cv2.pointPolygonTest: positive = inside, negative = outside
         signed_dist_px = cv2.pointPolygonTest(contour, point, True)
 
-        is_inside = signed_dist_px > 0
+        # >= 0: treat points exactly on the boundary as inside (unsafe)
+        is_inside = signed_dist_px >= 0
         dist_px = abs(signed_dist_px)
         dist_m = dist_px / self.geo.pix_per_m
 
@@ -262,7 +264,7 @@ class NFZGeofence:
                 min_dist = dist
                 closest_pt = cp
 
-        if closest_pt is None or min_dist < 1e-6:
+        if closest_pt is None:
             return 0.0, 0.0
 
         # --- Compute push vector (pixel space, away from boundary) ---
@@ -271,7 +273,46 @@ class NFZGeofence:
         push_len = np.sqrt(push_dx**2 + push_dy**2)
 
         if push_len < 1e-6:
-            return 0.0, 0.0
+            # Point is ON or extremely close to the boundary edge.
+            # The push direction (point - closest) is degenerate, so
+            # compute the outward normal of the nearest edge instead.
+            pts = contour.reshape(-1, 2)
+            best_edge_i = 0
+            best_edge_dist = float('inf')
+            for i in range(len(pts)):
+                p1 = pts[i]
+                p2 = pts[(i + 1) % len(pts)]
+                edge = p2 - p1
+                elen_sq = np.dot(edge, edge)
+                if elen_sq < 1e-12:
+                    continue
+                t = np.clip(np.dot(np.array([px, py]) - p1, edge) / elen_sq, 0, 1)
+                cp = p1 + t * edge
+                d = np.linalg.norm(np.array([px, py]) - cp)
+                if d < best_edge_dist:
+                    best_edge_dist = d
+                    best_edge_i = i
+
+            p1 = pts[best_edge_i]
+            p2 = pts[(best_edge_i + 1) % len(pts)]
+            edge = p2 - p1
+            # Outward normal: perpendicular to edge, pointing away from polygon interior
+            normal_a = np.array([-edge[1], edge[0]], dtype=np.float64)
+            normal_len = np.linalg.norm(normal_a)
+            if normal_len < 1e-12:
+                return 0.0, 0.0
+            normal_a /= normal_len
+
+            # Pick the outward direction: test a point slightly offset from the edge midpoint
+            mid = (p1 + p2) / 2.0
+            test_pt = mid + normal_a * 2.0
+            if cv2.pointPolygonTest(contour, (float(test_pt[0]), float(test_pt[1])), False) > 0:
+                # test_pt is inside the polygon, so normal_a points inward -- flip
+                normal_a = -normal_a
+
+            push_dx = normal_a[0]
+            push_dy = normal_a[1]
+            push_len = 1.0  # Already unit length
 
         # Strength grows linearly as the drone approaches the boundary
         repulsion_strength = max(0, (self.SOFT_BOUNDARY - dist_m)) * 0.5  # metres

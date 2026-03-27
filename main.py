@@ -191,7 +191,10 @@ class VisualFlightMission(StateHandlersMixin):
             self.search_poly = self._setup_real_search_area()
             cam_idx = None if DRY_RUN else config.REAL_CAMERA_INDEX
             self.eyes = VisionSystem(camera_index=cam_idx, model_path=MODEL_PATH)
-            self.eyes.using_ai = True
+            if self.eyes.model is not None:
+                self.eyes.using_ai = True
+            else:
+                print("[WARN] AI model not loaded — detection disabled, mission will fly pattern only")
 
         # Geofence
         self.geofence = None
@@ -265,6 +268,12 @@ class VisualFlightMission(StateHandlersMixin):
                 print(f"  Transit: {len(wps)} points from {TRANSIT_FILE}")
             except Exception as e:
                 print(f"WARNING: Failed to load {TRANSIT_FILE}: {e}")
+        elif TRANSIT_FILE and _TRANSIT_EXPLICIT:
+            print(f"ERROR: --transit file not found: {TRANSIT_FILE}")
+            print("  Cannot proceed without explicitly requested transit path.")
+            sys.exit(1)
+        elif TRANSIT_FILE:
+            print(f"  Transit: no file at {TRANSIT_FILE} — flying direct to search area")
         if hasattr(self, '_drawn_transit_gps') and self._drawn_transit_gps:
             self.pre_waypoints.extend(self._drawn_transit_gps)
 
@@ -388,7 +397,25 @@ class VisualFlightMission(StateHandlersMixin):
         else:
             frame = self.eyes.get_frame()
             if frame is None:
-                frame = np.zeros((config.IMAGE_H, config.IMAGE_W, 3), dtype=np.uint8)
+                self._camera_none_count += 1
+                now_cam = time.time()
+                if now_cam - self._last_camera_warn > 5.0:
+                    print(f"[WARN] Camera returned None "
+                          f"({self._camera_none_count} consecutive frames) "
+                          f"— flying blind!")
+                    self._last_camera_warn = now_cam
+                frame = np.zeros((config.IMAGE_H, config.IMAGE_W, 3),
+                                 dtype=np.uint8)
+                cv2.putText(frame, "CAMERA LOST",
+                            (config.IMAGE_W // 2 - 150,
+                             config.IMAGE_H // 2),
+                            cv2.FONT_HERSHEY_SIMPLEX, 1.5,
+                            (0, 0, 255), 3)
+            else:
+                if self._camera_none_count > 0:
+                    print(f"[INFO] Camera recovered after "
+                          f"{self._camera_none_count} dropped frames")
+                self._camera_none_count = 0
 
         found, u, v, conf = self.eyes.process_frame_manually(frame)
         self.current_conf = conf

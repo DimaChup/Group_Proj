@@ -449,7 +449,10 @@ class PiFlight:
             cv2.destroyAllWindows()
 
             self.eyes = VisionSystem(camera_index=None, model_path="best.tflite")
-            self.eyes.using_ai = True
+            if self.eyes.model is not None:
+                self.eyes.using_ai = True
+            else:
+                print("[WARN] AI model not loaded — detection disabled")
 
             # Store target positions (for simulation error display)
             self.all_targets_px = targets_list
@@ -479,7 +482,10 @@ class PiFlight:
             else:
                 self.search_poly_gps = list(config.SEARCH_AREA_GPS)
             self.eyes = VisionSystem(camera_index=config.REAL_CAMERA_INDEX, model_path="best.tflite")
-            self.eyes.using_ai = True
+            if self.eyes.model is not None:
+                self.eyes.using_ai = True
+            else:
+                print("[WARN] AI model not loaded — detection disabled")
             self.actual_gps = None
             self.all_target_gps = []
             print("Real mode: no ground truth")

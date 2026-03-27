@@ -88,6 +88,20 @@ class PathPlanner:
             return []
         bbox_x, bbox_y, bbox_w, bbox_h = cv2.boundingRect(points)
 
+        # 3b. Check if footprint covers the entire polygon
+        bbox_w_m = bbox_w / self.pix_per_m if self.pix_per_m else bbox_w
+        bbox_h_m = bbox_h / self.pix_per_m if self.pix_per_m else bbox_h
+        if bbox_w_m <= ground_footprint_m and bbox_h_m <= ground_footprint_m:
+            # Single flyover covers everything — just fly through the centroid
+            cx = bbox_x + bbox_w // 2
+            cy = bbox_y + bbox_h // 2
+            pt = np.array([[(cx, cy)]], dtype=np.float32)
+            pt_orig = cv2.transform(pt, inverse_rotation)[0][0]
+            centroid_gps = self.geo.pixels_to_gps(pt_orig[0], pt_orig[1])
+            print(f"  Polygon ({bbox_w_m:.0f}x{bbox_h_m:.0f}m) fits in one "
+                  f"footprint ({ground_footprint_m:.0f}m). Single centroid waypoint.")
+            return [centroid_gps]
+
         # 4. Generate scan lines (horizontal strips in rotated space)
         all_strips = []
         inset_px = strip_spacing_px // 3
