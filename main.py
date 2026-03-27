@@ -33,7 +33,7 @@ from state_machine import StateHandlersMixin
 from navigation import NavigationController
 from stream_server import (start_stream_server, set_stream_frame,
                            get_stream_frame, cmd_queue as stream_cmd_queue)
-from gps_utils import gps_distance, calculate_target_from_pixels, landing_offset_7_5m
+from gps_utils import calculate_target_from_pixels, landing_offset_7_5m
 
 # Conditional Import for Simulation
 if config.MODE == "SIMULATION":
@@ -117,14 +117,15 @@ class VisualFlightMission(StateHandlersMixin):
     def __init__(self):
         print(f"--- INITIALIZING IN {config.MODE} MODE ---")
 
+        # Load KML zones (search area, NFZ, flight area) — needed for BOTH modes
+        if not config.load_kml_zones():
+            print("[WARN] KML load failed — using fallback GPS coordinates from config.py")
+
         # 1. Initialize Geo & Map Tools
         if config.MODE == "SIMULATION":
             self.sim = SimulationEnvironment(GeoTransformer(map_w_px=100)) # Temp init
             self.geo = GeoTransformer(map_w_px=self.sim.map_w)
             self.sim.geo = self.geo # Sync geo tool
-            # Load search polygon from KML and transit path from JSON
-            if not config.load_kml_zones():
-                print("[WARN] KML load failed — using fallback SEARCH_AREA_GPS from config.py")
             preload_gps = config.SEARCH_AREA_GPS
             print(f"  Search polygon from KML: {len(preload_gps)} points")
 
@@ -152,6 +153,7 @@ class VisualFlightMission(StateHandlersMixin):
                 print(f"  Focus Area drawn: {len(config.FOCUS_AREA_GPS)} points (PLB beacon redirect)")
                 # Save to flight_plans/focus_area.json for mid-flight reloading
                 import json
+                os.makedirs("flight_plans", exist_ok=True)
                 fa_data = [{"lat": pt[0], "lon": pt[1], "label": f"F{i+1}"}
                            for i, pt in enumerate(config.FOCUS_AREA_GPS)]
                 with open("flight_plans/focus_area.json", "w") as f:
@@ -206,12 +208,12 @@ class VisualFlightMission(StateHandlersMixin):
         # 5. State & Telemetry
         self.state = State.INIT
         self.previous_state = State.HOVER
-        self.state_start_time = time.time()  # FIX 5: track time in current state
-        self.connect_start_time = 0          # FIX 4: heartbeat timeout tracking
-        self.gps_fix_ok = False              # FIX 1: GPS lock validated before arming
-        self._last_gps_status_print = 0      # FIX 1: throttle GPS status prints
-        self._last_mode_warn = -1            # FIX 6: RC failsafe mode change detection
-        self._arming_timeout_warned = False   # FIX 5: warn once per entry
+        self.state_start_time = time.time()  # Track time in current state for timeouts
+        self.connect_start_time = 0          # Heartbeat timeout tracking
+        self.gps_fix_ok = False              # GPS lock validated before arming
+        self._last_gps_status_print = 0      # Throttle GPS status prints
+        self._last_mode_warn = -1            # RC failsafe mode change detection
+        self._arming_timeout_warned = False   # Warn once per arming entry
         self._takeoff_timeout_warned = False
         self._centering_timeout_warned = False
         self._descending_timeout_warned = False
@@ -299,11 +301,11 @@ class VisualFlightMission(StateHandlersMixin):
         self.view_w_px = 100
         self.view_h_px = 100
         self.zoom_level = 1.0
-        self.last_speed_req = 0
         self.waiting_for_confirmation = False
         self.selecting_landing_side = False
 
         # Logging
+        os.makedirs(os.path.dirname(config.LOG_FILE) or ".", exist_ok=True)
         self.log_file = open(config.LOG_FILE, 'w', newline='')
         self.logger = csv.writer(self.log_file)
         self.logger.writerow(["Timestamp", "State", "Lat", "Lon", "Alt", "Target_Conf"])
@@ -361,7 +363,7 @@ class VisualFlightMission(StateHandlersMixin):
                         self.master.target_system = msg.get_srcSystem()
                         self.master.target_component = msg.get_srcComponent()
                         print(f"[LINK] Autopilot found: system {self.master.target_system}")
-                    # FIX 6: RC failsafe / unexpected mode change detection
+                    # RC failsafe / unexpected mode change detection
                     if hasattr(msg, 'custom_mode'):
                         current_mode = msg.custom_mode
                         COPTER_MODES = {0:'STABILIZE',2:'ALT_HOLD',3:'AUTO',4:'GUIDED',
@@ -868,10 +870,11 @@ def _dry_run(mission):
         if scale < 1.0:
             vis = cv2.resize(vis, (int(vis.shape[1] * scale), int(vis.shape[0] * scale)))
 
-        cv2.imshow("Dry-Run: Search Pattern", vis)
-        print(f"\n  Map visualization shown. Press any key to close.")
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+        if not HEADLESS:
+            cv2.imshow("Dry-Run: Search Pattern", vis)
+            print(f"\n  Map visualization shown. Press any key to close.")
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
 
         # Save image
         out_path = "dry_run_pattern.jpg"
@@ -902,4 +905,5 @@ if __name__ == "__main__":
         finally:
             if hasattr(mission, 'log_file') and mission.log_file:
                 mission.log_file.close()
-            cv2.destroyAllWindows()
+            if not HEADLESS:
+                cv2.destroyAllWindows()
