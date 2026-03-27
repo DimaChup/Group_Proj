@@ -850,60 +850,181 @@ class StateHandlersMixin:
 
     # ── Key input handling ────────────────────────────────────────────
 
+    def _handle_manual_toggle(self, target_found, px_u, px_v):
+        """M key: enter manual mode, or exit back to auto/centering."""
+        if self.state != State.MANUAL:
+            print("!!! MANUAL CONTROL OVERRIDE !!!")
+            print("  WASD=move  R/F=up/down  Q/E=yaw  M=resume auto")
+            # Don't overwrite previous_state if we're already returning from manual
+            if self.state != State.RETURN_FROM_MANUAL:
+                self.previous_state = self.state
+                self.manual_departure_lat = self.lat
+                self.manual_departure_lon = self.lon
+                self.manual_departure_alt = self.alt
+            self._set_state(State.MANUAL)
+            # Immediately stop — override ArduCopter's last position target
+            if self.nav:
+                self.nav.send_velocity(0, 0, 0)
+        else:
+            if target_found:
+                self.calculate_target_gps(px_u, px_v)
+                if not self._is_inside_nfz(self.target_lat, self.target_lon) and \
+                   not self._is_outside_search_area(self.target_lat, self.target_lon) and \
+                   not self._is_near_known(self.target_lat, self.target_lon):
+                    print("Target detected during manual flight — investigating!")
+                    self._locked_target = (self.target_lat, self.target_lon)
+                    self._set_state(State.CENTERING)
+                    return
+                else:
+                    self.target_lat = 0
+                    self.target_lon = 0
+                    # Fall through to queue check below
+                    target_found = False
+            if not target_found:
+                # Check detection queue first — investigate queued targets before resuming
+                result = self._pop_valid_target()
+                if result:
+                    q_lat, q_lon, _qc = result
+                    print(f"Investigating queued detection at ({q_lat:.6f}, {q_lon:.6f}) — {len(self._detect_queue)} remaining")
+                    self.target_lat = q_lat
+                    self.target_lon = q_lon
+                    self._locked_target = (q_lat, q_lon)
+                    self._set_state(State.CENTERING)
+                else:
+                    # No queued targets — return to departure point
+                    dist_from_departure = self.get_dist_to_point(
+                        self.manual_departure_lat, self.manual_departure_lon)
+                    if dist_from_departure > 5.0:
+                        print(f"Returning to manual departure point ({dist_from_departure:.0f}m away)...")
+                        self._set_state(State.RETURN_FROM_MANUAL)
+                    else:
+                        print("Resuming Automation...")
+                        self.last_req = 0
+                        self._set_state(self.previous_state)
+
+    def _handle_manual_flight(self, key):
+        """WASD/R/F velocity commands and Q/E yaw in MANUAL mode."""
+        fly_speed = config.MANUAL_FLY_SPEED_MPS
+        climb_rate = config.MANUAL_CLIMB_RATE_MPS
+        yaw_rate = config.MANUAL_YAW_RATE_DEGS
+        if key == ord('w') or key == ord('W'):
+            self.nav.send_velocity(fly_speed, 0, 0)
+        elif key == ord('s') or key == ord('S'):
+            self.nav.send_velocity(-fly_speed, 0, 0)
+        elif key == ord('a') or key == ord('A'):
+            self.nav.send_velocity(0, -fly_speed, 0)
+        elif key == ord('d') or key == ord('D'):
+            self.nav.send_velocity(0, fly_speed, 0)
+        elif key == ord('r') or key == ord('R'):
+            self.nav.send_velocity(0, 0, -climb_rate)
+        elif key == ord('f') or key == ord('F'):
+            self.nav.send_velocity(0, 0, climb_rate)
+        elif key == ord('q') or key == ord('Q'):
+            # Yaw left (relative, counterclockwise)
+            from pymavlink import mavutil
+            self.master.mav.command_long_send(
+                self.master.target_system, self.master.target_component,
+                mavutil.mavlink.MAV_CMD_CONDITION_YAW, 0,
+                config.MANUAL_YAW_STEP_DEG, yaw_rate, -1, 1, 0, 0, 0)
+        elif key == ord('e') or key == ord('E'):
+            # Yaw right (relative, clockwise)
+            from pymavlink import mavutil
+            self.master.mav.command_long_send(
+                self.master.target_system, self.master.target_component,
+                mavutil.mavlink.MAV_CMD_CONDITION_YAW, 0,
+                config.MANUAL_YAW_STEP_DEG, yaw_rate, 1, 1, 0, 0, 0)
+
+    def _handle_verify_input(self, key):
+        """Y/N/I confirmation and landing side selection in VERIFY state."""
+        if self.selecting_landing_side:
+            if key in [ord('n'), ord('e'), ord('w'), ord('s'), ord('N'), ord('E'), ord('W'), ord('S')]:
+                self.calculate_landing_spot(chr(key).lower())
+                self.selecting_landing_side = False
+                self.waiting_for_confirmation = False
+                self._set_state(State.APPROACH)
+            return
+
+        if key == ord('y') or key == ord('Y'):
+            if getattr(self, '_gps_avg_start', None):
+                # --center-verify: wait for 10s GPS averaging
+                elapsed = time.time() - self._gps_avg_start
+                remaining = max(0, 10.0 - elapsed)
+                self._confirmed_y = True
+                if remaining > 0:
+                    print(f"\n  Y confirmed — averaging GPS for {remaining:.0f}s more...")
+                # _handle_verify will finalize when 10s elapsed
+            else:
+                # Default: immediate confirm, no averaging
+                print()
+                print("USER CONFIRMED TARGET. SELECT LANDING SIDE:")
+                print("  N=North  E=East  S=South  W=West")
+                self.selecting_landing_side = True
+        elif key == ord('i') or key == ord('I'):
+            # Item of interest — log position, mark on map, continue search
+            if not hasattr(self, 'items_of_interest'):
+                self.items_of_interest = []
+            self.items_of_interest.append({
+                'lat': self.target_lat,
+                'lon': self.target_lon,
+                'alt': self.alt,
+                'time': time.time(),
+            })
+            idx = len(self.items_of_interest)
+            print(f"\n  ITEM OF INTEREST #{idx} logged at ({self.target_lat:.6f}, {self.target_lon:.6f})")
+            print(f"  Marked on map (blue). Continuing search.\n")
+            self.waiting_for_confirmation = False
+            self.target_lat = 0
+            self.target_lon = 0
+            self.last_req = 0
+            # If queue has items, go directly to next valid target
+            result = self._pop_valid_target()
+            if result:
+                q_lat, q_lon, _qc = result
+                print(f"Next queued target at ({q_lat:.6f}, {q_lon:.6f}) — {len(self._detect_queue)} remaining")
+                self.target_lat = q_lat
+                self.target_lon = q_lon
+                # Keep original departure point (where we left the scan line)
+                self._locked_target = (q_lat, q_lon)
+                self._set_state(State.CENTERING)
+            elif self.departure_lat != 0:
+                self._set_state(State.RETURN_TO_SEARCH)
+            else:
+                self._set_state(State.SEARCH)
+        elif key == ord('n') or key == ord('N'):
+            self.rejected_targets.append((self.target_lat, self.target_lon))
+            print(f"USER REJECTED TARGET at ({self.target_lat:.6f}, {self.target_lon:.6f}). RESUMING.")
+            self.waiting_for_confirmation = False
+            self.target_lat = 0
+            self.target_lon = 0
+            self.last_req = 0  # force immediate command
+            # If queue has items, go directly to next valid target
+            result = self._pop_valid_target()
+            if result:
+                q_lat, q_lon, _qc = result
+                print(f"Next queued target at ({q_lat:.6f}, {q_lon:.6f}) — {len(self._detect_queue)} remaining")
+                self.target_lat = q_lat
+                self.target_lon = q_lon
+                # Keep original departure point (where we left the scan line)
+                self._locked_target = (q_lat, q_lon)
+                self._set_state(State.CENTERING)
+            # If we came from manual flight, return to manual departure
+            elif self.manual_departure_lat != 0 and self.previous_state == State.MANUAL:
+                print(f"  Returning to manual departure point")
+                self._set_state(State.RETURN_FROM_MANUAL)
+            # If we came from search, return to search departure
+            elif self.departure_lat != 0:
+                print(f"  Returning to search departure point")
+                self._set_state(State.RETURN_TO_SEARCH)
+            else:
+                self._set_state(State.SEARCH)
+
     def _handle_keys(self, key, target_found, px_u, px_v):
         """Process keyboard/button input: manual override toggle, WASD flight,
         VERIFY confirmations.  Called once per loop iteration from run()."""
 
         # M key: toggle manual override
         if key == ord('m') or key == ord('M'):
-            if self.state != State.MANUAL:
-                print("!!! MANUAL CONTROL OVERRIDE !!!")
-                print("  WASD=move  R/F=up/down  Q/E=yaw  M=resume auto")
-                # Don't overwrite previous_state if we're already returning from manual
-                if self.state != State.RETURN_FROM_MANUAL:
-                    self.previous_state = self.state
-                    self.manual_departure_lat = self.lat
-                    self.manual_departure_lon = self.lon
-                    self.manual_departure_alt = self.alt
-                self._set_state(State.MANUAL)
-                # Immediately stop — override ArduCopter's last position target
-                if self.nav:
-                    self.nav.send_velocity(0, 0, 0)
-            else:
-                if target_found:
-                    self.calculate_target_gps(px_u, px_v)
-                    if not self._is_inside_nfz(self.target_lat, self.target_lon) and \
-                       not self._is_outside_search_area(self.target_lat, self.target_lon) and \
-                       not self._is_near_known(self.target_lat, self.target_lon):
-                        print("Target detected during manual flight — investigating!")
-                        self._locked_target = (self.target_lat, self.target_lon)
-                        self._set_state(State.CENTERING)
-                    else:
-                        self.target_lat = 0
-                        self.target_lon = 0
-                        # Fall through to queue check below
-                        target_found = False
-                if not target_found:
-                    # Check detection queue first — investigate queued targets before resuming
-                    result = self._pop_valid_target()
-                    if result:
-                        q_lat, q_lon, _qc = result
-                        print(f"Investigating queued detection at ({q_lat:.6f}, {q_lon:.6f}) — {len(self._detect_queue)} remaining")
-                        self.target_lat = q_lat
-                        self.target_lon = q_lon
-                        self._locked_target = (q_lat, q_lon)
-                        self._set_state(State.CENTERING)
-                    else:
-                        # No queued targets — return to departure point
-                        dist_from_departure = self.get_dist_to_point(
-                            self.manual_departure_lat, self.manual_departure_lon)
-                        if dist_from_departure > 5.0:
-                            print(f"Returning to manual departure point ({dist_from_departure:.0f}m away)...")
-                            self._set_state(State.RETURN_FROM_MANUAL)
-                        else:
-                            print("Resuming Automation...")
-                            self.last_req = 0
-                            self._set_state(self.previous_state)
+            self._handle_manual_toggle(target_found, px_u, px_v)
 
         # K key: clear rejected/ignored targets (re-enables detection in those areas)
         if key == ord('k') or key == ord('K'):
@@ -934,115 +1055,8 @@ class StateHandlersMixin:
 
         # MANUAL mode — WASD flight controls
         if self.state == State.MANUAL and self.master:
-            fly_speed = config.MANUAL_FLY_SPEED_MPS
-            climb_rate = config.MANUAL_CLIMB_RATE_MPS
-            yaw_rate = config.MANUAL_YAW_RATE_DEGS
-            if key == ord('w') or key == ord('W'):
-                self.nav.send_velocity(fly_speed, 0, 0)
-            elif key == ord('s') or key == ord('S'):
-                self.nav.send_velocity(-fly_speed, 0, 0)
-            elif key == ord('a') or key == ord('A'):
-                self.nav.send_velocity(0, -fly_speed, 0)
-            elif key == ord('d') or key == ord('D'):
-                self.nav.send_velocity(0, fly_speed, 0)
-            elif key == ord('r') or key == ord('R'):
-                self.nav.send_velocity(0, 0, -climb_rate)
-            elif key == ord('f') or key == ord('F'):
-                self.nav.send_velocity(0, 0, climb_rate)
-            elif key == ord('q') or key == ord('Q'):
-                # Yaw left (relative, counterclockwise)
-                from pymavlink import mavutil
-                self.master.mav.command_long_send(
-                    self.master.target_system, self.master.target_component,
-                    mavutil.mavlink.MAV_CMD_CONDITION_YAW, 0,
-                    config.MANUAL_YAW_STEP_DEG, yaw_rate, -1, 1, 0, 0, 0)
-            elif key == ord('e') or key == ord('E'):
-                # Yaw right (relative, clockwise)
-                from pymavlink import mavutil
-                self.master.mav.command_long_send(
-                    self.master.target_system, self.master.target_component,
-                    mavutil.mavlink.MAV_CMD_CONDITION_YAW, 0,
-                    config.MANUAL_YAW_STEP_DEG, yaw_rate, 1, 1, 0, 0, 0)
+            self._handle_manual_flight(key)
 
         # VERIFY state — Y/N confirmation and landing side selection
         if self.state == State.VERIFY:
-            if self.selecting_landing_side:
-                if key in [ord('n'), ord('e'), ord('w'), ord('s'), ord('N'), ord('E'), ord('W'), ord('S')]:
-                    self.calculate_landing_spot(chr(key).lower())
-                    self.selecting_landing_side = False
-                    self.waiting_for_confirmation = False
-                    self._set_state(State.APPROACH)
-            else:
-                if key == ord('y') or key == ord('Y'):
-                    if getattr(self, '_gps_avg_start', None):
-                        # --center-verify: wait for 10s GPS averaging
-                        elapsed = time.time() - self._gps_avg_start
-                        remaining = max(0, 10.0 - elapsed)
-                        self._confirmed_y = True
-                        if remaining > 0:
-                            print(f"\n  Y confirmed — averaging GPS for {remaining:.0f}s more...")
-                        # _handle_verify will finalize when 10s elapsed
-                    else:
-                        # Default: immediate confirm, no averaging
-                        print()
-                        print("USER CONFIRMED TARGET. SELECT LANDING SIDE:")
-                        print("  N=North  E=East  S=South  W=West")
-                        self.selecting_landing_side = True
-                elif key == ord('i') or key == ord('I'):
-                    # Item of interest — log position, mark on map, continue search
-                    if not hasattr(self, 'items_of_interest'):
-                        self.items_of_interest = []
-                    self.items_of_interest.append({
-                        'lat': self.target_lat,
-                        'lon': self.target_lon,
-                        'alt': self.alt,
-                        'time': time.time(),
-                    })
-                    idx = len(self.items_of_interest)
-                    print(f"\n  ITEM OF INTEREST #{idx} logged at ({self.target_lat:.6f}, {self.target_lon:.6f})")
-                    print(f"  Marked on map (blue). Continuing search.\n")
-                    self.waiting_for_confirmation = False
-                    self.target_lat = 0
-                    self.target_lon = 0
-                    self.last_req = 0
-                    # If queue has items, go directly to next valid target
-                    result = self._pop_valid_target()
-                    if result:
-                        q_lat, q_lon, _qc = result
-                        print(f"Next queued target at ({q_lat:.6f}, {q_lon:.6f}) — {len(self._detect_queue)} remaining")
-                        self.target_lat = q_lat
-                        self.target_lon = q_lon
-                        # Keep original departure point (where we left the scan line)
-                        self._locked_target = (q_lat, q_lon)
-                        self._set_state(State.CENTERING)
-                    elif self.departure_lat != 0:
-                        self._set_state(State.RETURN_TO_SEARCH)
-                    else:
-                        self._set_state(State.SEARCH)
-                elif key == ord('n') or key == ord('N'):
-                    self.rejected_targets.append((self.target_lat, self.target_lon))
-                    print(f"USER REJECTED TARGET at ({self.target_lat:.6f}, {self.target_lon:.6f}). RESUMING.")
-                    self.waiting_for_confirmation = False
-                    self.target_lat = 0
-                    self.target_lon = 0
-                    self.last_req = 0  # force immediate command
-                    # If queue has items, go directly to next valid target
-                    result = self._pop_valid_target()
-                    if result:
-                        q_lat, q_lon, _qc = result
-                        print(f"Next queued target at ({q_lat:.6f}, {q_lon:.6f}) — {len(self._detect_queue)} remaining")
-                        self.target_lat = q_lat
-                        self.target_lon = q_lon
-                        # Keep original departure point (where we left the scan line)
-                        self._locked_target = (q_lat, q_lon)
-                        self._set_state(State.CENTERING)
-                    # If we came from manual flight, return to manual departure
-                    elif self.manual_departure_lat != 0 and self.previous_state == State.MANUAL:
-                        print(f"  Returning to manual departure point")
-                        self._set_state(State.RETURN_FROM_MANUAL)
-                    # If we came from search, return to search departure
-                    elif self.departure_lat != 0:
-                        print(f"  Returning to search departure point")
-                        self._set_state(State.RETURN_TO_SEARCH)
-                    else:
-                        self._set_state(State.SEARCH)
+            self._handle_verify_input(key)
