@@ -2491,6 +2491,7 @@
     <bcf:citekey order="108" intorder="1">golden2006hypothermia</bcf:citekey>
     <bcf:citekey order="109" intorder="1">choset2001coverage</bcf:citekey>
     <bcf:citekey order="110" intorder="1">galceran2013survey</bcf:citekey>
+    <bcf:citekey order="111" intorder="1">galceran2013survey</bcf:citekey>
   </bcf:section>
   <!-- SORTING TEMPLATES -->
   <bcf:sortingtemplate name="none">

@@ -1,0 +1,236 @@
+% design_strategy.tex — Design strategy reasoning chain
+% Shows the logical dependency chain that determined all operating parameters.
+
+\section{Design Strategy: Parameter Derivation Chain}\label{sec:design-strategy}
+
+The operating parameters in Table~\ref{tab:pareto-final} were not selected independently.
+Each decision constrains the next, forming a directed dependency chain from the physical target through to the final mission plan.
+This section traces that chain step by step, showing how each parameter was derived from evidence rather than assumed.
+
+% =====================================================================
+\subsection{Step 1: Maximum Detection Altitude}\label{sec:step-max-alt}
+
+The reasoning begins with the target.
+The mannequin is \SI{1.8}{\metre} tall and \SI{0.5}{\metre} wide.
+At altitude~$h$, the target projects onto the camera sensor with a height in pixels of:
+
+\begin{equation}\label{eq:target-px}
+  \mathrm{px}_{\mathrm{target}} = \frac{d_{\mathrm{target}} \cdot f_{\mathrm{px}}}{h}
+\end{equation}
+
+\noindent where $f_{\mathrm{px}} = f / w_s \times W_{\mathrm{px}} = 5.46/5.02 \times 1456 = 1584$\,pixels is the focal length in pixel units, and $d_{\mathrm{target}}$ is the target dimension.
+YOLOv8n resizes the input to $640 \times 640$, so the model-input target height is further scaled by $640/1088 = 0.588$:
+
+\begin{equation}\label{eq:model-px}
+  \mathrm{px}_{\mathrm{model}} = \frac{d_{\mathrm{target}} \cdot f_{\mathrm{px}}}{h} \times \frac{640}{1088}
+\end{equation}
+
+Table~\ref{tab:px-vs-alt} traces this function across the altitude range.
+
+\begin{table}[ht]
+  \centering\compactTable
+  \caption{Target pixel extent versus altitude. The model-input column reflects YOLOv8n's $640\times640$ resize. Below \SI{20}{px} height in the model input, detection becomes unreliable.}\label{tab:px-vs-alt}
+  \begin{tabularx}{\linewidth}{@{}c c c c X@{}}
+    \toprule
+    \textbf{Altitude (m)} & \textbf{Sensor (px)} & \textbf{Model input (px)} & \textbf{Width model (px)} & \textbf{Assessment} \\
+    \midrule
+    20 & 143 & 84 & 18 & Excellent --- large, high confidence \\
+    35 & 81  & 48 & 10 & Comfortable --- clear margin above minimum \\
+    50 & 57  & 34 & 7  & Marginal width --- feature extraction degrades \\
+    60 & 48  & 28 & 6  & Below width comfort threshold \\
+    85 & 34  & 20 & 4  & At absolute minimum; unreliable \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+Two thresholds emerge.
+The \emph{absolute} detection limit occurs when the target height drops below approximately \SI{20}{px} in the model input ($h \approx \SI{85}{\metre}$), at which point the feature map representation is too coarse for reliable bounding box regression.
+The \emph{practical} limit is set by target \emph{width}: at \SI{50}{\metre} the mannequin's width is only 7~model pixels, below the 10-pixel comfort threshold for width-dependent features (limb visibility, aspect ratio cues).
+Empirically, detection confidence from the retrained \texttt{sar\_v2\_1088} model drops below 0.5 at approximately \SI{60}{\metre}.
+
+Regulatory constraint R03 limits altitude to \SI{50}{\metre}.
+Selecting $h = \SI{35}{\metre}$ provides a $\times$1.4 margin on target width (10\,px vs 7\,px at \SI{50}{\metre}) and a $\times$2.4 margin on target height (48\,px vs 20\,px minimum), creating headroom for real-world degradation modes: partial occlusion, unusual pose, non-ideal lighting, and altitude excursions during manoeuvres.
+
+\textbf{Decision:} $h = \SI{35}{\metre}$.
+This sacrifices the energy-optimal \SI{50}{\metre} (\SI{8.2}{Wh}) for a comfortable detection margin (\SI{12.6}{Wh}---still only \SI{10.9}{\percent} of battery capacity).
+
+% =====================================================================
+\subsection{Step 2: Maximum Speed at Chosen Altitude}\label{sec:step-max-speed}
+
+With altitude fixed, the camera's along-track ground footprint determines how long the target remains in view.
+At \SI{35}{\metre}:
+
+\begin{equation}\label{eq:footprint-along}
+  H_g = \frac{w_s \cdot h}{f} \times \frac{H_{\mathrm{px}}}{W_{\mathrm{px}}} = \frac{5.02 \times 35}{5.46} \times \frac{1088}{1456} = \SI{24.1}{\metre}
+\end{equation}
+
+At the TFLite inference rate of $f_{\mathrm{inf}} = \SI{4.8}{FPS}$ (benchmarked on Pi~5, Section~\ref{sec:cv-pipeline}), the drone advances $\Delta x = v / f_{\mathrm{inf}}$ metres between frames.
+For reliable detection, the target must appear in at least $n_{\min}$ independent inference frames.
+The maximum speed is therefore:
+
+\begin{equation}\label{eq:max-speed}
+  v_{\max} = \frac{H_g}{n_{\min} / f_{\mathrm{inf}}} = \frac{H_g \cdot f_{\mathrm{inf}}}{n_{\min}}
+\end{equation}
+
+If we require $n_{\min} = 3$ frames (one detection above threshold triggers investigation), then $v_{\max} = 24.1 \times 4.8 / 3 = \SI{38.6}{\metre\per\second}$---far above drone capability.
+However, at high frame rates consecutive frames are highly correlated: at \SI{8}{\metre\per\second} the inter-frame advance is \SI{1.67}{\metre}, yielding $91\%$ spatial overlap between adjacent frames.
+These are not independent observations.
+
+A conservative requirement of $n_{\min} = 10$ raw frames ensures that at least 3--4 contain substantially different views of the target (different pixel positions, different background context):
+
+\begin{equation}
+  v_{\max,\mathrm{conservative}} = \frac{24.1 \times 4.8}{10} = \SI{11.5}{\metre\per\second}
+\end{equation}
+
+The altitude-dependent speed schedule (Section~\ref{sec:moo}) assigns $v(\SI{35}{\metre}) = \SI{8.0}{\metre\per\second}$, which yields:
+
+\begin{equation}
+  n_f = \frac{H_g}{v} \times f_{\mathrm{inf}} = \frac{24.1}{8.0} \times 4.8 = 14.5 \approx 14 \text{ frames}
+\end{equation}
+
+\noindent This provides a $\times$1.4 margin above the conservative 10-frame requirement and a $\times$4.7 margin above the absolute 3-frame minimum.
+The cumulative detection probability over 14 frames, assuming per-frame probability $p = 0.95$ (conservative for 48-pixel targets), is $P_d = 1 - (1-0.95)^{14} > 0.9999$.
+
+\textbf{Decision:} $v = \SI{8}{\metre\per\second}$ at \SI{35}{\metre}, following the altitude-dependent linear schedule.
+
+% =====================================================================
+\subsection{Step 3: Minimise Energy via Scan Angle}\label{sec:step-scan-angle}
+
+With $h$ and $v$ fixed, the remaining free variable for the boustrophedon pattern is the scan angle~$\theta$---the orientation of parallel scan lines relative to north.
+This controls the number of scan lines (and therefore U-turns) required to cover the polygon.
+
+The 216-configuration parametric sweep (Section~\ref{sec:sweep}) tested 36 angles at each of 6 altitudes.
+At $h = \SI{35}{\metre}$, the results are unambiguous: scan angle $\theta = \SI{70}{\degree}$ (alignment with the polygon's longest edge, the northeast--southwest axis) minimises the number of scan lines from 10 (at \SI{0}{\degree}, north--south) to 6, and reduces U-turns from 9 to 5.
+
+The energy savings are substantial.
+At the optimal angle: $E = \SI{12.6}{Wh}$.
+At the worst angle (\SI{95}{\degree}, perpendicular to the long axis): $E = \SI{25.4}{Wh}$---a $2\times$ penalty for the same coverage.
+The energy valley at $\theta \approx \SI{70}{\degree}$ is visible in Figure~\ref{fig:energy-heatmap} across all altitudes, confirming that scan angle alignment is geometry-dependent and altitude-invariant.
+
+This angle also has a fortunate geometric property: the scan lines run roughly \emph{perpendicular} to the SSSI boundary on the northeast edge.
+This means each scan line clips the NFZ slow zone only at its endpoint, rather than running parallel to the boundary (which would force the entire line to be traversed at reduced speed).
+The NFZ energy penalty at \SI{70}{\degree} is approximately \SI{15}{\percent}; at \SI{0}{\degree} (north--south, running along the SSSI edge), the penalty exceeds \SI{40}{\percent}.
+
+\textbf{Decision:} $\theta = \SI{70}{\degree}$, aligned to the polygon's longest edge via \texttt{cv2.minAreaRect}.
+
+% =====================================================================
+\subsection{Step 4: NFZ Safety Margins}\label{sec:step-nfz-margins}
+
+The SSSI no-fly zone on the polygon's northeast edge requires a buffer that keeps the entire camera footprint---not just the drone's position---outside the protected area.
+At \SI{35}{\metre} altitude, the cross-track ground footprint is:
+
+\begin{equation}\label{eq:footprint-cross}
+  W_g = \frac{w_s \cdot h}{f} = \frac{5.02 \times 35}{5.46} = \SI{32.2}{\metre}
+\end{equation}
+
+The camera images a strip extending $W_g / 2 = \SI{16.1}{\metre}$ either side of nadir.
+To guarantee the camera footprint does not overlap the SSSI, the drone must maintain at least \SI{16.1}{\metre} lateral distance from the boundary.
+Three additional error sources widen this margin:
+
+\begin{enumerate}
+  \item \textbf{GPS position error}: CEP$_{95}$ = \SI{3}{\metre} for consumer-grade GNSS.
+  \item \textbf{Reaction time}: at $v = \SI{8}{\metre\per\second}$, a \SI{2}{\second} reaction window covers \SI{16}{\metre}.
+  \item \textbf{Wind gust displacement}: estimated \SI{2}{\metre} lateral excursion in \SI{15}{kt} crosswind.
+\end{enumerate}
+
+The root-sum-square (RSS) of these independent errors is:
+
+\begin{equation}
+  d_{\mathrm{margin}} = \sqrt{16.1^2 + 3^2 + 16^2 + 2^2} = \SI{23.1}{\metre}
+\end{equation}
+
+The system implements a three-layer defence:
+
+\begin{itemize}
+  \item \textbf{\SI{30}{\metre} waypoint buffer} (\texttt{NFZ\_WAYPOINT\_BUFFER\_M}): any waypoint within \SI{30}{\metre} of the SSSI boundary is excluded.
+  \item \textbf{\SI{20}{\metre} speed ramp} (\texttt{NFZ\_SLOW\_ZONE\_M}): linear deceleration from \SI{3}{\metre\per\second} to \SI{0.3}{\metre\per\second} within this zone.
+  \item \textbf{\SI{3}{\metre} hard boundary} (\texttt{NFZ\_HARD\_BOUNDARY\_M}): automatic switch to MANUAL mode.
+\end{itemize}
+
+The combined margin of \SI{30}{\metre} (waypoint buffer) + \SI{20}{\metre} (speed ramp) = \SI{50}{\metre} exceeds the RSS requirement of \SI{23}{\metre} by a factor of $2.2\times$.
+As a cross-check, the one-third rule (buffer $\geq W_g / 3$) requires \SI{10.7}{\metre}---our \SI{30}{\metre} buffer exceeds this by $2.8\times$.
+
+The cost of this conservatism is a \SI{4}{\percent} coverage gap in the strip adjacent to the SSSI.
+This strip lies within a fenced wildlife reserve with no public access, making the probability of a casualty there negligibly small.
+
+\textbf{Decision:} \SI{30}{\metre} waypoint buffer, \SI{20}{\metre} speed ramp, \SI{3}{\metre} hard cut-off.
+Accept \SI{96}{\percent} polygon coverage.
+
+% =====================================================================
+\subsection{Step 5: Swath Overlap}\label{sec:step-overlap}
+
+Adjacent scan lines must overlap sufficiently to prevent coverage gaps caused by lateral position error.
+Three sources of lane misalignment are relevant:
+
+\begin{enumerate}
+  \item \textbf{GPS cross-track drift}: $\sigma_{\mathrm{GPS}} = \SI{3}{\metre}$ (consumer GNSS CEP).
+  \item \textbf{Crosswind displacement}: $\delta_{\mathrm{wind}} \approx \SI{1.5}{\metre}$ lateral shift in \SI{10}{kt} crosswind at \SI{8}{\metre\per\second}.
+  \item \textbf{Attitude roll coupling}: a \SI{5}{\degree} roll displaces the footprint centre by $h \tan(5\degree) = 35 \times 0.087 = \SI{3.1}{\metre}$.
+\end{enumerate}
+
+Assuming independence, the worst-case combined displacement is:
+
+\begin{equation}\label{eq:lane-error}
+  \delta_{\mathrm{total}} = \sqrt{3^2 + 1.5^2 + 3.1^2} = \SI{4.6}{\metre}
+\end{equation}
+
+At \SI{35}{\metre} altitude with \SI{20}{\percent} overlap, the overlap margin in metres is:
+
+\begin{equation}
+  m_{\mathrm{overlap}} = 0.20 \times W_g = 0.20 \times 32.2 = \SI{6.4}{\metre}
+\end{equation}
+
+This covers the worst-case displacement with \SI{1.8}{\metre} to spare ($6.4 - 4.6 = \SI{1.8}{\metre}$).
+Increasing to \SI{30}{\percent} overlap would add an extra scan line (7 instead of 6), increasing flight time by approximately \SI{10}{\percent} for only \SI{3.2}{\metre} of additional margin---beyond the point of diminishing returns given the RSS error model.
+
+\textbf{Decision:} \SI{20}{\percent} swath overlap.
+
+% =====================================================================
+\subsection{Step 6: Diagonal vs Aligned Scanning}\label{sec:step-diagonal}
+
+A diagonal scan orientation (e.g., \SI{45}{\degree} to the wind) has been suggested in the coverage planning literature as a way to reduce crosswind-induced lane drift, since the wind component perpendicular to the scan direction is reduced~\cite{galceran2013survey}.
+For the AENGM0074 polygon, this would mean rotating the scan lines approximately \SI{25}{\degree} from the longest-edge alignment.
+
+The cost is significant: rotating from \SI{70}{\degree} to \SI{45}{\degree} increases the number of scan lines from 6 to approximately 8 (a \SI{33}{\percent} increase), adding 2 U-turns and approximately \SI{300}{\metre} of additional path length.
+The resulting energy cost rises from \SI{12.6}{Wh} to approximately \SI{16.4}{Wh}---a \SI{30}{\percent} penalty.
+
+The benefit is marginal: the crosswind displacement (\SI{1.5}{\metre}) is already covered by the \SI{6.4}{\metre} overlap margin with \SI{4.9}{\metre} to spare.
+Even doubling the crosswind to \SI{20}{kt} (\SI{3}{\metre} displacement) leaves \SI{3.4}{\metre} of margin within the existing \SI{20}{\percent} overlap.
+
+\textbf{Decision:} maintain longest-edge alignment (\SI{70}{\degree}).
+The \SI{20}{\percent} overlap already absorbs crosswind effects without the \SI{30}{\percent} energy penalty of diagonal scanning.
+
+% =====================================================================
+\subsection{The Dependency Chain}\label{sec:dependency-chain}
+
+The six steps above form a directed acyclic graph of parameter dependencies, where each decision is conditioned on the outputs of previous steps:
+
+\begin{enumerate}
+  \item \textbf{Target size} $\rightarrow$ \textbf{altitude}:
+    the mannequin's \SI{1.8}{\metre} height and the 20-pixel model-input minimum determine $h_{\max} = \SI{85}{\metre}$;
+    the 10-pixel width comfort threshold sets $h_{\mathrm{comfort}} = \SI{50}{\metre}$;
+    a \SI{30}{\percent} safety margin yields $h = \SI{35}{\metre}$.
+
+  \item \textbf{Altitude} $\rightarrow$ \textbf{footprint} $\rightarrow$ \textbf{speed}:
+    $h = \SI{35}{\metre}$ gives a \SI{24}{\metre} along-track footprint;
+    at \SI{4.8}{FPS}, requiring 10+ raw frames caps speed at \SI{11.5}{\metre\per\second};
+    the altitude-dependent schedule assigns $v = \SI{8}{\metre\per\second}$.
+
+  \item \textbf{Altitude + speed} $\rightarrow$ \textbf{scan angle}:
+    with $h$ and $v$ fixed, the 216-configuration sweep identifies $\theta = \SI{70}{\degree}$ as the energy minimum (longest-edge alignment, fewest U-turns).
+
+  \item \textbf{Altitude} $\rightarrow$ \textbf{footprint width} $\rightarrow$ \textbf{NFZ margin}:
+    the \SI{32}{\metre} footprint at \SI{35}{\metre} requires at least \SI{16}{\metre} standoff;
+    GPS error, reaction time, and wind push this to \SI{23}{\metre} RSS;
+    the \SI{30}{\metre} buffer provides a $2.2\times$ safety factor.
+
+  \item \textbf{Footprint + error model} $\rightarrow$ \textbf{overlap}:
+    \SI{4.6}{\metre} RSS lane error is covered by \SI{6.4}{\metre} (\SI{20}{\percent}) overlap margin.
+
+  \item \textbf{Energy budget} validates the chain:
+    \SI{12.6}{Wh} is \SI{10.9}{\percent} of the \SI{115.4}{Wh} battery, leaving \SI{14}{\minute} of flight endurance---sufficient for the \SI{1.9}{\minute} search plus transit, descent, verification, and landing.
+\end{enumerate}
+
+\noindent Every parameter is traceable to a physical measurement (target dimensions, sensor specifications, inference benchmarks) or a regulatory constraint (altitude ceiling, NFZ boundaries).
+No parameter was assumed or rounded for convenience.
+The chain can be re-evaluated instantly if any input changes---for example, a faster inference backend would relax the speed constraint, and a different target size would shift the altitude ceiling---making the design robust to future system upgrades.

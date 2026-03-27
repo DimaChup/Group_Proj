@@ -1126,150 +1126,182 @@
 \newlabel{fig:path-patterns}{{28}{99}{Search patterns overlaid on the AENGM0074 survey polygon at \SI {35}{\metre } and \SI {50}{\metre } altitude. The boustrophedon (leftmost column) achieves the shortest path and highest coverage for both altitudes. Start and end waypoints are marked with green circles and red squares respectively}{figure.caption.177}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {29}{\ignorespaces The selected lawnmower pattern over the AENGM0074 survey polygon at \SI {35}{\metre } altitude with \SI {70}{\degree } scan angle. The SSSI no-fly zone (red fill) and its \SI {20}{\metre } buffer zone (red dashed line) are shown. Scan lines are colour-coded by sequence order; dashed lines indicate U-turn transits. The take-off point is marked with a green triangle.}}{99}{figure.caption.179}\protected@file@percent }
 \newlabel{fig:optimal-pattern}{{29}{99}{The selected lawnmower pattern over the AENGM0074 survey polygon at \SI {35}{\metre } altitude with \SI {70}{\degree } scan angle. The SSSI no-fly zone (red fill) and its \SI {20}{\metre } buffer zone (red dashed line) are shown. Scan lines are colour-coded by sequence order; dashed lines indicate U-turn transits. The take-off point is marked with a green triangle}{figure.caption.179}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {U}Vision Performance Analysis}{99}{appendix.U}\protected@file@percent }
-\newlabel{sec:vision-perf}{{U}{99}{Vision Performance Analysis}{appendix.U}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {U.1}Altitude vs.\ Target Pixel Size}{100}{subsection.U.1}\protected@file@percent }
-\newlabel{sec:vp:altitude}{{U.1}{100}{Altitude vs.\ Target Pixel Size}{subsection.U.1}{}}
-\newlabel{eq:footprint}{{51}{100}{Altitude vs.\ Target Pixel Size}{equation.51}{}}
-\newlabel{eq:dummypx}{{52}{100}{Altitude vs.\ Target Pixel Size}{equation.52}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {30}{\ignorespaces Target height in the 640$\times $640 model input as a function of altitude. The red dashed line marks the 20\,px detection threshold; the shaded region indicates unreliable detection.}}{100}{figure.caption.183}\protected@file@percent }
-\newlabel{fig:alt-vs-px}{{30}{100}{Target height in the 640$\times $640 model input as a function of altitude. The red dashed line marks the 20\,px detection threshold; the shaded region indicates unreliable detection}{figure.caption.183}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {U.2}Speed vs.\ Motion Blur}{100}{subsection.U.2}\protected@file@percent }
-\newlabel{sec:vp:blur}{{U.2}{100}{Speed vs.\ Motion Blur}{subsection.U.2}{}}
-\newlabel{eq:blur}{{53}{100}{Speed vs.\ Motion Blur}{equation.53}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {31}{\ignorespaces Motion blur vs.\ drone speed at three altitudes (1/1000\,s exposure, global shutter). The grey dashed line marks the 1\,px visible-blur threshold.}}{101}{figure.caption.185}\protected@file@percent }
-\newlabel{fig:speed-blur}{{31}{101}{Motion blur vs.\ drone speed at three altitudes (1/1000\,s exposure, global shutter). The grey dashed line marks the 1\,px visible-blur threshold}{figure.caption.185}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {U.3}Speed vs.\ Frames on Target}{101}{subsection.U.3}\protected@file@percent }
-\newlabel{sec:vp:frames}{{U.3}{101}{Speed vs.\ Frames on Target}{subsection.U.3}{}}
-\newlabel{eq:frames}{{54}{101}{Speed vs.\ Frames on Target}{equation.54}{}}
-\newlabel{eq:critspeed}{{55}{101}{Speed vs.\ Frames on Target}{equation.55}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {U.4}Coverage Efficiency}{101}{subsection.U.4}\protected@file@percent }
-\newlabel{sec:vp:coverage}{{U.4}{101}{Coverage Efficiency}{subsection.U.4}{}}
-\newlabel{eq:coverage}{{56}{101}{Coverage Efficiency}{equation.56}{}}
-\newlabel{eq:overlap}{{57}{101}{Coverage Efficiency}{equation.57}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {32}{\ignorespaces Frames the target remains visible vs.\ drone speed at three altitudes (4.8\,FPS). The green and red dashed lines mark the 3-frame smart-detect threshold and 1-frame minimum, respectively.}}{102}{figure.caption.187}\protected@file@percent }
-\newlabel{fig:speed-frames}{{32}{102}{Frames the target remains visible vs.\ drone speed at three altitudes (4.8\,FPS). The green and red dashed lines mark the 3-frame smart-detect threshold and 1-frame minimum, respectively}{figure.caption.187}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {U.5}Combined Detection Envelope}{102}{subsection.U.5}\protected@file@percent }
-\newlabel{sec:vp:envelope}{{U.5}{102}{Combined Detection Envelope}{subsection.U.5}{}}
-\newlabel{eq:score}{{58}{102}{Combined Detection Envelope}{equation.58}{}}
-\newlabel{eq:ssize}{{59}{102}{Combined Detection Envelope}{equation.59}{}}
-\newlabel{eq:sframes}{{60}{102}{Combined Detection Envelope}{equation.60}{}}
-\newlabel{eq:sblur}{{61}{102}{Combined Detection Envelope}{equation.61}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {U.6}Summary of Limiting Factors}{102}{subsection.U.6}\protected@file@percent }
-\newlabel{sec:vp:summary}{{U.6}{102}{Summary of Limiting Factors}{subsection.U.6}{}}
-\@writefile{toc}{\contentsline {paragraph}{{\color  {blue} Version A --- Current (systematic framework-first).}}{102}{paragraph*.191}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {33}{\ignorespaces Search efficiency vs.\ altitude. The solid blue line shows coverage rate (m$^2$/s); the dashed pink line shows swath width. Higher altitude improves efficiency at the cost of reduced target pixel size.}}{103}{figure.caption.188}\protected@file@percent }
-\newlabel{fig:coverage}{{33}{103}{Search efficiency vs.\ altitude. The solid blue line shows coverage rate (m$^2$/s); the dashed pink line shows swath width. Higher altitude improves efficiency at the cost of reduced target pixel size}{figure.caption.188}{}}
-\@writefile{toc}{\contentsline {paragraph}{{\color  {red} Version B --- Lead with safety and ethical stakes.}}{103}{paragraph*.192}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{{\color  {olive} Version C --- Lead with economic accessibility.}}{103}{paragraph*.193}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{{\color  {blue} Version A --- Current (factual, process-oriented).}}{103}{paragraph*.194}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{{\color  {red} Version B --- Narrative/storytelling angle.}}{103}{paragraph*.195}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{{\color  {olive} Version C --- Emphasise data quality gained.}}{103}{paragraph*.196}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {34}{\ignorespaces Combined detection score across the speed--altitude envelope. Green indicates high-confidence detection; the white contours mark $S = 0.3$, $0.5$, and $0.7$. The operational regime (6--10\,m/s, 20--50\,m) lies entirely within the $S > 0.7$ zone.}}{104}{figure.caption.189}\protected@file@percent }
-\newlabel{fig:envelope}{{34}{104}{Combined detection score across the speed--altitude envelope. Green indicates high-confidence detection; the white contours mark $S = 0.3$, $0.5$, and $0.7$. The operational regime (6--10\,m/s, 20--50\,m) lies entirely within the $S > 0.7$ zone}{figure.caption.189}{}}
-\@writefile{toc}{\contentsline {paragraph}{{\color  {blue} Version A --- Current (Sheridan taxonomy, cost-structure analysis).}}{104}{paragraph*.197}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{{\color  {red} Version B --- SAR practitioner perspective.}}{104}{paragraph*.198}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{{\color  {olive} Version C --- Safety-critical systems perspective.}}{104}{paragraph*.199}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{{\color  {blue} Version A --- Current (balanced, methodological).}}{105}{paragraph*.200}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{{\color  {red} Version B --- Lead with the honest admission.}}{105}{paragraph*.201}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{{\color  {olive} Version C --- Lead with the strongest result first.}}{105}{paragraph*.202}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{{\color  {blue} Version A --- Achievements-first.}}{105}{paragraph*.203}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{{\color  {red} Version B --- Lessons-learned-first.}}{105}{paragraph*.204}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{{\color  {olive} Version C --- Future-impact-first.}}{105}{paragraph*.205}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {14}{\ignorespaces Plus/delta review of system technical performance.}}{106}{table.caption.47}\protected@file@percent }
-\newlabel{tab:plus-delta}{{14}{106}{Plus/delta review of system technical performance}{table.caption.47}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {16}{\ignorespaces Defects discovered at each testing tier, with resolution time and estimated cost if undetected.}}{107}{table.caption.50}\protected@file@percent }
-\newlabel{tab:bug-cost}{{16}{107}{Defects discovered at each testing tier, with resolution time and estimated cost if undetected}{table.caption.50}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {18}{\ignorespaces System configuration parameters grouped by function.}}{108}{table.caption.53}\protected@file@percent }
-\newlabel{tab:config-params}{{18}{108}{System configuration parameters grouped by function}{table.caption.53}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {19}{\ignorespaces Augmentation pipeline for the SAR dummy detector. Offline augmentations are applied during synthetic image generation; online augmentations are applied by the YOLO trainer at each epoch.}}{108}{table.caption.54}\protected@file@percent }
-\newlabel{tab:augmentation}{{19}{108}{Augmentation pipeline for the SAR dummy detector. Offline augmentations are applied during synthetic image generation; online augmentations are applied by the YOLO trainer at each epoch}{table.caption.54}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {20}{\ignorespaces Dataset composition for the v2 SAR dummy detector.}}{109}{table.caption.55}\protected@file@percent }
-\newlabel{tab:data_composition}{{20}{109}{Dataset composition for the v2 SAR dummy detector}{table.caption.55}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {21}{\ignorespaces Training hyperparameters for the YOLOv8n SAR dummy detector (v2).}}{109}{table.caption.56}\protected@file@percent }
-\newlabel{tab:training_config}{{21}{109}{Training hyperparameters for the YOLOv8n SAR dummy detector (v2)}{table.caption.56}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {22}{\ignorespaces Detection performance comparison between model versions. All metrics are computed on the respective validation sets.}}{109}{table.caption.57}\protected@file@percent }
-\newlabel{tab:training_results}{{22}{109}{Detection performance comparison between model versions. All metrics are computed on the respective validation sets}{table.caption.57}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {23}{\ignorespaces Failure modes and automated responses.}}{109}{table.caption.58}\protected@file@percent }
-\newlabel{tab:failure-modes}{{23}{109}{Failure modes and automated responses}{table.caption.58}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {24}{\ignorespaces Risk register with mitigations.}}{110}{table.caption.59}\protected@file@percent }
-\newlabel{tab:risk-register}{{24}{110}{Risk register with mitigations}{table.caption.59}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {28}{\ignorespaces Inference backend comparison for YOLOv8n ($640\times 640$ input) on Raspberry Pi~5.}}{110}{table.caption.67}\protected@file@percent }
-\newlabel{tab:backend_comparison}{{28}{110}{Inference backend comparison for YOLOv8n ($640\times 640$ input) on Raspberry Pi~5}{table.caption.67}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {29}{\ignorespaces Inference performance: measured baseline and projected improvements on Raspberry Pi~5 with YOLOv8n ($640\times 640$ input, float32 weights).}}{110}{table.caption.73}\protected@file@percent }
-\newlabel{tab:inference_roadmap}{{29}{110}{Inference performance: measured baseline and projected improvements on Raspberry Pi~5 with YOLOv8n ($640\times 640$ input, float32 weights)}{table.caption.73}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {30}{\ignorespaces Per-stage timing breakdown for the detection pipeline on Raspberry Pi~5 (mean of 50 runs, YOLOv8n FP32, XNNPACK 4-thread).}}{110}{table.caption.74}\protected@file@percent }
-\newlabel{tab:pipeline_timing}{{30}{110}{Per-stage timing breakdown for the detection pipeline on Raspberry Pi~5 (mean of 50 runs, YOLOv8n FP32, XNNPACK 4-thread)}{table.caption.74}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {31}{\ignorespaces Inference benchmarks on Raspberry Pi~5 (Cortex-A76 $\times $4 at \SI {2.4}{\giga \hertz }, XNNPACK 4-thread, active cooler, no desktop environment).}}{111}{table.caption.75}\protected@file@percent }
-\newlabel{tab:cv_benchmarks}{{31}{111}{Inference benchmarks on Raspberry Pi~5 (Cortex-A76 $\times $4 at \SI {2.4}{\giga \hertz }, XNNPACK 4-thread, active cooler, no desktop environment)}{table.caption.75}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {32}{\ignorespaces Camera ground footprint and target size at operational altitudes (IMX296, $f = \SI {5.46}{\milli \metre }$, $1456\!\times \!1088$ sensor).}}{111}{table.caption.80}\protected@file@percent }
-\newlabel{tab:footprint}{{32}{111}{Camera ground footprint and target size at operational altitudes (IMX296, $f = \SI {5.46}{\milli \metre }$, $1456\!\times \!1088$ sensor)}{table.caption.80}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {33}{\ignorespaces Frames per flyover and detection probability for a target within the search swath. $p_d$ = single-frame detection probability; $P_\mathrm  {miss}$ = $(1 - p_d)^N$; $P_\mathrm  {detect}$ = $1 - P_\mathrm  {miss}$.}}{111}{table.caption.81}\protected@file@percent }
-\newlabel{tab:frames_flyover}{{33}{111}{Frames per flyover and detection probability for a target within the search swath. $p_d$ = single-frame detection probability; $P_\mathrm {miss}$ = $(1 - p_d)^N$; $P_\mathrm {detect}$ = $1 - P_\mathrm {miss}$}{table.caption.81}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {34}{\ignorespaces Detection performance vs altitude for a \SI {1.8}{\metre } mannequin target. Pixel size is in the $640\!\times \!640$ model input; confidence and detection rate are empirically observed or interpolated from video replay data.}}{111}{table.caption.83}\protected@file@percent }
-\newlabel{tab:altitude_performance}{{34}{111}{Detection performance vs altitude for a \SI {1.8}{\metre } mannequin target. Pixel size is in the $640\!\times \!640$ model input; confidence and detection rate are empirically observed or interpolated from video replay data}{table.caption.83}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {35}{\ignorespaces Training evaluation metrics for the YOLOv8n SAR detector (v2, trained at $1088 \times 1088$, evaluated on validation split).}}{111}{table.caption.89}\protected@file@percent }
-\newlabel{tab:training_results_extended}{{35}{111}{Training evaluation metrics for the YOLOv8n SAR detector (v2, trained at $1088 \times 1088$, evaluated on validation split)}{table.caption.89}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {36}{\ignorespaces Available model variants for field deployment.}}{112}{table.caption.94}\protected@file@percent }
-\newlabel{tab:model_variants}{{36}{112}{Available model variants for field deployment}{table.caption.94}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {37}{\ignorespaces Comparison of video streaming protocols for companion-computer UAV telemetry.}}{112}{table.caption.103}\protected@file@percent }
-\newlabel{tab:stream-protocols}{{37}{112}{Comparison of video streaming protocols for companion-computer UAV telemetry}{table.caption.103}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {38}{\ignorespaces Ground sampling distance and footprint at key mission altitudes.}}{112}{table.caption.104}\protected@file@percent }
-\newlabel{tab:gsd-altitude}{{38}{112}{Ground sampling distance and footprint at key mission altitudes}{table.caption.104}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {39}{\ignorespaces Single-observation error budget at \SI {35}{\metre } and \SI {15}{\metre } altitude. RSS\,=\,root sum of squares.}}{112}{table.caption.107}\protected@file@percent }
-\newlabel{tab:error-budget}{{39}{112}{Single-observation error budget at \SI {35}{\metre } and \SI {15}{\metre } altitude. RSS\,=\,root sum of squares}{table.caption.107}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {40}{\ignorespaces Comparison of GPS estimation methods. Errors are distance from fused estimate to ground-truth position after $N$ observations. Simulation includes \SI {3}{\metre } GPS drift and \SI {1}{\metre } altitude noise.}}{112}{table.caption.113}\protected@file@percent }
-\newlabel{tab:method-compare}{{40}{112}{Comparison of GPS estimation methods. Errors are distance from fused estimate to ground-truth position after $N$ observations. Simulation includes \SI {3}{\metre } GPS drift and \SI {1}{\metre } altitude noise}{table.caption.113}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {45}{\ignorespaces Minimum viable deliverable: components and requirement coverage.}}{112}{table.caption.121}\protected@file@percent }
-\newlabel{tab:mvd}{{45}{112}{Minimum viable deliverable: components and requirement coverage}{table.caption.121}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {47}{\ignorespaces Target deliverable: full autonomous mission.}}{113}{table.caption.122}\protected@file@percent }
-\newlabel{tab:target}{{47}{113}{Target deliverable: full autonomous mission}{table.caption.122}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {49}{\ignorespaces Contingency plans for flight day failure scenarios.}}{113}{table.caption.123}\protected@file@percent }
-\newlabel{tab:contingency}{{49}{113}{Contingency plans for flight day failure scenarios}{table.caption.123}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {51}{\ignorespaces Contingency-to-test-script mapping.}}{114}{table.caption.124}\protected@file@percent }
-\newlabel{tab:test-scripts}{{51}{114}{Contingency-to-test-script mapping}{table.caption.124}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {59}{\ignorespaces Sensor calibration summary. The ``Error if uncalibrated'' column quantifies the systematic bias that would have affected every measurement had the default or assumed value been retained.}}{114}{table.caption.131}\protected@file@percent }
-\newlabel{tab:calibration}{{59}{114}{Sensor calibration summary. The ``Error if uncalibrated'' column quantifies the systematic bias that would have affected every measurement had the default or assumed value been retained}{table.caption.131}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {62}{\ignorespaces Comparison of landing approaches over 20 simulated missions each.}}{114}{table.caption.138}\protected@file@percent }
-\newlabel{tab:centering-comparison}{{62}{114}{Comparison of landing approaches over 20 simulated missions each}{table.caption.138}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {63}{\ignorespaces MAVLink messages used by the mission software.}}{114}{table.caption.140}\protected@file@percent }
-\newlabel{tab:mavlink-messages}{{63}{114}{MAVLink messages used by the mission software}{table.caption.140}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {65}{\ignorespaces Raw inference vs.\ effective pipeline throughput on Raspberry Pi~5 (YOLOv8n, $640\times 640$ input).}}{115}{table.caption.143}\protected@file@percent }
-\newlabel{tab:pipeline_fps}{{65}{115}{Raw inference vs.\ effective pipeline throughput on Raspberry Pi~5 (YOLOv8n, $640\times 640$ input)}{table.caption.143}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {66}{\ignorespaces Altitude--lane width--detection trade-off for the AENGM0074 survey polygon. Target pixel extent assumes a \SI {1.8}{\metre } prone mannequin imaged by the IMX296 sensor at 1456$\times $1088 resolution.}}{115}{table.caption.149}\protected@file@percent }
-\newlabel{tab:alt-tradeoff}{{66}{115}{Altitude--lane width--detection trade-off for the AENGM0074 survey polygon. Target pixel extent assumes a \SI {1.8}{\metre } prone mannequin imaged by the IMX296 sensor at 1456$\times $1088 resolution}{table.caption.149}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {68}{\ignorespaces Comparison of trained model generations. All models are YOLOv8n exported to TFLite float32. Inference latency measured on Raspberry Pi~5 (TFLite + XNNPACK, 4 threads). mAP values are computed on each model's respective validation set.}}{115}{table.caption.150}\protected@file@percent }
-\newlabel{tab:model_generations}{{68}{115}{Comparison of trained model generations. All models are YOLOv8n exported to TFLite float32. Inference latency measured on Raspberry Pi~5 (TFLite + XNNPACK, 4 threads). mAP values are computed on each model's respective validation set}{table.caption.150}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {69}{\ignorespaces Top~5 and bottom~5 configurations by total energy from the 216-configuration sweep. Coverage is measured as the fraction of the survey polygon area imaged.}}{115}{table.caption.151}\protected@file@percent }
-\newlabel{tab:energy-top5}{{69}{115}{Top~5 and bottom~5 configurations by total energy from the 216-configuration sweep. Coverage is measured as the fraction of the survey polygon area imaged}{table.caption.151}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {71}{\ignorespaces Rotation angle comparison at \SI {35}{\metre } altitude, \SI {8}{\metre \per \second } search speed.}}{115}{table.caption.153}\protected@file@percent }
-\newlabel{tab:rotation-compare}{{71}{115}{Rotation angle comparison at \SI {35}{\metre } altitude, \SI {8}{\metre \per \second } search speed}{table.caption.153}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {73}{\ignorespaces NFZ margin analysis: minimum required distance from the SSSI boundary to prevent camera footprint intrusion, compared with the implemented total margin (waypoint buffer + speed ramp zone).}}{116}{table.caption.155}\protected@file@percent }
-\newlabel{tab:nfz-margin}{{73}{116}{NFZ margin analysis: minimum required distance from the SSSI boundary to prevent camera footprint intrusion, compared with the implemented total margin (waypoint buffer + speed ramp zone)}{table.caption.155}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {75}{\ignorespaces Speed vs detection probability at \SI {35}{\metre } altitude. Search time is for the AENGM0074 polygon at the \SI {70}{\degree } scan angle.}}{116}{table.caption.157}\protected@file@percent }
-\newlabel{tab:speed-detect}{{75}{116}{Speed vs detection probability at \SI {35}{\metre } altitude. Search time is for the AENGM0074 polygon at the \SI {70}{\degree } scan angle}{table.caption.157}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {77}{\ignorespaces Multi-objective trade-off summary. The selected configuration prioritises detection reliability and regulatory safety over minimum energy or maximum coverage.}}{116}{table.caption.159}\protected@file@percent }
-\newlabel{tab:pareto-summary}{{77}{116}{Multi-objective trade-off summary. The selected configuration prioritises detection reliability and regulatory safety over minimum energy or maximum coverage}{table.caption.159}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {79}{\ignorespaces Four-layer NFZ protection architecture. Each layer activates at a different distance from the SSSI boundary, providing defence in depth.}}{116}{table.caption.168}\protected@file@percent }
-\newlabel{tab:nfz-layers}{{79}{116}{Four-layer NFZ protection architecture. Each layer activates at a different distance from the SSSI boundary, providing defence in depth}{table.caption.168}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {81}{\ignorespaces Top~5 and bottom~5 configurations by total energy (with NFZ) from the 216-configuration sweep. The selected operating point is highlighted.}}{116}{table.caption.174}\protected@file@percent }
-\newlabel{tab:energy-top-bottom}{{81}{116}{Top~5 and bottom~5 configurations by total energy (with NFZ) from the 216-configuration sweep. The selected operating point is highlighted}{table.caption.174}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {83}{\ignorespaces Quantitative comparison of six search strategies at \SI {50}{\metre } altitude, \SI {10}{\metre \per \second }. All values computed on the real AENGM0074 polygon (\SI {32200}{\metre \squared }).}}{117}{table.caption.176}\protected@file@percent }
-\newlabel{tab:strategy-compare}{{83}{117}{Quantitative comparison of six search strategies at \SI {50}{\metre } altitude, \SI {10}{\metre \per \second }. All values computed on the real AENGM0074 polygon (\SI {32200}{\metre \squared })}{table.caption.176}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {85}{\ignorespaces Detection probability function chain from altitude to cumulative detection probability per target flyover. Motion blur is sub-pixel at all speeds (IMX296 global shutter, $1/1000$\,s exposure) and is therefore omitted.}}{117}{table.caption.178}\protected@file@percent }
-\newlabel{tab:detect-chain}{{85}{117}{Detection probability function chain from altitude to cumulative detection probability per target flyover. Motion blur is sub-pixel at all speeds (IMX296 global shutter, $1/1000$\,s exposure) and is therefore omitted}{table.caption.178}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {87}{\ignorespaces Pareto trade-off summary. The selected configuration prioritises detection reliability and regulatory safety over minimum energy.}}{117}{table.caption.180}\protected@file@percent }
-\newlabel{tab:pareto-final}{{87}{117}{Pareto trade-off summary. The selected configuration prioritises detection reliability and regulatory safety over minimum energy}{table.caption.180}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {89}{\ignorespaces Camera and inference parameters used for the performance analysis.}}{117}{table.caption.181}\protected@file@percent }
-\newlabel{tab:vision-params}{{89}{117}{Camera and inference parameters used for the performance analysis}{table.caption.181}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {90}{\ignorespaces Dummy size in the model input at operating altitudes. The detection threshold is approximately \SI {20}{px} in the shortest dimension.}}{117}{table.caption.182}\protected@file@percent }
-\newlabel{tab:px-by-alt}{{90}{117}{Dummy size in the model input at operating altitudes. The detection threshold is approximately \SI {20}{px} in the shortest dimension}{table.caption.182}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {91}{\ignorespaces Motion blur in sensor pixels at $1/1000$\,s exposure. All values are sub-pixel at operating speeds.}}{118}{table.caption.184}\protected@file@percent }
-\newlabel{tab:blur}{{91}{118}{Motion blur in sensor pixels at $1/1000$\,s exposure. All values are sub-pixel at operating speeds}{table.caption.184}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {92}{\ignorespaces Frames on target at the adaptive speed profile. Even at maximum speed the target is captured in $\geq $11 frames.}}{118}{table.caption.186}\protected@file@percent }
-\newlabel{tab:frames}{{92}{118}{Frames on target at the adaptive speed profile. Even at maximum speed the target is captured in $\geq $11 frames}{table.caption.186}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {93}{\ignorespaces Summary of vision-system constraints within the operating envelope.}}{118}{table.caption.190}\protected@file@percent }
-\newlabel{tab:limits}{{93}{118}{Summary of vision-system constraints within the operating envelope}{table.caption.190}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {U}Design Strategy: Parameter Derivation Chain}{99}{appendix.U}\protected@file@percent }
+\newlabel{sec:design-strategy}{{U}{99}{Design Strategy: Parameter Derivation Chain}{appendix.U}{}}
+\gdef \LT@xxiv {\LT@entry 
+    {1}{62.66422pt}\LT@entry 
+    {1}{59.71356pt}\LT@entry 
+    {1}{86.951pt}\LT@entry 
+    {1}{90.80948pt}\LT@entry 
+    {1}{190.97641pt}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {U.1}Step 1: Maximum Detection Altitude}{100}{subsection.U.1}\protected@file@percent }
+\newlabel{sec:step-max-alt}{{U.1}{100}{Step 1: Maximum Detection Altitude}{subsection.U.1}{}}
+\newlabel{eq:target-px}{{51}{100}{Step 1: Maximum Detection Altitude}{equation.51}{}}
+\newlabel{eq:model-px}{{52}{100}{Step 1: Maximum Detection Altitude}{equation.52}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {U.2}Step 2: Maximum Speed at Chosen Altitude}{100}{subsection.U.2}\protected@file@percent }
+\newlabel{sec:step-max-speed}{{U.2}{100}{Step 2: Maximum Speed at Chosen Altitude}{subsection.U.2}{}}
+\newlabel{eq:footprint-along}{{53}{100}{Step 2: Maximum Speed at Chosen Altitude}{equation.53}{}}
+\newlabel{eq:max-speed}{{54}{100}{Step 2: Maximum Speed at Chosen Altitude}{equation.54}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {U.3}Step 3: Minimise Energy via Scan Angle}{101}{subsection.U.3}\protected@file@percent }
+\newlabel{sec:step-scan-angle}{{U.3}{101}{Step 3: Minimise Energy via Scan Angle}{subsection.U.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {U.4}Step 4: NFZ Safety Margins}{101}{subsection.U.4}\protected@file@percent }
+\newlabel{sec:step-nfz-margins}{{U.4}{101}{Step 4: NFZ Safety Margins}{subsection.U.4}{}}
+\newlabel{eq:footprint-cross}{{57}{101}{Step 4: NFZ Safety Margins}{equation.57}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {U.5}Step 5: Swath Overlap}{101}{subsection.U.5}\protected@file@percent }
+\newlabel{sec:step-overlap}{{U.5}{101}{Step 5: Swath Overlap}{subsection.U.5}{}}
+\newlabel{eq:lane-error}{{59}{101}{Step 5: Swath Overlap}{equation.59}{}}
+\abx@aux@cite{0}{galceran2013survey}
+\abx@aux@segm{0}{0}{galceran2013survey}
+\@writefile{toc}{\contentsline {subsection}{\numberline {U.6}Step 6: Diagonal vs Aligned Scanning}{102}{subsection.U.6}\protected@file@percent }
+\newlabel{sec:step-diagonal}{{U.6}{102}{Step 6: Diagonal vs Aligned Scanning}{subsection.U.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {U.7}The Dependency Chain}{102}{subsection.U.7}\protected@file@percent }
+\newlabel{sec:dependency-chain}{{U.7}{102}{The Dependency Chain}{subsection.U.7}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {V}Vision Performance Analysis}{102}{appendix.V}\protected@file@percent }
+\newlabel{sec:vision-perf}{{V}{102}{Vision Performance Analysis}{appendix.V}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {V.1}Altitude vs.\ Target Pixel Size}{102}{subsection.V.1}\protected@file@percent }
+\newlabel{sec:vp:altitude}{{V.1}{102}{Altitude vs.\ Target Pixel Size}{subsection.V.1}{}}
+\newlabel{eq:footprint}{{61}{102}{Altitude vs.\ Target Pixel Size}{equation.61}{}}
+\newlabel{eq:dummypx}{{62}{102}{Altitude vs.\ Target Pixel Size}{equation.62}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {30}{\ignorespaces Target height in the 640$\times $640 model input as a function of altitude. The red dashed line marks the 20\,px detection threshold; the shaded region indicates unreliable detection.}}{103}{figure.caption.184}\protected@file@percent }
+\newlabel{fig:alt-vs-px}{{30}{103}{Target height in the 640$\times $640 model input as a function of altitude. The red dashed line marks the 20\,px detection threshold; the shaded region indicates unreliable detection}{figure.caption.184}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {V.2}Speed vs.\ Motion Blur}{103}{subsection.V.2}\protected@file@percent }
+\newlabel{sec:vp:blur}{{V.2}{103}{Speed vs.\ Motion Blur}{subsection.V.2}{}}
+\newlabel{eq:blur}{{63}{103}{Speed vs.\ Motion Blur}{equation.63}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {V.3}Speed vs.\ Frames on Target}{103}{subsection.V.3}\protected@file@percent }
+\newlabel{sec:vp:frames}{{V.3}{103}{Speed vs.\ Frames on Target}{subsection.V.3}{}}
+\newlabel{eq:frames}{{64}{103}{Speed vs.\ Frames on Target}{equation.64}{}}
+\newlabel{eq:critspeed}{{65}{103}{Speed vs.\ Frames on Target}{equation.65}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {31}{\ignorespaces Motion blur vs.\ drone speed at three altitudes (1/1000\,s exposure, global shutter). The grey dashed line marks the 1\,px visible-blur threshold.}}{104}{figure.caption.186}\protected@file@percent }
+\newlabel{fig:speed-blur}{{31}{104}{Motion blur vs.\ drone speed at three altitudes (1/1000\,s exposure, global shutter). The grey dashed line marks the 1\,px visible-blur threshold}{figure.caption.186}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {V.4}Coverage Efficiency}{104}{subsection.V.4}\protected@file@percent }
+\newlabel{sec:vp:coverage}{{V.4}{104}{Coverage Efficiency}{subsection.V.4}{}}
+\newlabel{eq:coverage}{{66}{104}{Coverage Efficiency}{equation.66}{}}
+\newlabel{eq:overlap}{{67}{104}{Coverage Efficiency}{equation.67}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {V.5}Combined Detection Envelope}{104}{subsection.V.5}\protected@file@percent }
+\newlabel{sec:vp:envelope}{{V.5}{104}{Combined Detection Envelope}{subsection.V.5}{}}
+\newlabel{eq:score}{{68}{104}{Combined Detection Envelope}{equation.68}{}}
+\newlabel{eq:ssize}{{69}{104}{Combined Detection Envelope}{equation.69}{}}
+\newlabel{eq:sframes}{{70}{104}{Combined Detection Envelope}{equation.70}{}}
+\newlabel{eq:sblur}{{71}{104}{Combined Detection Envelope}{equation.71}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {32}{\ignorespaces Frames the target remains visible vs.\ drone speed at three altitudes (4.8\,FPS). The green and red dashed lines mark the 3-frame smart-detect threshold and 1-frame minimum, respectively.}}{105}{figure.caption.188}\protected@file@percent }
+\newlabel{fig:speed-frames}{{32}{105}{Frames the target remains visible vs.\ drone speed at three altitudes (4.8\,FPS). The green and red dashed lines mark the 3-frame smart-detect threshold and 1-frame minimum, respectively}{figure.caption.188}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {V.6}Summary of Limiting Factors}{105}{subsection.V.6}\protected@file@percent }
+\newlabel{sec:vp:summary}{{V.6}{105}{Summary of Limiting Factors}{subsection.V.6}{}}
+\@writefile{toc}{\contentsline {paragraph}{{\color  {blue} Version A --- Current (systematic framework-first).}}{105}{paragraph*.192}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{{\color  {red} Version B --- Lead with safety and ethical stakes.}}{105}{paragraph*.193}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{{\color  {olive} Version C --- Lead with economic accessibility.}}{105}{paragraph*.194}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {33}{\ignorespaces Search efficiency vs.\ altitude. The solid blue line shows coverage rate (m$^2$/s); the dashed pink line shows swath width. Higher altitude improves efficiency at the cost of reduced target pixel size.}}{106}{figure.caption.189}\protected@file@percent }
+\newlabel{fig:coverage}{{33}{106}{Search efficiency vs.\ altitude. The solid blue line shows coverage rate (m$^2$/s); the dashed pink line shows swath width. Higher altitude improves efficiency at the cost of reduced target pixel size}{figure.caption.189}{}}
+\@writefile{toc}{\contentsline {paragraph}{{\color  {blue} Version A --- Current (factual, process-oriented).}}{106}{paragraph*.195}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{{\color  {red} Version B --- Narrative/storytelling angle.}}{106}{paragraph*.196}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{{\color  {olive} Version C --- Emphasise data quality gained.}}{106}{paragraph*.197}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{{\color  {blue} Version A --- Current (Sheridan taxonomy, cost-structure analysis).}}{106}{paragraph*.198}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{{\color  {red} Version B --- SAR practitioner perspective.}}{106}{paragraph*.199}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {34}{\ignorespaces Combined detection score across the speed--altitude envelope. Green indicates high-confidence detection; the white contours mark $S = 0.3$, $0.5$, and $0.7$. The operational regime (6--10\,m/s, 20--50\,m) lies entirely within the $S > 0.7$ zone.}}{107}{figure.caption.190}\protected@file@percent }
+\newlabel{fig:envelope}{{34}{107}{Combined detection score across the speed--altitude envelope. Green indicates high-confidence detection; the white contours mark $S = 0.3$, $0.5$, and $0.7$. The operational regime (6--10\,m/s, 20--50\,m) lies entirely within the $S > 0.7$ zone}{figure.caption.190}{}}
+\@writefile{toc}{\contentsline {paragraph}{{\color  {olive} Version C --- Safety-critical systems perspective.}}{107}{paragraph*.200}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{{\color  {blue} Version A --- Current (balanced, methodological).}}{107}{paragraph*.201}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{{\color  {red} Version B --- Lead with the honest admission.}}{107}{paragraph*.202}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{{\color  {olive} Version C --- Lead with the strongest result first.}}{108}{paragraph*.203}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{{\color  {blue} Version A --- Achievements-first.}}{108}{paragraph*.204}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{{\color  {red} Version B --- Lessons-learned-first.}}{108}{paragraph*.205}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{{\color  {olive} Version C --- Future-impact-first.}}{108}{paragraph*.206}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {14}{\ignorespaces Plus/delta review of system technical performance.}}{109}{table.caption.47}\protected@file@percent }
+\newlabel{tab:plus-delta}{{14}{109}{Plus/delta review of system technical performance}{table.caption.47}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {16}{\ignorespaces Defects discovered at each testing tier, with resolution time and estimated cost if undetected.}}{110}{table.caption.50}\protected@file@percent }
+\newlabel{tab:bug-cost}{{16}{110}{Defects discovered at each testing tier, with resolution time and estimated cost if undetected}{table.caption.50}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {18}{\ignorespaces System configuration parameters grouped by function.}}{111}{table.caption.53}\protected@file@percent }
+\newlabel{tab:config-params}{{18}{111}{System configuration parameters grouped by function}{table.caption.53}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {19}{\ignorespaces Augmentation pipeline for the SAR dummy detector. Offline augmentations are applied during synthetic image generation; online augmentations are applied by the YOLO trainer at each epoch.}}{111}{table.caption.54}\protected@file@percent }
+\newlabel{tab:augmentation}{{19}{111}{Augmentation pipeline for the SAR dummy detector. Offline augmentations are applied during synthetic image generation; online augmentations are applied by the YOLO trainer at each epoch}{table.caption.54}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {20}{\ignorespaces Dataset composition for the v2 SAR dummy detector.}}{112}{table.caption.55}\protected@file@percent }
+\newlabel{tab:data_composition}{{20}{112}{Dataset composition for the v2 SAR dummy detector}{table.caption.55}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {21}{\ignorespaces Training hyperparameters for the YOLOv8n SAR dummy detector (v2).}}{112}{table.caption.56}\protected@file@percent }
+\newlabel{tab:training_config}{{21}{112}{Training hyperparameters for the YOLOv8n SAR dummy detector (v2)}{table.caption.56}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {22}{\ignorespaces Detection performance comparison between model versions. All metrics are computed on the respective validation sets.}}{112}{table.caption.57}\protected@file@percent }
+\newlabel{tab:training_results}{{22}{112}{Detection performance comparison between model versions. All metrics are computed on the respective validation sets}{table.caption.57}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {23}{\ignorespaces Failure modes and automated responses.}}{112}{table.caption.58}\protected@file@percent }
+\newlabel{tab:failure-modes}{{23}{112}{Failure modes and automated responses}{table.caption.58}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {24}{\ignorespaces Risk register with mitigations.}}{113}{table.caption.59}\protected@file@percent }
+\newlabel{tab:risk-register}{{24}{113}{Risk register with mitigations}{table.caption.59}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {28}{\ignorespaces Inference backend comparison for YOLOv8n ($640\times 640$ input) on Raspberry Pi~5.}}{113}{table.caption.67}\protected@file@percent }
+\newlabel{tab:backend_comparison}{{28}{113}{Inference backend comparison for YOLOv8n ($640\times 640$ input) on Raspberry Pi~5}{table.caption.67}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {29}{\ignorespaces Inference performance: measured baseline and projected improvements on Raspberry Pi~5 with YOLOv8n ($640\times 640$ input, float32 weights).}}{113}{table.caption.73}\protected@file@percent }
+\newlabel{tab:inference_roadmap}{{29}{113}{Inference performance: measured baseline and projected improvements on Raspberry Pi~5 with YOLOv8n ($640\times 640$ input, float32 weights)}{table.caption.73}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {30}{\ignorespaces Per-stage timing breakdown for the detection pipeline on Raspberry Pi~5 (mean of 50 runs, YOLOv8n FP32, XNNPACK 4-thread).}}{113}{table.caption.74}\protected@file@percent }
+\newlabel{tab:pipeline_timing}{{30}{113}{Per-stage timing breakdown for the detection pipeline on Raspberry Pi~5 (mean of 50 runs, YOLOv8n FP32, XNNPACK 4-thread)}{table.caption.74}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {31}{\ignorespaces Inference benchmarks on Raspberry Pi~5 (Cortex-A76 $\times $4 at \SI {2.4}{\giga \hertz }, XNNPACK 4-thread, active cooler, no desktop environment).}}{114}{table.caption.75}\protected@file@percent }
+\newlabel{tab:cv_benchmarks}{{31}{114}{Inference benchmarks on Raspberry Pi~5 (Cortex-A76 $\times $4 at \SI {2.4}{\giga \hertz }, XNNPACK 4-thread, active cooler, no desktop environment)}{table.caption.75}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {32}{\ignorespaces Camera ground footprint and target size at operational altitudes (IMX296, $f = \SI {5.46}{\milli \metre }$, $1456\!\times \!1088$ sensor).}}{114}{table.caption.80}\protected@file@percent }
+\newlabel{tab:footprint}{{32}{114}{Camera ground footprint and target size at operational altitudes (IMX296, $f = \SI {5.46}{\milli \metre }$, $1456\!\times \!1088$ sensor)}{table.caption.80}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {33}{\ignorespaces Frames per flyover and detection probability for a target within the search swath. $p_d$ = single-frame detection probability; $P_\mathrm  {miss}$ = $(1 - p_d)^N$; $P_\mathrm  {detect}$ = $1 - P_\mathrm  {miss}$.}}{114}{table.caption.81}\protected@file@percent }
+\newlabel{tab:frames_flyover}{{33}{114}{Frames per flyover and detection probability for a target within the search swath. $p_d$ = single-frame detection probability; $P_\mathrm {miss}$ = $(1 - p_d)^N$; $P_\mathrm {detect}$ = $1 - P_\mathrm {miss}$}{table.caption.81}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {34}{\ignorespaces Detection performance vs altitude for a \SI {1.8}{\metre } mannequin target. Pixel size is in the $640\!\times \!640$ model input; confidence and detection rate are empirically observed or interpolated from video replay data.}}{114}{table.caption.83}\protected@file@percent }
+\newlabel{tab:altitude_performance}{{34}{114}{Detection performance vs altitude for a \SI {1.8}{\metre } mannequin target. Pixel size is in the $640\!\times \!640$ model input; confidence and detection rate are empirically observed or interpolated from video replay data}{table.caption.83}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {35}{\ignorespaces Training evaluation metrics for the YOLOv8n SAR detector (v2, trained at $1088 \times 1088$, evaluated on validation split).}}{114}{table.caption.89}\protected@file@percent }
+\newlabel{tab:training_results_extended}{{35}{114}{Training evaluation metrics for the YOLOv8n SAR detector (v2, trained at $1088 \times 1088$, evaluated on validation split)}{table.caption.89}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {36}{\ignorespaces Available model variants for field deployment.}}{115}{table.caption.94}\protected@file@percent }
+\newlabel{tab:model_variants}{{36}{115}{Available model variants for field deployment}{table.caption.94}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {37}{\ignorespaces Comparison of video streaming protocols for companion-computer UAV telemetry.}}{115}{table.caption.103}\protected@file@percent }
+\newlabel{tab:stream-protocols}{{37}{115}{Comparison of video streaming protocols for companion-computer UAV telemetry}{table.caption.103}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {38}{\ignorespaces Ground sampling distance and footprint at key mission altitudes.}}{115}{table.caption.104}\protected@file@percent }
+\newlabel{tab:gsd-altitude}{{38}{115}{Ground sampling distance and footprint at key mission altitudes}{table.caption.104}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {39}{\ignorespaces Single-observation error budget at \SI {35}{\metre } and \SI {15}{\metre } altitude. RSS\,=\,root sum of squares.}}{115}{table.caption.107}\protected@file@percent }
+\newlabel{tab:error-budget}{{39}{115}{Single-observation error budget at \SI {35}{\metre } and \SI {15}{\metre } altitude. RSS\,=\,root sum of squares}{table.caption.107}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {40}{\ignorespaces Comparison of GPS estimation methods. Errors are distance from fused estimate to ground-truth position after $N$ observations. Simulation includes \SI {3}{\metre } GPS drift and \SI {1}{\metre } altitude noise.}}{115}{table.caption.113}\protected@file@percent }
+\newlabel{tab:method-compare}{{40}{115}{Comparison of GPS estimation methods. Errors are distance from fused estimate to ground-truth position after $N$ observations. Simulation includes \SI {3}{\metre } GPS drift and \SI {1}{\metre } altitude noise}{table.caption.113}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {45}{\ignorespaces Minimum viable deliverable: components and requirement coverage.}}{115}{table.caption.121}\protected@file@percent }
+\newlabel{tab:mvd}{{45}{115}{Minimum viable deliverable: components and requirement coverage}{table.caption.121}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {47}{\ignorespaces Target deliverable: full autonomous mission.}}{116}{table.caption.122}\protected@file@percent }
+\newlabel{tab:target}{{47}{116}{Target deliverable: full autonomous mission}{table.caption.122}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {49}{\ignorespaces Contingency plans for flight day failure scenarios.}}{116}{table.caption.123}\protected@file@percent }
+\newlabel{tab:contingency}{{49}{116}{Contingency plans for flight day failure scenarios}{table.caption.123}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {51}{\ignorespaces Contingency-to-test-script mapping.}}{117}{table.caption.124}\protected@file@percent }
+\newlabel{tab:test-scripts}{{51}{117}{Contingency-to-test-script mapping}{table.caption.124}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {59}{\ignorespaces Sensor calibration summary. The ``Error if uncalibrated'' column quantifies the systematic bias that would have affected every measurement had the default or assumed value been retained.}}{117}{table.caption.131}\protected@file@percent }
+\newlabel{tab:calibration}{{59}{117}{Sensor calibration summary. The ``Error if uncalibrated'' column quantifies the systematic bias that would have affected every measurement had the default or assumed value been retained}{table.caption.131}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {62}{\ignorespaces Comparison of landing approaches over 20 simulated missions each.}}{117}{table.caption.138}\protected@file@percent }
+\newlabel{tab:centering-comparison}{{62}{117}{Comparison of landing approaches over 20 simulated missions each}{table.caption.138}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {63}{\ignorespaces MAVLink messages used by the mission software.}}{117}{table.caption.140}\protected@file@percent }
+\newlabel{tab:mavlink-messages}{{63}{117}{MAVLink messages used by the mission software}{table.caption.140}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {65}{\ignorespaces Raw inference vs.\ effective pipeline throughput on Raspberry Pi~5 (YOLOv8n, $640\times 640$ input).}}{118}{table.caption.143}\protected@file@percent }
+\newlabel{tab:pipeline_fps}{{65}{118}{Raw inference vs.\ effective pipeline throughput on Raspberry Pi~5 (YOLOv8n, $640\times 640$ input)}{table.caption.143}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {66}{\ignorespaces Altitude--lane width--detection trade-off for the AENGM0074 survey polygon. Target pixel extent assumes a \SI {1.8}{\metre } prone mannequin imaged by the IMX296 sensor at 1456$\times $1088 resolution.}}{118}{table.caption.149}\protected@file@percent }
+\newlabel{tab:alt-tradeoff}{{66}{118}{Altitude--lane width--detection trade-off for the AENGM0074 survey polygon. Target pixel extent assumes a \SI {1.8}{\metre } prone mannequin imaged by the IMX296 sensor at 1456$\times $1088 resolution}{table.caption.149}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {68}{\ignorespaces Comparison of trained model generations. All models are YOLOv8n exported to TFLite float32. Inference latency measured on Raspberry Pi~5 (TFLite + XNNPACK, 4 threads). mAP values are computed on each model's respective validation set.}}{118}{table.caption.150}\protected@file@percent }
+\newlabel{tab:model_generations}{{68}{118}{Comparison of trained model generations. All models are YOLOv8n exported to TFLite float32. Inference latency measured on Raspberry Pi~5 (TFLite + XNNPACK, 4 threads). mAP values are computed on each model's respective validation set}{table.caption.150}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {69}{\ignorespaces Top~5 and bottom~5 configurations by total energy from the 216-configuration sweep. Coverage is measured as the fraction of the survey polygon area imaged.}}{118}{table.caption.151}\protected@file@percent }
+\newlabel{tab:energy-top5}{{69}{118}{Top~5 and bottom~5 configurations by total energy from the 216-configuration sweep. Coverage is measured as the fraction of the survey polygon area imaged}{table.caption.151}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {71}{\ignorespaces Rotation angle comparison at \SI {35}{\metre } altitude, \SI {8}{\metre \per \second } search speed.}}{118}{table.caption.153}\protected@file@percent }
+\newlabel{tab:rotation-compare}{{71}{118}{Rotation angle comparison at \SI {35}{\metre } altitude, \SI {8}{\metre \per \second } search speed}{table.caption.153}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {73}{\ignorespaces NFZ margin analysis: minimum required distance from the SSSI boundary to prevent camera footprint intrusion, compared with the implemented total margin (waypoint buffer + speed ramp zone).}}{119}{table.caption.155}\protected@file@percent }
+\newlabel{tab:nfz-margin}{{73}{119}{NFZ margin analysis: minimum required distance from the SSSI boundary to prevent camera footprint intrusion, compared with the implemented total margin (waypoint buffer + speed ramp zone)}{table.caption.155}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {75}{\ignorespaces Speed vs detection probability at \SI {35}{\metre } altitude. Search time is for the AENGM0074 polygon at the \SI {70}{\degree } scan angle.}}{119}{table.caption.157}\protected@file@percent }
+\newlabel{tab:speed-detect}{{75}{119}{Speed vs detection probability at \SI {35}{\metre } altitude. Search time is for the AENGM0074 polygon at the \SI {70}{\degree } scan angle}{table.caption.157}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {77}{\ignorespaces Multi-objective trade-off summary. The selected configuration prioritises detection reliability and regulatory safety over minimum energy or maximum coverage.}}{119}{table.caption.159}\protected@file@percent }
+\newlabel{tab:pareto-summary}{{77}{119}{Multi-objective trade-off summary. The selected configuration prioritises detection reliability and regulatory safety over minimum energy or maximum coverage}{table.caption.159}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {79}{\ignorespaces Four-layer NFZ protection architecture. Each layer activates at a different distance from the SSSI boundary, providing defence in depth.}}{119}{table.caption.168}\protected@file@percent }
+\newlabel{tab:nfz-layers}{{79}{119}{Four-layer NFZ protection architecture. Each layer activates at a different distance from the SSSI boundary, providing defence in depth}{table.caption.168}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {81}{\ignorespaces Top~5 and bottom~5 configurations by total energy (with NFZ) from the 216-configuration sweep. The selected operating point is highlighted.}}{119}{table.caption.174}\protected@file@percent }
+\newlabel{tab:energy-top-bottom}{{81}{119}{Top~5 and bottom~5 configurations by total energy (with NFZ) from the 216-configuration sweep. The selected operating point is highlighted}{table.caption.174}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {83}{\ignorespaces Quantitative comparison of six search strategies at \SI {50}{\metre } altitude, \SI {10}{\metre \per \second }. All values computed on the real AENGM0074 polygon (\SI {32200}{\metre \squared }).}}{120}{table.caption.176}\protected@file@percent }
+\newlabel{tab:strategy-compare}{{83}{120}{Quantitative comparison of six search strategies at \SI {50}{\metre } altitude, \SI {10}{\metre \per \second }. All values computed on the real AENGM0074 polygon (\SI {32200}{\metre \squared })}{table.caption.176}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {85}{\ignorespaces Detection probability function chain from altitude to cumulative detection probability per target flyover. Motion blur is sub-pixel at all speeds (IMX296 global shutter, $1/1000$\,s exposure) and is therefore omitted.}}{120}{table.caption.178}\protected@file@percent }
+\newlabel{tab:detect-chain}{{85}{120}{Detection probability function chain from altitude to cumulative detection probability per target flyover. Motion blur is sub-pixel at all speeds (IMX296 global shutter, $1/1000$\,s exposure) and is therefore omitted}{table.caption.178}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {87}{\ignorespaces Pareto trade-off summary. The selected configuration prioritises detection reliability and regulatory safety over minimum energy.}}{120}{table.caption.180}\protected@file@percent }
+\newlabel{tab:pareto-final}{{87}{120}{Pareto trade-off summary. The selected configuration prioritises detection reliability and regulatory safety over minimum energy}{table.caption.180}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {89}{\ignorespaces Target pixel extent versus altitude. The model-input column reflects YOLOv8n's $640\times 640$ resize. Below \SI {20}{px} height in the model input, detection becomes unreliable.}}{120}{table.caption.181}\protected@file@percent }
+\newlabel{tab:px-vs-alt}{{89}{120}{Target pixel extent versus altitude. The model-input column reflects YOLOv8n's $640\times 640$ resize. Below \SI {20}{px} height in the model input, detection becomes unreliable}{table.caption.181}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {91}{\ignorespaces Camera and inference parameters used for the performance analysis.}}{120}{table.caption.182}\protected@file@percent }
+\newlabel{tab:vision-params}{{91}{120}{Camera and inference parameters used for the performance analysis}{table.caption.182}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {92}{\ignorespaces Dummy size in the model input at operating altitudes. The detection threshold is approximately \SI {20}{px} in the shortest dimension.}}{121}{table.caption.183}\protected@file@percent }
+\newlabel{tab:px-by-alt}{{92}{121}{Dummy size in the model input at operating altitudes. The detection threshold is approximately \SI {20}{px} in the shortest dimension}{table.caption.183}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {93}{\ignorespaces Motion blur in sensor pixels at $1/1000$\,s exposure. All values are sub-pixel at operating speeds.}}{121}{table.caption.185}\protected@file@percent }
+\newlabel{tab:blur}{{93}{121}{Motion blur in sensor pixels at $1/1000$\,s exposure. All values are sub-pixel at operating speeds}{table.caption.185}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {94}{\ignorespaces Frames on target at the adaptive speed profile. Even at maximum speed the target is captured in $\geq $11 frames.}}{121}{table.caption.187}\protected@file@percent }
+\newlabel{tab:frames}{{94}{121}{Frames on target at the adaptive speed profile. Even at maximum speed the target is captured in $\geq $11 frames}{table.caption.187}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {95}{\ignorespaces Summary of vision-system constraints within the operating envelope.}}{121}{table.caption.191}\protected@file@percent }
+\newlabel{tab:limits}{{95}{121}{Summary of vision-system constraints within the operating envelope}{table.caption.191}{}}
 \abx@aux@read@bbl@mdfivesum{901921EE2E25BBED5E79AEB9EF105745}
 \abx@aux@defaultrefcontext{0}{murphy2014}{none/global//global/global/global}
 \abx@aux@defaultrefcontext{0}{edgeai}{none/global//global/global/global}
@@ -1325,4 +1357,4 @@
 \abx@aux@defaultrefcontext{0}{rtca_do178c}{none/global//global/global/global}
 \abx@aux@defaultrefcontext{0}{mavproxy}{none/global//global/global/global}
 \abx@aux@defaultrefcontext{0}{mavlink2}{none/global//global/global/global}
-\gdef \@abspage@last{118}
+\gdef \@abspage@last{121}
