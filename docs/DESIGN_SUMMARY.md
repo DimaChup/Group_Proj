@@ -88,7 +88,7 @@ called once per loop iteration.
 
 ### 2.1 Lawnmower Pattern
 
-The system uses a boustrophedon (lawnmower) scan pattern. Alternatives considered:
+The system uses a boustrophedon (lawnmower) scan pattern (Choset, 2001). Alternatives considered:
 
 | Pattern | Coverage guarantee | Why rejected |
 |---------|-------------------|-------------|
@@ -436,7 +436,7 @@ first.
 
 ### 4.1 AI Model
 
-YOLOv8n (nano) was chosen for the Pi 5's CPU constraints:
+YOLOv8n (Jocher et al., 2023) (nano) was chosen for the Pi 5's CPU constraints:
 
 | Variant | TFLite size | Pi 5 inference | Why |
 |---------|------------|----------------|-----|
