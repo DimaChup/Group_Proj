@@ -217,6 +217,9 @@ def gen_full():
         'RETURN_TRANSIT':    (9.5,  2.7),
         'RETURN_HOME':       (9.5,  1.5),
 
+        # Fallback
+        'HOVER':             (1.5,  3.3),
+
         # Safety (far right)
         'MANUAL':            (12.5, 7.5),
     }
@@ -237,6 +240,7 @@ def gen_full():
         'SEARCH': GREEN_DARK,
         'CENTERING': ORANGE, 'DESCENDING': ORANGE, 'VERIFY': ORANGE,
         'HOVER_TARGET': ORANGE,
+        'HOVER': GREY,
         'APPROACH': BLUE, 'LANDING': BLUE, 'DONE': GREEN,
         'RETURN_TO_SEARCH': '#f1c40f', 'RETURN_FROM_MANUAL': '#f1c40f',
         'RETURN_TRANSIT': '#f1c40f', 'RETURN_HOME': '#f1c40f',
@@ -271,6 +275,12 @@ def gen_full():
     # TRANSIT -> SEARCH
     arrow(ax, P['TRANSIT_TO_SEARCH'][0], P['TRANSIT_TO_SEARCH'][1]-bh/2,
           P['SEARCH'][0], P['SEARCH'][1]+bh/2, color=BLUE_DARK)
+
+    # HOVER fallback (no waypoints generated — error state)
+    arrow(ax, P['SEARCH'][0], P['SEARCH'][1]-bh/2,
+          P['HOVER'][0], P['HOVER'][1]+bh/2,
+          label='No WPs', color=GREY, linestyle='--', fontsize=6.5,
+          label_offset=(0.6, 0.15))
 
     # ── SEARCH -> CENTERING (detection) ─────────────────────────
     arrow(ax, P['SEARCH'][0]+bw/2, P['SEARCH'][1],
@@ -358,8 +368,8 @@ def gen_full():
     ax.annotate('', xy=(dx - bw/2, dy),
                 xytext=(sx, sy - bh/2),
                 arrowprops=dict(arrowstyle='->', color=BLUE_DARK, lw=1.2,
-                                connectionstyle='arc3,rad=0.4'), zorder=3)
-    ax.text(1.5, 1.0, 'All waypoints\nexhausted', ha='center', va='center',
+                                connectionstyle='arc3,rad=0.5'), zorder=3)
+    ax.text(0.5, 1.5, 'All waypoints\nexhausted', ha='center', va='center',
             fontsize=7, color=BLUE_DARK, fontstyle='italic',
             bbox=dict(boxstyle='round,pad=0.08', facecolor='white',
                       edgecolor='none', alpha=0.9), zorder=6)
