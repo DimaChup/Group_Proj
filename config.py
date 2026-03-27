@@ -227,7 +227,7 @@ MANUAL_YAW_RATE_DEGS = 30.0     # Yaw rotation speed for Q/E and alignment
 DIAGONAL_YAW_OFFSET_DEG = 0
 
 # --- SEARCH TUNING ---
-REJECTED_TARGET_RADIUS_M = 3.0  # Skip detections within this radius of rejected/IOI targets
+REJECTED_TARGET_RADIUS_M = 5.0  # Skip detections within this radius of rejected/IOI targets (GPS noise margin)
 DETECT_CONFIRM_FRAMES = 3       # Consecutive detection frames required before triggering (--smart-detect)
 DETECT_LOCK_RADIUS_M = 5.0     # During CENTERING, ignore detections further than this from locked target
 MAX_RESCAN_PASSES = 3           # Number of altitude-drop rescan passes
