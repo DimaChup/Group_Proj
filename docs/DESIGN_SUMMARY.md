@@ -211,7 +211,17 @@ independent protection layers.
 If the Pi crashes, the Cube geofence still works. If the firmware geofence is
 misconfigured, the software layers still enforce the boundary.
 
-### 3.2 Layer 1: Speed Cap (Scalar Field)
+### 3.2 The "Carrot" Concept
+
+The name "carrot" comes from "carrot on a stick." ArduCopter's GUIDED mode autopilot
+chases a target waypoint -- that waypoint is the carrot dangled in front of the drone.
+We do not modify the waypoint position or direction (that would be a "stick" approach,
+physically redirecting the drone). Instead, we cap how fast the autopilot is allowed to
+chase the carrot using `MAV_CMD_DO_CHANGE_SPEED`. The autopilot still handles all
+trajectory planning, path smoothing, deceleration curves, and wind compensation
+internally. We only adjust the speed ceiling.
+
+### 3.3 Layer 1: Speed Cap (Scalar Field)
 
 Within `NFZ_SLOW_ZONE_M = 20 m` of the SSSI boundary, a `MAV_CMD_DO_CHANGE_SPEED`
 command linearly reduces the maximum ground speed:
@@ -228,16 +238,31 @@ speed(d) = NFZ_MIN_SPEED_MPS + (d / NFZ_SLOW_ZONE_M) * (NFZ_ZONE_MAX_SPEED_MPS -
 | 0 m (at boundary) | 0.3 m/s |
 | > 20 m | Normal (6-10 m/s) |
 
+**Why 20 m zone width:** The drone's maximum search speed is 10 m/s (at 50 m altitude).
+At 10 m/s, stopping distance is approximately 5-8 m depending on wind conditions. A 20 m
+zone provides roughly 2x safety margin over the worst-case stopping distance. It also
+gives the drone sufficient distance to decelerate smoothly -- a gentle linear ramp over
+20 m rather than a hard wall that would cause abrupt braking or overshoot.
+
+**Why 3 m/s at the outer edge:** 3 m/s is the minimum useful search speed. Slower than
+this and the drone produces too many scan lines for the same area, wasting battery and
+flight time. Below 3 m/s, the drone is essentially loitering rather than searching.
+
+**Why 0.3 m/s at the boundary:** 0.3 m/s is effectively hovering -- barely perceptible
+movement. If the drone somehow reaches the actual NFZ boundary at 0.3 m/s, it has almost
+no momentum to cross it. The autopilot can stop from 0.3 m/s in well under a metre, even
+in moderate wind.
+
 **Why `DO_CHANGE_SPEED` and not velocity commands:** `DO_CHANGE_SPEED` modifies the
 autopilot's own speed limit. The autopilot continues handling path smoothing,
 deceleration, and wind compensation internally. The companion computer only adjusts the
 ceiling. Velocity commands (`SET_POSITION_TARGET_LOCAL_NED`) fight the position
-controller, causing oscillation -- this was tested and rejected (see 3.4).
+controller, causing oscillation -- this was tested and rejected (see 3.5).
 
 **Why linear:** Simple, predictable, monotonic. Two tunable parameters control the
 endpoints. No discontinuities or inflection points.
 
-### 3.3 Layer 2: Repulsive Push (Vector Field)
+### 3.4 Layer 2: Repulsive Push (Vector Field)
 
 A virtual inner polygon is offset inward by `NFZ_INNER_OFFSET_M = 20 m` from the SSSI
 boundary. When the drone is within `NFZ_INNER_RANGE_M = 23 m` of this inner polygon, a
@@ -252,29 +277,69 @@ Effective activation zone relative to the actual NFZ boundary:
 The 3 m overlap beyond the boundary provides a safety margin against GPS error and
 control lag.
 
-**Why constant magnitude (not gradient):** A gradient force that diminishes with distance
-can fail to overcome the waypoint controller's pull at the edge of the activation zone.
-A constant 3.0 m/s push always exceeds the near-zero speed cap at the boundary (0.3
-m/s), guaranteeing escape. One tunable parameter instead of a force curve.
+**Why 20 m inner polygon offset:** The offset places the repulsion source deep inside
+the NFZ so the resulting push field extends 3 m outside the actual boundary. This means
+the drone feels the push *before* it reaches the boundary. If the offset were smaller
+(e.g., 3 m), the push would only activate when the drone is already very close to or
+inside the boundary -- too late if it is approaching at any meaningful speed.
+
+**Why constant magnitude (not gradient):** A gradient force that weakens near the
+boundary would let a fast-moving drone slip through. If the drone is within the danger
+zone (23 m from the inner polygon, i.e., 3 m outside the actual NFZ boundary), the push
+must be strong enough to overcome any residual velocity. A constant 3.0 m/s push always
+exceeds the near-zero speed cap at the boundary (0.3 m/s), guaranteeing escape. One
+tunable parameter instead of a force curve.
+
+**Why the push is kept even though the carrot already slows the drone:** Defence in
+depth. The speed cap prevents fast approach; the push prevents crossing even at low
+speed. Belt and suspenders. The push is constant (not speed-dependent) so it works even
+if `DO_CHANGE_SPEED` fails to take effect, or if the drone is blown toward the boundary
+by wind. The speed cap is the primary defence; the push is the last resort.
 
 Push direction: unit vector from the closest point on the SSSI polygon to the drone,
 computed via line-segment projection in pixel space, converted back to GPS offsets.
 
-### 3.4 Design Evolution: Why We Picked NFZ_CARROT
+### 3.5 Design Evolution: Three Approaches Tested
 
-Three approaches were implemented and tested in SITL simulation:
+Three approaches were implemented and tested in SITL simulation before arriving at the
+current design:
 
-| Approach | Method | Problem |
-|----------|--------|---------|
-| `--nfz-repel` | Inverse-distance potential field (velocity commands only) | Oscillation -- velocity commands fought the position controller, causing jitter at the buffer boundary |
-| `--nfz-slow` | Compute direction to waypoint, send velocity at capped speed | Jittery -- duplicated autopilot's path-following logic; velocity recomputed each cycle with noisy GPS |
-| **`--nfz-carrot` (chosen)** | `DO_CHANGE_SPEED` for scalar field + inner polygon push for emergency deflection | No oscillation, same flight path, pilot override preserved, minimal code |
+**Approach 1: `--nfz-repel` (velocity commands pushing away from boundary)**
+
+Sent velocity commands (vx, vy) pushing the drone away from the NFZ boundary using an
+inverse-distance potential field. Problem: ArduCopter's GUIDED mode position controller
+is simultaneously trying to fly TO the next waypoint. Our velocity command says "go left"
+while the autopilot says "go right" -- they fight each other, causing oscillation and
+unpredictable jitter at the buffer boundary.
+
+**Approach 2: `--nfz-slow` (velocity toward waypoint at capped speed)**
+
+We computed the direction to the next waypoint ourselves and sent velocity commands at
+reduced speed. Problem: we were duplicating what ArduCopter already does (trajectory
+planning), but worse. Our 20 Hz velocity commands could not match ArduCopter's smooth
+internal trajectory planner, resulting in jittery movement and overshoots at turns. The
+velocity was recomputed each cycle with noisy GPS, compounding the jitter.
+
+**Approach 3: `--nfz-carrot` (chosen) -- `DO_CHANGE_SPEED` + inner polygon push**
+
+We tell ArduCopter "your max speed is now X m/s" via `DO_CHANGE_SPEED`. ArduCopter
+handles ALL direction and trajectory planning. We never fight the autopilot. The result
+is smooth, predictable flight with the same path the autopilot would fly without any
+NFZ system -- just slower near the boundary. The inner polygon push only activates as a
+last resort (within 3 m of the boundary) and is additive -- it pushes in addition to
+normal navigation, not instead of it.
+
+| Approach | Method | Result |
+|----------|--------|--------|
+| `--nfz-repel` | Velocity commands away from boundary | Oscillation (fought position controller) |
+| `--nfz-slow` | Velocity toward waypoint at capped speed | Jittery (duplicated autopilot logic, noisy GPS) |
+| **`--nfz-carrot`** | `DO_CHANGE_SPEED` + inner push | Smooth, predictable, no oscillation |
 
 `NFZ_CARROT` separates concerns: the scalar field handles gradual slowdown (letting the
 autopilot handle direction), and the vector field handles emergency deflection (only
 within 3 m of the boundary where the speed cap alone might be insufficient).
 
-### 3.5 Manual Mode and NFZ
+### 3.6 Manual Mode and NFZ
 
 | Geofence layer | Effect in software MANUAL (M key) |
 |----------------|----------------------------------|
@@ -286,7 +351,7 @@ On real hardware, switching to STABILIZE/LOITER on the RC transmitter disconnect
 companion computer entirely. The pilot has full stick authority; only the firmware
 geofence remains.
 
-### 3.6 Auto-MANUAL on NFZ Entry
+### 3.7 Auto-MANUAL on NFZ Entry
 
 If the drone's GPS falls inside the SSSI (or within 3 m), the software immediately:
 halts the drone (`send_velocity(0,0,0)`), saves the departure state, switches to MANUAL,
