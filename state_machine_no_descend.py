@@ -840,16 +840,25 @@ class StateHandlersMixin:
                     self.calculate_target_gps(px_u, px_v)
                     self._set_state(State.CENTERING)
                 else:
-                    # No detection — return to departure point first
-                    dist_from_departure = self.get_dist_to_point(
-                        self.manual_departure_lat, self.manual_departure_lon)
-                    if dist_from_departure > 5.0:
-                        print(f"Returning to manual departure point ({dist_from_departure:.0f}m away)...")
-                        self._set_state(State.RETURN_FROM_MANUAL)
+                    # Check detection queue first — investigate queued targets before resuming
+                    if getattr(self, '_detect_queue', None) and len(self._detect_queue) > 0:
+                        q_lat, q_lon, _qc = self._detect_queue.pop(0)
+                        print(f"Investigating queued detection at ({q_lat:.6f}, {q_lon:.6f}) — {len(self._detect_queue)} remaining")
+                        self.target_lat = q_lat
+                        self.target_lon = q_lon
+                        self._locked_target = (q_lat, q_lon)
+                        self._set_state(State.CENTERING)
                     else:
-                        print("Resuming Automation...")
-                        self.last_req = 0  # force immediate waypoint send
-                        self._set_state(self.previous_state)
+                        # No queued targets — return to departure point
+                        dist_from_departure = self.get_dist_to_point(
+                            self.manual_departure_lat, self.manual_departure_lon)
+                        if dist_from_departure > 5.0:
+                            print(f"Returning to manual departure point ({dist_from_departure:.0f}m away)...")
+                            self._set_state(State.RETURN_FROM_MANUAL)
+                        else:
+                            print("Resuming Automation...")
+                            self.last_req = 0
+                            self._set_state(self.previous_state)
 
         # K key: clear rejected/ignored targets (re-enables detection in those areas)
         if key == ord('k') or key == ord('K'):
