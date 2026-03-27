@@ -1106,7 +1106,17 @@ The GPS receiver latency creates a characteristic diagonal spread in the scatter
 estimates are biased along the direction of travel because the drone has moved 0.6-2.0 m
 since the GPS fix was recorded.
 
-#### 6.9.4 Accuracy Improvement Strategies
+#### 6.9.4 Bullseye Scatter Plot Visualisation
+
+Two tools provide real-time bullseye scatter plots of GPS estimation accuracy:
+
+- **`tests/laptop/video_test.py`** — replays DJI flight video with detection overlay. Shows two scatter plots: one coloured by distance from image centre (centre-snap detections are most accurate), one coloured by altitude (lower = more accurate). Prints CEP50, max spread, and mean error. This was used to measure the 2.3 m CEP50 from real flight data.
+
+- **`simulator/simple_simulator.py`** — interactive simulation with live bullseye plot. As the drone flies over dummies, each detection adds a dot to the scatter. Shows inverse-variance weighted average, Kalman filter estimate, and running total. Supports zoom/pan, landing zone donut overlay, and Tab to cycle between multiple targets. Used to validate the GPS estimation pipeline end-to-end before real flights.
+
+Both tools demonstrate how estimates converge as more observations are collected, and how centering directly above the target produces the tightest cluster.
+
+#### 6.9.5 Accuracy Improvement Strategies
 
 | Strategy | How it works | Expected CEP |
 |----------|-------------|:------------:|
