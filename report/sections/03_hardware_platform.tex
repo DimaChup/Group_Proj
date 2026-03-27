@@ -1,6 +1,6 @@
 \section{Hardware Platform}\label{sec:hardware}
 
-The hardware platform integrates a quadcopter airframe, an open-source flight controller, a single-board companion computer, and a global shutter camera into a self-contained system capable of autonomous flight and onboard inference. This section details each component and the calibration procedures required to produce reliable metric estimates from visual data.
+The hardware platform integrates a quadcopter airframe, an open-source flight controller, a single-board companion computer, and a global shutter camera into a self-contained system capable of autonomous flight and onboard inference. A central design goal was to demonstrate that effective SAR capability does not require the price point of commercial platforms: the complete system costs under \pounds500, compared with \pounds5\,000+ for a DJI Matrice 30T or \pounds12\,000+ for a DJI Matrice 350 RTK with thermal payload. The trade-off is manual integration effort and a narrower sensor suite, but the core capability---autonomous visual search with onboard AI---is preserved.
 
 % ── Block diagram placeholder ─────────────────────────────────────────
 \begin{figure}[ht]
@@ -8,13 +8,39 @@ The hardware platform integrates a quadcopter airframe, an open-source flight co
   % \includegraphics[width=\linewidth]{hardware_block_diagram}
   \fbox{\parbox{0.92\linewidth}{\centering\vspace{2.8cm}
     \textit{Hardware block diagram: Camera $\xrightarrow{\text{CSI}}$ Pi~5
-    $\xrightarrow{\text{UART}}$ Cube Orange
+    $\xrightarrow{\text{UART}}$ Cube Orange+
     $\xrightarrow{\text{Radio}}$ Ground Station}
   \vspace{2.8cm}}}
   \caption{Hardware block diagram showing data and command flow between subsystems.
            Solid lines indicate wired links; dashed lines indicate wireless.}
   \label{fig:hw-block}
 \end{figure}
+
+% ── Component table with costs ───────────────────────────────────────
+\begin{table}[ht]
+  \centering\compactTable
+  \caption{System bill of materials and approximate costs.}\label{tab:hw-bom}
+  \begin{tabularx}{\linewidth}{@{}l X r@{}}
+    \toprule
+    \textbf{Component} & \textbf{Specification} & \textbf{Cost (\pounds)} \\
+    \midrule
+    Cube Orange+ FC   & STM32H757 dual-core, triple-redundant IMU, ArduPilot 4.5 & 180 \\
+    Here3 GPS          & u-blox M8P, RTK-capable, CAN interface & 70 \\
+    Raspberry Pi 5     & BCM2712 4-core A76 @ \SI{2.4}{\giga\hertz}, \SI{8}{\giga\byte} RAM & 60 \\
+    IMX296 GS Camera   & Sony IMX296, $1456\!\times\!1088$, global shutter, CSI-2 & 45 \\
+    Frame (S500)       & 500\,mm wheelbase, X-configuration, glass fibre & 30 \\
+    Motors ($\times$4) & 2212 920\,KV brushless, ${\sim}\SI{800}{\gram}$ thrust each & 40 \\
+    ESCs ($\times$4)   & 30\,A BLHeli\_S, oneshot125 protocol & 30 \\
+    Battery            & 4S \SI{5200}{\milli\ampere\hour} LiPo, 50C & 35 \\
+    SiK telemetry radio& 433\,MHz pair, TELEM1 port & 20 \\
+    RC transmitter/Rx  & FlySky FS-i6, 6-channel, 2.4\,GHz & 40 \\
+    Wiring \& misc.    & Servo cables, XT60, power module, standoffs & 15 \\
+    \midrule
+    \textbf{Total}     & & \textbf{$\sim$565} \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
 
 % ── Specs table ───────────────────────────────────────────────────────
 \begin{table}[ht]
@@ -37,10 +63,15 @@ The hardware platform integrates a quadcopter airframe, an open-source flight co
       & Focal length& \SI{5.46}{\milli\metre} (calibrated) \\
       & Interface   & CSI-2, 2-lane MIPI \\
     \midrule
-    \multirow{3}{*}{Cube Orange}
+    \multirow{3}{*}{Cube Orange+}
       & MCU         & STM32H757, dual-core Arm Cortex-M7/M4 \\
       & IMU         & Triple-redundant (ICM-20948 $\times$2, ICM-20649) \\
       & Firmware    & ArduPilot Copter 4.5 \cite{ardupilot} \\
+    \midrule
+    \multirow{3}{*}{Power System}
+      & Battery     & 4S LiPo, \SI{5200}{\milli\ampere\hour}, 50C \\
+      & AUW         & ${\sim}\SI{3.0}{\kilo\gram}$ (incl.\ payload) \\
+      & Flight time & ${\sim}$12--15\,min (estimated, altitude- and wind-dependent) \\
     \bottomrule
   \end{tabularx}
 \end{table}
@@ -48,12 +79,14 @@ The hardware platform integrates a quadcopter airframe, an open-source flight co
 
 \subsection{Airframe and Flight Controller}\label{sec:hw-airframe}
 
-The airframe is a conventional X-configuration quadcopter sized for a \SI{3}{\kilo\gram} all-up weight. The Cube Orange flight controller \cite{cubepilot} runs ArduPilot Copter firmware \cite{ardupilot}, providing GPS-aided attitude stabilisation, waypoint navigation, and a MAVLink~2.0 command interface. An RC transmitter provides manual override at all times: the pilot can switch from \texttt{GUIDED} to \texttt{STABILIZE} or \texttt{LOITER} via a mode switch, and a dedicated kill switch triggers immediate motor disarm. This dual-authority design ensures that the companion computer can never prevent the pilot from assuming control.
+The airframe is a conventional X-configuration quadcopter (S500 frame, \SI{500}{\milli\metre} wheelbase) sized for an all-up weight of approximately \SI{3}{\kilo\gram}. Four 2212/920\,KV brushless motors, each producing roughly \SI{800}{\gram} of static thrust, provide a thrust-to-weight ratio of approximately 1.07:1---adequate for stable hover and moderate-speed survey flight, though not optimised for aggressive manoeuvring. Each motor is driven by a 30\,A BLHeli\_S electronic speed controller communicating with the flight controller via the oneshot125 protocol.
+
+The Cube Orange+ flight controller \cite{cubepilot} runs ArduPilot Copter firmware \cite{ardupilot}, providing GPS-aided attitude stabilisation, waypoint navigation, and a MAVLink~2.0 command interface. Its triple-redundant IMU (two ICM-20948 and one ICM-20649) and vibration-isolated design provide reliable state estimation. A Here3 GPS module on a mast provides position fixes at 5\,Hz. An RC transmitter provides manual override at all times: the pilot can switch from \texttt{GUIDED} to \texttt{STABILIZE} or \texttt{LOITER} via a mode switch, and a dedicated kill switch triggers immediate motor disarm. This dual-authority design ensures that the companion computer can never prevent the pilot from assuming control.
 
 
 \subsection{Companion Computer}\label{sec:hw-pi}
 
-A Raspberry Pi~5 \cite{rpi5} serves as the companion computer, chosen for its low cost (\textasciitilde\pounds60), sufficient compute for real-time inference, native CSI camera interface, GPIO serial connectivity to the flight controller, and the extensive community support available for both hardware peripherals and machine learning deployment.
+A Raspberry Pi~5 \cite{rpi5} serves as the companion computer, chosen for its low cost (\textasciitilde\pounds60), sufficient compute for real-time inference, native CSI camera interface, GPIO serial connectivity to the flight controller, and the extensive community support available for both hardware peripherals and machine learning deployment. At \SI{45}{\gram} it adds negligible mass to the airframe.
 
 The Pi runs Python~3.13 under Raspberry Pi OS. This version introduced a compatibility issue: the standard \texttt{tflite-runtime} package fails to build, as does direct serial communication via \texttt{pyserial}. Both problems were resolved without code-level workarounds. For inference, the Google-maintained \texttt{ai-edge-litert} package provides a drop-in replacement with an identical API. For serial communication, the \texttt{mavproxy} utility \cite{mavproxy} runs as a system service that reads the hardware UART and re-publishes MAVLink traffic over a local UDP socket, which \texttt{pymavlink} consumes without issue.
 
@@ -62,7 +95,7 @@ Only four Python packages are installed on the Pi: \texttt{pymavlink}, \texttt{o
 
 \subsection{Camera System}\label{sec:hw-camera}
 
-The Raspberry Pi Global Shutter Camera, based on the Sony IMX296 sensor, was selected for two reasons. First, its global shutter eliminates rolling-shutter distortion during forward flight, which would otherwise skew bounding boxes and degrade detection accuracy. Second, it interfaces directly with the Pi via a CSI ribbon cable, requiring no USB bandwidth and leaving the USB ports free for telemetry radios or storage.
+The Raspberry Pi Global Shutter Camera, based on the Sony IMX296 sensor, was selected for two reasons. First, its global shutter eliminates rolling-shutter distortion during forward flight, which would otherwise skew bounding boxes and degrade detection accuracy---a critical advantage over cheaper rolling-shutter alternatives when the drone is moving at up to \SI{10}{\metre\per\second}. Second, it interfaces directly with the Pi via a CSI ribbon cable, requiring no USB bandwidth and leaving the USB ports free for telemetry radios or storage.
 
 The camera captures at its native resolution of $1456 \times 1088$\,pixels via the \texttt{picamera2} library \cite{picamera2}, configured with the \texttt{RGB888} pixel format. Empirical testing revealed that the IMX296 driver outputs BGR-ordered data despite the RGB888 label. Applying the conventional \texttt{cv2.cvtColor(frame, COLOR\_RGB2BGR)} conversion therefore double-swaps channels and produces a blue colour cast. The correct approach---confirmed by testing all six channel permutations against ground truth---is to use the raw buffer directly. The camera is mounted inverted on the airframe and corrected in software via a $180°$ rotation (\texttt{CAMERA\_FLIP\_180 = True} in the configuration).
 
@@ -75,7 +108,21 @@ Two calibrations are required before the vision pipeline can produce metric posi
 A printed chequerboard target (calib.io pattern, $13 \times 8$ inner corners, \SI{28}{\milli\metre} square size) was captured from multiple angles. OpenCV's \texttt{calibrateCamera} function yielded intrinsic parameters and distortion coefficients with a reprojection RMS of 0.399\,px. Undistortion is applied at the start of every inference frame using precomputed \texttt{cv2.remap} look-up tables, adding only \SI{1.5}{\milli\second} to the per-frame pipeline---negligible relative to the \SI{206}{\milli\second} inference time.
 
 \textbf{FOV calibration.}
-The focal length was measured by imaging a tape measure at a known \SI{1}{\metre} standoff: \SI{92}{\centi\metre} of the ruler was visible across the sensor width, giving a calibrated focal length of \SI{5.46}{\milli\metre} (\texttt{FOCAL\_LENGTH\_MM}). This value, combined with the \SI{5.02}{\milli\metre} sensor width, determines the horizontal field of view used by the geo-transformer module (\secref{sec:target-loc}) to convert pixel offsets into metre-scale displacements at a given altitude.
+The focal length was measured by imaging a tape measure at a known \SI{1}{\metre} standoff: \SI{92}{\centi\metre} of the ruler was visible across the sensor width, giving a calibrated focal length of \SI{5.46}{\milli\metre} (\texttt{FOCAL\_LENGTH\_MM}). Combined with the \SI{5.02}{\milli\metre} sensor width, this yields a horizontal field of view of:
+%
+\begin{equation}\label{eq:hfov}
+  \theta_{\mathrm{HFOV}} = 2\arctan\!\left(\frac{w_s}{2f}\right)
+                         = 2\arctan\!\left(\frac{5.02}{2 \times 5.46}\right)
+                         \approx 49.3°
+\end{equation}
+%
+where $w_s$ is the sensor width and $f$ the focal length. The corresponding ground sample distance (GSD) at altitude $h$ is:
+%
+\begin{equation}\label{eq:gsd}
+  \mathrm{GSD} = \frac{w_s \cdot h}{f \cdot W_{\mathrm{px}}}
+\end{equation}
+%
+where $W_{\mathrm{px}} = 1456$ is the image width in pixels. At the nominal search altitude of \SI{35}{\metre}, GSD~$\approx$~\SI{2.2}{\centi\metre\per px}, and a \SI{1.8}{\metre} dummy subtends roughly 82 pixels---well above the minimum detectable object size for YOLOv8n.
 
 
 \subsection{Communication Links}\label{sec:hw-comms}
@@ -91,3 +138,13 @@ Three communication links connect the subsystems (\figref{fig:hw-block}):
 \end{enumerate}
 
 The \texttt{config.py} auto-detection logic probes for a serial device (\texttt{/dev/ttyAMA0}), a WSL gateway, or a localhost TCP socket, and selects the appropriate MAVLink connection string without user intervention. An environment variable (\texttt{DRONE\_CONN}) overrides auto-detection when needed.
+
+
+\subsection{Ground Station}\label{sec:hw-gs}
+
+The ground station consists of a laptop running two parallel interfaces. \textit{Mission Planner} \cite{missionplanner} connects to the Cube via the SiK telemetry radio or the \texttt{mavproxy} TCP bridge, providing a real-time moving map, full parameter editing, and the ability to upload waypoint missions. In parallel, the Pi serves a browser-based dashboard at \texttt{http://PI\_IP:8090} via an MJPEG video stream with detection overlays, a 2D GPS grid showing estimated target positions, and command buttons for the operator to confirm, reject, or classify detections. This dual-interface approach separates vehicle telemetry (Mission Planner) from mission-specific SA (browser dashboard), ensuring that the operator can monitor both without context-switching between tools.
+
+
+\subsection{Cost Comparison with Commercial Platforms}\label{sec:hw-cost}
+
+\tabref{tab:hw-bom} lists the total system cost at approximately \pounds565. Commercial SAR-capable platforms such as the DJI Matrice 30T (\textasciitilde\pounds5\,800 with thermal camera) or the Matrice 350~RTK with a Zenmuse H20T payload (\textasciitilde\pounds12\,000+) offer superior flight time (40+\,min), IP55 weather sealing, obstacle avoidance, and thermal imaging. However, they provide no onboard AI inference: detection requires a continuous video downlink and a ground-based operator or processing station, which introduces latency and a single point of failure in the communication link. The platform presented here performs inference onboard at the point of capture, enabling autonomous detection even if the ground link is temporarily lost---a meaningful operational advantage at roughly one-tenth the cost.

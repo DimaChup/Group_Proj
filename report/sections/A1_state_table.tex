@@ -1,0 +1,235 @@
+% A1_state_table.tex — Full state transition table (Appendix)
+
+\section{State Transition Table}\label{app:states}
+
+Table~\ref{tab:state-transitions} lists every state in the mission state machine,
+its entry condition, the actions performed while active, the possible exit
+transitions, and any timeout behaviour. The state machine contains 20~states
+with 32~distinct transitions implemented in \texttt{state\_machine.py}.
+
+\begin{small}
+\setlength{\LTpre}{6pt}
+\setlength{\LTpost}{6pt}
+\begin{longtable}{
+  @{}
+  >{\ttfamily\raggedright}p{2.6cm}
+  p{3.0cm}
+  p{3.2cm}
+  p{3.8cm}
+  >{\raggedright\arraybackslash}p{2.2cm}
+  @{}
+}
+\caption{Complete state transition table for the SAR mission state machine
+(20~states, 32~transitions). Abbreviations: WP\,=\,waypoint, alt\,=\,altitude,
+dist\,=\,distance, TGT\,=\,target, NFZ\,=\,no-fly zone, IOI\,=\,item of interest,
+PLB\,=\,personal locator beacon.}
+\label{tab:state-transitions} \\
+\toprule
+\textbf{State} & \textbf{Entry Condition} & \textbf{Actions} & \textbf{Exit Transitions} & \textbf{Timeout} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{State} & \textbf{Entry Condition} & \textbf{Actions} & \textbf{Exit Transitions} & \textbf{Timeout} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{5}{r}{\emph{Continued on next page}} \\
+\endfoot
+
+\bottomrule
+\endlastfoot
+
+% ── Startup sequence ──────────────────────────────────────────
+
+INIT &
+  Power-on (initial state) &
+  Attempt MAVLink connection to \texttt{CONNECTION\_STR} every 1\,s &
+  Connection OK $\to$ \textsc{connecting} &
+  None (retries indefinitely) \\
+\addlinespace
+
+CONNECTING &
+  MAVLink socket opened &
+  Wait for heartbeat; request data streams; set SITL speedup (SIM only) &
+  Heartbeat received $\to$ \textsc{arming} &
+  Warning at 15\,s intervals \\
+\addlinespace
+
+ARMING &
+  Heartbeat confirmed &
+  Wait for GPS fix ($\geq$3D, $\geq$6 sats); set GUIDED mode; send ARM command; record home position &
+  Motors armed $\to$ \textsc{takeoff} &
+  Warning at 120\,s \\
+\addlinespace
+
+TAKEOFF &
+  ARM confirmed &
+  Send \texttt{NAV\_TAKEOFF} to \texttt{TARGET\_ALT}; monitor altitude and armed status &
+  alt $\geq 0.9 \times$ \texttt{TARGET\_ALT}: \newline
+  \quad pre-WPs exist $\to$ \textsc{pre\_waypoints} \newline
+  \quad WPs exist $\to$ \textsc{transit\_to\_search} \newline
+  \quad no WPs $\to$ \textsc{hover} \newline
+  Disarmed (SIM) $\to$ \textsc{arming} \newline
+  Disarmed (REAL) $\to$ \textsc{done} &
+  Warning at 60\,s \\
+
+% ── Transit & search ──────────────────────────────────────────
+\addlinespace
+\midrule
+\addlinespace
+
+PRE\_WAYPOINTS &
+  Transit WPs defined (corridor path) &
+  Fly each pre-WP sequentially at \texttt{TRANSIT\_SPEED}; advance when dist\,$<$\,2\,m &
+  All pre-WPs reached $\to$ \textsc{transit\_to\_search} \newline
+  No search WPs $\to$ \textsc{hover} &
+  None \\
+\addlinespace
+
+TRANSIT\_TO\_ SEARCH &
+  Pre-WPs complete or altitude reached &
+  Fly to first search WP at \texttt{TRANSIT\_SPEED} &
+  dist to WP[0]\,$<$\,2\,m $\to$ \textsc{search} &
+  None \\
+\addlinespace
+
+SEARCH &
+  Reached search start or resumed after reject/IOI &
+  Orient yaw (diagonal alignment); fly lawnmower WPs at altitude-dependent speed; run CV detection; filter \& queue confirmed detections; PLB beacon redirect if delay elapsed &
+  Valid queued TGT $\to$ \textsc{centering} \newline
+  All WPs done, rescans left $\to$ \textsc{search} (lower alt) \newline
+  All WPs done, no rescans $\to$ \textsc{done} \newline
+  Rescan floor reached $\to$ \textsc{done} &
+  None \\
+
+% ── Target investigation ──────────────────────────────────────
+\addlinespace
+\midrule
+\addlinespace
+
+CENTERING &
+  Detection dequeued from search or manual &
+  Fly toward TGT GPS at current alt; update lock if CV re-detects within \texttt{LOCK\_RADIUS}; queue new detections outside lock radius &
+  dist to TGT\,$<$\,1\,m $\to$ \textsc{verify} &
+  60\,s $\to$ \textsc{search} \\
+\addlinespace
+
+DESCENDING &
+  (Currently bypassed---reserved for future descent-before-verify) &
+  Immediately transitions &
+  Instant $\to$ \textsc{verify} &
+  None \\
+\addlinespace
+
+VERIFY &
+  Centered over TGT ($<$\,1\,m) &
+  Hover over TGT; collect GPS avg samples; display countdown; wait for operator input via keyboard or browser &
+  \textbf{Y}: GPS avg (10\,s) $\to$ select landing side (N/E/S/W) $\to$ \textsc{approach} \newline
+  \textbf{N}: reject TGT; queue check $\to$ \textsc{centering} / \textsc{return\_from\_manual} / \textsc{return\_to\_search} / \textsc{search} \newline
+  \textbf{I}: log as IOI; queue check $\to$ same as N &
+  120\,s $\to$ auto-reject, \textsc{search} \\
+
+% ── Landing sequence ──────────────────────────────────────────
+\addlinespace
+\midrule
+\addlinespace
+
+APPROACH &
+  Operator confirmed + landing side selected &
+  Fly to 7.5\,m offset landing coordinate at 3\,m alt &
+  dist\,$<$\,2\,m and alt\,$<$\,4\,m $\to$ \textsc{hover\_target} &
+  None \\
+\addlinespace
+
+HOVER\_TARGET &
+  Above landing point at 3\,m &
+  Hold position; servo stage~1 at $t$\,=\,3\,s (partial release, PWM 1200); servo stage~2 at $t$\,=\,6\,s (full release, PWM 1900); close servo at $t$\,=\,15\,s &
+  $t > 15$\,s: \newline
+  \quad pre-WPs exist $\to$ \textsc{return\_transit} \newline
+  \quad else $\to$ \textsc{return\_home} &
+  Fixed 15\,s sequence \\
+
+% ── Return sequence ───────────────────────────────────────────
+\addlinespace
+\midrule
+\addlinespace
+
+RETURN\_TRANSIT &
+  Pre-WPs need retracing &
+  Climb to search alt; retrace pre-WPs in reverse order at \texttt{TRANSIT\_SPEED} &
+  All return WPs reached $\to$ \textsc{return\_home} &
+  None \\
+\addlinespace
+
+RETURN\_HOME &
+  Return transit complete or no pre-WPs &
+  Fly to home position at \texttt{TARGET\_ALT}; guard against invalid home if GPS never fixed &
+  dist to home\,$<$\,2\,m $\to$ \textsc{landing} \newline
+  No GPS fix $\to$ \textsc{landing} (in place) &
+  None \\
+\addlinespace
+
+LANDING &
+  Over home position or GPS-less fallback &
+  Send \texttt{NAV\_LAND}; monitor alt; detect touchdown (alt\,$<$\,0.5\,m for 5 consecutive ticks); disarm on touch; retry LAND every 5\,s if not descending &
+  Touchdown or auto-disarm $\to$ \textsc{done} \newline
+  5 LAND retries failed $\to$ force disarm $\to$ \textsc{done} &
+  90\,s $\to$ force disarm $\to$ \textsc{done} \\
+
+% ── Override & auxiliary ─────────────────────────────────────
+\addlinespace
+\midrule
+\addlinespace
+
+RETURN\_TO\_ SEARCH &
+  Target rejected/IOI'd; departure point recorded &
+  Fly to departure lat/lon at search alt &
+  dist\,$<$\,3\,m and alt\,$>$\,$0.85\times$search\_alt $\to$ \textsc{search} &
+  None \\
+\addlinespace
+
+RETURN\_FROM\_ MANUAL &
+  Exiting MANUAL mode; $>$\,5\,m from departure &
+  Fly to manual departure lat/lon/alt at \texttt{TRANSIT\_SPEED} &
+  dist\,$<$\,3\,m $\to$ resume previous state &
+  None \\
+\addlinespace
+
+HOVER &
+  No waypoints generated after takeoff &
+  Hold position; no commands &
+  -- &
+  60\,s $\to$ \textsc{done} \\
+\addlinespace
+
+MANUAL &
+  Operator presses \textbf{M} in any active state, \emph{or} geofence detects drone inside NFZ &
+  WASD velocity control; R/F climb/descend; Q/E yaw; CV detections queued silently for later investigation &
+  M pressed: \newline
+  \quad TGT visible $\to$ \textsc{centering} \newline
+  \quad queued TGT $\to$ \textsc{centering} \newline
+  \quad $>$\,5\,m from departure $\to$ \textsc{return\_from\_manual} \newline
+  \quad else $\to$ resume previous state &
+  None \\
+\addlinespace
+
+DONE &
+  Mission complete, landing confirmed, or fatal error &
+  Display final landing error; log mission time; no further commands sent &
+  Terminal state (exit main loop) &
+  3\,s display then exit \\
+
+\end{longtable}
+\end{small}
+
+\noindent\textbf{Global overrides} (apply in any non-terminal state):
+\begin{itemize}[nosep]
+  \item \textbf{M key} --- toggles \textsc{manual} override from any active flight state.
+  \item \textbf{K key} --- clears all rejected targets and items of interest (re-enables detection areas).
+  \item \textbf{B key} (during \textsc{search}) --- triggers PLB beacon redirect to focus area polygon.
+  \item \textbf{ESC key} --- immediate loop exit (emergency stop).
+  \item \textbf{Geofence violation} --- if the drone enters the NFZ boundary, the state machine forces a transition to \textsc{manual} and halts all velocity commands. Within the NFZ slow zone, speed is ramped down proportionally and a repulsive force vector is applied.
+  \item \textbf{RC failsafe} --- if the RC link is lost, telemetry detects the failsafe flag and the flight controller's built-in RTL behaviour takes precedence.
+\end{itemize}

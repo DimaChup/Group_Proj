@@ -2,9 +2,44 @@
 
 The mission controller is implemented as a deterministic finite state machine (FSM)~\cite{wagner2006fsm}, a widely adopted pattern in autonomous robotics for its verifiability, traceability, and ease of runtime monitoring. The FSM orchestrates the entire flight --- from power-on through search, detection, operator verification, payload delivery, and return --- while enforcing safety invariants at every transition.
 
+\subsection{Software Architecture}\label{subsec:arch}
+
+The mission software separates concerns across seven Python modules, each with a single responsibility:
+
+\begin{itemize}
+    \item \texttt{config.py} --- every tunable parameter (altitudes, speeds, camera, NFZ polygons, connection strings);
+    \item \texttt{states.py} --- a \texttt{State} class defining 20 string constants, one per discrete state;
+    \item \texttt{vision.py} --- camera acquisition and AI detection behind a single interface: \texttt{detect\_in\_image(frame)} $\rightarrow$ \texttt{(found, x, y, conf)};
+    \item \texttt{planning.py} --- lawnmower search pattern generator, returns an ordered list of GPS waypoints;
+    \item \texttt{navigation.py} --- MAVLink command abstraction: \texttt{goto}, \texttt{set\_speed}, \texttt{send\_velocity}, \texttt{land}, \texttt{arm};
+    \item \texttt{geofence.py} --- NFZ boundary distance computation and repulsive offset generation;
+    \item \texttt{state\_machine.py} --- all state handler methods, packaged as a mixin class.
+\end{itemize}
+
+\noindent The orchestration lives in \texttt{main.py}, which defines the central class \texttt{VisualFlightMission}. This class inherits from \texttt{StateHandlersMixin} (defined in \texttt{state\_machine.py}) using Python's mixin pattern: the mixin contributes all per-state handler methods (e.g.\ \texttt{\_handle\_search}, \texttt{\_handle\_verify}) and shared helpers, while the main class owns the event loop, telemetry, HUD rendering, and module wiring. The mixin declares no \texttt{\_\_init\_\_} and relies on attributes initialised by the consuming class, keeping the two files decoupled yet composable --- the orchestrator at under 700~lines, the handler mixin at 950~lines.
+
+\paragraph{Dispatch Table.}
+Rather than a chain of \texttt{if}/\texttt{elif} branches, the main loop uses a dictionary that maps each \texttt{State} constant to its handler method:
+
+\begin{verbatim}
+_dispatch = {
+    State.INIT:              self._handle_init,
+    State.SEARCH:            self._handle_search,
+    State.CENTERING:         self._handle_centering,
+    State.VERIFY:            self._handle_verify,
+    ...                      # 17 entries total
+}
+
+handler = _dispatch.get(self.state)
+if handler:
+    handler(target_found, px_u, px_v, key)
+\end{verbatim}
+
+\noindent This provides $O(1)$ dispatch, eliminates fall-through errors, and makes it straightforward to add or remove states without modifying the dispatch logic.
+
 \subsection{State Definitions}\label{subsec:states}
 
-The system defines 17 discrete states, grouped into four functional phases: startup, search, engagement, and recovery.
+The system defines 20 discrete states, grouped into four functional phases: startup, search, engagement, and recovery.
 
 \paragraph{Startup Phase.}
 \begin{itemize}
@@ -36,8 +71,9 @@ The system defines 17 discrete states, grouped into four functional phases: star
     \item \textbf{RETURN\_FROM\_MANUAL} --- Returns to the position where manual override was engaged, then resumes the previously active state.
     \item \textbf{RETURN\_TRANSIT} --- Retraces the pre-waypoint transit path in reverse order at search altitude. Provides controlled egress from the search area.
     \item \textbf{RETURN\_HOME} --- Navigates to the recorded home (takeoff) position. A safety guard checks that GPS was successfully fixed during arming; if not, the drone lands in place rather than flying to a potentially incorrect location.
-    \item \textbf{LANDING} --- Sends \texttt{MAV\_CMD\_NAV\_LAND} and monitors descent via three independent mechanisms: ArduPilot auto-disarm detection (accelerometer-based), altimeter-based touchdown (5 consecutive ticks below 0.5\,m), and a 90-second absolute timeout with forced disarm. Transitions to \textsc{Done}.
+    \item \textbf{LANDING} --- Sends \texttt{MAV\_CMD\_NAV\_LAND} and monitors descent via three independent touchdown mechanisms (Section~\ref{subsec:safety}). Transitions to \textsc{Done}.
     \item \textbf{DONE} --- Terminal state. Logs the landing error (distance from home) and mission elapsed time.
+    \item \textbf{HOVER} --- Fallback loiter state entered if no search waypoints are available after takeoff, with a 60-second timeout leading to \textsc{Done}.
     \item \textbf{MANUAL} --- Software manual override, accessible from any active state (Section~\ref{subsec:safety}).
 \end{itemize}
 
@@ -48,11 +84,11 @@ The system defines 17 discrete states, grouped into four functional phases: star
     \centering
     % \includegraphics[width=\textwidth]{figures/state_machine_diagram.pdf}
     \fbox{\parbox{0.9\textwidth}{\centering\vspace{3cm}\textit{State machine diagram placeholder}\vspace{3cm}}}
-    \caption{State transition diagram for the SAR mission controller. The primary mission path flows left-to-right across the top; engagement branches downward from \textsc{Search}. Manual override (dashed) is accessible from any active state.}
+    \caption{State transition diagram for the SAR mission controller. The primary mission path flows left-to-right across the top; engagement branches downward from \textsc{Search}. Manual override (dashed) is accessible from any active state. Safety transitions (dotted) can interrupt from any airborne state.}
     \label{fig:state_machine}
 \end{figure}
 
-Table~\ref{tab:transitions} summarises the principal transitions. The dispatch loop (executing at approximately 50\,Hz) reads telemetry, runs the vision pipeline, processes operator input, invokes the handler for the current state, and enforces geofence constraints --- in that fixed order each iteration.
+The main loop executes at approximately 50\,Hz and follows a fixed five-stage pipeline each iteration: (1)~read telemetry from the autopilot, (2)~run the vision pipeline and render the HUD, (3)~process operator key/button input, (4)~invoke the dispatch handler for the current state, and (5)~enforce geofence constraints. This ordering ensures that geofence enforcement always runs \emph{after} the state handler, so any waypoint command issued in step~4 can be overridden by a repulsive velocity in step~5. Table~\ref{tab:transitions} summarises the principal transitions.
 
 \begin{table}[htbp]
 \centering
@@ -93,26 +129,47 @@ Any active state$^*$ & Inside NFZ boundary & MANUAL \\
 \end{tabular}
 \end{table}
 
+Every transition is logged with the old state, new state, and mission elapsed time in the format \texttt{STATE: OLD --> NEW [T+MM:SS]}. All state-specific timeout flags are reset on entry (via the centralised \texttt{\_set\_state} method), preventing stale timeout warnings from persisting across state re-entries.
+
+\subsection{Detection Queue}\label{subsec:queue}
+
+During the search phase, multiple targets may be detected before any can be investigated. The system manages these using a FIFO detection queue with three properties:
+
+\begin{enumerate}
+    \item \textbf{Spatial deduplication} --- Before enqueuing, each detection is checked against rejected targets, items of interest, and existing queue entries using a configurable radius (\texttt{REJECTED\_TARGET\_RADIUS\_M}, default 5\,m). Detections within this radius of any known position are silently discarded, preventing the queue from filling with repeated sightings of the same object.
+    \item \textbf{Bounded capacity} --- The queue is capped at \texttt{MAX\_DETECT\_QUEUE} entries (default 20). When full, the oldest entry is dropped and logged. This prevents unbounded memory growth during long flights over cluttered terrain.
+    \item \textbf{Validation on dequeue} --- When a target is popped for investigation, it is re-validated against the NFZ polygon, search area boundary, and rejection list. Targets that have become invalid since enqueuing (e.g.\ a nearby target was subsequently rejected) are skipped. This lazy validation avoids the overhead of re-checking the entire queue every iteration.
+\end{enumerate}
+
+An optional \texttt{--smart-detect} mode requires \texttt{DETECT\_CONFIRM\_FRAMES} consecutive positive frames (default 3) before enqueuing, suppressing transient false positives at the cost of slightly delayed detection. During manual override, detections continue to be queued rather than discarded, so returning to autonomous mode can immediately investigate targets observed while the operator was flying.
+
 \subsection{Operator-in-the-Loop Verification}\label{subsec:operator}
 
-The \textsc{Verify} state implements a human-in-the-loop decision gate, a design choice motivated by the high cost of false positives in SAR operations~\cite{murphy2014disaster}. Autonomous descent onto an incorrectly identified target wastes battery, delays the search, and risks damage to the drone or bystanders. The operator classifies each detection into one of three categories:
+The \textsc{Verify} state implements a human-in-the-loop decision gate, a design choice motivated by the high cost of false positives in SAR operations~\cite{murphy2014disaster}. Autonomous descent onto an incorrectly identified target wastes battery, delays the search, and risks damage to the drone or bystanders. The operator classifies each detection into one of four categories:
 
 \begin{itemize}
-    \item \textbf{Confirm (Y)} --- The target is the casualty. GPS averaging is performed over 10 seconds to refine the position estimate, after which the operator selects a landing side (N/E/S/W) to avoid overflying the casualty during approach.
+    \item \textbf{Confirm (Y)} --- The target is the casualty. When \texttt{--center-verify} mode is active, GPS averaging is performed over 10 seconds to refine the position estimate using an inverse-variance weighted mean of all samples collected while hovering. The operator then selects a landing side (N/E/S/W) to avoid overflying the casualty during approach.
     \item \textbf{Reject (N)} --- The target is a false positive. Its GPS position is added to a rejection list; future detections within a configurable radius are suppressed, preventing repeated investigation of the same object.
     \item \textbf{Interest (I)} --- The target is noteworthy but not the primary casualty (e.g., debris, equipment). Its position is logged for later review while the search continues.
+    \item \textbf{False Positive (X)} --- Equivalent to reject, used in the web dashboard for ergonomic clarity.
 \end{itemize}
 
-A 120-second timeout ensures the drone does not hover indefinitely if the operator is unreachable; the target is automatically rejected and the search resumes. Visual and terminal warnings escalate at 60, 90, and 100 seconds. The operator interface supports three input modalities to accommodate different deployment scenarios: keyboard input over SSH/PuTTY for terminal-based operation, browser buttons on the web dashboard (Section~\ref{sec:groundstation}) for headless Pi deployments, and OpenCV key events for laptop-based simulation.
+A 120-second timeout ensures the drone does not hover indefinitely if the operator is unreachable; the target is automatically rejected and the search resumes. Escalating warnings are printed to the terminal at 60, 90, and 100 seconds, with a live countdown displayed on the HUD. This three-tier warning structure gives the operator progressively urgent cues:
 
-This tiered confirmation approach reflects the supervisory control paradigm recommended for field robotics~\cite{goodrich2007human}, where autonomy handles the high-bandwidth search task while human judgement is reserved for the high-consequence classification decision.
+\begin{enumerate}
+    \item At 60\,s: first warning (``60s remaining'');
+    \item At 90\,s: second warning (``30s remaining'');
+    \item At 100\,s onward: warnings every 10 seconds until timeout.
+\end{enumerate}
+
+The operator interface supports three input modalities: keyboard over SSH/PuTTY, browser buttons on the web dashboard (Section~\ref{sec:groundstation}), and OpenCV key events for simulation. All three feed into a unified command queue, ensuring identical behaviour regardless of input source. This supervisory control paradigm~\cite{goodrich2007human} lets autonomy handle the high-bandwidth search while human judgement is reserved for the high-consequence classification decision.
 
 \subsection{Safety Overrides and Fault Handling}\label{subsec:safety}
 
-Four independent safety mechanisms operate across all flight states:
+Five independent safety mechanisms operate across all flight states, forming a defence-in-depth architecture where each layer can catch failures missed by the others.
 
 \paragraph{Manual Override (M key).}
-Pressing M at any time transitions the FSM to \textsc{Manual}, immediately halting autonomous commands. The drone accepts WASD velocity commands from the operator (5\,m/s horizontal, 2\,m/s vertical). The departure position is recorded so that pressing M again triggers \textsc{Return\_From\_Manual}, which navigates back to the departure point before resuming the previous state. Detections observed during manual flight are queued rather than discarded.
+Pressing M at any time transitions the FSM to \textsc{Manual}, immediately halting autonomous commands by sending a zero-velocity command. The departure position and altitude are recorded so that pressing M again triggers \textsc{Return\_From\_Manual}, which navigates back to the departure point before resuming the previous state. If the operator observes a valid detection during manual flight, it is queued; upon exiting manual mode, the system checks for queued detections and transitions directly to \textsc{Centering} if one is available, or returns to the departure point if none exist. WASD keys provide 5\,m/s velocity commands, R/F control vertical movement at 2\,m/s, and Q/E rotate the yaw. This gives the operator complete manual authority without leaving the software framework.
 
 \paragraph{RC Kill Switch.}
 The RC transmitter can override the flight controller at the hardware level, independent of the companion computer. Switching the RC mode channel to STABILIZE or LOITER immediately removes the drone from GUIDED mode. The software monitors the \texttt{HEARTBEAT.custom\_mode} field and warns when the mode is no longer GUIDED, but takes no corrective action --- the pilot has full authority. This layered approach ensures that a software failure cannot prevent the safety pilot from regaining control~\cite{ardupilot_failsafe}.
@@ -121,4 +178,26 @@ The RC transmitter can override the flight controller at the hardware level, ind
 Two link-loss scenarios are handled. First, if the MAVLink \texttt{recv\_match} call raises a connection exception (socket error, broken pipe), an emergency RTL command (mode 6) is sent as a best-effort measure and the mission terminates. Second, GPS degradation is continuously monitored: if the fix type drops below 3D or satellite count falls below 6 for more than 5 seconds, an emergency RTL is triggered and the FSM transitions to \textsc{Landing}. ArduPilot's own GCS failsafe (\texttt{FS\_GCS\_ENABLE}) provides an additional hardware-level RTL if heartbeats from the companion computer cease entirely.
 
 \paragraph{Geofence Enforcement.}
-A no-fly zone (NFZ) polygon, defined from the site survey KML file, is enforced at every loop iteration. If the drone enters the NFZ hard boundary (3\,m inside the polygon), the FSM forces a transition to \textsc{Manual} and halts all velocity commands. Within a configurable buffer zone outside the boundary, the drone's speed is progressively reduced and a repulsive velocity vector is applied, pushing it away from the NFZ edge. Detected targets whose estimated GPS positions fall inside the NFZ are silently discarded rather than investigated.
+A no-fly zone (NFZ) polygon, defined from the site survey KML file corresponding to the SSSI boundary, is enforced through three complementary layers:
+
+\begin{enumerate}
+    \item \textbf{Plan-time filtering} --- the lawnmower planner's \texttt{filter\_waypoints()} method removes any waypoint that falls within a configurable buffer of the NFZ, preventing the search pattern from ever entering the restricted area.
+    \item \textbf{Runtime speed capping} --- at every loop iteration, the drone's distance to the NFZ boundary is computed using \texttt{cv2.pointPolygonTest} for signed-distance evaluation. Within the configurable slow zone (\texttt{NFZ\_SLOW\_ZONE\_M}), speed is linearly reduced from the zone maximum down to a minimum (\texttt{NFZ\_MIN\_SPEED\_MPS}), proportional to proximity. If the drone crosses the hard boundary (enters the NFZ polygon), the FSM forces an immediate transition to \textsc{Manual} and sends a zero-velocity halt command.
+    \item \textbf{Repulsive potential field} --- within a configurable inner range of the boundary, a repulsive velocity vector is computed from the gradient of an inverse-distance potential field and applied as a MAVLink velocity command. This gently pushes the drone away from the boundary edge even when the current waypoint lies close to it. The repulsive vector is also rendered on the HUD as a visual indicator for the operator.
+\end{enumerate}
+
+\noindent Detected targets whose estimated GPS positions fall inside the NFZ or outside the search area boundary are silently discarded rather than investigated.
+
+\paragraph{Landing Fault Tolerance.}
+The \textsc{Landing} state employs three independent touchdown detection mechanisms to handle the well-known barometric drift problem in small UAS~\cite{ardupilot_failsafe}:
+
+\begin{enumerate}
+    \item \textbf{ArduPilot auto-disarm} --- the autopilot's accelerometer-based landing detector disarms the motors when sustained low vibration is detected after a land command, requiring no companion-computer involvement;
+    \item \textbf{Altimeter threshold} --- if the barometric altitude remains below 0.5\,m for 5 consecutive loop ticks, the companion computer sends a disarm command directly;
+    \item \textbf{Absolute timeout} --- a 90-second wall-clock timeout triggers a forced disarm (using the MAVLink emergency disarm magic number 21196), ensuring the drone does not hover indefinitely if barometric drift keeps the reported altitude above the threshold.
+\end{enumerate}
+
+\noindent If the land command does not produce descent within 5\,s, it is retried up to 5 times before forced disarm. This layered approach ensures landing completes under all observed failure modes, including barometric drift deadlock documented during bench testing.
+
+\paragraph{State Timeouts.}
+Every blocking state carries a wall-clock timeout: \textsc{Arming} warns at 120\,s, \textsc{Takeoff} at 60\,s, \textsc{Centering} aborts to \textsc{Search} at 60\,s, \textsc{Verify} auto-rejects at 120\,s, and \textsc{Hover} transitions to \textsc{Done} at 60\,s. No state can hang the mission. The centralised \texttt{\_set\_state} method resets all timeout flags and records the entry timestamp, so each state's timeout logic is self-contained.
