@@ -235,11 +235,11 @@
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.8}R08 --- Autonomy Level Justified}{20}{subsection.3.8}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.9}R09 --- RTH and Motor Cutoff}{20}{subsection.3.9}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.10}R10 --- Report Lat/Lon and Images}{20}{subsection.3.10}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{GPS estimation pipeline.}{20}{paragraph*.44}\protected@file@percent }
 \gdef \LT@vi {\LT@entry 
     {1}{16.4845pt}\LT@entry 
     {1}{153.95424pt}\LT@entry 
     {1}{341.71089pt}}
+\@writefile{toc}{\contentsline {paragraph}{GPS estimation pipeline.}{21}{paragraph*.44}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Detection snapshots and metadata.}{21}{paragraph*.45}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Flight log.}{21}{paragraph*.46}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.11}R11 --- Company Pilot Designated}{21}{subsection.3.11}\protected@file@percent }
@@ -264,7 +264,7 @@
 \newlabel{fig:perf_analysis}{{12}{22}{System performance: inference latency budget and spatial detection distribution}{figure.caption.49}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Lessons Learned}{23}{subsection.4.3}\protected@file@percent }
 \newlabel{sec:lessons-learned}{{4.3}{23}{Lessons Learned}{subsection.4.3}{}}
-\@writefile{toc}{\contentsline {paragraph}{Summary.}{23}{paragraph*.50}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Summary.}{23}{paragraph*.51}\protected@file@percent }
 \gdef \LT@vii {\LT@entry 
     {1}{79.97733pt}\LT@entry 
     {1}{97.35826pt}\LT@entry 
@@ -273,80 +273,82 @@
     {1}{68.59596pt}}
 \@writefile{toc}{\contentsline {section}{\numberline {A}State Transition Table}{26}{appendix.A}\protected@file@percent }
 \newlabel{app:states}{{A}{26}{State Transition Table}{appendix.A}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {16}{\ignorespaces Complete state transition table for the SAR mission state machine (20~states, 32~transitions). Abbreviations: WP\,=\,waypoint, alt\,=\,altitude, dist\,=\,distance, TGT\,=\,target, NFZ\,=\,no-fly zone, IOI\,=\,item of interest, PLB\,=\,personal locator beacon.}}{26}{table.16}\protected@file@percent }
-\newlabel{tab:state-transitions}{{16}{26}{Complete state transition table for the SAR mission state machine (20~states, 32~transitions). Abbreviations: WP\,=\,waypoint, alt\,=\,altitude, dist\,=\,distance, TGT\,=\,target, NFZ\,=\,no-fly zone, IOI\,=\,item of interest, PLB\,=\,personal locator beacon}{table.16}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {13}{\ignorespaces Complete state machine diagram showing all 20~states and 32~transitions. The primary mission path flows left to right; engagement branches downward from SEARCH; recovery paths return to the search or home. Manual override is accessible from any active state.}}{26}{figure.caption.52}\protected@file@percent }
+\newlabel{fig:state_machine_full}{{13}{26}{Complete state machine diagram showing all 20~states and 32~transitions. The primary mission path flows left to right; engagement branches downward from SEARCH; recovery paths return to the search or home. Manual override is accessible from any active state}{figure.caption.52}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {17}{\ignorespaces Complete state transition table for the SAR mission state machine (20~states, 32~transitions). Abbreviations: WP\,=\,waypoint, alt\,=\,altitude, dist\,=\,distance, TGT\,=\,target, NFZ\,=\,no-fly zone, IOI\,=\,item of interest, PLB\,=\,personal locator beacon.}}{26}{table.17}\protected@file@percent }
+\newlabel{tab:state-transitions}{{17}{26}{Complete state transition table for the SAR mission state machine (20~states, 32~transitions). Abbreviations: WP\,=\,waypoint, alt\,=\,altitude, dist\,=\,distance, TGT\,=\,target, NFZ\,=\,no-fly zone, IOI\,=\,item of interest, PLB\,=\,personal locator beacon}{table.17}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {B}Configuration Parameters}{28}{appendix.B}\protected@file@percent }
+\newlabel{app:config}{{B}{28}{Configuration Parameters}{appendix.B}{}}
 \abx@aux@cite{0}{domainrand}
 \abx@aux@segm{0}{0}{domainrand}
 \abx@aux@cite{0}{yolov8}
 \abx@aux@segm{0}{0}{yolov8}
 \abx@aux@cite{0}{domainrand}
 \abx@aux@segm{0}{0}{domainrand}
-\@writefile{toc}{\contentsline {section}{\numberline {B}Configuration Parameters}{28}{appendix.B}\protected@file@percent }
-\newlabel{app:config}{{B}{28}{Configuration Parameters}{appendix.B}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {C}Model Training and Dataset}{28}{appendix.C}\protected@file@percent }
-\newlabel{sec:training}{{C}{28}{Model Training and Dataset}{appendix.C}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {C.1}Training Data Strategy}{28}{subsection.C.1}\protected@file@percent }
-\newlabel{sec:training:strategy}{{C.1}{28}{Training Data Strategy}{subsection.C.1}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {C.2}Domain Randomisation}{28}{subsection.C.2}\protected@file@percent }
-\newlabel{sec:training:domainrand}{{C.2}{28}{Domain Randomisation}{subsection.C.2}{}}
 \abx@aux@cite{0}{synthdata}
 \abx@aux@segm{0}{0}{synthdata}
+\@writefile{toc}{\contentsline {section}{\numberline {C}Model Training and Dataset}{29}{appendix.C}\protected@file@percent }
+\newlabel{sec:training}{{C}{29}{Model Training and Dataset}{appendix.C}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.1}Training Data Strategy}{29}{subsection.C.1}\protected@file@percent }
+\newlabel{sec:training:strategy}{{C.1}{29}{Training Data Strategy}{subsection.C.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.2}Domain Randomisation}{29}{subsection.C.2}\protected@file@percent }
+\newlabel{sec:training:domainrand}{{C.2}{29}{Domain Randomisation}{subsection.C.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.3}Augmentation Pipeline}{29}{subsection.C.3}\protected@file@percent }
+\newlabel{sec:training:augmentation}{{C.3}{29}{Augmentation Pipeline}{subsection.C.3}{}}
 \abx@aux@cite{0}{bochkovskiy2020yolov4}
 \abx@aux@segm{0}{0}{bochkovskiy2020yolov4}
 \abx@aux@cite{0}{synthdata}
 \abx@aux@segm{0}{0}{synthdata}
 \abx@aux@cite{0}{shrivastava2016training}
 \abx@aux@segm{0}{0}{shrivastava2016training}
-\@writefile{toc}{\contentsline {subsection}{\numberline {C.3}Augmentation Pipeline}{29}{subsection.C.3}\protected@file@percent }
-\newlabel{sec:training:augmentation}{{C.3}{29}{Augmentation Pipeline}{subsection.C.3}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {C.4}Synthetic Data Generation Pipeline}{29}{subsection.C.4}\protected@file@percent }
-\newlabel{sec:training:synthetic}{{C.4}{29}{Synthetic Data Generation Pipeline}{subsection.C.4}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {C.5}Real Data Labelling}{29}{subsection.C.5}\protected@file@percent }
-\newlabel{sec:training:labelling}{{C.5}{29}{Real Data Labelling}{subsection.C.5}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {C.6}Negative Mining}{29}{subsection.C.6}\protected@file@percent }
-\newlabel{sec:training:negatives}{{C.6}{29}{Negative Mining}{subsection.C.6}{}}
 \abx@aux@cite{0}{shrivastava2016training}
 \abx@aux@segm{0}{0}{shrivastava2016training}
 \abx@aux@cite{0}{shrivastava2016training}
 \abx@aux@segm{0}{0}{shrivastava2016training}
 \abx@aux@cite{0}{domainrand}
 \abx@aux@segm{0}{0}{domainrand}
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.4}Synthetic Data Generation Pipeline}{30}{subsection.C.4}\protected@file@percent }
+\newlabel{sec:training:synthetic}{{C.4}{30}{Synthetic Data Generation Pipeline}{subsection.C.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.5}Real Data Labelling}{30}{subsection.C.5}\protected@file@percent }
+\newlabel{sec:training:labelling}{{C.5}{30}{Real Data Labelling}{subsection.C.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.6}Negative Mining}{30}{subsection.C.6}\protected@file@percent }
+\newlabel{sec:training:negatives}{{C.6}{30}{Negative Mining}{subsection.C.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.7}Data Composition Analysis}{30}{subsection.C.7}\protected@file@percent }
+\newlabel{sec:training:composition}{{C.7}{30}{Data Composition Analysis}{subsection.C.7}{}}
 \abx@aux@cite{0}{coco_dataset}
 \abx@aux@segm{0}{0}{coco_dataset}
 \abx@aux@cite{0}{yolov8}
 \abx@aux@segm{0}{0}{yolov8}
-\@writefile{toc}{\contentsline {subsection}{\numberline {C.7}Data Composition Analysis}{30}{subsection.C.7}\protected@file@percent }
-\newlabel{sec:training:composition}{{C.7}{30}{Data Composition Analysis}{subsection.C.7}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {C.8}Training Pipeline and Convergence}{30}{subsection.C.8}\protected@file@percent }
-\newlabel{sec:training:pipeline}{{C.8}{30}{Training Pipeline and Convergence}{subsection.C.8}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {C.9}Results}{30}{subsection.C.9}\protected@file@percent }
-\newlabel{sec:training:results}{{C.9}{30}{Results}{subsection.C.9}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {C.10}Model Export Pipeline}{30}{subsection.C.10}\protected@file@percent }
-\newlabel{sec:training:export}{{C.10}{30}{Model Export Pipeline}{subsection.C.10}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.8}Training Pipeline and Convergence}{31}{subsection.C.8}\protected@file@percent }
+\newlabel{sec:training:pipeline}{{C.8}{31}{Training Pipeline and Convergence}{subsection.C.8}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.9}Results}{31}{subsection.C.9}\protected@file@percent }
+\newlabel{sec:training:results}{{C.9}{31}{Results}{subsection.C.9}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.10}Model Export Pipeline}{31}{subsection.C.10}\protected@file@percent }
+\newlabel{sec:training:export}{{C.10}{31}{Model Export Pipeline}{subsection.C.10}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.11}Deployment}{31}{subsection.C.11}\protected@file@percent }
+\newlabel{sec:training:deployment}{{C.11}{31}{Deployment}{subsection.C.11}{}}
 \abx@aux@cite{0}{domainrand}
 \abx@aux@segm{0}{0}{domainrand}
 \abx@aux@cite{0}{jarus2019sora}
 \abx@aux@segm{0}{0}{jarus2019sora}
 \abx@aux@cite{0}{caa2024uas}
 \abx@aux@segm{0}{0}{caa2024uas}
-\@writefile{toc}{\contentsline {subsection}{\numberline {C.11}Deployment}{31}{subsection.C.11}\protected@file@percent }
-\newlabel{sec:training:deployment}{{C.11}{31}{Deployment}{subsection.C.11}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {C.12}Limitations}{31}{subsection.C.12}\protected@file@percent }
-\newlabel{sec:training:limitations}{{C.12}{31}{Limitations}{subsection.C.12}{}}
-\abx@aux@cite{0}{ardupilot_failsafe}
-\abx@aux@segm{0}{0}{ardupilot_failsafe}
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.12}Limitations}{32}{subsection.C.12}\protected@file@percent }
+\newlabel{sec:training:limitations}{{C.12}{32}{Limitations}{subsection.C.12}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {D}Safety and Risk Management}{32}{appendix.D}\protected@file@percent }
 \newlabel{sec:safety}{{D}{32}{Safety and Risk Management}{appendix.D}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {D.1}Geofence Implementation}{32}{subsection.D.1}\protected@file@percent }
 \newlabel{sec:geofencing}{{D.1}{32}{Geofence Implementation}{subsection.D.1}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {D.2}Failure Mode Analysis}{32}{subsection.D.2}\protected@file@percent }
-\newlabel{sec:failure-modes}{{D.2}{32}{Failure Mode Analysis}{subsection.D.2}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {D.3}Operator-in-the-Loop}{32}{subsection.D.3}\protected@file@percent }
-\newlabel{sec:operator-loop}{{D.3}{32}{Operator-in-the-Loop}{subsection.D.3}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {D.4}Emergency Procedures}{32}{subsection.D.4}\protected@file@percent }
-\newlabel{sec:emergency}{{D.4}{32}{Emergency Procedures}{subsection.D.4}{}}
+\abx@aux@cite{0}{ardupilot_failsafe}
+\abx@aux@segm{0}{0}{ardupilot_failsafe}
 \abx@aux@cite{0}{jarus2019sora}
 \abx@aux@segm{0}{0}{jarus2019sora}
+\@writefile{toc}{\contentsline {subsection}{\numberline {D.2}Failure Mode Analysis}{33}{subsection.D.2}\protected@file@percent }
+\newlabel{sec:failure-modes}{{D.2}{33}{Failure Mode Analysis}{subsection.D.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {D.3}Operator-in-the-Loop}{33}{subsection.D.3}\protected@file@percent }
+\newlabel{sec:operator-loop}{{D.3}{33}{Operator-in-the-Loop}{subsection.D.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {D.4}Emergency Procedures}{33}{subsection.D.4}\protected@file@percent }
+\newlabel{sec:emergency}{{D.4}{33}{Emergency Procedures}{subsection.D.4}{}}
 \abx@aux@cite{0}{caa2024uas}
 \abx@aux@segm{0}{0}{caa2024uas}
 \abx@aux@cite{0}{wca1981}
@@ -357,38 +359,38 @@
 \abx@aux@segm{0}{0}{forsberg1991relationship}
 \abx@aux@cite{0}{koopman2016challenges}
 \abx@aux@segm{0}{0}{koopman2016challenges}
-\@writefile{toc}{\contentsline {subsection}{\numberline {D.5}Risk Assessment}{33}{subsection.D.5}\protected@file@percent }
-\newlabel{sec:risk-register}{{D.5}{33}{Risk Assessment}{subsection.D.5}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {D.6}Regulatory Considerations}{33}{subsection.D.6}\protected@file@percent }
-\newlabel{sec:regulatory}{{D.6}{33}{Regulatory Considerations}{subsection.D.6}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {E}Testing Methodology}{33}{appendix.E}\protected@file@percent }
-\newlabel{sec:testing}{{E}{33}{Testing Methodology}{appendix.E}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {E.1}V-Model Verification Approach}{33}{subsection.E.1}\protected@file@percent }
-\newlabel{sec:vmodel}{{E.1}{33}{V-Model Verification Approach}{subsection.E.1}{}}
-\abx@aux@cite{0}{ardupilot2024}
-\abx@aux@segm{0}{0}{ardupilot2024}
+\@writefile{toc}{\contentsline {subsection}{\numberline {D.5}Risk Assessment}{34}{subsection.D.5}\protected@file@percent }
+\newlabel{sec:risk-register}{{D.5}{34}{Risk Assessment}{subsection.D.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {D.6}Regulatory Considerations}{34}{subsection.D.6}\protected@file@percent }
+\newlabel{sec:regulatory}{{D.6}{34}{Regulatory Considerations}{subsection.D.6}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {E}Testing Methodology}{34}{appendix.E}\protected@file@percent }
+\newlabel{sec:testing}{{E}{34}{Testing Methodology}{appendix.E}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {E.1}V-Model Verification Approach}{34}{subsection.E.1}\protected@file@percent }
+\newlabel{sec:vmodel}{{E.1}{34}{V-Model Verification Approach}{subsection.E.1}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {E.2}Five-Tier Progressive Testing}{34}{subsection.E.2}\protected@file@percent }
 \newlabel{sec:five-tier}{{E.2}{34}{Five-Tier Progressive Testing}{subsection.E.2}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {24}{\ignorespaces Five-tier progressive testing framework. Each tier must pass before the next is attempted.}}{34}{table.caption.58}\protected@file@percent }
-\newlabel{tab:five-tier}{{24}{34}{Five-tier progressive testing framework. Each tier must pass before the next is attempted}{table.caption.58}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {E.3}Test Script Organisation}{34}{subsection.E.3}\protected@file@percent }
-\newlabel{sec:test-org}{{E.3}{34}{Test Script Organisation}{subsection.E.3}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {E.4}Dry-Run Validation}{35}{subsection.E.4}\protected@file@percent }
-\newlabel{sec:dry-run}{{E.4}{35}{Dry-Run Validation}{subsection.E.4}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {E.5}DJI Video Analysis}{35}{subsection.E.5}\protected@file@percent }
-\newlabel{sec:video-analysis}{{E.5}{35}{DJI Video Analysis}{subsection.E.5}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {E.6}Stress Testing and Failure Scenarios}{35}{subsection.E.6}\protected@file@percent }
-\newlabel{sec:stress}{{E.6}{35}{Stress Testing and Failure Scenarios}{subsection.E.6}{}}
+\abx@aux@cite{0}{ardupilot2024}
+\abx@aux@segm{0}{0}{ardupilot2024}
+\@writefile{lot}{\contentsline {table}{\numberline {25}{\ignorespaces Five-tier progressive testing framework. Each tier must pass before the next is attempted.}}{35}{table.caption.60}\protected@file@percent }
+\newlabel{tab:five-tier}{{25}{35}{Five-tier progressive testing framework. Each tier must pass before the next is attempted}{table.caption.60}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {E.3}Test Script Organisation}{35}{subsection.E.3}\protected@file@percent }
+\newlabel{sec:test-org}{{E.3}{35}{Test Script Organisation}{subsection.E.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {E.4}Dry-Run Validation}{36}{subsection.E.4}\protected@file@percent }
+\newlabel{sec:dry-run}{{E.4}{36}{Dry-Run Validation}{subsection.E.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {E.5}DJI Video Analysis}{36}{subsection.E.5}\protected@file@percent }
+\newlabel{sec:video-analysis}{{E.5}{36}{DJI Video Analysis}{subsection.E.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {E.6}Stress Testing and Failure Scenarios}{36}{subsection.E.6}\protected@file@percent }
+\newlabel{sec:stress}{{E.6}{36}{Stress Testing and Failure Scenarios}{subsection.E.6}{}}
 \abx@aux@cite{0}{nasa2015vv}
 \abx@aux@segm{0}{0}{nasa2015vv}
 \abx@aux@cite{0}{jarus2019sora}
 \abx@aux@segm{0}{0}{jarus2019sora}
-\@writefile{lot}{\contentsline {table}{\numberline {25}{\ignorespaces Stress test results: 20 failure scenarios tested in SITL.}}{36}{table.caption.59}\protected@file@percent }
-\newlabel{tab:stress-results}{{25}{36}{Stress test results: 20 failure scenarios tested in SITL}{table.caption.59}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {E.7}Comparison with Industry Testing Standards}{36}{subsection.E.7}\protected@file@percent }
-\newlabel{sec:industry-comparison}{{E.7}{36}{Comparison with Industry Testing Standards}{subsection.E.7}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {E.8}Preflight Checklist}{36}{subsection.E.8}\protected@file@percent }
-\newlabel{sec:test-preflight}{{E.8}{36}{Preflight Checklist}{subsection.E.8}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {26}{\ignorespaces Stress test results: 20 failure scenarios tested in SITL.}}{37}{table.caption.61}\protected@file@percent }
+\newlabel{tab:stress-results}{{26}{37}{Stress test results: 20 failure scenarios tested in SITL}{table.caption.61}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {E.7}Comparison with Industry Testing Standards}{37}{subsection.E.7}\protected@file@percent }
+\newlabel{sec:industry-comparison}{{E.7}{37}{Comparison with Industry Testing Standards}{subsection.E.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {E.8}Preflight Checklist}{37}{subsection.E.8}\protected@file@percent }
+\newlabel{sec:test-preflight}{{E.8}{37}{Preflight Checklist}{subsection.E.8}{}}
 \abx@aux@cite{0}{ardupilot_mavproxy}
 \abx@aux@segm{0}{0}{ardupilot_mavproxy}
 \abx@aux@cite{0}{lens_calibration}
@@ -405,31 +407,31 @@
 \abx@aux@segm{0}{0}{xnnpack}
 \abx@aux@cite{0}{xnnpack}
 \abx@aux@segm{0}{0}{xnnpack}
-\@writefile{toc}{\contentsline {section}{\numberline {F}Field Testing and Results}{37}{appendix.F}\protected@file@percent }
-\newlabel{sec:results}{{F}{37}{Field Testing and Results}{appendix.F}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {F.1}Bench Testing Results}{37}{subsection.F.1}\protected@file@percent }
-\newlabel{sec:bench-results}{{F.1}{37}{Bench Testing Results}{subsection.F.1}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {F.2}FOV Calibration}{37}{subsection.F.2}\protected@file@percent }
-\newlabel{sec:fov-results}{{F.2}{37}{FOV Calibration}{subsection.F.2}{}}
-\newlabel{eq:focal-length}{{2}{37}{FOV Calibration}{equation.2}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {F.3}Lens Distortion Calibration}{37}{subsection.F.3}\protected@file@percent }
-\newlabel{sec:lens-calibration}{{F.3}{37}{Lens Distortion Calibration}{subsection.F.3}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {F.4}Inference Benchmarks}{37}{subsection.F.4}\protected@file@percent }
-\newlabel{sec:inference-benchmarks}{{F.4}{37}{Inference Benchmarks}{subsection.F.4}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {F}Field Testing and Results}{38}{appendix.F}\protected@file@percent }
+\newlabel{sec:results}{{F}{38}{Field Testing and Results}{appendix.F}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {F.1}Bench Testing Results}{38}{subsection.F.1}\protected@file@percent }
+\newlabel{sec:bench-results}{{F.1}{38}{Bench Testing Results}{subsection.F.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {F.2}FOV Calibration}{38}{subsection.F.2}\protected@file@percent }
+\newlabel{sec:fov-results}{{F.2}{38}{FOV Calibration}{subsection.F.2}{}}
+\newlabel{eq:focal-length}{{2}{38}{FOV Calibration}{equation.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {F.3}Lens Distortion Calibration}{38}{subsection.F.3}\protected@file@percent }
+\newlabel{sec:lens-calibration}{{F.3}{38}{Lens Distortion Calibration}{subsection.F.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {F.4}Inference Benchmarks}{38}{subsection.F.4}\protected@file@percent }
+\newlabel{sec:inference-benchmarks}{{F.4}{38}{Inference Benchmarks}{subsection.F.4}{}}
 \abx@aux@cite{0}{ncnn}
 \abx@aux@segm{0}{0}{ncnn}
 \abx@aux@cite{0}{edgeai}
 \abx@aux@segm{0}{0}{edgeai}
 \abx@aux@cite{0}{misra2006global}
 \abx@aux@segm{0}{0}{misra2006global}
-\@writefile{lot}{\contentsline {table}{\numberline {26}{\ignorespaces Inference benchmark results on Raspberry~Pi~5 (TFLite, XNNPACK CPU delegate~\blx@tocontentsinit {0}\cite {xnnpack}).}}{38}{table.caption.60}\protected@file@percent }
-\newlabel{tab:benchmark-results}{{26}{38}{Inference benchmark results on Raspberry~Pi~5 (TFLite, XNNPACK CPU delegate~\cite {xnnpack})}{table.caption.60}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {F.5}Post-Hoc Video Analysis}{38}{subsection.F.5}\protected@file@percent }
-\newlabel{sec:dji-analysis}{{F.5}{38}{Post-Hoc Video Analysis}{subsection.F.5}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {F.5.1}Detection Performance}{38}{subsubsection.F.5.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {F.5.2}GPS Estimation Accuracy}{38}{subsubsection.F.5.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {F.6}Dry-Run Validation}{38}{subsection.F.6}\protected@file@percent }
-\newlabel{sec:dry-run-results}{{F.6}{38}{Dry-Run Validation}{subsection.F.6}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {27}{\ignorespaces Inference benchmark results on Raspberry~Pi~5 (TFLite, XNNPACK CPU delegate~\blx@tocontentsinit {0}\cite {xnnpack}).}}{39}{table.caption.62}\protected@file@percent }
+\newlabel{tab:benchmark-results}{{27}{39}{Inference benchmark results on Raspberry~Pi~5 (TFLite, XNNPACK CPU delegate~\cite {xnnpack})}{table.caption.62}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {F.5}Post-Hoc Video Analysis}{39}{subsection.F.5}\protected@file@percent }
+\newlabel{sec:dji-analysis}{{F.5}{39}{Post-Hoc Video Analysis}{subsection.F.5}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {F.5.1}Detection Performance}{39}{subsubsection.F.5.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {F.5.2}GPS Estimation Accuracy}{39}{subsubsection.F.5.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {F.6}Dry-Run Validation}{39}{subsection.F.6}\protected@file@percent }
+\newlabel{sec:dry-run-results}{{F.6}{39}{Dry-Run Validation}{subsection.F.6}{}}
 \abx@aux@cite{0}{wca1981}
 \abx@aux@segm{0}{0}{wca1981}
 \abx@aux@cite{0}{imx296}
@@ -440,16 +442,16 @@
 \abx@aux@segm{0}{0}{koopman2016challenges}
 \abx@aux@cite{0}{david2021tensorflow}
 \abx@aux@segm{0}{0}{david2021tensorflow}
-\@writefile{toc}{\contentsline {subsection}{\numberline {F.7}Discussion}{39}{subsection.F.7}\protected@file@percent }
-\newlabel{sec:results-discussion}{{F.7}{39}{Discussion}{subsection.F.7}{}}
-\@writefile{toc}{\contentsline {paragraph}{Detection pipeline confidence.}{39}{paragraph*.61}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{GPS estimation accuracy.}{39}{paragraph*.62}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Inference throughput.}{39}{paragraph*.63}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Remaining unknowns.}{39}{paragraph*.64}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {G}Future Work}{39}{appendix.G}\protected@file@percent }
-\newlabel{sec:future}{{G}{39}{Future Work}{appendix.G}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {G.1}Inference Acceleration}{39}{subsection.G.1}\protected@file@percent }
-\newlabel{sec:future-inference}{{G.1}{39}{Inference Acceleration}{subsection.G.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {F.7}Discussion}{40}{subsection.F.7}\protected@file@percent }
+\newlabel{sec:results-discussion}{{F.7}{40}{Discussion}{subsection.F.7}{}}
+\@writefile{toc}{\contentsline {paragraph}{Detection pipeline confidence.}{40}{paragraph*.63}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{GPS estimation accuracy.}{40}{paragraph*.64}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Inference throughput.}{40}{paragraph*.65}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Remaining unknowns.}{40}{paragraph*.66}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {G}Future Work}{40}{appendix.G}\protected@file@percent }
+\newlabel{sec:future}{{G}{40}{Future Work}{appendix.G}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {G.1}Inference Acceleration}{40}{subsection.G.1}\protected@file@percent }
+\newlabel{sec:future-inference}{{G.1}{40}{Inference Acceleration}{subsection.G.1}{}}
 \abx@aux@cite{0}{ncnn2017}
 \abx@aux@segm{0}{0}{ncnn2017}
 \abx@aux@cite{0}{hailo2023datasheet}
@@ -460,12 +462,12 @@
 \abx@aux@segm{0}{0}{rudol2008human}
 \abx@aux@cite{0}{thermal_sar}
 \abx@aux@segm{0}{0}{thermal_sar}
-\@writefile{toc}{\contentsline {subsection}{\numberline {G.2}Detection Improvements}{40}{subsection.G.2}\protected@file@percent }
-\newlabel{sec:future-detection}{{G.2}{40}{Detection Improvements}{subsection.G.2}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {G.3}Multi-Target Support}{40}{subsection.G.3}\protected@file@percent }
-\newlabel{sec:future-multi}{{G.3}{40}{Multi-Target Support}{subsection.G.3}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {G.4}Thermal Imaging}{40}{subsection.G.4}\protected@file@percent }
-\newlabel{sec:future-thermal}{{G.4}{40}{Thermal Imaging}{subsection.G.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {G.2}Detection Improvements}{41}{subsection.G.2}\protected@file@percent }
+\newlabel{sec:future-detection}{{G.2}{41}{Detection Improvements}{subsection.G.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {G.3}Multi-Target Support}{41}{subsection.G.3}\protected@file@percent }
+\newlabel{sec:future-multi}{{G.3}{41}{Multi-Target Support}{subsection.G.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {G.4}Thermal Imaging}{41}{subsection.G.4}\protected@file@percent }
+\newlabel{sec:future-thermal}{{G.4}{41}{Thermal Imaging}{subsection.G.4}{}}
 \abx@aux@cite{0}{cap722}
 \abx@aux@segm{0}{0}{cap722}
 \abx@aux@cite{0}{waharte2010supporting}
@@ -478,17 +480,17 @@
 \abx@aux@segm{0}{0}{tflite}
 \abx@aux@cite{0}{xnnpack}
 \abx@aux@segm{0}{0}{xnnpack}
-\@writefile{toc}{\contentsline {subsection}{\numberline {G.5}Communication}{41}{subsection.G.5}\protected@file@percent }
-\newlabel{sec:future-comms}{{G.5}{41}{Communication}{subsection.G.5}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {G.6}Swarm Operations}{41}{subsection.G.6}\protected@file@percent }
-\newlabel{sec:future-swarm}{{G.6}{41}{Swarm Operations}{subsection.G.6}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {G.7}Edge Inference Architecture}{41}{subsection.G.7}\protected@file@percent }
-\newlabel{sec:cv:inference}{{G.7}{41}{Edge Inference Architecture}{subsection.G.7}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {G.7.1}Compute Platform Constraints}{41}{subsubsection.G.7.1}\protected@file@percent }
-\newlabel{sec:cv:inference:hw}{{G.7.1}{41}{Compute Platform Constraints}{subsubsection.G.7.1}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {G.7.2}Backend Selection}{41}{subsubsection.G.7.2}\protected@file@percent }
-\newlabel{sec:cv:inference:backends}{{G.7.2}{41}{Backend Selection}{subsubsection.G.7.2}{}}
-\@writefile{toc}{\contentsline {paragraph}{TFLite with XNNPACK delegate.}{41}{paragraph*.66}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {G.5}Communication}{42}{subsection.G.5}\protected@file@percent }
+\newlabel{sec:future-comms}{{G.5}{42}{Communication}{subsection.G.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {G.6}Swarm Operations}{42}{subsection.G.6}\protected@file@percent }
+\newlabel{sec:future-swarm}{{G.6}{42}{Swarm Operations}{subsection.G.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {G.7}Edge Inference Architecture}{42}{subsection.G.7}\protected@file@percent }
+\newlabel{sec:cv:inference}{{G.7}{42}{Edge Inference Architecture}{subsection.G.7}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {G.7.1}Compute Platform Constraints}{42}{subsubsection.G.7.1}\protected@file@percent }
+\newlabel{sec:cv:inference:hw}{{G.7.1}{42}{Compute Platform Constraints}{subsubsection.G.7.1}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {G.7.2}Backend Selection}{42}{subsubsection.G.7.2}\protected@file@percent }
+\newlabel{sec:cv:inference:backends}{{G.7.2}{42}{Backend Selection}{subsubsection.G.7.2}{}}
+\@writefile{toc}{\contentsline {paragraph}{TFLite with XNNPACK delegate.}{42}{paragraph*.68}\protected@file@percent }
 \abx@aux@cite{0}{ncnn}
 \abx@aux@segm{0}{0}{ncnn}
 \abx@aux@cite{0}{yolov8}
@@ -501,224 +503,224 @@
 \abx@aux@segm{0}{0}{tflite}
 \abx@aux@cite{0}{ncnn}
 \abx@aux@segm{0}{0}{ncnn}
-\@writefile{toc}{\contentsline {paragraph}{NCNN.}{42}{paragraph*.67}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Ultralytics/PyTorch.}{42}{paragraph*.68}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {G.7.3}Quantisation Trade-offs}{42}{subsubsection.G.7.3}\protected@file@percent }
-\newlabel{sec:cv:inference:quant}{{G.7.3}{42}{Quantisation Trade-offs}{subsubsection.G.7.3}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {G.7.4}Pipeline Architecture}{42}{subsubsection.G.7.4}\protected@file@percent }
-\newlabel{sec:cv:inference:pipeline}{{G.7.4}{42}{Pipeline Architecture}{subsubsection.G.7.4}{}}
+\@writefile{toc}{\contentsline {paragraph}{NCNN.}{43}{paragraph*.69}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Ultralytics/PyTorch.}{43}{paragraph*.70}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {G.7.3}Quantisation Trade-offs}{43}{subsubsection.G.7.3}\protected@file@percent }
+\newlabel{sec:cv:inference:quant}{{G.7.3}{43}{Quantisation Trade-offs}{subsubsection.G.7.3}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {G.7.4}Pipeline Architecture}{43}{subsubsection.G.7.4}\protected@file@percent }
+\newlabel{sec:cv:inference:pipeline}{{G.7.4}{43}{Pipeline Architecture}{subsubsection.G.7.4}{}}
 \abx@aux@cite{0}{yolov8}
 \abx@aux@segm{0}{0}{yolov8}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {G.7.5}Video Streaming Architecture}{43}{subsubsection.G.7.5}\protected@file@percent }
-\newlabel{sec:cv:inference:streaming}{{G.7.5}{43}{Video Streaming Architecture}{subsubsection.G.7.5}{}}
-\@writefile{toc}{\contentsline {paragraph}{MJPEG over HTTP (selected).}{43}{paragraph*.69}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Alternatives considered.}{43}{paragraph*.70}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {G.7.6}Benchmark Methodology}{43}{subsubsection.G.7.6}\protected@file@percent }
-\newlabel{sec:cv:inference:method}{{G.7.6}{43}{Benchmark Methodology}{subsubsection.G.7.6}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {G.7.7}Results and Projected Improvements}{43}{subsubsection.G.7.7}\protected@file@percent }
-\newlabel{sec:cv:inference:results}{{G.7.7}{43}{Results and Projected Improvements}{subsubsection.G.7.7}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {H}Computer Vision: Extended Analysis}{44}{appendix.H}\protected@file@percent }
-\newlabel{app:cv-extended}{{H}{44}{Computer Vision: Extended Analysis}{appendix.H}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {H.1}Detection Pipeline: Step-by-Step Timing}{44}{subsection.H.1}\protected@file@percent }
-\newlabel{app:cv:pipeline}{{H.1}{44}{Detection Pipeline: Step-by-Step Timing}{subsection.H.1}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {H.1.1}Stage 1: Camera Capture}{44}{subsubsection.H.1.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {H.1.2}Stage 2: Lens Undistortion}{44}{subsubsection.H.1.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {H.1.3}Stage 3: Preprocessing}{44}{subsubsection.H.1.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {H.1.4}Stage 4: TFLite Inference}{44}{subsubsection.H.1.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {H.1.5}Stage 5: Postprocessing}{44}{subsubsection.H.1.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {H.1.6}Stage 6: Visualisation}{45}{subsubsection.H.1.6}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {H.2}Comprehensive Benchmark Results}{45}{subsection.H.2}\protected@file@percent }
-\newlabel{app:cv:benchmarks}{{H.2}{45}{Comprehensive Benchmark Results}{subsection.H.2}{}}
-\@writefile{toc}{\contentsline {paragraph}{Inference time is model-size-independent.}{45}{paragraph*.74}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Undistortion overhead is negligible.}{45}{paragraph*.75}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Custom model vastly outperforms generic COCO.}{45}{paragraph*.76}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Timing stability.}{45}{paragraph*.77}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {H.3}Mission Runtime Analysis}{45}{subsection.H.3}\protected@file@percent }
-\newlabel{app:cv:runtime}{{H.3}{45}{Mission Runtime Analysis}{subsection.H.3}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {H.3.1}Ground Footprint Geometry}{45}{subsubsection.H.3.1}\protected@file@percent }
-\newlabel{eq:footprint_w}{{3}{45}{Ground Footprint Geometry}{equation.3}{}}
-\newlabel{eq:footprint_l}{{4}{45}{Ground Footprint Geometry}{equation.4}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {H.3.2}Frames per Flyover}{46}{subsubsection.H.3.2}\protected@file@percent }
-\newlabel{eq:frames_per_flyover}{{5}{46}{Frames per Flyover}{equation.5}{}}
-\@writefile{toc}{\contentsline {paragraph}{Key finding.}{46}{paragraph*.80}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {H.3.3}Frame Overlap Analysis}{46}{subsubsection.H.3.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {H.4}Detection Performance vs Altitude}{46}{subsection.H.4}\protected@file@percent }
-\newlabel{app:cv:altitude}{{H.4}{46}{Detection Performance vs Altitude}{subsection.H.4}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {H.4.1}Pixel Size Model}{46}{subsubsection.H.4.1}\protected@file@percent }
-\newlabel{eq:target_pixels}{{7}{46}{Pixel Size Model}{equation.7}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {H.4.2}Altitude Performance Table}{46}{subsubsection.H.4.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Operational envelope.}{46}{paragraph*.82}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Confidence versus pixel size relationship.}{47}{paragraph*.83}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {13}{\ignorespaces Detection confidence vs altitude for the YOLOv8n custom model. Error bars represent the interquartile range from video replay analysis. The dashed line marks the 0.2 confidence threshold.}}{47}{figure.caption.84}\protected@file@percent }
-\newlabel{fig:conf_vs_alt}{{13}{47}{Detection confidence vs altitude for the YOLOv8n custom model. Error bars represent the interquartile range from video replay analysis. The dashed line marks the 0.2 confidence threshold}{figure.caption.84}{}}
-\@writefile{toc}{\contentsline {paragraph}{Combined detection envelope.}{47}{paragraph*.85}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {H.5}Model Training Results}{47}{subsection.H.5}\protected@file@percent }
-\newlabel{app:cv:training}{{H.5}{47}{Model Training Results}{subsection.H.5}{}}
-\@writefile{toc}{\contentsline {paragraph}{Confusion matrix analysis.}{47}{paragraph*.88}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Comparison with v1.}{47}{paragraph*.89}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Export and deployment.}{47}{paragraph*.90}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {H.6}Dual Backend Architecture}{47}{subsection.H.6}\protected@file@percent }
-\newlabel{app:cv:backends}{{H.6}{47}{Dual Backend Architecture}{subsection.H.6}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {14}{\ignorespaces Combined detection envelope showing confidence degradation from both altitude (target pixel size reduction) and motion blur at \SI {10}{\metre \per \second }. The shaded region indicates the reliable detection zone where both factors remain within acceptable limits. The nominal search altitude of \SI {35}{\metre } sits comfortably within this envelope.}}{48}{figure.caption.86}\protected@file@percent }
-\newlabel{fig:detection_envelope}{{14}{48}{Combined detection envelope showing confidence degradation from both altitude (target pixel size reduction) and motion blur at \SI {10}{\metre \per \second }. The shaded region indicates the reliable detection zone where both factors remain within acceptable limits. The nominal search altitude of \SI {35}{\metre } sits comfortably within this envelope}{figure.caption.86}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {H.6.1}Backend Selection Logic}{48}{subsubsection.H.6.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {H.6.2}Backend Abstraction Benefits}{48}{subsubsection.H.6.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {H.7}Model Swapping and Field Deployment}{49}{subsection.H.7}\protected@file@percent }
-\newlabel{app:cv:swapping}{{H.7}{49}{Model Swapping and Field Deployment}{subsection.H.7}{}}
-\@writefile{toc}{\contentsline {paragraph}{File-copy swap.}{49}{paragraph*.91}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{CLI flag swap.}{49}{paragraph*.93}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Zero-code-change guarantee.}{49}{paragraph*.94}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {H.8}Detection Speed vs Drone Speed}{49}{subsection.H.8}\protected@file@percent }
-\newlabel{app:cv:speed}{{H.8}{49}{Detection Speed vs Drone Speed}{subsection.H.8}{}}
-\@writefile{toc}{\contentsline {paragraph}{Frames per flyover.}{49}{paragraph*.95}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Motion blur.}{49}{paragraph*.96}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {15}{\ignorespaces Pixel motion blur vs.\ altitude at different flight speeds and exposure times. At the nominal search configuration (\SI {10}{\metre \per \second }, \SI {2}{\milli \second } exposure), blur remains below 1\,px for all altitudes above \SI {15}{\metre }. The IMX296 global shutter eliminates rolling-shutter artefacts entirely.}}{49}{figure.caption.97}\protected@file@percent }
-\newlabel{fig:blur_vs_altitude}{{15}{49}{Pixel motion blur vs.\ altitude at different flight speeds and exposure times. At the nominal search configuration (\SI {10}{\metre \per \second }, \SI {2}{\milli \second } exposure), blur remains below 1\,px for all altitudes above \SI {15}{\metre }. The IMX296 global shutter eliminates rolling-shutter artefacts entirely}{figure.caption.97}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {16}{\ignorespaces Detection probability per flyover vs drone speed at \SI {35}{\metre } altitude, for single-frame detection rates of 0.70, 0.85, and 0.95. Even at 15\,m/s, the probability exceeds 99\% for $p_d \geq 0.85$.}}{50}{figure.caption.98}\protected@file@percent }
-\newlabel{fig:det_vs_speed}{{16}{50}{Detection probability per flyover vs drone speed at \SI {35}{\metre } altitude, for single-frame detection rates of 0.70, 0.85, and 0.95. Even at 15\,m/s, the probability exceeds 99\% for $p_d \geq 0.85$}{figure.caption.98}{}}
-\@writefile{toc}{\contentsline {paragraph}{Altitude-dependent speed scheduling.}{50}{paragraph*.99}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {H.9}Inference Latency Breakdown}{50}{subsection.H.9}\protected@file@percent }
-\newlabel{app:cv:latency}{{H.9}{50}{Inference Latency Breakdown}{subsection.H.9}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {17}{\ignorespaces Latency breakdown of the detection pipeline. Model inference (XNNPACK, 4-thread) accounts for 94\% of total latency; all other stages are negligible in comparison.}}{50}{figure.caption.100}\protected@file@percent }
-\newlabel{fig:latency_breakdown}{{17}{50}{Latency breakdown of the detection pipeline. Model inference (XNNPACK, 4-thread) accounts for 94\% of total latency; all other stages are negligible in comparison}{figure.caption.100}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {G.7.5}Video Streaming Architecture}{44}{subsubsection.G.7.5}\protected@file@percent }
+\newlabel{sec:cv:inference:streaming}{{G.7.5}{44}{Video Streaming Architecture}{subsubsection.G.7.5}{}}
+\@writefile{toc}{\contentsline {paragraph}{MJPEG over HTTP (selected).}{44}{paragraph*.71}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Alternatives considered.}{44}{paragraph*.72}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {G.7.6}Benchmark Methodology}{44}{subsubsection.G.7.6}\protected@file@percent }
+\newlabel{sec:cv:inference:method}{{G.7.6}{44}{Benchmark Methodology}{subsubsection.G.7.6}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {G.7.7}Results and Projected Improvements}{44}{subsubsection.G.7.7}\protected@file@percent }
+\newlabel{sec:cv:inference:results}{{G.7.7}{44}{Results and Projected Improvements}{subsubsection.G.7.7}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {H}Computer Vision: Extended Analysis}{45}{appendix.H}\protected@file@percent }
+\newlabel{app:cv-extended}{{H}{45}{Computer Vision: Extended Analysis}{appendix.H}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {H.1}Detection Pipeline: Step-by-Step Timing}{45}{subsection.H.1}\protected@file@percent }
+\newlabel{app:cv:pipeline}{{H.1}{45}{Detection Pipeline: Step-by-Step Timing}{subsection.H.1}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {H.1.1}Stage 1: Camera Capture}{45}{subsubsection.H.1.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {H.1.2}Stage 2: Lens Undistortion}{45}{subsubsection.H.1.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {H.1.3}Stage 3: Preprocessing}{45}{subsubsection.H.1.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {H.1.4}Stage 4: TFLite Inference}{45}{subsubsection.H.1.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {H.1.5}Stage 5: Postprocessing}{45}{subsubsection.H.1.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {H.1.6}Stage 6: Visualisation}{46}{subsubsection.H.1.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {H.2}Comprehensive Benchmark Results}{46}{subsection.H.2}\protected@file@percent }
+\newlabel{app:cv:benchmarks}{{H.2}{46}{Comprehensive Benchmark Results}{subsection.H.2}{}}
+\@writefile{toc}{\contentsline {paragraph}{Inference time is model-size-independent.}{46}{paragraph*.76}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Undistortion overhead is negligible.}{46}{paragraph*.77}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Custom model vastly outperforms generic COCO.}{46}{paragraph*.78}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Timing stability.}{46}{paragraph*.79}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {H.3}Mission Runtime Analysis}{46}{subsection.H.3}\protected@file@percent }
+\newlabel{app:cv:runtime}{{H.3}{46}{Mission Runtime Analysis}{subsection.H.3}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {H.3.1}Ground Footprint Geometry}{46}{subsubsection.H.3.1}\protected@file@percent }
+\newlabel{eq:footprint_w}{{3}{46}{Ground Footprint Geometry}{equation.3}{}}
+\newlabel{eq:footprint_l}{{4}{46}{Ground Footprint Geometry}{equation.4}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {H.3.2}Frames per Flyover}{47}{subsubsection.H.3.2}\protected@file@percent }
+\newlabel{eq:frames_per_flyover}{{5}{47}{Frames per Flyover}{equation.5}{}}
+\@writefile{toc}{\contentsline {paragraph}{Key finding.}{47}{paragraph*.82}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {H.3.3}Frame Overlap Analysis}{47}{subsubsection.H.3.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {H.4}Detection Performance vs Altitude}{47}{subsection.H.4}\protected@file@percent }
+\newlabel{app:cv:altitude}{{H.4}{47}{Detection Performance vs Altitude}{subsection.H.4}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {H.4.1}Pixel Size Model}{47}{subsubsection.H.4.1}\protected@file@percent }
+\newlabel{eq:target_pixels}{{7}{47}{Pixel Size Model}{equation.7}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {H.4.2}Altitude Performance Table}{47}{subsubsection.H.4.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Operational envelope.}{47}{paragraph*.84}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Confidence versus pixel size relationship.}{48}{paragraph*.85}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {14}{\ignorespaces Detection confidence vs altitude for the YOLOv8n custom model. Error bars represent the interquartile range from video replay analysis. The dashed line marks the 0.2 confidence threshold.}}{48}{figure.caption.86}\protected@file@percent }
+\newlabel{fig:conf_vs_alt_ext}{{14}{48}{Detection confidence vs altitude for the YOLOv8n custom model. Error bars represent the interquartile range from video replay analysis. The dashed line marks the 0.2 confidence threshold}{figure.caption.86}{}}
+\@writefile{toc}{\contentsline {paragraph}{Combined detection envelope.}{48}{paragraph*.87}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {H.5}Model Training Results}{48}{subsection.H.5}\protected@file@percent }
+\newlabel{app:cv:training}{{H.5}{48}{Model Training Results}{subsection.H.5}{}}
+\@writefile{toc}{\contentsline {paragraph}{Confusion matrix analysis.}{48}{paragraph*.90}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Comparison with v1.}{48}{paragraph*.91}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Export and deployment.}{48}{paragraph*.92}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {H.6}Dual Backend Architecture}{48}{subsection.H.6}\protected@file@percent }
+\newlabel{app:cv:backends}{{H.6}{48}{Dual Backend Architecture}{subsection.H.6}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {15}{\ignorespaces Combined detection envelope showing confidence degradation from both altitude (target pixel size reduction) and motion blur at \SI {10}{\metre \per \second }. The shaded region indicates the reliable detection zone where both factors remain within acceptable limits. The nominal search altitude of \SI {35}{\metre } sits comfortably within this envelope.}}{49}{figure.caption.88}\protected@file@percent }
+\newlabel{fig:detection_envelope}{{15}{49}{Combined detection envelope showing confidence degradation from both altitude (target pixel size reduction) and motion blur at \SI {10}{\metre \per \second }. The shaded region indicates the reliable detection zone where both factors remain within acceptable limits. The nominal search altitude of \SI {35}{\metre } sits comfortably within this envelope}{figure.caption.88}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {H.6.1}Backend Selection Logic}{49}{subsubsection.H.6.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {H.6.2}Backend Abstraction Benefits}{49}{subsubsection.H.6.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {H.7}Model Swapping and Field Deployment}{50}{subsection.H.7}\protected@file@percent }
+\newlabel{app:cv:swapping}{{H.7}{50}{Model Swapping and Field Deployment}{subsection.H.7}{}}
+\@writefile{toc}{\contentsline {paragraph}{File-copy swap.}{50}{paragraph*.93}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{CLI flag swap.}{50}{paragraph*.95}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Zero-code-change guarantee.}{50}{paragraph*.96}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {H.8}Detection Speed vs Drone Speed}{50}{subsection.H.8}\protected@file@percent }
+\newlabel{app:cv:speed}{{H.8}{50}{Detection Speed vs Drone Speed}{subsection.H.8}{}}
+\@writefile{toc}{\contentsline {paragraph}{Frames per flyover.}{50}{paragraph*.97}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Motion blur.}{50}{paragraph*.98}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {16}{\ignorespaces Pixel motion blur vs.\ altitude at different flight speeds and exposure times. At the nominal search configuration (\SI {10}{\metre \per \second }, \SI {2}{\milli \second } exposure), blur remains below 1\,px for all altitudes above \SI {15}{\metre }. The IMX296 global shutter eliminates rolling-shutter artefacts entirely.}}{50}{figure.caption.99}\protected@file@percent }
+\newlabel{fig:blur_vs_altitude}{{16}{50}{Pixel motion blur vs.\ altitude at different flight speeds and exposure times. At the nominal search configuration (\SI {10}{\metre \per \second }, \SI {2}{\milli \second } exposure), blur remains below 1\,px for all altitudes above \SI {15}{\metre }. The IMX296 global shutter eliminates rolling-shutter artefacts entirely}{figure.caption.99}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {17}{\ignorespaces Detection probability per flyover vs drone speed at \SI {35}{\metre } altitude, for single-frame detection rates of 0.70, 0.85, and 0.95. Even at 15\,m/s, the probability exceeds 99\% for $p_d \geq 0.85$.}}{51}{figure.caption.100}\protected@file@percent }
+\newlabel{fig:det_vs_speed_ext}{{17}{51}{Detection probability per flyover vs drone speed at \SI {35}{\metre } altitude, for single-frame detection rates of 0.70, 0.85, and 0.95. Even at 15\,m/s, the probability exceeds 99\% for $p_d \geq 0.85$}{figure.caption.100}{}}
+\@writefile{toc}{\contentsline {paragraph}{Altitude-dependent speed scheduling.}{51}{paragraph*.101}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {H.9}Inference Latency Breakdown}{51}{subsection.H.9}\protected@file@percent }
+\newlabel{app:cv:latency}{{H.9}{51}{Inference Latency Breakdown}{subsection.H.9}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {18}{\ignorespaces Latency breakdown of the detection pipeline. Model inference (XNNPACK, 4-thread) accounts for 94\% of total latency; all other stages are negligible in comparison.}}{51}{figure.caption.102}\protected@file@percent }
+\newlabel{fig:latency_breakdown_ext}{{18}{51}{Latency breakdown of the detection pipeline. Model inference (XNNPACK, 4-thread) accounts for 94\% of total latency; all other stages are negligible in comparison}{figure.caption.102}{}}
 \abx@aux@cite{0}{munoz2016mjpeg}
 \abx@aux@segm{0}{0}{munoz2016mjpeg}
 \abx@aux@cite{0}{apple_hls}
 \abx@aux@segm{0}{0}{apple_hls}
-\@writefile{toc}{\contentsline {section}{\numberline {I}Video Streaming and Ground Station Architecture}{51}{appendix.I}\protected@file@percent }
-\newlabel{sec:streaming-arch}{{I}{51}{Video Streaming and Ground Station Architecture}{appendix.I}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {I.1}Streaming Protocol Selection}{51}{subsection.I.1}\protected@file@percent }
-\newlabel{sec:stream-protocol}{{I.1}{51}{Streaming Protocol Selection}{subsection.I.1}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {I.2}Threading Model and Frame Buffering}{51}{subsection.I.2}\protected@file@percent }
-\newlabel{sec:threading-model}{{I.2}{51}{Threading Model and Frame Buffering}{subsection.I.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {I}Video Streaming and Ground Station Architecture}{52}{appendix.I}\protected@file@percent }
+\newlabel{sec:streaming-arch}{{I}{52}{Video Streaming and Ground Station Architecture}{appendix.I}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {I.1}Streaming Protocol Selection}{52}{subsection.I.1}\protected@file@percent }
+\newlabel{sec:stream-protocol}{{I.1}{52}{Streaming Protocol Selection}{subsection.I.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {I.2}Threading Model and Frame Buffering}{52}{subsection.I.2}\protected@file@percent }
+\newlabel{sec:threading-model}{{I.2}{52}{Threading Model and Frame Buffering}{subsection.I.2}{}}
 \abx@aux@cite{0}{gamma1994design}
 \abx@aux@segm{0}{0}{gamma1994design}
 \abx@aux@cite{0}{goodrich2007human}
 \abx@aux@segm{0}{0}{goodrich2007human}
-\@writefile{toc}{\contentsline {subsection}{\numberline {I.3}Headless Operation}{52}{subsection.I.3}\protected@file@percent }
-\newlabel{sec:headless-design}{{I.3}{52}{Headless Operation}{subsection.I.3}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {I.4}Port Allocation and Service Separation}{52}{subsection.I.4}\protected@file@percent }
-\newlabel{sec:port-alloc}{{I.4}{52}{Port Allocation and Service Separation}{subsection.I.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {I.3}Headless Operation}{53}{subsection.I.3}\protected@file@percent }
+\newlabel{sec:headless-design}{{I.3}{53}{Headless Operation}{subsection.I.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {I.4}Port Allocation and Service Separation}{53}{subsection.I.4}\protected@file@percent }
+\newlabel{sec:port-alloc}{{I.4}{53}{Port Allocation and Service Separation}{subsection.I.4}{}}
 \abx@aux@cite{0}{wiegand2003h264}
 \abx@aux@segm{0}{0}{wiegand2003h264}
 \abx@aux@cite{0}{qgroundcontrol2020}
 \abx@aux@segm{0}{0}{qgroundcontrol2020}
-\@writefile{toc}{\contentsline {subsection}{\numberline {I.5}Bandwidth Estimation}{53}{subsection.I.5}\protected@file@percent }
-\newlabel{sec:bandwidth}{{I.5}{53}{Bandwidth Estimation}{subsection.I.5}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {I.6}Ground Station Alternatives Considered}{53}{subsection.I.6}\protected@file@percent }
-\newlabel{sec:gs-alternatives}{{I.6}{53}{Ground Station Alternatives Considered}{subsection.I.6}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {J}GPS Target Estimation: A Deep Dive}{53}{appendix.J}\protected@file@percent }
-\newlabel{sec:gps-deep}{{J}{53}{GPS Target Estimation: A Deep Dive}{appendix.J}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {J.1}Problem Statement}{53}{subsection.J.1}\protected@file@percent }
-\newlabel{sec:gps-problem}{{J.1}{53}{Problem Statement}{subsection.J.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {I.5}Bandwidth Estimation}{54}{subsection.I.5}\protected@file@percent }
+\newlabel{sec:bandwidth}{{I.5}{54}{Bandwidth Estimation}{subsection.I.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {I.6}Ground Station Alternatives Considered}{54}{subsection.I.6}\protected@file@percent }
+\newlabel{sec:gs-alternatives}{{I.6}{54}{Ground Station Alternatives Considered}{subsection.I.6}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {J}GPS Target Estimation: A Deep Dive}{54}{appendix.J}\protected@file@percent }
+\newlabel{sec:gps-deep}{{J}{54}{GPS Target Estimation: A Deep Dive}{appendix.J}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {J.1}Problem Statement}{54}{subsection.J.1}\protected@file@percent }
+\newlabel{sec:gps-problem}{{J.1}{54}{Problem Statement}{subsection.J.1}{}}
 \abx@aux@cite{0}{kaplan2017understanding}
 \abx@aux@segm{0}{0}{kaplan2017understanding}
 \abx@aux@cite{0}{misra2006global}
 \abx@aux@segm{0}{0}{misra2006global}
-\@writefile{toc}{\contentsline {subsection}{\numberline {J.2}Pixel-to-GPS Mathematics}{54}{subsection.J.2}\protected@file@percent }
-\newlabel{sec:gps-math}{{J.2}{54}{Pixel-to-GPS Mathematics}{subsection.J.2}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {J.2.1}Ground Sampling Distance}{54}{subsubsection.J.2.1}\protected@file@percent }
-\newlabel{eq:gsd-deep}{{8}{54}{Ground Sampling Distance}{equation.8}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {J.2.2}Body-Frame Projection}{54}{subsubsection.J.2.2}\protected@file@percent }
-\newlabel{eq:body-deep}{{9}{54}{Body-Frame Projection}{equation.9}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {J.2.3}Heading Rotation}{54}{subsubsection.J.2.3}\protected@file@percent }
-\newlabel{eq:rotation-deep}{{10}{54}{Heading Rotation}{equation.10}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {J.2.4}WGS\,84 Conversion}{54}{subsubsection.J.2.4}\protected@file@percent }
-\newlabel{eq:wgs84-deep}{{11}{54}{WGS\,84 Conversion}{equation.11}{}}
-\@writefile{toc}{\contentsline {paragraph}{Centre-snap optimisation.}{54}{paragraph*.103}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Lens undistortion.}{54}{paragraph*.104}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {J.3}Error Budget}{54}{subsection.J.3}\protected@file@percent }
-\newlabel{sec:error-budget}{{J.3}{54}{Error Budget}{subsection.J.3}{}}
-\@writefile{toc}{\contentsline {paragraph}{GPS receiver noise}{54}{paragraph*.106}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {J.2}Pixel-to-GPS Mathematics}{55}{subsection.J.2}\protected@file@percent }
+\newlabel{sec:gps-math}{{J.2}{55}{Pixel-to-GPS Mathematics}{subsection.J.2}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {J.2.1}Ground Sampling Distance}{55}{subsubsection.J.2.1}\protected@file@percent }
+\newlabel{eq:gsd-deep}{{8}{55}{Ground Sampling Distance}{equation.8}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {J.2.2}Body-Frame Projection}{55}{subsubsection.J.2.2}\protected@file@percent }
+\newlabel{eq:body-deep}{{9}{55}{Body-Frame Projection}{equation.9}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {J.2.3}Heading Rotation}{55}{subsubsection.J.2.3}\protected@file@percent }
+\newlabel{eq:rotation-deep}{{10}{55}{Heading Rotation}{equation.10}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {J.2.4}WGS\,84 Conversion}{55}{subsubsection.J.2.4}\protected@file@percent }
+\newlabel{eq:wgs84-deep}{{11}{55}{WGS\,84 Conversion}{equation.11}{}}
+\@writefile{toc}{\contentsline {paragraph}{Centre-snap optimisation.}{55}{paragraph*.105}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Lens undistortion.}{55}{paragraph*.106}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {J.3}Error Budget}{55}{subsection.J.3}\protected@file@percent }
+\newlabel{sec:error-budget}{{J.3}{55}{Error Budget}{subsection.J.3}{}}
+\@writefile{toc}{\contentsline {paragraph}{GPS receiver noise}{55}{paragraph*.108}\protected@file@percent }
 \abx@aux@cite{0}{kalman1960new}
 \abx@aux@segm{0}{0}{kalman1960new}
-\@writefile{toc}{\contentsline {paragraph}{GPS timing lag}{55}{paragraph*.107}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Barometric altitude error}{55}{paragraph*.108}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Heading uncertainty}{55}{paragraph*.109}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{FOV calibration error}{55}{paragraph*.110}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {J.4}Fusion Strategies}{55}{subsection.J.4}\protected@file@percent }
-\newlabel{sec:fusion-strategies}{{J.4}{55}{Fusion Strategies}{subsection.J.4}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {J.4.1}Rolling Weighted Average (Window = 50)}{55}{subsubsection.J.4.1}\protected@file@percent }
-\newlabel{eq:rolling}{{12}{55}{Rolling Weighted Average (Window = 50)}{equation.12}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {J.4.2}Cumulative Weighted Average (All Time)}{55}{subsubsection.J.4.2}\protected@file@percent }
-\newlabel{eq:cumulative}{{13}{55}{Cumulative Weighted Average (All Time)}{equation.13}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {J.4.3}Kalman Filter (Static Target)}{55}{subsubsection.J.4.3}\protected@file@percent }
-\newlabel{sec:kalman-deep}{{J.4.3}{55}{Kalman Filter (Static Target)}{subsubsection.J.4.3}{}}
-\newlabel{eq:kalman-R-deep}{{14}{55}{Kalman Filter (Static Target)}{equation.14}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {J.4.4}Inverse-Variance Weighting}{56}{subsubsection.J.4.4}\protected@file@percent }
-\newlabel{sec:ivw}{{J.4.4}{56}{Inverse-Variance Weighting}{subsubsection.J.4.4}{}}
-\newlabel{eq:weight-deep}{{19}{56}{Inverse-Variance Weighting}{equation.19}{}}
-\newlabel{eq:alt-weight}{{21}{56}{Inverse-Variance Weighting}{equation.21}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {J.5}Spatial Clustering}{56}{subsection.J.5}\protected@file@percent }
-\newlabel{sec:clustering}{{J.5}{56}{Spatial Clustering}{subsection.J.5}{}}
-\newlabel{eq:haversine}{{22}{56}{Spatial Clustering}{equation.22}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {J.6}Comparison of Methods}{56}{subsection.J.6}\protected@file@percent }
-\newlabel{sec:method-comparison}{{J.6}{56}{Comparison of Methods}{subsection.J.6}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {J.7}Empirical Validation}{57}{subsection.J.7}\protected@file@percent }
-\newlabel{sec:validation}{{J.7}{57}{Empirical Validation}{subsection.J.7}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {J.7.1}DJI Video Replay (The ``Bullseye Test'')}{57}{subsubsection.J.7.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {J.7.2}Simulator Validation}{57}{subsubsection.J.7.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {J.8}Why Inverse-Variance Weighting Won}{57}{subsection.J.8}\protected@file@percent }
-\newlabel{sec:why-ivw}{{J.8}{57}{Why Inverse-Variance Weighting Won}{subsection.J.8}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {J.9}Offset Landing Application}{57}{subsection.J.9}\protected@file@percent }
-\newlabel{sec:offset-landing}{{J.9}{57}{Offset Landing Application}{subsection.J.9}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {K}Progressive Testing Methodology}{58}{appendix.K}\protected@file@percent }
-\newlabel{sec:testing-deep}{{K}{58}{Progressive Testing Methodology}{appendix.K}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {K.1}Philosophy: Never Skip a Tier}{58}{subsection.K.1}\protected@file@percent }
-\newlabel{sec:test-philosophy}{{K.1}{58}{Philosophy: Never Skip a Tier}{subsection.K.1}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {K.2}The Five Tiers in Detail}{58}{subsection.K.2}\protected@file@percent }
-\newlabel{sec:tiers-detail}{{K.2}{58}{The Five Tiers in Detail}{subsection.K.2}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {18}{\ignorespaces Tier progression. Each arrow represents a gate: the downstream tier is blocked until all upstream tests pass.}}{58}{figure.caption.112}\protected@file@percent }
-\newlabel{fig:tier-flow}{{18}{58}{Tier progression. Each arrow represents a gate: the downstream tier is blocked until all upstream tests pass}{figure.caption.112}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {K.2.1}Tier 1: SITL Simulation (Zero Hardware Risk)}{58}{subsubsection.K.2.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Defects caught.}{58}{paragraph*.113}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {K.2.2}Tier 2: Bench Test (Pi + Cube + Camera, No Props)}{58}{subsubsection.K.2.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Defects caught.}{59}{paragraph*.114}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {K.2.3}Tier 3: Passive Flight (Pilot Flies, Pi Watches, Zero Commands)}{59}{subsubsection.K.2.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {K.2.4}Tier 4: Autonomous Search with Log-Only Detection}{59}{subsubsection.K.2.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {K.2.5}Tier 5: Full Autonomous Mission}{59}{subsubsection.K.2.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {K.3}Test Script Organisation}{60}{subsection.K.3}\protected@file@percent }
-\newlabel{sec:test-org-detail}{{K.3}{60}{Test Script Organisation}{subsection.K.3}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {40}{\ignorespaces Test script categories and their tier coverage.}}{60}{table.caption.115}\protected@file@percent }
-\newlabel{tab:test-categories}{{40}{60}{Test script categories and their tier coverage}{table.caption.115}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {K.4}Experiment Scripts for Quantitative Validation}{60}{subsection.K.4}\protected@file@percent }
-\newlabel{sec:experiment-scripts}{{K.4}{60}{Experiment Scripts for Quantitative Validation}{subsection.K.4}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {K.5}Defect Discovery by Tier}{60}{subsection.K.5}\protected@file@percent }
-\newlabel{sec:bug-discovery}{{K.5}{60}{Defect Discovery by Tier}{subsection.K.5}{}}
+\@writefile{toc}{\contentsline {paragraph}{GPS timing lag}{56}{paragraph*.109}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Barometric altitude error}{56}{paragraph*.110}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Heading uncertainty}{56}{paragraph*.111}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{FOV calibration error}{56}{paragraph*.112}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {J.4}Fusion Strategies}{56}{subsection.J.4}\protected@file@percent }
+\newlabel{sec:fusion-strategies}{{J.4}{56}{Fusion Strategies}{subsection.J.4}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {J.4.1}Rolling Weighted Average (Window = 50)}{56}{subsubsection.J.4.1}\protected@file@percent }
+\newlabel{eq:rolling}{{12}{56}{Rolling Weighted Average (Window = 50)}{equation.12}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {J.4.2}Cumulative Weighted Average (All Time)}{56}{subsubsection.J.4.2}\protected@file@percent }
+\newlabel{eq:cumulative}{{13}{56}{Cumulative Weighted Average (All Time)}{equation.13}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {J.4.3}Kalman Filter (Static Target)}{56}{subsubsection.J.4.3}\protected@file@percent }
+\newlabel{sec:kalman-deep}{{J.4.3}{56}{Kalman Filter (Static Target)}{subsubsection.J.4.3}{}}
+\newlabel{eq:kalman-R-deep}{{14}{56}{Kalman Filter (Static Target)}{equation.14}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {J.4.4}Inverse-Variance Weighting}{57}{subsubsection.J.4.4}\protected@file@percent }
+\newlabel{sec:ivw}{{J.4.4}{57}{Inverse-Variance Weighting}{subsubsection.J.4.4}{}}
+\newlabel{eq:weight-deep}{{19}{57}{Inverse-Variance Weighting}{equation.19}{}}
+\newlabel{eq:alt-weight}{{21}{57}{Inverse-Variance Weighting}{equation.21}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {J.5}Spatial Clustering}{57}{subsection.J.5}\protected@file@percent }
+\newlabel{sec:clustering}{{J.5}{57}{Spatial Clustering}{subsection.J.5}{}}
+\newlabel{eq:haversine}{{22}{57}{Spatial Clustering}{equation.22}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {J.6}Comparison of Methods}{57}{subsection.J.6}\protected@file@percent }
+\newlabel{sec:method-comparison}{{J.6}{57}{Comparison of Methods}{subsection.J.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {J.7}Empirical Validation}{58}{subsection.J.7}\protected@file@percent }
+\newlabel{sec:validation}{{J.7}{58}{Empirical Validation}{subsection.J.7}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {J.7.1}DJI Video Replay (The ``Bullseye Test'')}{58}{subsubsection.J.7.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {J.7.2}Simulator Validation}{58}{subsubsection.J.7.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {J.8}Why Inverse-Variance Weighting Won}{58}{subsection.J.8}\protected@file@percent }
+\newlabel{sec:why-ivw}{{J.8}{58}{Why Inverse-Variance Weighting Won}{subsection.J.8}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {J.9}Offset Landing Application}{58}{subsection.J.9}\protected@file@percent }
+\newlabel{sec:offset-landing}{{J.9}{58}{Offset Landing Application}{subsection.J.9}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {K}Progressive Testing Methodology}{59}{appendix.K}\protected@file@percent }
+\newlabel{sec:testing-deep}{{K}{59}{Progressive Testing Methodology}{appendix.K}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {K.1}Philosophy: Never Skip a Tier}{59}{subsection.K.1}\protected@file@percent }
+\newlabel{sec:test-philosophy}{{K.1}{59}{Philosophy: Never Skip a Tier}{subsection.K.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {K.2}The Five Tiers in Detail}{59}{subsection.K.2}\protected@file@percent }
+\newlabel{sec:tiers-detail}{{K.2}{59}{The Five Tiers in Detail}{subsection.K.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {19}{\ignorespaces Tier progression. Each arrow represents a gate: the downstream tier is blocked until all upstream tests pass.}}{59}{figure.caption.114}\protected@file@percent }
+\newlabel{fig:tier-flow}{{19}{59}{Tier progression. Each arrow represents a gate: the downstream tier is blocked until all upstream tests pass}{figure.caption.114}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {K.2.1}Tier 1: SITL Simulation (Zero Hardware Risk)}{59}{subsubsection.K.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Defects caught.}{59}{paragraph*.115}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {K.2.2}Tier 2: Bench Test (Pi + Cube + Camera, No Props)}{59}{subsubsection.K.2.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Defects caught.}{60}{paragraph*.116}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {K.2.3}Tier 3: Passive Flight (Pilot Flies, Pi Watches, Zero Commands)}{60}{subsubsection.K.2.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {K.2.4}Tier 4: Autonomous Search with Log-Only Detection}{60}{subsubsection.K.2.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {K.2.5}Tier 5: Full Autonomous Mission}{60}{subsubsection.K.2.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {K.3}Test Script Organisation}{61}{subsection.K.3}\protected@file@percent }
+\newlabel{sec:test-org-detail}{{K.3}{61}{Test Script Organisation}{subsection.K.3}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {41}{\ignorespaces Test script categories and their tier coverage.}}{61}{table.caption.117}\protected@file@percent }
+\newlabel{tab:test-categories}{{41}{61}{Test script categories and their tier coverage}{table.caption.117}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {K.4}Experiment Scripts for Quantitative Validation}{61}{subsection.K.4}\protected@file@percent }
+\newlabel{sec:experiment-scripts}{{K.4}{61}{Experiment Scripts for Quantitative Validation}{subsection.K.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {K.5}Defect Discovery by Tier}{61}{subsection.K.5}\protected@file@percent }
+\newlabel{sec:bug-discovery}{{K.5}{61}{Defect Discovery by Tier}{subsection.K.5}{}}
 \abx@aux@cite{0}{forsberg1991relationship}
 \abx@aux@segm{0}{0}{forsberg1991relationship}
-\@writefile{lot}{\contentsline {table}{\numberline {41}{\ignorespaces Defects discovered at each testing tier, with resolution time and estimated cost if undetected.}}{61}{table.caption.116}\protected@file@percent }
-\newlabel{tab:bug-cost}{{41}{61}{Defects discovered at each testing tier, with resolution time and estimated cost if undetected}{table.caption.116}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {K.6}V-Model Mapping}{61}{subsection.K.6}\protected@file@percent }
-\newlabel{sec:vmodel-mapping}{{K.6}{61}{V-Model Mapping}{subsection.K.6}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {42}{\ignorespaces Mapping between V-model verification levels and the progressive testing tiers.}}{61}{table.caption.117}\protected@file@percent }
-\newlabel{tab:vmodel-map}{{42}{61}{Mapping between V-model verification levels and the progressive testing tiers}{table.caption.117}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {K.7}Cost--Risk Gradient}{62}{subsection.K.7}\protected@file@percent }
-\newlabel{sec:cost-risk}{{K.7}{62}{Cost--Risk Gradient}{subsection.K.7}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {43}{\ignorespaces Cost and risk gradient across testing tiers.}}{62}{table.caption.118}\protected@file@percent }
-\newlabel{tab:cost-gradient}{{43}{62}{Cost and risk gradient across testing tiers}{table.caption.118}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {K.8}Summary}{62}{subsection.K.8}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {L}Field Day: Adaptation Under Uncertainty}{62}{appendix.L}\protected@file@percent }
-\newlabel{sec:field-day}{{L}{62}{Field Day: Adaptation Under Uncertainty}{appendix.L}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {L.1}Setup: Three Terminals, One Aircraft}{62}{subsection.L.1}\protected@file@percent }
-\newlabel{sec:field-setup}{{L.1}{62}{Setup: Three Terminals, One Aircraft}{subsection.L.1}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {L.2}What We Tested}{63}{subsection.L.2}\protected@file@percent }
-\newlabel{sec:field-tests}{{L.2}{63}{What We Tested}{subsection.L.2}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {L.3}FOV Calibration: Catching a 22\% Error}{63}{subsection.L.3}\protected@file@percent }
-\newlabel{sec:field-fov}{{L.3}{63}{FOV Calibration: Catching a 22\% Error}{subsection.L.3}{}}
-\newlabel{eq:fov-field}{{23}{63}{FOV Calibration: Catching a 22\% Error}{equation.23}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {L.4}Camera Colour Discovery}{63}{subsection.L.4}\protected@file@percent }
-\newlabel{sec:field-colour}{{L.4}{63}{Camera Colour Discovery}{subsection.L.4}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {L.5}Lens Calibration}{63}{subsection.L.5}\protected@file@percent }
-\newlabel{sec:field-lens}{{L.5}{63}{Lens Calibration}{subsection.L.5}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {L.6}Benchmark Results}{64}{subsection.L.6}\protected@file@percent }
-\newlabel{sec:field-benchmark}{{L.6}{64}{Benchmark Results}{subsection.L.6}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {L.7}Weather Cancellation and the Go/No-Go Decision}{64}{subsection.L.7}\protected@file@percent }
-\newlabel{sec:field-weather}{{L.7}{64}{Weather Cancellation and the Go/No-Go Decision}{subsection.L.7}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {L.8}The Pivot: Evidence-Based Adaptation}{64}{subsection.L.8}\protected@file@percent }
-\newlabel{sec:field-pivot}{{L.8}{64}{The Pivot: Evidence-Based Adaptation}{subsection.L.8}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {L.9}DJI Video Analysis: A Flight-Data Proxy}{64}{subsection.L.9}\protected@file@percent }
-\newlabel{sec:field-dji}{{L.9}{64}{DJI Video Analysis: A Flight-Data Proxy}{subsection.L.9}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {42}{\ignorespaces Defects discovered at each testing tier, with resolution time and estimated cost if undetected.}}{62}{table.caption.118}\protected@file@percent }
+\newlabel{tab:bug-cost-appendix}{{42}{62}{Defects discovered at each testing tier, with resolution time and estimated cost if undetected}{table.caption.118}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {K.6}V-Model Mapping}{62}{subsection.K.6}\protected@file@percent }
+\newlabel{sec:vmodel-mapping}{{K.6}{62}{V-Model Mapping}{subsection.K.6}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {43}{\ignorespaces Mapping between V-model verification levels and the progressive testing tiers.}}{62}{table.caption.119}\protected@file@percent }
+\newlabel{tab:vmodel-map}{{43}{62}{Mapping between V-model verification levels and the progressive testing tiers}{table.caption.119}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {K.7}Cost--Risk Gradient}{63}{subsection.K.7}\protected@file@percent }
+\newlabel{sec:cost-risk}{{K.7}{63}{Cost--Risk Gradient}{subsection.K.7}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {44}{\ignorespaces Cost and risk gradient across testing tiers.}}{63}{table.caption.120}\protected@file@percent }
+\newlabel{tab:cost-gradient}{{44}{63}{Cost and risk gradient across testing tiers}{table.caption.120}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {K.8}Summary}{63}{subsection.K.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {L}Field Day: Adaptation Under Uncertainty}{63}{appendix.L}\protected@file@percent }
+\newlabel{sec:field-day}{{L}{63}{Field Day: Adaptation Under Uncertainty}{appendix.L}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {L.1}Setup: Three Terminals, One Aircraft}{63}{subsection.L.1}\protected@file@percent }
+\newlabel{sec:field-setup}{{L.1}{63}{Setup: Three Terminals, One Aircraft}{subsection.L.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {L.2}What We Tested}{64}{subsection.L.2}\protected@file@percent }
+\newlabel{sec:field-tests}{{L.2}{64}{What We Tested}{subsection.L.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {L.3}FOV Calibration: Catching a 22\% Error}{64}{subsection.L.3}\protected@file@percent }
+\newlabel{sec:field-fov}{{L.3}{64}{FOV Calibration: Catching a 22\% Error}{subsection.L.3}{}}
+\newlabel{eq:fov-field}{{23}{64}{FOV Calibration: Catching a 22\% Error}{equation.23}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {L.4}Camera Colour Discovery}{64}{subsection.L.4}\protected@file@percent }
+\newlabel{sec:field-colour}{{L.4}{64}{Camera Colour Discovery}{subsection.L.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {L.5}Lens Calibration}{64}{subsection.L.5}\protected@file@percent }
+\newlabel{sec:field-lens}{{L.5}{64}{Lens Calibration}{subsection.L.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {L.6}Benchmark Results}{65}{subsection.L.6}\protected@file@percent }
+\newlabel{sec:field-benchmark}{{L.6}{65}{Benchmark Results}{subsection.L.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {L.7}Weather Cancellation and the Go/No-Go Decision}{65}{subsection.L.7}\protected@file@percent }
+\newlabel{sec:field-weather}{{L.7}{65}{Weather Cancellation and the Go/No-Go Decision}{subsection.L.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {L.8}The Pivot: Evidence-Based Adaptation}{65}{subsection.L.8}\protected@file@percent }
+\newlabel{sec:field-pivot}{{L.8}{65}{The Pivot: Evidence-Based Adaptation}{subsection.L.8}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {L.9}DJI Video Analysis: A Flight-Data Proxy}{65}{subsection.L.9}\protected@file@percent }
+\newlabel{sec:field-dji}{{L.9}{65}{DJI Video Analysis: A Flight-Data Proxy}{subsection.L.9}{}}
 \gdef \LT@viii {\LT@entry 
     {1}{125.50148pt}\LT@entry 
     {1}{321.16855pt}\LT@entry 
@@ -727,16 +729,16 @@
     {1}{125.50148pt}\LT@entry 
     {1}{299.45775pt}\LT@entry 
     {1}{87.1904pt}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {L.10}Lessons for the Next Field Day}{65}{subsection.L.10}\protected@file@percent }
-\newlabel{sec:field-lessons}{{L.10}{65}{Lessons for the Next Field Day}{subsection.L.10}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {M}Contingency Planning and Deliverable Tiers}{65}{appendix.M}\protected@file@percent }
-\newlabel{sec:contingency}{{M}{65}{Contingency Planning and Deliverable Tiers}{appendix.M}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {M.1}Minimum Viable Deliverable}{65}{subsection.M.1}\protected@file@percent }
-\newlabel{sec:mvd}{{M.1}{65}{Minimum Viable Deliverable}{subsection.M.1}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {M.2}Target Deliverable}{65}{subsection.M.2}\protected@file@percent }
-\newlabel{sec:target}{{M.2}{65}{Target Deliverable}{subsection.M.2}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {M.3}Stretch Goals}{65}{subsection.M.3}\protected@file@percent }
-\newlabel{sec:stretch}{{M.3}{65}{Stretch Goals}{subsection.M.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {L.10}Lessons for the Next Field Day}{66}{subsection.L.10}\protected@file@percent }
+\newlabel{sec:field-lessons}{{L.10}{66}{Lessons for the Next Field Day}{subsection.L.10}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {M}Contingency Planning and Deliverable Tiers}{66}{appendix.M}\protected@file@percent }
+\newlabel{sec:contingency}{{M}{66}{Contingency Planning and Deliverable Tiers}{appendix.M}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {M.1}Minimum Viable Deliverable}{66}{subsection.M.1}\protected@file@percent }
+\newlabel{sec:mvd}{{M.1}{66}{Minimum Viable Deliverable}{subsection.M.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {M.2}Target Deliverable}{66}{subsection.M.2}\protected@file@percent }
+\newlabel{sec:target}{{M.2}{66}{Target Deliverable}{subsection.M.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {M.3}Stretch Goals}{66}{subsection.M.3}\protected@file@percent }
+\newlabel{sec:stretch}{{M.3}{66}{Stretch Goals}{subsection.M.3}{}}
 \gdef \LT@x {\LT@entry 
     {1}{79.97733pt}\LT@entry 
     {1}{97.35826pt}\LT@entry 
@@ -747,158 +749,158 @@
     {1}{317.74265pt}}
 \abx@aux@cite{0}{rtca_do178c}
 \abx@aux@segm{0}{0}{rtca_do178c}
-\@writefile{toc}{\contentsline {subsection}{\numberline {M.4}Contingency Plans}{66}{subsection.M.4}\protected@file@percent }
-\newlabel{sec:contingencies}{{M.4}{66}{Contingency Plans}{subsection.M.4}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {M.5}Test Script Mapping}{66}{subsection.M.5}\protected@file@percent }
-\newlabel{sec:test-mapping}{{M.5}{66}{Test Script Mapping}{subsection.M.5}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {N}Test Script Reference}{66}{appendix.N}\protected@file@percent }
-\newlabel{sec:test-scripts}{{N}{66}{Test Script Reference}{appendix.N}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {N.1}Organisation by Category}{66}{subsection.N.1}\protected@file@percent }
-\newlabel{sec:script-categories}{{N.1}{66}{Organisation by Category}{subsection.N.1}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {N.2}Flight Test Progression}{67}{subsection.N.2}\protected@file@percent }
-\newlabel{sec:flight-progression}{{N.2}{67}{Flight Test Progression}{subsection.N.2}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {52}{\ignorespaces Flight test progression. Each script must pass before the next is attempted. ``Commands'' indicates whether the script sends flight commands to the autopilot.}}{67}{table.caption.123}\protected@file@percent }
-\newlabel{tab:flight-scripts}{{52}{67}{Flight test progression. Each script must pass before the next is attempted. ``Commands'' indicates whether the script sends flight commands to the autopilot}{table.caption.123}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {N.3}Hardware Tests}{68}{subsection.N.3}\protected@file@percent }
-\newlabel{sec:hw-tests}{{N.3}{68}{Hardware Tests}{subsection.N.3}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {53}{\ignorespaces Hardware test scripts. All run on the Pi bench with zero flight commands.}}{68}{table.caption.124}\protected@file@percent }
-\newlabel{tab:hw-tests}{{53}{68}{Hardware test scripts. All run on the Pi bench with zero flight commands}{table.caption.124}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {N.4}Calibration Tests}{68}{subsection.N.4}\protected@file@percent }
-\newlabel{sec:cal-tests}{{N.4}{68}{Calibration Tests}{subsection.N.4}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {54}{\ignorespaces Calibration test scripts.}}{68}{table.caption.125}\protected@file@percent }
-\newlabel{tab:cal-tests}{{54}{68}{Calibration test scripts}{table.caption.125}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {N.5}Experiment Scripts}{68}{subsection.N.5}\protected@file@percent }
-\newlabel{sec:experiment-scripts}{{N.5}{68}{Experiment Scripts}{subsection.N.5}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {55}{\ignorespaces Day~1 experiment scripts. All passive (zero commands), all output CSV.}}{69}{table.caption.126}\protected@file@percent }
-\newlabel{tab:experiment-scripts}{{55}{69}{Day~1 experiment scripts. All passive (zero commands), all output CSV}{table.caption.126}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {N.6}Diagnostics}{69}{subsection.N.6}\protected@file@percent }
-\newlabel{sec:diag-scripts}{{N.6}{69}{Diagnostics}{subsection.N.6}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {N.7}Script-to-Requirement Mapping}{69}{subsection.N.7}\protected@file@percent }
-\newlabel{sec:script-req-map}{{N.7}{69}{Script-to-Requirement Mapping}{subsection.N.7}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {56}{\ignorespaces Test script categories mapped to mission requirements and verification tiers.}}{70}{table.caption.127}\protected@file@percent }
-\newlabel{tab:script-req-map}{{56}{70}{Test script categories mapped to mission requirements and verification tiers}{table.caption.127}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {N.8}What Was Tested on Real Hardware}{70}{subsection.N.8}\protected@file@percent }
-\newlabel{sec:tested-real}{{N.8}{70}{What Was Tested on Real Hardware}{subsection.N.8}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {N.9}Remaining Test Gaps}{70}{subsection.N.9}\protected@file@percent }
-\newlabel{sec:test-gaps}{{N.9}{70}{Remaining Test Gaps}{subsection.N.9}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {57}{\ignorespaces Tests not yet completed on real hardware. All have passed in SITL simulation.}}{70}{table.caption.128}\protected@file@percent }
-\newlabel{tab:test-gaps}{{57}{70}{Tests not yet completed on real hardware. All have passed in SITL simulation}{table.caption.128}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {M.4}Contingency Plans}{67}{subsection.M.4}\protected@file@percent }
+\newlabel{sec:contingencies}{{M.4}{67}{Contingency Plans}{subsection.M.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {M.5}Test Script Mapping}{67}{subsection.M.5}\protected@file@percent }
+\newlabel{sec:test-mapping}{{M.5}{67}{Test Script Mapping}{subsection.M.5}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {N}Test Script Reference}{67}{appendix.N}\protected@file@percent }
+\newlabel{sec:test-scripts}{{N}{67}{Test Script Reference}{appendix.N}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {N.1}Organisation by Category}{67}{subsection.N.1}\protected@file@percent }
+\newlabel{sec:script-categories}{{N.1}{67}{Organisation by Category}{subsection.N.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {N.2}Flight Test Progression}{68}{subsection.N.2}\protected@file@percent }
+\newlabel{sec:flight-progression}{{N.2}{68}{Flight Test Progression}{subsection.N.2}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {53}{\ignorespaces Flight test progression. Each script must pass before the next is attempted. ``Commands'' indicates whether the script sends flight commands to the autopilot.}}{68}{table.caption.125}\protected@file@percent }
+\newlabel{tab:flight-scripts}{{53}{68}{Flight test progression. Each script must pass before the next is attempted. ``Commands'' indicates whether the script sends flight commands to the autopilot}{table.caption.125}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {N.3}Hardware Tests}{69}{subsection.N.3}\protected@file@percent }
+\newlabel{sec:hw-tests}{{N.3}{69}{Hardware Tests}{subsection.N.3}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {54}{\ignorespaces Hardware test scripts. All run on the Pi bench with zero flight commands.}}{69}{table.caption.126}\protected@file@percent }
+\newlabel{tab:hw-tests}{{54}{69}{Hardware test scripts. All run on the Pi bench with zero flight commands}{table.caption.126}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {N.4}Calibration Tests}{69}{subsection.N.4}\protected@file@percent }
+\newlabel{sec:cal-tests}{{N.4}{69}{Calibration Tests}{subsection.N.4}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {55}{\ignorespaces Calibration test scripts.}}{69}{table.caption.127}\protected@file@percent }
+\newlabel{tab:cal-tests}{{55}{69}{Calibration test scripts}{table.caption.127}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {N.5}Experiment Scripts}{69}{subsection.N.5}\protected@file@percent }
+\newlabel{sec:experiment-scripts}{{N.5}{69}{Experiment Scripts}{subsection.N.5}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {56}{\ignorespaces Day~1 experiment scripts. All passive (zero commands), all output CSV.}}{70}{table.caption.128}\protected@file@percent }
+\newlabel{tab:experiment-scripts}{{56}{70}{Day~1 experiment scripts. All passive (zero commands), all output CSV}{table.caption.128}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {N.6}Diagnostics}{70}{subsection.N.6}\protected@file@percent }
+\newlabel{sec:diag-scripts}{{N.6}{70}{Diagnostics}{subsection.N.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {N.7}Script-to-Requirement Mapping}{70}{subsection.N.7}\protected@file@percent }
+\newlabel{sec:script-req-map}{{N.7}{70}{Script-to-Requirement Mapping}{subsection.N.7}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {57}{\ignorespaces Test script categories mapped to mission requirements and verification tiers.}}{71}{table.caption.129}\protected@file@percent }
+\newlabel{tab:script-req-map}{{57}{71}{Test script categories mapped to mission requirements and verification tiers}{table.caption.129}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {N.8}What Was Tested on Real Hardware}{71}{subsection.N.8}\protected@file@percent }
+\newlabel{sec:tested-real}{{N.8}{71}{What Was Tested on Real Hardware}{subsection.N.8}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {N.9}Remaining Test Gaps}{71}{subsection.N.9}\protected@file@percent }
+\newlabel{sec:test-gaps}{{N.9}{71}{Remaining Test Gaps}{subsection.N.9}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {58}{\ignorespaces Tests not yet completed on real hardware. All have passed in SITL simulation.}}{71}{table.caption.130}\protected@file@percent }
+\newlabel{tab:test-gaps}{{58}{71}{Tests not yet completed on real hardware. All have passed in SITL simulation}{table.caption.130}{}}
 \abx@aux@cite{0}{brown1966decentering}
 \abx@aux@segm{0}{0}{brown1966decentering}
-\@writefile{toc}{\contentsline {section}{\numberline {O}Sensor Calibration}{71}{appendix.O}\protected@file@percent }
-\newlabel{sec:calibration}{{O}{71}{Sensor Calibration}{appendix.O}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {O.1}Field-of-View Calibration}{71}{subsection.O.1}\protected@file@percent }
-\newlabel{sec:cal:fov}{{O.1}{71}{Field-of-View Calibration}{subsection.O.1}{}}
-\newlabel{eq:footprint}{{24}{71}{Field-of-View Calibration}{equation.24}{}}
-\newlabel{eq:fov-result}{{25}{71}{Field-of-View Calibration}{equation.25}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {O.2}Lens Distortion Calibration}{71}{subsection.O.2}\protected@file@percent }
-\newlabel{sec:cal:lens}{{O.2}{71}{Lens Distortion Calibration}{subsection.O.2}{}}
-\newlabel{eq:distortion}{{27}{71}{Lens Distortion Calibration}{equation.27}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {O.3}Camera Colour-Space Discovery}{72}{subsection.O.3}\protected@file@percent }
-\newlabel{sec:cal:colour}{{O.3}{72}{Camera Colour-Space Discovery}{subsection.O.3}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {O.4}DJI Video FOV Calibration}{72}{subsection.O.4}\protected@file@percent }
-\newlabel{sec:cal:dji}{{O.4}{72}{DJI Video FOV Calibration}{subsection.O.4}{}}
-\newlabel{eq:dji-focal}{{28}{72}{DJI Video FOV Calibration}{equation.28}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {O.5}Calibration Impact Summary}{73}{subsection.O.5}\protected@file@percent }
-\newlabel{sec:cal:summary}{{O.5}{73}{Calibration Impact Summary}{subsection.O.5}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {O.6}Simulation Validation and Sim-to-Real Gap}{73}{subsection.O.6}\protected@file@percent }
-\newlabel{sec:sim-validation}{{O.6}{73}{Simulation Validation and Sim-to-Real Gap}{subsection.O.6}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {O.6.1}Three Simulation Levels and What Each Validated}{73}{subsubsection.O.6.1}\protected@file@percent }
-\newlabel{sec:sim-levels-val}{{O.6.1}{73}{Three Simulation Levels and What Each Validated}{subsubsection.O.6.1}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {59}{\ignorespaces Validation coverage by simulation level. \text  {$\mathsurround \z@ \mathchar "458$}= validated, $\sim $ = partially validated, --- = not testable.}}{73}{table.caption.130}\protected@file@percent }
-\newlabel{tab:sim-val-matrix}{{59}{73}{Validation coverage by simulation level. \checkmark = validated, $\sim $ = partially validated, --- = not testable}{table.caption.130}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {O.6.2}Error Injection as a Validation Tool}{73}{subsubsection.O.6.2}\protected@file@percent }
-\newlabel{sec:error-injection-val}{{O.6.2}{73}{Error Injection as a Validation Tool}{subsubsection.O.6.2}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {O.6.3}DJI Video Replay as a Sim-to-Real Proxy}{74}{subsubsection.O.6.3}\protected@file@percent }
-\newlabel{sec:dji-proxy}{{O.6.3}{74}{DJI Video Replay as a Sim-to-Real Proxy}{subsubsection.O.6.3}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {O.6.4}Validation Results Summary}{74}{subsubsection.O.6.4}\protected@file@percent }
-\newlabel{sec:val-results}{{O.6.4}{74}{Validation Results Summary}{subsubsection.O.6.4}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {60}{\ignorespaces Quantitative simulation validation results.}}{74}{table.caption.131}\protected@file@percent }
-\newlabel{tab:sim-val-results}{{60}{74}{Quantitative simulation validation results}{table.caption.131}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {O.6.5}Known Sim-to-Real Gaps}{74}{subsubsection.O.6.5}\protected@file@percent }
-\newlabel{sec:known-gaps}{{O.6.5}{74}{Known Sim-to-Real Gaps}{subsubsection.O.6.5}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {O.6.6}Confidence Assessment}{75}{subsubsection.O.6.6}\protected@file@percent }
-\newlabel{sec:confidence}{{O.6.6}{75}{Confidence Assessment}{subsubsection.O.6.6}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {P}Mission Flow}{75}{appendix.P}\protected@file@percent }
-\newlabel{sec:mission-flow}{{P}{75}{Mission Flow}{appendix.P}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {P.1}Pre-Flight}{75}{subsection.P.1}\protected@file@percent }
-\newlabel{sec:mf-preflight}{{P.1}{75}{Pre-Flight}{subsection.P.1}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {P.2}Takeoff}{75}{subsection.P.2}\protected@file@percent }
-\newlabel{sec:mf-takeoff}{{P.2}{75}{Takeoff}{subsection.P.2}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {P.3}Transit to Search Area}{75}{subsection.P.3}\protected@file@percent }
-\newlabel{sec:mf-transit}{{P.3}{75}{Transit to Search Area}{subsection.P.3}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {P.4}Search}{76}{subsection.P.4}\protected@file@percent }
-\newlabel{sec:mf-search}{{P.4}{76}{Search}{subsection.P.4}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {P.5}Detection and Queuing}{76}{subsection.P.5}\protected@file@percent }
-\newlabel{sec:mf-detection}{{P.5}{76}{Detection and Queuing}{subsection.P.5}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {P.6}PLB Focus Area Redirect}{76}{subsection.P.6}\protected@file@percent }
-\newlabel{sec:mf-plb}{{P.6}{76}{PLB Focus Area Redirect}{subsection.P.6}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {P.7}Investigation}{76}{subsection.P.7}\protected@file@percent }
-\newlabel{sec:mf-investigation}{{P.7}{76}{Investigation}{subsection.P.7}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {P.8}Verification}{76}{subsection.P.8}\protected@file@percent }
-\newlabel{sec:mf-verify}{{P.8}{76}{Verification}{subsection.P.8}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {P.9}Approach and Landing}{76}{subsection.P.9}\protected@file@percent }
-\newlabel{sec:mf-landing}{{P.9}{76}{Approach and Landing}{subsection.P.9}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {P.10}Return to Launch}{77}{subsection.P.10}\protected@file@percent }
-\newlabel{sec:mf-rtl}{{P.10}{77}{Return to Launch}{subsection.P.10}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {P.11}Safety Layers During Flight}{77}{subsection.P.11}\protected@file@percent }
-\newlabel{sec:mf-safety}{{P.11}{77}{Safety Layers During Flight}{subsection.P.11}{}}
-\@writefile{toc}{\contentsline {paragraph}{NFZ Geofence (R01, R02).}{77}{paragraph*.132}\protected@file@percent }
-\newlabel{sec:mf-nfz}{{P.11}{77}{NFZ Geofence (R01, R02)}{paragraph*.132}{}}
-\@writefile{toc}{\contentsline {paragraph}{Manual Override.}{77}{paragraph*.133}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{RC Kill Switch (R09).}{77}{paragraph*.134}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Link Loss.}{77}{paragraph*.135}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {P.12}Centering vs.\ Direct Offset Landing}{77}{subsection.P.12}\protected@file@percent }
-\newlabel{sec:centering-analysis}{{P.12}{77}{Centering vs.\ Direct Offset Landing}{subsection.P.12}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {P.12.1}The Centering Option}{78}{subsubsection.P.12.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {P.12.2}Why Direct Offset Landing Is Sufficient}{78}{subsubsection.P.12.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {P.12.3}Probability Analysis}{78}{subsubsection.P.12.3}\protected@file@percent }
-\newlabel{sec:prob-analysis}{{P.12.3}{78}{Probability Analysis}{subsubsection.P.12.3}{}}
-\newlabel{eq:sigma-rayleigh}{{30}{78}{Probability Analysis}{equation.30}{}}
-\newlabel{eq:pband}{{31}{78}{Probability Analysis}{equation.31}{}}
-\newlabel{eq:pband-fused}{{32}{78}{Probability Analysis}{equation.32}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {P.12.4}Simulation Comparison}{78}{subsubsection.P.12.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {O}Sensor Calibration}{72}{appendix.O}\protected@file@percent }
+\newlabel{sec:calibration}{{O}{72}{Sensor Calibration}{appendix.O}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {O.1}Field-of-View Calibration}{72}{subsection.O.1}\protected@file@percent }
+\newlabel{sec:cal:fov}{{O.1}{72}{Field-of-View Calibration}{subsection.O.1}{}}
+\newlabel{eq:footprint}{{24}{72}{Field-of-View Calibration}{equation.24}{}}
+\newlabel{eq:fov-result}{{25}{72}{Field-of-View Calibration}{equation.25}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {O.2}Lens Distortion Calibration}{72}{subsection.O.2}\protected@file@percent }
+\newlabel{sec:cal:lens}{{O.2}{72}{Lens Distortion Calibration}{subsection.O.2}{}}
+\newlabel{eq:distortion}{{27}{72}{Lens Distortion Calibration}{equation.27}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {O.3}Camera Colour-Space Discovery}{73}{subsection.O.3}\protected@file@percent }
+\newlabel{sec:cal:colour}{{O.3}{73}{Camera Colour-Space Discovery}{subsection.O.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {O.4}DJI Video FOV Calibration}{73}{subsection.O.4}\protected@file@percent }
+\newlabel{sec:cal:dji}{{O.4}{73}{DJI Video FOV Calibration}{subsection.O.4}{}}
+\newlabel{eq:dji-focal}{{28}{73}{DJI Video FOV Calibration}{equation.28}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {O.5}Calibration Impact Summary}{74}{subsection.O.5}\protected@file@percent }
+\newlabel{sec:cal:summary}{{O.5}{74}{Calibration Impact Summary}{subsection.O.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {O.6}Simulation Validation and Sim-to-Real Gap}{74}{subsection.O.6}\protected@file@percent }
+\newlabel{sec:sim-validation}{{O.6}{74}{Simulation Validation and Sim-to-Real Gap}{subsection.O.6}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {O.6.1}Three Simulation Levels and What Each Validated}{74}{subsubsection.O.6.1}\protected@file@percent }
+\newlabel{sec:sim-levels-val}{{O.6.1}{74}{Three Simulation Levels and What Each Validated}{subsubsection.O.6.1}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {60}{\ignorespaces Validation coverage by simulation level. \text  {$\mathsurround \z@ \mathchar "458$}= validated, $\sim $ = partially validated, --- = not testable.}}{74}{table.caption.132}\protected@file@percent }
+\newlabel{tab:sim-val-matrix}{{60}{74}{Validation coverage by simulation level. \checkmark = validated, $\sim $ = partially validated, --- = not testable}{table.caption.132}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {O.6.2}Error Injection as a Validation Tool}{74}{subsubsection.O.6.2}\protected@file@percent }
+\newlabel{sec:error-injection-val}{{O.6.2}{74}{Error Injection as a Validation Tool}{subsubsection.O.6.2}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {O.6.3}DJI Video Replay as a Sim-to-Real Proxy}{75}{subsubsection.O.6.3}\protected@file@percent }
+\newlabel{sec:dji-proxy}{{O.6.3}{75}{DJI Video Replay as a Sim-to-Real Proxy}{subsubsection.O.6.3}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {O.6.4}Validation Results Summary}{75}{subsubsection.O.6.4}\protected@file@percent }
+\newlabel{sec:val-results}{{O.6.4}{75}{Validation Results Summary}{subsubsection.O.6.4}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {61}{\ignorespaces Quantitative simulation validation results.}}{75}{table.caption.133}\protected@file@percent }
+\newlabel{tab:sim-val-results}{{61}{75}{Quantitative simulation validation results}{table.caption.133}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {O.6.5}Known Sim-to-Real Gaps}{75}{subsubsection.O.6.5}\protected@file@percent }
+\newlabel{sec:known-gaps}{{O.6.5}{75}{Known Sim-to-Real Gaps}{subsubsection.O.6.5}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {O.6.6}Confidence Assessment}{76}{subsubsection.O.6.6}\protected@file@percent }
+\newlabel{sec:confidence}{{O.6.6}{76}{Confidence Assessment}{subsubsection.O.6.6}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {P}Mission Flow}{76}{appendix.P}\protected@file@percent }
+\newlabel{sec:mission-flow}{{P}{76}{Mission Flow}{appendix.P}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {P.1}Pre-Flight}{76}{subsection.P.1}\protected@file@percent }
+\newlabel{sec:mf-preflight}{{P.1}{76}{Pre-Flight}{subsection.P.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {P.2}Takeoff}{76}{subsection.P.2}\protected@file@percent }
+\newlabel{sec:mf-takeoff}{{P.2}{76}{Takeoff}{subsection.P.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {P.3}Transit to Search Area}{76}{subsection.P.3}\protected@file@percent }
+\newlabel{sec:mf-transit}{{P.3}{76}{Transit to Search Area}{subsection.P.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {P.4}Search}{77}{subsection.P.4}\protected@file@percent }
+\newlabel{sec:mf-search}{{P.4}{77}{Search}{subsection.P.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {P.5}Detection and Queuing}{77}{subsection.P.5}\protected@file@percent }
+\newlabel{sec:mf-detection}{{P.5}{77}{Detection and Queuing}{subsection.P.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {P.6}PLB Focus Area Redirect}{77}{subsection.P.6}\protected@file@percent }
+\newlabel{sec:mf-plb}{{P.6}{77}{PLB Focus Area Redirect}{subsection.P.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {P.7}Investigation}{77}{subsection.P.7}\protected@file@percent }
+\newlabel{sec:mf-investigation}{{P.7}{77}{Investigation}{subsection.P.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {P.8}Verification}{77}{subsection.P.8}\protected@file@percent }
+\newlabel{sec:mf-verify}{{P.8}{77}{Verification}{subsection.P.8}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {P.9}Approach and Landing}{77}{subsection.P.9}\protected@file@percent }
+\newlabel{sec:mf-landing}{{P.9}{77}{Approach and Landing}{subsection.P.9}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {P.10}Return to Launch}{78}{subsection.P.10}\protected@file@percent }
+\newlabel{sec:mf-rtl}{{P.10}{78}{Return to Launch}{subsection.P.10}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {P.11}Safety Layers During Flight}{78}{subsection.P.11}\protected@file@percent }
+\newlabel{sec:mf-safety}{{P.11}{78}{Safety Layers During Flight}{subsection.P.11}{}}
+\@writefile{toc}{\contentsline {paragraph}{NFZ Geofence (R01, R02).}{78}{paragraph*.134}\protected@file@percent }
+\newlabel{sec:mf-nfz}{{P.11}{78}{NFZ Geofence (R01, R02)}{paragraph*.134}{}}
+\@writefile{toc}{\contentsline {paragraph}{Manual Override.}{78}{paragraph*.135}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{RC Kill Switch (R09).}{78}{paragraph*.136}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Link Loss.}{78}{paragraph*.137}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {P.12}Centering vs.\ Direct Offset Landing}{78}{subsection.P.12}\protected@file@percent }
+\newlabel{sec:centering-analysis}{{P.12}{78}{Centering vs.\ Direct Offset Landing}{subsection.P.12}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {P.12.1}The Centering Option}{79}{subsubsection.P.12.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {P.12.2}Why Direct Offset Landing Is Sufficient}{79}{subsubsection.P.12.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {P.12.3}Probability Analysis}{79}{subsubsection.P.12.3}\protected@file@percent }
+\newlabel{sec:prob-analysis}{{P.12.3}{79}{Probability Analysis}{subsubsection.P.12.3}{}}
+\newlabel{eq:sigma-rayleigh}{{30}{79}{Probability Analysis}{equation.30}{}}
+\newlabel{eq:pband}{{31}{79}{Probability Analysis}{equation.31}{}}
+\newlabel{eq:pband-fused}{{32}{79}{Probability Analysis}{equation.32}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {P.12.4}Simulation Comparison}{79}{subsubsection.P.12.4}\protected@file@percent }
 \abx@aux@cite{0}{mavproxy}
 \abx@aux@segm{0}{0}{mavproxy}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {P.12.5}Design Decision}{79}{subsubsection.P.12.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {Q}MAVLink Communication Architecture}{79}{appendix.Q}\protected@file@percent }
-\newlabel{sec:comms}{{Q}{79}{MAVLink Communication Architecture}{appendix.Q}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {Q.1}The Python 3.13 Serial Problem}{79}{subsection.Q.1}\protected@file@percent }
-\newlabel{sec:serial-problem}{{Q.1}{79}{The Python 3.13 Serial Problem}{subsection.Q.1}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {Q.2}MAVProxy Bridge Architecture}{79}{subsection.Q.2}\protected@file@percent }
-\newlabel{sec:mavproxy-bridge}{{Q.2}{79}{MAVProxy Bridge Architecture}{subsection.Q.2}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {Q.3}Connection Auto-Detection}{79}{subsection.Q.3}\protected@file@percent }
-\newlabel{sec:auto-detect}{{Q.3}{79}{Connection Auto-Detection}{subsection.Q.3}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {P.12.5}Design Decision}{80}{subsubsection.P.12.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {Q}MAVLink Communication Architecture}{80}{appendix.Q}\protected@file@percent }
+\newlabel{sec:comms}{{Q}{80}{MAVLink Communication Architecture}{appendix.Q}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {Q.1}The Python 3.13 Serial Problem}{80}{subsection.Q.1}\protected@file@percent }
+\newlabel{sec:serial-problem}{{Q.1}{80}{The Python 3.13 Serial Problem}{subsection.Q.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {Q.2}MAVProxy Bridge Architecture}{80}{subsection.Q.2}\protected@file@percent }
+\newlabel{sec:mavproxy-bridge}{{Q.2}{80}{MAVProxy Bridge Architecture}{subsection.Q.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {Q.3}Connection Auto-Detection}{80}{subsection.Q.3}\protected@file@percent }
+\newlabel{sec:auto-detect}{{Q.3}{80}{Connection Auto-Detection}{subsection.Q.3}{}}
 \abx@aux@cite{0}{mavlink2}
 \abx@aux@segm{0}{0}{mavlink2}
 \gdef \LT@xii {\LT@entry 
     {1}{139.45775pt}\LT@entry 
     {1}{51.6105pt}\LT@entry 
     {1}{321.08138pt}}
-\@writefile{lof}{\contentsline {figure}{\numberline {19}{\ignorespaces MAVLink communication topology. MAVProxy bridges the UART serial link to three independent consumers over localhost UDP and network TCP. All consumers receive the full telemetry stream; any can inject commands.}}{80}{figure.caption.137}\protected@file@percent }
-\newlabel{fig:comms-topology}{{19}{80}{MAVLink communication topology. MAVProxy bridges the UART serial link to three independent consumers over localhost UDP and network TCP. All consumers receive the full telemetry stream; any can inject commands}{figure.caption.137}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {Q.4}MAVLink Message Protocol}{80}{subsection.Q.4}\protected@file@percent }
-\newlabel{sec:mavlink-protocol}{{Q.4}{80}{MAVLink Message Protocol}{subsection.Q.4}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {Q.5}Link Loss Detection and Recovery}{80}{subsection.Q.5}\protected@file@percent }
-\newlabel{sec:link-loss}{{Q.5}{80}{Link Loss Detection and Recovery}{subsection.Q.5}{}}
-\@writefile{toc}{\contentsline {paragraph}{Heartbeat timeout.}{80}{paragraph*.139}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{GPS degradation monitor.}{80}{paragraph*.140}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {Q.6}Latency Characteristics}{80}{subsection.Q.6}\protected@file@percent }
-\newlabel{sec:latency}{{Q.6}{80}{Latency Characteristics}{subsection.Q.6}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {Q.7}Raw Inference vs.\ Effective Pipeline Throughput}{80}{subsection.Q.7}\protected@file@percent }
-\newlabel{sec:cv:pipeline-fps}{{Q.7}{80}{Raw Inference vs.\ Effective Pipeline Throughput}{subsection.Q.7}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {Q.7.1}Pipeline Stages and Overhead Budget}{80}{subsubsection.Q.7.1}\protected@file@percent }
-\newlabel{sec:cv:pipeline-fps:stages}{{Q.7.1}{80}{Pipeline Stages and Overhead Budget}{subsubsection.Q.7.1}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {Q.7.2}Measured and Projected Results}{81}{subsubsection.Q.7.2}\protected@file@percent }
-\newlabel{sec:cv:pipeline-fps:results}{{Q.7.2}{81}{Measured and Projected Results}{subsubsection.Q.7.2}{}}
-\@writefile{toc}{\contentsline {paragraph}{TFLite FP32 (deployed baseline).}{81}{paragraph*.142}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{NCNN FP32 (benchmarked, not deployed).}{81}{paragraph*.143}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{TFLite FP16 (projected).}{81}{paragraph*.144}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Ultralytics/PyTorch (laptop reference).}{81}{paragraph*.145}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {Q.7.3}Bottleneck Transition}{81}{subsubsection.Q.7.3}\protected@file@percent }
-\newlabel{sec:cv:pipeline-fps:bottleneck}{{Q.7.3}{81}{Bottleneck Transition}{subsubsection.Q.7.3}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {20}{\ignorespaces Frame time decomposition: inference vs.\ pipeline overhead for each backend. As raw inference latency decreases, overhead transitions from negligible (5.8\% for TFLite FP32) to significant (16.3\% for NCNN).}}{81}{figure.caption.146}\protected@file@percent }
-\newlabel{fig:bottleneck_shift}{{20}{81}{Frame time decomposition: inference vs.\ pipeline overhead for each backend. As raw inference latency decreases, overhead transitions from negligible (5.8\% for TFLite FP32) to significant (16.3\% for NCNN)}{figure.caption.146}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {20}{\ignorespaces MAVLink communication topology. MAVProxy bridges the UART serial link to three independent consumers over localhost UDP and network TCP. All consumers receive the full telemetry stream; any can inject commands.}}{81}{figure.caption.139}\protected@file@percent }
+\newlabel{fig:comms-topology}{{20}{81}{MAVLink communication topology. MAVProxy bridges the UART serial link to three independent consumers over localhost UDP and network TCP. All consumers receive the full telemetry stream; any can inject commands}{figure.caption.139}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {Q.4}MAVLink Message Protocol}{81}{subsection.Q.4}\protected@file@percent }
+\newlabel{sec:mavlink-protocol}{{Q.4}{81}{MAVLink Message Protocol}{subsection.Q.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {Q.5}Link Loss Detection and Recovery}{81}{subsection.Q.5}\protected@file@percent }
+\newlabel{sec:link-loss}{{Q.5}{81}{Link Loss Detection and Recovery}{subsection.Q.5}{}}
+\@writefile{toc}{\contentsline {paragraph}{Heartbeat timeout.}{81}{paragraph*.141}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{GPS degradation monitor.}{81}{paragraph*.142}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {Q.6}Latency Characteristics}{81}{subsection.Q.6}\protected@file@percent }
+\newlabel{sec:latency}{{Q.6}{81}{Latency Characteristics}{subsection.Q.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {Q.7}Raw Inference vs.\ Effective Pipeline Throughput}{81}{subsection.Q.7}\protected@file@percent }
+\newlabel{sec:cv:pipeline-fps}{{Q.7}{81}{Raw Inference vs.\ Effective Pipeline Throughput}{subsection.Q.7}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {Q.7.1}Pipeline Stages and Overhead Budget}{81}{subsubsection.Q.7.1}\protected@file@percent }
+\newlabel{sec:cv:pipeline-fps:stages}{{Q.7.1}{81}{Pipeline Stages and Overhead Budget}{subsubsection.Q.7.1}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {Q.7.2}Measured and Projected Results}{82}{subsubsection.Q.7.2}\protected@file@percent }
+\newlabel{sec:cv:pipeline-fps:results}{{Q.7.2}{82}{Measured and Projected Results}{subsubsection.Q.7.2}{}}
+\@writefile{toc}{\contentsline {paragraph}{TFLite FP32 (deployed baseline).}{82}{paragraph*.144}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{NCNN FP32 (benchmarked, not deployed).}{82}{paragraph*.145}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{TFLite FP16 (projected).}{82}{paragraph*.146}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Ultralytics/PyTorch (laptop reference).}{82}{paragraph*.147}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {Q.7.3}Bottleneck Transition}{82}{subsubsection.Q.7.3}\protected@file@percent }
+\newlabel{sec:cv:pipeline-fps:bottleneck}{{Q.7.3}{82}{Bottleneck Transition}{subsubsection.Q.7.3}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {21}{\ignorespaces Frame time decomposition: inference vs.\ pipeline overhead for each backend. As raw inference latency decreases, overhead transitions from negligible (5.8\% for TFLite FP32) to significant (16.3\% for NCNN).}}{82}{figure.caption.148}\protected@file@percent }
+\newlabel{fig:bottleneck_shift}{{21}{82}{Frame time decomposition: inference vs.\ pipeline overhead for each backend. As raw inference latency decreases, overhead transitions from negligible (5.8\% for TFLite FP32) to significant (16.3\% for NCNN)}{figure.caption.148}{}}
 \gdef \LT@xiii {\LT@entry 
     {1}{38.84424pt}\LT@entry 
     {1}{70.63133pt}\LT@entry 
@@ -906,48 +908,48 @@
     {1}{38.91246pt}\LT@entry 
     {1}{59.51903pt}\LT@entry 
     {1}{186.02249pt}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {Q.7.4}Operational Implications}{82}{subsubsection.Q.7.4}\protected@file@percent }
-\newlabel{sec:cv:pipeline-fps:ops}{{Q.7.4}{82}{Operational Implications}{subsubsection.Q.7.4}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {Q.8}Flight Path Optimisation}{82}{subsection.Q.8}\protected@file@percent }
-\newlabel{sec:path-tradeoffs}{{Q.8}{82}{Flight Path Optimisation}{subsection.Q.8}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {Q.8.1}Diagonal vs Axis-Aligned Scanning}{82}{subsubsection.Q.8.1}\protected@file@percent }
-\newlabel{sec:diagonal}{{Q.8.1}{82}{Diagonal vs Axis-Aligned Scanning}{subsubsection.Q.8.1}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {Q.8.2}Lane Width vs Altitude Trade-Off}{82}{subsubsection.Q.8.2}\protected@file@percent }
-\newlabel{sec:lane-alt}{{Q.8.2}{82}{Lane Width vs Altitude Trade-Off}{subsubsection.Q.8.2}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {Q.8.3}Altitude-Dependent Speed Schedule}{83}{subsubsection.Q.8.3}\protected@file@percent }
-\newlabel{sec:speed-schedule}{{Q.8.3}{83}{Altitude-Dependent Speed Schedule}{subsubsection.Q.8.3}{}}
-\newlabel{eq:speed-schedule}{{33}{83}{Altitude-Dependent Speed Schedule}{equation.33}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {Q.8.4}Turn Strategy}{83}{subsubsection.Q.8.4}\protected@file@percent }
-\newlabel{sec:turn-strategy}{{Q.8.4}{83}{Turn Strategy}{subsubsection.Q.8.4}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {Q.8.5}Overlap Margin Analysis}{83}{subsubsection.Q.8.5}\protected@file@percent }
-\newlabel{sec:overlap-margin}{{Q.8.5}{83}{Overlap Margin Analysis}{subsubsection.Q.8.5}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {Q.8.6}Start Corner Optimisation}{83}{subsubsection.Q.8.6}\protected@file@percent }
-\newlabel{sec:start-corner}{{Q.8.6}{83}{Start Corner Optimisation}{subsubsection.Q.8.6}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {Q.8.7}PLB Focus Area Redirect}{84}{subsubsection.Q.8.7}\protected@file@percent }
-\newlabel{sec:plb-redirect}{{Q.8.7}{84}{PLB Focus Area Redirect}{subsubsection.Q.8.7}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {Q.9}Payload Release Mechanism}{84}{subsection.Q.9}\protected@file@percent }
-\newlabel{sec:payload-release}{{Q.9}{84}{Payload Release Mechanism}{subsection.Q.9}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {Q.9.1}Tarot Double-Throw Release Mechanism}{84}{subsubsection.Q.9.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {Q.9.2}Why Release from Altitude, Not Land}{84}{subsubsection.Q.9.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {Q.9.3}The \SI {7.5}{\metre } Offset}{84}{subsubsection.Q.9.3}\protected@file@percent }
-\newlabel{sec:offset-rationale}{{Q.9.3}{84}{The \SI {7.5}{\metre } Offset}{subsubsection.Q.9.3}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {Q.9.4}Servo Actuation Sequence}{85}{subsubsection.Q.9.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {Q.9.5}Why Visual Servo Centering Was Not Required}{85}{subsubsection.Q.9.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {Q.9.6}Future Work: Precision Drop}{85}{subsubsection.Q.9.6}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {R}Model Comparison and Future Vision Improvements}{85}{appendix.R}\protected@file@percent }
-\newlabel{sec:model_comparison}{{R}{85}{Model Comparison and Future Vision Improvements}{appendix.R}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {R.1}Model Generations}{85}{subsection.R.1}\protected@file@percent }
-\newlabel{sec:model_comparison:generations}{{R.1}{85}{Model Generations}{subsection.R.1}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {Q.7.4}Operational Implications}{83}{subsubsection.Q.7.4}\protected@file@percent }
+\newlabel{sec:cv:pipeline-fps:ops}{{Q.7.4}{83}{Operational Implications}{subsubsection.Q.7.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {Q.8}Flight Path Optimisation}{83}{subsection.Q.8}\protected@file@percent }
+\newlabel{sec:path-tradeoffs}{{Q.8}{83}{Flight Path Optimisation}{subsection.Q.8}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {Q.8.1}Diagonal vs Axis-Aligned Scanning}{83}{subsubsection.Q.8.1}\protected@file@percent }
+\newlabel{sec:diagonal}{{Q.8.1}{83}{Diagonal vs Axis-Aligned Scanning}{subsubsection.Q.8.1}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {Q.8.2}Lane Width vs Altitude Trade-Off}{83}{subsubsection.Q.8.2}\protected@file@percent }
+\newlabel{sec:lane-alt}{{Q.8.2}{83}{Lane Width vs Altitude Trade-Off}{subsubsection.Q.8.2}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {Q.8.3}Altitude-Dependent Speed Schedule}{84}{subsubsection.Q.8.3}\protected@file@percent }
+\newlabel{sec:speed-schedule}{{Q.8.3}{84}{Altitude-Dependent Speed Schedule}{subsubsection.Q.8.3}{}}
+\newlabel{eq:speed-schedule}{{33}{84}{Altitude-Dependent Speed Schedule}{equation.33}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {Q.8.4}Turn Strategy}{84}{subsubsection.Q.8.4}\protected@file@percent }
+\newlabel{sec:turn-strategy}{{Q.8.4}{84}{Turn Strategy}{subsubsection.Q.8.4}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {Q.8.5}Overlap Margin Analysis}{84}{subsubsection.Q.8.5}\protected@file@percent }
+\newlabel{sec:overlap-margin}{{Q.8.5}{84}{Overlap Margin Analysis}{subsubsection.Q.8.5}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {Q.8.6}Start Corner Optimisation}{84}{subsubsection.Q.8.6}\protected@file@percent }
+\newlabel{sec:start-corner}{{Q.8.6}{84}{Start Corner Optimisation}{subsubsection.Q.8.6}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {Q.8.7}PLB Focus Area Redirect}{85}{subsubsection.Q.8.7}\protected@file@percent }
+\newlabel{sec:plb-redirect}{{Q.8.7}{85}{PLB Focus Area Redirect}{subsubsection.Q.8.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {Q.9}Payload Release Mechanism}{85}{subsection.Q.9}\protected@file@percent }
+\newlabel{sec:payload-release}{{Q.9}{85}{Payload Release Mechanism}{subsection.Q.9}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {Q.9.1}Tarot Double-Throw Release Mechanism}{85}{subsubsection.Q.9.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {Q.9.2}Why Release from Altitude, Not Land}{85}{subsubsection.Q.9.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {Q.9.3}The \SI {7.5}{\metre } Offset}{85}{subsubsection.Q.9.3}\protected@file@percent }
+\newlabel{sec:offset-rationale}{{Q.9.3}{85}{The \SI {7.5}{\metre } Offset}{subsubsection.Q.9.3}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {Q.9.4}Servo Actuation Sequence}{86}{subsubsection.Q.9.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {Q.9.5}Why Visual Servo Centering Was Not Required}{86}{subsubsection.Q.9.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {Q.9.6}Future Work: Precision Drop}{86}{subsubsection.Q.9.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {R}Model Comparison and Future Vision Improvements}{86}{appendix.R}\protected@file@percent }
+\newlabel{sec:model_comparison}{{R}{86}{Model Comparison and Future Vision Improvements}{appendix.R}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {R.1}Model Generations}{86}{subsection.R.1}\protected@file@percent }
+\newlabel{sec:model_comparison:generations}{{R.1}{86}{Model Generations}{subsection.R.1}{}}
 \abx@aux@cite{0}{coco_dataset}
 \abx@aux@segm{0}{0}{coco_dataset}
 \abx@aux@cite{0}{yolov8}
 \abx@aux@segm{0}{0}{yolov8}
-\@writefile{toc}{\contentsline {subsection}{\numberline {R.2}COCO Person Detector as Fallback}{86}{subsection.R.2}\protected@file@percent }
-\newlabel{sec:model_comparison:coco}{{R.2}{86}{COCO Person Detector as Fallback}{subsection.R.2}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {R.3}Overfitting Risk in Single-Class Detection}{86}{subsection.R.3}\protected@file@percent }
-\newlabel{sec:model_comparison:overfit}{{R.3}{86}{Overfitting Risk in Single-Class Detection}{subsection.R.3}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {R.4}Tiling vs.\ Full-Frame Detection}{86}{subsection.R.4}\protected@file@percent }
-\newlabel{sec:model_comparison:tiling}{{R.4}{86}{Tiling vs.\ Full-Frame Detection}{subsection.R.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {R.2}COCO Person Detector as Fallback}{87}{subsection.R.2}\protected@file@percent }
+\newlabel{sec:model_comparison:coco}{{R.2}{87}{COCO Person Detector as Fallback}{subsection.R.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {R.3}Overfitting Risk in Single-Class Detection}{87}{subsection.R.3}\protected@file@percent }
+\newlabel{sec:model_comparison:overfit}{{R.3}{87}{Overfitting Risk in Single-Class Detection}{subsection.R.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {R.4}Tiling vs.\ Full-Frame Detection}{87}{subsection.R.4}\protected@file@percent }
+\newlabel{sec:model_comparison:tiling}{{R.4}{87}{Tiling vs.\ Full-Frame Detection}{subsection.R.4}{}}
 \abx@aux@cite{0}{yolov8}
 \abx@aux@segm{0}{0}{yolov8}
 \abx@aux@cite{0}{rudol2008human}
@@ -956,10 +958,10 @@
 \abx@aux@segm{0}{0}{settles2009active}
 \abx@aux@cite{0}{golden2006hypothermia}
 \abx@aux@segm{0}{0}{golden2006hypothermia}
-\@writefile{toc}{\contentsline {subsection}{\numberline {R.5}Future Vision Improvements}{87}{subsection.R.5}\protected@file@percent }
-\newlabel{sec:model_comparison:future}{{R.5}{87}{Future Vision Improvements}{subsection.R.5}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {R.6}Multi-Objective Search Optimisation}{87}{subsection.R.6}\protected@file@percent }
-\newlabel{sec:search-opt}{{R.6}{87}{Multi-Objective Search Optimisation}{subsection.R.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {R.5}Future Vision Improvements}{88}{subsection.R.5}\protected@file@percent }
+\newlabel{sec:model_comparison:future}{{R.5}{88}{Future Vision Improvements}{subsection.R.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {R.6}Multi-Objective Search Optimisation}{88}{subsection.R.6}\protected@file@percent }
+\newlabel{sec:search-opt}{{R.6}{88}{Multi-Objective Search Optimisation}{subsection.R.6}{}}
 \abx@aux@cite{0}{stolaroff2018energy}
 \abx@aux@segm{0}{0}{stolaroff2018energy}
 \gdef \LT@xiv {\LT@entry 
@@ -979,15 +981,20 @@
     {1}{46.16223pt}\LT@entry 
     {1}{67.87523pt}\LT@entry 
     {1}{83.99464pt}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {R.7}Energy Efficiency Simulation}{88}{subsection.R.7}\protected@file@percent }
-\newlabel{sec:energy-sim}{{R.7}{88}{Energy Efficiency Simulation}{subsection.R.7}{}}
-\newlabel{eq:energy-model}{{34}{88}{Energy Efficiency Simulation}{equation.34}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {R.8}Rotation Angle Analysis}{88}{subsection.R.8}\protected@file@percent }
-\newlabel{sec:rotation-analysis}{{R.8}{88}{Rotation Angle Analysis}{subsection.R.8}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {R.9}Coverage Completeness: Is 96\% Acceptable?}{88}{subsection.R.9}\protected@file@percent }
-\newlabel{sec:coverage-96}{{R.9}{88}{Coverage Completeness: Is 96\% Acceptable?}{subsection.R.9}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {R.9.1}Probabilistic Argument}{88}{subsubsection.R.9.1}\protected@file@percent }
-\newlabel{eq:effective-coverage}{{35}{88}{Probabilistic Argument}{equation.35}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {R.7}Energy Efficiency Simulation}{89}{subsection.R.7}\protected@file@percent }
+\newlabel{sec:energy-sim}{{R.7}{89}{Energy Efficiency Simulation}{subsection.R.7}{}}
+\newlabel{eq:energy-model}{{34}{89}{Energy Efficiency Simulation}{equation.34}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {22}{\ignorespaces Energy efficiency across the 216-configuration parameter sweep. Lower-energy configurations cluster at high altitude and optimal scan angle; the selected operating point (\SI {35}{\metre }, \SI {70}{\degree }, \SI {8}{\metre \per \second }) trades minimal energy for reliable detection.}}{89}{figure.caption.152}\protected@file@percent }
+\newlabel{fig:energy_efficiency}{{22}{89}{Energy efficiency across the 216-configuration parameter sweep. Lower-energy configurations cluster at high altitude and optimal scan angle; the selected operating point (\SI {35}{\metre }, \SI {70}{\degree }, \SI {8}{\metre \per \second }) trades minimal energy for reliable detection}{figure.caption.152}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {R.8}Rotation Angle Analysis}{89}{subsection.R.8}\protected@file@percent }
+\newlabel{sec:rotation-analysis}{{R.8}{89}{Rotation Angle Analysis}{subsection.R.8}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {23}{\ignorespaces Scan angle comparison for the AENGM0074 survey polygon. Aligning strips with the longest edge (\SI {70}{\degree }) minimises U-turn count and path length compared to axis-aligned or diagonal orientations.}}{90}{figure.caption.154}\protected@file@percent }
+\newlabel{fig:rotation_comparison}{{23}{90}{Scan angle comparison for the AENGM0074 survey polygon. Aligning strips with the longest edge (\SI {70}{\degree }) minimises U-turn count and path length compared to axis-aligned or diagonal orientations}{figure.caption.154}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {R.9}Coverage Completeness: Is 96\% Acceptable?}{90}{subsection.R.9}\protected@file@percent }
+\newlabel{sec:coverage-96}{{R.9}{90}{Coverage Completeness: Is 96\% Acceptable?}{subsection.R.9}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {R.9.1}Probabilistic Argument}{90}{subsubsection.R.9.1}\protected@file@percent }
+\newlabel{eq:effective-coverage}{{35}{90}{Probabilistic Argument}{equation.35}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {R.9.2}Buffer Reduction Trade-Off}{90}{subsubsection.R.9.2}\protected@file@percent }
 \gdef \LT@xvi {\LT@entry 
     {1}{38.84424pt}\LT@entry 
     {1}{78.61183pt}\LT@entry 
@@ -1002,143 +1009,148 @@
     {1}{31.69452pt}\LT@entry 
     {1}{77.17332pt}\LT@entry 
     {1}{93.83148pt}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {R.9.2}Buffer Reduction Trade-Off}{89}{subsubsection.R.9.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {R.10}NFZ Margin vs Altitude}{89}{subsection.R.10}\protected@file@percent }
-\newlabel{sec:nfz-altitude}{{R.10}{89}{NFZ Margin vs Altitude}{subsection.R.10}{}}
-\newlabel{eq:footprint-half}{{36}{89}{NFZ Margin vs Altitude}{equation.36}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {R.11}Speed vs Detection Probability}{89}{subsection.R.11}\protected@file@percent }
-\newlabel{sec:speed-detection}{{R.11}{89}{Speed vs Detection Probability}{subsection.R.11}{}}
-\newlabel{eq:frames-target}{{37}{89}{Speed vs Detection Probability}{equation.37}{}}
-\newlabel{eq:detect-prob}{{38}{89}{Speed vs Detection Probability}{equation.38}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {R.12}Focus Area Redirect Impact}{89}{subsection.R.12}\protected@file@percent }
-\newlabel{sec:focus-impact}{{R.12}{89}{Focus Area Redirect Impact}{subsection.R.12}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {R.10}NFZ Margin vs Altitude}{91}{subsection.R.10}\protected@file@percent }
+\newlabel{sec:nfz-altitude}{{R.10}{91}{NFZ Margin vs Altitude}{subsection.R.10}{}}
+\newlabel{eq:footprint-half}{{36}{91}{NFZ Margin vs Altitude}{equation.36}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {24}{\ignorespaces NFZ margin analysis as a function of altitude. The camera footprint radius grows linearly with altitude, but the implemented \SI {50}{\metre } total margin maintains a comfortable surplus at all operational altitudes.}}{91}{figure.caption.156}\protected@file@percent }
+\newlabel{fig:nfz_margin_altitude}{{24}{91}{NFZ margin analysis as a function of altitude. The camera footprint radius grows linearly with altitude, but the implemented \SI {50}{\metre } total margin maintains a comfortable surplus at all operational altitudes}{figure.caption.156}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {R.11}Speed vs Detection Probability}{91}{subsection.R.11}\protected@file@percent }
+\newlabel{sec:speed-detection}{{R.11}{91}{Speed vs Detection Probability}{subsection.R.11}{}}
+\newlabel{eq:frames-target}{{37}{91}{Speed vs Detection Probability}{equation.37}{}}
+\newlabel{eq:detect-prob}{{38}{91}{Speed vs Detection Probability}{equation.38}{}}
 \gdef \LT@xviii {\LT@entry 
     {1}{55.27649pt}\LT@entry 
     {1}{34.7775pt}\LT@entry 
     {1}{44.32732pt}\LT@entry 
     {1}{248.71764pt}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {R.13}Summary of Optimisation Trade-Offs}{90}{subsection.R.13}\protected@file@percent }
-\newlabel{sec:opt-summary}{{R.13}{90}{Summary of Optimisation Trade-Offs}{subsection.R.13}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {S}Focus Area Redirect and Repulsive Field Implementation}{90}{appendix.S}\protected@file@percent }
-\newlabel{sec:focus-repulsive}{{S}{90}{Focus Area Redirect and Repulsive Field Implementation}{appendix.S}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {S.1}PLB Focus Area Logic (R06)}{90}{subsection.S.1}\protected@file@percent }
-\newlabel{sec:plb-redirect}{{S.1}{90}{PLB Focus Area Logic (R06)}{subsection.S.1}{}}
-\@writefile{toc}{\contentsline {paragraph}{Activation.}{90}{paragraph*.154}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Focus area definition.}{90}{paragraph*.155}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Pattern regeneration.}{90}{paragraph*.156}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {25}{\ignorespaces Speed--detection--energy trade-off at \SI {35}{\metre } altitude. Detection probability remains above 99.6\% across all speeds; the binding constraint is energy consumption and NFZ margin rather than detection reliability.}}{92}{figure.caption.158}\protected@file@percent }
+\newlabel{fig:speed_detection_energy}{{25}{92}{Speed--detection--energy trade-off at \SI {35}{\metre } altitude. Detection probability remains above 99.6\% across all speeds; the binding constraint is energy consumption and NFZ margin rather than detection reliability}{figure.caption.158}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {R.12}Focus Area Redirect Impact}{92}{subsection.R.12}\protected@file@percent }
+\newlabel{sec:focus-impact}{{R.12}{92}{Focus Area Redirect Impact}{subsection.R.12}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {R.13}Summary of Optimisation Trade-Offs}{93}{subsection.R.13}\protected@file@percent }
+\newlabel{sec:opt-summary}{{R.13}{93}{Summary of Optimisation Trade-Offs}{subsection.R.13}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {S}Focus Area Redirect and Repulsive Field Implementation}{93}{appendix.S}\protected@file@percent }
+\newlabel{sec:focus-repulsive}{{S}{93}{Focus Area Redirect and Repulsive Field Implementation}{appendix.S}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {S.1}PLB Focus Area Logic (R06)}{93}{subsection.S.1}\protected@file@percent }
+\newlabel{sec:plb-redirect}{{S.1}{93}{PLB Focus Area Logic (R06)}{subsection.S.1}{}}
+\@writefile{toc}{\contentsline {paragraph}{Activation.}{93}{paragraph*.160}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Focus area definition.}{93}{paragraph*.161}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Pattern regeneration.}{93}{paragraph*.162}\protected@file@percent }
+\newlabel{alg:beacon-redirect}{{S.1}{93}{Pattern regeneration}{paragraph*.162}{}}
+\@writefile{toc}{\contentsline {paragraph}{State preservation.}{93}{paragraph*.163}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {S.2}Repulsive Vector Field}{93}{subsection.S.2}\protected@file@percent }
+\newlabel{sec:repulsive-field}{{S.2}{93}{Repulsive Vector Field}{subsection.S.2}{}}
 \gdef \LT@xix {\LT@entry 
     {1}{28.88327pt}\LT@entry 
     {1}{67.96426pt}\LT@entry 
     {1}{35.28598pt}\LT@entry 
     {1}{213.42482pt}}
-\newlabel{alg:beacon-redirect}{{S.1}{91}{Pattern regeneration}{paragraph*.156}{}}
-\@writefile{toc}{\contentsline {paragraph}{State preservation.}{91}{paragraph*.157}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {S.2}Repulsive Vector Field}{91}{subsection.S.2}\protected@file@percent }
-\newlabel{sec:repulsive-field}{{S.2}{91}{Repulsive Vector Field}{subsection.S.2}{}}
-\@writefile{toc}{\contentsline {paragraph}{Nearest-point computation.}{91}{paragraph*.158}\protected@file@percent }
-\newlabel{eq:closest-pt}{{39}{91}{Nearest-point computation}{equation.39}{}}
-\@writefile{toc}{\contentsline {paragraph}{Degenerate case.}{91}{paragraph*.159}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Repulsion magnitude.}{91}{paragraph*.160}\protected@file@percent }
-\newlabel{eq:repulsion}{{40}{91}{Repulsion magnitude}{equation.40}{}}
-\newlabel{eq:push-vector}{{41}{91}{Repulsion magnitude}{equation.41}{}}
-\@writefile{toc}{\contentsline {paragraph}{Velocity application.}{91}{paragraph*.161}\protected@file@percent }
-\newlabel{eq:push-vel}{{42}{91}{Velocity application}{equation.42}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {S.3}Four-Layer Protection Architecture}{91}{subsection.S.3}\protected@file@percent }
-\newlabel{sec:nfz-layers}{{S.3}{91}{Four-Layer Protection Architecture}{subsection.S.3}{}}
-\@writefile{toc}{\contentsline {paragraph}{Layer interaction.}{92}{paragraph*.163}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Distance rationale.}{92}{paragraph*.164}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Sign convention.}{92}{paragraph*.165}\protected@file@percent }
-\newlabel{sec:sign-convention}{{S.3}{92}{Sign convention}{paragraph*.165}{}}
-\@writefile{toc}{\contentsline {paragraph}{Firmware backup.}{92}{paragraph*.166}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{{\color  {blue} Version A --- Current (systematic framework-first).}}{92}{paragraph*.167}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{{\color  {red} Version B --- Lead with safety and ethical stakes.}}{92}{paragraph*.168}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{{\color  {olive} Version C --- Lead with economic accessibility.}}{92}{paragraph*.169}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{{\color  {blue} Version A --- Current (factual, process-oriented).}}{93}{paragraph*.170}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{{\color  {red} Version B --- Narrative/storytelling angle.}}{93}{paragraph*.171}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{{\color  {olive} Version C --- Emphasise data quality gained.}}{93}{paragraph*.172}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{{\color  {blue} Version A --- Current (Sheridan taxonomy, cost-structure analysis).}}{93}{paragraph*.173}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{{\color  {red} Version B --- SAR practitioner perspective.}}{93}{paragraph*.174}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{{\color  {olive} Version C --- Safety-critical systems perspective.}}{93}{paragraph*.175}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{{\color  {blue} Version A --- Current (balanced, methodological).}}{93}{paragraph*.176}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{{\color  {red} Version B --- Lead with the honest admission.}}{93}{paragraph*.177}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{{\color  {olive} Version C --- Lead with the strongest result first.}}{94}{paragraph*.178}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{{\color  {blue} Version A --- Achievements-first.}}{94}{paragraph*.179}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{{\color  {red} Version B --- Lessons-learned-first.}}{94}{paragraph*.180}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{{\color  {olive} Version C --- Future-impact-first.}}{94}{paragraph*.181}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {14}{\ignorespaces Plus/delta review of system technical performance.}}{95}{table.caption.47}\protected@file@percent }
-\newlabel{tab:plus-delta}{{14}{95}{Plus/delta review of system technical performance}{table.caption.47}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {17}{\ignorespaces System configuration parameters grouped by function.}}{96}{table.caption.51}\protected@file@percent }
-\newlabel{tab:config-params}{{17}{96}{System configuration parameters grouped by function}{table.caption.51}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {18}{\ignorespaces Augmentation pipeline for the SAR dummy detector. Offline augmentations are applied during synthetic image generation; online augmentations are applied by the YOLO trainer at each epoch.}}{96}{table.caption.52}\protected@file@percent }
-\newlabel{tab:augmentation}{{18}{96}{Augmentation pipeline for the SAR dummy detector. Offline augmentations are applied during synthetic image generation; online augmentations are applied by the YOLO trainer at each epoch}{table.caption.52}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {19}{\ignorespaces Dataset composition for the v2 SAR dummy detector.}}{97}{table.caption.53}\protected@file@percent }
-\newlabel{tab:data_composition}{{19}{97}{Dataset composition for the v2 SAR dummy detector}{table.caption.53}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {20}{\ignorespaces Training hyperparameters for the YOLOv8n SAR dummy detector (v2).}}{97}{table.caption.54}\protected@file@percent }
-\newlabel{tab:training_config}{{20}{97}{Training hyperparameters for the YOLOv8n SAR dummy detector (v2)}{table.caption.54}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {21}{\ignorespaces Detection performance comparison between model versions. All metrics are computed on the respective validation sets.}}{97}{table.caption.55}\protected@file@percent }
-\newlabel{tab:training_results}{{21}{97}{Detection performance comparison between model versions. All metrics are computed on the respective validation sets}{table.caption.55}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {22}{\ignorespaces Failure modes and automated responses.}}{97}{table.caption.56}\protected@file@percent }
-\newlabel{tab:failure-modes}{{22}{97}{Failure modes and automated responses}{table.caption.56}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {23}{\ignorespaces Risk register with mitigations.}}{98}{table.caption.57}\protected@file@percent }
-\newlabel{tab:risk-register}{{23}{98}{Risk register with mitigations}{table.caption.57}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {27}{\ignorespaces Inference backend comparison for YOLOv8n ($640\times 640$ input) on Raspberry Pi~5.}}{98}{table.caption.65}\protected@file@percent }
-\newlabel{tab:backend_comparison}{{27}{98}{Inference backend comparison for YOLOv8n ($640\times 640$ input) on Raspberry Pi~5}{table.caption.65}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {28}{\ignorespaces Inference performance: measured baseline and projected improvements on Raspberry Pi~5 with YOLOv8n ($640\times 640$ input, float32 weights).}}{98}{table.caption.71}\protected@file@percent }
-\newlabel{tab:inference_roadmap}{{28}{98}{Inference performance: measured baseline and projected improvements on Raspberry Pi~5 with YOLOv8n ($640\times 640$ input, float32 weights)}{table.caption.71}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {29}{\ignorespaces Per-stage timing breakdown for the detection pipeline on Raspberry Pi~5 (mean of 50 runs, YOLOv8n FP32, XNNPACK 4-thread).}}{98}{table.caption.72}\protected@file@percent }
-\newlabel{tab:pipeline_timing}{{29}{98}{Per-stage timing breakdown for the detection pipeline on Raspberry Pi~5 (mean of 50 runs, YOLOv8n FP32, XNNPACK 4-thread)}{table.caption.72}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {30}{\ignorespaces Inference benchmarks on Raspberry Pi~5 (Cortex-A76 $\times $4 at \SI {2.4}{\giga \hertz }, XNNPACK 4-thread, active cooler, no desktop environment).}}{99}{table.caption.73}\protected@file@percent }
-\newlabel{tab:cv_benchmarks}{{30}{99}{Inference benchmarks on Raspberry Pi~5 (Cortex-A76 $\times $4 at \SI {2.4}{\giga \hertz }, XNNPACK 4-thread, active cooler, no desktop environment)}{table.caption.73}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {31}{\ignorespaces Camera ground footprint and target size at operational altitudes (IMX296, $f = \SI {5.46}{\milli \metre }$, $1456\!\times \!1088$ sensor).}}{99}{table.caption.78}\protected@file@percent }
-\newlabel{tab:footprint}{{31}{99}{Camera ground footprint and target size at operational altitudes (IMX296, $f = \SI {5.46}{\milli \metre }$, $1456\!\times \!1088$ sensor)}{table.caption.78}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {32}{\ignorespaces Frames per flyover and detection probability for a target within the search swath. $p_d$ = single-frame detection probability; $P_\mathrm  {miss}$ = $(1 - p_d)^N$; $P_\mathrm  {detect}$ = $1 - P_\mathrm  {miss}$.}}{99}{table.caption.79}\protected@file@percent }
-\newlabel{tab:frames_flyover}{{32}{99}{Frames per flyover and detection probability for a target within the search swath. $p_d$ = single-frame detection probability; $P_\mathrm {miss}$ = $(1 - p_d)^N$; $P_\mathrm {detect}$ = $1 - P_\mathrm {miss}$}{table.caption.79}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {33}{\ignorespaces Detection performance vs altitude for a \SI {1.8}{\metre } mannequin target. Pixel size is in the $640\!\times \!640$ model input; confidence and detection rate are empirically observed or interpolated from video replay data.}}{99}{table.caption.81}\protected@file@percent }
-\newlabel{tab:altitude_performance}{{33}{99}{Detection performance vs altitude for a \SI {1.8}{\metre } mannequin target. Pixel size is in the $640\!\times \!640$ model input; confidence and detection rate are empirically observed or interpolated from video replay data}{table.caption.81}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {34}{\ignorespaces Training evaluation metrics for the YOLOv8n SAR detector (v2, trained at $1088 \times 1088$, evaluated on validation split).}}{99}{table.caption.87}\protected@file@percent }
-\newlabel{tab:training_results_extended}{{34}{99}{Training evaluation metrics for the YOLOv8n SAR detector (v2, trained at $1088 \times 1088$, evaluated on validation split)}{table.caption.87}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {35}{\ignorespaces Available model variants for field deployment.}}{100}{table.caption.92}\protected@file@percent }
-\newlabel{tab:model_variants}{{35}{100}{Available model variants for field deployment}{table.caption.92}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {36}{\ignorespaces Comparison of video streaming protocols for companion-computer UAV telemetry.}}{100}{table.caption.101}\protected@file@percent }
-\newlabel{tab:stream-protocols}{{36}{100}{Comparison of video streaming protocols for companion-computer UAV telemetry}{table.caption.101}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {37}{\ignorespaces Ground sampling distance and footprint at key mission altitudes.}}{100}{table.caption.102}\protected@file@percent }
-\newlabel{tab:gsd-altitude}{{37}{100}{Ground sampling distance and footprint at key mission altitudes}{table.caption.102}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {38}{\ignorespaces Single-observation error budget at \SI {35}{\metre } and \SI {15}{\metre } altitude. RSS\,=\,root sum of squares.}}{100}{table.caption.105}\protected@file@percent }
-\newlabel{tab:error-budget}{{38}{100}{Single-observation error budget at \SI {35}{\metre } and \SI {15}{\metre } altitude. RSS\,=\,root sum of squares}{table.caption.105}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {39}{\ignorespaces Comparison of GPS estimation methods. Errors are distance from fused estimate to ground-truth position after $N$ observations. Simulation includes \SI {3}{\metre } GPS drift and \SI {1}{\metre } altitude noise.}}{100}{table.caption.111}\protected@file@percent }
-\newlabel{tab:method-compare}{{39}{100}{Comparison of GPS estimation methods. Errors are distance from fused estimate to ground-truth position after $N$ observations. Simulation includes \SI {3}{\metre } GPS drift and \SI {1}{\metre } altitude noise}{table.caption.111}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {44}{\ignorespaces Minimum viable deliverable: components and requirement coverage.}}{100}{table.caption.119}\protected@file@percent }
-\newlabel{tab:mvd}{{44}{100}{Minimum viable deliverable: components and requirement coverage}{table.caption.119}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {46}{\ignorespaces Target deliverable: full autonomous mission.}}{101}{table.caption.120}\protected@file@percent }
-\newlabel{tab:target}{{46}{101}{Target deliverable: full autonomous mission}{table.caption.120}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {48}{\ignorespaces Contingency plans for flight day failure scenarios.}}{101}{table.caption.121}\protected@file@percent }
-\newlabel{tab:contingency}{{48}{101}{Contingency plans for flight day failure scenarios}{table.caption.121}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {50}{\ignorespaces Contingency-to-test-script mapping.}}{102}{table.caption.122}\protected@file@percent }
-\newlabel{tab:test-scripts}{{50}{102}{Contingency-to-test-script mapping}{table.caption.122}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {58}{\ignorespaces Sensor calibration summary. The ``Error if uncalibrated'' column quantifies the systematic bias that would have affected every measurement had the default or assumed value been retained.}}{102}{table.caption.129}\protected@file@percent }
-\newlabel{tab:calibration}{{58}{102}{Sensor calibration summary. The ``Error if uncalibrated'' column quantifies the systematic bias that would have affected every measurement had the default or assumed value been retained}{table.caption.129}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {61}{\ignorespaces Comparison of landing approaches over 20 simulated missions each.}}{102}{table.caption.136}\protected@file@percent }
-\newlabel{tab:centering-comparison}{{61}{102}{Comparison of landing approaches over 20 simulated missions each}{table.caption.136}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {62}{\ignorespaces MAVLink messages used by the mission software.}}{102}{table.caption.138}\protected@file@percent }
-\newlabel{tab:mavlink-messages}{{62}{102}{MAVLink messages used by the mission software}{table.caption.138}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {64}{\ignorespaces Raw inference vs.\ effective pipeline throughput on Raspberry Pi~5 (YOLOv8n, $640\times 640$ input).}}{103}{table.caption.141}\protected@file@percent }
-\newlabel{tab:pipeline_fps}{{64}{103}{Raw inference vs.\ effective pipeline throughput on Raspberry Pi~5 (YOLOv8n, $640\times 640$ input)}{table.caption.141}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {65}{\ignorespaces Altitude--lane width--detection trade-off for the AENGM0074 survey polygon. Target pixel extent assumes a \SI {1.8}{\metre } prone mannequin imaged by the IMX296 sensor at 1456$\times $1088 resolution.}}{103}{table.caption.147}\protected@file@percent }
-\newlabel{tab:alt-tradeoff}{{65}{103}{Altitude--lane width--detection trade-off for the AENGM0074 survey polygon. Target pixel extent assumes a \SI {1.8}{\metre } prone mannequin imaged by the IMX296 sensor at 1456$\times $1088 resolution}{table.caption.147}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {67}{\ignorespaces Comparison of trained model generations. All models are YOLOv8n exported to TFLite float32. Inference latency measured on Raspberry Pi~5 (TFLite + XNNPACK, 4 threads). mAP values are computed on each model's respective validation set.}}{103}{table.caption.148}\protected@file@percent }
-\newlabel{tab:model_generations}{{67}{103}{Comparison of trained model generations. All models are YOLOv8n exported to TFLite float32. Inference latency measured on Raspberry Pi~5 (TFLite + XNNPACK, 4 threads). mAP values are computed on each model's respective validation set}{table.caption.148}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {68}{\ignorespaces Top~5 and bottom~5 configurations by total energy from the 216-configuration sweep. Coverage is measured as the fraction of the survey polygon area imaged.}}{103}{table.caption.149}\protected@file@percent }
-\newlabel{tab:energy-top5}{{68}{103}{Top~5 and bottom~5 configurations by total energy from the 216-configuration sweep. Coverage is measured as the fraction of the survey polygon area imaged}{table.caption.149}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {70}{\ignorespaces Rotation angle comparison at \SI {35}{\metre } altitude, \SI {8}{\metre \per \second } search speed.}}{103}{table.caption.150}\protected@file@percent }
-\newlabel{tab:rotation-compare}{{70}{103}{Rotation angle comparison at \SI {35}{\metre } altitude, \SI {8}{\metre \per \second } search speed}{table.caption.150}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {72}{\ignorespaces NFZ margin analysis: minimum required distance from the SSSI boundary to prevent camera footprint intrusion, compared with the implemented total margin (waypoint buffer + speed ramp zone).}}{104}{table.caption.151}\protected@file@percent }
-\newlabel{tab:nfz-margin}{{72}{104}{NFZ margin analysis: minimum required distance from the SSSI boundary to prevent camera footprint intrusion, compared with the implemented total margin (waypoint buffer + speed ramp zone)}{table.caption.151}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {74}{\ignorespaces Speed vs detection probability at \SI {35}{\metre } altitude. Search time is for the AENGM0074 polygon at the \SI {70}{\degree } scan angle.}}{104}{table.caption.152}\protected@file@percent }
-\newlabel{tab:speed-detect}{{74}{104}{Speed vs detection probability at \SI {35}{\metre } altitude. Search time is for the AENGM0074 polygon at the \SI {70}{\degree } scan angle}{table.caption.152}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {76}{\ignorespaces Multi-objective trade-off summary. The selected configuration prioritises detection reliability and regulatory safety over minimum energy or maximum coverage.}}{104}{table.caption.153}\protected@file@percent }
-\newlabel{tab:pareto-summary}{{76}{104}{Multi-objective trade-off summary. The selected configuration prioritises detection reliability and regulatory safety over minimum energy or maximum coverage}{table.caption.153}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {78}{\ignorespaces Four-layer NFZ protection architecture. Each layer activates at a different distance from the SSSI boundary, providing defence in depth.}}{104}{table.caption.162}\protected@file@percent }
-\newlabel{tab:nfz-layers}{{78}{104}{Four-layer NFZ protection architecture. Each layer activates at a different distance from the SSSI boundary, providing defence in depth}{table.caption.162}{}}
+\@writefile{toc}{\contentsline {paragraph}{Nearest-point computation.}{94}{paragraph*.164}\protected@file@percent }
+\newlabel{eq:closest-pt}{{39}{94}{Nearest-point computation}{equation.39}{}}
+\@writefile{toc}{\contentsline {paragraph}{Degenerate case.}{94}{paragraph*.165}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Repulsion magnitude.}{94}{paragraph*.166}\protected@file@percent }
+\newlabel{eq:repulsion}{{40}{94}{Repulsion magnitude}{equation.40}{}}
+\newlabel{eq:push-vector}{{41}{94}{Repulsion magnitude}{equation.41}{}}
+\@writefile{toc}{\contentsline {paragraph}{Velocity application.}{94}{paragraph*.167}\protected@file@percent }
+\newlabel{eq:push-vel}{{42}{94}{Velocity application}{equation.42}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {S.3}Four-Layer Protection Architecture}{94}{subsection.S.3}\protected@file@percent }
+\newlabel{sec:nfz-layers}{{S.3}{94}{Four-Layer Protection Architecture}{subsection.S.3}{}}
+\@writefile{toc}{\contentsline {paragraph}{Layer interaction.}{94}{paragraph*.169}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Distance rationale.}{94}{paragraph*.170}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Sign convention.}{95}{paragraph*.171}\protected@file@percent }
+\newlabel{sec:sign-convention}{{S.3}{95}{Sign convention}{paragraph*.171}{}}
+\@writefile{toc}{\contentsline {paragraph}{Firmware backup.}{95}{paragraph*.172}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{{\color  {blue} Version A --- Current (systematic framework-first).}}{95}{paragraph*.173}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{{\color  {red} Version B --- Lead with safety and ethical stakes.}}{95}{paragraph*.174}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{{\color  {olive} Version C --- Lead with economic accessibility.}}{95}{paragraph*.175}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{{\color  {blue} Version A --- Current (factual, process-oriented).}}{95}{paragraph*.176}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{{\color  {red} Version B --- Narrative/storytelling angle.}}{95}{paragraph*.177}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{{\color  {olive} Version C --- Emphasise data quality gained.}}{95}{paragraph*.178}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{{\color  {blue} Version A --- Current (Sheridan taxonomy, cost-structure analysis).}}{96}{paragraph*.179}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{{\color  {red} Version B --- SAR practitioner perspective.}}{96}{paragraph*.180}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{{\color  {olive} Version C --- Safety-critical systems perspective.}}{96}{paragraph*.181}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{{\color  {blue} Version A --- Current (balanced, methodological).}}{96}{paragraph*.182}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{{\color  {red} Version B --- Lead with the honest admission.}}{96}{paragraph*.183}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{{\color  {olive} Version C --- Lead with the strongest result first.}}{96}{paragraph*.184}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{{\color  {blue} Version A --- Achievements-first.}}{96}{paragraph*.185}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{{\color  {red} Version B --- Lessons-learned-first.}}{97}{paragraph*.186}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{{\color  {olive} Version C --- Future-impact-first.}}{97}{paragraph*.187}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {14}{\ignorespaces Plus/delta review of system technical performance.}}{98}{table.caption.47}\protected@file@percent }
+\newlabel{tab:plus-delta}{{14}{98}{Plus/delta review of system technical performance}{table.caption.47}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {16}{\ignorespaces Defects discovered at each testing tier, with resolution time and estimated cost if undetected.}}{99}{table.caption.50}\protected@file@percent }
+\newlabel{tab:bug-cost}{{16}{99}{Defects discovered at each testing tier, with resolution time and estimated cost if undetected}{table.caption.50}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {18}{\ignorespaces System configuration parameters grouped by function.}}{100}{table.caption.53}\protected@file@percent }
+\newlabel{tab:config-params}{{18}{100}{System configuration parameters grouped by function}{table.caption.53}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {19}{\ignorespaces Augmentation pipeline for the SAR dummy detector. Offline augmentations are applied during synthetic image generation; online augmentations are applied by the YOLO trainer at each epoch.}}{100}{table.caption.54}\protected@file@percent }
+\newlabel{tab:augmentation}{{19}{100}{Augmentation pipeline for the SAR dummy detector. Offline augmentations are applied during synthetic image generation; online augmentations are applied by the YOLO trainer at each epoch}{table.caption.54}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {20}{\ignorespaces Dataset composition for the v2 SAR dummy detector.}}{101}{table.caption.55}\protected@file@percent }
+\newlabel{tab:data_composition}{{20}{101}{Dataset composition for the v2 SAR dummy detector}{table.caption.55}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {21}{\ignorespaces Training hyperparameters for the YOLOv8n SAR dummy detector (v2).}}{101}{table.caption.56}\protected@file@percent }
+\newlabel{tab:training_config}{{21}{101}{Training hyperparameters for the YOLOv8n SAR dummy detector (v2)}{table.caption.56}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {22}{\ignorespaces Detection performance comparison between model versions. All metrics are computed on the respective validation sets.}}{101}{table.caption.57}\protected@file@percent }
+\newlabel{tab:training_results}{{22}{101}{Detection performance comparison between model versions. All metrics are computed on the respective validation sets}{table.caption.57}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {23}{\ignorespaces Failure modes and automated responses.}}{101}{table.caption.58}\protected@file@percent }
+\newlabel{tab:failure-modes}{{23}{101}{Failure modes and automated responses}{table.caption.58}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {24}{\ignorespaces Risk register with mitigations.}}{102}{table.caption.59}\protected@file@percent }
+\newlabel{tab:risk-register}{{24}{102}{Risk register with mitigations}{table.caption.59}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {28}{\ignorespaces Inference backend comparison for YOLOv8n ($640\times 640$ input) on Raspberry Pi~5.}}{102}{table.caption.67}\protected@file@percent }
+\newlabel{tab:backend_comparison}{{28}{102}{Inference backend comparison for YOLOv8n ($640\times 640$ input) on Raspberry Pi~5}{table.caption.67}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {29}{\ignorespaces Inference performance: measured baseline and projected improvements on Raspberry Pi~5 with YOLOv8n ($640\times 640$ input, float32 weights).}}{102}{table.caption.73}\protected@file@percent }
+\newlabel{tab:inference_roadmap}{{29}{102}{Inference performance: measured baseline and projected improvements on Raspberry Pi~5 with YOLOv8n ($640\times 640$ input, float32 weights)}{table.caption.73}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {30}{\ignorespaces Per-stage timing breakdown for the detection pipeline on Raspberry Pi~5 (mean of 50 runs, YOLOv8n FP32, XNNPACK 4-thread).}}{102}{table.caption.74}\protected@file@percent }
+\newlabel{tab:pipeline_timing}{{30}{102}{Per-stage timing breakdown for the detection pipeline on Raspberry Pi~5 (mean of 50 runs, YOLOv8n FP32, XNNPACK 4-thread)}{table.caption.74}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {31}{\ignorespaces Inference benchmarks on Raspberry Pi~5 (Cortex-A76 $\times $4 at \SI {2.4}{\giga \hertz }, XNNPACK 4-thread, active cooler, no desktop environment).}}{103}{table.caption.75}\protected@file@percent }
+\newlabel{tab:cv_benchmarks}{{31}{103}{Inference benchmarks on Raspberry Pi~5 (Cortex-A76 $\times $4 at \SI {2.4}{\giga \hertz }, XNNPACK 4-thread, active cooler, no desktop environment)}{table.caption.75}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {32}{\ignorespaces Camera ground footprint and target size at operational altitudes (IMX296, $f = \SI {5.46}{\milli \metre }$, $1456\!\times \!1088$ sensor).}}{103}{table.caption.80}\protected@file@percent }
+\newlabel{tab:footprint}{{32}{103}{Camera ground footprint and target size at operational altitudes (IMX296, $f = \SI {5.46}{\milli \metre }$, $1456\!\times \!1088$ sensor)}{table.caption.80}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {33}{\ignorespaces Frames per flyover and detection probability for a target within the search swath. $p_d$ = single-frame detection probability; $P_\mathrm  {miss}$ = $(1 - p_d)^N$; $P_\mathrm  {detect}$ = $1 - P_\mathrm  {miss}$.}}{103}{table.caption.81}\protected@file@percent }
+\newlabel{tab:frames_flyover}{{33}{103}{Frames per flyover and detection probability for a target within the search swath. $p_d$ = single-frame detection probability; $P_\mathrm {miss}$ = $(1 - p_d)^N$; $P_\mathrm {detect}$ = $1 - P_\mathrm {miss}$}{table.caption.81}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {34}{\ignorespaces Detection performance vs altitude for a \SI {1.8}{\metre } mannequin target. Pixel size is in the $640\!\times \!640$ model input; confidence and detection rate are empirically observed or interpolated from video replay data.}}{103}{table.caption.83}\protected@file@percent }
+\newlabel{tab:altitude_performance}{{34}{103}{Detection performance vs altitude for a \SI {1.8}{\metre } mannequin target. Pixel size is in the $640\!\times \!640$ model input; confidence and detection rate are empirically observed or interpolated from video replay data}{table.caption.83}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {35}{\ignorespaces Training evaluation metrics for the YOLOv8n SAR detector (v2, trained at $1088 \times 1088$, evaluated on validation split).}}{103}{table.caption.89}\protected@file@percent }
+\newlabel{tab:training_results_extended}{{35}{103}{Training evaluation metrics for the YOLOv8n SAR detector (v2, trained at $1088 \times 1088$, evaluated on validation split)}{table.caption.89}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {36}{\ignorespaces Available model variants for field deployment.}}{104}{table.caption.94}\protected@file@percent }
+\newlabel{tab:model_variants}{{36}{104}{Available model variants for field deployment}{table.caption.94}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {37}{\ignorespaces Comparison of video streaming protocols for companion-computer UAV telemetry.}}{104}{table.caption.103}\protected@file@percent }
+\newlabel{tab:stream-protocols}{{37}{104}{Comparison of video streaming protocols for companion-computer UAV telemetry}{table.caption.103}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {38}{\ignorespaces Ground sampling distance and footprint at key mission altitudes.}}{104}{table.caption.104}\protected@file@percent }
+\newlabel{tab:gsd-altitude}{{38}{104}{Ground sampling distance and footprint at key mission altitudes}{table.caption.104}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {39}{\ignorespaces Single-observation error budget at \SI {35}{\metre } and \SI {15}{\metre } altitude. RSS\,=\,root sum of squares.}}{104}{table.caption.107}\protected@file@percent }
+\newlabel{tab:error-budget}{{39}{104}{Single-observation error budget at \SI {35}{\metre } and \SI {15}{\metre } altitude. RSS\,=\,root sum of squares}{table.caption.107}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {40}{\ignorespaces Comparison of GPS estimation methods. Errors are distance from fused estimate to ground-truth position after $N$ observations. Simulation includes \SI {3}{\metre } GPS drift and \SI {1}{\metre } altitude noise.}}{104}{table.caption.113}\protected@file@percent }
+\newlabel{tab:method-compare}{{40}{104}{Comparison of GPS estimation methods. Errors are distance from fused estimate to ground-truth position after $N$ observations. Simulation includes \SI {3}{\metre } GPS drift and \SI {1}{\metre } altitude noise}{table.caption.113}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {45}{\ignorespaces Minimum viable deliverable: components and requirement coverage.}}{104}{table.caption.121}\protected@file@percent }
+\newlabel{tab:mvd}{{45}{104}{Minimum viable deliverable: components and requirement coverage}{table.caption.121}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {47}{\ignorespaces Target deliverable: full autonomous mission.}}{105}{table.caption.122}\protected@file@percent }
+\newlabel{tab:target}{{47}{105}{Target deliverable: full autonomous mission}{table.caption.122}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {49}{\ignorespaces Contingency plans for flight day failure scenarios.}}{105}{table.caption.123}\protected@file@percent }
+\newlabel{tab:contingency}{{49}{105}{Contingency plans for flight day failure scenarios}{table.caption.123}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {51}{\ignorespaces Contingency-to-test-script mapping.}}{106}{table.caption.124}\protected@file@percent }
+\newlabel{tab:test-scripts}{{51}{106}{Contingency-to-test-script mapping}{table.caption.124}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {59}{\ignorespaces Sensor calibration summary. The ``Error if uncalibrated'' column quantifies the systematic bias that would have affected every measurement had the default or assumed value been retained.}}{106}{table.caption.131}\protected@file@percent }
+\newlabel{tab:calibration}{{59}{106}{Sensor calibration summary. The ``Error if uncalibrated'' column quantifies the systematic bias that would have affected every measurement had the default or assumed value been retained}{table.caption.131}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {62}{\ignorespaces Comparison of landing approaches over 20 simulated missions each.}}{106}{table.caption.138}\protected@file@percent }
+\newlabel{tab:centering-comparison}{{62}{106}{Comparison of landing approaches over 20 simulated missions each}{table.caption.138}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {63}{\ignorespaces MAVLink messages used by the mission software.}}{106}{table.caption.140}\protected@file@percent }
+\newlabel{tab:mavlink-messages}{{63}{106}{MAVLink messages used by the mission software}{table.caption.140}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {65}{\ignorespaces Raw inference vs.\ effective pipeline throughput on Raspberry Pi~5 (YOLOv8n, $640\times 640$ input).}}{107}{table.caption.143}\protected@file@percent }
+\newlabel{tab:pipeline_fps}{{65}{107}{Raw inference vs.\ effective pipeline throughput on Raspberry Pi~5 (YOLOv8n, $640\times 640$ input)}{table.caption.143}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {66}{\ignorespaces Altitude--lane width--detection trade-off for the AENGM0074 survey polygon. Target pixel extent assumes a \SI {1.8}{\metre } prone mannequin imaged by the IMX296 sensor at 1456$\times $1088 resolution.}}{107}{table.caption.149}\protected@file@percent }
+\newlabel{tab:alt-tradeoff}{{66}{107}{Altitude--lane width--detection trade-off for the AENGM0074 survey polygon. Target pixel extent assumes a \SI {1.8}{\metre } prone mannequin imaged by the IMX296 sensor at 1456$\times $1088 resolution}{table.caption.149}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {68}{\ignorespaces Comparison of trained model generations. All models are YOLOv8n exported to TFLite float32. Inference latency measured on Raspberry Pi~5 (TFLite + XNNPACK, 4 threads). mAP values are computed on each model's respective validation set.}}{107}{table.caption.150}\protected@file@percent }
+\newlabel{tab:model_generations}{{68}{107}{Comparison of trained model generations. All models are YOLOv8n exported to TFLite float32. Inference latency measured on Raspberry Pi~5 (TFLite + XNNPACK, 4 threads). mAP values are computed on each model's respective validation set}{table.caption.150}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {69}{\ignorespaces Top~5 and bottom~5 configurations by total energy from the 216-configuration sweep. Coverage is measured as the fraction of the survey polygon area imaged.}}{107}{table.caption.151}\protected@file@percent }
+\newlabel{tab:energy-top5}{{69}{107}{Top~5 and bottom~5 configurations by total energy from the 216-configuration sweep. Coverage is measured as the fraction of the survey polygon area imaged}{table.caption.151}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {71}{\ignorespaces Rotation angle comparison at \SI {35}{\metre } altitude, \SI {8}{\metre \per \second } search speed.}}{107}{table.caption.153}\protected@file@percent }
+\newlabel{tab:rotation-compare}{{71}{107}{Rotation angle comparison at \SI {35}{\metre } altitude, \SI {8}{\metre \per \second } search speed}{table.caption.153}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {73}{\ignorespaces NFZ margin analysis: minimum required distance from the SSSI boundary to prevent camera footprint intrusion, compared with the implemented total margin (waypoint buffer + speed ramp zone).}}{108}{table.caption.155}\protected@file@percent }
+\newlabel{tab:nfz-margin}{{73}{108}{NFZ margin analysis: minimum required distance from the SSSI boundary to prevent camera footprint intrusion, compared with the implemented total margin (waypoint buffer + speed ramp zone)}{table.caption.155}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {75}{\ignorespaces Speed vs detection probability at \SI {35}{\metre } altitude. Search time is for the AENGM0074 polygon at the \SI {70}{\degree } scan angle.}}{108}{table.caption.157}\protected@file@percent }
+\newlabel{tab:speed-detect}{{75}{108}{Speed vs detection probability at \SI {35}{\metre } altitude. Search time is for the AENGM0074 polygon at the \SI {70}{\degree } scan angle}{table.caption.157}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {77}{\ignorespaces Multi-objective trade-off summary. The selected configuration prioritises detection reliability and regulatory safety over minimum energy or maximum coverage.}}{108}{table.caption.159}\protected@file@percent }
+\newlabel{tab:pareto-summary}{{77}{108}{Multi-objective trade-off summary. The selected configuration prioritises detection reliability and regulatory safety over minimum energy or maximum coverage}{table.caption.159}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {79}{\ignorespaces Four-layer NFZ protection architecture. Each layer activates at a different distance from the SSSI boundary, providing defence in depth.}}{108}{table.caption.168}\protected@file@percent }
+\newlabel{tab:nfz-layers}{{79}{108}{Four-layer NFZ protection architecture. Each layer activates at a different distance from the SSSI boundary, providing defence in depth}{table.caption.168}{}}
 \abx@aux@read@bbl@mdfivesum{901921EE2E25BBED5E79AEB9EF105745}
 \abx@aux@defaultrefcontext{0}{murphy2014}{none/global//global/global/global}
 \abx@aux@defaultrefcontext{0}{edgeai}{none/global//global/global/global}
@@ -1194,4 +1206,4 @@
 \abx@aux@defaultrefcontext{0}{rtca_do178c}{none/global//global/global/global}
 \abx@aux@defaultrefcontext{0}{mavproxy}{none/global//global/global/global}
 \abx@aux@defaultrefcontext{0}{mavlink2}{none/global//global/global/global}
-\gdef \@abspage@last{104}
+\gdef \@abspage@last{108}

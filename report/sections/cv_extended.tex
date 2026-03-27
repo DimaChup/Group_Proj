@@ -230,13 +230,13 @@ Table~\ref{tab:altitude_performance} combines the pixel-size model with confiden
 The data confirms that \SI{35}{\metre} (the configured \texttt{TARGET\_ALT}) sits comfortably within the reliable detection zone (95\% per-frame, $>$99.97\% per-flyover).  The altitude ceiling for reliable single-pass detection is approximately \SI{40}{\metre}; above this, multi-pass coverage from the lawnmower pattern provides the necessary redundancy.  The theoretical floor for detection (${\sim}\SI{70}{\metre}$) corresponds to the target subtending approximately 20 pixels---below the YOLOv8n smallest feature scale ($80 \times 80$ grid, where each cell covers an $8 \times 8$ region of the input).
 
 \paragraph{Confidence versus pixel size relationship.}
-Figure~\ref{fig:conf_vs_alt} shows the empirically measured confidence as a function of altitude.  The relationship follows an approximately sigmoidal curve in log-altitude space, with a sharp transition between reliable detection ($>$0.9) and unreliable detection ($<$0.5) occurring over a narrow altitude band (\SIrange{40}{60}{\metre}).  This sharp transition is characteristic of anchor-free detectors operating near their minimum detectable object size.
+Figure~\ref{fig:conf_vs_alt_ext} shows the empirically measured confidence as a function of altitude.  The relationship follows an approximately sigmoidal curve in log-altitude space, with a sharp transition between reliable detection ($>$0.9) and unreliable detection ($<$0.5) occurring over a narrow altitude band (\SIrange{40}{60}{\metre}).  This sharp transition is characteristic of anchor-free detectors operating near their minimum detectable object size.
 
 \begin{figure}[ht]
 \centering
 \includegraphics[width=0.75\textwidth]{conf_vs_alt}
 \caption{Detection confidence vs altitude for the YOLOv8n custom model.  Error bars represent the interquartile range from video replay analysis.  The dashed line marks the 0.2 confidence threshold.}
-\label{fig:conf_vs_alt}
+\label{fig:conf_vs_alt_ext}
 \end{figure}
 
 \paragraph{Combined detection envelope.}
@@ -370,7 +370,7 @@ Figure~\ref{fig:blur_vs_altitude} quantifies pixel motion blur as a function of 
 \centering
 \includegraphics[width=0.75\textwidth]{det_vs_speed}
 \caption{Detection probability per flyover vs drone speed at \SI{35}{\metre} altitude, for single-frame detection rates of 0.70, 0.85, and 0.95.  Even at 15\,m/s, the probability exceeds 99\% for $p_d \geq 0.85$.}
-\label{fig:det_vs_speed}
+\label{fig:det_vs_speed_ext}
 \end{figure}
 
 \paragraph{Altitude-dependent speed scheduling.}
@@ -379,13 +379,13 @@ To balance coverage rate against detection reliability, \texttt{config.py} imple
 % ═══════════════════════════════════════════════════════════════
 \subsection{Inference Latency Breakdown}\label{app:cv:latency}
 
-Figure~\ref{fig:latency_breakdown} presents the latency breakdown as a stacked bar chart, emphasising that model inference dominates the pipeline at 94\% of total time.  This has two implications for optimisation:
+Figure~\ref{fig:latency_breakdown_ext} presents the latency breakdown as a stacked bar chart, emphasising that model inference dominates the pipeline at 94\% of total time.  This has two implications for optimisation:
 
 \begin{figure}[ht]
 \centering
 \includegraphics[width=0.65\textwidth]{latency_breakdown}
 \caption{Latency breakdown of the detection pipeline.  Model inference (XNNPACK, 4-thread) accounts for 94\% of total latency; all other stages are negligible in comparison.}
-\label{fig:latency_breakdown}
+\label{fig:latency_breakdown_ext}
 \end{figure}
 
 \begin{enumerate}

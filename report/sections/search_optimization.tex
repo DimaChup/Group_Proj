@@ -56,6 +56,13 @@ Table~\ref{tab:energy-top5} presents the five most and least energy-efficient co
   \end{tabularx}
 \end{table}
 
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.85\linewidth]{energy_efficiency}
+  \caption{Energy efficiency across the 216-configuration parameter sweep. Lower-energy configurations cluster at high altitude and optimal scan angle; the selected operating point (\SI{35}{\metre}, \SI{70}{\degree}, \SI{8}{\metre\per\second}) trades minimal energy for reliable detection.}
+  \label{fig:energy_efficiency}
+\end{figure}
+
 The selected operating point (rank~5: \SI{70}{\degree}, \SI{35}{\metre}, \SI{8}{\metre\per\second}) is not the global energy minimum---that distinction belongs to the \SI{50}{\metre}/\SI{10}{\metre\per\second} configuration---but it is the most energy-efficient configuration that maintains reliable detection. At \SI{50}{\metre} the mannequin subtends only 17~pixels, approaching the YOLOv8n detection threshold; at \SI{35}{\metre} it subtends 24~pixels with a comfortable margin above the minimum detectable size. The energy penalty for this safety margin is \SI{4.4}{\watt\hour} (\SI{54}{\percent} more than the absolute minimum), which consumes only \SI{10.9}{\percent} of the battery capacity and leaves over \SI{14}{\minute} of flight endurance---well above the \SI{2}{\minute} search time.
 
 % ─────────────────────────────────────────────────────────────────────
@@ -76,6 +83,13 @@ The scan angle is the single parameter with the largest impact on turn count and
     \bottomrule
   \end{tabularx}
 \end{table}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.85\linewidth]{rotation_comparison}
+  \caption{Scan angle comparison for the AENGM0074 survey polygon. Aligning strips with the longest edge (\SI{70}{\degree}) minimises U-turn count and path length compared to axis-aligned or diagonal orientations.}
+  \label{fig:rotation_comparison}
+\end{figure}
 
 The longest-edge alignment at \SI{70}{\degree} reduces the turn count from 8 to 4 compared to north--south scanning, saving approximately \SI{60}{\second} of flight time and \SI{13.3}{\watt\hour} of energy. This is because the AENGM0074 polygon is elongated along a northeast--southwest axis: scanning perpendicular to the short axis requires far fewer strips to cover the same area. The \texttt{cv2.minAreaRect} function computes this alignment automatically, and the parametric sweep confirms that its output (\SI{68}{\degree} for this polygon) falls within the optimal \SIrange{65}{75}{\degree} band.
 
@@ -136,6 +150,13 @@ Table~\ref{tab:nfz-margin} shows the required minimum drone-to-boundary distance
   \end{tabularx}
 \end{table}
 
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.85\linewidth]{nfz_margin_altitude}
+  \caption{NFZ margin analysis as a function of altitude. The camera footprint radius grows linearly with altitude, but the implemented \SI{50}{\metre} total margin maintains a comfortable surplus at all operational altitudes.}
+  \label{fig:nfz_margin_altitude}
+\end{figure}
+
 The total margin of \SI{50}{\metre} (comprising the \SI{30}{\metre} waypoint buffer plus the \SI{20}{\metre} NFZ slow zone where speed ramps down to \SI{0.3}{\metre\per\second}) provides a comfortable surplus at all altitudes up to \SI{50}{\metre}. Even at the highest altitude considered, the surplus of \SI{27}{\metre} ensures that transient GPS errors, wind gusts, or turn overshoots cannot cause the camera footprint to image the SSSI. The multi-layer NFZ protection---waypoint exclusion, speed ramping, and repulsive geofence push---provides defence in depth; no single failure mode can result in SSSI intrusion.
 
 % ─────────────────────────────────────────────────────────────────────
@@ -170,6 +191,13 @@ Table~\ref{tab:speed-detect} quantifies this trade-off across the speed range.
     \bottomrule
   \end{tabularx}
 \end{table}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.85\linewidth]{speed_detection_energy}
+  \caption{Speed--detection--energy trade-off at \SI{35}{\metre} altitude. Detection probability remains above 99.6\% across all speeds; the binding constraint is energy consumption and NFZ margin rather than detection reliability.}
+  \label{fig:speed_detection_energy}
+\end{figure}
 
 At all speeds up to \SI{15}{\metre\per\second}, the detection probability exceeds \SI{99.6}{\percent}---a consequence of the high per-frame detection rate and the multiple-frame dwell time. The practical distinction between \SI{5}{\metre\per\second} (\SI{99.99}{\percent}) and \SI{15}{\metre\per\second} (\SI{99.66}{\percent}) is negligible in terms of detection reliability, but the search time differs by a factor of three. This analysis supports the altitude-dependent speed schedule (Section~\ref{sec:speed-schedule}): there is little detection benefit to flying slower than \SI{6}{\metre\per\second} at any altitude, and the time savings from faster flight are substantial.
 

@@ -2,10 +2,17 @@
 
 \section{State Transition Table}\label{app:states}
 
-Table~\ref{tab:state-transitions} lists every state in the mission state machine,
+Figure~\ref{fig:state_machine_full} shows the complete 20-state transition diagram with all 32~transitions. Table~\ref{tab:state-transitions} lists every state in the mission state machine,
 its entry condition, the actions performed while active, the possible exit
 transitions, and any timeout behaviour. The state machine contains 20~states
 with 32~distinct transitions implemented in \texttt{state\_machine.py}.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\linewidth]{state_machine_full}
+\caption{Complete state machine diagram showing all 20~states and 32~transitions. The primary mission path flows left to right; engagement branches downward from SEARCH; recovery paths return to the search or home. Manual override is accessible from any active state.}
+\label{fig:state_machine_full}
+\end{figure}
 
 \begin{small}
 \setlength{\LTpre}{6pt}
