@@ -123,7 +123,7 @@ Three candidate companion computers were evaluated using weighted multi-criteria
   \end{tabularx}
 \end{table}
 
-\noindent The Raspberry Pi~5 scores highest across all criteria. The Jetson Nano offers superior GPU inference but is more expensive, draws more power, and lags behind on Python version support due to NVIDIA's JetPack release cycle. The Intel Neural Compute Stick~2 was discontinued by Intel in 2023 and lacks GPIO or CSI interfaces, requiring a separate host SBC.
+\noindent The Raspberry Pi~5 achieves the highest weighted total. The Jetson Nano offers superior GPU inference but is more expensive, draws more power, and lags behind on Python version support due to NVIDIA's JetPack release cycle. The Intel Neural Compute Stick~2 was discontinued by Intel in 2023 and lacks GPIO or CSI interfaces, requiring a separate host SBC.
 
 \subsubsection{Communication Architecture Trade Study}
 
@@ -257,7 +257,7 @@ ROS~2 is the de facto middleware for multi-sensor robotic systems~\cite{quigley2
 
     \item \textbf{Deployment complexity.} A full ROS~2 Humble installation on Raspberry Pi OS requires $\approx$\SI{2}{\giga\byte} of disk and 15+ packages. The current deployment requires four \texttt{pip} packages totalling \SI{<50}{\mega\byte} (Table~\ref{tab:mcda-comms}). On flight day, the Pi must boot and be mission-ready within 60~seconds; a lighter dependency tree reduces the surface area for version conflicts and startup failures.
 
-    \item \textbf{Timeline constraint.} The five-person team had no prior ROS experience. Conservative estimation placed the ROS learning curve at 40--60~hours per developer~\cite{quigley2009ros}, consuming 25\% of the available development time for middleware proficiency rather than mission logic. The pymavlink API provided immediate access to all required ArduPilot commands with a learning investment of approximately 5~hours.
+    \item \textbf{Timeline constraint.} The five-person team had no prior ROS experience. Conservative estimation placed the ROS learning curve at 40--60~hours per developer~\cite{quigley2009ros}, consuming 25\% of the available development time for middleware proficiency rather than mission logic. The pymavlink API provided immediate access to all required ArduPilot commands with minimal learning investment.
 \end{enumerate}
 
 \noindent ROS remains the recommended path for future extensions (multi-drone coordination, SLAM, sensor fusion) where inter-process communication becomes essential.

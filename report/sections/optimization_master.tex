@@ -277,6 +277,39 @@ Figure~\ref{fig:pareto-2d} projects this onto a two-dimensional view: mission ef
   \caption{Pareto frontier in the effectiveness--cost plane. Each point is one of the 216 evaluated configurations, coloured by altitude. The Pareto-efficient frontier (black line) separates achievable from dominated solutions. The selected operating point (35\,m, 70\textdegree) lies on the frontier at the ``knee''---the point of maximum curvature where marginal effectiveness gains require disproportionate cost increases.}\label{fig:pareto-2d}
 \end{figure}
 
+\paragraph{Alternative projections of the five-dimensional objective space.}
+The Pareto frontier can be visualised in several complementary ways, each revealing different aspects of the trade-off structure.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.85\linewidth]{pareto_curve}
+  \caption{Classical 2D Pareto curve: detection probability vs mission time. Each dot represents one of the 216 swept configurations, coloured by altitude. The Pareto frontier connects non-dominated solutions. The selected operating point (35\,m, 8\,m/s) sits at the knee of the curve.}
+  \label{fig:pareto-curve}
+\end{figure}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.85\linewidth]{pareto_3d}
+  \caption{Three-dimensional objective space adding energy consumption as the vertical axis, with coverage encoded as colour (fourth dimension). The selected configuration achieves low energy and high detection while maintaining coverage above 96\%.}
+  \label{fig:pareto-3d}
+\end{figure}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.95\linewidth]{pareto_parallel}
+  \caption{Parallel coordinates plot showing all five objectives simultaneously without dimensional projection. Orange lines indicate the seven Pareto-optimal configurations; the selected configuration (thick blue) achieves balanced performance across all axes. This representation reveals that the selected point trades speed and energy efficiency for superior detection and safety.}
+  \label{fig:pareto-parallel}
+\end{figure}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.85\linewidth]{pareto_tradeoff_simple}
+  \caption{Simplified trade-off summary for non-technical audiences. Five key configurations plotted on composite effectiveness vs cost axes, illustrating the fundamental tension between mission reliability and resource expenditure.}
+  \label{fig:pareto-simple}
+\end{figure}
+
+These four visualisations collapse the same five-dimensional objective space into progressively richer representations: the 2D curve (Figure~\ref{fig:pareto-curve}) shows the dominant detection--time trade-off, the 3D plot (Figure~\ref{fig:pareto-3d}) adds energy as a third axis with coverage as colour, the parallel coordinates (Figure~\ref{fig:pareto-parallel}) displays all five dimensions without projection loss, and the simplified view (Figure~\ref{fig:pareto-simple}) distils the insight for decision-makers.
+
 The selected operating point lies at the ``knee'' of the Pareto frontier: the region where marginal improvements in effectiveness require disproportionate increases in cost.
 Moving rightward along the frontier (e.g., to 30\,m at 65\textdegree) gains 0.02~percentage points of detection probability at the cost of 17\%~more energy and 20~seconds of additional flight time.
 Moving leftward (e.g., to 50\,m at 70\textdegree) saves 35\%~energy but reduces the target width to 7~model pixels, eliminating the safety margin against real-world degradation.
