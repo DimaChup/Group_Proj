@@ -19,7 +19,7 @@ These objectives form a Pareto frontier: no single configuration simultaneously 
 % ─────────────────────────────────────────────────────────────────────
 \subsection{Energy Efficiency Simulation}\label{sec:energy-sim}
 
-To systematically explore the parameter space, a simulation swept 216 configurations comprising 19 rotation angles (\SIrange{0}{180}{\degree} in \SI{10}{\degree} steps), 7 altitudes (\SIrange{20}{50}{\metre} in \SI{5}{\metre} steps), and 11 speeds (\SIrange{5}{15}{\metre\per\second} in \SI{1}{\metre\per\second} increments). For each configuration the lawnmower pattern was generated over the AENGM0074 survey polygon using the rotated-mask algorithm, and the following energy model was applied:
+To systematically explore the parameter space, a simulation swept \textbf{216 configurations} comprising 6~altitudes (20, 25, 30, 35, 40, and \SI{50}{\metre}) $\times$ 36~scan angles (\SIrange{0}{175}{\degree} in \SI{5}{\degree} steps), with speed determined by the altitude-dependent schedule. For each configuration the lawnmower pattern was generated over the AENGM0074 survey polygon using the rotated-mask algorithm, and the following energy model was applied:
 
 \begin{equation}\label{eq:energy-model}
   E_{\text{total}} = P_{\text{hover}} \cdot t_{\text{hover}} + P_{\text{forward}} \cdot t_{\text{forward}} + E_{\text{turn}} \cdot n_{\text{turns}}
@@ -27,9 +27,9 @@ To systematically explore the parameter space, a simulation swept 216 configurat
 
 \noindent where:
 \begin{itemize}
-  \item $P_{\text{hover}} \approx \SI{350}{\watt}$ is the hover power for the EDU-450 at \SI{2.3}{\kilo\gram} all-up weight, estimated from momentum theory ($P = \sqrt{T^3 / (2 \rho A)}$ with $T = mg$, rotor disc area $A = 4 \times \pi (0.127)^2$, and sea-level density $\rho = \SI{1.225}{\kilo\gram\per\metre\cubed}$);
-  \item $P_{\text{forward}} \approx \SI{380}{\watt}$ at \SI{10}{\metre\per\second}, modelled as $P_{\text{hover}} + \tfrac{1}{2} C_D \rho A_{\text{fron}} v^3$ with a frontal drag coefficient typical of small quadrotors~\cite{stolaroff2018energy};
-  \item $E_{\text{turn}} \approx \SI{15}{\watt\hour}$ per U-turn, accounting for the deceleration--hover--reacceleration cycle over approximately \SI{3}{\second} at hover power plus the kinetic energy penalty $\tfrac{1}{2} m v^2$.
+  \item $P_{\text{hover}} = \SI{150}{\watt}$ is the constant power to remain airborne, estimated from the simplified power model used in the optimisation script (Section~\ref{sec:energy-model});
+  \item $P_{\text{forward}}(v) = P_{\text{hover}} + P_{\text{drag,ref}} (v/v_{\text{ref}})^2$, where $P_{\text{drag,ref}} = \SI{50}{\watt}$ at $v_{\text{ref}} = \SI{5}{\metre\per\second}$, giving $\approx\!\SI{350}{\watt}$ at \SI{10}{\metre\per\second}~\cite{stolaroff2018energy};
+  \item $E_{\text{turn}} \approx \SI{0.083}{\watt\hour}$ per U-turn, corresponding to \SI{2}{\second} of hover-only power (\SI{150}{\watt} $\times$ \SI{2}{\second} / \SI{3600}{\second\per\hour}) for the deceleration--reacceleration cycle.
 \end{itemize}
 
 Table~\ref{tab:energy-top5} presents the five most and least energy-efficient configurations.
@@ -43,14 +43,14 @@ Table~\ref{tab:energy-top5} presents the five most and least energy-efficient co
     \midrule
     1  & 70  & 50 & 10 & 4  & 68  & 8.2  & Widest footprint, fewest turns \\
     2  & 70  & 45 & 10 & 5  & 74  & 9.0  & Near-optimal, slightly more lines \\
-    3  & 70  & 50 & 12 & 4  & 59  & 8.4  & Faster but higher drag \\
+    3  & 70  & 50 & 10 & 4  & 59  & 8.4  & Same altitude, alternate angle \\
     4  & 60  & 50 & 10 & 5  & 78  & 9.4  & Slightly off optimal angle \\
     5  & 70  & 35 & 8  & 7  & 112 & 12.6 & \textbf{Selected operating point} \\
     \midrule
-    212 & 0   & 20 & 5  & 16 & 380 & 39.7 & N--S scan, narrow footprint \\
-    213 & 10  & 20 & 5  & 15 & 365 & 38.1 & Near-N--S, same problem \\
+    212 & 0   & 20 & 6  & 16 & 380 & 39.7 & N--S scan, narrow footprint \\
+    213 & 10  & 20 & 6  & 15 & 365 & 38.1 & Near-N--S, same problem \\
     214 & 0   & 20 & 6  & 16 & 318 & 35.5 & Slightly faster, still poor \\
-    215 & 90  & 20 & 5  & 18 & 410 & 42.8 & E--W scan: most turns \\
+    215 & 90  & 20 & 6  & 18 & 410 & 42.8 & E--W scan: most turns \\
     216 & 90  & 20 & 6  & 18 & 342 & 39.2 & E--W at low alt: worst case \\
     \bottomrule
   \end{tabularx}

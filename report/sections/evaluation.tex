@@ -28,7 +28,7 @@ Table~\ref{tab:plus-delta} summarises the principal strengths and areas for impr
 \addlinespace
 \color{green!50!black}\textbf{P6} & Web-based ground station & Browser dashboard with MJPEG stream, GPS grid, and command buttons operates headlessly over SSH at \texttt{http://PI\_IP:8090}. Tested from PuTTY terminal and phone browser during bench day (\secref{sec:groundstation}). \\
 \addlinespace
-\color{green!50!black}\textbf{P7} & 58 test scripts across 6 categories & Comprehensive test coverage across hardware checks, flight progressions, diagnostics, calibration, field experiments, and development tools---each script single-purpose with CSV output where applicable (\secref{sec:test-org-detail}). \\
+\color{green!50!black}\textbf{P7} & 71 test scripts across 6 categories & Comprehensive test coverage across hardware checks, flight progressions, diagnostics, calibration, field experiments, and development tools---each script single-purpose with CSV output where applicable (\secref{sec:test-org-detail}). \\
 \addlinespace
 \color{green!50!black}\textbf{P8} & Simulation-first development & Full state machine, geofence enforcement, and detection pipeline were validated end-to-end in SITL before hardware connection; the same \texttt{main.py} runs on both platforms. Dry-run mode validates waypoints in under 1\,s without any hardware (\secref{sec:simulation}). \\
 \addlinespace
@@ -102,7 +102,7 @@ Table~\ref{tab:plus-delta} summarises the principal strengths and areas for impr
 Isolating all computer-vision logic behind a single interface (\texttt{detect\_in\_image}) and auto-detecting the flight controller connection simplified integration throughout development. The AI model was retrained three times---from the original 640-pixel dataset, through a 1280-pixel variant, to the final 1088-pixel version on mixed synthetic and real data---and each swap required only replacing a single file with no changes to the orchestrator, state machine, or ground station. The same benefit extends to future upgrades: an NCNN backend or a hardware accelerator (e.g.\ Hailo-8L) can be integrated by modifying \texttt{vision.py} alone. This architectural decision was validated empirically: adding lens undistortion---a feature not anticipated during initial design---required changes to a single file and added negligible latency (\SI{1.5}{\milli\second}).
 
 \textbf{Detection performance (P4, D2, D4, D5, D9).}
-The retrained YOLOv8n model achieved mAP$_{50}$ of 0.995 on the validation set containing real flight imagery, and bench tests confirmed 50/50 detection at 0.966 mean confidence (Figure~\ref{fig:conf_vs_alt}). At the nominal search altitude of \SI{35}{\metre}, the target subtends approximately 24~pixels in the $640\times640$ inference tensor---sufficient for reliable detection but approaching the lower limit for the nano-variant architecture. Video analysis of DJI flight footage at comparable altitudes produced consistent detections, providing indirect evidence that the model generalises beyond synthetic training data.
+The retrained YOLOv8n model achieved mAP$_{50}$ of 0.995 on the validation set containing real flight imagery, and bench tests confirmed 50/50 detection at 0.966 mean confidence (Figure~\ref{fig:conf_vs_alt}). At the nominal search altitude of \SI{35}{\metre}, the target subtends 36~pixels in the $640\!\times\!640$ model input (81 sensor pixels, scale factor $640/1456 = 0.4396$)---sufficient for reliable detection with comfortable margin above the 20-pixel floor. Video analysis of DJI flight footage at comparable altitudes produced consistent detections, providing indirect evidence that the model generalises beyond synthetic training data.
 
 However, this performance figure must be interpreted with caution. The training and validation sets share the same synthetic generation pipeline, meaning the 0.995 mAP$_{50}$ likely overestimates real-world accuracy. The 16 real images in the dataset provide some cross-domain signal, but a proper held-out test set from an independent flight is needed to establish a trustworthy performance bound. Additionally, the confidence threshold of 0.2 was selected by visual inspection of video replay detections rather than by sweeping a precision--recall curve. This means the operating point may not be optimal: a lower threshold could recover missed detections at altitude, while a higher threshold could reduce false positives against cluttered backgrounds. Characterising this trade-off formally is a priority for future work.
 
@@ -112,7 +112,7 @@ The float32 deployment leaves performance on the table: FP16 XNNPACK dispatch on
 Target GPS coordinates are derived by projecting the detection's pixel offset through the calibrated camera model and the drone's reported position and altitude. Analysis of DJI flight video with known ground-truth positions yielded CEP$_{50}$ = \SI{2.3}{\metre} and worst-case error of \SI{16.5}{\metre} (Figures~\ref{fig:gps_bullseye} and~\ref{fig:gps_error_direction}), the latter attributable to GPS timing lag compounding with heading-aligned motion. Inverse-variance-weighted averaging and Kalman filtering partially mitigate this, but a first-order lag compensation (offsetting GPS by $v \cdot \Delta t_{\text{lag}}$ in the heading direction) has not yet been implemented and would reduce the systematic bias component.
 
 \textbf{Testing effectiveness (P3, P7).}
-The progressive framework's value is best demonstrated by the defect discovery table (Table~\ref{tab:bug-cost}): 12 defects were caught at Tiers~1--3, each resolved in minutes to hours at zero hardware risk. Five of these---the geofence sign inversion, repulsive force reversal, barometric drift loop, duplicate target queuing, and missing timeout guard---would have caused mission-critical failures in flight but were trivially reproducible in simulation. The remaining seven were hardware-integration faults (BGR inversion, FOV miscalibration, pyserial breakage, tflite-runtime unavailability, camera resource conflict, uninitialised variable, GPS timing lag) that required the physical Pi but not propeller rotation. The 58 test scripts across six categories enabled rapid fault diagnosis during the compressed bench-testing window.
+The progressive framework's value is best demonstrated by the defect discovery table (Table~\ref{tab:bug-cost}): 12 defects were caught at Tiers~1--3, each resolved in minutes to hours at zero hardware risk. Five of these---the geofence sign inversion, repulsive force reversal, barometric drift loop, duplicate target queuing, and missing timeout guard---would have caused mission-critical failures in flight but were trivially reproducible in simulation. The remaining seven were hardware-integration faults (BGR inversion, FOV miscalibration, pyserial breakage, tflite-runtime unavailability, camera resource conflict, uninitialised variable, GPS timing lag) that required the physical Pi but not propeller rotation. The 71 test scripts across six categories enabled rapid fault diagnosis during the compressed bench-testing window.
 
 \begin{table}[ht]
 \centering
@@ -156,6 +156,46 @@ The scheduled outdoor flight was cancelled due to sustained high winds exceeding
 
 \textbf{Incomplete flight validation (D1, D6, D7, D8).}
 The most significant limitation remains the absence of outdoor flight data. Every subsystem has been verified individually---camera, inference, MAVLink commands, GPS fix, lens calibration---but the integrated system has not yet executed a search pattern over real terrain. Several performance characteristics therefore remain theoretical: detection range as a function of altitude and lighting, false-positive rate against natural backgrounds (grass, shadows, debris), wind-induced motion blur, and GPS accuracy under dynamic manoeuvres. The progressive testing framework was designed to retire these risks incrementally (passive flight before autonomous flight), and bench results give reasonable confidence that outdoor operation will require parameter tuning rather than architectural changes. The single-class detector limitation (D6) is a deeper concern: in a real SAR scenario, the system would flag any human-sized object, requiring operator verification at the VERIFY state to distinguish casualties from bystanders or debris.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{Testing Framework Summary}\label{sec:test-framework-summary}
+
+The five-tier progressive testing framework (Table~\ref{tab:five-tier-summary}) advanced from pure software to full autonomy, with each tier serving as a gate that must pass before the next is attempted. This structure caught 12 defects at low-cost tiers (Table~\ref{tab:bug-cost}) and is the primary reason no architectural faults remained by the time hardware was assembled.
+
+\begin{table}[ht]
+\centering\small
+\caption{Five-tier progressive testing framework (condensed from Appendix~\ref{sec:five-tier}).}\label{tab:five-tier-summary}
+\begin{tabular}{@{}clp{7.5cm}@{}}
+\toprule
+\textbf{Tier} & \textbf{Environment} & \textbf{What It Verifies} \\
+\midrule
+1 & SITL simulation & State machine logic, path planning, geofence, detection pipeline---zero hardware risk. \\
+2 & Docker Pi test & TFLite loads on ARM, dependency compatibility, headless operation. \\
+3 & Bench (Pi + Cube, no props) & MAVLink ACKs, camera frames, GPS fix, full sensing chain. \\
+4 & Passive flight (pilot on RC) & Real-world detection range, FOV/GPS calibration---Pi issues zero commands. \\
+5 & Autonomous flight & End-to-end mission: search, detect, centre, verify, land. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Tiers~1--3 were fully exercised; Tier~4 was partially achieved through DJI video replay as a proxy after weather cancellation. Tier~5 remains outstanding. The two intermediate tiers unique to this project---Docker environment testing (Tier~2) and passive zero-command flight (Tier~4)---are absent from most university drone projects and were responsible for catching six of the twelve defects.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{What Would Change in a Second Iteration}\label{sec:what-would-change}
+
+Five changes would yield the largest improvement if the project were repeated:
+
+\begin{enumerate}
+    \item \textbf{Start with Pi hardware from week~1, not week~16.} The BGR colour inversion, pyserial breakage, and tflite-runtime incompatibility were all discovered only when Pi integration began in the final weeks. Earlier hardware access would have surfaced these faults when schedule slack existed, rather than compressing six integration defects into a single bench day.
+
+    \item \textbf{Use NCNN inference from the start.} The NCNN backend delivers approximately 2$\times$ the throughput of TFLite on the Pi~5's Cortex-A76 cores (${\sim}$15\,FPS vs 4.8\,FPS). The TFLite path was chosen for simplicity, but NCNN requires no additional complexity---only a different model export---and would have relaxed the speed constraint (D2) that limits search speed at altitude.
+
+    \item \textbf{Automate regression tests in CI.} All 71 test scripts are run manually. A GitHub Actions pipeline running the dry-run, TFLite model loading, geofence sign checks, and state-transition unit tests on every push would have caught the geofence sign inversion and the uninitialised variable before they reached the bench.
+
+    \item \textbf{Record flight video in the first available session for training data.} The DJI video replay pipeline---built after the weather cancellation---proved more informative than extended simulation (Lesson~3). Recording real aerial footage of the dummy during any early manual flight would have provided labelled training data weeks earlier, enabling a stronger model with a proper held-out test set and eliminating the train/validation overlap concern (D5).
+
+    \item \textbf{Train a multi-class detector.} The single-class ``dummy'' model (D6) cannot distinguish the target from other human-sized objects, forcing operator confirmation at every detection. A three-class model (person, dummy, debris) trained on mixed data would reduce operator workload and enable fully autonomous triage in future iterations.
+\end{enumerate}
 
 % ─────────────────────────────────────────────────────────────────────
 \subsection{Lessons Learned}\label{sec:lessons-learned}

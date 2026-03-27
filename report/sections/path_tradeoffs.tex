@@ -32,7 +32,7 @@ The lane width is a direct function of search altitude through Eq.~\eqref{eq:foo
   \end{tabularx}
 \end{table}
 
-At \SI{20}{\metre} the mannequin subtends approximately 42~pixels---comfortably above YOLOv8n's detection threshold---but the narrow \SI{18.4}{\metre} footprint roughly doubles the number of scan lines compared to \SI{35}{\metre}, increasing both flight time and the number of U-turns.  At \SI{50}{\metre} the target shrinks to approximately 17~pixels, approaching the limit at which detection confidence degrades significantly.  The \SI{35}{\metre} operating point provides a 24-pixel target extent---sufficient for reliable detection at the 0.2 confidence threshold used in the system---while maintaining a practical scan-line count.  This altitude also leaves margin for the verification descent to \SI{15}{\metre}, where the target subtends over 50~pixels for high-confidence confirmation.
+At \SI{20}{\metre} the mannequin subtends 63 model-input pixels (142 sensor pixels)---comfortably above YOLOv8n's detection threshold---but the narrow \SI{18.4}{\metre} footprint roughly doubles the number of scan lines compared to \SI{35}{\metre}, increasing both flight time and the number of U-turns.  At \SI{50}{\metre} the target shrinks to 25 model-input pixels (57 sensor pixels), approaching the limit at which detection confidence degrades significantly.  The \SI{35}{\metre} operating point provides a 36-pixel model-input target extent (81 sensor pixels)---sufficient for reliable detection at the 0.2 confidence threshold used in the system---while maintaining a practical scan-line count.  This altitude also leaves margin for the verification descent to \SI{15}{\metre}, where the target subtends 84 model-input pixels for high-confidence confirmation.
 
 % ── 3. Speed schedule ────────────────────────────────────────────────
 \subsubsection{Altitude-Dependent Speed Schedule}\label{sec:speed-schedule}
@@ -49,7 +49,7 @@ The speed schedule implements a linear interpolation between two anchor points:
   \end{cases}
 \end{equation}
 
-\noindent At the nominal \SI{35}{\metre} search altitude this yields $v \approx \SI{7.3}{\metre\per\second}$.  The anchor values were chosen conservatively: \SI{6}{\metre\per\second} at low altitude keeps the target in view for at least 10 inference cycles, while \SI{10}{\metre\per\second} at high altitude is below the airframe's maximum cruise speed, leaving margin for wind gusts.  Transit segments to and from the search area use a separate, higher speed of \SI{15}{\metre\per\second} since no detection is required.
+\noindent At the nominal \SI{35}{\metre} search altitude this yields $v = \SI{8.0}{\metre\per\second}$.  The anchor values were chosen conservatively: \SI{6}{\metre\per\second} at low altitude keeps the target in view for at least 10 inference cycles, while \SI{10}{\metre\per\second} at high altitude is below the airframe's maximum cruise speed, leaving margin for wind gusts.  Transit segments to and from the search area use a separate, higher speed of \SI{15}{\metre\per\second} since no detection is required.
 
 % ── 4. Turn strategy ─────────────────────────────────────────────────
 \subsubsection{Turn Strategy}\label{sec:turn-strategy}

@@ -61,10 +61,10 @@ Each U-turn incurs a penalty of $\Delta t_{\mathrm{turn}} = \SI{2}{\second}$ of 
 The total mission energy is therefore:
 
 \begin{equation}\label{eq:total-energy}
-  E_{\mathrm{total}} = \underbrace{P_{\mathrm{hover}} \cdot t_{\mathrm{total}}}_{\text{hover}} \;+\; \underbrace{P_{\mathrm{drag}}(v) \cdot t_{\mathrm{flight}}}_{\text{drag}} \;+\; \underbrace{n_{\mathrm{turns}} \cdot \Delta t_{\mathrm{turn}} \cdot P_{\mathrm{hover}}}_{\text{U-turn penalty}}
+  E_{\mathrm{total}} = \underbrace{P_{\mathrm{hover}} \cdot t_{\mathrm{total}}}_{\text{hover (incl.\ turns)}} \;+\; \underbrace{P_{\mathrm{drag}}(v) \cdot t_{\mathrm{flight}}}_{\text{drag (forward motion only)}}
 \end{equation}
 
-\noindent where $t_{\mathrm{total}}$ is the total airborne time (including turns), $t_{\mathrm{flight}}$ is the time spent in forward motion along scan lines and transit segments, and $n_{\mathrm{turns}}$ is the number of U-turns.
+\noindent where $t_{\mathrm{total}} = t_{\mathrm{flight}} + n_{\mathrm{turns}} \cdot \Delta t_{\mathrm{turn}}$ is the total airborne time including U-turn penalties, $t_{\mathrm{flight}}$ is the time spent in forward motion along scan lines and transit segments, and $n_{\mathrm{turns}}$ is the number of U-turns. Each U-turn adds $\Delta t_{\mathrm{turn}} = \SI{2}{\second}$ of hover-only time (no drag component, since the drone decelerates to a near-hover during the reversal).
 At the selected operating point (\SI{35}{\metre}, \SI{8}{\metre\per\second}), the drag component contributes $50 \times (8/5)^2 = \SI{128}{\watt}$, giving a total in-flight power of \SI{278}{\watt}.
 
 Near the SSSI boundary, the speed scalar field reduces the drone's velocity from the search speed down to $v_{\mathrm{min}} = \SI{0.3}{\metre\per\second}$ at the boundary, following a linear ramp over a \SI{20}{\metre} slow zone.
@@ -220,7 +220,7 @@ This combines the ``search likely area first'' benefit of the expanding square w
 \subsection{NFZ Interaction and Speed Scalar Field}\label{sec:nfz-interaction}
 
 The SSSI no-fly zone on the northeast edge of the survey polygon introduces a position-dependent speed constraint that interacts with the path energy computation.
-The NFZ avoidance operates through three layers (Section~\ref{sec:nfz-avoidance}):
+The NFZ avoidance operates through three layers (Section~\ref{sec:nfz-layers}):
 
 \begin{enumerate}
   \item \textbf{Waypoint exclusion.} Any waypoint within \SI{30}{\metre} of the SSSI boundary is removed from the pattern, truncating or omitting the corresponding scan line.
@@ -259,7 +259,7 @@ The mannequin (\SI{1.8}{\metre} tall, \SI{0.5}{\metre} wide) projects to:
   \mathrm{px}_{\mathrm{wide}} = \frac{0.5}{\mathrm{GSD}}
 \end{equation}
 
-\noindent Since YOLOv8n resizes the input to $640 \times 640$, the model-input target size is further reduced by the aspect-ratio-dependent scale factors ($640/1456$ horizontally, $640/1088$ vertically).
+\noindent Since YOLOv8n resizes the $1456 \times 1088$ sensor frame to $640 \times 640$, the model-input target size is further reduced by the uniform scale factor $640/1456 = 0.4396$.
 
 Table~\ref{tab:detect-chain} traces this function chain from altitude through to detection probability.
 The altitude-dependent speed~$v(h)$ determines the dwell time (how long the target remains in the field of view), and therefore the number of inference frames:
@@ -277,29 +277,29 @@ Assuming independent per-frame detection with probability~$p$ (a function of pix
 
 \begin{table}[ht]
   \centering\compactTable
-  \caption{Detection probability function chain from altitude to cumulative detection probability per target flyover. Motion blur is sub-pixel at all speeds (IMX296 global shutter, $1/1000$\,s exposure) and is therefore omitted.}\label{tab:detect-chain}
+  \caption{Detection probability function chain from altitude to cumulative detection probability per target flyover. Target columns show height $\times$ width; sensor = native $1456\!\times\!1088$ pixels; model = after $640\!\times\!640$ resize (scale $= 0.4396$). Motion blur is sub-pixel at all speeds (IMX296 global shutter, $1/1000$\,s exposure) and is therefore omitted.}\label{tab:detect-chain}
   \begin{tabularx}{\linewidth}{@{}c c c c c c c c@{}}
     \toprule
-    \textbf{Alt (m)} & \textbf{GSD (mm/px)} & \textbf{Target (px)} & \textbf{Model (px)} & $v$ \textbf{(m/s)} & \textbf{Dwell (s)} & $n_f$ & $P_d$ \\
+    \textbf{Alt (m)} & \textbf{GSD (mm/px)} & \textbf{Sensor (px)} & \textbf{Model (px)} & $v$ \textbf{(m/s)} & \textbf{Dwell (s)} & $n_f$ & $P_d$ \\
     \midrule
-    20 & 12.6 & $143 \times 40$ & $84 \times 18$ & 6.0  & 2.3  & 11 & 0.9999 \\
-    25 & 15.8 & $114 \times 32$ & $67 \times 14$ & 6.7  & 2.6  & 12 & 0.9999 \\
-    30 & 18.9 & $95 \times 26$  & $56 \times 12$ & 7.3  & 2.8  & 14 & 0.9999 \\
-    35 & 22.1 & $81 \times 23$  & $48 \times 10$ & 8.0  & 3.0  & 14 & 0.9997 \\
-    40 & 25.3 & $71 \times 20$  & $42 \times 9$  & 8.7  & 3.2  & 15 & 0.9994 \\
-    50 & 31.6 & $57 \times 16$  & $34 \times 7$  & 10.0 & 3.4  & 16 & 0.9966 \\
+    20 & 12.6 & $142 \times 40$ & $63 \times 18$ & 6.0  & 2.3  & 11 & 0.9999 \\
+    25 & 15.8 & $114 \times 32$ & $50 \times 14$ & 6.7  & 2.6  & 12 & 0.9999 \\
+    30 & 18.9 & $95 \times 26$  & $42 \times 11$ & 7.3  & 2.8  & 14 & 0.9999 \\
+    35 & 22.1 & $81 \times 23$  & $36 \times 10$ & 8.0  & 3.0  & 14 & 0.9997 \\
+    40 & 25.3 & $71 \times 20$  & $31 \times 9$  & 8.7  & 3.2  & 15 & 0.9994 \\
+    50 & 31.6 & $57 \times 16$  & $25 \times 7$  & 10.0 & 3.4  & 16 & 0.9966 \\
     \bottomrule
   \end{tabularx}
 \end{table}
 
 Two results are noteworthy.
 First, \textbf{motion blur is not a limiting factor}: the IMX296 global shutter combined with a $1/1000$\,s exposure produces sub-pixel blur (\SI{0.3}{\px} at \SI{10}{\metre\per\second}, \SI{50}{\metre} altitude) at all operating speeds.
-The critical speed for single-pixel blur exceeds \SI{30}{\metre\per\second} at all altitudes---well beyond drone capability.
+The critical speed for single-pixel blur exceeds the maximum search speed at every altitude in the operating range (\SI{12.6}{\metre\per\second} at \SI{20}{\metre} vs \SI{6}{\metre\per\second} search speed; \SI{31.6}{\metre\per\second} at \SI{50}{\metre} vs \SI{10}{\metre\per\second} search speed), so motion blur remains sub-pixel throughout.
 
 Second, \textbf{the dwell time paradoxically increases with altitude} (from \SI{2.3}{\second} at \SI{20}{\metre} to \SI{3.4}{\second} at \SI{50}{\metre}) because the footprint height grows faster than the speed.
 The target is captured in 11--16 frames at all altitudes---more than sufficient given that a single detection above the \SI{0.2}{} confidence threshold triggers investigation.
 Detection probability exceeds \SI{99.6}{\percent} even at \SI{50}{\metre}, where the target width drops to 7\,pixels in the model input.
-The binding constraint on altitude is therefore not detection probability per se, but detection \emph{confidence}: at \SI{50}{\metre} the model produces lower-confidence detections that are more likely to be marginal, whereas at \SI{35}{\metre} the target subtends 48\,pixels in the model input with comfortable margin above the \SI{20}{\px} minimum detectable size.
+The binding constraint on altitude is therefore not detection probability per se, but detection \emph{confidence}: at \SI{50}{\metre} the model produces lower-confidence detections that are more likely to be marginal, whereas at \SI{35}{\metre} the target subtends 36\,pixels in the model input with comfortable margin above the \SI{20}{\px} minimum detectable size.
 
 % =====================================================================
 \subsection{Selected Configuration and Justification}\label{sec:selected-config}
@@ -323,7 +323,7 @@ This configuration is \emph{not} the energy minimum---that distinction belongs t
     \midrule
     Coverage        & 100\%             & 96\%          & 4\% loss in fenced NFZ buffer zone (low casualty probability) \\
     Mission time    & \SI{68}{\second}  & \SI{112}{\second} & Slower speed ensures $\geq$14 inference frames per target \\
-    Energy          & \SI{8.2}{Wh}      & \SI{12.6}{Wh} & \SI{35}{\metre} vs \SI{50}{\metre}: 48\,px target vs 34\,px \\
+    Energy          & \SI{8.2}{Wh}      & \SI{12.6}{Wh} & \SI{35}{\metre} vs \SI{50}{\metre}: 36\,px target vs 25\,px \\
     Detection $P_d$ & $>$99.99\%        & 99.97\%       & Near-unity at all operating speeds \\
     NFZ margin      & \SI{50}{\metre}   & \SI{50}{\metre} & \SI{34}{\metre} surplus above footprint radius at \SI{35}{\metre} \\
     \bottomrule
@@ -338,7 +338,7 @@ The rationale for choosing \SI{35}{\metre} over the energy-optimal \SI{50}{\metr
   \item The retrained YOLOv8n model (\texttt{sar\_v2\_1088}, mAP$_{50}$ = 0.995) was trained on synthetic images including high-altitude views, but real-world conditions (lighting variation, partial occlusion, unusual target pose) can degrade detection at the pixel-count margin.
         The \SI{35}{\metre} altitude provides a buffer against these degradation modes.
   \item The energy penalty is \SI{4.4}{\watt\hour} (\SI{54}{\percent} more than the minimum), consuming only \SI{10.9}{\percent} of battery capacity and leaving over \SI{14}{\minute} of flight endurance---well above the \SI{1.9}{\minute} search time.
-  \item The multi-pass rescan chain ($35 \to 28 \to 22$\,m, Section~\ref{sec:rescan}) provides a safety net: if the initial pass at \SI{35}{\metre} misses the target, subsequent passes at lower altitude increase pixel extent to 60+ pixels, where detection is virtually certain.
+  \item The multi-pass rescan chain ($35 \to 28 \to 22$\,m, Section~\ref{sec:detect-prob}) provides a safety net: if the initial pass at \SI{35}{\metre} misses the target, subsequent passes at lower altitude increase pixel extent to 45+ model-input pixels (57+ at 22\,m), where detection is virtually certain.
 \end{itemize}
 
 The \SI{96}{\percent} coverage figure arises from the \SI{30}{\metre} NFZ waypoint buffer, which excludes waypoints near the SSSI boundary.

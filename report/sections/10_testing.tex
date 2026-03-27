@@ -1,6 +1,6 @@
 \section{Testing Methodology}\label{sec:testing}
 
-The verification and validation strategy draws on V-model principles~\cite{forsberg1991relationship}, where each level of system integration is paired with a corresponding verification activity, and on incremental autonomy practices from safety-critical robotics~\cite{koopman2016challenges}. The resulting five-tier progressive testing framework advances from pure software simulation to full autonomous flight, supported by 41 dedicated test scripts organised across six categories and a stress-testing campaign that exercised 20 failure scenarios before the first outdoor test.
+The verification and validation strategy draws on V-model principles~\cite{forsberg1991relationship}, where each level of system integration is paired with a corresponding verification activity, and on incremental autonomy practices from safety-critical robotics~\cite{koopman2016challenges}. The resulting five-tier progressive testing framework advances from pure software simulation to full autonomous flight, supported by 71 dedicated test scripts organised across six categories and a stress-testing campaign that exercised 20 failure scenarios before the first outdoor test.
 
 \subsection{V-Model Verification Approach}\label{sec:vmodel}
 
@@ -48,7 +48,7 @@ Table~\ref{tab:five-tier} summarises the five tiers and their verification targe
 
 \subsection{Test Script Organisation}\label{sec:test-org}
 
-The 41 test scripts are organised into six directories, each addressing a distinct verification concern:
+The 71 test scripts are organised into six directories, each addressing a distinct verification concern:
 
 \begin{itemize}
     \item \textbf{Hardware} (\texttt{tests/hardware/}, 6 scripts) --- individual component checks: inference benchmark (50-run timing report on Pi~5), detection rate under simulated blur, GPS satellite tracking, GPS step-by-step health verification, and buzzer functionality. These confirm that each peripheral operates correctly before integration.
@@ -71,7 +71,7 @@ Dry-run validation is executed before every flight day as the first item on the 
 
 Real flight footage from a DJI survey drone provided a supplementary validation path between simulation and live flight. The video analysis pipeline replays recorded 4K video at 30\,fps with frame-synchronised SRT telemetry (GPS, altitude, heading) while running the YOLOv8n model on every frame. Each detection is projected from pixel coordinates to GPS coordinates using the calibrated FOV ($\SI{54.4}{\degree}$ HFOV for the cropped $1456 \times 1088$ frame). The pipeline produces scatter plots of estimated target positions, circular error statistics, and a scale bar overlay for visual verification of distance estimates.
 
-An A/B comparison tool switches between model variants during replay, enabling direct evaluation of the baseline and retrained models on identical footage. This analysis informed the decision to retrain on mixed synthetic-plus-real data (Section~\ref{sec:model-training}) and quantified the GPS estimation accuracy (CEP50 = 2.3\,m, maximum error = 16.5\,m) under real flight dynamics, including the 100--200\,ms GPS timing lag identified during analysis.
+An A/B comparison tool switches between model variants during replay, enabling direct evaluation of the baseline and retrained models on identical footage. This analysis informed the decision to retrain on mixed synthetic-plus-real data (Section~\ref{sec:training}) and quantified the GPS estimation accuracy (CEP50 = 2.3\,m, maximum error = 16.5\,m) under real flight dynamics, including the 100--200\,ms GPS timing lag identified during analysis.
 
 \subsection{Stress Testing and Failure Scenarios}\label{sec:stress}
 

@@ -178,6 +178,28 @@ Each detection is converted from pixel coordinates to GPS using the pinhole came
 
 Video replay analysis (DJI flight footage, $1456 \times 1088$ at 30\,fps) yielded CEP$_{50}$ = 2.3\,m, maximum error = 16.5\,m (high-speed outlier). The characteristic directional elongation is attributed to GPS receiver latency (100--200\,ms), mitigated by multi-pass averaging in the lawnmower pattern.
 
+\paragraph{Error budget.}
+Six independent sources contribute to single-observation position uncertainty (Table~\ref{tab:error-budget-summary}). GPS receiver noise dominates at all altitudes; GPS timing lag is the largest \emph{systematic} contributor, displacing each estimate by $v_\mathrm{gnd} \cdot \Delta t$ along the flight heading. The RSS total of \SI{2.9}{\metre} at \SI{35}{\metre} altitude reduces to \SI{2.5}{\metre} with first-order velocity correction and further to sub-metre levels after inverse-variance fusion of 15+ observations across descent altitudes (Appendix~\ref{sec:error-budget}).
+
+\begin{table}[ht]
+  \centering\small
+  \caption{Single-observation error budget at \SI{35}{\metre} and \SI{15}{\metre} altitude.}\label{tab:error-budget-summary}
+  \begin{tabular}{@{}lccc@{}}
+    \toprule
+    \textbf{Source} & $\boldsymbol{\sigma}$ \textbf{(35\,m)} & $\boldsymbol{\sigma}$ \textbf{(15\,m)} & \textbf{Notes} \\
+    \midrule
+    GPS receiver noise   & \SI{2.3}{\metre} & \SI{2.3}{\metre} & CEP95, altitude-independent \\
+    GPS timing lag       & \SI{1.5}{\metre} & \SI{0.75}{\metre} & \SI{150}{\milli\second} at speed \\
+    Compass heading      & \SI{0.6}{\metre} & \SI{0.3}{\metre} & $\pm$\SI{5}{\degree} yaw error \\
+    Barometric altitude  & \SI{0.5}{\metre} & \SI{0.1}{\metre} & $\pm$\SI{0.5}{\metre} baro drift \\
+    Camera mount offset  & \SI{0.5}{\metre} & \SI{0.5}{\metre} & $\pm$\SI{2}{\degree} off-nadir \\
+    Pixel quantisation   & \SI{0.01}{\metre} & \SI{0.005}{\metre} & Negligible \\
+    \midrule
+    \textbf{RSS total}   & \textbf{\SI{2.9}{\metre}} & \textbf{\SI{2.5}{\metre}} & Without lag correction \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
 \begin{figure}[ht]
 \centering
 \begin{subfigure}[t]{0.48\textwidth}

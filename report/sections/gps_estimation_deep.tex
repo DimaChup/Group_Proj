@@ -89,7 +89,7 @@ The metre-level offsets are converted to latitude and longitude increments on th
 
 \paragraph{Centre-snap optimisation.}  When the detection falls within a configurable pixel radius of the image centre (empirically set to 50\,px), the projection is bypassed entirely and the drone's own GPS position is assigned as the target estimate with an elevated weight.  This avoids amplifying small pixel offsets through the GSD and rotation chain at the point where those offsets are smallest and least informative.
 
-\paragraph{Lens undistortion.}  Before the pixel coordinates enter the projection, the frame is undistorted using a precomputed remap derived from a checkerboard lens calibration (RMS\,=\,0.399\,px, Section~\ref{sec:lens-calib}).  The cost is approximately \SI{1.5}{\milli\second} per frame---negligible against the \SI{207}{\milli\second} inference time.
+\paragraph{Lens undistortion.}  Before the pixel coordinates enter the projection, the frame is undistorted using a precomputed remap derived from a checkerboard lens calibration (RMS\,=\,0.399\,px, Section~\ref{sec:cal:lens}).  The cost is approximately \SI{1.5}{\milli\second} per frame---negligible against the \SI{207}{\milli\second} inference time.
 
 % =====================================================================
 \subsection{Error Budget}\label{sec:error-budget}
@@ -126,7 +126,7 @@ Six independent error sources contribute to the total position uncertainty.  Eac
 
 \paragraph{Heading uncertainty} rotates the offset vector (Equation~\ref{eq:rotation-deep}) by the wrong angle.  A $\pm\SI{5}{\degree}$ compass error with a \SI{16}{\metre} ground offset (edge of frame at \SI{35}{\metre}) produces up to \SI{1.4}{\metre} of cross-track error.  For the typical mid-frame detection at \SI{5}{\metre} ground offset, the contribution is approximately \SI{0.4}{\metre}.
 
-\paragraph{FOV calibration error} scales all ground offsets proportionally.  The focal length was calibrated at \SI{1}{\metre} distance (\SI{92}{\centi\metre} visible width), cross-validated at multiple altitudes from DJI video (Section~\ref{sec:fov-calib}), and found to be accurate to $\pm3$\%.
+\paragraph{FOV calibration error} scales all ground offsets proportionally.  The focal length was calibrated at \SI{1}{\metre} distance (\SI{92}{\centi\metre} visible width), cross-validated at multiple altitudes from DJI video (Section~\ref{sec:cal:fov}), and found to be accurate to $\pm3$\%.
 
 % =====================================================================
 \subsection{Fusion Strategies}\label{sec:fusion-strategies}

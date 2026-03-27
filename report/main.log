@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.3.27)  27 MAR 2026 21:50
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.3.27)  27 MAR 2026 22:26
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1487,11 +1487,11 @@ Package uniquecounter Info: New unique counter `rerunfilecheck' on input line 2
 \Hy@SectionHShift=\skip171
 )
 Package translations Info: No language package found. I am going to use `englis
-h' as default language. on input line 123.
+h' as default language. on input line 124.
 Package csquotes Info: Checking for multilingual support...
 Package csquotes Info: ... none found.
 LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 1
-23.
+24.
 
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/lm\ot1lmr.fd
 File: ot1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
@@ -1512,24 +1512,24 @@ LaTeX Warning: Label `eq:footprint' multiply defined.
 )
 \openout1 = `main.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 123.
-LaTeX Font Info:    ... okay on input line 123.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 123.
-LaTeX Font Info:    ... okay on input line 123.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 123.
-LaTeX Font Info:    ... okay on input line 123.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 123.
-LaTeX Font Info:    ... okay on input line 123.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 123.
-LaTeX Font Info:    ... okay on input line 123.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 123.
-LaTeX Font Info:    ... okay on input line 123.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 123.
-LaTeX Font Info:    ... okay on input line 123.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 123.
-LaTeX Font Info:    ... okay on input line 123.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 123.
-LaTeX Font Info:    ... okay on input line 123.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 124.
+LaTeX Font Info:    ... okay on input line 124.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 124.
+LaTeX Font Info:    ... okay on input line 124.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 124.
+LaTeX Font Info:    ... okay on input line 124.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 124.
+LaTeX Font Info:    ... okay on input line 124.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 124.
+LaTeX Font Info:    ... okay on input line 124.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 124.
+LaTeX Font Info:    ... okay on input line 124.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 124.
+LaTeX Font Info:    ... okay on input line 124.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 124.
+LaTeX Font Info:    ... okay on input line 124.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 124.
+LaTeX Font Info:    ... okay on input line 124.
 
 *geometry* driver: auto-detecting
 *geometry* detected driver: pdftex
@@ -1565,13 +1565,13 @@ LaTeX Font Info:    ... okay on input line 123.
 * \@reversemarginfalse
 * (1in=72.27pt=25.4mm, 1cm=28.453pt)
 
-LaTeX Info: Redefining \microtypecontext on input line 123.
-Package microtype Info: Applying patch `item' on input line 123.
-Package microtype Info: Applying patch `toc' on input line 123.
-Package microtype Info: Applying patch `eqnum' on input line 123.
-Package microtype Info: Applying patch `footnote' on input line 123.
-Package microtype Info: Applying patch `verbatim' on input line 123.
-LaTeX Info: Redefining \microtypesetup on input line 123.
+LaTeX Info: Redefining \microtypecontext on input line 124.
+Package microtype Info: Applying patch `item' on input line 124.
+Package microtype Info: Applying patch `toc' on input line 124.
+Package microtype Info: Applying patch `eqnum' on input line 124.
+Package microtype Info: Applying patch `footnote' on input line 124.
+Package microtype Info: Applying patch `verbatim' on input line 124.
+LaTeX Info: Redefining \microtypesetup on input line 124.
 Package microtype Info: Generating PDF output.
 Package microtype Info: Character protrusion enabled (level 2).
 Package microtype Info: Using default protrusion set `alltext'.
@@ -1628,7 +1628,7 @@ File: translations-basic-dictionary-english.trsl (english translation file `tra
 nslations-basic-dictionary')
 )
 Package translations Info: loading dictionary `translations-basic-dictionary' f
-or `english'. on input line 123.
+or `english'. on input line 124.
 
 Package pgfplots notification 'compat/show suggested version=true': document ha
 s been generated with the most recent feature set (\pgfplotsset{compat=1.18}).
@@ -1648,67 +1648,10 @@ Package biblatex Info: Automatic encoding selection.
 
 Package biblatex Info: Trying to load bibliographic data...
 Package biblatex Info: ... file 'main.bbl' found.
- (main.bbl
-
-Package biblatex Warning: The following entry could not be found
-(biblatex)                in the database:
-(biblatex)                apple_hls
-(biblatex)                Please verify the spelling and rerun
-(biblatex)                LaTeX afterwards.
-
-
-Package biblatex Warning: The following entry could not be found
-(biblatex)                in the database:
-(biblatex)                arm_a76
-(biblatex)                Please verify the spelling and rerun
-(biblatex)                LaTeX afterwards.
-
-
-Package biblatex Warning: The following entry could not be found
-(biblatex)                in the database:
-(biblatex)                brown1966decentering
-(biblatex)                Please verify the spelling and rerun
-(biblatex)                LaTeX afterwards.
-
-
-Package biblatex Warning: The following entry could not be found
-(biblatex)                in the database:
-(biblatex)                gamma1994design
-(biblatex)                Please verify the spelling and rerun
-(biblatex)                LaTeX afterwards.
-
-
-Package biblatex Warning: The following entry could not be found
-(biblatex)                in the database:
-(biblatex)                golden2006hypothermia
-(biblatex)                Please verify the spelling and rerun
-(biblatex)                LaTeX afterwards.
-
-
-Package biblatex Warning: The following entry could not be found
-(biblatex)                in the database:
-(biblatex)                settles2009active
-(biblatex)                Please verify the spelling and rerun
-(biblatex)                LaTeX afterwards.
-
-
-Package biblatex Warning: The following entry could not be found
-(biblatex)                in the database:
-(biblatex)                stolaroff2018energy
-(biblatex)                Please verify the spelling and rerun
-(biblatex)                LaTeX afterwards.
-
-
-Package biblatex Warning: The following entry could not be found
-(biblatex)                in the database:
-(biblatex)                wiegand2003h264
-(biblatex)                Please verify the spelling and rerun
-(biblatex)                LaTeX afterwards.
-
-)
-Package biblatex Info: Reference section=0 on input line 123.
-Package biblatex Info: Reference segment=0 on input line 123.
-Package hyperref Info: Link coloring ON on input line 123.
+ (main.bbl)
+Package biblatex Info: Reference section=0 on input line 124.
+Package biblatex Info: Reference segment=0 on input line 124.
+Package hyperref Info: Link coloring ON on input line 124.
  (main.out) (main.out)
 \@outlinefile=\write5
 \openout5 = `main.out'.
@@ -1800,73 +1743,73 @@ n/10 tflite-runtime
 
 [8{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-rmsc.en
 c}] [9]) (sections/system_description.tex
-<figs/mission_overview.pdf, id=1325, 488.03644pt x 464.76385pt>
+<figs/mission_overview.pdf, id=1333, 488.03644pt x 464.76385pt>
 File: figs/mission_overview.pdf Graphic file (type pdf)
 <use figs/mission_overview.pdf>
 Package pdftex.def Info: figs/mission_overview.pdf  used on input line 12.
 (pdftex.def)             Requested size: 512.14963pt x 487.76114pt.
  [10 <./figs/mission_overview.pdf>]
-<figs/architecture.pdf, id=1421, 654.40488pt x 570.93298pt>
+<figs/architecture.pdf, id=1429, 654.40488pt x 570.93298pt>
 File: figs/architecture.pdf Graphic file (type pdf)
 <use figs/architecture.pdf>
 Package pdftex.def Info: figs/architecture.pdf  used on input line 50.
 (pdftex.def)             Requested size: 435.3303pt x 379.81377pt.
-<figs/pi_system.pdf, id=1422, 873.46724pt x 681.93645pt>
+<figs/pi_system.pdf, id=1430, 873.46724pt x 681.93645pt>
 File: figs/pi_system.pdf Graphic file (type pdf)
 <use figs/pi_system.pdf>
 Package pdftex.def Info: figs/pi_system.pdf  used on input line 57.
 (pdftex.def)             Requested size: 384.11221pt x 299.88647pt.
-<figs/geofence_diagram.pdf, id=1426, 974.55922pt x 699.68274pt>
+<figs/geofence_diagram.pdf, id=1434, 974.55922pt x 699.68274pt>
 File: figs/geofence_diagram.pdf Graphic file (type pdf)
 <use figs/geofence_diagram.pdf>
 Package pdftex.def Info: figs/geofence_diagram.pdf  used on input line 94.
 (pdftex.def)             Requested size: 512.14963pt x 367.71262pt.
 
 [11]
-<figs/cv_pipeline.pdf, id=1442, 797.37903pt x 195.129pt>
+<figs/cv_pipeline.pdf, id=1450, 797.37903pt x 195.129pt>
 File: figs/cv_pipeline.pdf Graphic file (type pdf)
 <use figs/cv_pipeline.pdf>
 Package pdftex.def Info: figs/cv_pipeline.pdf  used on input line 112.
 (pdftex.def)             Requested size: 435.3303pt x 106.52927pt.
  [12 <./figs/architecture.pdf>]
-<figs/coverage_vs_time.pdf, id=1608, 425.99664pt x 256.37357pt>
+<figs/coverage_vs_time.pdf, id=1616, 425.99664pt x 256.37357pt>
 File: figs/coverage_vs_time.pdf Graphic file (type pdf)
 <use figs/coverage_vs_time.pdf>
 Package pdftex.def Info: figs/coverage_vs_time.pdf  used on input line 142.
 (pdftex.def)             Requested size: 409.72125pt x 246.59306pt.
-<figs/state_machine.pdf, id=1611, 547.08388pt x 498.663pt>
+<figs/state_machine.pdf, id=1619, 547.08388pt x 498.663pt>
 File: figs/state_machine.pdf Graphic file (type pdf)
 <use figs/state_machine.pdf>
 Package pdftex.def Info: figs/state_machine.pdf  used on input line 154.
 (pdftex.def)             Requested size: 486.54057pt x 443.48909pt.
  [13 <./figs/pi_system.pdf>] [14 <./figs/geofence_diagram.pdf> <./figs/cv_pipel
 ine.pdf>]
-<figs/gps_bullseye.pdf, id=2020, 415.84798pt x 426.3403pt>
+<figs/gps_bullseye.pdf, id=2030, 415.84798pt x 426.3403pt>
 File: figs/gps_bullseye.pdf Graphic file (type pdf)
 <use figs/gps_bullseye.pdf>
-Package pdftex.def Info: figs/gps_bullseye.pdf  used on input line 185.
+Package pdftex.def Info: figs/gps_bullseye.pdf  used on input line 207.
 (pdftex.def)             Requested size: 245.82962pt x 252.033pt.
-<figs/gps_error_direction.pdf, id=2021, 743.24844pt x 354.82443pt>
+<figs/gps_error_direction.pdf, id=2031, 743.24844pt x 354.82443pt>
 File: figs/gps_error_direction.pdf Graphic file (type pdf)
 <use figs/gps_error_direction.pdf>
-Package pdftex.def Info: figs/gps_error_direction.pdf  used on input line 192.
+Package pdftex.def Info: figs/gps_error_direction.pdf  used on input line 214.
 (pdftex.def)             Requested size: 245.82962pt x 117.35771pt.
-<figs/gps_convergence.pdf, id=2022, 403.13737pt x 260.18466pt>
+<figs/gps_convergence.pdf, id=2032, 403.13737pt x 260.18466pt>
 File: figs/gps_convergence.pdf Graphic file (type pdf)
 <use figs/gps_convergence.pdf>
-Package pdftex.def Info: figs/gps_convergence.pdf  used on input line 204.
+Package pdftex.def Info: figs/gps_convergence.pdf  used on input line 226.
 (pdftex.def)             Requested size: 245.82962pt x 158.66078pt.
-<figs/estimator_comparison.pdf, id=2023, 499.19498pt x 316.54886pt>
+<figs/estimator_comparison.pdf, id=2033, 499.19498pt x 316.54886pt>
 File: figs/estimator_comparison.pdf Graphic file (type pdf)
 <use figs/estimator_comparison.pdf>
-Package pdftex.def Info: figs/estimator_comparison.pdf  used on input line 211.
+Package pdftex.def Info: figs/estimator_comparison.pdf  used on input line 233.
 
 (pdftex.def)             Requested size: 245.82962pt x 155.88312pt.
  [15 <./figs/coverage_vs_time.pdf>]
-<figs/mission_timeline.pdf, id=2073, 723.18619pt x 291.45325pt>
+<figs/mission_timeline.pdf, id=2088, 723.18619pt x 291.45325pt>
 File: figs/mission_timeline.pdf Graphic file (type pdf)
 <use figs/mission_timeline.pdf>
-Package pdftex.def Info: figs/mission_timeline.pdf  used on input line 237.
+Package pdftex.def Info: figs/mission_timeline.pdf  used on input line 259.
 (pdftex.def)             Requested size: 460.93153pt x 185.7645pt.
 ) (sections/requirements_verification.tex
 Overfull \hbox (2.64287pt too wide) in paragraph at lines 12--12
@@ -2026,7 +1969,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 25--26
 []|\OT1/lmr/m/n/9 (+20) Verified (in-spec-
  []
 
-
+[16 <./figs/state_machine.pdf>]
 Overfull \hbox (7.87587pt too wide) in paragraph at lines 32--33
 \OT1/lmr/m/n/10 (-20) The four-vertex Flight Area poly-gon is loaded at startup
  by \OT1/lmtt/m/n/10 load[]kml[]zones() \OT1/lmr/m/n/10 (-20) in \OT1/lmtt/m/n/
@@ -2034,7 +1977,8 @@ Overfull \hbox (7.87587pt too wide) in paragraph at lines 32--33
 
  []
 
-[16 <./figs/state_machine.pdf>]
+[17 <./figs/gps_bullseye.pdf> <./figs/gps_error_direction.pdf> <./figs/gps_conv
+ergence.pdf> <./figs/estimator_comparison.pdf>]
 Overfull \hbox (5.38629pt too wide) in paragraph at lines 41--42
 \OT1/lmtt/m/n/10 NFZ[]WAYPOINT[]BUFFER[]M \OT1/lmr/m/n/10 (-20) = 30m of the SS
 SI poly-gon us-ing signed-distance com-pu-ta-tion via \OT1/lmtt/m/n/10 cv2.poin
@@ -2048,8 +1992,6 @@ lmr/m/n/10 (-20) = 3.0m/s di-rected away from the near-est bound-ary edge. The
 \OT1/lmtt/m/n/10 repulsive[]offset()
  []
 
-[17 <./figs/gps_bullseye.pdf> <./figs/gps_error_direction.pdf> <./figs/gps_conv
-ergence.pdf> <./figs/estimator_comparison.pdf>]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
 (hyperref)                removing `\leavevmode@ifvmode' on input line 52.
@@ -2086,19 +2028,18 @@ Overfull \hbox (0.58803pt too wide) in paragraph at lines 89--90
 offset[]7[]5m()
  []
 
-
+[20{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathex
+.enc}]
 Overfull \hbox (9.97177pt too wide) in paragraph at lines 107--108
 []\OT1/lmr/bx/n/10 (-20) Automated fail-safes: \OT1/lmr/m/n/10 (-20) GPS fix de
 gra-da-tion be-yond 5s trig-gers emer-gency RTL. GCS heart-beat loss (\OT1/lmtt
 /m/n/10 FS[]GCS[]ENABLE\OT1/lmr/m/n/10 (-20) )
  []
 
-[20{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathex
-.enc}]
 
 Package hyperref Warning: Suppressing empty link on input line 123.
 
-) (sections/evaluation.tex
+) (sections/evaluation.tex [21]
 Underfull \hbox (badness 3646) in paragraph at lines 57--57
 []|\OT1/lmtt/m/n/9 vision.py \OT1/lmr/m/n/9 (+20) is the sole file that touches
  CV/AI; all other mod-ules call
@@ -2122,35 +2063,35 @@ Underfull \hbox (badness 10000) in paragraph at lines 57--57
 
 LaTeX Warning: Float too large for page by 172.71274pt on input line 58.
 
-<figs/conf_vs_alt.pdf, id=2623, 359.22015pt x 256.37357pt>
+<figs/conf_vs_alt.pdf, id=2644, 359.22015pt x 256.37357pt>
 File: figs/conf_vs_alt.pdf Graphic file (type pdf)
 <use figs/conf_vs_alt.pdf>
 Package pdftex.def Info: figs/conf_vs_alt.pdf  used on input line 67.
 (pdftex.def)             Requested size: 245.82962pt x 175.44661pt.
-<figs/det_vs_speed.pdf, id=2624, 362.40393pt x 256.37357pt>
+<figs/det_vs_speed.pdf, id=2645, 362.40393pt x 256.37357pt>
 File: figs/det_vs_speed.pdf Graphic file (type pdf)
 <use figs/det_vs_speed.pdf>
 Package pdftex.def Info: figs/det_vs_speed.pdf  used on input line 74.
 (pdftex.def)             Requested size: 245.82962pt x 173.90921pt.
-<figs/latency_breakdown.pdf, id=2625, 362.54507pt x 254.02415pt>
+<figs/latency_breakdown.pdf, id=2646, 362.54507pt x 254.02415pt>
 File: figs/latency_breakdown.pdf Graphic file (type pdf)
 <use figs/latency_breakdown.pdf>
 Package pdftex.def Info: figs/latency_breakdown.pdf  used on input line 86.
 (pdftex.def)             Requested size: 245.82962pt x 172.24962pt.
-<figs/detection_heatmap.pdf, id=2626, 550.9432pt x 380.144pt>
+<figs/detection_heatmap.pdf, id=2647, 550.9432pt x 380.144pt>
 File: figs/detection_heatmap.pdf Graphic file (type pdf)
 <use figs/detection_heatmap.pdf>
 Package pdftex.def Info: figs/detection_heatmap.pdf  used on input line 93.
 (pdftex.def)             Requested size: 245.82962pt x 169.61888pt.
 
 Overfull \hbox (16.91039pt too wide) in paragraph at lines 101--103
-\OT1/lmr/bx/n/10 (-20) Architecture re-silience (P1, P2, P5, P8). \OT1/lmr/m/n/
-10 (-20) Iso-lat-ing all computer-vision logic be-hind a sin-gle in-ter-face (\
-OT1/lmtt/m/n/10 detect[]in[]image\OT1/lmr/m/n/10 (-20) )
+[]\OT1/lmr/bx/n/10 (-20) Architecture re-silience (P1, P2, P5, P8). \OT1/lmr/m/
+n/10 (-20) Iso-lat-ing all computer-vision logic be-hind a sin-gle in-ter-face 
+(\OT1/lmtt/m/n/10 detect[]in[]image\OT1/lmr/m/n/10 (-20) )
  []
 
-[21] [22 <./figs/conf_vs_alt.pdf> <./figs/det_vs_speed.pdf> <./figs/latency_bre
-akdown.pdf> <./figs/detection_heatmap.pdf>]
+[22 <./figs/conf_vs_alt.pdf> <./figs/det_vs_speed.pdf> <./figs/latency_breakdow
+n.pdf> <./figs/detection_heatmap.pdf>]
 Underfull \hbox (badness 1721) in paragraph at lines 126--126
 []|\OT1/lmr/m/n/9 (+20) Geofence sign con-ven-tion in-
  []
@@ -2180,8 +2121,8 @@ Underfull \hbox (badness 3219) in paragraph at lines 148--149
 []|\OT1/lmr/m/n/9 (+20) Crash on first de-tec-tion in
  []
 
-) [23] [24] [25] (sections/A1_state_table.tex
-<figs/state_machine_full.pdf, id=2981, 973.76273pt x 863.3819pt>
+[23]) [24] [25] [26] (sections/A1_state_table.tex
+<figs/state_machine_full.pdf, id=3018, 973.76273pt x 863.3819pt>
 File: figs/state_machine_full.pdf Graphic file (type pdf)
 <use figs/state_machine_full.pdf>
 Package pdftex.def Info: figs/state_machine_full.pdf  used on input line 12.
@@ -2495,11 +2436,11 @@ Underfull \hbox (badness 10000) in paragraph at lines 226--226
 []|\OT1/lmr/m/n/9 (+20) Mission com-plete,
  []
 
-ignored error: Infinite glue shrinkage found in box being split [26 <./figs/sta
+ignored error: Infinite glue shrinkage found in box being split [27 <./figs/sta
 te_machine_full.pdf>]
-ignored error: Infinite glue shrinkage found in box being split [27])
-(sections/A2_config_params.tex [28]) (sections/12_model_training.tex [29]
-[30] [31]) (sections/13_safety_risk.tex [32]
+ignored error: Infinite glue shrinkage found in box being split [28])
+(sections/A2_config_params.tex [29]) (sections/12_model_training.tex [30]
+[31] [32]) (sections/13_safety_risk.tex [33]
 Overfull \hbox (33.8198pt too wide) in paragraph at lines 14--15
 []\OT1/lmr/bx/n/10 (-20) Hard bound-ary cut-off. \OT1/lmr/m/n/10 (-20) If the a
 ir-craft's GPS po-si-tion falls in-side the SSSI poly-gon (or within \OT1/lmtt/
@@ -2529,7 +2470,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 39--39
  []
 
 
-LaTeX Warning: Reference `subsec:operator' on page 33 undefined on input line 4
+LaTeX Warning: Reference `subsec:operator' on page 34 undefined on input line 4
 8.
 
 
@@ -2562,55 +2503,43 @@ Underfull \hbox (badness 10000) in paragraph at lines 92--92
 []|\OT1/lmr/m/n/9 (+20) Regulatory non-
  []
 
-[33]) (sections/10_testing.tex [34] [35]
+[34]) (sections/10_testing.tex [35] [36] [37] [38])
+(sections/11_field_results.tex [39] [40]) (sections/14_future_work.tex [41]
+[42]) (sections/inference_architecture.tex [43]
 
-LaTeX Warning: Reference `sec:model-training' on page 36 undefined on input lin
-e 74.
-
-[36] [37]) (sections/11_field_results.tex [38]
-
-LaTeX Warning: Reference `sec:gps-estimation' on page 39 undefined on input lin
-e 71.
-
-[39]
-
-LaTeX Warning: Reference `sec:methodology' on page 40 undefined on input line 1
-05.
-
-) (sections/14_future_work.tex [40] [41]) (sections/inference_architecture.tex
-[42]
-
-LaTeX Warning: Reference `sec:cv:benchmarks' on page 43 undefined on input line
+LaTeX Warning: Reference `sec:cv:benchmarks' on page 44 undefined on input line
  41.
 
 
-LaTeX Warning: Citation 'arm_a76' on page 43 undefined on input line 53.
-
-
-Overfull \hbox (55.41069pt too wide) in paragraph at lines 53--54
-\OT1/lmr/m/n/10 (-20) XN-NPACK del-e-gate sup-ports trans-par-ent FP16 ex-e-cu-
-tion of FP32 mod-els via the \OT1/lmtt/m/n/10 TFLITE[]XNNPACK[]DELEGATE[]FLAG[]
-FORCE[]FP16
+Overfull \hbox (41.09068pt too wide) in paragraph at lines 53--54
+\OT1/lmr/m/n/10 (-20) NPACK del-e-gate sup-ports trans-par-ent FP16 ex-e-cu-tio
+n of FP32 mod-els via the \OT1/lmtt/m/n/10 TFLITE[]XNNPACK[]DELEGATE[]FLAG[]FOR
+CE[]FP16
  []
 
-[43]) (sections/cv_extended.tex [44] [45] [46] [47]
+[44]) (sections/cv_extended.tex [45] [46] [47]
+Overfull \hbox (36.0382pt too wide) in paragraph at lines 210--227
+ [][] 
+ []
+
+[48]
 File: figs/conf_vs_alt.pdf Graphic file (type pdf)
 <use figs/conf_vs_alt.pdf>
 Package pdftex.def Info: figs/conf_vs_alt.pdf  used on input line 237.
 (pdftex.def)             Requested size: 384.11221pt x 274.13704pt.
-<figs/detection_envelope.pdf, id=3369, 571.09987pt x 354.0703pt>
+<figs/detection_envelope.pdf, id=3410, 571.09987pt x 354.0703pt>
 File: figs/detection_envelope.pdf Graphic file (type pdf)
 <use figs/detection_envelope.pdf>
 Package pdftex.def Info: figs/detection_envelope.pdf  used on input line 247.
 (pdftex.def)             Requested size: 435.3303pt x 269.89581pt.
- [48] [49 <./figs/detection_envelope.pdf>]
+ [49] [50 <./figs/detection_envelope.pdf>]
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/listings\lstlang1.sty
 File: lstlang1.sty 2025/11/14 1.11b listings language file
 )
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/listings\lstlang1.sty
 File: lstlang1.sty 2025/11/14 1.11b listings language file
 )
-<figs/blur_vs_altitude.pdf, id=3502, 788.11186pt x 357.6005pt>
+<figs/blur_vs_altitude.pdf, id=3543, 788.11186pt x 357.6005pt>
 File: figs/blur_vs_altitude.pdf Graphic file (type pdf)
 <use figs/blur_vs_altitude.pdf>
 Package pdftex.def Info: figs/blur_vs_altitude.pdf  used on input line 364.
@@ -2619,26 +2548,13 @@ File: figs/det_vs_speed.pdf Graphic file (type pdf)
 <use figs/det_vs_speed.pdf>
 Package pdftex.def Info: figs/det_vs_speed.pdf  used on input line 371.
 (pdftex.def)             Requested size: 384.11221pt x 271.75075pt.
- [50 <./figs/blur_vs_altitude.pdf>]
+ [51 <./figs/blur_vs_altitude.pdf>]
 File: figs/latency_breakdown.pdf Graphic file (type pdf)
 <use figs/latency_breakdown.pdf>
 Package pdftex.def Info: figs/latency_breakdown.pdf  used on input line 386.
 (pdftex.def)             Requested size: 332.89412pt x 233.25542pt.
- [51]) (sections/streaming_architecture.tex
-
-LaTeX Warning: Citation 'apple_hls' on page 52 undefined on input line 69.
-
-[52]
-
-LaTeX Warning: Citation 'gamma1994design' on page 53 undefined on input line 12
-0.
-
-[53]
-
-LaTeX Warning: Citation 'wiegand2003h264' on page 54 undefined on input line 21
-9.
-
-) (sections/gps_estimation_deep.tex [54]
+ [52]) (sections/streaming_architecture.tex [53] [54]) (sections/gps_estimation
+_deep.tex [55]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
 (hyperref)                removing `\leavevmode@ifvmode' on input line 78.
@@ -2648,16 +2564,7 @@ Package hyperref Warning: Token not allowed in a PDF string (Unicode):
 (hyperref)                \kern 1.66702pt
 (hyperref)                removed on input line 78.
 
-
-LaTeX Warning: Reference `sec:lens-calib' on page 55 undefined on input line 92
-.
-
-[55]
-
-LaTeX Warning: Reference `sec:fov-calib' on page 56 undefined on input line 129
-.
-
-[56] [57]) (sections/testing_deep.tex [58] [59] [60]
+[56] [57] [58]) (sections/testing_deep.tex [59] [60] [61]
 Underfull \hbox (badness 1721) in paragraph at lines 141--141
 []|\OT1/lmr/m/n/9 (+20) Geofence sign con-ven-tion in-
  []
@@ -2687,13 +2594,13 @@ Underfull \hbox (badness 3219) in paragraph at lines 163--164
 []|\OT1/lmr/m/n/9 (+20) Crash on first de-tec-tion in
  []
 
-[61] [62]) (sections/field_day_narrative.tex [63] [64] [65])
+[62] [63]) (sections/field_day_narrative.tex [64] [65] [66])
 (sections/contingency.tex
 
-LaTeX Warning: Reference `sec:focus-area' on page 66 undefined on input line 53
+LaTeX Warning: Reference `sec:focus-area' on page 67 undefined on input line 53
 .
 
-[66]
+[67]
 Overfull \hbox (60.4425pt too wide) in paragraph at lines 64--65
 []\OT1/lmr/bx/n/10 (-20) NCNN in-fer-ence back-end. \OT1/lmr/m/n/10 (-20) The N
 CNN ex-port of the re-trained YOLOv8n model is avail-able in \OT1/lmtt/m/n/10 c
@@ -2756,7 +2663,7 @@ Overfull \hbox (82.95808pt too wide) in paragraph at lines 112--112
 []|\OT1/lmtt/m/n/9 tests/hardware/detection[]snapshot[]test.py| 
  []
 
-) (sections/test_scripts_guide.tex [67]
+) (sections/test_scripts_guide.tex [68]
 Underfull \hbox (badness 10000) in paragraph at lines 71--71
 []|\OT1/lmr/m/n/9 (+20) GPS di-ag-nos-tics: satel-lite count, fix type
  []
@@ -2766,7 +2673,7 @@ Underfull \hbox (badness 3118) in paragraph at lines 71--71
 \OT1/lmr/m/n/9 (+20) (2D/3D/DGPS), HDOP, po-si-tion, and time-to-
  []
 
-[68]
+[69]
 Underfull \hbox (badness 10000) in paragraph at lines 102--103
 []|\OT1/lmtt/m/n/9 calibration[]data.npz
  []
@@ -2791,7 +2698,7 @@ Underfull \hbox (badness 1226) in paragraph at lines 133--133
 []|\OT1/lmr/m/n/9 (+20) General-purpose flight log-ger:
  []
 
-[69]
+[70]
 Underfull \hbox (badness 10000) in paragraph at lines 167--168
 []|\OT1/lmr/m/n/9 (+20) fov[]calibrate,
  []
@@ -2836,23 +2743,12 @@ Underfull \hbox (badness 10000) in paragraph at lines 181--182
 []|\OT1/lmr/m/n/9 (+20) video[]test,
  []
 
-[70]
+[71]
 Underfull \hbox (badness 10000) in paragraph at lines 215--215
 []|\OT1/lmr/m/n/9 (+20) AUTO pat-tern + AI-triggered
  []
 
-) [71] (sections/calibration_deep.tex
-
-LaTeX Warning: Citation 'brown1966decentering' on page 72 undefined on input li
-ne 37.
-
-
-Overfull \hbox (20.67361pt too wide) in paragraph at lines 37--38
-\OT1/lmr/m/n/10 (-20) tre by sev-eral pix-els, de-grad-ing the pixel-to-GPS con
--ver-sion. The stan-dard Brown--Conrady model [[]]
- []
-
-
+) [72] (sections/calibration_deep.tex
 Overfull \hbox (53.51639pt too wide) in paragraph at lines 43--44
 \OT1/lmr/m/n/10 (-20) 13 \OMS/lmsy/m/n/10 ^^B \OT1/lmr/m/n/10 (-20) 8$ in-ner c
 or-ners). Ap-prox-i-mately 20 im-ages were cap-tured at vary-ing ori-en-ta-tion
@@ -2860,7 +2756,7 @@ s us-ing \OT1/lmtt/m/n/10 tests/calibration/lens[]calibrate.py\OT1/lmr/m/n/10 (
 -20) ,
  []
 
-[72] [73]
+[73] [74]
 Underfull \hbox (badness 10000) in paragraph at lines 107--107
 []|\OT1/lmr/m/n/10 (+20) Focal length
  []
@@ -2881,12 +2777,12 @@ Overfull \hbox (44.07799pt too wide) in paragraph at lines 15--33
  [][] 
  []
 
-[74] [75]) (sections/mission_flow.tex
+[75] [76]) (sections/mission_flow.tex
 
-LaTeX Warning: Reference `tab:flight-params' on page 76 undefined on input line
+LaTeX Warning: Reference `tab:flight-params' on page 77 undefined on input line
  3.
 
-[76]
+[77]
 
 ! Package siunitx Error: Invalid number '1456x1088'.
 
@@ -2914,35 +2810,35 @@ The input '640x640' could not be parsed as a number following the format
 defined in module documentation.
 
 
-[77]) (sections/centering_analysis.tex
+[78]) (sections/centering_analysis.tex
 
-LaTeX Warning: Reference `subsec:states' on page 78 undefined on input line 3.
+LaTeX Warning: Reference `subsec:states' on page 79 undefined on input line 3.
 
-[78]
+[79]
 Overfull \hbox (1.19736pt too wide) in paragraph at lines 55--63
  [][] 
  []
 
-[79]) (sections/comms_architecture.tex [80]) (sections/pipeline_fps.tex
+[80]) (sections/comms_architecture.tex [81]) (sections/pipeline_fps.tex
 Overfull \vbox (143.70584pt too high) has occurred while \output is active []
 
 
-[81]
+[82]
 Package pgfplots info on input line 80: Using 'lua backend=false' for axis: sta
 cked plots unsupported (yet).
 Package pgfplots info on input line 80: Using 'lua backend=false' for axis: x c
 oord trafo unsupported.
- [82]) (sections/path_tradeoffs.tex
+ [83]) (sections/path_tradeoffs.tex
 
-LaTeX Warning: Reference `tab:flight-params' on page 83 undefined on input line
+LaTeX Warning: Reference `tab:flight-params' on page 84 undefined on input line
  6.
 
 
-LaTeX Warning: Reference `sec:algorithm' on page 83 undefined on input line 11.
+LaTeX Warning: Reference `sec:algorithm' on page 84 undefined on input line 11.
 
 
 
-LaTeX Warning: Reference `sec:scan-angle' on page 83 undefined on input line 11
+LaTeX Warning: Reference `sec:scan-angle' on page 84 undefined on input line 11
 .
 
 
@@ -2950,69 +2846,54 @@ LaTeX Warning: Command \textdegree invalid in math mode on input line 13.
 
 
 LaTeX Warning: Command \textdegree invalid in math mode on input line 13.
-
-[83]
-
-LaTeX Warning: Reference `sec:bezier' on page 84 undefined on input line 59.
-
-
-LaTeX Warning: Command \textdegree invalid in math mode on input line 69.
-
-
-LaTeX Warning: Command \textdegree invalid in math mode on input line 69.
-
-
-LaTeX Warning: Reference `sec:algorithm' on page 84 undefined on input line 77.
-
 
 [84]
 
-LaTeX Warning: Reference `sec:focus-area' on page 85 undefined on input line 82
+LaTeX Warning: Reference `sec:bezier' on page 85 undefined on input line 59.
+
+
+LaTeX Warning: Command \textdegree invalid in math mode on input line 69.
+
+
+LaTeX Warning: Command \textdegree invalid in math mode on input line 69.
+
+
+LaTeX Warning: Reference `sec:algorithm' on page 85 undefined on input line 77.
+
+
+[85]
+
+LaTeX Warning: Reference `sec:focus-area' on page 86 undefined on input line 82
 .
 
-) (sections/payload_release.tex [85]) (sections/model_comparison.tex [86]
-[87]
-
-LaTeX Warning: Citation 'settles2009active' on page 88 undefined on input line 
-76.
-
-) (sections/search_optimization.tex
-
-LaTeX Warning: Citation 'golden2006hypothermia' on page 88 undefined on input l
-ine 11.
-
-[88]
-
-LaTeX Warning: Citation 'stolaroff2018energy' on page 89 undefined on input lin
-e 31.
-
-<figs/energy_efficiency.pdf, id=4024, 546.09808pt x 390.17519pt>
+) (sections/payload_release.tex [86]) (sections/model_comparison.tex [87]
+[88]) (sections/search_optimization.tex [89]
+<figs/energy_efficiency.pdf, id=4075, 546.09808pt x 390.17519pt>
 File: figs/energy_efficiency.pdf Graphic file (type pdf)
 <use figs/energy_efficiency.pdf>
 Package pdftex.def Info: figs/energy_efficiency.pdf  used on input line 61.
 (pdftex.def)             Requested size: 435.3303pt x 311.0332pt.
-<figs/rotation_comparison.pdf, id=4025, 1004.2368pt x 382.12764pt>
+<figs/rotation_comparison.pdf, id=4076, 1004.2368pt x 382.12764pt>
 File: figs/rotation_comparison.pdf Graphic file (type pdf)
 <use figs/rotation_comparison.pdf>
 Package pdftex.def Info: figs/rotation_comparison.pdf  used on input line 89.
 (pdftex.def)             Requested size: 435.3303pt x 165.64693pt.
-[89 <./figs/energy_efficiency.pdf>] [90 <./figs/rotation_comparison.pdf>]
-<figs/nfz_margin_altitude.pdf, id=4217, 571.4587pt x 354.04019pt>
+ [90 <./figs/energy_efficiency.pdf>] [91 <./figs/rotation_comparison.pdf>]
+<figs/nfz_margin_altitude.pdf, id=4269, 571.4587pt x 354.04019pt>
 File: figs/nfz_margin_altitude.pdf Graphic file (type pdf)
 <use figs/nfz_margin_altitude.pdf>
 Package pdftex.def Info: figs/nfz_margin_altitude.pdf  used on input line 155.
 (pdftex.def)             Requested size: 435.3303pt x 269.7108pt.
-<figs/speed_detection_energy.pdf, id=4219, 571.83449pt x 389.89288pt>
+<figs/speed_detection_energy.pdf, id=4271, 571.83449pt x 389.89288pt>
 File: figs/speed_detection_energy.pdf Graphic file (type pdf)
 <use figs/speed_detection_energy.pdf>
 Package pdftex.def Info: figs/speed_detection_energy.pdf  used on input line 19
 7.
 (pdftex.def)             Requested size: 435.3303pt x 296.82735pt.
+ [92 <./figs/nfz_margin_altitude.pdf>]
+[93 <./figs/speed_detection_energy.pdf>]) (sections/focus_and_repulsive.tex
 
-[91 <./figs/nfz_margin_altitude.pdf>] [92 <./figs/speed_detection_energy.pdf>])
-(sections/focus_and_repulsive.tex
-
-LaTeX Warning: Reference `sec:focus-area' on page 93 undefined on input line 4.
+LaTeX Warning: Reference `sec:focus-area' on page 94 undefined on input line 4.
 
 
 LaTeX Font Info:    Trying to load font information for OMS+lmtt on input line 
@@ -3024,7 +2905,7 @@ LaTeX Font Warning: Font shape `OMS/lmtt/m/n' undefined
 (Font)              for symbol `textbraceleft' on input line 18.
 
 
-LaTeX Warning: Reference `sec:algorithm' on page 93 undefined on input line 26.
+LaTeX Warning: Reference `sec:algorithm' on page 94 undefined on input line 26.
 
 
 
@@ -3211,11 +3092,7 @@ Your command was ignored.
 Type  I <command> <return>  to replace it with another command,
 or  <return>  to continue without it.
 
-[93] [94]) (sections/path_optimization_definitive.tex
-
-LaTeX Warning: Citation 'golden2006hypothermia' on page 95 undefined on input l
-ine 19.
-
+[94] [95]) (sections/path_optimization_definitive.tex
 ! Undefined control sequence.
 \degree ->\ERROR 
                  
@@ -3238,8 +3115,8 @@ misspelled it (e.g., `\hobx'), type `I' and the correct
 spelling (e.g., `I\hbox'). Otherwise just continue,
 and I'll forget about whatever was undefined.
 
-[95]
-<figs/real_energy_heatmap.png, id=4504, 867.24pt x 578.16pt>
+[96]
+<figs/real_energy_heatmap.png, id=4556, 867.24pt x 578.16pt>
 File: figs/real_energy_heatmap.png Graphic file (type png)
 <use figs/real_energy_heatmap.png>
 Package pdftex.def Info: figs/real_energy_heatmap.png  used on input line 90.
@@ -3256,32 +3133,28 @@ misspelled it (e.g., `\hobx'), type `I' and the correct
 spelling (e.g., `I\hbox'). Otherwise just continue,
 and I'll forget about whatever was undefined.
 
-<figs/real_energy_vs_altitude.png, id=4508, 722.7pt x 505.89pt>
+<figs/real_energy_vs_altitude.png, id=4560, 722.7pt x 505.89pt>
 File: figs/real_energy_vs_altitude.png Graphic file (type png)
 <use figs/real_energy_vs_altitude.png>
 Package pdftex.def Info: figs/real_energy_vs_altitude.png  used on input line 1
 36.
 (pdftex.def)             Requested size: 450.69417pt x 315.48573pt.
-[96]
-<figs/real_path_patterns.png, id=4527, 1582.713pt x 738.1176pt>
+[97]
+<figs/real_path_patterns.png, id=4579, 1582.713pt x 738.1176pt>
 File: figs/real_path_patterns.png Graphic file (type png)
 <use figs/real_path_patterns.png>
 Package pdftex.def Info: figs/real_path_patterns.png  used on input line 192.
 (pdftex.def)             Requested size: 486.54057pt x 226.89941pt.
 
 
-LaTeX Warning: Reference `sec:focus-area' on page 97 undefined on input line 21
+LaTeX Warning: Reference `sec:focus-area' on page 98 undefined on input line 21
 6.
-
-
-LaTeX Warning: Reference `sec:nfz-avoidance' on page 97 undefined on input line
- 223.
 
 
 Overfull \vbox (358.72835pt too high) has occurred while \output is active []
 
 
-[97 <./figs/real_energy_heatmap.png>]
+[98 <./figs/real_energy_heatmap.png>]
 ! Undefined control sequence.
 <argument> \px 
                
@@ -3326,26 +3199,19 @@ misspelled it (e.g., `\hobx'), type `I' and the correct
 spelling (e.g., `I\hbox'). Otherwise just continue,
 and I'll forget about whatever was undefined.
 
-<figs/real_optimal_pattern.png, id=4549, 1156.32pt x 578.16pt>
+<figs/real_optimal_pattern.png, id=4602, 1156.32pt x 578.16pt>
 File: figs/real_optimal_pattern.png Graphic file (type png)
 <use figs/real_optimal_pattern.png>
 Package pdftex.def Info: figs/real_optimal_pattern.png  used on input line 312.
 
 (pdftex.def)             Requested size: 450.69417pt x 225.34033pt.
 
-LaTeX Warning: Reference `sec:rescan' on page 98 undefined on input line 341.
-
-)
-Overfull \vbox (354.52046pt too high) has occurred while \output is active []
+Overfull \vbox (357.93047pt too high) has occurred while \output is active []
 
 
-[98 <./figs/real_energy_vs_altitude.png>] (sections/design_strategy.tex
-[99 <./figs/real_path_patterns.png> <./figs/real_optimal_pattern.png>]
-
-LaTeX Warning: Reference `sec:cv-pipeline' on page 100 undefined on input line 
-67.
-
-[100]
+[99 <./figs/real_energy_vs_altitude.png>]) (sections/design_strategy.tex
+[100 <./figs/real_path_patterns.png> <./figs/real_optimal_pattern.png>]
+[101]
 ! Undefined control sequence.
 \degree ->\ERROR 
                  
@@ -3357,49 +3223,45 @@ misspelled it (e.g., `\hobx'), type `I' and the correct
 spelling (e.g., `I\hbox'). Otherwise just continue,
 and I'll forget about whatever was undefined.
 
-[101]) (sections/vision_performance.tex
-
-LaTeX Warning: Reference `sec:multipass' on page 102 undefined on input line 81
-.
-
-[102]
-<figs/real_altitude_vs_px.png, id=4617, 505.89pt x 325.215pt>
+[102]) (sections/vision_performance.tex [103]
+<figs/real_altitude_vs_px.png, id=4672, 505.89pt x 325.215pt>
 File: figs/real_altitude_vs_px.png Graphic file (type png)
 <use figs/real_altitude_vs_px.png>
-Package pdftex.def Info: figs/real_altitude_vs_px.png  used on input line 85.
+Package pdftex.def Info: figs/real_altitude_vs_px.png  used on input line 88.
 (pdftex.def)             Requested size: 435.3303pt x 279.8581pt.
-<figs/real_speed_vs_blur.png, id=4620, 505.89pt x 325.215pt>
+<figs/real_speed_vs_blur.png, id=4675, 505.89pt x 325.215pt>
 File: figs/real_speed_vs_blur.png Graphic file (type png)
 <use figs/real_speed_vs_blur.png>
-Package pdftex.def Info: figs/real_speed_vs_blur.png  used on input line 132.
+Package pdftex.def Info: figs/real_speed_vs_blur.png  used on input line 135.
 (pdftex.def)             Requested size: 435.3303pt x 279.8581pt.
-<figs/real_speed_vs_frames.png, id=4622, 505.89pt x 325.215pt>
+ [104 <./figs/real_altitude_vs_px.png>]
+<figs/real_speed_vs_frames.png, id=4689, 505.89pt x 325.215pt>
 File: figs/real_speed_vs_frames.png Graphic file (type png)
 <use figs/real_speed_vs_frames.png>
-Package pdftex.def Info: figs/real_speed_vs_frames.png  used on input line 182.
+Package pdftex.def Info: figs/real_speed_vs_frames.png  used on input line 185.
 
 (pdftex.def)             Requested size: 435.3303pt x 279.8581pt.
- [103 <./figs/real_altitude_vs_px.png>]
-<figs/real_coverage.png, id=4636, 505.89pt x 325.215pt>
+<figs/real_coverage.png, id=4690, 505.89pt x 325.215pt>
 File: figs/real_coverage.png Graphic file (type png)
 <use figs/real_coverage.png>
-Package pdftex.def Info: figs/real_coverage.png  used on input line 215.
+Package pdftex.def Info: figs/real_coverage.png  used on input line 218.
 (pdftex.def)             Requested size: 435.3303pt x 279.8581pt.
-<figs/real_detection_envelope.png, id=4638, 542.025pt x 361.35pt>
+ [105 <./figs/real_speed_vs_blur.png>]
+<figs/real_detection_envelope.png, id=4702, 542.025pt x 361.35pt>
 File: figs/real_detection_envelope.png Graphic file (type png)
 <use figs/real_detection_envelope.png>
 Package pdftex.def Info: figs/real_detection_envelope.png  used on input line 2
-54.
+57.
 (pdftex.def)             Requested size: 450.69417pt x 300.4718pt.
- [104 <./figs/real_speed_vs_blur.png>]
 
-LaTeX Warning: Reference `sec:gps-accuracy' on page 105 undefined on input line
- 290.
 
-) (sections/alternatives.tex [105 <./figs/real_speed_vs_frames.png>] [106 <./fi
-gs/real_coverage.png>] [107 <./figs/real_detection_envelope.png>] [108]
-[109] [110] [111] [112] [113] [114] [115] [116] [117] [118] [119] [120]
-[121] (main.aux)
+LaTeX Warning: Reference `sec:accuracy' on page 106 undefined on input line 293
+.
+
+) (sections/alternatives.tex [106 <./figs/real_speed_vs_frames.png>] [107 <./fi
+gs/real_coverage.png>] [108 <./figs/real_detection_envelope.png>] [109]
+[110] [111] [112] [113] [114] [115] [116] [117] [118] [119] [120] [121]
+[122] (main.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-01-19>
@@ -3415,17 +3277,17 @@ LaTeX Warning: There were undefined references.
 LaTeX Warning: There were multiply-defined labels.
 
 Package rerunfilecheck Info: File `main.out' has not changed.
-(rerunfilecheck)             Checksum: 491521B571766DE4EDAD6CBA1ED25345;57335.
+(rerunfilecheck)             Checksum: C204DA80E492A24AD7DFC5272AB750F7;57797.
 Package logreq Info: Writing requests to 'main.run.xml'.
 \openout1 = `main.run.xml'.
 
  ) ) 
 Here is how much of TeX's memory you used:
- 53895 strings out of 467866
- 1217951 string characters out of 5417351
- 2300636 words of memory out of 5000000
- 80450 multiletter control sequences out of 15000+600000
- 736118 words of font info for 366 fonts, out of 8000000 for 9000
+ 53963 strings out of 467866
+ 1219914 string characters out of 5417351
+ 2312376 words of memory out of 5000000
+ 80485 multiletter control sequences out of 15000+600000
+ 738285 words of font info for 377 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  99i,20n,118p,1475b,2559s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts
@@ -3464,9 +3326,9 @@ ocal/Programs/MiKTeX/fonts/type1/public/lm/lmtt10.pfb><C:/Users/Bristol/AppData
 /Local/Programs/MiKTeX/fonts/type1/public/lm/lmtt8.pfb><C:/Users/Bristol/AppDat
 a/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtt9.pfb><C:/Users/Bristol/AppDa
 ta/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/symbols/msam10.pfb>
-Output written on main.pdf (121 pages, 3822491 bytes).
+Output written on main.pdf (122 pages, 3838495 bytes).
 PDF statistics:
- 5130 PDF objects out of 5155 (max. 8388607)
- 979 named destinations out of 1000 (max. 500000)
- 65469 words of extra memory for PDF output out of 74296 (max. 10000000)
+ 5188 PDF objects out of 6186 (max. 8388607)
+ 998 named destinations out of 1000 (max. 500000)
+ 65485 words of extra memory for PDF output out of 74296 (max. 10000000)
 

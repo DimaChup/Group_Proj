@@ -19,37 +19,37 @@ At altitude~$h$, the target projects onto the camera sensor with a height in pix
 \end{equation}
 
 \noindent where $f_{\mathrm{px}} = f / w_s \times W_{\mathrm{px}} = 5.46/5.02 \times 1456 = 1584$\,pixels is the focal length in pixel units, and $d_{\mathrm{target}}$ is the target dimension.
-YOLOv8n resizes the input to $640 \times 640$, so the model-input target height is further scaled by $640/1088 = 0.588$:
+YOLOv8n resizes the $1456 \times 1088$ sensor frame to $640 \times 640$; the uniform scale factor is $640/\max(1456, 1088) = 640/1456 = 0.4396$:
 
 \begin{equation}\label{eq:model-px}
-  \mathrm{px}_{\mathrm{model}} = \frac{d_{\mathrm{target}} \cdot f_{\mathrm{px}}}{h} \times \frac{640}{1088}
+  \mathrm{px}_{\mathrm{model}} = \frac{d_{\mathrm{target}} \cdot f_{\mathrm{px}}}{h} \times \frac{640}{1456}
 \end{equation}
 
 Table~\ref{tab:px-vs-alt} traces this function across the altitude range.
 
 \begin{table}[ht]
   \centering\compactTable
-  \caption{Target pixel extent versus altitude. The model-input column reflects YOLOv8n's $640\times640$ resize. Below \SI{20}{px} height in the model input, detection becomes unreliable.}\label{tab:px-vs-alt}
+  \caption{Target pixel extent versus altitude. Sensor column = pixels in the native $1456\!\times\!1088$ frame; model-input columns = after resize to $640\!\times\!640$ (scale $= 640/1456 = 0.4396$). Below \SI{20}{px} height in the model input, detection becomes unreliable.}\label{tab:px-vs-alt}
   \begin{tabularx}{\linewidth}{@{}c c c c X@{}}
     \toprule
     \textbf{Altitude (m)} & \textbf{Sensor (px)} & \textbf{Model input (px)} & \textbf{Width model (px)} & \textbf{Assessment} \\
     \midrule
-    20 & 143 & 84 & 18 & Excellent --- large, high confidence \\
-    35 & 81  & 48 & 10 & Comfortable --- clear margin above minimum \\
-    50 & 57  & 34 & 7  & Marginal width --- feature extraction degrades \\
-    60 & 48  & 28 & 6  & Below width comfort threshold \\
-    85 & 34  & 20 & 4  & At absolute minimum; unreliable \\
+    20 & 142 & 63 & 18 & Excellent --- large, high confidence \\
+    35 & 81  & 36 & 10 & Comfortable --- clear margin above minimum \\
+    50 & 57  & 25 & 7  & Marginal width --- feature extraction degrades \\
+    60 & 48  & 21 & 6  & Below width comfort threshold \\
+    85 & 34  & 15 & 4  & At absolute minimum; unreliable \\
     \bottomrule
   \end{tabularx}
 \end{table}
 
 Two thresholds emerge.
-The \emph{absolute} detection limit occurs when the target height drops below approximately \SI{20}{px} in the model input ($h \approx \SI{85}{\metre}$), at which point the feature map representation is too coarse for reliable bounding box regression.
+The \emph{absolute} detection limit occurs when the target height drops below approximately \SI{20}{px} in the model input ($h \approx \SI{70}{\metre}$), at which point the feature map representation is too coarse for reliable bounding box regression.
 The \emph{practical} limit is set by target \emph{width}: at \SI{50}{\metre} the mannequin's width is only 7~model pixels, below the 10-pixel comfort threshold for width-dependent features (limb visibility, aspect ratio cues).
 Empirically, detection confidence from the retrained \texttt{sar\_v2\_1088} model drops below 0.5 at approximately \SI{60}{\metre}.
 
 Regulatory constraint R03 limits altitude to \SI{50}{\metre}.
-Selecting $h = \SI{35}{\metre}$ provides a $\times$1.4 margin on target width (10\,px vs 7\,px at \SI{50}{\metre}) and a $\times$2.4 margin on target height (48\,px vs 20\,px minimum), creating headroom for real-world degradation modes: partial occlusion, unusual pose, non-ideal lighting, and altitude excursions during manoeuvres.
+Selecting $h = \SI{35}{\metre}$ provides a $\times$1.4 margin on target width (10\,px vs 7\,px at \SI{50}{\metre}) and a $\times$1.8 margin on target height (36\,px vs 20\,px minimum), creating headroom for real-world degradation modes: partial occlusion, unusual pose, non-ideal lighting, and altitude excursions during manoeuvres.
 
 \textbf{Decision:} $h = \SI{35}{\metre}$.
 This sacrifices the energy-optimal \SI{50}{\metre} (\SI{8.2}{Wh}) for a comfortable detection margin (\SI{12.6}{Wh}---still only \SI{10.9}{\percent} of battery capacity).
@@ -64,7 +64,7 @@ At \SI{35}{\metre}:
   H_g = \frac{w_s \cdot h}{f} \times \frac{H_{\mathrm{px}}}{W_{\mathrm{px}}} = \frac{5.02 \times 35}{5.46} \times \frac{1088}{1456} = \SI{24.1}{\metre}
 \end{equation}
 
-At the TFLite inference rate of $f_{\mathrm{inf}} = \SI{4.8}{FPS}$ (benchmarked on Pi~5, Section~\ref{sec:cv-pipeline}), the drone advances $\Delta x = v / f_{\mathrm{inf}}$ metres between frames.
+At the TFLite inference rate of $f_{\mathrm{inf}} = \SI{4.8}{FPS}$ (benchmarked on Pi~5, Section~\ref{sec:cv:inference:pipeline}), the drone advances $\Delta x = v / f_{\mathrm{inf}}$ metres between frames.
 For reliable detection, the target must appear in at least $n_{\min}$ independent inference frames.
 The maximum speed is therefore:
 
@@ -207,7 +207,7 @@ The six steps above form a directed acyclic graph of parameter dependencies, whe
 
 \begin{enumerate}
   \item \textbf{Target size} $\rightarrow$ \textbf{altitude}:
-    the mannequin's \SI{1.8}{\metre} height and the 20-pixel model-input minimum determine $h_{\max} = \SI{85}{\metre}$;
+    the mannequin's \SI{1.8}{\metre} height and the 20-pixel model-input minimum determine $h_{\max} = \SI{70}{\metre}$;
     the 10-pixel width comfort threshold sets $h_{\mathrm{comfort}} = \SI{50}{\metre}$;
     a \SI{30}{\percent} safety margin yields $h = \SI{35}{\metre}$.
 

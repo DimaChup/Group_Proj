@@ -1762,6 +1762,29 @@
       \field{title}{{Raspberry Pi 5} Documentation}
       \field{year}{2023}
     \endentry
+    \entry{arm_a76}{manual}{}{}
+      \name{author}{1}{}{%
+        {{hash=644dd70990f258f8e2be8a6b5037e58d}{%
+           family={{Arm Ltd.}},
+           familyi={A\bibinitperiod}}}%
+      }
+      \strng{namehash}{644dd70990f258f8e2be8a6b5037e58d}
+      \strng{fullhash}{644dd70990f258f8e2be8a6b5037e58d}
+      \strng{fullhashraw}{644dd70990f258f8e2be8a6b5037e58d}
+      \strng{bibnamehash}{644dd70990f258f8e2be8a6b5037e58d}
+      \strng{authorbibnamehash}{644dd70990f258f8e2be8a6b5037e58d}
+      \strng{authornamehash}{644dd70990f258f8e2be8a6b5037e58d}
+      \strng{authorfullhash}{644dd70990f258f8e2be8a6b5037e58d}
+      \strng{authorfullhashraw}{644dd70990f258f8e2be8a6b5037e58d}
+      \field{sortinit}{8}
+      \field{sortinithash}{a231b008ebf0ecbe0b4d96dcc159445f}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{https://developer.arm.com/documentation/100798/latest/}}
+      \field{note}{Revision r3p0}
+      \field{title}{Cortex-A76 Technical Reference Manual}
+      \field{year}{2018}
+    \endentry
     \entry{munoz2016mjpeg}{inproceedings}{}{}
       \name{author}{3}{}{%
         {{hash=b328616f1d120f57ec8a03604fe66d35}{%
@@ -1800,6 +1823,116 @@
       \field{year}{2016}
       \field{pages}{5248\bibrangedash 5253}
       \range{pages}{6}
+    \endentry
+    \entry{apple_hls}{misc}{}{}
+      \name{author}{1}{}{%
+        {{hash=3325b015fbae57ba74629a53f1ead961}{%
+           family={{Apple Inc.}},
+           familyi={A\bibinitperiod}}}%
+      }
+      \strng{namehash}{3325b015fbae57ba74629a53f1ead961}
+      \strng{fullhash}{3325b015fbae57ba74629a53f1ead961}
+      \strng{fullhashraw}{3325b015fbae57ba74629a53f1ead961}
+      \strng{bibnamehash}{3325b015fbae57ba74629a53f1ead961}
+      \strng{authorbibnamehash}{3325b015fbae57ba74629a53f1ead961}
+      \strng{authornamehash}{3325b015fbae57ba74629a53f1ead961}
+      \strng{authorfullhash}{3325b015fbae57ba74629a53f1ead961}
+      \strng{authorfullhashraw}{3325b015fbae57ba74629a53f1ead961}
+      \field{sortinit}{8}
+      \field{sortinithash}{a231b008ebf0ecbe0b4d96dcc159445f}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{https://developer.apple.com/streaming/}}
+      \field{note}{Accessed: 2026-03-20}
+      \field{title}{{HTTP} Live Streaming}
+      \field{year}{2023}
+    \endentry
+    \entry{gamma1994design}{book}{}{}
+      \name{author}{4}{}{%
+        {{hash=abd927bf30d6566be0ac66a66e893fdd}{%
+           family={Gamma},
+           familyi={G\bibinitperiod},
+           given={Erich},
+           giveni={E\bibinitperiod}}}%
+        {{hash=233f891813bda0f3920985f97a4a7554}{%
+           family={Helm},
+           familyi={H\bibinitperiod},
+           given={Richard},
+           giveni={R\bibinitperiod}}}%
+        {{hash=fd79e5e249b219ff553fc2d811104d78}{%
+           family={Johnson},
+           familyi={J\bibinitperiod},
+           given={Ralph},
+           giveni={R\bibinitperiod}}}%
+        {{hash=e032589f0b9a38804483ab7cf5ccad7f}{%
+           family={Vlissides},
+           familyi={V\bibinitperiod},
+           given={John},
+           giveni={J\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {Addison-Wesley}%
+      }
+      \strng{namehash}{4d2492409a24d4ed208ae6670cb91945}
+      \strng{fullhash}{5cb4a6d7baf30d11bae6682eca698b4f}
+      \strng{fullhashraw}{5cb4a6d7baf30d11bae6682eca698b4f}
+      \strng{bibnamehash}{4d2492409a24d4ed208ae6670cb91945}
+      \strng{authorbibnamehash}{4d2492409a24d4ed208ae6670cb91945}
+      \strng{authornamehash}{4d2492409a24d4ed208ae6670cb91945}
+      \strng{authorfullhash}{5cb4a6d7baf30d11bae6682eca698b4f}
+      \strng{authorfullhashraw}{5cb4a6d7baf30d11bae6682eca698b4f}
+      \field{sortinit}{9}
+      \field{sortinithash}{0a5ebc79d83c96b6579069544c73c7d4}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{title}{Design Patterns: Elements of Reusable Object-Oriented Software}
+      \field{year}{1994}
+    \endentry
+    \entry{wiegand2003h264}{article}{}{}
+      \name{author}{4}{}{%
+        {{hash=0a42920957ef8d58a2d10f5d46385a09}{%
+           family={Wiegand},
+           familyi={W\bibinitperiod},
+           given={Thomas},
+           giveni={T\bibinitperiod}}}%
+        {{hash=250e65846e0a4808878c862a83418772}{%
+           family={Sullivan},
+           familyi={S\bibinitperiod},
+           given={Gary\bibnamedelima J.},
+           giveni={G\bibinitperiod\bibinitdelim J\bibinitperiod}}}%
+        {{hash=20788e3633aa927ca26e013e776e653d}{%
+           family={Bjontegaard},
+           familyi={B\bibinitperiod},
+           given={Gisle},
+           giveni={G\bibinitperiod}}}%
+        {{hash=78751742f33be265702a527345925354}{%
+           family={Luthra},
+           familyi={L\bibinitperiod},
+           given={Ajay},
+           giveni={A\bibinitperiod}}}%
+      }
+      \strng{namehash}{f6974a0ad43b69734541904026b2606f}
+      \strng{fullhash}{b42838bba92dee010d3ddbd59a2d6108}
+      \strng{fullhashraw}{b42838bba92dee010d3ddbd59a2d6108}
+      \strng{bibnamehash}{f6974a0ad43b69734541904026b2606f}
+      \strng{authorbibnamehash}{f6974a0ad43b69734541904026b2606f}
+      \strng{authornamehash}{f6974a0ad43b69734541904026b2606f}
+      \strng{authorfullhash}{b42838bba92dee010d3ddbd59a2d6108}
+      \strng{authorfullhashraw}{b42838bba92dee010d3ddbd59a2d6108}
+      \field{sortinit}{9}
+      \field{sortinithash}{0a5ebc79d83c96b6579069544c73c7d4}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{IEEE Transactions on Circuits and Systems for Video Technology}
+      \field{number}{7}
+      \field{title}{Overview of the {H.264/AVC} Video Coding Standard}
+      \field{volume}{13}
+      \field{year}{2003}
+      \field{pages}{560\bibrangedash 576}
+      \range{pages}{17}
+      \verb{doi}
+      \verb 10.1109/TCSVT.2003.815165
+      \endverb
     \endentry
     \entry{qgroundcontrol2020}{misc}{}{}
       \name{author}{1}{}{%
@@ -1917,6 +2050,34 @@
       \field{type}{techreport}
       \field{year}{2011}
     \endentry
+    \entry{brown1966decentering}{article}{}{}
+      \name{author}{1}{}{%
+        {{hash=cef983baf9419e6031a5316e58e5115a}{%
+           family={Brown},
+           familyi={B\bibinitperiod},
+           given={Duane\bibnamedelima C.},
+           giveni={D\bibinitperiod\bibinitdelim C\bibinitperiod}}}%
+      }
+      \strng{namehash}{cef983baf9419e6031a5316e58e5115a}
+      \strng{fullhash}{cef983baf9419e6031a5316e58e5115a}
+      \strng{fullhashraw}{cef983baf9419e6031a5316e58e5115a}
+      \strng{bibnamehash}{cef983baf9419e6031a5316e58e5115a}
+      \strng{authorbibnamehash}{cef983baf9419e6031a5316e58e5115a}
+      \strng{authornamehash}{cef983baf9419e6031a5316e58e5115a}
+      \strng{authorfullhash}{cef983baf9419e6031a5316e58e5115a}
+      \strng{authorfullhashraw}{cef983baf9419e6031a5316e58e5115a}
+      \field{sortinit}{9}
+      \field{sortinithash}{0a5ebc79d83c96b6579069544c73c7d4}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Photogrammetric Engineering}
+      \field{number}{3}
+      \field{title}{Decentering Distortion of Lenses}
+      \field{volume}{32}
+      \field{year}{1966}
+      \field{pages}{444\bibrangedash 462}
+      \range{pages}{19}
+    \endentry
     \entry{mavproxy}{misc}{}{}
       \name{author}{1}{}{%
         {{hash=002e4a64dbc1404d94eef1845911c190}{%
@@ -1991,15 +2152,123 @@
       \field{title}{{MAVLink 2}: Micro Air Vehicle Communication Protocol}
       \field{year}{2017}
     \endentry
+    \entry{settles2009active}{book}{}{}
+      \name{author}{1}{}{%
+        {{hash=9941c4d5402b5e6ceeb53599273e07a3}{%
+           family={Settles},
+           familyi={S\bibinitperiod},
+           given={Burr},
+           giveni={B\bibinitperiod}}}%
+      }
+      \list{institution}{1}{%
+        {University of Wisconsin--Madison}%
+      }
+      \strng{namehash}{9941c4d5402b5e6ceeb53599273e07a3}
+      \strng{fullhash}{9941c4d5402b5e6ceeb53599273e07a3}
+      \strng{fullhashraw}{9941c4d5402b5e6ceeb53599273e07a3}
+      \strng{bibnamehash}{9941c4d5402b5e6ceeb53599273e07a3}
+      \strng{authorbibnamehash}{9941c4d5402b5e6ceeb53599273e07a3}
+      \strng{authornamehash}{9941c4d5402b5e6ceeb53599273e07a3}
+      \strng{authorfullhash}{9941c4d5402b5e6ceeb53599273e07a3}
+      \strng{authorfullhashraw}{9941c4d5402b5e6ceeb53599273e07a3}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{note}{Computer Sciences Technical Report 1648}
+      \field{title}{Active Learning Literature Survey}
+      \field{year}{2009}
+    \endentry
+    \entry{golden2006hypothermia}{incollection}{}{}
+      \name{author}{2}{}{%
+        {{hash=da94d52553c9aad8818ac6ed89369773}{%
+           family={Golden},
+           familyi={G\bibinitperiod},
+           given={Frank},
+           giveni={F\bibinitperiod}}}%
+        {{hash=067b6e64b694413a92bd1f2844f2dea1}{%
+           family={Tipton},
+           familyi={T\bibinitperiod},
+           given={Michael},
+           giveni={M\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {Human Kinetics}%
+      }
+      \strng{namehash}{84d4fe39b896b2eef25345b89bb47611}
+      \strng{fullhash}{84d4fe39b896b2eef25345b89bb47611}
+      \strng{fullhashraw}{84d4fe39b896b2eef25345b89bb47611}
+      \strng{bibnamehash}{84d4fe39b896b2eef25345b89bb47611}
+      \strng{authorbibnamehash}{84d4fe39b896b2eef25345b89bb47611}
+      \strng{authornamehash}{84d4fe39b896b2eef25345b89bb47611}
+      \strng{authorfullhash}{84d4fe39b896b2eef25345b89bb47611}
+      \strng{authorfullhashraw}{84d4fe39b896b2eef25345b89bb47611}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{booktitle}{Essentials of Sea Survival}
+      \field{note}{Hypothermia survival curves}
+      \field{title}{Essentials of Sea Survival}
+      \field{year}{2002}
+    \endentry
+    \entry{stolaroff2018energy}{article}{}{}
+      \name{author}{6}{}{%
+        {{hash=27dc90b4139eb9c6b35fb6f82a0e6656}{%
+           family={Stolaroff},
+           familyi={S\bibinitperiod},
+           given={Joshuah\bibnamedelima K.},
+           giveni={J\bibinitperiod\bibinitdelim K\bibinitperiod}}}%
+        {{hash=272378f05846b8e9ad99be8b66348df8}{%
+           family={Samaras},
+           familyi={S\bibinitperiod},
+           given={Constantine},
+           giveni={C\bibinitperiod}}}%
+        {{hash=1898f27080738bf301e5e025f23c3e5b}{%
+           family={O'Neill},
+           familyi={O\bibinitperiod},
+           given={Emma\bibnamedelima R.},
+           giveni={E\bibinitperiod\bibinitdelim R\bibinitperiod}}}%
+        {{hash=a819d6d557ee884d800290a66d998618}{%
+           family={Lubers},
+           familyi={L\bibinitperiod},
+           given={Alia},
+           giveni={A\bibinitperiod}}}%
+        {{hash=a7df1d2da0b17dae2e907c44d4e3816f}{%
+           family={Mitchell},
+           familyi={M\bibinitperiod},
+           given={Alexandra\bibnamedelima S.},
+           giveni={A\bibinitperiod\bibinitdelim S\bibinitperiod}}}%
+        {{hash=d781e6087721767fd6cf4f56c7ed2e73}{%
+           family={Ceperley},
+           familyi={C\bibinitperiod},
+           given={Daniel},
+           giveni={D\bibinitperiod}}}%
+      }
+      \strng{namehash}{f23859f768e5f53d591d30168b7d3d6e}
+      \strng{fullhash}{99b7138667418ea37fd8fdec182f4665}
+      \strng{fullhashraw}{99b7138667418ea37fd8fdec182f4665}
+      \strng{bibnamehash}{f23859f768e5f53d591d30168b7d3d6e}
+      \strng{authorbibnamehash}{f23859f768e5f53d591d30168b7d3d6e}
+      \strng{authornamehash}{f23859f768e5f53d591d30168b7d3d6e}
+      \strng{authorfullhash}{99b7138667418ea37fd8fdec182f4665}
+      \strng{authorfullhashraw}{99b7138667418ea37fd8fdec182f4665}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Nature Communications}
+      \field{number}{1}
+      \field{title}{Energy Use and Life Cycle Greenhouse Gas Emissions of Drones for Commercial Package Delivery}
+      \field{volume}{9}
+      \field{year}{2018}
+      \field{pages}{409}
+      \range{pages}{1}
+      \verb{doi}
+      \verb 10.1038/s41467-017-02411-5
+      \endverb
+    \endentry
   \enddatalist
-  \missing{apple_hls}
-  \missing{arm_a76}
-  \missing{brown1966decentering}
-  \missing{gamma1994design}
-  \missing{golden2006hypothermia}
-  \missing{settles2009active}
-  \missing{stolaroff2018energy}
-  \missing{wiegand2003h264}
 \endrefsection
 \endinput
 

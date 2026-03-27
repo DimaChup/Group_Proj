@@ -124,24 +124,24 @@ Table~\ref{tab:footprint} gives the ground footprint at key operational altitude
 
 \begin{table}[ht]
   \centering
-  \caption{Camera ground footprint and target size at operational altitudes (IMX296, $f = \SI{5.46}{\milli\metre}$, $1456\!\times\!1088$ sensor).}\label{tab:footprint}
-  \begin{tabular}{@{}c c c c c@{}}
+  \caption{Camera ground footprint and target size at operational altitudes (IMX296, $f = \SI{5.46}{\milli\metre}$, $1456\!\times\!1088$ sensor).  Sensor px = height in native frame; Model px = after resize to $640\!\times\!640$ (scale $= 640/1456 = 0.4396$).}\label{tab:footprint}
+  \begin{tabular}{@{}c c c c c c@{}}
     \toprule
-    \textbf{Altitude (m)} & $W_g$ \textbf{(m)} & $L_g$ \textbf{(m)} & \textbf{Dummy px} & \textbf{GSD (mm/px)} \\
+    \textbf{Altitude (m)} & $W_g$ \textbf{(m)} & $L_g$ \textbf{(m)} & \textbf{Sensor (px)} & \textbf{Model (px)} & \textbf{GSD (mm/px)} \\
     \midrule
-    10  & 9.2  & 6.9  & 285  & 6.3 \\
-    15  & 13.8 & 10.3 & 190  & 9.5 \\
-    20  & 18.4 & 13.8 & 142  & 12.7 \\
-    25  & 23.0 & 17.2 & 114  & 15.8 \\
-    30  & 27.6 & 20.7 & 95   & 19.0 \\
-    35  & 32.2 & 24.1 & 81   & 22.1 \\
-    40  & 36.8 & 27.6 & 71   & 25.3 \\
-    50  & 46.0 & 34.5 & 57   & 31.6 \\
+    10  & 9.2  & 6.9  & 285 & 125 & 6.3 \\
+    15  & 13.8 & 10.3 & 190 & 84  & 9.5 \\
+    20  & 18.4 & 13.8 & 142 & 63  & 12.7 \\
+    25  & 23.0 & 17.2 & 114 & 50  & 15.8 \\
+    30  & 27.6 & 20.7 & 95  & 42  & 19.0 \\
+    35  & 32.2 & 24.1 & 81  & 36  & 22.1 \\
+    40  & 36.8 & 27.6 & 71  & 31  & 25.3 \\
+    50  & 46.0 & 34.5 & 57  & 25  & 31.6 \\
     \bottomrule
   \end{tabular}
 \end{table}
 
-The ``Dummy px'' column shows the number of pixels subtended by a \SI{1.8}{\metre} target along the vertical axis of the $640 \times 640$ model input (computed as $1.8 / \mathrm{GSD} \times 640 / 1088$, accounting for the resize from $1088$ to $640$ rows).  The ground sampling distance (GSD) is $L_g / 1088$.
+The ``Sensor px'' column shows the dummy's height in the native $1456 \times 1088$ frame ($= 1.8\,\text{m} / \mathrm{GSD}$, where $\mathrm{GSD} = L_g / 1088$).  The ``Model px'' column applies the resize scale factor $640/1456 = 0.4396$ to convert to the $640 \times 640$ inference input.
 
 \subsubsection{Frames per Flyover}
 
@@ -193,12 +193,12 @@ The critical operational question is: ``at what altitude does detection become u
 
 \subsubsection{Pixel Size Model}
 
-The apparent height of a target of real height $H_t = \SI{1.8}{\metre}$ in the $640 \times 640$ model input at altitude $h$ is:
+The target of real height $H_t = \SI{1.8}{\metre}$ first projects onto the sensor with $\mathrm{px}_{\mathrm{sensor}} = H_t \cdot f_{\mathrm{px}} / h$ pixels, where $f_{\mathrm{px}} = f / w_s \times W_{\mathrm{px}} = 5.46/5.02 \times 1456 = 1584$\,px.
+The $1456 \times 1088$ frame is then resized to $640 \times 640$; applying the uniform scale factor $640/1456 = 0.4396$ gives the model-input height:
 \begin{equation}
-    p_t = \frac{H_t \cdot f \cdot 640}{w_s \cdot h \cdot (W_\mathrm{native} / H_\mathrm{native})}
+    p_t = \frac{H_t \cdot f_{\mathrm{px}}}{h} \times \frac{640}{1456}
     \label{eq:target_pixels}
 \end{equation}
-where $f = \SI{5.46}{\milli\metre}$, $w_s = \SI{5.02}{\milli\metre}$, and the aspect-ratio correction term accounts for the non-square resize from $1456 \times 1088$ to $640 \times 640$.
 
 \subsubsection{Altitude Performance Table}
 
@@ -206,28 +206,28 @@ Table~\ref{tab:altitude_performance} combines the pixel-size model with confiden
 
 \begin{table}[ht]
   \centering
-  \caption{Detection performance vs altitude for a \SI{1.8}{\metre} mannequin target.  Pixel size is in the $640\!\times\!640$ model input; confidence and detection rate are empirically observed or interpolated from video replay data.}\label{tab:altitude_performance}
-  \begin{tabular}{@{}c c c c l@{}}
+  \caption{Detection performance vs altitude for a \SI{1.8}{\metre} mannequin target.  Pixel sizes are shown for both the native sensor frame and the $640\!\times\!640$ model input (scale $= 640/1456 = 0.4396$).  Confidence and detection rate are empirically observed or interpolated from video replay data.}\label{tab:altitude_performance}
+  \begin{tabular}{@{}c c c c c l@{}}
     \toprule
-    \textbf{Altitude (m)} & \textbf{Target (px)} & \textbf{Confidence} & \textbf{Det. rate} & \textbf{Assessment} \\
+    \textbf{Altitude (m)} & \textbf{Sensor (px)} & \textbf{Model (px)} & \textbf{Confidence} & \textbf{Det. rate} & \textbf{Assessment} \\
     \midrule
-    10  & 144 & 0.98 & 100\% & Excellent --- target fills $>$22\% of frame height \\
-    15  & 96  & 0.97 & 100\% & Excellent --- verify altitude \\
-    20  & 72  & 0.96 & 100\% & Very good --- still large and clear \\
-    25  & 57  & 0.94 & 98\%  & Good --- typical low search altitude \\
-    30  & 48  & 0.92 & 96\%  & Good --- reliable detection \\
-    35  & 41  & 0.90 & 95\%  & Good --- nominal search altitude \\
-    40  & 36  & 0.85 & 90\%  & Marginal --- approaching limits \\
-    50  & 29  & 0.70 & 75\%  & Degraded --- single-pass detection unreliable \\
-    60  & 24  & 0.45 & 50\%  & Poor --- near threshold \\
-    70  & 20  & 0.30 & 30\%  & Unreliable --- below practical threshold \\
-    80  & 18  & $<$0.20 & $<$15\% & Not viable --- below confidence threshold \\
+    10  & 285 & 125 & 0.98 & 100\% & Excellent --- target fills $>$19\% of model height \\
+    15  & 190 & 84  & 0.97 & 100\% & Excellent --- verify altitude \\
+    20  & 142 & 63  & 0.96 & 100\% & Very good --- still large and clear \\
+    25  & 114 & 50  & 0.94 & 98\%  & Good --- typical low search altitude \\
+    30  & 95  & 42  & 0.92 & 96\%  & Good --- reliable detection \\
+    35  & 81  & 36  & 0.90 & 95\%  & Good --- nominal search altitude \\
+    40  & 71  & 31  & 0.85 & 90\%  & Marginal --- approaching limits \\
+    50  & 57  & 25  & 0.70 & 75\%  & Degraded --- single-pass detection unreliable \\
+    60  & 48  & 21  & 0.45 & 50\%  & Poor --- degraded confidence \\
+    70  & 41  & 18  & 0.30 & 30\%  & Unreliable --- approaching confidence threshold \\
+    80  & 36  & 16  & $<$0.20 & $<$15\% & Not viable --- below confidence threshold \\
     \bottomrule
   \end{tabular}
 \end{table}
 
 \paragraph{Operational envelope.}
-The data confirms that \SI{35}{\metre} (the configured \texttt{TARGET\_ALT}) sits comfortably within the reliable detection zone (95\% per-frame, $>$99.97\% per-flyover).  The altitude ceiling for reliable single-pass detection is approximately \SI{40}{\metre}; above this, multi-pass coverage from the lawnmower pattern provides the necessary redundancy.  The theoretical floor for detection (${\sim}\SI{70}{\metre}$) corresponds to the target subtending approximately 20 pixels---below the YOLOv8n smallest feature scale ($80 \times 80$ grid, where each cell covers an $8 \times 8$ region of the input).
+The data confirms that \SI{35}{\metre} (the configured \texttt{TARGET\_ALT}) sits comfortably within the reliable detection zone (95\% per-frame, $>$99.97\% per-flyover).  The altitude ceiling for reliable single-pass detection is approximately \SI{40}{\metre}; above this, multi-pass coverage from the lawnmower pattern provides the necessary redundancy.  The theoretical floor for detection (${\sim}\SI{70}{\metre}$) corresponds to the target subtending approximately 18 model-input pixels (41 sensor pixels)---near the YOLOv8n smallest feature scale ($80 \times 80$ grid, where each cell covers an $8 \times 8$ region of the input).
 
 \paragraph{Confidence versus pixel size relationship.}
 Figure~\ref{fig:conf_vs_alt_ext} shows the empirically measured confidence as a function of altitude.  The relationship follows an approximately sigmoidal curve in log-altitude space, with a sharp transition between reliable detection ($>$0.9) and unreliable detection ($<$0.5) occurring over a narrow altitude band (\SIrange{40}{60}{\metre}).  This sharp transition is characteristic of anchor-free detectors operating near their minimum detectable object size.
@@ -362,7 +362,7 @@ Figure~\ref{fig:blur_vs_altitude} quantifies pixel motion blur as a function of 
 \begin{figure}[ht]
 \centering
 \includegraphics[width=0.85\textwidth]{blur_vs_altitude}
-\caption{Pixel motion blur vs.\ altitude at different flight speeds and exposure times. At the nominal search configuration (\SI{10}{\metre\per\second}, \SI{2}{\milli\second} exposure), blur remains below 1\,px for all altitudes above \SI{15}{\metre}. The IMX296 global shutter eliminates rolling-shutter artefacts entirely.}
+\caption{Pixel motion blur vs.\ altitude at different flight speeds and exposure times. At the nominal search configuration (\SI{8}{\metre\per\second} at 35\,m altitude, \SI{2}{\milli\second} exposure), blur remains below 1\,px for all altitudes above \SI{15}{\metre}. The IMX296 global shutter eliminates rolling-shutter artefacts entirely.}
 \label{fig:blur_vs_altitude}
 \end{figure}
 

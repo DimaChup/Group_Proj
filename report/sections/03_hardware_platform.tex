@@ -122,7 +122,7 @@ where $w_s$ is the sensor width and $f$ the focal length. The corresponding grou
   \mathrm{GSD} = \frac{w_s \cdot h}{f \cdot W_{\mathrm{px}}}
 \end{equation}
 %
-where $W_{\mathrm{px}} = 1456$ is the image width in pixels. At the nominal search altitude of \SI{35}{\metre}, GSD~$\approx$~\SI{2.2}{\centi\metre\per px}, and a \SI{1.8}{\metre} dummy subtends roughly 82 pixels---well above the minimum detectable object size for YOLOv8n.
+where $W_{\mathrm{px}} = 1456$ is the image width in pixels. At the nominal search altitude of \SI{35}{\metre}, GSD~$\approx$~\SI{2.2}{\centi\metre\per px}, and a \SI{1.8}{\metre} dummy subtends 81 sensor pixels (36 in the $640\!\times\!640$ model input)---well above the minimum detectable object size for YOLOv8n.
 
 
 \subsection{Communication Links}\label{sec:hw-comms}

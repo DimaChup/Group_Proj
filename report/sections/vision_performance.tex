@@ -47,38 +47,41 @@ $f = \SI{5.46}{\milli\metre}$ is the focal length, and $N_h \times N_v = 1456
 $\mathrm{GSD} = W_{\mathrm{gnd}} / N_h$.
 
 The dummy height in the \emph{model input} (640$\times$640) determines
-detectability:
+detectability.  The $1456 \times 1088$ sensor frame is resized to $640 \times 640$;
+the uniform scale factor is $640 / \max(N_h, N_v) = 640/1456 = 0.4396$:
 \begin{equation}\label{eq:dummypx}
   p_{\mathrm{model}} = \frac{d}{H_{\mathrm{gnd}}} \cdot N_v
     \cdot \frac{640}{\max(N_h, N_v)}
 \end{equation}
 where $d = \SI{1.8}{\metre}$ is the target height.  Table~\ref{tab:px-by-alt}
-lists the result at key altitudes.
+lists the result at key altitudes, distinguishing between sensor-native and
+model-input pixel counts.
 
 \begin{table}[ht]
   \centering
-  \caption{Dummy size in the model input at operating altitudes.  The detection
-  threshold is approximately \SI{20}{px} in the shortest dimension.}\label{tab:px-by-alt}
+  \caption{Dummy height in sensor pixels and in the $640\!\times\!640$ model input
+  at operating altitudes.  Scale factor $= 640/1456 = 0.4396$.  The detection
+  threshold is approximately \SI{20}{px} in the model input.}\label{tab:px-by-alt}
   \begin{tabular}{@{}c c c c c@{}}
     \toprule
-    \textbf{Altitude (m)} & \textbf{GSD (mm/px)} & \textbf{Full frame (px)} &
+    \textbf{Altitude (m)} & \textbf{GSD (mm/px)} & \textbf{Sensor (px)} &
       \textbf{Model input (px)} & \textbf{Detectable?} \\
     \midrule
-    20 & 12.6 & 143 & 84 & Comfortable \\
-    30 & 18.9 &  95 & 56 & Solid \\
-    35 & 22.1 &  81 & 48 & Adequate \\
-    50 & 31.6 &  57 & 34 & Marginal width \\
+    20 & 12.6 & 142 & 63 & Comfortable \\
+    30 & 18.9 &  95 & 42 & Solid \\
+    35 & 22.1 &  81 & 36 & Adequate \\
+    50 & 31.6 &  57 & 25 & Marginal width \\
     \bottomrule
   \end{tabular}
 \end{table}
 
 Figure~\ref{fig:alt-vs-px} shows the continuous relationship.  The dummy
 height drops below the \SI{20}{px} YOLOv8 detection threshold at approximately
-\SI{85}{\metre}; within the operating range of 20--\SI{50}{\metre} the target
-remains at 34--84\,px, comfortably above this floor.  The critical dimension
+\SI{70}{\metre}; within the operating range of 20--\SI{50}{\metre} the target
+remains at 25--63\,px in the model input, comfortably above this floor.  The critical dimension
 is the dummy's width (0.5\,m), which shrinks to 7\,px in the model input at
 \SI{50}{\metre}---the primary reason for the multi-pass descent strategy
-described in Section~\ref{sec:multipass}.
+described in Section~\ref{sec:detect-prob}.
 
 \begin{figure}[ht]
   \centering
@@ -231,14 +234,14 @@ boundary:
 \end{equation}
 where each component is normalised to $[0, 1]$:
 \begin{align}
-  S_{\mathrm{size}}   &= \min\!\bigl(p_{\mathrm{model}}(h)\,/\,60,\;1\bigr)
+  S_{\mathrm{size}}   &= \min\!\bigl(p_{\mathrm{model}}(h)\,/\,45,\;1\bigr)
     \label{eq:ssize} \\
   S_{\mathrm{frames}} &= \min\!\bigl(n_{\mathrm{frames}}(v,h)\,/\,5,\;1\bigr)
     \label{eq:sframes} \\
   S_{\mathrm{blur}}   &= 1 - \min\!\bigl(b_{\mathrm{px}}(v,h)\,/\,5,\;1\bigr)
     \label{eq:sblur}
 \end{align}
-A score of 60\,px in the model input and 5 frames on target represent ``fully
+A score of 45\,px in the model input and 5 frames on target represent ``fully
 good'' conditions; 5\,px of blur represents total degradation.
 
 Figure~\ref{fig:envelope} renders this score as a speed--altitude heatmap.
@@ -264,7 +267,7 @@ operation.
 Table~\ref{tab:limits} summarises the constraint analysis.  The dominant
 operational limit is \emph{altitude} (pixel size), not speed or blur.  The
 multi-pass descent strategy (50\,m $\to$ 40\,m $\to$ 32\,m) provides a
-robust safety net: at 32\,m the dummy occupies 52\,px in the model
+robust safety net: at 32\,m the dummy occupies 39\,px in the model
 input---well above the detection floor.
 
 \begin{table}[ht]
@@ -276,8 +279,8 @@ input---well above the detection floor.
     \textbf{Factor} & \textbf{Limiting?} & \textbf{Reason} \\
     \midrule
     Motion blur     & No  & Global shutter + 1/1000\,s $\Rightarrow$ sub-pixel blur at all speeds \\
-    Pixel size (${<}40$\,m)  & No  & Dummy height $>42$\,px in model input \\
-    Pixel size (50\,m)       & Marginal & Dummy height 34\,px, width 7\,px \\
+    Pixel size (${<}40$\,m)  & No  & Dummy height $>31$\,px in model input \\
+    Pixel size (50\,m)       & Marginal & Dummy height 25\,px, width 7\,px \\
     Inference FPS   & No  & 4.8\,FPS gives 11--17 frames per flyover \\
     Frame gap       & No  & ${\leq}2.1$\,m gap at 10\,m/s; 93\%+ overlap \\
     Speed           & No  & Max 10\,m/s is far below 66\,m/s single-frame limit \\
@@ -287,6 +290,6 @@ input---well above the detection floor.
 
 The speed profile could be increased to 15+\,m/s without impacting detection
 performance; however, the resulting \SI{1.5}{\metre} GPS timing lag at
-\SI{10}{\metre\per\second} (Section~\ref{sec:gps-accuracy}) makes speed
+\SI{10}{\metre\per\second} (Section~\ref{sec:accuracy}) makes speed
 reduction a more effective strategy for improving localisation accuracy than
 for preserving detection capability.

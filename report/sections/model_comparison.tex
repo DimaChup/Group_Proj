@@ -47,14 +47,14 @@ A more robust long-term approach would be multi-class detection---training the m
 
 \subsection{Tiling vs.\ Full-Frame Detection}\label{sec:model_comparison:tiling}
 
-At search altitudes of 30--35\,m, the mannequin subtends approximately 24 pixels in height when the $1456\times1088$ camera frame is resized to the $640\times640$ inference input.  This is above the empirical minimum for YOLOv8 detection (${\sim}10$~pixels)~\cite{yolov8}, but leaves limited margin.  Two detection strategies were therefore evaluated:
+At search altitudes of 30--35\,m, the mannequin subtends approximately 36--42 pixels in height in the $640\!\times\!640$ model input (scale factor $640/1456 = 0.4396$ from the $1456\!\times\!1088$ sensor frame).  This is above the empirical minimum for YOLOv8 detection (${\sim}20$~pixels)~\cite{yolov8}, but the target \emph{width} drops to 10--12 model pixels, leaving limited margin.  Two detection strategies were therefore evaluated:
 
 \begin{enumerate}
     \item \textbf{Full-frame resize.}  The entire $1456\times1088$ frame is resized to $640\times640$ in a single pass.  One inference call per frame; latency ${\sim}207$\,ms.
     \item \textbf{Tiled detection.}  The frame is divided into overlapping $640\times640$ tiles (typically $2\times2$ with 25\% overlap), each processed independently.  Four inference calls per frame; latency ${\sim}830$\,ms.
 \end{enumerate}
 
-Tiling preserves higher effective resolution per tile, improving detection of very small targets at extreme altitude.  However, testing on DJI flight video (\texttt{video\_test.py}) showed that full-frame detection achieved reliable detection across the entire 15--50\,m altitude range with the v3 model, with no altitude band where tiling produced detections that full-frame missed.  The $4\times$ inference cost of tiling---reducing throughput from 4.8\,FPS to 1.2\,FPS---would significantly increase the probability of missing a target during a search pass at 5\,m/s, where each frame covers approximately 1\,m of ground track.
+Tiling preserves higher effective resolution per tile, improving detection of very small targets at extreme altitude.  However, testing on DJI flight video (\texttt{video\_test.py}) showed that full-frame detection achieved reliable detection across the entire 15--50\,m altitude range with the v3 model, with no altitude band where tiling produced detections that full-frame missed.  The $4\times$ inference cost of tiling---reducing throughput from 4.8\,FPS to 1.2\,FPS---would significantly increase the probability of missing a target during a search pass at the nominal 8\,m/s (altitude-dependent schedule at 35\,m), where each frame at 1.2\,FPS covers approximately 6.7\,m of ground track.
 
 Full-frame detection was therefore selected as the deployment strategy.  Tiling remains available as a configurable option in the video analysis tools for post-flight forensic review, where latency is not a constraint.
 
@@ -73,7 +73,7 @@ Six directions are identified for improving detection reliability and operationa
 
     \item \textbf{Thermal camera fusion.}  A FLIR Lepton~3.5 module ($160\times120$, LWIR 8--14\,$\mu$m) would provide body-heat detection independent of visible appearance, enabling night and low-visibility operations~\cite{rudol2008human}.  Decision-level fusion---requiring confirmation in both visual and thermal modalities---would suppress the false positives inherent in each sensor alone (sun-heated objects in thermal, colour-similar debris in visual).
 
-    \item \textbf{Active learning.}  Flagging detections with confidence scores in the 0.3--0.6 range (below the current 0.4 threshold) for human review would create a feedback loop: uncertain predictions are labelled by the operator post-flight and added to the training set, progressively improving the model in the regions of feature space where it is least confident.  This approach is particularly efficient for rare-event detection where exhaustive labelling is impractical~\cite{settles2009active}.
+    \item \textbf{Active learning.}  Flagging detections with confidence scores in the 0.2--0.5 range (near the current 0.2 threshold) for human review would create a feedback loop: uncertain predictions are labelled by the operator post-flight and added to the training set, progressively improving the model in the regions of feature space where it is least confident.  This approach is particularly efficient for rare-event detection where exhaustive labelling is impractical~\cite{settles2009active}.
 \end{enumerate}
 
 These improvements are ordered by implementation effort: items 1--2 require only additional data and a retraining cycle, items 3--4 require dataset restructuring and architecture evaluation, and items 5--6 require new hardware or workflow infrastructure.  The modular vision architecture---where all detection logic is encapsulated behind a single function interface---ensures that any of these improvements can be integrated without modifying the state machine, ground station, or flight control code.
