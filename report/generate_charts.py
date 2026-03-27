@@ -144,33 +144,43 @@ def chart_detection_vs_speed():
 
     speeds = np.linspace(0.5, 15, 200)
     alt = TARGET_ALT
-
     fp_along = footprint_along_track(alt)  # ground distance visible along track
 
-    def det_rate(speed, fps):
-        # Time target is in frame = footprint / speed
+    # Per-frame detection probability degrades with speed due to motion blur.
+    # At 0 m/s: ~0.95 (benchmark). Motion blur reduces this progressively.
+    # Model: linear drop from 0.95 at 0 m/s to ~0.60 at 15 m/s (empirical
+    # approximation accounting for blur, reduced dwell time, and vibration).
+    def per_frame_rate(speed):
+        return np.clip(0.95 - 0.025 * speed, 0.55, 0.95)
+
+    p_frame = per_frame_rate(speeds)
+
+    # Cumulative detection rate: P = 1 - (1 - p_frame)^n_frames
+    def cumulative_rate(speed, fps):
         time_in_view = fp_along / speed
-        n_frames = np.maximum(time_in_view * fps, 0.1)
-        # Probability of at least one detection in n frames
-        # Account for motion blur reducing single-frame rate at high speed
-        blur_factor = np.clip(1.0 - 0.02 * (speed - 3), 0.6, 1.0)
-        p_single = SINGLE_FRAME_DET_RATE * blur_factor
-        return (1.0 - (1.0 - p_single) ** n_frames) * 100
+        n_frames = np.maximum(time_in_view * fps, 1)
+        pf = per_frame_rate(speed)
+        return (1.0 - (1.0 - pf) ** n_frames) * 100
 
-    rate_48 = det_rate(speeds, FPS_CURRENT)
-    rate_fp16 = det_rate(speeds, FPS_FP16)
+    cum_48 = cumulative_rate(speeds, FPS_CURRENT)
+    cum_fp16 = cumulative_rate(speeds, FPS_FP16)
 
-    ax.plot(speeds, rate_48, color=COLOR_PRIMARY, linewidth=2.0,
-            label=f"TFLite CPU ({FPS_CURRENT:.1f} FPS)")
-    ax.plot(speeds, rate_fp16, color=COLOR_SECONDARY, linewidth=2.0,
-            linestyle="--", label=f"FP16 projected ({FPS_FP16:.1f} FPS)")
+    # --- Per-frame curve (left y-axis context, plotted as %) ---
+    ax.plot(speeds, p_frame * 100, color="#9CA3AF", linewidth=1.5,
+            linestyle=":", label="Per-frame detection rate")
+
+    # --- Cumulative curves ---
+    ax.plot(speeds, cum_48, color=COLOR_PRIMARY, linewidth=2.0,
+            label=f"Cumulative ({FPS_CURRENT:.1f} FPS)")
+    ax.plot(speeds, cum_fp16, color=COLOR_SECONDARY, linewidth=2.0,
+            linestyle="--", label=f"Cumulative ({FPS_FP16:.1f} FPS, projected)")
+
+    ax.fill_between(speeds, cum_48, cum_fp16, alpha=0.08, color=COLOR_SECONDARY)
 
     # Mark operational speed
     ax.axvline(x=SEARCH_SPEED_MPS, color="#9CA3AF", linestyle=":", linewidth=1.0)
-    ax.annotate(f"Search speed\n({SEARCH_SPEED_MPS:.0f} m/s)", xy=(SEARCH_SPEED_MPS, 55),
+    ax.annotate(f"Search speed\n({SEARCH_SPEED_MPS:.0f} m/s)", xy=(SEARCH_SPEED_MPS, 42),
                 fontsize=8, color="#6B7280", ha="center")
-
-    ax.fill_between(speeds, rate_48, rate_fp16, alpha=0.08, color=COLOR_SECONDARY)
 
     ax.set_xlabel("Ground Speed (m/s)")
     ax.set_ylabel("Detection Rate (%)")
@@ -179,6 +189,7 @@ def chart_detection_vs_speed():
     ax.legend(loc="lower left", fontsize=8, framealpha=0.9)
 
     fig.savefig(FIGS / "det_vs_speed.pdf", format="pdf")
+    fig.savefig(FIGS / "det_vs_speed.png", format="png", dpi=200)
     plt.close(fig)
     print(f"  Saved: {FIGS / 'det_vs_speed.pdf'}")
 
@@ -281,7 +292,7 @@ def chart_latency_breakdown():
             fontsize=8, color="white", fontweight="bold")
 
     ax.set_xticks(x)
-    ax.set_xticklabels(["TFLite INT8\n(current)", "FP16 XNNPACK\n(projected)"])
+    ax.set_xticklabels(["TFLite FP32\n(current)", "FP16 XNNPACK\n(projected)"])
     ax.set_ylabel("Latency (ms)")
     ax.set_ylim(0, 240)
     ax.legend(loc="upper right", fontsize=7.5, framealpha=0.9,

@@ -89,12 +89,11 @@ def gen_simple():
         'LANDING':    (2.5, 0.3),
         'DONE':       (2.5, -0.9),
         'MANUAL':     (7.0, 5.1),
-        'RTL':        (7.0, 2.7),
     }
     colors = {
         'INIT': GREEN, 'TAKEOFF': BLUE, 'SEARCH': BLUE,
         'CENTERING': BLUE, 'VERIFY': ORANGE, 'APPROACH': BLUE,
-        'LANDING': BLUE, 'DONE': GREEN, 'MANUAL': RED, 'RTL': RED,
+        'LANDING': BLUE, 'DONE': GREEN, 'MANUAL': RED,
     }
     for name, (cx, cy) in positions.items():
         draw_box(ax, cx, cy, bw, bh, name, colors[name], fontsize=9)
@@ -143,14 +142,15 @@ def gen_simple():
             color=RED_DARK, fontstyle='italic',
             bbox=dict(boxstyle='round,pad=0.1', facecolor='white', edgecolor='none', alpha=0.85), zorder=5)
 
-    # Any -> RTL
-    ax.annotate('', xy=(positions['RTL'][0]-bw/2, positions['RTL'][1]),
+    # RTL annotation (firmware behaviour, not a state)
+    ax.text(7.0, 2.7, 'Link loss / RC kill\n  RTL (firmware)', ha='center',
+            va='center', fontsize=7.5, color=RED, fontstyle='italic',
+            bbox=dict(boxstyle='round,pad=0.15', facecolor='#fadbd8',
+                      edgecolor=RED, alpha=0.8, linewidth=0.8), zorder=5)
+    ax.annotate('', xy=(5.95, 2.7),
                 xytext=(positions['VERIFY'][0]+bw/2+0.15, positions['VERIFY'][1]),
                 arrowprops=dict(arrowstyle='->', color=RED, lw=1.1,
                                 linestyle='dotted', connectionstyle='arc3,rad=0.15'), zorder=2)
-    ax.text(4.85, 2.2, 'Link loss /\nRC kill', ha='center', va='center', fontsize=7,
-            color=RED, fontstyle='italic',
-            bbox=dict(boxstyle='round,pad=0.1', facecolor='white', edgecolor='none', alpha=0.85), zorder=5)
 
     legend_items = [
         mpatches.Patch(color=GREEN, label='Start / End'),
@@ -331,7 +331,7 @@ def gen_full():
     # ── HOVER_TARGET -> RETURN_TRANSIT -> RETURN_HOME -> LANDING
     arrow(ax, P['HOVER_TARGET'][0]+bw/2, P['HOVER_TARGET'][1],
           P['RETURN_TRANSIT'][0]-bw/2-0.2, P['RETURN_TRANSIT'][1],
-          label='Beacon\ntimeout', color='#d4ac0d', label_offset=(0, 0.25))
+          label='Deploy done\n(15 s)', color='#d4ac0d', label_offset=(0, 0.25))
 
     arrow(ax, P['RETURN_TRANSIT'][0], P['RETURN_TRANSIT'][1]-bh/2,
           P['RETURN_HOME'][0], P['RETURN_HOME'][1]+bh/2,
@@ -355,10 +355,35 @@ def gen_full():
           label='M key\n(resume)', color=RED_DARK, label_offset=(0, 0.3),
           linestyle='--', rad=0.15)
 
-    # RETURN_FROM_MANUAL -> previous state (back to search area)
+    # RETURN_FROM_MANUAL -> previous state (could be any state, shown toward search area)
     arrow(ax, P['RETURN_FROM_MANUAL'][0]-bw/2-0.2, P['RETURN_FROM_MANUAL'][1]-0.15,
           P['TRANSIT_TO_SEARCH'][0]+bw/2, P['TRANSIT_TO_SEARCH'][1]+0.15,
-          label='Reached\ndeparture', color='#d4ac0d', label_offset=(0.5, 0.25))
+          label='Resume\nprevious', color='#d4ac0d', label_offset=(0.5, 0.25))
+
+    # ── Timeout transitions (dashed) ─────────────────────────────
+    # CENTERING -> SEARCH (60s timeout)
+    arrow(ax, P['CENTERING'][0]-bw/2, P['CENTERING'][1]+0.1,
+          P['SEARCH'][0]+bw/2, P['SEARCH'][1]-0.1,
+          label='60 s\ntimeout', color=GREY, label_offset=(0, -0.3),
+          linestyle='--', fontsize=6.5, rad=-0.15)
+
+    # VERIFY -> SEARCH (120s timeout — curved left through search column)
+    arrow(ax, P['VERIFY'][0]-bw/2, P['VERIFY'][1],
+          P['SEARCH'][0]+bw/2, P['SEARCH'][1]-0.2,
+          label='120 s\ntimeout', color=GREY, label_offset=(-0.3, 0.3),
+          linestyle='--', fontsize=6.5, rad=0.3)
+
+    # HOVER -> DONE (60s timeout)
+    arrow(ax, P['HOVER'][0]+bw/2, P['HOVER'][1]-0.1,
+          P['DONE'][0]-bw/2, P['DONE'][1]+0.1,
+          label='60 s', color=GREY, label_offset=(0, -0.25),
+          linestyle='--', fontsize=6.5, rad=0.3)
+
+    # VERIFY -> CENTERING (N/I with queued target)
+    arrow(ax, P['VERIFY'][0]+0.3, P['VERIFY'][1]+bh/2,
+          P['CENTERING'][0]+0.3, P['CENTERING'][1]-bh/2,
+          label='N/I +\nqueue', color=ORANGE_DARK, label_offset=(0.55, 0),
+          fontsize=6.5, rad=-0.3)
 
     # ── Search exhausted -> DONE (via left side) ────────────────
     # Down from SEARCH, curve around to DONE

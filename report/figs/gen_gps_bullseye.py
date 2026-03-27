@@ -37,7 +37,7 @@ bias_x = lag_bias * np.sin(heading_rad)
 bias_y = lag_bias * np.cos(heading_rad)
 
 # Anisotropic noise: more spread along flight direction
-along_std = 2.6   # along flight direction (tuned to give CEP50 ~ 2.3m)
+along_std = 2.8   # along flight direction (tuned to give CEP50 ~ 2.3m)
 across_std = 1.5  # perpendicular
 
 # Generate in flight-aligned frame, then rotate

@@ -54,12 +54,11 @@ positions = {
     'LANDING':    (2.5, 0.3),
     'DONE':       (2.5, -0.9),
     'MANUAL':     (7.0, 5.1),
-    'RTL':        (7.0, 2.7),
 }
 colors = {
     'INIT': GREEN, 'TAKEOFF': BLUE, 'SEARCH': BLUE,
     'CENTERING': BLUE, 'VERIFY': ORANGE, 'APPROACH': BLUE,
-    'LANDING': BLUE, 'DONE': GREEN, 'MANUAL': RED, 'RTL': RED,
+    'LANDING': BLUE, 'DONE': GREEN, 'MANUAL': RED,
 }
 
 # Draw boxes
@@ -112,13 +111,15 @@ ax.annotate('', xy=(positions['SEARCH'][0] + bw/2 + 0.15, positions['SEARCH'][1]
 ax.text(4.85, 4.45, 'M key\n(resume)', ha='center', va='center', fontsize=7, color=RED_DARK,
         fontstyle='italic', bbox=dict(boxstyle='round,pad=0.1', facecolor='white', edgecolor='none', alpha=0.85), zorder=5)
 
-# Any state -> RTL
-ax.annotate('', xy=(positions['RTL'][0] - bw/2, positions['RTL'][1]),
+# RTL annotation (firmware behaviour, not a state)
+ax.text(7.0, 2.7, 'Link loss / RC kill\n  RTL (firmware)', ha='center',
+        va='center', fontsize=7.5, color=RED, fontstyle='italic',
+        bbox=dict(boxstyle='round,pad=0.15', facecolor='#fadbd8',
+                  edgecolor=RED, alpha=0.8, linewidth=0.8), zorder=5)
+ax.annotate('', xy=(5.95, 2.7),
             xytext=(positions['VERIFY'][0] + bw/2 + 0.15, positions['VERIFY'][1]),
             arrowprops=dict(arrowstyle='->', color=RED, lw=1.1,
                             linestyle='dotted', connectionstyle='arc3,rad=0.15'), zorder=2)
-ax.text(4.85, 2.2, 'Link loss /\nRC kill', ha='center', va='center', fontsize=7, color=RED,
-        fontstyle='italic', bbox=dict(boxstyle='round,pad=0.1', facecolor='white', edgecolor='none', alpha=0.85), zorder=5)
 
 # Legend
 legend_items = [

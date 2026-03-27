@@ -252,19 +252,19 @@ Figure~\ref{fig:detection_envelope} overlays the altitude-dependent confidence c
 % ═══════════════════════════════════════════════════════════════
 \subsection{Model Training Results}\label{app:cv:training}
 
-The retrained v2 model (\texttt{sar\_v2\_1088}) was trained on Google Colab (NVIDIA T4 GPU) for 150 epochs using the mixed dataset described in Section~\ref{sec:training}.  Table~\ref{tab:training_results} summarises the final evaluation metrics.
+The retrained v2 model (\texttt{sar\_v2\_1088}) was trained on Google Colab (NVIDIA T4 GPU) for 150 epochs using the mixed dataset described in Section~\ref{sec:training}.  Table~\ref{tab:training_results_extended} summarises the final evaluation metrics.
 
 \begin{table}[ht]
   \centering
-  \caption{Training evaluation metrics for the YOLOv8n SAR detector (v2, trained at $1088 \times 1088$, evaluated on validation split).}\label{tab:training_results}
+  \caption{Training evaluation metrics for the YOLOv8n SAR detector (v2, trained at $1088 \times 1088$, evaluated on validation split).}\label{tab:training_results_extended}
   \begin{tabular}{@{}l c l@{}}
     \toprule
     \textbf{Metric} & \textbf{Value} & \textbf{Interpretation} \\
     \midrule
     mAP$_{50}$         & 0.995 & Near-perfect at IoU $\geq 0.50$ \\
-    mAP$_{50{:}95}$    & 0.893 & Strong across IoU thresholds \\
-    Precision          & 0.989 & Very low false positive rate \\
-    Recall             & 0.995 & Near-zero missed detections \\
+    mAP$_{50{:}95}$    & 0.828 & Strong across IoU thresholds \\
+    Precision          & 0.994 & Very low false positive rate \\
+    Recall             & 0.989 & Near-zero missed detections \\
     F1 score           & 0.992 & Balanced precision-recall \\
     \midrule
     Training time      & 47\,min & 150 epochs on T4 GPU \\

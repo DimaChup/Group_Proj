@@ -44,7 +44,7 @@ The hardware integrates a Hexsoon EDU-450 airframe, CubePilot Orange+ flight con
 
 \subsubsection{Companion Computer Trade Study}
 
-Three candidate companion computers were evaluated using weighted multi-criteria decision analysis (Table~\ref{tab:mcda-companion}). Criteria weights reflect the project's priorities: cost and Python ecosystem compatibility are paramount for a student team, while raw GPU performance is less critical given the lightweight YOLOv8n model.
+Three candidate companion computers were evaluated using weighted multi-criteria decision analysis (Table~\ref{tab:mcda-companion}). Criteria weights were established before candidate scoring based on mission requirements and operational constraints. Cost and Python ecosystem compatibility are paramount for a student team, while raw GPU performance is less critical given the lightweight YOLOv8n model.
 
 \begin{table}[H]
   \centering\compactTable
@@ -70,7 +70,7 @@ Three candidate companion computers were evaluated using weighted multi-criteria
 
 \subsubsection{Communication Architecture Trade Study}
 
-Three architectures for companion-to-autopilot communication were compared (Table~\ref{tab:mcda-comms}).
+Three architectures for companion-to-autopilot communication were compared (Table~\ref{tab:mcda-comms}). Criteria weights were established before candidate scoring based on mission requirements and operational constraints.
 
 \begin{table}[H]
   \centering\compactTable
@@ -109,7 +109,7 @@ Four principles govern the architecture, enabling parallel development by a five
 
 \subsection{Detection Model Selection}\label{sec:model-rationale}
 
-YOLOv8n (the nano variant, 3.2~million parameters, 8.7~GFLOPs) was selected after benchmarking the YOLO model family on the target hardware~\cite{yolov8}. Table~\ref{tab:mcda-model} summarises the weighted comparison.
+YOLOv8n (the nano variant, 3.2~million parameters, 8.7~GFLOPs) was selected after benchmarking the YOLO model family on the target hardware~\cite{yolov8}. Criteria weights were established before candidate scoring based on mission requirements and operational constraints. Table~\ref{tab:mcda-model} summarises the weighted comparison.
 
 \begin{table}[H]
   \centering\compactTable
@@ -130,13 +130,13 @@ YOLOv8n (the nano variant, 3.2~million parameters, 8.7~GFLOPs) was selected afte
   \end{tabularx}
 \end{table}
 
-\noindent YOLOv8n is the only variant that achieves real-time inference on the Pi~5 CPU within the 300\,ms-per-frame budget required for useful detection at search speed. Larger variants (YOLOv8s at 11.2\,M parameters, YOLOv8m at 25.9\,M) exceeded this budget by factors of two and four respectively. SSD~MobileNetV2 matches YOLOv8n on speed but delivers substantially lower accuracy on the custom SAR dataset due to its simpler feature pyramid~\cite{edgeai}.
+\noindent YOLOv8n is the only variant that achieves real-time inference on the Pi~5 CPU within the 300\,ms-per-frame budget required for useful detection at search speed. Larger variants (YOLOv8s at 11.2\,M parameters, YOLOv8m at 25.9\,M) exceeded this budget by factors of two and four respectively. SSD~MobileNetV2 matches YOLOv8n on speed but delivers lower accuracy, with reported mAP values on the COCO benchmark substantially below YOLO variants due to its simpler feature pyramid~\cite{lin2014coco, edgeai}.
 
 The model was trained as a single-class detector on 366 mixed images (300 synthetic, 16 real, 50 negatives) at native camera resolution ($1456 \times 1088$), following the domain-randomisation principle~\cite{domainrand}. Training at higher resolution than the $640 \times 640$ inference input allows the network to learn fine-grained features that survive downscaling~\cite{yolov8}. A COCO person detector is carried as a fallback model for field conditions where the custom model underperforms.
 
 \subsection{Coverage Path Planning}\label{sec:plan-rationale}
 
-Four candidate search patterns were evaluated (Table~\ref{tab:mcda-search}). Criteria weights emphasise coverage guarantee and implementability, reflecting the project's emphasis on reliable, verifiable behaviour over theoretically optimal paths.
+Four candidate search patterns were evaluated (Table~\ref{tab:mcda-search}). Criteria weights were established before candidate scoring based on mission requirements and operational constraints, emphasising coverage guarantee and implementability to ensure reliable, verifiable behaviour over theoretically optimal paths.
 
 \begin{table}[H]
   \centering\compactTable
@@ -165,7 +165,7 @@ A deterministic finite state machine (FSM) with 20~states and 32~transitions was
 
 \subsection{Autonomy Level Justification}\label{sec:autonomy-rationale}
 
-The system operates at Sheridan Level~5 (``computer decides, human can veto'')~\cite{sheridan2002humans} for the search phase and Level~3 (``computer suggests, human approves'') for the landing decision. This hybrid was chosen after analysing the asymmetric cost structure of SAR false positives versus false negatives~\cite{endsley1999loa, cummings2014man_uav}.
+The system operates at Sheridan Level~7--8 (``computer executes autonomously, human monitors'')~\cite{sheridan2002humans} for the search phase and Level~3--4 (``computer suggests one alternative, human approves'') for the landing decision. This hybrid was chosen after analysing the asymmetric cost structure of SAR false positives versus false negatives~\cite{endsley1999loa, cummings2014man_uav}.
 
 A \emph{false positive landing} (descending on a rock, tree stump, or discarded clothing) incurs three compounding penalties: (1)~battery endurance consumed by descent, hover, and re-climb (\SI{\approx 90}{\second}, roughly 8\% of a 20-minute endurance budget); (2)~search coverage paused during the entire descent--verify--climb cycle; (3)~risk of mechanical damage if the landing site is uneven. In a single-drone mission with no redundancy, even one unnecessary landing significantly reduces the probability of covering the full search area before battery exhaustion.
 
@@ -180,7 +180,7 @@ Full autonomy (Level~10) was rejected because the single-class detector cannot d
 Four design parameters were revised during development when empirical evidence contradicted initial assumptions. Each correction followed the pattern: \emph{initial assumption $\rightarrow$ measurement $\rightarrow$ correction}.
 
 \paragraph{Focal length: \SI{7.0}{\milli\metre} $\rightarrow$ \SI{5.46}{\milli\metre}.}
-The lens datasheet specifies a \SI{6}{\milli\metre} nominal focal length. Initial FOV calculations assumed \SI{7.0}{\milli\metre} based on a conservative estimate. On field day (2026-03-11), a tape-measure calibration at \SI{1}{\metre} height measured \SI{92}{\centi\metre} of visible ground width, implying an effective focal length of \SI{5.46}{\milli\metre}---a 22\% deviation from the assumed value. This single correction shifted every downstream GPS estimation by up to \SI{3}{\metre} at \SI{30}{\metre} altitude, because target position is computed from the ratio of pixel offset to focal-length-derived ground sample distance. Had this not been corrected before flight, every reported casualty position would have carried a systematic bias exceeding the \SI{10}{\metre} landing accuracy required by R07.
+The lens datasheet specifies a \SI{6}{\milli\metre} nominal focal length. Initial FOV calculations used \SI{7.0}{\milli\metre}, which overestimated the focal length by 22\%. On field day (2026-03-11), a tape-measure calibration at \SI{1}{\metre} height measured \SI{92}{\centi\metre} of visible ground width, implying an effective focal length of \SI{5.46}{\milli\metre}---a 22\% deviation from the assumed value. This single correction shifted every downstream GPS estimation by up to \SI{3}{\metre} at \SI{30}{\metre} altitude, because target position is computed from the ratio of pixel offset to focal-length-derived ground sample distance. Had this not been corrected before flight, every reported casualty position would have carried a systematic bias exceeding the \SI{10}{\metre} landing accuracy required by R07.
 
 \paragraph{Camera resolution: $640 \times 480$ $\rightarrow$ $1456 \times 1088$.}
 The initial configuration used $640 \times 480$ to match typical YOLOv8 training resolution and minimise inference cost. Analysis of DJI flight video (Section~\ref{sec:results}) revealed that at \SI{30}{\metre} altitude, a prone casualty occupies only $\approx 20 \times 14$~pixels at $640 \times 480$---below the reliable detection threshold. Switching to the IMX296's native $1456 \times 1088$ increased the target to $\approx 46 \times 32$~pixels, comfortably above the minimum. The model's internal resize to $640 \times 640$ means inference time is unchanged; the cost is borne only in the CSI capture and OpenCV resize (\SI{\approx 2}{\milli\second}).
@@ -207,7 +207,7 @@ ROS~2 is the de facto middleware for multi-sensor robotic systems~\cite{quigley2
 
 \subsection{Camera Selection: Global vs Rolling Shutter}\label{sec:camera-rationale}
 
-The provided IMX296 global shutter camera was selected over alternative rolling-shutter modules (e.g., IMX477, IMX219) for motion-tolerance reasons specific to aerial search~\cite{imx296, sukhatme2012rolling_global}.
+While the IMX296 was provided as part of the university equipment package, its suitability was validated against alternatives to confirm it meets mission requirements. The IMX296 global shutter camera was selected over alternative rolling-shutter modules (e.g., IMX477, IMX219) for motion-tolerance reasons specific to aerial search~\cite{imx296, sukhatme2012rolling_global}.
 
 During forward flight at \SI{5}{\metre\per\second} and \SI{30}{\metre} altitude, the ground moves across the sensor at approximately 250~pixels per second (at $1456 \times 1088$). A rolling-shutter sensor reads rows sequentially over $\approx$\SI{30}{\milli\second}; during this interval the scene shifts by $\approx 7.5$~pixels between the first and last row, producing a parallelogram distortion (``jello effect'') that skews bounding boxes and shifts detected centroids by up to \SI{0.5}{\metre} on the ground. The IMX296's global shutter captures all rows simultaneously, eliminating this geometric error entirely.
 

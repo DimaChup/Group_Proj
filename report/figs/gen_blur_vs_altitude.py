@@ -156,8 +156,8 @@ ax2.plot(altitudes2, conf_gs, color=GREEN, linewidth=1.8, linestyle=':',
          label='10 m/s, global shutter (1/500 s)', zorder=3)
 
 # Confidence threshold
-ax2.axhline(y=0.4, color=GREY, linewidth=1.2, linestyle=':', alpha=0.7)
-ax2.text(58, 0.42, 'Confidence\nthreshold (0.4)', fontsize=8, color=GREY,
+ax2.axhline(y=0.2, color=GREY, linewidth=1.2, linestyle=':', alpha=0.7)
+ax2.text(58, 0.22, 'Confidence\nthreshold (0.2)', fontsize=8, color=GREY,
          ha='right', va='bottom', fontstyle='italic')
 
 # Operational envelope shading

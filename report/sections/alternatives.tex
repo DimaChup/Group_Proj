@@ -1,0 +1,78 @@
+% alternatives.tex — Drop-in paragraph alternatives for key sections
+% Usage: read all versions, pick the one that best fits the final narrative.
+% Each version is 3–5 sentences, written as a direct replacement.
+% Requires \usepackage{xcolor} in preamble.
+
+\section*{Alternative Paragraph Options}
+
+% =====================================================================
+\subsection*{1. STEEPLE Opening Paragraph}
+% Current location: design\_rationale.tex, line 6
+% =====================================================================
+
+\paragraph{{\color{blue} Version A --- Current (systematic framework-first).}}
+Every major design decision was evaluated against the seven STEEPLE dimensions (Social, Technological, Economic, Environmental, Political, Legal, Ethical) before proceeding to technical trade studies for hardware, software architecture, detection, path planning, and mission control.
+
+\paragraph{{\color{red} Version B --- Lead with safety and ethical stakes.}}
+Search and rescue is a domain where engineering decisions carry life-or-death consequences: a false negative means a casualty remains undiscovered, while an unsafe autonomous action could endanger both the victim and ground personnel. These stakes demand that design choices be evaluated not only on technical merit but across social, ethical, legal, and environmental dimensions simultaneously. The STEEPLE framework (Social, Technological, Economic, Environmental, Political, Legal, Ethical) was adopted as the structured lens through which every major decision was assessed before any trade study proceeded.
+
+\paragraph{{\color{olive} Version C --- Lead with economic accessibility.}}
+Commercial SAR drone platforms cost \pounds5\,000--\pounds15\,000, placing them beyond the reach of volunteer mountain rescue teams who perform the majority of UK land-based search operations. This project's central design constraint was therefore economic: every technical choice had to preserve a sub-\pounds600 total system cost without compromising safety or detection reliability. The STEEPLE analysis formalises this constraint alongside six other dimensions---social trust, technological feasibility, environmental protection, political compliance, legal data handling, and ethical autonomy boundaries---ensuring that cost reduction never came at the expense of responsible deployment.
+
+% =====================================================================
+\subsection*{2. Weather Adaptation Paragraph}
+% Current location: design\_rationale.tex, Section 5.8 (lines 218--235)
+% =====================================================================
+
+\paragraph{{\color{blue} Version A --- Current (factual, process-oriented).}}
+The scheduled flight test (2026-03-11) was cancelled due to sustained winds exceeding the EDU-450's \SI{10}{\metre\per\second} operational limit. Rather than treating this as lost time, the team executed a pre-planned fallback protocol designed to maximise information gain from the available hardware access. Three go/no-go criteria were evaluated 30~minutes before the scheduled window; sustained wind measured \SI{12}{\metre\per\second} with gusts to \SI{18}{\metre\per\second}, failing criterion~(1) by 50\%. The no-go decision was unanimous and immediate.
+
+\paragraph{{\color{red} Version B --- Narrative/storytelling angle.}}
+On the morning of 11~March, the team arrived at the field site with the drone assembled, the Pi powered, and three batteries charged---only to watch the wind sock stand horizontal in \SI{12}{\metre\per\second} sustained gusts. Within ten minutes of the scheduled launch window, it was clear that flying a \SI{3}{\kilo\gram} quadcopter in conditions 50\% above its rated wind limit would be reckless, not ambitious. The decision to ground the aircraft was unanimous, but what happened next---four hours of bench calibration, checkerboard photography, and inference benchmarking---turned a cancelled flight into the most data-rich session of the entire project.
+
+\paragraph{{\color{olive} Version C --- Emphasise data quality gained.}}
+Cancelling the scheduled flight due to \SI{12}{\metre\per\second} winds initially appeared to be the project's most significant setback. In retrospect, it produced higher-quality calibration data than a rushed mid-flight measurement ever could have. The grounded session yielded a 22\% correction to the assumed focal length (\SI{7.0}{\milli\metre}~$\rightarrow$~\SI{5.46}{\milli\metre}), a lens distortion map with RMS~0.399, and a 50-run inference benchmark establishing \SI{207}{\milli\second} per frame as the authoritative performance figure---measurements that require a stationary camera, controlled geometry, and unlimited time, none of which are available in flight. The focal length correction alone prevented a systematic \SI{3}{\metre} bias in every subsequent GPS estimate.
+
+% =====================================================================
+\subsection*{3. Why Semi-Autonomous (Autonomy Level Justification)}
+% Current location: design\_rationale.tex, Section 5.6 (lines 166--176)
+% =====================================================================
+
+\paragraph{{\color{blue} Version A --- Current (Sheridan taxonomy, cost-structure analysis).}}
+The system operates at Sheridan Level~5 (``computer decides, human can veto'') for the search phase and Level~3 (``computer suggests, human approves'') for the landing decision. This hybrid was chosen after analysing the asymmetric cost structure of SAR false positives versus false negatives. A false positive landing consumes approximately 8\% of the battery endurance budget per event, while a false negative is partially recoverable through the lawnmower pattern's guaranteed revisitation. The operator-in-the-loop gate therefore addresses the higher-consequence, lower-recoverable error.
+
+\paragraph{{\color{red} Version B --- SAR practitioner perspective.}}
+Conversations with SAR literature and operational reports reveal a consistent message from rescue teams: they want a tool that searches tirelessly without requiring constant babysitting, but they refuse to trust a machine to decide where to land. The system's autonomy split reflects exactly this preference. The drone handles the tedious, attention-demanding task---scanning hectares of terrain at 4.8~frames per second---while the operator makes the high-stakes classification decision: is this a casualty or a false alarm? This division exploits the complementary strengths of each agent. The machine excels at sustained visual scanning across a wide field of view, a task at which human operators degrade after approximately 20~minutes of continuous monitoring. The human excels at contextual judgement---distinguishing a person from a discarded jacket---which remains beyond single-class object detectors.
+
+\paragraph{{\color{olive} Version C --- Safety-critical systems perspective.}}
+In safety-critical avionics, DO-178C classifies software by the severity of its failure consequences, from Level~E (no effect) to Level~A (catastrophic). Mapping this framework to SAR drone operations, the search phase is Level~D (minor): a missed detection delays the search but does not directly endanger anyone. The landing decision, however, is Level~B (hazardous): an autonomous landing on the wrong target wastes irreplaceable battery endurance, and an uncontrolled descent near a real casualty could cause injury. The system's split autonomy---fully autonomous search, human-gated landing---mirrors this severity gradient. The lower-consequence function operates at higher automation to maximise throughput; the higher-consequence function requires explicit human confirmation, accepting reduced speed in exchange for assured correctness.
+
+% =====================================================================
+\subsection*{4. Evaluation Opening Paragraph}
+% Current location: evaluation.tex, lines 1--3
+% =====================================================================
+
+\paragraph{{\color{blue} Version A --- Current (balanced, methodological).}}
+The plus/delta review below assesses technical performance honestly, drawing on simulation results, bench tests, field calibration data, and video analysis of DJI flight footage processed through the detection pipeline. Where outdoor flight data is unavailable due to weather cancellation, we state so explicitly and quantify the gap. Team-working aspects are addressed individually in D7.
+
+\paragraph{{\color{red} Version B --- Lead with the honest admission.}}
+This project did not achieve outdoor flight. Weather cancelled the single scheduled flight day, and no backup slot was available within the submission window. Every result presented below therefore comes from one of four sources: SITL simulation, bench testing with the physical hardware, lens and FOV calibration on a stationary rig, or post-hoc analysis of DJI survey video replayed through the detection pipeline. We consider this a significant limitation---and we are explicit about exactly which claims it affects and which it does not.
+
+\paragraph{{\color{olive} Version C --- Lead with the strongest result first.}}
+The system's detection pipeline achieves \SI{4.8}{FPS} on a \pounds75 Raspberry Pi~5 with 0.995~mAP$_{50}$, processes DJI survey video with a CEP$_{50}$ of \SI{2.3}{\metre} for target localisation, and runs the same \texttt{main.py} unmodified across simulation, bench, and companion-computer environments. These figures are drawn from bench benchmarks, calibration measurements, and video replay analysis; outdoor flight validation remains incomplete due to weather cancellation. The evaluation below presents nine quantified strengths and nine specific gaps, each with the evidence source and proposed remediation.
+
+% =====================================================================
+\subsection*{5. Conclusion / Summary Paragraph}
+% Current location: evaluation.tex, lines 140--141 (``Summary'' paragraph)
+% =====================================================================
+
+\paragraph{{\color{blue} Version A --- Achievements-first.}}
+The evaluation demonstrates a system that is architecturally sound and quantitatively characterised, but incompletely validated due to the absence of outdoor flight data. The nine plus items reflect deliberate engineering decisions---modular vision, progressive testing, simulation-first development---that would transfer directly to a second iteration. The nine delta items are predominantly operational gaps (no flight, uncompensated GPS lag, uncharacterised threshold) rather than architectural deficiencies, suggesting that the remaining risk is in parameter tuning and environmental validation rather than fundamental redesign.
+
+\paragraph{{\color{red} Version B --- Lessons-learned-first.}}
+The most important lesson from this project is that the engineering effort required to \emph{know whether a system works} rivals the effort required to \emph{build} it. The progressive testing framework, the 58 test scripts, the DJI video replay pipeline, and the sensor characterisation sessions collectively consumed more development hours than the state machine and detection code they were designed to validate. This investment was justified: it caught 12 defects at zero hardware risk and produced calibration data that would have been impossible to collect during a time-pressured flight. The system is ready for outdoor deployment with parameter tuning, not redesign---but the project underscores that ``ready for deployment'' and ``deployed'' are separated by scheduling, weather, and the irreducible uncertainty of real-world testing.
+
+\paragraph{{\color{olive} Version C --- Future-impact-first.}}
+What remains after this project is not a finished SAR product but something arguably more valuable: a verified, open-source architecture that any team can fork, recalibrate, and fly. The modular design (swap one TFLite file to change the detector, edit one config file to change the mission), the progressive testing framework (five tiers from bench to autonomous flight), and the dual-backend vision system (develop on a laptop GPU, deploy on a \pounds75 Pi) are reusable patterns that transfer to any small-UAS autonomy project. The immediate next step is straightforward---book a flight slot and execute Tiers~3 through~5 of the testing framework with the identical codebase. The longer-term contribution is a template demonstrating that meaningful autonomous SAR capability is achievable at one-tenth the cost of commercial platforms, provided the engineering process prioritises verifiability over feature count.
+
+\end{document}
