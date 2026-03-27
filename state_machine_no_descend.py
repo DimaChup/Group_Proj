@@ -864,6 +864,20 @@ class StateHandlersMixin:
         if (key == ord('b') or key == ord('B')) and self.state == State.SEARCH:
             self._trigger_beacon_redirect()
 
+        # MANUAL mode — queue detections for later investigation
+        if self.state == State.MANUAL and target_found:
+            self.calculate_target_gps(px_u, px_v)
+            if not self._is_inside_nfz(self.target_lat, self.target_lon) and \
+               not self._is_outside_search_area(self.target_lat, self.target_lon) and \
+               not self._is_near_known(self.target_lat, self.target_lon):
+                if not hasattr(self, '_detect_queue'):
+                    self._detect_queue = []
+                conf = getattr(self, 'current_conf', 0.5)
+                self._detect_queue.append((self.target_lat, self.target_lon, conf))
+                print(f"[MANUAL] Detection queued at ({self.target_lat:.6f}, {self.target_lon:.6f}) — will investigate on resume")
+            self.target_lat = 0
+            self.target_lon = 0
+
         # MANUAL mode — WASD flight controls
         if self.state == State.MANUAL and self.master:
             fly_speed = config.MANUAL_FLY_SPEED_MPS
@@ -943,8 +957,7 @@ class StateHandlersMixin:
                         print(f"Next queued target at ({q_lat:.6f}, {q_lon:.6f}) — {len(self._detect_queue)} remaining")
                         self.target_lat = q_lat
                         self.target_lon = q_lon
-                        self.departure_lat = self.lat  # update departure to current pos
-                        self.departure_lon = self.lon
+                        # Keep original departure point (where we left the scan line)
                         self._locked_target = (q_lat, q_lon)
                         self._set_state(State.CENTERING)
                     elif self.departure_lat != 0:
@@ -964,8 +977,7 @@ class StateHandlersMixin:
                         print(f"Next queued target at ({q_lat:.6f}, {q_lon:.6f}) — {len(self._detect_queue)} remaining")
                         self.target_lat = q_lat
                         self.target_lon = q_lon
-                        self.departure_lat = self.lat  # update departure to current pos
-                        self.departure_lon = self.lon
+                        # Keep original departure point (where we left the scan line)
                         self._locked_target = (q_lat, q_lon)
                         self._set_state(State.CENTERING)
                     # If we came from manual flight, return to manual departure
