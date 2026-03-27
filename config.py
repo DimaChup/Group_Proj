@@ -1,115 +1,72 @@
-# config.py
-# ==========================================
-#       CONFIGURATION & SETTINGS
-# ==========================================
+# config.py — All mission settings in one place.
+# Values only — no logic except auto-detection and KML loading.
+
 import os
 import platform
 import subprocess
 
-# --- AUTO-DETECT CONNECTION ---
+
+# ============================================================
+#  MODE
+# ============================================================
+# "SIMULATION" = map.jpg + mouse drawing   "REAL" = live camera + GPS
+# Override: export DRONE_MODE=REAL
+MODE = os.environ.get("DRONE_MODE", "SIMULATION")
+
+
+# ============================================================
+#  CONNECTION
+# ============================================================
 def _detect_connection():
-    """Auto-detect the best connection string. No hardcoded IPs."""
-    # 1. Environment variable always wins
+    """Auto-detect connection string: Pi serial → WSL gateway → localhost."""
+    # 1. Env var always wins
     env = os.environ.get("DRONE_CONN")
     if env:
         return env
-
-    # 2. Pi: check for serial ports
-    #    Use mavproxy UDP bridge (start mavproxy first!) because
-    #    Python 3.13 + pyserial has broken serial reads on Pi.
-    #    Start mavproxy with:
-    #      sudo /opt/mavlink/mavlink-venv/bin/mavproxy.py \
-    #        --master=/dev/ttyAMA0 --baudrate=921600 \
-    #        --out=udpout:127.0.0.1:14550
+    # 2. Pi: serial port present → use mavproxy UDP bridge
     for port in ["/dev/ttyAMA0", "/dev/ttyACM0", "/dev/ttyUSB0"]:
         if os.path.exists(port):
             return "udpin:0.0.0.0:14550"
-
-    # 3. WSL: auto-detect gateway IP to reach Windows SITL
+    # 3. WSL: reach Windows SITL via gateway IP
     if platform.system() == "Linux":
         try:
             with open("/proc/version", "r") as f:
                 if "microsoft" in f.read().lower():
-                    result = subprocess.run(["ip", "route", "show", "default"],
-                                            capture_output=True, text=True)
+                    result = subprocess.run(
+                        ["ip", "route", "show", "default"],
+                        capture_output=True, text=True,
+                    )
                     parts = result.stdout.strip().split()
                     if "via" in parts:
                         gw = parts[parts.index("via") + 1]
                         return f"tcp:{gw}:5762"
         except Exception:
             pass
-
     # 4. Default: Windows localhost
     return "tcp:127.0.0.1:5762"
 
-# --- OPERATION MODE ---
-# "SIMULATION": Uses map.jpg and mouse clicks for setup.
-# "REAL": Uses Real Camera and assumes waypoints are loaded/generated elsewhere.
-# Override with: export DRONE_MODE=REAL
-MODE = os.environ.get("DRONE_MODE", "SIMULATION")
-
-# --- FLIGHT CONNECTION ---
-# Auto-detects: Pi->serial, WSL->gateway IP, Windows->localhost
-# Override with: export DRONE_CONN=tcp:172.20.80.1:5762
-CONNECTION_STR = _detect_connection()   
+CONNECTION_STR = _detect_connection()  # Override: export DRONE_CONN=tcp:IP:PORT
 BAUD_RATE = int(os.environ.get("DRONE_BAUD", 921600))
 
-# --- ALTITUDES ---
-TARGET_ALT = 35.0 # Search Altitude (Meters)
-VERIFY_ALT = 15.0 # Descent Altitude for Verification
 
-# --- MAP CONFIGURATION (Simulation Only) ---
-MAP_FILE = "assets/map.jpg"
-DUMMY_FILE = "assets/dummy.png"
-CONE_FILE = "assets/cone.png"
-MAP_WIDTH_METERS = 480.0
-REF_LAT = 51.425106
-REF_LON = -2.672257
+# ============================================================
+#  FLIGHT — altitudes & speeds
+# ============================================================
+TARGET_ALT = 35.0               # Search altitude (m)
+VERIFY_ALT = 15.0               # Descent altitude for close-up verification (m)
 
-# --- TARGET SPECS ---
-TARGET_REAL_RADIUS_M = 0.15 # 15 cm radius
-DUMMY_HEIGHT_M = 1.8
-CONE_HEIGHT_M = 0.5         # traffic cone ~50cm
+TRANSIT_SPEED_MPS = 15.0        # Speed to/from search area
+SEARCH_SPEED_MPS = 10.0         # Default search pass speed
+FOCUS_SEARCH_SPEED_MPS = 5.0    # Slower in Focus Area (PLB zone)
 
-# --- CAMERA SPECS ---
-# Update these for the Raspberry Pi Global Shutter Camera
-SENSOR_WIDTH_MM = 5.02
-# Calibrate: hold camera 1m above tape measure, read visible width in mm
-# FOCAL_LENGTH_MM = 5020 / measured_width_mm
-FOCAL_LENGTH_MM = 5.46  # Calibrated: 92cm visible at 1m height (2026-03-11)
-IMAGE_W = 1456  # IMX296 native resolution (was 640x480, upgraded for full detail)
-IMAGE_H = 1088  # vision.py resizes to model input (640x640) for inference
-REAL_CAMERA_INDEX = 0 # Usually 0 for Pi Cam
-
-# --- CAMERA WHITE BALANCE (Pi only) ---
-# "auto", "daylight", "cloudy", "indoor", or "manual"
-# Use "daylight" or "cloudy" for outdoor flights to fix blue tint
-CAMERA_AWB_MODE = "auto"
-# Manual colour gains (red, blue) — only used when AWB_MODE = "manual"
-CAMERA_COLOUR_GAINS = (1.5, 1.2)
-# Software color correction (gray world algorithm) — not needed after channel fix
-CAMERA_COLOR_CORRECTION = False
-CAMERA_FLIP_180 = True   # Camera mounted inverted on drone — flip image 180°
-
-# --- CV DETECTION ---
-# All scripts use best.tflite in root. To swap model on Pi:
-#   cp cv_models/sar_v2_1088/best.tflite best.tflite  (retrained v2, recommended)
-#   cp cv_models/sar_640/best.tflite best.tflite       (earlier 640x640 training)
-CONFIDENCE_THRESHOLD = 0.2  # Min detection confidence (low enough to catch edge cases, operator filters FPs)
-
-# --- SPEED SETTINGS ---
-TRANSIT_SPEED_MPS = 15.0
-SEARCH_SPEED_MPS = 10.0
-FOCUS_SEARCH_SPEED_MPS = 5.0  # Slower in Focus Area (PLB beacon) — more detection time
-
-# Altitude-dependent speed: linear from (20m, 6 m/s) to (50m, 10 m/s)
-SPEED_ALT_LOW = 20.0   # metres — below this, use SPEED_AT_LOW
-SPEED_ALT_HIGH = 50.0  # metres — above this, use SPEED_AT_HIGH
-SPEED_AT_LOW = 6.0     # m/s at low altitude (less blur)
-SPEED_AT_HIGH = 10.0   # m/s at high altitude (faster coverage)
+# Altitude-dependent speed: linear interpolation
+SPEED_ALT_LOW = 20.0            # Below this altitude → SPEED_AT_LOW
+SPEED_ALT_HIGH = 50.0           # Above this altitude → SPEED_AT_HIGH
+SPEED_AT_LOW = 6.0              # m/s at low alt (less blur)
+SPEED_AT_HIGH = 10.0            # m/s at high alt (faster coverage)
 
 def speed_for_altitude(alt):
-    """Linear interpolation: slower at low alt (less blur), faster at high alt."""
+    """Linear interpolation: slower low, faster high."""
     if alt <= SPEED_ALT_LOW:
         return SPEED_AT_LOW
     if alt >= SPEED_ALT_HIGH:
@@ -117,28 +74,108 @@ def speed_for_altitude(alt):
     ratio = (alt - SPEED_ALT_LOW) / (SPEED_ALT_HIGH - SPEED_ALT_LOW)
     return SPEED_AT_LOW + ratio * (SPEED_AT_HIGH - SPEED_AT_LOW)
 
-# --- REAL MODE SEARCH AREA ---
-# --- SEARCH AREA ---
-# Load from AENGM0074.kml at runtime (see load_kml_zones() below)
-# Fallback: define manually if KML not found
+
+# ============================================================
+#  CAMERA — sensor & optics
+# ============================================================
+SENSOR_WIDTH_MM = 5.02          # IMX296 sensor width
+FOCAL_LENGTH_MM = 5.46          # Calibrated 2026-03-11 (92 cm visible at 1 m)
+IMAGE_W = 1456                  # IMX296 native width
+IMAGE_H = 1088                  # IMX296 native height
+REAL_CAMERA_INDEX = 0           # /dev/video0 on Pi
+
+# White balance (Pi picamera2 only)
+CAMERA_AWB_MODE = "auto"        # "auto", "daylight", "cloudy", "indoor", "manual"
+CAMERA_COLOUR_GAINS = (1.5, 1.2)  # (red, blue) — used only when AWB_MODE = "manual"
+CAMERA_COLOR_CORRECTION = False # Software gray-world correction (not needed)
+CAMERA_FLIP_180 = True          # Camera mounted inverted on drone
+
+
+# ============================================================
+#  DETECTION — CV thresholds & confirmation
+# ============================================================
+CONFIDENCE_THRESHOLD = 0.2      # Min YOLO confidence (low — operator filters FPs)
+DETECT_CONFIRM_FRAMES = 3       # Consecutive frames before triggering (--smart-detect)
+DETECT_LOCK_RADIUS_M = 5.0     # Ignore detections beyond this from locked target
+
+
+# ============================================================
+#  TARGET SPECS
+# ============================================================
+TARGET_REAL_RADIUS_M = 0.15     # Dummy radius (15 cm)
+DUMMY_HEIGHT_M = 1.8            # Dummy height for FOV calculations
+CONE_HEIGHT_M = 0.5             # Traffic cone height
+
+
+# ============================================================
+#  NFZ GEOFENCE
+# ============================================================
+NFZ_HARD_BOUNDARY_M = 3.0      # Inside this → force MANUAL
+NFZ_SOFT_BOUNDARY_M = 8.0      # Quadratic repulsion zone (legacy --nfz-repel)
+NFZ_WAYPOINT_BUFFER_M = 30.0   # Skip waypoints within this of NFZ
+NFZ_SLOW_ZONE_M = 20.0         # Speed scalar field active within this
+NFZ_MIN_SPEED_MPS = 0.3        # Speed at NFZ boundary
+NFZ_ZONE_MAX_SPEED_MPS = 3.0   # Speed at outer edge of slow zone
+NFZ_INNER_OFFSET_M = 20.0      # Inner (pink) polygon offset inside NFZ
+NFZ_INNER_RANGE_M = 23.0       # Repulsion active within this from inner polygon
+NFZ_PUSH_SPEED_MPS = 3.0       # Constant repulsive push speed
+
+
+# ============================================================
+#  SEARCH AREA — zones loaded from KML
+# ============================================================
+# Fallback polygon (overwritten by load_kml_zones if KML found)
 SEARCH_AREA_GPS = [
-    # (lat, lon) - polygon corners, at least 3 points
-    # These are overwritten by load_kml_zones() if AENGM0074.kml exists
     (51.42530, -2.67260),
     (51.42530, -2.67180),
     (51.42480, -2.67180),
     (51.42480, -2.67260),
 ]
-
-# These get populated by load_kml_zones()
 FLIGHT_AREA_GPS = []
 SSSI_GPS = []
 TAKEOFF_GPS = None
 FOCUS_AREA_GPS = []
 
+REJECTED_TARGET_RADIUS_M = 5.0  # Skip detections near rejected/IOI targets
+MAX_RESCAN_PASSES = 3            # Altitude-drop rescan passes before giving up
+RESCAN_ALT_FACTOR = 0.8          # Altitude multiplier per rescan pass
+RESCAN_ALT_FLOOR_M = 15.0       # Minimum rescan altitude
+
+DIAGONAL_YAW_OFFSET_DEG = 0    # Yaw offset at turn (0 = face scan line, None = auto)
+
+
+# ============================================================
+#  SIMULATION MAP
+# ============================================================
+MAP_FILE = "assets/map.jpg"
+DUMMY_FILE = "assets/dummy.png"
+CONE_FILE = "assets/cone.png"
+MAP_WIDTH_METERS = 480.0
+REF_LAT = 51.425106             # Map top-left corner (do NOT change)
+REF_LON = -2.672257             # Map top-left corner (do NOT change)
+
+
+# ============================================================
+#  MANUAL FLIGHT (reserved — not yet wired)
+# ============================================================
+MANUAL_FLY_SPEED_MPS = 5.0     # WASD horizontal speed
+MANUAL_CLIMB_RATE_MPS = 2.0    # R/F vertical speed
+MANUAL_YAW_STEP_DEG = 10       # Q/E yaw step per keypress
+MANUAL_YAW_RATE_DEGS = 30.0    # Yaw rotation speed
+
+
+# ============================================================
+#  LOGGING
+# ============================================================
+LOG_FILE = "logs/flight_log.csv"
+
+
+# ============================================================
+#  KML LOADER
+# ============================================================
 def load_kml_zones(kml_path="flight_plans/AENGM0074.kml"):
     """Parse KML file and populate GPS zone variables."""
-    global SEARCH_AREA_GPS, FLIGHT_AREA_GPS, SSSI_GPS, TAKEOFF_GPS, FOCUS_AREA_GPS, REF_LAT, REF_LON
+    global SEARCH_AREA_GPS, FLIGHT_AREA_GPS, SSSI_GPS, TAKEOFF_GPS, FOCUS_AREA_GPS
     import xml.etree.ElementTree as ET
 
     if not os.path.exists(kml_path):
@@ -150,14 +187,13 @@ def load_kml_zones(kml_path="flight_plans/AENGM0074.kml"):
     root = tree.getroot()
 
     def parse_coords(coord_text):
-        """Parse KML coordinate string (lon,lat,alt) → list of (lat, lon)."""
+        """Parse KML coordinate string (lon,lat,alt) → [(lat, lon), ...]."""
         pts = []
         for token in coord_text.strip().split():
             parts = token.split(",")
             if len(parts) >= 2:
                 lon, lat = float(parts[0]), float(parts[1])
                 pts.append((lat, lon))
-        # Remove closing point if it duplicates the first
         if len(pts) > 1 and pts[0] == pts[-1]:
             pts = pts[:-1]
         return pts
@@ -176,12 +212,11 @@ def load_kml_zones(kml_path="flight_plans/AENGM0074.kml"):
                 lon, lat = float(parts[0]), float(parts[1])
                 if "take" in name.lower() or "off" in name.lower():
                     TAKEOFF_GPS = (lat, lon)
-                    # NOTE: Do NOT overwrite REF_LAT/REF_LON here.
-                    # Those define the map.jpg origin (top-left corner).
-                    # Changing them breaks all GPS↔pixel conversions.
 
         # Polygon placemarks
-        coords = pm.find(".//kml:Polygon/kml:outerBoundaryIs/kml:LinearRing/kml:coordinates", ns)
+        coords = pm.find(
+            ".//kml:Polygon/kml:outerBoundaryIs/kml:LinearRing/kml:coordinates", ns
+        )
         if coords is not None:
             pts = parse_coords(coords.text)
             lower = name.lower()
@@ -200,42 +235,3 @@ def load_kml_zones(kml_path="flight_plans/AENGM0074.kml"):
     print(f"  Flight Area:  {len(FLIGHT_AREA_GPS)} corners")
     print(f"  SSSI:         {len(SSSI_GPS)} corners")
     return True
-
-# Call load_kml_zones() explicitly when needed:
-#   import config
-#   config.load_kml_zones()         # default: AENGM0074.kml
-#   config.load_kml_zones("path/to/other.kml")
-
-# --- NFZ GEOFENCE TUNING ---
-NFZ_HARD_BOUNDARY_M = 3.0       # Auto-switch to MANUAL if closer than this to NFZ
-NFZ_SOFT_BOUNDARY_M = 8.0       # Quadratic repulsion zone (legacy --nfz-repel mode)
-NFZ_WAYPOINT_BUFFER_M = 30.0    # Skip planned waypoints within this of NFZ
-NFZ_SLOW_ZONE_M = 20.0          # Speed scalar field active within this distance of NFZ
-NFZ_MIN_SPEED_MPS = 0.3         # Minimum speed at NFZ boundary
-NFZ_ZONE_MAX_SPEED_MPS = 3.0    # Speed at outer edge of slow zone
-NFZ_INNER_OFFSET_M = 20.0       # Inner (pink) polygon offset inside NFZ boundary
-NFZ_INNER_RANGE_M = 23.0        # Repulsion active within this dist from inner polygon
-NFZ_PUSH_SPEED_MPS = 3.0        # Constant repulsive push speed (m/s)
-
-# --- MANUAL FLIGHT ---
-MANUAL_FLY_SPEED_MPS = 5.0      # WASD horizontal speed
-MANUAL_CLIMB_RATE_MPS = 2.0     # R/F vertical speed
-MANUAL_YAW_STEP_DEG = 10        # Q/E yaw step per keypress
-MANUAL_YAW_RATE_DEGS = 30.0     # Yaw rotation speed for Q/E and alignment
-
-# --- DIAGONAL REALIGN ---
-# Yaw offset from scan direction when re-orienting at each search pass.
-# None = auto-compute from atan(IMAGE_W/IMAGE_H) = 53.2 deg (optimal diagonal).
-# 0 = face along scan line (no rotation). Any value = custom angle in degrees.
-DIAGONAL_YAW_OFFSET_DEG = 0
-
-# --- SEARCH TUNING ---
-REJECTED_TARGET_RADIUS_M = 5.0  # Skip detections within this radius of rejected/IOI targets (GPS noise margin)
-DETECT_CONFIRM_FRAMES = 3       # Consecutive detection frames required before triggering (--smart-detect)
-DETECT_LOCK_RADIUS_M = 5.0     # During CENTERING, ignore detections further than this from locked target
-MAX_RESCAN_PASSES = 3           # Number of altitude-drop rescan passes
-RESCAN_ALT_FACTOR = 0.8         # Altitude multiplier per rescan pass
-RESCAN_ALT_FLOOR_M = 15.0       # Minimum rescan altitude
-
-# --- LOGGING ---
-LOG_FILE = "logs/flight_log.csv"
