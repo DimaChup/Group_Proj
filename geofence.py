@@ -20,10 +20,10 @@ class NFZGeofence:
         self.sssi_polygon_gps = config.SSSI_GPS
         self._sssi_contour = None  # Cached pixel contour
 
-        # Buffer distances (meters)
-        self.HARD_BOUNDARY = 3.0     # Auto-manual if closer than this
-        self.SOFT_BOUNDARY = 8.0     # Repulsive push if closer (quadratic, 10 m/s max)
-        self.WAYPOINT_BUFFER = 30.0  # For filter_waypoints() if used
+        # Buffer distances from config.py
+        self.HARD_BOUNDARY = config.NFZ_HARD_BOUNDARY_M
+        self.SOFT_BOUNDARY = config.NFZ_SOFT_BOUNDARY_M
+        self.WAYPOINT_BUFFER = config.NFZ_WAYPOINT_BUFFER_M
 
     def _get_contour(self):
         """Cache polygon as cv2 contour format."""
@@ -173,7 +173,7 @@ class NFZGeofence:
         push_dy = (push_dy / push_len) * repulsion_strength * self.geo.pix_per_m
 
         # Convert pixel offset to GPS offset
-        offset_lat, offset_lon = self.geo.pixels_to_gps(int(push_dx), int(push_dy))
+        offset_lat, offset_lon = self.geo.pixels_to_gps(push_dx, push_dy)
         offset_lat -= config.REF_LAT
         offset_lon -= config.REF_LON
 

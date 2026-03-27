@@ -207,6 +207,9 @@ def load_kml_zones(kml_path="flight_plans/AENGM0074.kml"):
 #   config.load_kml_zones("path/to/other.kml")
 
 # --- NFZ GEOFENCE TUNING ---
+NFZ_HARD_BOUNDARY_M = 3.0       # Auto-switch to MANUAL if closer than this to NFZ
+NFZ_SOFT_BOUNDARY_M = 8.0       # Quadratic repulsion zone (legacy --nfz-repel mode)
+NFZ_WAYPOINT_BUFFER_M = 30.0    # Skip planned waypoints within this of NFZ
 NFZ_SLOW_ZONE_M = 20.0          # Speed scalar field active within this distance of NFZ
 NFZ_MIN_SPEED_MPS = 0.3         # Minimum speed at NFZ boundary
 NFZ_ZONE_MAX_SPEED_MPS = 3.0    # Speed at outer edge of slow zone

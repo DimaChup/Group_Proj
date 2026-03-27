@@ -7,7 +7,6 @@ import math
 import time
 from pymavlink import mavutil
 
-from gps_utils import gps_distance
 
 # ArduCopter custom mode numbers
 # https://ardupilot.org/copter/docs/parameters.html#fltmode1
@@ -196,7 +195,7 @@ class NavigationController:
             self.master.target_system, self.master.target_component,
             mavutil.mavlink.MAV_CMD_NAV_LAND, 0,
             0, 0, 0, 0,
-            int(lat * 1e7), int(lon * 1e7), 0)
+            lat, lon, 0)  # command_long takes float degrees, NOT int*1e7
 
     # ── Mode changes ─────────────────────────────────────────────────
 
