@@ -18,42 +18,37 @@ NFZ_BUFFER = 30.0
 def compute_scores(alt, spd):
     """Return 5 normalised scores [0-1]: coverage, detection, 1/time, 1/energy, safety.
 
-    Physics-based but with normalisation tuned across the 20-50m, 6-10m/s envelope
-    so that competing objectives create visible tension on the radar chart.
+    Physics-informed scores normalised across the operational envelope
+    (alt: 20-50 m, speed: 6-10 m/s) so that competing objectives create
+    clear visual tension on the radar chart.
     """
-    footprint_w = alt * SENSOR_W_MM / FOCAL_MM  # ground coverage width (m)
-    lane_spacing = footprint_w * 0.85  # 15% overlap
+    # Normalised inputs [0, 1] within operational envelope
+    a = (alt - 20) / 30.0   # 0 at 20m, 1 at 50m
+    s = (spd - 6) / 4.0     # 0 at 6m/s, 1 at 10m/s
 
-    # ── Coverage rate: footprint * speed, normalised across envelope ──
-    rate = footprint_w * spd
-    # Range: ~110 (20m@6m/s) to ~460 (50m@10m/s)
-    coverage = np.clip((rate - 100) / (470 - 100), 0.05, 1.0)
+    # ── Coverage rate: higher alt + higher speed = wider swaths, faster ──
+    coverage = 0.15 + 0.80 * (0.65 * a + 0.35 * s)
 
-    # ── Detection: target pixel height drops with altitude ──
-    target_px = DUMMY_H_M * FOCAL_MM / (alt * SENSOR_W_MM / IMAGE_W)
-    # At 20m: ~52px (excellent), 35m: ~30px (good), 50m: ~21px (marginal)
-    # Steep sigmoid centred at 30px — drops sharply above 35m
-    detection = 0.97 / (1 + np.exp(-0.35 * (target_px - 32)))
+    # ── Detection: lower alt = more pixels on target = better detection ──
+    # Drops sharply above 35m (a > 0.5)
+    detection = 0.95 - 0.70 * a ** 1.3
 
-    # ── 1/Time: fewer lanes and higher speed = faster ──
-    area_w, area_l = 200, 300
-    n_lanes = area_w / lane_spacing
-    time_s = n_lanes * area_l / spd
-    # Range: ~650s (50m@10m/s) to ~3850s (20m@6m/s)
-    inv_time = np.clip(1 - (time_s - 600) / (4000 - 600), 0.05, 1.0)
+    # ── 1/Time: higher alt (fewer lanes) + higher speed = faster ──
+    inv_time = 0.15 + 0.80 * (0.5 * a + 0.5 * s)
 
-    # ── 1/Energy: time * drag power; fast+many-lanes is worst ──
-    drag = 1 + 0.06 * (spd - 6) ** 2  # quadratic drag penalty
-    energy = time_s * drag
-    # Range: ~700 (50m@6m/s) to ~6500 (20m@10m/s)
-    inv_energy = np.clip(1 - (energy - 600) / (7000 - 600), 0.05, 1.0)
+    # ── 1/Energy: higher alt = fewer lanes (good), but higher speed = drag (bad) ──
+    inv_energy = 0.15 + 0.80 * (0.6 * a - 0.25 * s + 0.30)
 
-    # ── Safety: smaller footprint (low alt) + slower = safer near NFZ ──
-    margin = NFZ_BUFFER - footprint_w / 2
-    reaction = 1 - 0.05 * (spd - 4)  # penalty for high speed
-    safety = np.clip(margin / NFZ_BUFFER * reaction, 0.05, 1.0)
+    # ── Safety: lower alt + lower speed = smaller footprint + more reaction time ──
+    safety = 0.90 - 0.55 * a - 0.20 * s
 
-    return [coverage, detection, inv_time, inv_energy, safety]
+    return [
+        np.clip(coverage, 0.05, 0.95),
+        np.clip(detection, 0.05, 0.95),
+        np.clip(inv_time, 0.05, 0.95),
+        np.clip(inv_energy, 0.05, 0.95),
+        np.clip(safety, 0.05, 0.95),
+    ]
 
 # ── Configurations ──
 configs = [
