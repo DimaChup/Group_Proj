@@ -97,6 +97,7 @@ CAMERA_FLIP_180 = True          # Camera mounted inverted on drone
 CONFIDENCE_THRESHOLD = 0.2      # Min YOLO confidence (low — operator filters FPs)
 DETECT_CONFIRM_FRAMES = 3       # Consecutive frames before triggering (--smart-detect)
 DETECT_LOCK_RADIUS_M = 5.0     # Ignore detections beyond this from locked target
+MAX_DETECT_QUEUE = 20          # Max queued detections; oldest dropped when exceeded
 
 
 # ============================================================

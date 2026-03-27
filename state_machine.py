@@ -92,6 +92,16 @@ class StateHandlersMixin:
                 return result < 0
         return False
 
+    def _enqueue_detection(self, lat, lon, conf):
+        """Append a detection to the queue, enforcing MAX_DETECT_QUEUE (drop oldest)."""
+        if not hasattr(self, '_detect_queue'):
+            self._detect_queue = []
+        self._detect_queue.append((lat, lon, conf))
+        max_q = getattr(config, 'MAX_DETECT_QUEUE', 20)
+        while len(self._detect_queue) > max_q:
+            dropped = self._detect_queue.pop(0)
+            print(f"[QUEUE] Dropped oldest detection ({dropped[0]:.6f}, {dropped[1]:.6f}) — queue full ({max_q})")
+
     def _pop_valid_target(self):
         """Pop next valid target from queue, skipping invalid ones."""
         while getattr(self, '_detect_queue', None) and len(self._detect_queue) > 0:
@@ -529,7 +539,10 @@ class StateHandlersMixin:
         elapsed = time.time() - self.state_start_time
         self._hover_elapsed = elapsed
 
-        SERVO_CH, SERVO_CLOSED, SERVO_S1, SERVO_S2 = 9, 1500, 1300, 1100
+        SERVO_CH = config.SERVO_CHANNEL
+        SERVO_CLOSED = config.SERVO_CLOSE_PWM
+        SERVO_S1 = config.SERVO_PARTIAL_PWM
+        SERVO_S2 = config.SERVO_FULL_PWM
 
         if elapsed >= 3.0 and not hasattr(self, '_servo_stage1_done'):
             self._servo_stage1_done = True
@@ -649,17 +662,23 @@ class StateHandlersMixin:
             try:
                 with open(fa_path, encoding='utf-8') as f:
                     data = json.load(f)
+                if not isinstance(data, list):
+                    raise ValueError(f"Expected a JSON list, got {type(data).__name__}")
                 loaded = []
-                for wp in data:
+                for i, wp in enumerate(data):
                     if isinstance(wp, dict):
-                        loaded.append((wp["lat"], wp["lon"]))
+                        lat, lon = float(wp["lat"]), float(wp["lon"])
                     else:
-                        loaded.append((wp[0], wp[1]))
-                if len(loaded) >= 3:
-                    config.FOCUS_AREA_GPS = loaded
-                    print(f"[PLB] Loaded focus_area.json: {len(loaded)} points")
+                        lat, lon = float(wp[0]), float(wp[1])
+                    if not (-90 <= lat <= 90 and -180 <= lon <= 180):
+                        raise ValueError(f"Point {i} out of range: ({lat}, {lon})")
+                    loaded.append((lat, lon))
+                if len(loaded) < 3:
+                    raise ValueError(f"Need >= 3 points, got {len(loaded)}")
+                config.FOCUS_AREA_GPS = loaded
+                print(f"[PLB] Loaded focus_area.json: {len(loaded)} points")
             except Exception as e:
-                print(f"[PLB] Failed to read {fa_path}: {e}")
+                print(f"[PLB] Failed to read {fa_path}: {e} — using default Focus Area")
 
         if not config.FOCUS_AREA_GPS or len(config.FOCUS_AREA_GPS) < 3:
             print("[PLB] No Focus Area defined — ignoring beacon")
