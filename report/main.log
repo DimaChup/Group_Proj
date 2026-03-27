@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.3.27)  27 MAR 2026 21:08
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.3.27)  27 MAR 2026 21:18
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1512,6 +1512,9 @@ LaTeX Warning: Label `sec:experiment-scripts' multiply defined.
 
 LaTeX Warning: Label `eq:footprint' multiply defined.
 
+
+LaTeX Warning: Label `sec:plb-redirect' multiply defined.
+
 )
 \openout1 = `main.aux'.
 
@@ -1683,7 +1686,21 @@ Package biblatex Warning: The following entry could not be found
 
 Package biblatex Warning: The following entry could not be found
 (biblatex)                in the database:
+(biblatex)                golden2006hypothermia
+(biblatex)                Please verify the spelling and rerun
+(biblatex)                LaTeX afterwards.
+
+
+Package biblatex Warning: The following entry could not be found
+(biblatex)                in the database:
 (biblatex)                settles2009active
+(biblatex)                Please verify the spelling and rerun
+(biblatex)                LaTeX afterwards.
+
+
+Package biblatex Warning: The following entry could not be found
+(biblatex)                in the database:
+(biblatex)                stolaroff2018energy
 (biblatex)                Please verify the spelling and rerun
 (biblatex)                LaTeX afterwards.
 
@@ -1789,70 +1806,70 @@ n/10 tflite-runtime
 
 [8{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-rmsc.en
 c}] [9]) (sections/system_description.tex
-<figs/mission_overview.pdf, id=1177, 488.03644pt x 464.76385pt>
+<figs/mission_overview.pdf, id=1233, 488.03644pt x 464.76385pt>
 File: figs/mission_overview.pdf Graphic file (type pdf)
 <use figs/mission_overview.pdf>
 Package pdftex.def Info: figs/mission_overview.pdf  used on input line 12.
 (pdftex.def)             Requested size: 512.14963pt x 487.76114pt.
  [10 <./figs/mission_overview.pdf>]
-<figs/architecture.pdf, id=1273, 654.40488pt x 570.93298pt>
+<figs/architecture.pdf, id=1329, 654.40488pt x 570.93298pt>
 File: figs/architecture.pdf Graphic file (type pdf)
 <use figs/architecture.pdf>
 Package pdftex.def Info: figs/architecture.pdf  used on input line 50.
 (pdftex.def)             Requested size: 435.3303pt x 379.81377pt.
-<figs/pi_system.pdf, id=1274, 873.46724pt x 681.93645pt>
+<figs/pi_system.pdf, id=1330, 873.46724pt x 681.93645pt>
 File: figs/pi_system.pdf Graphic file (type pdf)
 <use figs/pi_system.pdf>
 Package pdftex.def Info: figs/pi_system.pdf  used on input line 57.
 (pdftex.def)             Requested size: 384.11221pt x 299.88647pt.
-<figs/geofence_diagram.pdf, id=1278, 974.55922pt x 699.68274pt>
+<figs/geofence_diagram.pdf, id=1334, 974.55922pt x 699.68274pt>
 File: figs/geofence_diagram.pdf Graphic file (type pdf)
 <use figs/geofence_diagram.pdf>
 Package pdftex.def Info: figs/geofence_diagram.pdf  used on input line 94.
 (pdftex.def)             Requested size: 512.14963pt x 367.71262pt.
 
 [11]
-<figs/cv_pipeline.pdf, id=1294, 797.37903pt x 195.129pt>
+<figs/cv_pipeline.pdf, id=1350, 797.37903pt x 195.129pt>
 File: figs/cv_pipeline.pdf Graphic file (type pdf)
 <use figs/cv_pipeline.pdf>
 Package pdftex.def Info: figs/cv_pipeline.pdf  used on input line 112.
 (pdftex.def)             Requested size: 435.3303pt x 106.52927pt.
  [12 <./figs/architecture.pdf>]
-<figs/coverage_vs_time.pdf, id=1460, 425.99664pt x 256.37357pt>
+<figs/coverage_vs_time.pdf, id=1516, 425.99664pt x 256.37357pt>
 File: figs/coverage_vs_time.pdf Graphic file (type pdf)
 <use figs/coverage_vs_time.pdf>
 Package pdftex.def Info: figs/coverage_vs_time.pdf  used on input line 142.
 (pdftex.def)             Requested size: 409.72125pt x 246.59306pt.
-<figs/state_machine.pdf, id=1463, 547.08388pt x 498.663pt>
+<figs/state_machine.pdf, id=1519, 547.08388pt x 498.663pt>
 File: figs/state_machine.pdf Graphic file (type pdf)
 <use figs/state_machine.pdf>
 Package pdftex.def Info: figs/state_machine.pdf  used on input line 154.
 (pdftex.def)             Requested size: 486.54057pt x 443.48909pt.
  [13 <./figs/pi_system.pdf>] [14 <./figs/geofence_diagram.pdf> <./figs/cv_pipel
 ine.pdf>]
-<figs/gps_bullseye.pdf, id=1872, 415.84798pt x 426.3403pt>
+<figs/gps_bullseye.pdf, id=1928, 415.84798pt x 426.3403pt>
 File: figs/gps_bullseye.pdf Graphic file (type pdf)
 <use figs/gps_bullseye.pdf>
 Package pdftex.def Info: figs/gps_bullseye.pdf  used on input line 185.
 (pdftex.def)             Requested size: 245.82962pt x 252.033pt.
-<figs/gps_error_direction.pdf, id=1873, 743.24844pt x 354.82443pt>
+<figs/gps_error_direction.pdf, id=1929, 743.24844pt x 354.82443pt>
 File: figs/gps_error_direction.pdf Graphic file (type pdf)
 <use figs/gps_error_direction.pdf>
 Package pdftex.def Info: figs/gps_error_direction.pdf  used on input line 192.
 (pdftex.def)             Requested size: 245.82962pt x 117.35771pt.
-<figs/gps_convergence.pdf, id=1874, 403.13737pt x 260.18466pt>
+<figs/gps_convergence.pdf, id=1930, 403.13737pt x 260.18466pt>
 File: figs/gps_convergence.pdf Graphic file (type pdf)
 <use figs/gps_convergence.pdf>
 Package pdftex.def Info: figs/gps_convergence.pdf  used on input line 204.
 (pdftex.def)             Requested size: 245.82962pt x 158.66078pt.
-<figs/estimator_comparison.pdf, id=1875, 499.19498pt x 316.54886pt>
+<figs/estimator_comparison.pdf, id=1931, 499.19498pt x 316.54886pt>
 File: figs/estimator_comparison.pdf Graphic file (type pdf)
 <use figs/estimator_comparison.pdf>
 Package pdftex.def Info: figs/estimator_comparison.pdf  used on input line 211.
 
 (pdftex.def)             Requested size: 245.82962pt x 155.88312pt.
  [15 <./figs/coverage_vs_time.pdf>]
-<figs/mission_timeline.pdf, id=1925, 723.18619pt x 291.45325pt>
+<figs/mission_timeline.pdf, id=1981, 723.18619pt x 291.45325pt>
 File: figs/mission_timeline.pdf Graphic file (type pdf)
 <use figs/mission_timeline.pdf>
 Package pdftex.def Info: figs/mission_timeline.pdf  used on input line 237.
@@ -2115,22 +2132,22 @@ Underfull \hbox (badness 10000) in paragraph at lines 57--57
 
 LaTeX Warning: Float too large for page by 172.71274pt on input line 58.
 
-<figs/conf_vs_alt.pdf, id=2474, 359.22015pt x 256.37357pt>
+<figs/conf_vs_alt.pdf, id=2530, 359.22015pt x 256.37357pt>
 File: figs/conf_vs_alt.pdf Graphic file (type pdf)
 <use figs/conf_vs_alt.pdf>
 Package pdftex.def Info: figs/conf_vs_alt.pdf  used on input line 67.
 (pdftex.def)             Requested size: 245.82962pt x 175.44661pt.
-<figs/det_vs_speed.pdf, id=2475, 362.40393pt x 256.37357pt>
+<figs/det_vs_speed.pdf, id=2531, 362.40393pt x 256.37357pt>
 File: figs/det_vs_speed.pdf Graphic file (type pdf)
 <use figs/det_vs_speed.pdf>
 Package pdftex.def Info: figs/det_vs_speed.pdf  used on input line 74.
 (pdftex.def)             Requested size: 245.82962pt x 173.90921pt.
-<figs/latency_breakdown.pdf, id=2476, 362.54507pt x 254.02415pt>
+<figs/latency_breakdown.pdf, id=2532, 362.54507pt x 254.02415pt>
 File: figs/latency_breakdown.pdf Graphic file (type pdf)
 <use figs/latency_breakdown.pdf>
 Package pdftex.def Info: figs/latency_breakdown.pdf  used on input line 86.
 (pdftex.def)             Requested size: 245.82962pt x 172.24962pt.
-<figs/detection_heatmap.pdf, id=2477, 550.9432pt x 380.144pt>
+<figs/detection_heatmap.pdf, id=2533, 550.9432pt x 380.144pt>
 File: figs/detection_heatmap.pdf Graphic file (type pdf)
 <use figs/detection_heatmap.pdf>
 Package pdftex.def Info: figs/detection_heatmap.pdf  used on input line 93.
@@ -2555,7 +2572,7 @@ File: figs/conf_vs_alt.pdf Graphic file (type pdf)
 <use figs/conf_vs_alt.pdf>
 Package pdftex.def Info: figs/conf_vs_alt.pdf  used on input line 237.
 (pdftex.def)             Requested size: 384.11221pt x 274.13704pt.
-<figs/detection_envelope.pdf, id=3088, 571.09987pt x 354.0703pt>
+<figs/detection_envelope.pdf, id=3144, 571.09987pt x 354.0703pt>
 File: figs/detection_envelope.pdf Graphic file (type pdf)
 <use figs/detection_envelope.pdf>
 Package pdftex.def Info: figs/detection_envelope.pdf  used on input line 247.
@@ -2567,7 +2584,7 @@ File: lstlang1.sty 2025/11/14 1.11b listings language file
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/listings\lstlang1.sty
 File: lstlang1.sty 2025/11/14 1.11b listings language file
 )
-<figs/blur_vs_altitude.pdf, id=3219, 788.11186pt x 357.6005pt>
+<figs/blur_vs_altitude.pdf, id=3275, 788.11186pt x 357.6005pt>
 File: figs/blur_vs_altitude.pdf Graphic file (type pdf)
 <use figs/blur_vs_altitude.pdf>
 Package pdftex.def Info: figs/blur_vs_altitude.pdf  used on input line 364.
@@ -2933,12 +2950,226 @@ LaTeX Warning: Reference `sec:focus-area' on page 84 undefined on input line 82
 LaTeX Warning: Citation 'settles2009active' on page 87 undefined on input line 
 76.
 
-) (sections/alternatives.tex [87] [88] [89] [90] [91] [92] [93] [94] [95]
-[96] [97] [98] (main.aux)
+) (sections/search_optimization.tex
+
+LaTeX Warning: Citation 'golden2006hypothermia' on page 87 undefined on input l
+ine 11.
+
+[87]
+
+LaTeX Warning: Citation 'stolaroff2018energy' on page 88 undefined on input lin
+e 31.
+
+[88] [89]) (sections/focus_and_repulsive.tex
+
+LaTeX Warning: Reference `sec:focus-area' on page 90 undefined on input line 4.
+
+
+LaTeX Font Info:    Trying to load font information for OMS+lmtt on input line 
+18.
+LaTeX Font Info:    No file OMSlmtt.fd. on input line 18.
+
+LaTeX Font Warning: Font shape `OMS/lmtt/m/n' undefined
+(Font)              using `OMS/cmsy/m/n' instead
+(Font)              for symbol `textbraceleft' on input line 18.
+
+
+LaTeX Warning: Reference `sec:algorithm' on page 90 undefined on input line 26.
+
+
+
+! LaTeX Error: Environment algorithm undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.28 \begin{algorithm}
+                      [ht]
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! Package caption Error: \caption outside float.
+
+See the caption package documentation for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.29 \caption
+             {PLB beacon redirect}\label{alg:beacon-redirect}
+If you do not understand this error, please take a closer look
+at the documentation of the `caption' package, especially the
+section about errors.
+Try typing  <return>  to proceed.
+If that doesn't work, type  X <return>  to quit.
+
+
+! LaTeX Error: Environment algorithmic undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.30 \begin{algorithmic}
+                        [1]
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+! Undefined control sequence.
+l.31 \Require
+              PLB signal received (B key or timer expiry)
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Undefined control sequence.
+l.32 \Ensure
+             Search redirected to focus area polygon
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Undefined control sequence.
+l.33 \If
+        {already triggered} \Return \EndIf
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Undefined control sequence.
+l.33 \If{already triggered} \Return
+                                    \EndIf
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Undefined control sequence.
+l.33 \If{already triggered} \Return \EndIf
+                                          
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Undefined control sequence.
+l.34 \State
+            Load focus polygon from JSON (or use fallback GPS)
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Undefined control sequence.
+l.35 \State
+            Validate $\geq 3$ vertices, each within valid lat/lon range
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Undefined control sequence.
+l.36 \State
+            Convert GPS vertices to pixel coordinates via \textsc{GeoTransfo...
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Undefined control sequence.
+l.37 \State
+            Replace planner search polygon $\gets$ focus polygon
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Undefined control sequence.
+l.38 \State
+            Generate new lawnmower pattern from current position
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Undefined control sequence.
+l.39 \State
+            $\texttt{wp\_index} \gets 0$; $\texttt{rescan\_pass} \gets 0$
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Undefined control sequence.
+l.40 \State
+            Set \texttt{\_beacon\_triggered} $\gets$ \textbf{true}
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Undefined control sequence.
+l.41 \State
+            Cap search speed to \SI{5}{\metre\per\second}
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+
+! LaTeX Error: \begin{document} ended by \end{algorithmic}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.42 \end{algorithmic}
+                      
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: \begin{document} ended by \end{algorithm}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.43 \end{algorithm}
+                    
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+[90] [91]) (sections/alternatives.tex [92] [93] [94] [95] [96] [97] [98]
+[99] [100] [101] [102] [103] [104] (main.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-01-19>
  ***********
+
+
+LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 
 
 LaTeX Warning: There were undefined references.
@@ -2947,55 +3178,58 @@ LaTeX Warning: There were undefined references.
 LaTeX Warning: There were multiply-defined labels.
 
 Package rerunfilecheck Info: File `main.out' has not changed.
-(rerunfilecheck)             Checksum: B784773B0104351D73146AAB386B7FD4;49256.
+(rerunfilecheck)             Checksum: FEA80D1DE575FD1F506C4E6E13835DD7;52345.
 Package logreq Info: Writing requests to 'main.run.xml'.
 \openout1 = `main.run.xml'.
 
  ) ) 
 Here is how much of TeX's memory you used:
- 53284 strings out of 467866
- 1205369 string characters out of 5417351
- 2235959 words of memory out of 5000000
- 80091 multiletter control sequences out of 15000+600000
- 733937 words of font info for 349 fonts, out of 8000000 for 9000
+ 53453 strings out of 467866
+ 1208203 string characters out of 5417351
+ 2257993 words of memory out of 5000000
+ 80170 multiletter control sequences out of 15000+600000
+ 735340 words of font info for 359 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  99i,20n,118p,1475b,2559s stack positions out of 10000i,1000n,20000p,200000b,200000s
-<C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx1
-0.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmb
-x12.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/l
-mbx7.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/
-lmbx8.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm
-/lmbx9.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/l
-m/lmcsc10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/publi
-c/lm/lmex10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/pub
-lic/lm/lmmi10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/p
-ublic/lm/lmmi6.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/
-public/lm/lmmi7.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1
-/public/lm/lmmi8.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type
-1/public/lm/lmmi9.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/typ
-e1/public/lm/lmmib10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/
-type1/public/lm/lmr10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts
-/type1/public/lm/lmr12.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/font
-s/type1/public/lm/lmr6.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/font
-s/type1/public/lm/lmr7.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/font
-s/type1/public/lm/lmr8.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/font
-s/type1/public/lm/lmr9.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/font
-s/type1/public/lm/lmri10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fo
-nts/type1/public/lm/lmri12.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/
-fonts/type1/public/lm/lmri9.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX
-/fonts/type1/public/lm/lmsy10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKT
-eX/fonts/type1/public/lm/lmsy6.pfb><C:/Users/Bristol/AppData/Local/Programs/MiK
-TeX/fonts/type1/public/lm/lmsy7.pfb><C:/Users/Bristol/AppData/Local/Programs/Mi
-KTeX/fonts/type1/public/lm/lmsy8.pfb><C:/Users/Bristol/AppData/Local/Programs/M
-iKTeX/fonts/type1/public/lm/lmsy9.pfb><C:/Users/Bristol/AppData/Local/Programs/
-MiKTeX/fonts/type1/public/lm/lmtk10.pfb><C:/Users/Bristol/AppData/Local/Program
-s/MiKTeX/fonts/type1/public/lm/lmtt10.pfb><C:/Users/Bristol/AppData/Local/Progr
-ams/MiKTeX/fonts/type1/public/lm/lmtt8.pfb><C:/Users/Bristol/AppData/Local/Prog
-rams/MiKTeX/fonts/type1/public/lm/lmtt9.pfb><C:/Users/Bristol/AppData/Local/Pro
-grams/MiKTeX/fonts/type1/public/amsfonts/symbols/msam10.pfb>
-Output written on main.pdf (98 pages, 2009392 bytes).
+<C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts
+/cm/cmsy10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/publ
+ic/lm/lmbx10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/pu
+blic/lm/lmbx12.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/
+public/lm/lmbx7.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1
+/public/lm/lmbx8.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type
+1/public/lm/lmbx9.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/typ
+e1/public/lm/lmcsc10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/
+type1/public/lm/lmex10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/font
+s/type1/public/lm/lmmi10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fo
+nts/type1/public/lm/lmmi5.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/f
+onts/type1/public/lm/lmmi6.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/
+fonts/type1/public/lm/lmmi7.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX
+/fonts/type1/public/lm/lmmi8.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTe
+X/fonts/type1/public/lm/lmmi9.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKT
+eX/fonts/type1/public/lm/lmmib10.pfb><C:/Users/Bristol/AppData/Local/Programs/M
+iKTeX/fonts/type1/public/lm/lmr10.pfb><C:/Users/Bristol/AppData/Local/Programs/
+MiKTeX/fonts/type1/public/lm/lmr12.pfb><C:/Users/Bristol/AppData/Local/Programs
+/MiKTeX/fonts/type1/public/lm/lmr5.pfb><C:/Users/Bristol/AppData/Local/Programs
+/MiKTeX/fonts/type1/public/lm/lmr6.pfb><C:/Users/Bristol/AppData/Local/Programs
+/MiKTeX/fonts/type1/public/lm/lmr7.pfb><C:/Users/Bristol/AppData/Local/Programs
+/MiKTeX/fonts/type1/public/lm/lmr8.pfb><C:/Users/Bristol/AppData/Local/Programs
+/MiKTeX/fonts/type1/public/lm/lmr9.pfb><C:/Users/Bristol/AppData/Local/Programs
+/MiKTeX/fonts/type1/public/lm/lmri10.pfb><C:/Users/Bristol/AppData/Local/Progra
+ms/MiKTeX/fonts/type1/public/lm/lmri12.pfb><C:/Users/Bristol/AppData/Local/Prog
+rams/MiKTeX/fonts/type1/public/lm/lmri9.pfb><C:/Users/Bristol/AppData/Local/Pro
+grams/MiKTeX/fonts/type1/public/lm/lmsy10.pfb><C:/Users/Bristol/AppData/Local/P
+rograms/MiKTeX/fonts/type1/public/lm/lmsy6.pfb><C:/Users/Bristol/AppData/Local/
+Programs/MiKTeX/fonts/type1/public/lm/lmsy7.pfb><C:/Users/Bristol/AppData/Local
+/Programs/MiKTeX/fonts/type1/public/lm/lmsy8.pfb><C:/Users/Bristol/AppData/Loca
+l/Programs/MiKTeX/fonts/type1/public/lm/lmsy9.pfb><C:/Users/Bristol/AppData/Loc
+al/Programs/MiKTeX/fonts/type1/public/lm/lmtk10.pfb><C:/Users/Bristol/AppData/L
+ocal/Programs/MiKTeX/fonts/type1/public/lm/lmtt10.pfb><C:/Users/Bristol/AppData
+/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtt8.pfb><C:/Users/Bristol/AppDat
+a/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtt9.pfb><C:/Users/Bristol/AppDa
+ta/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/symbols/msam10.pfb>
+Output written on main.pdf (104 pages, 2094081 bytes).
 PDF statistics:
- 4111 PDF objects out of 4296 (max. 8388607)
- 772 named destinations out of 1000 (max. 500000)
- 64079 words of extra memory for PDF output out of 74296 (max. 10000000)
+ 4281 PDF objects out of 4296 (max. 8388607)
+ 840 named destinations out of 1000 (max. 500000)
+ 65215 words of extra memory for PDF output out of 74296 (max. 10000000)
 

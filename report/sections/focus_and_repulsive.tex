@@ -1,0 +1,127 @@
+% focus_and_repulsive.tex — PLB Focus Area redirect + repulsive field detail
+\section{Focus Area Redirect and Repulsive Field Implementation}\label{sec:focus-repulsive}
+
+This section expands on two mission-critical subsystems introduced in Sections~\ref{sec:focus-area} and~\ref{sec:geofencing}: the PLB-triggered focus area redirect that narrows the search polygon mid-flight, and the inverse-distance repulsive vector field that enforces the SSSI no-fly zone boundary.
+
+% ═════════════════════════════════════════════════════════════════════
+\subsection{PLB Focus Area Logic (R06)}\label{sec:plb-redirect}
+
+Requirement R06 stipulates that the system shall respond to a Personal Locator Beacon (PLB) signal by redirecting the search to a smaller focus area polygon of 3--10 vertices. In the operational scenario the PLB signal is expected 5--15 minutes into the search, once the casualty's approximate position has been triangulated by ground teams.
+
+\paragraph{Activation.}
+Two activation mechanisms are implemented. First, the operator can press the B key (or the corresponding browser button on the ground station) at any time during the \textsc{Search} state to trigger the redirect manually. Second, the \texttt{-{}-beacon-delay} command-line argument specifies an elapsed-time threshold in seconds; once the search clock exceeds this value, the redirect fires automatically. The auto-trigger is checked on every loop iteration during \textsc{Search} and fires at most once---a boolean guard (\texttt{\_beacon\_triggered}) prevents re-entry.
+
+\paragraph{Focus area definition.}
+The focus area polygon is defined in one of three ways, in decreasing priority:
+
+\begin{enumerate}
+  \item A JSON file (\texttt{flight\_plans/focus\_area.json}) containing 3--10 vertices as \texttt{\{lat, lon\}} objects. The file is re-read at activation time, allowing the ground station to update coordinates mid-flight.
+  \item Interactive drawing on the satellite map during simulation setup (a fourth polygon drawn after the search area, transit path, and target placement).
+  \item Fallback coordinates in \texttt{config.FOCUS\_AREA\_GPS}, loaded from the KML file at startup.
+\end{enumerate}
+
+\noindent Each vertex is validated to lie within $\pm90^{\circ}$ latitude and $\pm180^{\circ}$ longitude, and at least three vertices must be present; otherwise the redirect is aborted with a console warning.
+
+\paragraph{Pattern regeneration.}
+Upon activation, the planner's search polygon is replaced with the focus area polygon and a fresh lawnmower pattern is generated from the drone's current GPS position (Algorithm~\ref{alg:beacon-redirect}). The new pattern uses the same rotated-mask algorithm described in Section~\ref{sec:algorithm}, but the search speed is capped at \texttt{FOCUS\_SEARCH\_SPEED\_MPS}\,=\,\SI{5}{\metre\per\second}---slower than the normal altitude-dependent schedule---to maximise detection probability in the high-priority zone. The waypoint index and rescan counter both reset to zero.
+
+\begin{algorithm}[ht]
+\caption{PLB beacon redirect}\label{alg:beacon-redirect}
+\begin{algorithmic}[1]
+\Require PLB signal received (B key or timer expiry)
+\Ensure Search redirected to focus area polygon
+\If{already triggered} \Return \EndIf
+\State Load focus polygon from JSON (or use fallback GPS)
+\State Validate $\geq 3$ vertices, each within valid lat/lon range
+\State Convert GPS vertices to pixel coordinates via \textsc{GeoTransformer}
+\State Replace planner search polygon $\gets$ focus polygon
+\State Generate new lawnmower pattern from current position
+\State $\texttt{wp\_index} \gets 0$; $\texttt{rescan\_pass} \gets 0$
+\State Set \texttt{\_beacon\_triggered} $\gets$ \textbf{true}
+\State Cap search speed to \SI{5}{\metre\per\second}
+\end{algorithmic}
+\end{algorithm}
+
+\paragraph{State preservation.}
+Existing detection clusters, rejected targets, and items of interest are preserved across the redirect. This ensures that false positives identified during the wide-area search are not re-investigated in the focus area. If the focus area overlaps the SSSI no-fly zone, the geofence waypoint filter (Section~\ref{sec:nfz-layers}) removes offending waypoints exactly as it does for the primary search pattern.
+
+% ═════════════════════════════════════════════════════════════════════
+\subsection{Repulsive Vector Field}\label{sec:repulsive-field}
+
+The repulsive potential field is the second of four NFZ protection layers (Section~\ref{sec:nfz-layers}). Its purpose is to continuously deflect the aircraft away from the SSSI boundary, even when the planned waypoint lies close to it due to GPS drift or wind gusts. The field is evaluated on every loop iteration when the drone is within \texttt{NFZ\_INNER\_RANGE\_M}\,=\,\SI{23}{\metre} of an inner offset polygon.
+
+\paragraph{Nearest-point computation.}
+For each edge $(\mathbf{p}_i, \mathbf{p}_{i+1})$ of the NFZ polygon (expressed in pixel coordinates via \textsc{GeoTransformer}), the closest point to the drone's position $\mathbf{q}$ is found by projecting $\mathbf{q}$ onto the edge and clamping the parameter $t$ to $[0, 1]$:
+
+\begin{equation}\label{eq:closest-pt}
+  \mathbf{c}_i = \mathbf{p}_i + \text{clamp}\!\left(\frac{(\mathbf{q} - \mathbf{p}_i) \cdot (\mathbf{p}_{i+1} - \mathbf{p}_i)}{\|\mathbf{p}_{i+1} - \mathbf{p}_i\|^2},\; 0,\; 1\right) (\mathbf{p}_{i+1} - \mathbf{p}_i)
+\end{equation}
+
+\noindent The edge yielding the smallest $\|\mathbf{q} - \mathbf{c}_i\|$ is selected, and the push direction is $\hat{\mathbf{d}} = (\mathbf{q} - \mathbf{c}^*) / \|\mathbf{q} - \mathbf{c}^*\|$, pointing away from the boundary.
+
+\paragraph{Degenerate case.}
+When the drone lies exactly on or extremely close to a boundary edge ($\|\mathbf{q} - \mathbf{c}^*\| < \epsilon$), the direction vector is degenerate. In this case, the outward normal of the nearest edge is computed instead: for edge vector $\mathbf{e} = \mathbf{p}_{i+1} - \mathbf{p}_i$, the candidate normal is $\mathbf{n} = (-e_y,\, e_x)$. A sign test (\texttt{cv2.pointPolygonTest} on a point offset slightly along $\mathbf{n}$) determines whether $\mathbf{n}$ points inward or outward; if inward, it is flipped. This guarantees a valid push direction even at zero distance.
+
+\paragraph{Repulsion magnitude.}
+The repulsive offset grows linearly as the drone approaches the boundary:
+
+\begin{equation}\label{eq:repulsion}
+  R = \tfrac{1}{2}\,\max\!\bigl(0,\; d_{\text{soft}} - d\bigr)
+\end{equation}
+
+\noindent where $d$ is the perpendicular distance to the NFZ boundary (metres) and $d_{\text{soft}} = \texttt{NFZ\_SOFT\_BOUNDARY\_M} = \SI{8}{\metre}$ is the zone within which repulsion is active. The factor $\frac{1}{2}$ is a gain constant that limits the maximum offset to $\frac{d_{\text{soft}}}{2} = \SI{4}{\metre}$ at the boundary itself. The pixel-space push vector is then:
+
+\begin{equation}\label{eq:push-vector}
+  \mathbf{v}_{\text{push}} = R \cdot s_{\text{pix}} \cdot \hat{\mathbf{d}}
+\end{equation}
+
+\noindent where $s_{\text{pix}}$ is the pixel-per-metre scale factor from \textsc{GeoTransformer}. This pixel offset is converted back to a GPS delta $(\Delta\phi, \Delta\lambda)$ and negated to correct for the coordinate transform sign convention (see Section~\ref{sec:sign-convention}).
+
+\paragraph{Velocity application.}
+In the main loop (\texttt{\_enforce\_geofence}), the GPS offset from \texttt{repulsive\_offset()} is converted to a unit North--East velocity vector and scaled to a constant push speed of \texttt{NFZ\_PUSH\_SPEED\_MPS}\,=\,\SI{3.0}{\metre\per\second}:
+
+\begin{equation}\label{eq:push-vel}
+  v_N = \frac{-\Delta\phi \cdot 111320}{\|\mathbf{v}\|} \cdot v_{\text{push}}, \qquad
+  v_E = \frac{-\Delta\lambda \cdot 111320\cos\phi}{\|\mathbf{v}\|} \cdot v_{\text{push}}
+\end{equation}
+
+\noindent where the factor 111\,320 converts degrees to metres. If the drone is inside the NFZ polygon (detected by sign inversion of \texttt{cv2.pointPolygonTest}), the velocity direction is reversed to push the aircraft outward.
+
+% ═════════════════════════════════════════════════════════════════════
+\subsection{Four-Layer Protection Architecture}\label{sec:nfz-layers}
+
+Table~\ref{tab:nfz-layers} summarises the four software layers that enforce the SSSI exclusion zone, listed from outermost (plan-time) to innermost (emergency).
+
+\begin{table}[ht]
+  \centering\compactTable
+  \caption{Four-layer NFZ protection architecture. Each layer activates at a different distance from the SSSI boundary, providing defence in depth.}\label{tab:nfz-layers}
+  \begin{tabularx}{\linewidth}{@{}c l c X@{}}
+    \toprule
+    \textbf{Layer} & \textbf{Mechanism} & \textbf{Range} & \textbf{Effect} \\
+    \midrule
+    0 & Waypoint filter      & 30\,m & Waypoints within buffer removed at plan time \\
+    1 & Speed ramp           & 20\,m & Linear deceleration: 3.0\,m/s $\to$ 0.3\,m/s \\
+    2 & Repulsive field      & 23\,m & 3.0\,m/s push away from nearest boundary edge \\
+    3 & Hard boundary        &  3\,m & Immediate transition to \textsc{Manual}; zero-velocity halt \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\paragraph{Layer interaction.}
+Layers 1 and 2 overlap spatially: the speed ramp activates at 20\,m while the repulsive field activates at 23\,m (measured from an inner polygon offset 20\,m inside the true NFZ boundary). In practice, the repulsive field begins deflecting the trajectory before the speed ramp starts decelerating. The combined effect is a smooth, progressive deflection: the drone first feels a gentle push, then decelerates as it approaches the boundary, and only triggers the hard cutoff if both softer layers fail. This graduated response avoids the jarring mode switches that a single hard boundary would produce, and gives the safety pilot time to assess the situation before the aircraft halts.
+
+\paragraph{Distance rationale.}
+The specific distances were chosen to account for known error sources:
+
+\begin{itemize}
+  \item \textbf{30\,m waypoint buffer} --- ensures the planned path maintains a comfortable margin from the NFZ. At the nominal search speed of \SI{10}{\metre\per\second}, a 30\,m buffer provides 3\,s of reaction time if the drone overshoots a waypoint.
+  \item \textbf{20\,m speed ramp} --- allows gradual deceleration from the search speed. At an approach rate of \SI{10}{\metre\per\second}, the 20\,m zone provides 2\,s of braking distance. The minimum speed of \SI{0.3}{\metre\per\second} at the boundary means the drone is nearly stationary before reaching the danger zone.
+  \item \textbf{23\,m repulsive field} --- extends 3\,m beyond the speed ramp onset to catch trajectories where GPS drift has already placed the drone closer than planned. The 3\,m margin matches the typical GPS CEP (Circular Error Probable) observed during bench testing (\SIrange{2}{3}{\metre}).
+  \item \textbf{3\,m hard boundary} --- a last-resort cutoff that accounts for worst-case GPS error. At this distance the drone is within one CEP of the true boundary, so autonomous flight is no longer safe. The transition to \textsc{Manual} halts all velocity commands and alerts the operator, who can then fly the aircraft away using RC override.
+\end{itemize}
+
+\paragraph{Sign convention.}\label{sec:sign-convention}
+The \texttt{GeoTransformer} converts pixel offsets to GPS deltas relative to a reference origin. Because the pixel $y$-axis is inverted with respect to latitude (pixel~$y$ increases southward while latitude increases northward), the raw GPS delta from \texttt{pixels\_to\_gps()} points \emph{toward} the NFZ rather than away from it. The \texttt{repulsive\_offset()} method therefore negates both components before returning them. The caller in \texttt{\_enforce\_geofence()} applies a second negation when converting to North--East velocity components, yielding the correct outward push direction. This double-negation was verified empirically by approaching the NFZ from all cardinal directions in SITL and confirming that the repulsive vector always points away from the boundary.
+
+\paragraph{Firmware backup.}
+On the flight controller (Cube Orange), an independent firmware-level geofence is configured via the \texttt{FENCE\_TYPE} and \texttt{FENCE\_ACTION} parameters. If all four software layers fail---for example, due to a companion-computer crash---the firmware triggers \texttt{RTL} when the aircraft crosses the configured fence polygon. This fifth layer operates entirely within the autopilot and requires no companion-computer involvement.
