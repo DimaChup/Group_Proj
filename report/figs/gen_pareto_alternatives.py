@@ -162,22 +162,22 @@ ax1.scatter(pf1_x, pf1_y, c=alts[pf1_idx], cmap=cmap_alt, norm=norm_alt,
 if selected is not None:
     ax1.scatter(p_detect[selected], times[selected], marker="*", s=350,
                 c="#2166ac", edgecolors="k", lw=1.5, zorder=6)
-    ax1.annotate("Selected (35 m, 8 m/s)",
+    ax1.annotate("Selected\n(35 m, 8 m/s)",
                  (p_detect[selected], times[selected]),
-                 textcoords="offset points", xytext=(15, 30), fontsize=10,
+                 textcoords="offset points", xytext=(-95, 35), fontsize=10,
                  fontweight="bold", color="#2166ac",
                  arrowprops=dict(arrowstyle="->", color="#2166ac", lw=1.2))
 
-# Utopia point (max detection, min time)
-utopia_time = times.min() * 0.7  # below the best achievable
+# Utopia point (max detection, min time) — placed in empty bottom-right
+utopia_time = times.min() * 0.5
 ax1.scatter(1.0, utopia_time, marker="x", s=150, c="gold", lw=3, zorder=5)
 ax1.annotate("Utopia point\n(unreachable)",
-             (1.0, utopia_time), textcoords="offset points", xytext=(-100, 15),
+             (1.0, utopia_time), textcoords="offset points", xytext=(-110, -20),
              fontsize=9, color="goldenrod", fontstyle="italic",
              arrowprops=dict(arrowstyle="->", color="goldenrod", lw=1.0, ls="--"))
 
-# Annotation along the curve
-ax1.text(0.5, 0.95,
+# Annotation along the curve — place below title, away from legend
+ax1.text(0.55, 0.93,
          r"$\longrightarrow$ Better detection (lower altitude) costs more time",
          transform=ax1.transAxes, ha="center", fontsize=9, color="grey",
          fontstyle="italic")
@@ -224,22 +224,24 @@ sc2 = ax2.scatter(p_detect[pf3_idx], times[pf3_idx], energies[pf3_idx],
 if selected is not None:
     ax2.scatter([p_detect[selected]], [times[selected]], [energies[selected]],
                 marker="*", s=400, c="#2166ac", edgecolors="k", lw=1.5, zorder=10)
-    ax2.text(p_detect[selected], times[selected], energies[selected] + 1.5,
-             "Selected\n(35 m, 8 m/s)", fontsize=8, fontweight="bold",
+    # Place label above with vertical offset in energy axis
+    ax2.text(p_detect[selected], times[selected],
+             energies[selected] + (energies.max() - energies.min()) * 0.15,
+             "Selected\n(35 m, 8 m/s)", fontsize=9, fontweight="bold",
              color="#2166ac", ha="center")
 
-cb2 = fig2.colorbar(sc2, ax=ax2, shrink=0.6, pad=0.08)
-cb2.set_label("Coverage (%)", fontsize=10)
+cb2 = fig2.colorbar(sc2, ax=ax2, shrink=0.55, pad=0.1)
+cb2.set_label("Coverage", fontsize=10)
 
-ax2.set_xlabel("\nDetection Prob.", fontsize=10, labelpad=10)
-ax2.set_ylabel("\nMission Time (s)", fontsize=10, labelpad=10)
-ax2.set_zlabel("\nEnergy (Wh)", fontsize=10, labelpad=10)
+ax2.set_xlabel("Detection Prob.", fontsize=9, labelpad=6)
+ax2.set_ylabel("Mission Time (s)", fontsize=9, labelpad=6)
+ax2.set_zlabel("Energy (Wh)", fontsize=9, labelpad=6)
 ax2.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f"{x:.2f}"))
-ax2.tick_params(axis='x', labelsize=8)
-ax2.tick_params(axis='y', labelsize=8)
-ax2.tick_params(axis='z', labelsize=8)
-ax2.set_title("3D Objective Space (4th dimension: colour = coverage %)",
-              fontsize=12, fontweight="bold", pad=15)
+ax2.tick_params(axis='x', labelsize=7, pad=2)
+ax2.tick_params(axis='y', labelsize=7, pad=2)
+ax2.tick_params(axis='z', labelsize=7, pad=2)
+ax2.set_title("3D Objective Space (4th dimension: colour = coverage)",
+              fontsize=12, fontweight="bold", pad=10)
 ax2.view_init(elev=25, azim=-45)
 
 for fmt in ["pdf", "png"]:
@@ -317,18 +319,23 @@ ax3.set_title("Parallel Coordinates: 216 Configurations Across 5 Objectives",
               fontsize=12, fontweight="bold")
 ax3.legend(loc="upper right", fontsize=9, framealpha=0.9)
 
-# Add scale ticks on each axis
+# Add scale ticks on each axis — show real-world values
 for i in range(n_dims):
-    for val in [0.0, 0.25, 0.5, 0.75, 1.0]:
+    for val in [0.0, 0.5, 1.0]:
         real_val = dims_min[i] + val * (dims_max[i] - dims_min[i])
-        if i in [2, 3]:  # 1/time, 1/energy — show inverted
+        if i == 2:    # 1/time axis — show as time (s)
             if real_val > 0:
-                label = f"{1.0/real_val:.0f}" if i == 2 else f"{1.0/real_val:.1f}"
+                label = f"{1.0/real_val:.0f}s"
+            else:
+                label = ""
+        elif i == 3:  # 1/energy axis — show as energy (Wh)
+            if real_val > 0:
+                label = f"{1.0/real_val:.0f}Wh"
             else:
                 label = ""
         else:
             label = f"{real_val:.2f}"
-        ax3.text(i + 0.08, val, label, fontsize=6.5, color="grey", va="center")
+        ax3.text(i + 0.07, val, label, fontsize=7, color="grey", va="center")
 
 for fmt in ["pdf", "png"]:
     fig3.savefig(OUT / f"pareto_parallel.{fmt}", dpi=300, bbox_inches="tight")
@@ -348,84 +355,82 @@ energy_norm = (energies - energies.min()) / (energies.max() - energies.min())
 mission_cost = 0.5 * time_norm + 0.5 * energy_norm
 mission_effectiveness = p_detect * coverage
 
-# 6 key configurations + selected
+# 5 key well-spaced configurations (removed 20/8 and 50/10 to avoid overlap)
 key_configs = [
-    (20, 4,  0.15, "20 m, 4 m/s\n(max reliability)"),
-    (20, 8,  0.15, "20 m, 8 m/s"),
-    (30, 8,  0.15, "30 m, 8 m/s"),
-    (35, 8,  0.15, "35 m, 8 m/s\n(SELECTED)"),
-    (40, 10, 0.15, "40 m, 10 m/s"),
-    (50, 10, 0.15, "50 m, 10 m/s"),
-    (50, 14, 0.15, "50 m, 14 m/s\n(fastest)"),
+    (20, 4,  0.15, "20 m, 4 m/s\n(max reliability)",  "^",  "#762a83", 140),
+    (25, 8,  0.15, "25 m, 8 m/s",                      "o",  "#9970ab",  80),
+    (35, 8,  0.15, "35 m, 8 m/s\n(SELECTED)",          "*",  "#2166ac", 300),
+    (40, 10, 0.15, "40 m, 10 m/s",                     "s",  "#5aae61",  80),
+    (50, 14, 0.15, "50 m, 14 m/s\n(fastest)",          "D",  "#d73027", 140),
 ]
 
 key_indices = []
 key_labels = []
-for alt_t, spd_t, ovl_t, label in key_configs:
+key_markers = []
+key_colors = []
+key_sizes = []
+for alt_t, spd_t, ovl_t, label, mkr, clr, sz in key_configs:
     idx = find_config(alt_t, spd_t, ovl_t)
     if idx is not None:
         key_indices.append(idx)
         key_labels.append(label)
+        key_markers.append(mkr)
+        key_colors.append(clr)
+        key_sizes.append(sz)
 
 ki = np.array(key_indices)
 kx = mission_effectiveness[ki]
 ky = mission_cost[ki]
 
-# Connect with dashed line (approximate Pareto curve through these points)
+# Connect with dashed line (approximate trade-off curve)
 order = np.argsort(kx)
 ax4.plot(kx[order], ky[order], "k--", lw=1.5, alpha=0.4, zorder=2)
 
-# Plot points
-colors = ["#762a83", "#9970ab", "#5aae61", "#2166ac", "#fdae61", "#f46d43", "#d73027"]
-markers = ["^", "o", "o", "*", "o", "o", "D"]
-sizes = [120, 80, 80, 300, 80, 80, 120]
-
-offsets = [
-    (-10, 18),   # 20,4
-    (12, -20),   # 20,8
-    (12, 12),    # 30,8
-    (15, 18),    # 35,8 selected
-    (12, -20),   # 40,10
-    (-80, 15),   # 50,10
-    (12, -22),   # 50,14
+# Label offsets — manually tuned to avoid overlap
+label_offsets = [
+    (-85, 10),    # 20,4  — far left (away from "Expensive but reliable")
+    (-80, -20),   # 25,8  — far left
+    (15, 25),     # 35,8  selected — top right
+    (15, -25),    # 40,10 — bottom right
+    (-10, -30),   # 50,14 — below
 ]
 
-for j, idx in enumerate(order):
-    ax4.scatter(kx[idx], ky[idx], marker=markers[idx], s=sizes[idx],
-                c=colors[idx], edgecolors="k", lw=1.2, zorder=5)
-    ax4.annotate(key_labels[idx],
-                 (kx[idx], ky[idx]),
-                 textcoords="offset points", xytext=offsets[idx],
-                 fontsize=8, ha="center",
-                 fontweight="bold" if "SELECTED" in key_labels[idx] else "normal",
-                 color=colors[idx],
-                 arrowprops=dict(arrowstyle="-", color=colors[idx], lw=0.8))
+for j in range(len(ki)):
+    ax4.scatter(kx[j], ky[j], marker=key_markers[j], s=key_sizes[j],
+                c=key_colors[j], edgecolors="k", lw=1.2, zorder=5)
+    ax4.annotate(key_labels[j],
+                 (kx[j], ky[j]),
+                 textcoords="offset points", xytext=label_offsets[j],
+                 fontsize=8.5, ha="center",
+                 fontweight="bold" if "SELECTED" in key_labels[j] else "normal",
+                 color=key_colors[j],
+                 arrowprops=dict(arrowstyle="-", color=key_colors[j], lw=0.8))
 
 # Arrow: expensive-reliable to cheap-risky
-ax4.annotate("", xy=(kx[order[0]] - 0.02, ky[order[0]] + 0.02),
-             xytext=(kx[order[-1]] + 0.02, ky[order[-1]] - 0.02),
+ax4.annotate("", xy=(kx[order[0]] - 0.015, ky[order[0]] + 0.015),
+             xytext=(kx[order[-1]] + 0.015, ky[order[-1]] - 0.015),
              arrowprops=dict(arrowstyle="<->", color="grey", lw=1.8, ls="-"))
-ax4.text(0.25, 0.15, "Cheap but risky", fontsize=9, color="grey",
+ax4.text(0.15, 0.12, "Cheap but risky", fontsize=9, color="grey",
          fontstyle="italic", transform=ax4.transAxes, ha="center")
-ax4.text(0.78, 0.88, "Expensive but reliable", fontsize=9, color="grey",
+ax4.text(0.85, 0.95, "Expensive but reliable", fontsize=9, color="grey",
          fontstyle="italic", transform=ax4.transAxes, ha="center")
 
-# Best compromise region
+# Best compromise highlight
 if selected is not None:
     from matplotlib.patches import FancyBboxPatch
     sel_x = mission_effectiveness[selected]
     sel_y = mission_cost[selected]
-    rect = FancyBboxPatch((sel_x - 0.04, sel_y - 0.06), 0.08, 0.12,
-                          boxstyle="round,pad=0.02", facecolor="#2166ac",
-                          alpha=0.08, edgecolor="#2166ac", lw=1.5, ls="--", zorder=1)
+    rect = FancyBboxPatch((sel_x - 0.025, sel_y - 0.04), 0.05, 0.08,
+                          boxstyle="round,pad=0.015", facecolor="#2166ac",
+                          alpha=0.10, edgecolor="#2166ac", lw=1.5, ls="--", zorder=1)
     ax4.add_patch(rect)
 
 ax4.set_xlabel("Mission Effectiveness (detection $\\times$ coverage)", fontsize=11)
 ax4.set_ylabel("Mission Cost (normalised time + energy)", fontsize=11)
 ax4.set_title("Trade-off Summary: Key Configurations", fontsize=13, fontweight="bold")
 ax4.grid(True, alpha=0.2)
-ax4.set_xlim(min(kx) - 0.08, max(kx) + 0.08)
-ax4.set_ylim(min(ky) - 0.12, max(ky) + 0.12)
+ax4.set_xlim(min(kx) - 0.06, max(kx) + 0.06)
+ax4.set_ylim(min(ky) - 0.1, max(ky) + 0.15)
 
 for fmt in ["pdf", "png"]:
     fig4.savefig(OUT / f"pareto_tradeoff_simple.{fmt}", dpi=300, bbox_inches="tight")

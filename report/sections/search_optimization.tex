@@ -95,6 +95,10 @@ The longest-edge alignment at \SI{70}{\degree} reduces the turn count from 8 to 
 
 An alternative considered was wind-aligned scanning, which would orient strips along the prevailing westerly wind direction to minimise crosswind drift accumulation along the inter-lane axis. For the typical \SI{3}{\metre\per\second} westerly wind at the survey site, this would correspond to approximately \SI{90}{\degree} (east--west strips). However, east--west scanning of this polygon produces the \emph{worst-case} geometry: 10 scan lines with 9 U-turns, nearly doubling the path length compared to the optimal angle. The \SI{20}{\percent} lateral overlap already absorbs the expected \SIrange{1}{2}{\metre} crosswind displacement (Section~\ref{sec:overlap-margin}), making the energy penalty of wind-aligned scanning unjustifiable.
 
+A diagonal scanning approach at \SI{45}{\degree} was also evaluated as a compromise between wind alignment and longest-edge alignment. While this orientation partially distributes crosswind drift across both axes, analysis indicated that it would require approximately \SI{30}{\percent} additional scan lines compared to the \SI{70}{\degree} optimum, adding roughly \SI{40}{\second} of flight time. The marginal crosswind benefit was judged to fall well within the existing overlap margin, making the additional scan lines unnecessary.
+
+We also investigated whether rotating the scan pattern to align with the wind direction would reduce GPS drift accumulation during U-turns, where the drone decelerates and is most susceptible to wind-induced displacement. Preliminary analysis suggested that the effect on turn-phase GPS error was within \SIrange{0.3}{0.5}{\metre}---comfortably absorbed by the \SI{6.4}{\metre} overlap band---and that the dominant source of turn-phase error was the deceleration--reacceleration cycle rather than wind alignment.
+
 % ─────────────────────────────────────────────────────────────────────
 \subsection{Coverage Completeness: Is 96\% Acceptable?}\label{sec:coverage-96}
 
