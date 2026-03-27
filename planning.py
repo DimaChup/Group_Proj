@@ -41,10 +41,10 @@ class PathPlanner:
         # Scan Lines — spacing depends on turning mode
         ground_width_m = (config.SENSOR_WIDTH_MM * search_alt) / config.FOCAL_LENGTH_MM
         if getattr(self, '_no_turn', False):
-            # No-turn: use height (perpendicular dim), 20% overlap
+            # No-turn: use height (perpendicular dim), zero overlap (diagonal realign gives 67% bonus)
             aspect = config.IMAGE_H / config.IMAGE_W
             ground_width_m = ground_width_m * aspect
-            overlap = 0.2
+            overlap = 0.0
         else:
             # Turning: use width (perpendicular dim), 20% overlap
             overlap = 0.2
