@@ -342,70 +342,66 @@ class StateHandlersMixin:
             self.departure_lon = 0
             self._set_state(State.SEARCH)
 
-    def _handle_search(self, target_found, px_u, px_v, key):
-        g = _get_main_globals()
-        REAL_CANVAS_SIZE = g['REAL_CANVAS_SIZE']
+    # ── Search sub-methods ─────────────────────────────────────────
 
-        # Orient drone once: yaw aligned to scan direction + diagonal offset.
-        # The diagonal offset rotates the camera so its diagonal (longest dimension)
-        # is perpendicular to the scan direction, maximising ground coverage per pass.
-        if not getattr(self, '_search_yaw_done', False):
-            if hasattr(self.planner, 'last_scan_angle'):
-                from pymavlink import mavutil
-                if not getattr(self, '_search_yaw_sent', False):
-                    if len(self.waypoints) >= 2:
-                        wp0 = self.waypoints[0]
-                        wp1 = self.waypoints[1]
-                        dlat = wp1[0] - wp0[0]
-                        dlon = wp1[1] - wp0[1]
-                        yaw_deg = math.degrees(math.atan2(dlon * math.cos(math.radians(wp0[0])), dlat)) % 360
-                    else:
-                        yaw_deg = self.planner.last_scan_angle
-                    # Diagonal offset: configurable or auto-computed from camera aspect
-                    if config.DIAGONAL_YAW_OFFSET_DEG is not None:
-                        diag_offset = config.DIAGONAL_YAW_OFFSET_DEG
-                    else:
-                        diag_offset = math.degrees(math.atan2(config.IMAGE_W, config.IMAGE_H))
-                    yaw_deg = (yaw_deg + diag_offset) % 360
-                    self.master.mav.command_long_send(
-                        self.master.target_system, self.master.target_component,
-                        mavutil.mavlink.MAV_CMD_CONDITION_YAW, 0,
-                        yaw_deg, 45, 1, 0, 0, 0, 0)
-                    self._search_yaw_sent = True
-                    self._search_yaw_target = yaw_deg
-                    self._search_yaw_time = time.time()
-                    print(f"[YAW] Orienting to {yaw_deg:.0f} deg (diagonal alignment)...")
-                    return
-                else:
-                    yaw_error = abs(math.degrees(self.yaw) - self._search_yaw_target) % 360
-                    if yaw_error > 180: yaw_error = 360 - yaw_error
-                    if yaw_error < 10 or time.time() - self._search_yaw_time > 5.0:
-                        self._search_yaw_done = True
-                        print(f"[YAW] Aligned. Starting search pattern.")
-                    else:
-                        return
+    def _orient_search_yaw(self):
+        """Align drone yaw to scan direction + diagonal offset at start of each pass.
 
-        # Speed depends on altitude (slower low = less blur) and focus area
-        if getattr(self, '_beacon_triggered', False):
-            search_speed = min(config.FOCUS_SEARCH_SPEED_MPS, config.speed_for_altitude(self.alt))
-        else:
-            search_speed = config.speed_for_altitude(self.alt)
-        self.nav.set_speed(search_speed)
+        Returns True if still orienting (caller should return early),
+        False when yaw alignment is complete.
+        """
+        if getattr(self, '_search_yaw_done', False):
+            return False
+        if not hasattr(self.planner, 'last_scan_angle'):
+            return False
 
-        # Auto-trigger PLB beacon after delay (--beacon-delay N)
-        beacon_delay = g.get('BEACON_DELAY', 0)
-        if beacon_delay > 0 and not getattr(self, '_beacon_triggered', False):
-            # Track when SEARCH first started
-            if not hasattr(self, '_search_first_start'):
-                self._search_first_start = time.time()
-            if time.time() - self._search_first_start >= beacon_delay:
-                self._trigger_beacon_redirect()
+        from pymavlink import mavutil
 
-        # --- Detection logic ---
+        if not getattr(self, '_search_yaw_sent', False):
+            if len(self.waypoints) >= 2:
+                wp0 = self.waypoints[0]
+                wp1 = self.waypoints[1]
+                dlat = wp1[0] - wp0[0]
+                dlon = wp1[1] - wp0[1]
+                yaw_deg = math.degrees(math.atan2(dlon * math.cos(math.radians(wp0[0])), dlat)) % 360
+            else:
+                yaw_deg = self.planner.last_scan_angle
+            # Diagonal offset: configurable or auto-computed from camera aspect
+            if config.DIAGONAL_YAW_OFFSET_DEG is not None:
+                diag_offset = config.DIAGONAL_YAW_OFFSET_DEG
+            else:
+                diag_offset = math.degrees(math.atan2(config.IMAGE_W, config.IMAGE_H))
+            yaw_deg = (yaw_deg + diag_offset) % 360
+            self.master.mav.command_long_send(
+                self.master.target_system, self.master.target_component,
+                mavutil.mavlink.MAV_CMD_CONDITION_YAW, 0,
+                yaw_deg, 45, 1, 0, 0, 0, 0)
+            self._search_yaw_sent = True
+            self._search_yaw_target = yaw_deg
+            self._search_yaw_time = time.time()
+            print(f"[YAW] Orienting to {yaw_deg:.0f} deg (diagonal alignment)...")
+            return True
+
+        # Already sent — check if aligned
+        yaw_error = abs(math.degrees(self.yaw) - self._search_yaw_target) % 360
+        if yaw_error > 180:
+            yaw_error = 360 - yaw_error
+        if yaw_error < 10 or time.time() - self._search_yaw_time > 5.0:
+            self._search_yaw_done = True
+            print(f"[YAW] Aligned. Starting search pattern.")
+            return False
+        return True
+
+    def _process_detection(self, target_found, px_u, px_v):
+        """Process a detection frame: filter, confirm, and queue valid targets.
+
+        Handles NFZ/search-area filtering, near-known dedup,
+        smart-detect multi-frame confirmation, and single-frame queueing.
+        """
         import __main__ as _main
         smart_detect = getattr(_main, 'SMART_DETECT', False)
 
-        # Detection queue: all detections are queued and investigated in order
+        # Initialise detection queue on first call
         if not hasattr(self, '_detect_queue'):
             self._detect_queue = []
             self._consecutive_detect_count = 0
@@ -415,31 +411,101 @@ class StateHandlersMixin:
             # Ignore detections inside NFZ or outside search area
             if self._is_inside_nfz(self.target_lat, self.target_lon) or \
                self._is_outside_search_area(self.target_lat, self.target_lon):
-                target_found = False
                 self._consecutive_detect_count = 0
+                return
             # Ignore detections near already-known targets (rejected / items of interest)
-            elif self._is_near_known(self.target_lat, self.target_lon):
+            if self._is_near_known(self.target_lat, self.target_lon):
                 self._consecutive_detect_count = 0
+                return
+            conf = getattr(self, 'current_conf', 0.5)
+            if smart_detect:
+                # Multi-frame confirmation (opt-in): require N consecutive frames
+                self._consecutive_detect_count += 1
+                if self._consecutive_detect_count >= config.DETECT_CONFIRM_FRAMES:
+                    print(f"[SMART] Confirmed ({self._consecutive_detect_count} frames) at ({self.target_lat:.6f}, {self.target_lon:.6f}) conf={conf:.2f}")
+                    self._detect_queue.append((self.target_lat, self.target_lon, conf))
+                    self._consecutive_detect_count = 0
             else:
-                conf = getattr(self, 'current_conf', 0.5)
-                if smart_detect:
-                    # Multi-frame confirmation (opt-in): require N consecutive frames
-                    self._consecutive_detect_count += 1
-                    if self._consecutive_detect_count >= config.DETECT_CONFIRM_FRAMES:
-                        print(f"[SMART] Confirmed ({self._consecutive_detect_count} frames) at ({self.target_lat:.6f}, {self.target_lon:.6f}) conf={conf:.2f}")
-                        self._detect_queue.append((self.target_lat, self.target_lon, conf))
-                        self._consecutive_detect_count = 0
-                else:
-                    # Single-frame trigger (default): queue if not already queued nearby
-                    if not self._is_near_known(self.target_lat, self.target_lon):
-                        print("TARGET DETECTED!")
-                        self._detect_queue.append((self.target_lat, self.target_lon, conf))
+                # Single-frame trigger (default): queue if not already queued nearby
+                if not self._is_near_known(self.target_lat, self.target_lon):
+                    print("TARGET DETECTED!")
+                    self._detect_queue.append((self.target_lat, self.target_lon, conf))
         else:
             self._consecutive_detect_count = 0
 
-        # Fly to next waypoint (runs when no new target, or target was rejected)
+    def _advance_waypoint(self):
+        """Fly toward next waypoint; start rescan pass or finish when pattern exhausted."""
+        g = _get_main_globals()
+        REAL_CANVAS_SIZE = g['REAL_CANVAS_SIZE']
+
+        if self.wp_index < len(self.waypoints):
+            target = self.waypoints[self.wp_index]
+            if time.time() - self.last_req > 2.0:
+                self.nav.send_global_target(target[0], target[1], self._current_search_alt())
+                self.last_req = time.time()
+            if self.get_dist_to_point(target[0], target[1]) < 2.0:
+                self.wp_index += 1
+        elif self.rescan_pass < self.max_rescan_passes:
+            # Drop altitude by 20% and rescan from current position
+            current_alt = self._current_search_alt()
+            new_alt = max(config.RESCAN_ALT_FLOOR_M, current_alt * config.RESCAN_ALT_FACTOR)
+            if new_alt <= config.RESCAN_ALT_FLOOR_M:
+                print(f"WARNING: Rescan altitude hit {config.RESCAN_ALT_FLOOR_M}m floor. Ending mission.")
+                self._set_state(State.DONE)
+                return
+            self.rescan_pass += 1
+            self._rescan_alt = new_alt  # store for _current_search_alt
+            print(f"\n{'=' * 50}")
+            print(f"  SEARCH COMPLETE — nothing confirmed.")
+            print(f"  Dropping from {current_alt:.0f}m to {new_alt:.0f}m (pass {self.rescan_pass + 1})")
+            print(f"{'=' * 50}")
+            # Regenerate lawnmower from current position at new altitude
+            if config.MODE == "SIMULATION":
+                canvas_w, canvas_h = self.sim.map_w, self.sim.map_h
+            else:
+                canvas_w, canvas_h = REAL_CANVAS_SIZE, REAL_CANVAS_SIZE
+            # Start from where we are now (end of previous pattern)
+            self.waypoints = self.planner.generate_search_pattern(
+                canvas_w, canvas_h, (self.lat, self.lon), alt_override=new_alt)
+            self.wp_index = 0
+            # Re-orient yaw for new pass (waypoints may change direction)
+            self._search_yaw_done = False
+            self._search_yaw_sent = False
+            # Keep rejected targets across passes (N = false positive, don't revisit)
+            # Stay in SEARCH — just descend and continue (no transit back)
+            self._set_state(State.SEARCH)
+        else:
+            self._set_state(State.DONE)
+
+    # ── Search orchestrator ──────────────────────────────────────────
+
+    def _handle_search(self, target_found, px_u, px_v, key):
+        g = _get_main_globals()
+
+        # 1. Orient yaw at start of each pass (returns early while aligning)
+        if self._orient_search_yaw():
+            return
+
+        # 2. Set search speed (slower at low altitude / in focus area)
+        if getattr(self, '_beacon_triggered', False):
+            search_speed = min(config.FOCUS_SEARCH_SPEED_MPS, config.speed_for_altitude(self.alt))
+        else:
+            search_speed = config.speed_for_altitude(self.alt)
+        self.nav.set_speed(search_speed)
+
+        # 3. Auto-trigger PLB beacon after delay (--beacon-delay N)
+        beacon_delay = g.get('BEACON_DELAY', 0)
+        if beacon_delay > 0 and not getattr(self, '_beacon_triggered', False):
+            if not hasattr(self, '_search_first_start'):
+                self._search_first_start = time.time()
+            if time.time() - self._search_first_start >= beacon_delay:
+                self._trigger_beacon_redirect()
+
+        # 4. Process detection (filter, confirm, queue)
+        self._process_detection(target_found, px_u, px_v)
+
+        # 5. Pop queued target → CENTERING, or advance waypoint
         if self.state == State.SEARCH:
-            # If queue has items, pop and go investigate
             result = self._pop_valid_target()
             if result:
                 q_lat, q_lon, q_conf = result
@@ -451,44 +517,7 @@ class StateHandlersMixin:
                 self._locked_target = (q_lat, q_lon)
                 self._set_state(State.CENTERING)
         if self.state == State.SEARCH:
-            if self.wp_index < len(self.waypoints):
-                target = self.waypoints[self.wp_index]
-                if time.time() - self.last_req > 2.0:
-                    self.nav.send_global_target(target[0], target[1], self._current_search_alt())
-                    self.last_req = time.time()
-                if self.get_dist_to_point(target[0], target[1]) < 2.0:
-                    self.wp_index += 1
-            elif self.rescan_pass < self.max_rescan_passes:
-                # Drop altitude by 20% and rescan from current position
-                current_alt = self._current_search_alt()
-                new_alt = max(config.RESCAN_ALT_FLOOR_M, current_alt * config.RESCAN_ALT_FACTOR)
-                if new_alt <= config.RESCAN_ALT_FLOOR_M:
-                    print(f"WARNING: Rescan altitude hit {config.RESCAN_ALT_FLOOR_M}m floor. Ending mission.")
-                    self._set_state(State.DONE)
-                    return
-                self.rescan_pass += 1
-                self._rescan_alt = new_alt  # store for _current_search_alt
-                print(f"\n{'=' * 50}")
-                print(f"  SEARCH COMPLETE — nothing confirmed.")
-                print(f"  Dropping from {current_alt:.0f}m to {new_alt:.0f}m (pass {self.rescan_pass + 1})")
-                print(f"{'=' * 50}")
-                # Regenerate lawnmower from current position at new altitude
-                if config.MODE == "SIMULATION":
-                    canvas_w, canvas_h = self.sim.map_w, self.sim.map_h
-                else:
-                    canvas_w, canvas_h = REAL_CANVAS_SIZE, REAL_CANVAS_SIZE
-                # Start from where we are now (end of previous pattern)
-                self.waypoints = self.planner.generate_search_pattern(
-                    canvas_w, canvas_h, (self.lat, self.lon), alt_override=new_alt)
-                self.wp_index = 0
-                # Re-orient yaw for new pass (waypoints may change direction)
-                self._search_yaw_done = False
-                self._search_yaw_sent = False
-                # Keep rejected targets across passes (N = false positive, don't revisit)
-                # Stay in SEARCH — just descend and continue (no transit back)
-                self._set_state(State.SEARCH)
-            else:
-                self._set_state(State.DONE)
+            self._advance_waypoint()
 
     def _handle_centering(self, target_found, px_u, px_v, key):
         # NO-DESCEND variant: center at current altitude, then VERIFY
