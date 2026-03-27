@@ -110,7 +110,7 @@ Stale departure point after manual & PASS & Correctly returns to pre-manual posi
 \end{tabular}
 \end{table}
 
-Of the 20 scenarios, 12 passed on the first attempt with the correct automated response already in place. The remaining 8 revealed deficiencies---missing timeouts, insufficient input validation, hardcoded parameters, or unclear error messages---that were fixed and re-verified before outdoor testing. No scenario was left unhandled: every failure mode either triggers an automated recovery (RTL, mode change, queue management) or produces an actionable operator warning with a clear next step.
+Of the 20 scenarios, 11 passed on the first attempt with the correct automated response already in place. The remaining 9 revealed deficiencies---missing timeouts, insufficient input validation, hardcoded parameters, or unclear error messages---that were fixed and re-verified before outdoor testing. No scenario was left unhandled: every failure mode either triggers an automated recovery (RTL, mode change, queue management) or produces an actionable operator warning with a clear next step.
 
 The 22-test simulation checklist provides structured coverage of all operational modes: full autonomous mission (baseline), multi-frame detection confirmation, vision-based centering with GPS averaging, geofence enforcement and disable, manual override workflow, multi-target queue ordering, NFZ speed ramp, out-of-polygon detection filtering, beacon redirect, transit planning, altitude override, dry-run generation, headless mode, code refactoring validation, stream server functionality, confidence threshold tuning, reject radius deduplication, manual-mode queue persistence, rapid input robustness, empty queue handling, and log file integrity.
 

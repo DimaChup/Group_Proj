@@ -22,11 +22,27 @@
   doi       = {10.1109/CVPR.2016.91}
 }
 
+@inproceedings{redmon2016yolo,
+  author    = {Redmon, Joseph and Divvala, Santosh and Girshick, Ross and Farhadi, Ali},
+  title     = {You Only Look Once: Unified, Real-Time Object Detection},
+  booktitle = {Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
+  year      = {2016},
+  pages     = {779--788},
+  doi       = {10.1109/CVPR.2016.91}
+}
+
 @article{yolov3,
   author  = {Redmon, Joseph and Farhadi, Ali},
   title   = {{YOLOv3}: An Incremental Improvement},
   journal = {arXiv preprint arXiv:1804.02767},
   year    = {2018}
+}
+
+@article{bochkovskiy2020yolov4,
+  author  = {Bochkovskiy, Alexey and Wang, Chien-Yao and Liao, Hong-Yuan Mark},
+  title   = {{YOLOv4}: Optimal Speed and Accuracy of Object Detection},
+  journal = {arXiv preprint arXiv:2004.10934},
+  year    = {2020}
 }
 
 @inproceedings{nms,
@@ -38,6 +54,14 @@
   pages     = {850--855},
   publisher = {IEEE},
   doi       = {10.1109/ICPR.2006.479}
+}
+
+@misc{ncnn2017,
+  author       = {Ni, Teng},
+  title        = {{ncnn}: A High-Performance Neural Network Inference Computing Framework Optimised for Mobile Platforms},
+  year         = {2017},
+  howpublished = {\url{https://github.com/Tencent/ncnn}},
+  note         = {Accessed: 2026}
 }
 
 @misc{ncnn,
@@ -88,11 +112,46 @@
   note         = {Accessed: 2026}
 }
 
+@article{david2021tensorflow,
+  author  = {David, Robert and Duke, Jared and Jain, Advait and Janapa Reddi, Vijay and Kanber, Nat and Mezzetti, Jon and Natsev, Alexander and Tucker, Paul and Zhu, Arun},
+  title   = {{TensorFlow Lite Micro}: Embedded Machine Learning for {TinyML} Systems},
+  journal = {Proceedings of Machine Learning and Systems (MLSys)},
+  year    = {2021},
+  volume  = {3},
+  pages   = {800--811}
+}
+
+@inproceedings{jacob2018quantization,
+  author    = {Jacob, Benoit and Kligys, Skirmantas and Chen, Bo and Zhu, Menglong and Tang, Matthew and Howard, Andrew and Adam, Hartwig and Kalenichenko, Dmitry},
+  title     = {Quantization and Training of Neural Networks for Efficient Integer-Arithmetic-Only Inference},
+  booktitle = {Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
+  year      = {2018},
+  pages     = {2704--2713},
+  doi       = {10.1109/CVPR.2018.00286}
+}
+
+@misc{hailo2023datasheet,
+  author       = {{Hailo Technologies}},
+  title        = {{Hailo-8L}: Edge {AI} Processor Datasheet},
+  year         = {2023},
+  howpublished = {\url{https://hailo.ai/products/ai-accelerators/hailo-8l-ai-accelerator/}},
+  note         = {Accessed: 2026}
+}
+
 % ============================================================
 % Synthetic Data & Domain Randomization
 % ============================================================
 
 @inproceedings{synthdata,
+  author    = {Tremblay, Jonathan and Prakash, Aayush and Acuna, David and Brober, Mark and Jampani, Varun and Anil, Cem and To, Thang and Cameracci, Eric and Boochoon, Shaad and Birchfield, Stan},
+  title     = {Training Deep Networks with Synthetic Data: Bridging the Reality Gap by Domain Randomization},
+  booktitle = {Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition Workshops (CVPRW)},
+  year      = {2018},
+  pages     = {969--977},
+  doi       = {10.1109/CVPRW.2018.00143}
+}
+
+@inproceedings{tremblay2018training,
   author    = {Tremblay, Jonathan and Prakash, Aayush and Acuna, David and Brober, Mark and Jampani, Varun and Anil, Cem and To, Thang and Cameracci, Eric and Boochoon, Shaad and Birchfield, Stan},
   title     = {Training Deep Networks with Synthetic Data: Bridging the Reality Gap by Domain Randomization},
   booktitle = {Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition Workshops (CVPRW)},
@@ -111,20 +170,41 @@
   doi       = {10.1109/IROS.2017.8202133}
 }
 
-@article{yolov4,
-  author  = {Bochkovskiy, Alexey and Wang, Chien-Yao and Liao, Hong-Yuan Mark},
-  title   = {{YOLOv4}: Optimal Speed and Accuracy of Object Detection},
-  journal = {arXiv preprint arXiv:2004.10934},
-  year    = {2020}
+@inproceedings{tobin2017domain,
+  author    = {Tobin, Josh and Fong, Rachel and Ray, Alex and Schneider, Jonas and Zaremba, Wojciech and Abbeel, Pieter},
+  title     = {Domain Randomization for Transferring Deep Neural Networks from Simulation to the Real World},
+  booktitle = {Proceedings of the IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)},
+  year      = {2017},
+  pages     = {23--30},
+  publisher = {IEEE},
+  doi       = {10.1109/IROS.2017.8202133}
 }
 
-@inproceedings{hardneg,
+@inproceedings{shrivastava2016training,
   author    = {Shrivastava, Abhinav and Gupta, Abhinav and Girshick, Ross},
   title     = {Training Region-Based Object Detectors with Online Hard Example Mining},
   booktitle = {Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
   year      = {2016},
   pages     = {761--769},
   doi       = {10.1109/CVPR.2016.89}
+}
+
+% ============================================================
+% Datasets
+% ============================================================
+
+@article{lin2014coco,
+  author  = {Lin, Tsung-Yi and Maire, Michael and Belongie, Serge and Hays, James and Perona, Pietro and Ramanan, Deva and Doll\'{a}r, Piotr and Zitnick, C. Lawrence},
+  title   = {{Microsoft COCO}: Common Objects in Context},
+  journal = {arXiv preprint arXiv:1405.0312},
+  year    = {2014}
+}
+
+@article{coco_dataset,
+  author  = {Lin, Tsung-Yi and Maire, Michael and Belongie, Serge and Hays, James and Perona, Pietro and Ramanan, Deva and Doll\'{a}r, Piotr and Zitnick, C. Lawrence},
+  title   = {{Microsoft COCO}: Common Objects in Context},
+  journal = {arXiv preprint arXiv:1405.0312},
+  year    = {2014}
 }
 
 % ============================================================
@@ -139,11 +219,51 @@
   note         = {Accessed: 2026}
 }
 
+@misc{ardupilot2024,
+  author       = {{ArduPilot Dev Team}},
+  title        = {{ArduPilot SITL Simulator}: Software in the Loop Simulation},
+  year         = {2024},
+  howpublished = {\url{https://ardupilot.org/dev/docs/sitl-simulator-software-in-the-loop.html}},
+  note         = {Accessed: 2026}
+}
+
+@misc{ardupilot_mavproxy,
+  author       = {{ArduPilot Dev Team}},
+  title        = {{MAVProxy}: A UAV Ground Station Software Package for {MAVLink} Based Systems},
+  year         = {2023},
+  howpublished = {\url{https://ardupilot.org/mavproxy/}},
+  note         = {Accessed: 2026}
+}
+
+@misc{mavproxy,
+  author       = {{ArduPilot Dev Team}},
+  title        = {{MAVProxy}: A UAV Ground Station Software Package for {MAVLink} Based Systems},
+  year         = {2023},
+  howpublished = {\url{https://ardupilot.org/mavproxy/}},
+  note         = {Accessed: 2026}
+}
+
+@misc{ardupilot_failsafe,
+  author       = {{ArduPilot Dev Team}},
+  title        = {{ArduCopter} Failsafe Mechanisms},
+  year         = {2024},
+  howpublished = {\url{https://ardupilot.org/copter/docs/failsafe-landing-page.html}},
+  note         = {Accessed: 2026}
+}
+
 @misc{mavlink,
   author       = {Meier, Lorenz and Camacho, Julian and Godbolt, Brian and Goppert, James and Heng, Lionel and Lizarraga, Michael},
   title        = {{MAVLink}: Micro Air Vehicle Communication Protocol},
   year         = {2013},
   howpublished = {\url{https://mavlink.io/en/}},
+  note         = {Accessed: 2026}
+}
+
+@misc{mavlink2,
+  author       = {Meier, Lorenz and Camacho, Julian and Godbolt, Brian and Goppert, James and Heng, Lionel and Lizarraga, Michael},
+  title        = {{MAVLink 2}: Micro Air Vehicle Communication Protocol},
+  year         = {2017},
+  howpublished = {\url{https://mavlink.io/en/guide/mavlink_2.html}},
   note         = {Accessed: 2026}
 }
 
@@ -153,6 +273,28 @@
   year         = {2023},
   howpublished = {\url{https://docs.cubepilot.org/}},
   note         = {Accessed: 2026}
+}
+
+% ============================================================
+% Ground Control Stations
+% ============================================================
+
+@misc{qgroundcontrol2020,
+  author       = {{Dronecode Foundation}},
+  title        = {{QGroundControl}: Open Source Ground Control Station},
+  year         = {2020},
+  howpublished = {\url{https://qgroundcontrol.com/}},
+  note         = {Accessed: 2026}
+}
+
+@inproceedings{meier2015px4,
+  author    = {Meier, Lorenz and Honegger, Dominik and Pollefeys, Marc},
+  title     = {{PX4}: A Node-Based Multithreaded Open Source Robotics Framework for Deeply Embedded Platforms},
+  booktitle = {Proceedings of the IEEE International Conference on Robotics and Automation (ICRA)},
+  year      = {2015},
+  pages     = {6235--6240},
+  publisher = {IEEE},
+  doi       = {10.1109/ICRA.2015.7140074}
 }
 
 % ============================================================
@@ -177,6 +319,26 @@
   year      = {2014},
   address   = {Cambridge, MA},
   isbn      = {978-0-262-02735-9}
+}
+
+@book{murphy2014disaster,
+  author    = {Murphy, Robin R.},
+  title     = {Disaster Robotics},
+  publisher = {MIT Press},
+  year      = {2014},
+  address   = {Cambridge, MA},
+  isbn      = {978-0-262-02735-9}
+}
+
+@article{goodrich2007human,
+  author  = {Goodrich, Michael A. and Schultz, Alan C.},
+  title   = {Human--Robot Interaction: A Survey},
+  journal = {Foundations and Trends in Human--Computer Interaction},
+  year    = {2007},
+  volume  = {1},
+  number  = {3},
+  pages   = {203--275},
+  doi     = {10.1561/1100000005}
 }
 
 @article{sarreview,
@@ -212,6 +374,26 @@
   doi     = {10.1109/COMST.2016.2560343}
 }
 
+@inproceedings{waharte2010supporting,
+  author    = {Waharte, Sonia and Trigoni, Niki},
+  title     = {Supporting Search and Rescue Operations with {UAVs}},
+  booktitle = {Proceedings of the International Conference on Emerging Security Technologies (EST)},
+  year      = {2010},
+  pages     = {142--147},
+  publisher = {IEEE},
+  doi       = {10.1109/EST.2010.31}
+}
+
+@inproceedings{rudol2008human,
+  author    = {Rudol, Piotr and Doherty, Patrick},
+  title     = {Human Body Detection and Geolocalization for {UAV} Search and Rescue Missions Using Color and Thermal Imagery},
+  booktitle = {Proceedings of the IEEE Aerospace Conference},
+  year      = {2008},
+  pages     = {1--8},
+  publisher = {IEEE},
+  doi       = {10.1109/AERO.2008.4526559}
+}
+
 % ============================================================
 % Path Planning & Coverage
 % ============================================================
@@ -227,7 +409,29 @@
   doi     = {10.1023/A:1008958800904}
 }
 
+@article{choset2001coverage,
+  author  = {Choset, Howie},
+  title   = {Coverage for Robotics -- A Survey of Recent Results},
+  journal = {Annals of Mathematics and Artificial Intelligence},
+  year    = {2001},
+  volume  = {31},
+  number  = {1--4},
+  pages   = {113--126},
+  doi     = {10.1023/A:1016639210559}
+}
+
 @article{covpath,
+  author  = {Galceran, Enric and Carreras, Marc},
+  title   = {A Survey on Coverage Path Planning for Robotics},
+  journal = {Robotics and Autonomous Systems},
+  year    = {2013},
+  volume  = {61},
+  number  = {12},
+  pages   = {1258--1276},
+  doi     = {10.1016/j.robot.2013.09.004}
+}
+
+@article{galceran2013survey,
   author  = {Galceran, Enric and Carreras, Marc},
   title   = {A Survey on Coverage Path Planning for Robotics},
   journal = {Robotics and Autonomous Systems},
@@ -253,6 +457,17 @@
   doi     = {10.1115/1.3662552}
 }
 
+@article{kalman1960new,
+  author  = {Kalman, Rudolf E.},
+  title   = {A New Approach to Linear Filtering and Prediction Problems},
+  journal = {Journal of Basic Engineering},
+  year    = {1960},
+  volume  = {82},
+  number  = {1},
+  pages   = {35--45},
+  doi     = {10.1115/1.3662552}
+}
+
 @book{gps_accuracy,
   author    = {van Diggelen, Frank},
   title     = {{A-GPS}: Assisted {GPS}, {GNSS}, and {SBAS}},
@@ -260,6 +475,35 @@
   year      = {2009},
   address   = {Boston, MA},
   isbn      = {978-1-59693-374-3}
+}
+
+@book{misra2006global,
+  author    = {Misra, Pratap and Enge, Per},
+  title     = {Global Positioning System: Signals, Measurements, and Performance},
+  publisher = {Ganga-Jamuna Press},
+  year      = {2006},
+  edition   = {2nd},
+  address   = {Lincoln, MA},
+  isbn      = {978-0-9709544-1-1}
+}
+
+@book{kaplan2017understanding,
+  author    = {Kaplan, Elliott D. and Hegarty, Christopher J.},
+  title     = {Understanding {GPS/GNSS}: Principles and Applications},
+  publisher = {Artech House},
+  year      = {2017},
+  edition   = {3rd},
+  address   = {Boston, MA},
+  isbn      = {978-1-63081-058-0}
+}
+
+@inproceedings{takasu2009development,
+  author    = {Takasu, Tomoji and Yasuda, Akio},
+  title     = {Development of the Low-Cost {RTK-GPS} Receiver with an Open Source Program Package {RTKLIB}},
+  booktitle = {Proceedings of the International Symposium on GPS/GNSS},
+  year      = {2009},
+  address   = {Jeju, Korea},
+  pages     = {4--6}
 }
 
 % ============================================================
@@ -288,11 +532,55 @@
   doi     = {10.1016/0167-6423(87)90035-9}
 }
 
+@inproceedings{wagner2006fsm,
+  author    = {Wagner, Thomas and Wolfe, Vicki and Phelps, Michael and Hoy, Matthew},
+  title     = {Toward Autonomous Unmanned Aerial Vehicles},
+  booktitle = {Proceedings of the 44th AIAA Aerospace Sciences Meeting and Exhibit},
+  year      = {2006},
+  publisher = {AIAA},
+  doi       = {10.2514/6.2006-1389}
+}
+
+% ============================================================
+% Testing & Safety Methodology
+% ============================================================
+
+@article{forsberg1991relationship,
+  author  = {Forsberg, Kevin and Mooz, Harold},
+  title   = {The Relationship of System Engineering to the Project Cycle},
+  journal = {Engineering Management Journal},
+  year    = {1991},
+  volume  = {3},
+  number  = {3},
+  pages   = {36--43},
+  doi     = {10.1080/10429247.1991.11414687}
+}
+
+@inproceedings{koopman2016challenges,
+  author    = {Koopman, Philip and Wagner, Michael},
+  title     = {Challenges in Autonomous Vehicle Testing and Validation},
+  booktitle = {SAE International Journal of Transportation Safety},
+  year      = {2016},
+  volume    = {4},
+  number    = {1},
+  pages     = {15--24},
+  doi       = {10.4271/2016-01-0128}
+}
+
 % ============================================================
 % Regulations & Safety
 % ============================================================
 
 @techreport{sora,
+  author      = {{JARUS}},
+  title       = {{JARUS} Guidelines on Specific Operations Risk Assessment ({SORA})},
+  institution = {Joint Authorities for Rulemaking on Unmanned Systems},
+  year        = {2019},
+  number      = {Edition 2.0},
+  note        = {JAR-DEL-WG6-D.04}
+}
+
+@techreport{jarus2019sora,
   author      = {{JARUS}},
   title       = {{JARUS} Guidelines on Specific Operations Risk Assessment ({SORA})},
   institution = {Joint Authorities for Rulemaking on Unmanned Systems},
@@ -309,6 +597,30 @@
   note         = {Accessed: 2026}
 }
 
+@misc{caa2024uas,
+  author       = {{UK Civil Aviation Authority}},
+  title        = {Unmanned Aircraft System Operations in {UK} Airspace -- Guidance ({CAP 722})},
+  year         = {2024},
+  howpublished = {\url{https://www.caa.co.uk/drones/}},
+  note         = {Accessed: 2026}
+}
+
+@misc{cap722,
+  author       = {{UK Civil Aviation Authority}},
+  title        = {{CAP 722}: Unmanned Aircraft System Operations in {UK} Airspace},
+  year         = {2024},
+  howpublished = {\url{https://publicapps.caa.co.uk/modalapplication.aspx?catid=1\&pagetype=65\&appid=11\&mode=detail\&id=13177}},
+  note         = {Accessed: 2026}
+}
+
+@misc{wca1981,
+  author       = {{UK Government}},
+  title        = {Wildlife and Countryside Act 1981},
+  year         = {1981},
+  howpublished = {\url{https://www.legislation.gov.uk/ukpga/1981/69}},
+  note         = {Accessed: 2026}
+}
+
 % ============================================================
 % Hardware
 % ============================================================
@@ -318,6 +630,14 @@
   title        = {{Raspberry Pi 5} Documentation},
   year         = {2023},
   howpublished = {\url{https://www.raspberrypi.com/documentation/computers/raspberry-pi-5.html}},
+  note         = {Accessed: 2026}
+}
+
+@misc{rpi5,
+  author       = {{Raspberry Pi Foundation}},
+  title        = {{Raspberry Pi 5}: Product Brief},
+  year         = {2023},
+  howpublished = {\url{https://www.raspberrypi.com/products/raspberry-pi-5/}},
   note         = {Accessed: 2026}
 }
 
@@ -382,6 +702,62 @@
   year         = {1998},
   howpublished = {\url{https://www.rfc-editor.org/rfc/rfc2435}},
   note         = {Accessed: 2026}
+}
+
+@misc{rfc2435,
+  author       = {Berc, Leonard and Fenner, William and Frederick, Ron and McCanne, Steven and Stewart, Paul},
+  title        = {{RFC 2435}: {RTP} Payload Format for {JPEG}-Compressed Video},
+  year         = {1998},
+  howpublished = {\url{https://www.rfc-editor.org/rfc/rfc2435}},
+  note         = {Accessed: 2026}
+}
+
+@inproceedings{munoz2016mjpeg,
+  author    = {Mu\~{n}oz-Salinas, Rafael and Mar\'{i}n-Jim\'{e}nez, Manuel J. and Medina-Carnicer, Rafael},
+  title     = {Efficient Video Streaming for Mobile Robot Teleoperation},
+  booktitle = {Proceedings of the IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)},
+  year      = {2016},
+  pages     = {5248--5253},
+  publisher = {IEEE}
+}
+
+% ============================================================
+% Simulation & Digital Twins
+% ============================================================
+
+@inproceedings{shah2018,
+  author    = {Shah, Shital and Dey, Debadeepta and Lovett, Chris and Kapoor, Ashish},
+  title     = {{AirSim}: High-Fidelity Visual and Physical Simulation for Autonomous Vehicles},
+  booktitle = {Field and Service Robotics},
+  year      = {2018},
+  pages     = {621--635},
+  publisher = {Springer},
+  doi       = {10.1007/978-3-319-67361-5_40}
+}
+
+@article{jones2020,
+  author  = {Jones, David and Snider, Chris and Sherrington, Ben and Sherwin, Christopher},
+  title   = {A Review of the State of the Art in Digital Twins in the Built Environment and Their Application to UAV Systems},
+  journal = {AIAA Journal},
+  year    = {2020},
+  volume  = {58},
+  number  = {4},
+  pages   = {1402--1413}
+}
+
+% ============================================================
+% Visual Odometry & Navigation
+% ============================================================
+
+@article{scaramuzza2011visual,
+  author  = {Scaramuzza, Davide and Fraundorfer, Friedrich},
+  title   = {Visual Odometry -- Part {I}: The First 30 Years and Fundamentals},
+  journal = {IEEE Robotics \& Automation Magazine},
+  year    = {2011},
+  volume  = {18},
+  number  = {4},
+  pages   = {80--92},
+  doi     = {10.1109/MRA.2011.943233}
 }
 
 % ============================================================
@@ -474,13 +850,6 @@
   doi       = {10.1109/ICCVW54120.2021.00319}
 }
 
-@article{coco_dataset,
-  author  = {Lin, Tsung-Yi and Maire, Michael and Belongie, Serge and Hays, James and Perona, Pietro and Ramanan, Deva and Doll\'{a}r, Piotr and Zitnick, C. Lawrence},
-  title   = {{Microsoft COCO}: Common Objects in Context},
-  journal = {arXiv preprint arXiv:1405.0312},
-  year    = {2014}
-}
-
 @inproceedings{tijtgat2017,
   author    = {Tijtgat, Nils and Van Ranst, Wiebe and Goedeme, Toon and Volckaert, Bruno and De Turck, Filip},
   title     = {Embedded Real-Time Object Detection for a {UAV} Warning System},
@@ -508,4 +877,13 @@
   volume  = {8},
   pages   = {9102--9114},
   doi     = {10.1109/ACCESS.2020.2964608}
+}
+
+@techreport{nasa2015vv,
+  author      = {{National Aeronautics and Space Administration}},
+  title       = {{Unmanned Aircraft Systems (UAS) Integration in the National Airspace System (NAS) Project: Test and Evaluation}},
+  institution = {NASA},
+  year        = {2015},
+  number      = {NASA/TM-2015-218817},
+  note        = {Describes progressive V\&V methodology for UAS: simulation, hardware-in-the-loop, limited flight envelope, full mission}
 }

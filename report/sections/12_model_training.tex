@@ -84,7 +84,7 @@ Table~\ref{tab:training_results} presents the validation metrics for the v2 mode
     \end{tabular}
 \end{table}
 
-A caveat applies: the training and validation splits use the same image set (\texttt{train=val=images}), which inflates the reported metrics relative to a held-out evaluation. This pragmatic choice was driven by the small dataset size---splitting 366 images 80/20 would leave only 73 validation images, too few for stable metric estimation. The strong field-test results (Section~\ref{sec:field}) provide independent confirmation that the model generalises beyond the training distribution.
+A caveat applies: the training and validation splits use the same image set (\texttt{train=val=images}), which inflates the reported metrics relative to a held-out evaluation. This pragmatic choice was driven by the small dataset size---splitting 366 images 80/20 would leave only 73 validation images, too few for stable metric estimation. The strong field-test results (Section~\ref{sec:results}) provide independent confirmation that the model generalises beyond the training distribution.
 
 The exported TFLite model is 11.7\,MB (float32) and maintains the same input tensor shape $[1, 640, 640, 3]$ and output tensor shape $[1, 5, 8400]$ as the original model. Three model variants are archived in the \texttt{cv\_models/} directory: \texttt{sar\_v2\_1088} (current best), \texttt{sar\_640}, and \texttt{sar\_1280}, each containing TFLite, PyTorch, and NCNN exports along with training curves and confusion matrices for reproducibility.
 

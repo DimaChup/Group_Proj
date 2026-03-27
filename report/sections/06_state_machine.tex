@@ -166,7 +166,7 @@ The operator interface supports three input modalities: keyboard over SSH/PuTTY,
 
 \subsection{Safety Overrides and Fault Handling}\label{subsec:safety}
 
-Five independent safety mechanisms operate across all flight states, forming a defence-in-depth architecture where each layer can catch failures missed by the others.
+Five independent safety mechanisms operate across all flight states in a defence-in-depth architecture.
 
 \paragraph{Manual Override (M key).}
 Pressing M at any time transitions the FSM to \textsc{Manual}, immediately halting autonomous commands by sending a zero-velocity command. The departure position and altitude are recorded so that pressing M again triggers \textsc{Return\_From\_Manual}, which navigates back to the departure point before resuming the previous state. If the operator observes a valid detection during manual flight, it is queued; upon exiting manual mode, the system checks for queued detections and transitions directly to \textsc{Centering} if one is available, or returns to the departure point if none exist. WASD keys provide 5\,m/s velocity commands, R/F control vertical movement at 2\,m/s, and Q/E rotate the yaw. This gives the operator complete manual authority without leaving the software framework.

@@ -1,0 +1,447 @@
+\documentclass[10pt,a4paper]{article}
+
+% ── Layout ──────────────────────────────────────────────────────────────
+\usepackage[margin=15mm,heightrounded]{geometry}
+\usepackage{microtype}
+\usepackage{lmodern}
+\usepackage{setspace}
+\setstretch{1.05}
+
+% ── Graphics & Figures ──────────────────────────────────────────────────
+\usepackage{graphicx}
+\usepackage{float}
+
+% ── Tables ──────────────────────────────────────────────────────────────
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{multirow}
+
+% ── Typography & Colour ────────────────────────────────────────────────
+\usepackage[dvipsnames]{xcolor}
+\definecolor{headblue}{HTML}{1F3864}
+\definecolor{decisiongreen}{HTML}{E8F5E9}
+\definecolor{decisionborder}{HTML}{2E7D32}
+\usepackage{titlesec}
+\titleformat{\section}{\normalfont\Large\bfseries\color{headblue}}{\thesection}{0.6em}{}
+\titleformat{\subsection}{\normalfont\large\bfseries\color{headblue}}{\thesubsection}{0.5em}{}
+\titleformat{\subsubsection}{\normalfont\normalsize\bfseries\color{headblue}}{\thesubsubsection}{0.4em}{}
+\titlespacing*{\section}{0pt}{10pt plus 2pt}{4pt plus 1pt}
+\titlespacing*{\subsection}{0pt}{8pt plus 2pt}{3pt plus 1pt}
+
+% ── Headers & Footers ──────────────────────────────────────────────────
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\cfoot{\footnotesize\thepage}
+\renewcommand{\headrulewidth}{0pt}
+
+% ── Lists ───────────────────────────────────────────────────────────────
+\usepackage[nosep]{enumitem}
+
+% ── Boxes ───────────────────────────────────────────────────────────────
+\usepackage[framemethod=TikZ]{mdframed}
+
+\newmdenv[
+  backgroundcolor=black!5,
+  linewidth=0pt,
+  innertopmargin=8pt,
+  innerbottommargin=8pt,
+  innerleftmargin=10pt,
+  innerrightmargin=10pt,
+  roundcorner=3pt
+]{abstractbox}
+
+\newmdenv[
+  backgroundcolor=blue!3,
+  linecolor=headblue,
+  linewidth=0.8pt,
+  innertopmargin=6pt,
+  innerbottommargin=6pt,
+  innerleftmargin=8pt,
+  innerrightmargin=8pt,
+  roundcorner=2pt
+]{infobox}
+
+\newmdenv[
+  backgroundcolor=decisiongreen,
+  linecolor=decisionborder,
+  linewidth=1pt,
+  innertopmargin=6pt,
+  innerbottommargin=6pt,
+  innerleftmargin=8pt,
+  innerrightmargin=8pt,
+  roundcorner=2pt
+]{decisionbox}
+
+% ── Code Listings ───────────────────────────────────────────────────────
+\usepackage{listings}
+\lstset{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  frame=single,
+  rulecolor=\color{black!20},
+  backgroundcolor=\color{black!2},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  tabsize=4,
+  showstringspaces=false,
+  keywordstyle=\color{blue!70},
+  commentstyle=\color{green!50!black},
+  stringstyle=\color{red!60!black}
+}
+
+% ── Hyperlinks ──────────────────────────────────────────────────────────
+\usepackage[hidelinks,colorlinks=true,linkcolor=headblue,citecolor=headblue,urlcolor=blue!60]{hyperref}
+
+% ── Float control ───────────────────────────────────────────────────────
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.8}
+\renewcommand{\floatpagefraction}{0.85}
+\setlength{\parskip}{2pt plus 1pt}
+\setlength{\parindent}{0pt}
+
+% ── Custom commands ─────────────────────────────────────────────────────
+\newcommand{\compactTable}{\small\setlength{\tabcolsep}{3pt}\renewcommand{\arraystretch}{1.05}}
+\newcommand{\ddlabel}[1]{\textbf{\color{headblue}#1}\hspace{0.5em}}
+
+% ═══════════════════════════════════════════════════════════════════════
+\begin{document}
+
+% ── Title Block ─────────────────────────────────────────────────────────
+\begin{center}
+  {\LARGE\bfseries Design Decisions --- SAR Drone System}\\[10pt]
+  {\large AENGM0074 Group Design Project --- University of Bristol}\\[4pt]
+  {\normalsize March 2026}
+\end{center}
+
+\vspace{4pt}
+
+% ── Introduction ────────────────────────────────────────────────────────
+\begin{abstractbox}
+This document records the key technical design decisions made during the development of the autonomous Search and Rescue (SAR) drone system. Each entry captures the context, alternatives considered, final decision, and rationale---providing traceability of engineering judgement for the project report and future maintainers.
+\end{abstractbox}
+
+\vspace{6pt}
+
+\tableofcontents
+
+\vspace{8pt}
+
+% ═══════════════════════════════════════════════════════════════════════
+\section{Video Streaming}
+% ═══════════════════════════════════════════════════════════════════════
+
+\subsection{DD-01: MJPEG over H.264 for Video Streaming}
+\label{sec:dd01}
+
+\ddlabel{Date:} 2026-03-09 (updated 2026-03-18)
+
+\ddlabel{Context:} The system requires live camera feed from the Raspberry Pi to the laptop ground station during flight. Six streaming protocols were evaluated.
+
+\vspace{4pt}
+
+\begin{table}[H]
+\centering
+\compactTable
+\caption{Video streaming options comparison}
+\label{tab:dd01-options}
+\begin{tabularx}{\textwidth}{l c c c c c c}
+\toprule
+\textbf{Method} & \textbf{Latency} & \textbf{Max FPS} & \textbf{Browser?} & \textbf{Dependencies} & \textbf{Complexity} & \textbf{Reliability} \\
+\midrule
+\textbf{MJPEG/HTTP} & \textasciitilde300\,ms & 3--5 & Yes & OpenCV only & Low & Very high \\
+H.264/RTP + GStreamer & \textasciitilde100\,ms & 30 & No & gstreamer & High & Medium \\
+H.264/HLS via FFmpeg & 1--2\,s & 30 & Yes & ffmpeg & Medium & Medium \\
+WebRTC & \textasciitilde50\,ms & 30 & Yes & aiortc, STUN & High & Medium \\
+GStreamer RTSP & \textasciitilde100\,ms & 30 & No & gstreamer & Medium & Medium \\
+VNC & \textasciitilde500\,ms & 15 & VNC client & VNC server & Low & Medium \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{decisionbox}
+\textbf{Decision:} MJPEG over HTTP.
+\end{decisionbox}
+
+\ddlabel{Rationale:}
+\begin{itemize}
+  \item Most reliable for field operations---pure HTTP, stateless, each frame independent.
+  \item Works in any browser (laptop, phone, tablet) with no special apps or codecs.
+  \item Zero extra dependencies beyond OpenCV \texttt{imencode()}.
+  \item Inference runs at only 3--5\,FPS; low-latency streaming provides no benefit when the AI processes 3 frames per second.
+  \item Thread-safe via \texttt{ThreadingMixIn}---handles multiple browser clients.
+  \item Battle-tested across \texttt{passive\_watch.py}, \texttt{pi\_flight.py}, and \texttt{capture\_training.py}.
+\end{itemize}
+
+\ddlabel{Alternatives rejected:}
+\begin{itemize}
+  \item \textbf{H.264/GStreamer:} Requires \texttt{pygobject} + GStreamer plugins---extra failure points in the field. Does not work in a plain browser.
+  \item \textbf{WebRTC:} Most complex (STUN/TURN servers, signalling). Overkill for passive monitoring at 3\,FPS.
+\end{itemize}
+
+\ddlabel{Trade-offs accepted:}
+\begin{itemize}
+  \item Higher bandwidth (\textasciitilde2--5\,Mbps vs \textasciitilde0.5\,Mbps for H.264).
+  \item Higher latency (\textasciitilde300\,ms vs \textasciitilde100\,ms)---acceptable since passive watch sends zero commands.
+  \item CPU cost of JPEG re-encoding per frame.
+\end{itemize}
+
+\ddlabel{Revisit if:} Real-time FPV is needed for manual piloting, or inference speed exceeds 15\,FPS (NCNN/Hailo).
+
+% ═══════════════════════════════════════════════════════════════════════
+\section{Platform and Connectivity}
+% ═══════════════════════════════════════════════════════════════════════
+
+\subsection{DD-02: Headless Operation via SSH}
+\label{sec:dd02}
+
+\ddlabel{Date:} 2026-03-10
+
+\ddlabel{Context:} The Pi is mounted on the drone with no attached monitor. Scripts must be started and monitored remotely. OpenCV's \texttt{cv2.imshow()} crashes with a Qt plugin error when no display is available.
+
+\ddlabel{Options considered:}
+\begin{enumerate}
+  \item Attach a monitor to the Pi in the field---impractical.
+  \item VNC---adds latency and complexity.
+  \item \textbf{SSH + headless flags}---lightweight, reliable.
+\end{enumerate}
+
+\begin{decisionbox}
+\textbf{Decision:} SSH (PuTTY) for script control; browser for visual output.
+\end{decisionbox}
+
+\ddlabel{Implementation:}
+\begin{itemize}
+  \item \texttt{signal.signal(signal.SIGINT, signal.SIG\_DFL)} ensures Ctrl+C works over SSH.
+  \item \texttt{os.environ['QT\_QPA\_PLATFORM'] = 'minimal'} when no \texttt{DISPLAY}---prevents Qt crash.
+  \item Auto-detect IP with \texttt{hostname -I}; always prints correct URL.
+  \item All visual output via MJPEG web stream, never \texttt{cv2.imshow}.
+\end{itemize}
+
+\begin{infobox}
+\textbf{Flight day workflow:}\\
+PuTTY Terminal 1: mavproxy \quad|\quad PuTTY Terminal 2: \texttt{pi\_flight.py}\\
+Laptop browser: dashboard at \texttt{http://<PI\_IP>:8090}\\
+Laptop Mission Planner: TCP to \texttt{<PI\_IP>:5762}
+\end{infobox}
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{DD-04: mavproxy UDP Bridge (not direct serial)}
+\label{sec:dd04}
+
+\ddlabel{Date:} 2026-02-17
+
+\ddlabel{Context:} Python 3.13 combined with \texttt{pyserial} produces broken serial reads---bytes are dropped, causing persistent \texttt{BAD\_DATA} errors on the MAVLink stream.
+
+\ddlabel{Options considered:}
+\begin{enumerate}
+  \item Downgrade to Python 3.11---breaks other dependencies.
+  \item Fix \texttt{pyserial}---upstream bug, not within project scope.
+  \item \textbf{mavproxy as UDP bridge}---reads serial correctly, forwards via UDP.
+\end{enumerate}
+
+\begin{decisionbox}
+\textbf{Decision:} mavproxy bridge.\\[2pt]
+\texttt{\small mavproxy.py --master=/dev/ttyAMA0 --baudrate=921600 --out=udpout:127.0.0.1:14550 --out=tcpin:0.0.0.0:5762}
+\end{decisionbox}
+
+\ddlabel{Rationale:} mavproxy is battle-tested and also provides free Mission Planner connectivity via TCP. Scripts connect to \texttt{udpin:0.0.0.0:14550} instead of the serial port. One extra process but zero data loss.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{DD-05: Camera Shares One Owner}
+\label{sec:dd05}
+
+\ddlabel{Date:} 2026-03-10
+
+\ddlabel{Context:} Two scripts must run concurrently: Robin's mission script (flight control) and our vision script (camera + AI). Only one process can open the Pi camera (\texttt{picamera2}) at a time.
+
+\begin{decisionbox}
+\textbf{Decision:} Robin's script handles flight only (no camera). \texttt{pi\_flight.py} handles camera + vision + stream. Both run in parallel without conflict.
+\end{decisionbox}
+
+\ddlabel{Alternative rejected:} Shared camera via IPC/socket---adds complexity and fragility, not justified for a demonstration.
+
+% ═══════════════════════════════════════════════════════════════════════
+\section{Computer Vision}
+% ═══════════════════════════════════════════════════════════════════════
+
+\subsection{DD-03: Dual-Backend Vision System}
+\label{sec:dd03}
+
+\ddlabel{Date:} 2026-02-17
+
+\ddlabel{Context:} The development laptop has the full PyTorch + Ultralytics stack; the Pi has only lightweight TFLite.
+
+\begin{decisionbox}
+\textbf{Decision:} A single \texttt{vision.py} module with automatic backend detection---tries Ultralytics first, falls back to TFLite.
+\end{decisionbox}
+
+\ddlabel{Rationale:} The same code runs on both platforms with no \texttt{if platform == ...} scattered throughout the codebase. The public interface \texttt{detect\_in\_image(frame) $\rightarrow$ (found, x, y, conf)} is identical regardless of backend.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{DD-06: IMX296 BGR Colour Fix}
+\label{sec:dd06}
+
+\ddlabel{Date:} 2026-02-17
+
+\ddlabel{Context:} Camera images exhibited a persistent blue tint despite trying all AWB modes, manual gains, and ISP tuning.
+
+\ddlabel{Root cause:} The IMX296 global shutter sensor outputs BGR data despite \texttt{picamera2} labelling the format as \texttt{RGB888}. The codebase contained a \texttt{cv2.cvtColor(frame, cv2.COLOR\_RGB2BGR)} call which double-swapped the channels.
+
+\ddlabel{Discovery method:} Tested all six permutations of R, G, B channels---``no conversion'' produced correct colours.
+
+\begin{decisionbox}
+\textbf{Fix:} Remove \texttt{cvtColor} entirely. The data is already BGR (OpenCV's native format).
+\end{decisionbox}
+
+\ddlabel{Lesson:} Do not trust format labels---test empirically.
+
+% ═══════════════════════════════════════════════════════════════════════
+\section{Testing and Safety}
+% ═══════════════════════════════════════════════════════════════════════
+
+\subsection{DD-07: Progressive Test Strategy}
+\label{sec:dd07}
+
+\ddlabel{Date:} 2026-02-18
+
+\ddlabel{Context:} The team needs confidence that autonomous flight will not crash the drone. A single ``test everything at once'' approach is unsafe.
+
+\begin{decisionbox}
+\textbf{Decision:} Numbered test progression---each step builds trust before adding risk.
+\end{decisionbox}
+
+\begin{table}[H]
+\centering
+\compactTable
+\caption{Progressive test steps}
+\label{tab:dd07-steps}
+\begin{tabularx}{\textwidth}{c l X}
+\toprule
+\textbf{Step} & \textbf{Description} & \textbf{What it proves} \\
+\midrule
+1 & Mission Planner AUTO waypoints & Cube, GPS, motors, RTL---no custom code involved \\
+2 & Waypoint test script (no CV) & MAVLink arm, takeoff, goto, land commands work \\
+3 & Manual flight + passive CV & CV works outdoors; calibrates detection altitude \\
+4 & Autonomous search + log only & Full search pattern; CV detects from altitude \\
+5 & Full autonomous mission & End-to-end with operator verify \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\ddlabel{Rationale:} Never skip a step. Each step isolates one new variable. If step $N$ fails, the problem is the thing added at step $N$, not something from step $N{-}2$.
+
+% ═══════════════════════════════════════════════════════════════════════
+\section{Navigation and Landing}
+% ═══════════════════════════════════════════════════════════════════════
+
+\subsection{DD-08: GPS Estimation --- Inverse Variance Weighting}
+\label{sec:dd08}
+
+\ddlabel{Date:} 2026-02-20
+
+\ddlabel{Context:} The system estimates the target's GPS position from camera detections at varying altitudes. Observations from 30\,m have much larger error than from 10\,m (more metres per pixel).
+
+\begin{decisionbox}
+\textbf{Decision:} Weight observations by $1/h^{2}$---an observation at 10\,m altitude is $9\times$ more valuable than one at 30\,m.
+\end{decisionbox}
+
+\ddlabel{Additional:} Centre-snap observations (target at frame centre) receive a $10\times$ bonus weight since projection error is minimal at the optical axis.
+
+\ddlabel{Validation:} Simulated to \textasciitilde0.5\,m estimate error after 30\,s averaging while centred at 10--15\,m.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{DD-09: 7.5\,m Offset Landing}
+\label{sec:dd09}
+
+\ddlabel{Date:} 2026-02-19
+
+\ddlabel{Context:} The drone must land near the casualty but \emph{not} directly on them (propwash, crash risk).
+
+\begin{decisionbox}
+\textbf{Decision:} After GPS lock on target, fly to a point 7.5\,m north and land there.
+\end{decisionbox}
+
+\ddlabel{Rationale:} 7.5\,m provides safe separation. ``North'' is arbitrary but consistent---the SAR team knows where to look relative to the drone. Simulated successfully in \texttt{simple\_simulator.py}.
+
+% ═══════════════════════════════════════════════════════════════════════
+\section{Geofencing}
+% ═══════════════════════════════════════════════════════════════════════
+
+\subsection{DD-10: NFZ Geofence --- Three Avoidance Strategies}
+\label{sec:dd10}
+
+\ddlabel{Date:} 2026-03-25
+
+\ddlabel{Context:} An SSSI no-fly zone lies near the search area. The drone must avoid entering but still search close to the boundary. ArduCopter has no built-in soft boundary concept---it either enforces a hard geofence (RTL/LAND) or ignores it entirely.
+
+\vspace{4pt}
+
+\begin{table}[H]
+\centering
+\compactTable
+\caption{NFZ avoidance mode comparison}
+\label{tab:dd10-modes}
+\begin{tabularx}{\textwidth}{l l X c c}
+\toprule
+\textbf{Mode} & \textbf{CLI Flag} & \textbf{Mechanism} & \textbf{Buffer} & \textbf{Smoothness} \\
+\midrule
+Repulsive & \texttt{--nfz-repel} & Velocity nudge away from NFZ (quadratic force) & 8\,m & Medium \\
+Velocity & \texttt{--nfz-slow} & Velocity commands toward waypoint, speed capped & 20\,m & Medium \\
+\textbf{Speed-cap} & \texttt{--nfz-carrot} & Normal waypoint nav, only \texttt{DO\_CHANGE\_SPEED} capped & 20\,m & \textbf{Best} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{decisionbox}
+\textbf{Decision:} \texttt{--nfz-carrot} (speed-cap) is the recommended mode.
+\end{decisionbox}
+
+\ddlabel{Speed profile (20\,m buffer zone):}
+\begin{itemize}
+  \item Linear: $v = 0.3 + \dfrac{d}{20} \times (3.0 - 0.3)$, where $d$ is distance to boundary.
+  \item At 20\,m: 3.0\,m/s (entering buffer). At 10\,m: 1.65\,m/s. At 0\,m: 0.3\,m/s (near-stop).
+  \item Outside 20\,m: normal altitude-dependent speed (6--10\,m/s).
+\end{itemize}
+
+\ddlabel{Why speed-cap wins:}
+\begin{enumerate}
+  \item \textbf{No jitter}---does not override position targets or send velocity commands; ArduCopter's own path following handles direction.
+  \item \textbf{Same flight path}---drone follows the exact same waypoints, just slower near the SSSI.
+  \item \textbf{\texttt{DO\_CHANGE\_SPEED} only affects GUIDED/AUTO}---zero effect on manual RC flying (STABILIZE/LOITER/POSHOLD), so the pilot retains full stick authority.
+  \item \textbf{SEARCH-only}---speed cap is active only during the SEARCH state; transit, pre-waypoints, return, and manual modes all fly at normal speed.
+\end{enumerate}
+
+\ddlabel{Hard boundary:} If the drone enters the NFZ, the system auto-switches to MANUAL mode regardless of which geofence mode is active.
+
+\ddlabel{Visualisation:} An orange buffer zone is drawn on the map at 20\,m from the SSSI boundary (slow/carrot modes) or 8\,m (repel mode).
+
+% ═══════════════════════════════════════════════════════════════════════
+\section{Summary}
+% ═══════════════════════════════════════════════════════════════════════
+
+\begin{table}[H]
+\centering
+\compactTable
+\caption{Design decisions summary}
+\label{tab:summary}
+\begin{tabularx}{\textwidth}{l l X}
+\toprule
+\textbf{ID} & \textbf{Date} & \textbf{Decision} \\
+\midrule
+DD-01 & 2026-03-09 & MJPEG/HTTP for video streaming (reliability over latency) \\
+DD-02 & 2026-03-10 & SSH + browser for headless Pi operation \\
+DD-03 & 2026-02-17 & Dual-backend vision (Ultralytics / TFLite auto-detect) \\
+DD-04 & 2026-02-17 & mavproxy UDP bridge (pyserial bug workaround) \\
+DD-05 & 2026-03-10 & Single camera owner (flight script + vision script separation) \\
+DD-06 & 2026-02-17 & Remove \texttt{cvtColor}---IMX296 already outputs BGR \\
+DD-07 & 2026-02-18 & 5-step progressive test strategy \\
+DD-08 & 2026-02-20 & Inverse variance weighting ($1/h^{2}$) for GPS estimation \\
+DD-09 & 2026-02-19 & 7.5\,m north offset landing \\
+DD-10 & 2026-03-25 & Speed-cap geofence (\texttt{--nfz-carrot}) for NFZ avoidance \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\end{document}
