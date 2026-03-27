@@ -1,0 +1,228 @@
+% optimization_formal.tex — Formal multi-objective optimisation problem statement
+% COUNTED in 15-page limit
+
+\section{Multi-Objective Search Optimisation}\label{sec:formal-opt}
+
+The search pattern is governed by a set of coupled decision variables whose optimal values cannot be determined independently. This section formalises the optimisation problem, defines each objective function with its physical basis, identifies the constraint set imposed by regulations and hardware, analyses the coupling structure, and justifies the solution approach.
+
+% =====================================================================
+\subsection{Problem Formulation}\label{sec:problem-formulation}
+
+Let the decision vector be
+
+\begin{equation}\label{eq:decision-vector}
+  \mathbf{x} = \bigl[\, h,\; v,\; \theta,\; \alpha,\; d_{\mathrm{nfz}} \,\bigr]^\top
+\end{equation}
+
+\noindent where $h \in [20, 50]$\,m is the search altitude, $v \in [6, 10]$\,m/s is the forward speed (coupled to $h$ through the altitude-dependent schedule), $\theta \in [0\degree, 180\degree)$ is the scan angle relative to north, $\alpha \in [0, 0.5]$ is the lateral overlap fraction between adjacent swaths, and $d_{\mathrm{nfz}} \geq 0$\,m is the minimum planned standoff distance from the SSSI no-fly zone boundary.
+
+The multi-objective optimisation problem is stated as:
+
+\begin{equation}\label{eq:moo}
+  \begin{aligned}
+    \underset{\mathbf{x}}{\text{minimise}} \quad & \mathbf{F}(\mathbf{x}) = \Bigl[\, -f_{\mathrm{cov}}(\mathbf{x}),\;\; -f_{\mathrm{det}}(\mathbf{x}),\;\; f_{\mathrm{time}}(\mathbf{x}),\;\; f_{\mathrm{energy}}(\mathbf{x}),\;\; -f_{\mathrm{safety}}(\mathbf{x}) \,\Bigr]^\top \\[4pt]
+    \text{subject to} \quad
+      & h \leq 50 \;\text{m} & \text{(R04: altitude ceiling)} \\
+      & \mathbf{w}_i \in \mathcal{P}_{\mathrm{flight}}, \;\; \forall\, i & \text{(R01: flight area)} \\
+      & \mathcal{F}(h, \mathbf{w}_i) \cap \mathcal{P}_{\mathrm{SSSI}} = \varnothing, \;\; \forall\, i & \text{(R02: no footprint over SSSI)} \\
+      & \lVert \mathbf{w}_0 - \mathbf{p}_{\mathrm{TOL}} \rVert \leq 5 \;\text{m} & \text{(R03: takeoff proximity)} \\
+      & f_{\mathrm{energy}}(\mathbf{x}) \leq 0.8 \, E_{\mathrm{batt}} & \text{(battery reserve)}
+  \end{aligned}
+\end{equation}
+
+\noindent where $\mathbf{w}_i$ is the $i$-th waypoint, $\mathcal{P}_{\mathrm{flight}}$ is the flight area polygon, $\mathcal{F}(h, \mathbf{w}_i)$ is the camera footprint polygon at altitude $h$ centred on waypoint $\mathbf{w}_i$, $\mathcal{P}_{\mathrm{SSSI}}$ is the SSSI polygon, $\mathbf{p}_{\mathrm{TOL}}$ is the designated take-off/landing point, and $E_{\mathrm{batt}} = \SI{115.4}{\watt\hour}$ is the battery capacity (6S 5200\,mAh LiPo). The 80\% cap reserves 20\% for return-to-launch, descent, and contingency hover.
+
+Coverage and detection are negated because they are maximisation objectives cast into the standard minimisation form.
+
+% =====================================================================
+\subsection{Objective Functions}\label{sec:objectives}
+
+Each objective is derived from the physical relationships linking the decision variables to mission performance.
+
+\subsubsection{Coverage Completeness}\label{sec:obj-coverage}
+
+The camera ground footprint at altitude $h$ has width
+
+\begin{equation}\label{eq:footprint-w}
+  W_g(h) = \frac{w_s \cdot h}{f}
+\end{equation}
+
+\noindent and along-track height
+
+\begin{equation}\label{eq:footprint-h}
+  H_g(h) = \frac{h_s \cdot h}{f}
+\end{equation}
+
+\noindent where $w_s = \SI{5.02}{\milli\metre}$ and $h_s = \SI{3.75}{\milli\metre}$ are the sensor dimensions (IMX296), and $f = \SI{5.46}{\milli\metre}$ is the calibrated focal length. At the selected altitude of \SI{35}{\metre}, $W_g = \SI{32.2}{\metre}$ and $H_g = \SI{24.0}{\metre}$.
+
+Adjacent scan lines are spaced at
+
+\begin{equation}\label{eq:lane-spacing}
+  L(h, \alpha) = W_g(h) \cdot (1 - \alpha)
+\end{equation}
+
+\noindent yielding $n_{\mathrm{lines}}(\theta) = \lceil W_\perp(\theta) / L \rceil$ scan lines, where $W_\perp(\theta)$ is the polygon extent perpendicular to the scan direction. The coverage fraction is
+
+\begin{equation}\label{eq:coverage}
+  f_{\mathrm{cov}}(h, \theta, \alpha, d_{\mathrm{nfz}}) = \frac{A_{\mathrm{scanned}}(h, \theta, \alpha, d_{\mathrm{nfz}})}{A_{\mathrm{total}}}
+\end{equation}
+
+\noindent where $A_{\mathrm{scanned}}$ is the union of all swath rectangles clipped to the survey polygon minus the NFZ buffer zone, and $A_{\mathrm{total}} = \SI{32200}{\metre\squared}$ is the survey polygon area. The NFZ standoff $d_{\mathrm{nfz}}$ reduces $A_{\mathrm{scanned}}$ by excluding scan line endpoints within $d_{\mathrm{nfz}}$ of the SSSI boundary, creating a coverage gap along the northeast edge. At $d_{\mathrm{nfz}} = \SI{30}{\metre}$, this gap is approximately 4\% of the total area.
+
+\subsubsection{Detection Probability}\label{sec:obj-detection}
+
+A target of physical width $w_t = \SI{0.5}{\metre}$ (mannequin) subtends
+
+\begin{equation}\label{eq:target-px}
+  p_{\mathrm{px}}(h) = \frac{w_t}{\mathrm{GSD}(h)} \cdot \frac{640}{W_{\mathrm{px}}} = \frac{w_t \cdot f \cdot 640}{w_s \cdot h \cdot 1}
+\end{equation}
+
+\noindent pixels in the $640 \times 640$ model input, where $\mathrm{GSD}(h) = w_s h / (f \cdot W_{\mathrm{px}})$ is the ground sample distance and $W_{\mathrm{px}} = 1456$ is the sensor width. The per-frame detection probability $p(h)$ is modelled as a sigmoid function of the target's pixel extent:
+
+\begin{equation}\label{eq:p-single}
+  p(h) = \frac{1}{1 + \exp\!\bigl(-\kappa\,(p_{\mathrm{px}}(h) - p_{\mathrm{min}})\bigr)}
+\end{equation}
+
+\noindent where $p_{\mathrm{min}} = 7$\,px is the empirically observed minimum detectable width and $\kappa = 0.5$\,px$^{-1}$ controls the transition sharpness. This sigmoidal model captures the behaviour observed in video analysis: detection is virtually certain above 15\,px and rapidly degrades below 10\,px, with no sharp threshold.
+
+The number of inference frames in which the target appears during a single flyover is
+
+\begin{equation}\label{eq:n-frames}
+  n_f(h, v) = \frac{H_g(h)}{v} \cdot f_{\mathrm{inf}}
+\end{equation}
+
+\noindent where $f_{\mathrm{inf}} = \SI{4.8}{FPS}$ is the TFLite inference rate on the Raspberry Pi~5. Assuming statistically independent per-frame detections (justified by the global shutter eliminating inter-frame correlation from rolling-shutter artefacts), the cumulative detection probability is
+
+\begin{equation}\label{eq:p-detect}
+  f_{\mathrm{det}}(h, v) = 1 - \bigl(1 - p(h)\bigr)^{n_f(h,v)}
+\end{equation}
+
+\noindent At the selected operating point ($h = \SI{35}{\metre}$, $v = \SI{8}{\metre\per\second}$), the target subtends $p_{\mathrm{px}} = 10$\,px in the model input, the dwell time is \SI{3.0}{\second}, $n_f = 14$ frames, and $f_{\mathrm{det}} > 0.9997$.
+
+\subsubsection{Mission Time}\label{sec:obj-time}
+
+The total mission time decomposes into forward-flight time along scan lines, U-turn penalties, and transit to and from the search area:
+
+\begin{equation}\label{eq:time}
+  f_{\mathrm{time}}(h, v, \theta) = \sum_{i=1}^{n_{\mathrm{lines}}} \frac{\ell_i}{v_{\mathrm{eff},i}} \;+\; n_{\mathrm{turns}} \cdot \Delta t_{\mathrm{turn}} \;+\; \frac{2 \, d_{\mathrm{transit}}}{v_{\mathrm{transit}}}
+\end{equation}
+
+\noindent where $\ell_i$ is the length of the $i$-th scan line, $v_{\mathrm{eff},i}$ is the effective speed along that line (reduced from $v$ in the NFZ slow zone per the speed ramp of Eq.~\eqref{eq:speed-ramp-obj}), $n_{\mathrm{turns}} = n_{\mathrm{lines}} - 1$, $\Delta t_{\mathrm{turn}} = \SI{2}{\second}$ is the deceleration--reacceleration penalty per U-turn, $d_{\mathrm{transit}}$ is the one-way distance from take-off to the search pattern entry point, and $v_{\mathrm{transit}} = \SI{15}{\metre\per\second}$. Within the NFZ slow zone, the effective speed follows a linear ramp:
+
+\begin{equation}\label{eq:speed-ramp-obj}
+  v_{\mathrm{eff}}(d) = v_{\mathrm{min}} + \frac{d}{d_{\mathrm{zone}}} \cdot (v_{\mathrm{zone}} - v_{\mathrm{min}}), \qquad 0 \leq d \leq d_{\mathrm{zone}}
+\end{equation}
+
+\noindent with $v_{\mathrm{min}} = \SI{0.3}{\metre\per\second}$, $v_{\mathrm{zone}} = \SI{3.0}{\metre\per\second}$, and $d_{\mathrm{zone}} = \SI{20}{\metre}$.
+
+\subsubsection{Energy Consumption}\label{sec:obj-energy}
+
+Total power at forward speed $v$ is modelled as the sum of a constant hover component and a speed-dependent parasitic drag component:
+
+\begin{equation}\label{eq:power}
+  P(v) = P_{\mathrm{hover}} + P_{\mathrm{drag,ref}} \left(\frac{v}{v_{\mathrm{ref}}}\right)^{\!2}
+\end{equation}
+
+\noindent where $P_{\mathrm{hover}} = \SI{150}{\watt}$ (momentum-theory estimate for the EDU-450 at \SI{2.3}{\kilo\gram} AUW), $P_{\mathrm{drag,ref}} = \SI{50}{\watt}$ at $v_{\mathrm{ref}} = \SI{5}{\metre\per\second}$, and the quadratic scaling follows from the aerodynamic drag relation $\tfrac{1}{2} C_D \rho A v^2$. The total energy integrates power over the mission profile:
+
+\begin{equation}\label{eq:energy}
+  f_{\mathrm{energy}}(\mathbf{x}) = \int_0^{t_{\mathrm{total}}} P\bigl(v(t)\bigr) \, \mathrm{d}t = P_{\mathrm{hover}} \cdot t_{\mathrm{total}} + P_{\mathrm{drag,ref}} \sum_{i=1}^{n_{\mathrm{lines}}} \int_0^{\ell_i / v_{\mathrm{eff},i}} \!\left(\frac{v_{\mathrm{eff},i}(t)}{v_{\mathrm{ref}}}\right)^{\!2} \mathrm{d}t
+\end{equation}
+
+\noindent During U-turns, only the hover component is active (the drone decelerates to near-zero ground speed). The NFZ slow zone interacts asymmetrically with energy: lower $v$ reduces drag power but increases hover time for the same distance, and since $P_{\mathrm{hover}} \gg P_{\mathrm{drag}}$ at low speeds, the net effect is an energy \emph{increase} for scan lines passing through the slow zone.
+
+\subsubsection{NFZ Safety Margin}\label{sec:obj-safety}
+
+The safety margin accounts for the physical extent of the camera footprint, not merely the waypoint position:
+
+\begin{equation}\label{eq:safety}
+  f_{\mathrm{safety}}(h, d_{\mathrm{nfz}}) = d_{\mathrm{nfz}} - \frac{W_g(h)}{2} = d_{\mathrm{nfz}} - \frac{w_s \cdot h}{2f}
+\end{equation}
+
+\noindent This is the minimum clearance between the nearest edge of any camera footprint and the SSSI boundary. A positive value indicates that no part of any image frame overlaps the protected zone. At the selected operating point ($h = \SI{35}{\metre}$, $d_{\mathrm{nfz}} = \SI{30}{\metre}$), $W_g/2 = \SI{16.1}{\metre}$ and $f_{\mathrm{safety}} = \SI{13.9}{\metre}$, providing a safety factor of $30/16.1 = 1.86$.
+
+% =====================================================================
+\subsection{Constraints}\label{sec:constraints}
+
+The constraint set is derived from regulatory requirements (R01--R04), hardware limits, and operational policy:
+
+\begin{table}[H]
+  \centering\compactTable
+  \caption{Constraint summary with source and binding status at the selected operating point.}\label{tab:constraints}
+  \begin{tabularx}{\linewidth}{@{}c l l c X@{}}
+    \toprule
+    \textbf{ID} & \textbf{Constraint} & \textbf{Formal expression} & \textbf{Binding?} & \textbf{Source} \\
+    \midrule
+    C1 & Altitude ceiling & $h \leq 50$\,m & No & CAA Open A3 (R04) \\
+    C2 & Flight boundary & $\mathbf{w}_i \in \mathcal{P}_{\mathrm{flight}} \;\forall\, i$ & No & KML flight area (R01) \\
+    C3 & SSSI exclusion & $\mathcal{F}(h, \mathbf{w}_i) \cap \mathcal{P}_{\mathrm{SSSI}} = \varnothing$ & Active & SSSI no-fly zone (R02) \\
+    C4 & Takeoff proximity & $\lVert \mathbf{w}_0 - \mathbf{p}_{\mathrm{TOL}} \rVert \leq 5$\,m & No & TOL designation (R03) \\
+    C5 & Battery reserve & $f_{\mathrm{energy}} \leq 0.8 \times 115.4 = 92.3$\,Wh & No & 20\% RTL reserve \\
+    C6 & Min pixel extent & $p_{\mathrm{px}}(h) \geq 7$\,px & Active & Detection threshold \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\noindent Constraints C3 and C6 are the active (near-binding) constraints at the selected operating point: the SSSI exclusion creates the 4\% coverage gap, and the minimum pixel extent prevents operating above approximately \SI{50}{\metre}. The battery constraint (C5) is far from binding---the search consumes \SI{12.6}{\watt\hour} (10.9\% of capacity), leaving ample margin for transit, descent, verification, and return.
+
+% =====================================================================
+\subsection{Variable Coupling Analysis}\label{sec:coupling}
+
+The five decision variables do not affect the objectives independently. Table~\ref{tab:coupling-matrix} shows the coupling structure: each cell indicates which objectives are jointly influenced by the corresponding variable pair.
+
+\begin{table}[H]
+  \centering\compactTable
+  \caption{Variable--objective coupling matrix. Entries indicate which objectives ($C$ = coverage, $D$ = detection, $T$ = time, $E$ = energy, $S$ = safety) are jointly affected by each variable pair. The altitude--speed pair exhibits the strongest coupling, jointly determining four of five objectives.}\label{tab:coupling-matrix}
+  \begin{tabularx}{\linewidth}{@{}l *{5}{>{\centering\arraybackslash}X}@{}}
+    \toprule
+    & $h$ & $v$ & $\theta$ & $\alpha$ & $d_{\mathrm{nfz}}$ \\
+    \midrule
+    $h$             & $C, D, T, E, S$ & $D, T, E$       & $C, T, E$   & $C$     & $C, S$  \\
+    $v$             & ---             & $D, T, E$       & $T, E$      & ---     & ---     \\
+    $\theta$        & ---             & ---             & $C, T, E$   & $C$     & $C$     \\
+    $\alpha$        & ---             & ---             & ---         & $C$     & ---     \\
+    $d_{\mathrm{nfz}}$ & ---          & ---             & ---         & ---     & $C, S$  \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\noindent Three observations follow from the coupling structure:
+
+\begin{enumerate}
+  \item \textbf{Altitude is the most coupled variable.} It appears in all five objectives: higher altitude increases the footprint (improving coverage rate and safety margin) but reduces target pixel extent (degrading detection confidence), while simultaneously affecting mission time (fewer scan lines) and energy (fewer U-turns but higher drag at the associated speed).
+
+  \item \textbf{Speed and altitude are co-dependent.} The altitude-dependent speed schedule $v(h) = 6 + \tfrac{4(h - 20)}{30}$\,m/s (linear from \SI{6}{\metre\per\second} at \SI{20}{\metre} to \SI{10}{\metre\per\second} at \SI{50}{\metre}) links these variables, reducing the effective dimensionality from five to four. This coupling was introduced deliberately: lower altitudes produce smaller targets requiring longer dwell times, which the reduced speed provides.
+
+  \item \textbf{Scan angle and altitude interact through geometry.} The number of scan lines $n_{\mathrm{lines}}(\theta, h)$ depends on both the polygon's projected width in the scan direction and the altitude-dependent swath width. At $\theta = 70\degree$ (aligned with the longest polygon edge), $n_{\mathrm{lines}}$ ranges from 4 at \SI{50}{\metre} to 10 at \SI{20}{\metre}; at $\theta = 0\degree$, it ranges from 8 to 18. The interaction is multiplicative: a poor angle choice at low altitude compounds the penalty.
+\end{enumerate}
+
+\noindent The coupling structure rules out sequential single-variable optimisation (e.g., optimise $h$ first, then $\theta$), because the optimal altitude depends on the chosen angle and vice versa. A joint evaluation of the full decision space is required.
+
+% =====================================================================
+\subsection{Solution Approach}\label{sec:solution-approach}
+
+The problem was solved by exhaustive enumeration of the discretised feasible set rather than gradient-based or evolutionary optimisation. The enumeration evaluates
+
+\begin{equation}\label{eq:enum-size}
+  N = |H| \times |\Theta| = 6 \times 36 = 216 \;\text{configurations}
+\end{equation}
+
+\noindent where $H = \{20, 25, 30, 35, 40, 50\}$\,m and $\Theta = \{0\degree, 5\degree, \ldots, 175\degree\}$. Speed is determined by the altitude-dependent schedule, overlap is fixed at $\alpha = 0.20$, and the NFZ buffer is fixed at $d_{\mathrm{nfz}} = \SI{30}{\metre}$ (the minimum value satisfying C3 with margin). Four properties of the problem justify this approach over more sophisticated methods:
+
+\begin{enumerate}
+  \item \textbf{Discrete feasible set.} The altitude is constrained to values compatible with the ArduPilot waypoint resolution (\SI{1}{\metre}), and angles finer than \SI{5}{\degree} produce negligible changes in scan line count. The resulting $6 \times 36$ grid is small enough for complete evaluation in under \SI{2}{\second} on a laptop.
+
+  \item \textbf{Non-convex objectives.} The detection probability $f_{\mathrm{det}}$ has a sigmoidal dependence on altitude (Eq.~\eqref{eq:p-single}), and the energy landscape contains local minima created by discrete jumps in the number of scan lines as the swath width crosses polygon geometry thresholds. Gradient-based methods would require careful initialisation to avoid local optima.
+
+  \item \textbf{Geometry-dependent evaluation.} Each configuration requires generating the full lawnmower pattern on the real polygon, computing per-segment NFZ slow-zone penalties via numerical integration (50 sample points per segment), and evaluating the energy model. The evaluation function is not differentiable with respect to the scan angle because the number of scan lines changes discontinuously.
+
+  \item \textbf{Interpretability.} Exhaustive enumeration produces the complete Pareto frontier, enabling direct visualisation of trade-offs (Figures~\ref{fig:energy-heatmap},~\ref{fig:alt-speed-body}) rather than a single ``optimal'' point whose sensitivity to modelling assumptions is opaque.
+\end{enumerate}
+
+\noindent From the 216 configurations, Pareto-dominated solutions are filtered, and the operating point is selected from the remaining Pareto-efficient set using a weighted composite score:
+
+\begin{equation}\label{eq:composite}
+  S(\mathbf{x}) = w_D \cdot \hat{f}_{\mathrm{det}}(\mathbf{x}) + w_C \cdot \hat{f}_{\mathrm{cov}}(\mathbf{x}) + w_E \cdot \bigl(1 - \hat{f}_{\mathrm{energy}}(\mathbf{x})\bigr)
+\end{equation}
+
+\noindent where $\hat{f}$ denotes min-max normalisation to $[0, 1]$ across the feasible set, and the weights $w_D = 0.40$, $w_C = 0.35$, $w_E = 0.25$ reflect the SAR priority hierarchy: detection reliability is paramount, coverage completeness is second (a missed area cannot be searched), and energy efficiency is third (the search consumes only 10.9\% of battery regardless). The selected operating point (\SI{35}{\metre}, \SI{70}{\degree}, \SI{8}{\metre\per\second}) achieves the highest composite score: $f_{\mathrm{det}} = 0.9997$, $f_{\mathrm{cov}} = 0.96$, $f_{\mathrm{energy}} = \SI{12.6}{\watt\hour}$ (10.9\% of battery), and $f_{\mathrm{safety}} = \SI{13.9}{\metre}$ net clearance from the SSSI. This point is Pareto-efficient: no other configuration improves any objective without degrading at least one other.
