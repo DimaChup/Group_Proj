@@ -31,7 +31,7 @@ def overlay_image_alpha(background, overlay, x, y, target_w, target_h, rotation_
         target_w = int(w_src * scale)
     if target_w <= 0 or target_h <= 0: return
     try: resized = cv2.resize(overlay, (target_w, target_h))
-    except: return 
+    except Exception: return
     
     diag = int(math.sqrt(target_w**2 + target_h**2))
     pad_x = (diag - target_w) // 2

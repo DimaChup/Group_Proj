@@ -1,0 +1,263 @@
+===============================================================================
+   WORKING5.8 TEST CHECKLIST — HOW TO USE THIS DOCUMENTATION
+===============================================================================
+
+START HERE: Read this file first
+
+===============================================================================
+
+WHAT WAS CREATED?
+-----------------
+
+4 comprehensive test documents (1,446 lines total) in docs/ folder:
+
+  1. TEST_CHECKLIST_5.8.md          (823 lines) — MAIN TEST DOCUMENT
+  2. TEST_CHECKLIST_5.8_FEATURES.md (294 lines) — Feature mapping
+  3. TEST_CHECKLIST_5.8_INDEX.md    (230 lines) — Navigation guide
+  4. TEST_CHECKLIST_5.8_SUMMARY.txt ( 99 lines) — Quick reference
+
+Location: c:\Users\Bristol\Desktop\AI for Robotics\v3\docs\
+
+===============================================================================
+
+HOW TO USE
+----------
+
+OPTION A: Quick Briefing (5 minutes)
+  → Read: TEST_CHECKLIST_5.8_SUMMARY.txt
+  → Understand: What's being tested, how long, pass criteria
+  → Time: 5 min, printable one-page reference
+
+OPTION B: Understand What Changed (10 minutes)
+  → Read: TEST_CHECKLIST_5.8_FEATURES.md
+  → Understand: Commits, features, test mapping
+  → Time: 10 min, links 15+ commits to tests
+
+OPTION C: Full Testing Workflow (20 min quick run OR 60 min full run)
+  → Read: TEST_CHECKLIST_5.8.md
+  → Do: Run tests step-by-step following exact commands
+  → Time: 20-60 min depending on quick/full run
+  → Key: Pre-test setup section is essential
+
+OPTION D: Navigation & Troubleshooting
+  → Read: TEST_CHECKLIST_5.8_INDEX.md
+  → Use: Find which test to run for your issue
+  → Reference: Troubleshooting quick links table
+
+===============================================================================
+
+WHICH FILE DO I NEED?
+---------------------
+
+I need to...                          Read...
+
+Run the tests                         TEST_CHECKLIST_5.8.md
+Understand what changed              TEST_CHECKLIST_5.8_FEATURES.md
+Get a quick overview                 TEST_CHECKLIST_5.8_SUMMARY.txt
+Print a reference card               TEST_CHECKLIST_5.8_SUMMARY.txt
+Navigate all documentation           TEST_CHECKLIST_5.8_INDEX.md
+Troubleshoot a failure               TEST_CHECKLIST_5.8.md (Fail/Investigate)
+Find a specific test                 TEST_CHECKLIST_5.8_INDEX.md (Troubleshooting Links)
+Verify test coverage                 TEST_CHECKLIST_5.8_FEATURES.md (Summary Table)
+Brief the team                       TEST_CHECKLIST_5.8_SUMMARY.txt
+
+===============================================================================
+
+QUICK START (IF YOU JUST WANT TO TEST)
+--------------------------------------
+
+1. Open: docs/TEST_CHECKLIST_5.8.md
+
+2. Read "Pre-Test Setup" section (3 items)
+   - Verify SITL running
+   - Activate test_env venv
+   - Set DRONE_MODE=SIMULATION
+
+3. Choose ONE of:
+   A) Quick Run (20 min): TEST 1, 6, 8, 15, 22
+   B) Full Run (60 min): All 22 tests
+
+4. For each test:
+   - Read PURPOSE (what is being tested)
+   - Run COMMAND (exact Python command)
+   - Follow TEST STEPS (numbered walkthrough)
+   - Check PASS CRITERIA (checklist boxes)
+   - If fail, see FAIL/INVESTIGATE section
+
+5. After all tests:
+   - If all pass: ready to merge to MainOne2
+   - If failures: fix and re-test
+
+===============================================================================
+
+22 TESTS INCLUDED
+-----------------
+
+CRITICAL (Quick Run, 20 min):
+  TEST 1: Full mission
+  TEST 6: Manual override (M key)
+  TEST 8: NFZ speed capping
+  TEST 15: Code refactoring
+  TEST 22: Log file
+
+OPTIONAL (Full Run only, 40 additional min):
+  TEST 2-5: Smart detect, center verify, geofence, no-nfz
+  TEST 7-14: Queue, filtering, beacon, transit, alt, dry-run, headless
+  TEST 16-21: Stream server, threshold, radius, queue persist, rapid keys, empty queue
+
+===============================================================================
+
+ENVIRONMENT REQUIREMENTS
+------------------------
+
+Platform:  Windows laptop or WSL/Linux
+SITL:      Mission Planner or mavproxy (must be running)
+VEnv:      test_env (has pymavlink, Ultralytics, TFLite)
+Mode:      DRONE_MODE=SIMULATION (set before running)
+Files:     best.tflite + map.jpg in project root
+
+Optional for REAL mode:
+  Pi 5 + camera + Cube + mavproxy bridge (921600 baud)
+
+===============================================================================
+
+BEFORE YOU START TESTING
+------------------------
+
+Checklist (verify all boxes):
+
+  [ ] Git branch is Working5.8
+  [ ] SITL running (Mission Planner or mavproxy)
+  [ ] test_env venv activated
+  [ ] DRONE_MODE=SIMULATION (export or set)
+  [ ] best.tflite exists in project root
+  [ ] map.jpg exists for simulation
+  [ ] No processes on ports 8090/8091 (from previous runs)
+  [ ] All 4 checklist documents present in docs/
+
+If any box is unchecked, fix it before starting tests.
+
+===============================================================================
+
+EXPECTED OUTCOMES
+-----------------
+
+After Quick Run (5 tests, ~20 min):
+  - Core mission works end-to-end
+  - Manual override (M key) responsive
+  - Geofence logic correct
+  - Code refactoring successful (no crashes)
+  - Logging works
+
+After Full Run (22 tests, ~60 min):
+  - All features tested
+  - All CLI flags work
+  - All safety systems verified
+  - Ready for Pi deployment
+
+===============================================================================
+
+PASS CRITERIA
+-------------
+
+All tests pass if:
+
+  [ ] 0 crashes (none)
+  [ ] 0 exceptions (all caught and logged)
+  [ ] 0 failed state transitions (all states reachable)
+  [ ] All tests (quick run 5 or full run 22) marked PASS
+  [ ] No timeout or hang issues
+  [ ] Performance acceptable (<5s state changes, smooth video)
+
+If any test fails:
+  1. Read FAIL/INVESTIGATE section in TEST_CHECKLIST_5.8.md
+  2. Fix the issue
+  3. Re-run that test
+  4. Document issue in CLAUDE.md session log
+
+===============================================================================
+
+AFTER TESTING
+-------------
+
+If all tests PASS:
+  1. Document results (pass/fail times)
+  2. Commit to Working5.8
+  3. Merge to MainOne2 (staging)
+  4. Deploy to Pi
+  5. Archive this checklist (append results)
+
+If any test FAILS:
+  1. Review Fail/Investigate section
+  2. Check related commits in TEST_CHECKLIST_5.8_FEATURES.md
+  3. Fix code or config
+  4. Re-run failing test
+  5. Do NOT merge until all pass
+
+===============================================================================
+
+SUPPORT & TROUBLESHOOTING
+-------------------------
+
+If a test fails:
+
+Step 1: Read the error message carefully
+Step 2: Find the test in TEST_CHECKLIST_5.8.md
+Step 3: Read its "Fail / Investigate" section
+Step 4: Check TEST_CHECKLIST_5.8_FEATURES.md for related commits
+Step 5: Run TEST 15 (refactoring) to rule out integration issues
+Step 6: Check CLAUDE.md for hardware/config details
+Step 7: Report issue with:
+   - Test number
+   - Command run
+   - Full error output
+   - Environment details
+
+===============================================================================
+
+TIME ESTIMATES
+--------------
+
+Quick Run:        20 minutes
+Full Run:         45-60 minutes
+Pre-test setup:   10 minutes
+Total time:       60-75 minutes for full validation
+
+Run at time when:
+  - SITL is stable (not lagging)
+  - No other heavy processes running
+  - Enough time to complete without interruption
+
+===============================================================================
+
+NEXT STEPS (QUICK REFERENCE)
+----------------------------
+
+1. Read TEST_CHECKLIST_5.8_SUMMARY.txt (5 min)
+2. Set up environment (10 min)
+3. Run Quick Run (20 min)
+4. If pass, run Full Run (60 min)
+5. Log results
+6. Merge to MainOne2
+7. Deploy to Pi
+
+Total time: ~60-75 minutes
+
+===============================================================================
+
+QUESTIONS?
+----------
+
+Check TEST_CHECKLIST_5.8_INDEX.md section: "Contact & Support"
+
+Or review:
+  - TEST_CHECKLIST_5.8_FEATURES.md (understand what changed)
+  - CLAUDE.md in project root (hardware/config details)
+  - Recent commits (15+ commits validated by tests)
+
+===============================================================================
+
+CREATED: 2026-03-27
+FOR: Working5.8 pre-deployment validation
+AUDIENCE: Test lead, team members, flight day coordinator
+STATUS: Ready to use
