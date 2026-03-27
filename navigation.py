@@ -1,15 +1,10 @@
-# navigation.py — MAVLink navigation commands
-# Wraps all MAVLink command construction in one place.
-# Every method uses the EXACT same message format, type_mask, and coordinate
-# frame as the original inline code in main.py.
+"""MAVLink navigation commands for ArduCopter."""
 
 import math
 import time
 from pymavlink import mavutil
 
 
-# ArduCopter custom mode numbers
-# https://ardupilot.org/copter/docs/parameters.html#fltmode1
 COPTER_MODES = {
     "STABILIZE": 0,
     "ACRO":      1,
@@ -28,47 +23,18 @@ COPTER_MODES = {
 
 
 class NavigationController:
-    """Thin wrapper around pymavlink MAVLink navigation commands.
-
-    All methods match the exact message construction previously inlined in
-    main.py — same type_mask values, same coordinate frames, same parameter
-    order.  No protocol changes.
-
-    Parameters
-    ----------
-    master : mavutil.mavlink_connection
-        Active pymavlink connection to the autopilot (Cube / SITL).
-    """
+    """Thin wrapper around pymavlink MAVLink navigation commands."""
 
     def __init__(self, master, no_turn=False, get_yaw=None):
         self.master = master
-        self.no_turn = no_turn      # If True, hold yaw (strafe) on position commands
-        self._get_yaw = get_yaw     # Callable returning current yaw in radians
-        # Throttles (callers can read/write these directly)
+        self.no_turn = no_turn
+        self._get_yaw = get_yaw
         self.last_speed_req = 0.0
 
     # ── Position commands ────────────────────────────────────────────
 
     def send_global_target(self, lat, lon, alt, yaw=None):
-        """Send a SET_POSITION_TARGET_GLOBAL_INT to fly to (lat, lon, alt).
-
-        Coordinate frame: MAV_FRAME_GLOBAL_RELATIVE_ALT_INT (altitude is
-        meters above home).
-
-        Parameters
-        ----------
-        lat, lon : float
-            Target latitude / longitude in degrees.
-        alt : float
-            Target altitude in meters (relative to home).
-        yaw : float or None
-            If provided, the drone holds this yaw (radians) and strafes to
-            the waypoint without rotating (NO_TURN behaviour).  If None AND
-            self.no_turn is True, the current yaw from self._get_yaw() is
-            used automatically.  If None and no_turn is False the drone
-            rotates to face the next waypoint (default ArduCopter behaviour).
-        """
-        # Validate GPS coordinates and altitude before sending
+        """Fly to (lat, lon, alt) via SET_POSITION_TARGET_GLOBAL_INT (relative-alt frame)."""
         if math.isnan(lat) or math.isnan(lon) or math.isnan(alt):
             print(f"WARNING: NaN in target position (lat={lat}, lon={lon}, alt={alt}) — skipping")
             return
@@ -79,20 +45,16 @@ class NavigationController:
             print(f"WARNING: altitude out of range ({alt}m) — skipping")
             return
 
-        # Auto-apply NO_TURN yaw hold when caller doesn't provide explicit yaw
         if yaw is None and self.no_turn and self._get_yaw is not None:
             yaw = self._get_yaw()
 
         if yaw is not None:
-            # Hold current yaw — quadcopter strafes to waypoint without rotating
-            # type_mask: bit 10 cleared = yaw field USED, bit 11 set = yaw_rate ignored
             self.master.mav.set_position_target_global_int_send(
                 0, self.master.target_system, self.master.target_component,
                 mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT_INT,
                 0b100111111000, int(lat * 1e7), int(lon * 1e7), alt,
                 0, 0, 0, 0, 0, 0, yaw, 0)
         else:
-            # Default: drone rotates to face next waypoint
             self.master.mav.set_position_target_global_int_send(
                 0, self.master.target_system, self.master.target_component,
                 mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT_INT,
@@ -100,22 +62,7 @@ class NavigationController:
                 0, 0, 0, 0, 0, 0, 0, 0)
 
     def send_velocity(self, vx, vy, vz, yaw_rate=0, current_yaw=None):
-        """Send a velocity command in the body frame.
-
-        Body-frame inputs are rotated into NED using *current_yaw* before
-        being packed into SET_POSITION_TARGET_LOCAL_NED.
-
-        Parameters
-        ----------
-        vx : float   Forward speed (m/s, positive = nose direction).
-        vy : float   Rightward speed (m/s, positive = starboard).
-        vz : float   Downward speed (m/s, positive = descend — NED convention).
-        yaw_rate : float  Yaw rate in deg/s (positive = CW).
-        current_yaw : float or None
-            Current heading in radians (needed for body->NED rotation).
-            If None, auto-fetched from self._get_yaw() if available,
-            otherwise defaults to 0.0.
-        """
+        """Send body-frame velocity command, rotated to NED before transmission."""
         if not self.master:
             return
         if current_yaw is None:
@@ -133,13 +80,7 @@ class NavigationController:
     # ── Speed ────────────────────────────────────────────────────────
 
     def set_speed(self, speed_mps):
-        """Send MAV_CMD_DO_CHANGE_SPEED (throttled to once per 3 s).
-
-        Parameters
-        ----------
-        speed_mps : float
-            Desired ground speed in m/s.
-        """
+        """Send MAV_CMD_DO_CHANGE_SPEED (throttled to once per 3 s)."""
         if time.time() - self.last_speed_req < 3.0:
             return
         self.master.mav.command_long_send(
@@ -151,10 +92,7 @@ class NavigationController:
     # ── Arm / Takeoff / Land ─────────────────────────────────────────
 
     def request_arm(self):
-        """Send MAV_CMD_COMPONENT_ARM_DISARM (arm=1).
-
-        Returns the COMMAND_ACK result code, or None if no ACK within 1 s.
-        """
+        """Send arm command; return COMMAND_ACK result or None on timeout."""
         self.master.mav.command_long_send(
             self.master.target_system, self.master.target_component,
             mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0,
@@ -165,13 +103,7 @@ class NavigationController:
         return None
 
     def request_takeoff(self, alt):
-        """Send MAV_CMD_NAV_TAKEOFF to the given altitude (meters AGL).
-
-        Parameters
-        ----------
-        alt : float
-            Target takeoff altitude in meters (relative to home).
-        """
+        """Send MAV_CMD_NAV_TAKEOFF to the given altitude in meters AGL."""
         if alt <= 0:
             print(f"WARNING: invalid takeoff altitude ({alt}m) — must be positive")
             return
@@ -181,47 +113,17 @@ class NavigationController:
             0, 0, 0, 0, 0, 0, alt)
 
     def send_land(self, lat=0, lon=0):
-        """Send MAV_CMD_NAV_LAND at the given GPS position.
-
-        ArduCopter handles throttle, ground detection, and auto-disarm.
-
-        Parameters
-        ----------
-        lat, lon : float
-            Landing coordinates in degrees.  Pass 0, 0 to land at the
-            current position (ArduCopter default).
-        """
+        """Send MAV_CMD_NAV_LAND at (lat, lon) in degrees; (0, 0) lands at current position."""
         self.master.mav.command_long_send(
             self.master.target_system, self.master.target_component,
             mavutil.mavlink.MAV_CMD_NAV_LAND, 0,
             0, 0, 0, 0,
-            lat, lon, 0)  # command_long takes float degrees, NOT int*1e7
+            lat, lon, 0)
 
     # ── Mode changes ─────────────────────────────────────────────────
 
     def set_mode(self, mode_name):
-        """Set ArduCopter flight mode by name (e.g. 'GUIDED', 'RTL', 'LAND').
-
-        Uses MAV_CMD_DO_SET_MODE with MAV_MODE_FLAG_CUSTOM_MODE_ENABLED,
-        which is the same method used in main.py for setting GUIDED mode.
-
-        Parameters
-        ----------
-        mode_name : str
-            One of the ArduCopter mode names: STABILIZE, ALT_HOLD, AUTO,
-            GUIDED, LOITER, RTL, LAND, POSHOLD, BRAKE, etc.
-
-        Returns
-        -------
-        int or None
-            COMMAND_ACK result code (0 = accepted), or None if no ACK
-            within 1 s.
-
-        Raises
-        ------
-        ValueError
-            If *mode_name* is not a recognised ArduCopter mode.
-        """
+        """Set ArduCopter flight mode by name; return COMMAND_ACK result or None."""
         key = mode_name.upper()
         if key not in COPTER_MODES:
             raise ValueError(
@@ -241,13 +143,7 @@ class NavigationController:
     # ── Data streams ─────────────────────────────────────────────────
 
     def request_data_stream(self, rate_hz=10):
-        """Request all data streams at the given rate.
-
-        Parameters
-        ----------
-        rate_hz : int
-            Requested stream rate in Hz (default 10).
-        """
+        """Request all MAVLink data streams at the given rate in Hz."""
         self.master.mav.request_data_stream_send(
             self.master.target_system, self.master.target_component,
             mavutil.mavlink.MAV_DATA_STREAM_ALL, rate_hz, 1)
