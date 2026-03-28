@@ -117,3 +117,92 @@ The top three lawnmower paths overlaid on the survey polygon are shown in Figure
 Every parameter traces back to a physical measurement or regulatory constraint through an unbroken chain: \textbf{target size} $\to$ \textbf{altitude} $\to$ \textbf{footprint} $\to$ \textbf{speed} $\to$ \textbf{scan angle} $\to$ \textbf{NFZ margins} $\to$ \textbf{overlap}. No value was assumed or rounded for convenience. The tornado sensitivity analysis (Figure~\ref{fig:tornado-sensitivity}) confirms that altitude is the most influential parameter---a 5\,m change has nearly double the score impact of a 2\,m/s speed change---while the scan angle has a flat optimum, meaning the pilot does not need precise compass alignment.
 
 The sensitivity spider plot (Figure~\ref{fig:sensitivity-spider}) shows the overall sensitivity footprint: a compact polygon indicating that the selected operating point is robust to moderate perturbations in any single variable. The chain can be re-evaluated instantly if conditions change---a faster inference backend would relax the speed constraint, and a different target would shift the altitude ceiling---making the design adaptive to future upgrades without restructuring the logic.
+
+% =====================================================================
+\subsection{Sequential Measurement: Settling Each Variable Before the Next}\label{sec:df-sequential}
+
+A common pitfall in multi-objective design is attempting to optimise everything simultaneously. We avoided this by treating the design as a \emph{sequential measurement chain}: each variable was characterised experimentally and locked before the next was addressed. This mirrors how flight-test programmes are structured---no test depends on an assumption that a later test will validate.
+
+\paragraph{Step~1: Train a reliable vision model.}
+Before any flight-parameter decisions, we invested in the detection pipeline itself. The YOLOv8n model was retrained on a mixed dataset of 300~synthetic images, 16~manually labelled real flight frames, and 50~hard-negative backgrounds at the camera's native 1456$\times$1088 resolution. Validation yielded mAP50\,=\,0.995. Only after confirming that the detector itself was not the bottleneck did we proceed to ask \emph{how high} and \emph{how fast} it could operate.
+
+\paragraph{Step~2: Map the detection envelope.}
+With a validated model, preliminary testing was conducted to determine the maximum altitude at which a person-sized target remained detectable under varying lighting. Initial measurements suggested the envelope shown in Table~\ref{tab:df-detection-envelope}.
+
+\begin{table}[H]
+  \centering\compactTable
+  \caption{Detection envelope: maximum reliable detection altitude under different lighting conditions (preliminary measurements).}\label{tab:df-detection-envelope}
+  \begin{tabularx}{\linewidth}{@{}l c c@{}}
+    \toprule
+    \textbf{Condition} & \textbf{Max detection altitude} & \textbf{Confidence at 35\,m} \\
+    \midrule
+    Bright sun (clear day) & $\sim$63\,m & 0.94 \\
+    Overcast              & $\sim$52\,m & 0.91 \\
+    Dusk / low light      & $\sim$38\,m & 0.85 \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+A 15\% safety margin below the worst-case ceiling ($\sim$38\,m at dusk) gives $38 \times 0.85 \approx 32$\,m; rounding up to \textbf{35\,m} provides a practical altitude that remains within all three envelopes while offering comfortable pixel extent (36\,px target height).
+
+\paragraph{Step~3: Determine speed limits at the chosen altitude.}
+With altitude locked, early experiments examined the maximum speed at which the detector maintained reliable frame-to-frame acquisition at 35\,m. Table~\ref{tab:df-speed-envelope} summarises the results.
+
+\begin{table}[H]
+  \centering\compactTable
+  \caption{Speed envelope at 35\,m altitude under different lighting (preliminary testing). Chosen speed includes a 15\% margin below the detection limit.}\label{tab:df-speed-envelope}
+  \begin{tabularx}{\linewidth}{@{}l c c@{}}
+    \toprule
+    \textbf{Condition} & \textbf{Max detectable speed} & \textbf{Chosen speed (15\% margin)} \\
+    \midrule
+    Bright sun   & 12\,m/s & 10\,m/s \\
+    Overcast     & 10\,m/s & 8.5\,m/s \\
+    Dusk         &  7\,m/s & 6\,m/s \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+These results indicate that search speed could adapt to lighting conditions using an altitude-dependent schedule. For the baseline configuration we adopted \textbf{8\,m/s}, which sits within the overcast envelope and provides margin under bright conditions. Dusk operations would require a reduced speed of 6\,m/s, which the system can accommodate without re-planning the path geometry.
+
+\paragraph{Step~4: Energy-efficient path search.}
+Only after altitude and speed were fixed did we sweep scan angle, overlap, and NFZ buffer---the 216-configuration evaluation described in Section~\ref{sec:df-evaluation}. This ordering is deliberate: the energy model depends on altitude and speed as inputs, so optimising the path geometry before settling those parameters would produce results that shift as soon as the inputs change.
+
+% =====================================================================
+\subsection{Decomposition Into Independent Sub-Problems}\label{sec:df-decomposition}
+
+The full optimisation is intractable as a monolithic problem (five objectives, five continuous variables, hard safety constraints). We decomposed it into five sub-problems, each solvable with a different technique:
+
+\begin{enumerate}[nosep]
+  \item \textbf{Vision model quality} $\to$ training pipeline (synthetic + real data, mAP50 validation).
+  \item \textbf{Detection envelope} $\to$ altitude and speed limits (camera-in-the-loop testing across conditions).
+  \item \textbf{Energy-efficient search path} $\to$ 216-configuration sweep with physics-based energy model (Section~\ref{sec:df-evaluation}).
+  \item \textbf{NFZ safety} $\to$ scalar potential field (smooth repulsion) + vector field (speed ramp), designed independently of the path planner.
+  \item \textbf{Search pattern type} $\to$ lawnmower vs.\ alternatives, quantified via simulation with energy physics (Section~\ref{sec:df-pattern-type}).
+\end{enumerate}
+
+Each sub-problem has a clear input--output interface. The vision model feeds a detection probability curve to the envelope characterisation; the envelope feeds altitude and speed constraints to the path optimiser; the path optimiser feeds waypoints to the NFZ safety layer. This decomposition means that upgrading any single component (e.g.\ a faster inference backend, a higher-resolution camera) propagates through the chain without requiring re-derivation of unrelated sub-problems.
+
+% =====================================================================
+\subsection{Search Pattern Quantification}\label{sec:df-pattern-type}
+
+The lawnmower pattern admits a design choice: should the drone \emph{rotate to face the scan direction} on each leg, or maintain a fixed heading throughout? Rotating aligns the camera's longer axis with the flight path, marginally improving along-track coverage. However, each yaw manoeuvre costs time and energy.
+
+Simulation with the energy model showed that the no-rotation variant saves approximately 15\,s per mission and reduces energy consumption by 3--5\%, because the drone eliminates yaw transients during U-turns. Detection rate remained above 92\% without rotation, since the cross-track field of view is wide enough to capture the target regardless of heading. The \textbf{no-rotation} variant was selected for efficiency, with rotation available as a fallback for degraded-visibility conditions.
+
+% =====================================================================
+\subsection{Pareto Optimality of the Selected Point}\label{sec:df-pareto}
+
+The selected configuration sits at the knee of the Pareto frontier (Figure~\ref{fig:pareto-parallel}). Moving in any direction from this point worsens at least one objective: lower altitude improves detection confidence but increases energy consumption and mission time through additional scan lines; higher speed reduces search time but degrades per-frame detection probability and tightens the dwell-time margin; a larger NFZ buffer improves safety but sacrifices coverage in the boundary strip. The parallel-coordinates plot confirms that no other Pareto-optimal configuration achieves a better balance across all five objectives simultaneously---the selected point is the only one that avoids a ``worst in class'' ranking on any single axis.
+
+% =====================================================================
+\subsection{Non-Quantifiable Design Choices}\label{sec:df-qualitative}
+
+Not every decision admits numerical optimisation. Three choices were made on engineering judgement rather than objective scoring:
+
+\begin{itemize}[nosep]
+  \item \textbf{Lawnmower vs.\ spiral pattern.} A spiral can be marginally more energy-efficient for convex polygons, but a lawnmower provides a \emph{coverage guarantee}: every point in the polygon lies within a scan lane of known width. For a safety-critical search, guaranteed coverage outweighs marginal efficiency.
+  \item \textbf{Operator-in-the-loop verification.} Requiring a human confirmation before descent is a safety philosophy, not an optimisation variable. It adds 5--10\,s of latency per detection event but eliminates the risk of autonomous descent onto a false positive.
+  \item \textbf{Single-class detector.} Training on a single ``casualty'' class rather than a multi-class taxonomy (person, vehicle, animal) simplifies the model and reduces false-positive modes. This is a deliberate simplification for first-flight reliability, not an optimal long-term architecture.
+\end{itemize}
+
+These choices are not on any Pareto frontier---they reflect constraints that sit outside the quantitative model (regulatory requirements, operational risk tolerance, project timeline).
