@@ -1,0 +1,304 @@
+\documentclass[10pt,a4paper]{article}
+
+% ── Layout ──────────────────────────────────────────────────────────────
+\usepackage[margin=15mm,heightrounded]{geometry}
+\usepackage{microtype}
+\usepackage{lmodern}
+\usepackage{setspace}
+\setstretch{1.05}
+
+% ── Graphics & Figures ──────────────────────────────────────────────────
+\usepackage{graphicx}
+\graphicspath{{../figs/}}
+\usepackage{subcaption}
+\usepackage[font=small,labelfont=bf,skip=4pt]{caption}
+\usepackage{float}
+
+% ── Tables ──────────────────────────────────────────────────────────────
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{siunitx}
+\DeclareSIUnit{\px}{px}
+
+% ── Math ────────────────────────────────────────────────────────────────
+\usepackage{amsmath,amssymb}
+
+% ── Typography & Colour ────────────────────────────────────────────────
+\usepackage[dvipsnames]{xcolor}
+\definecolor{headblue}{HTML}{1F3864}
+\usepackage{titlesec}
+\titleformat{\section}{\normalfont\Large\bfseries\color{headblue}}{\thesection}{0.6em}{}
+\titleformat{\subsection}{\normalfont\large\bfseries\color{headblue}}{\thesubsection}{0.5em}{}
+\titleformat{\subsubsection}{\normalfont\normalsize\bfseries\color{headblue}}{\thesubsubsection}{0.4em}{}
+\titlespacing*{\section}{0pt}{10pt plus 2pt}{4pt plus 1pt}
+\titlespacing*{\subsection}{0pt}{8pt plus 2pt}{3pt plus 1pt}
+
+% ── Headers & Footers ──────────────────────────────────────────────────
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\cfoot{\footnotesize\thepage}
+\renewcommand{\headrulewidth}{0pt}
+
+% ── Lists ───────────────────────────────────────────────────────────────
+\usepackage{enumitem}
+\setlist{nosep}
+
+% ── Hyperlinks (must be last) ───────────────────────────────────────────
+\usepackage[hidelinks,colorlinks=true,linkcolor=headblue,citecolor=headblue,urlcolor=blue!60]{hyperref}
+
+% ── Float control ───────────────────────────────────────────────────────
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.8}
+\renewcommand{\floatpagefraction}{0.85}
+\setlength{\parskip}{2pt plus 1pt}
+\setlength{\parindent}{0pt}
+
+% ── Custom commands ─────────────────────────────────────────────────────
+\newcommand{\compactTable}{\small\setlength{\tabcolsep}{3pt}\renewcommand{\arraystretch}{1.05}}
+
+% ════════════════════════════════════════════════════════════════════════
+\begin{document}
+
+% ── Title ───────────────────────────────────────────────────────────────
+\begin{center}
+  {\LARGE\bfseries\color{headblue} SAR Drone Search Parameter Optimisation\\[4pt] Decision Flow}\\[8pt]
+  {\large AENGM0074 Group Design Project}\\[4pt]
+  {\small University of Bristol \quad---\quad 2025--26}
+\end{center}
+\vspace{6pt}
+\hrule height 0.6pt
+\vspace{10pt}
+
+% ── Decision flow infographic ──────────────────────────────────────────
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\linewidth]{decision_flow}
+  \caption{Decision flow infographic: the sequential chain from target size through altitude, speed, scan angle, and NFZ margins to the final operating configuration.}\label{fig:decision-flow}
+\end{figure}
+
+% ════════════════════════════════════════════════════════════════════════
+\section{The Problem}\label{sec:df-problem}
+
+A hiker is missing. The drone has one battery, one camera, and roughly twenty minutes of flight time to scan a 3.2-hectare field bordered by a protected wildlife reserve. Five things compete:
+
+\begin{itemize}[nosep]
+  \item \textbf{Coverage} --- scan every square metre of the search area.
+  \item \textbf{Detection} --- actually see a person-sized target from altitude.
+  \item \textbf{Time} --- the ``golden hour'' of hypothermia survivability is ticking.
+  \item \textbf{Energy} --- the battery must last the search \emph{plus} transit, descent, verification, and return.
+  \item \textbf{Safety} --- the drone must never enter the adjacent SSSI no-fly zone.
+\end{itemize}
+
+No single configuration maximises all five simultaneously. Flying higher covers ground faster but shrinks the target to a few pixels. Flying lower improves detection but burns more energy on extra scan lines. Flying near the boundary maximises coverage but risks an incursion.
+
+We adopted a clear priority stack: \textbf{safety $>$ detection $>$ speed $>$ energy}. An NFZ violation grounds the project. A missed casualty defeats its purpose. A slow search wastes the golden hour. High energy use is undesirable but survivable.
+
+% ════════════════════════════════════════════════════════════════════════
+\section{The Variables We Control}\label{sec:df-variables}
+
+Five parameters define the search pattern. Each affects multiple objectives; altitude alone touches all five.
+
+\begin{table}[H]
+  \centering\compactTable
+  \caption{Decision variables and the objectives they influence.}\label{tab:df-variables}
+  \begin{tabularx}{\linewidth}{@{}l c X@{}}
+    \toprule
+    \textbf{Variable} & \textbf{Range tested} & \textbf{Affects} \\
+    \midrule
+    Altitude         & 20--50\,m          & Detection, coverage, time, energy, safety \\
+    Speed            & 6--10\,m/s         & Detection (dwell time), time, energy \\
+    Scan angle       & 0--175\textdegree  & Energy (number of U-turns), time \\
+    Swath overlap    & 10--30\%           & Coverage reliability, energy \\
+    NFZ buffer       & 16--50\,m          & Safety margin, coverage completeness \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+The coupling structure is shown in Figure~\ref{fig:sensitivity-matrix}: darker cells indicate stronger influence. The altitude--speed pair dominates, jointly determining four of the five objectives.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.55\linewidth]{sensitivity_matrix}
+  \caption{Sensitivity matrix: darker cells indicate stronger influence of each input parameter on each derived metric.}\label{fig:sensitivity-matrix}
+\end{figure}
+
+% ════════════════════════════════════════════════════════════════════════
+\section{Our Strategy: Safety-First, Detection-Optimised}\label{sec:df-strategy}
+
+Rather than searching a table of numbers, we followed a logical chain where each decision constrains the next. The reasoning runs in six steps:
+
+\paragraph{1. Start from detection: how high can we fly and still see the target?}
+The rescue dummy is 1.8\,m tall, 0.5\,m wide. As altitude increases, the target shrinks in the camera frame. At 50\,m it is only 7~pixels wide in the model input---right at the limit of reliable detection. At 70\,m it disappears entirely. The hard ceiling is roughly 63\,m.
+
+\paragraph{2. Add a safety margin.}
+Real conditions degrade detection: haze, unusual target pose, altitude excursions during turns. A 30\% margin below the ceiling gives us \textbf{35\,m operating altitude}, where the target is 36~pixels tall and 10~pixels wide---comfortably above the minimum.
+
+\paragraph{3. At 35\,m, how fast can we fly?}
+The camera sees a 24\,m strip of ground along the flight direction. At 4.8~frames per second (benchmarked on the Pi~5), the target must stay in view for at least 10~frames to ensure reliable multi-frame detection. That caps speed at 11.5\,m/s. We chose \textbf{8\,m/s}---giving 14~frames per flyover and a cumulative detection probability above 99.97\%.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\linewidth]{altitude_speed_tradeoff}
+  \caption{Altitude--speed trade-off space. Colour encodes the composite score (40\% detection $+$ 35\% coverage $+$ 25\% energy). Blue contours: detection probability. Orange contours: coverage time. The selected point (35\,m, 8\,m/s) sits in the high-score region above the 95\% detection contour.}\label{fig:alt-speed-body}
+\end{figure}
+
+\paragraph{4. What scan angle minimises energy?}
+With altitude and speed locked, the only lever left for the lawnmower pattern is its orientation. We swept 36~angles and found that aligning with the polygon's longest edge (\textbf{70\textdegree}) cuts U-turns from 9 to 5 and halves the energy compared to the worst orientation (Figure~\ref{fig:energy-heatmap}).
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\linewidth]{real_energy_heatmap}
+  \caption{Energy heatmap across 216 altitude--angle configurations. A clear low-energy valley runs through 65--75\textdegree{} at all altitudes, corresponding to longest-edge alignment. The red star marks the global energy minimum (50\,m, 70\textdegree). The selected point (35\,m, 70\textdegree) trades 4.4\,Wh of energy for a 44\% increase in target pixel extent.}\label{fig:energy-heatmap}
+\end{figure}
+
+\paragraph{5. How much NFZ margin do we need?}
+At 35\,m the camera footprint extends 16\,m from directly below the drone. Adding GPS error (3\,m), reaction distance, and wind displacement in a root-sum-square (RSS) combination gives a 23\,m requirement. Our \textbf{30\,m buffer} provides a 2.2$\times$ safety factor. A speed-ramp zone and hard cutoff add a further 20\,m, giving 50\,m of total clearance.
+
+\paragraph{6. Is 96\% coverage acceptable?}
+The buffer trims 4\% of the polygon along the SSSI edge. That strip lies inside a fenced wildlife reserve with no public access, making it an unlikely casualty location. \textbf{96\% coverage was accepted} as a deliberate trade-off against NFZ safety.
+
+% ════════════════════════════════════════════════════════════════════════
+\section{What We Evaluated}\label{sec:df-evaluation}
+
+We did not rely on intuition. A physics-based simulation evaluated \textbf{216~configurations} (6~altitudes $\times$ 36~scan angles) on the real survey polygon, modelling energy consumption, detection probability, and NFZ penalties for every combination.
+
+\begin{table}[H]
+  \centering\compactTable
+  \caption{Top three configurations from the 216-point sweep, ranked by composite score (40\% detection + 35\% coverage + 25\% energy).}\label{tab:df-top3}
+  \begin{tabularx}{\linewidth}{@{}c c c c c c c X@{}}
+    \toprule
+    \textbf{\#} & \textbf{Alt} & \textbf{Angle} & \textbf{Speed} & $P_d$ & \textbf{Energy} & \textbf{Score} & \textbf{Why not?} \\
+    \midrule
+    \textbf{1} & \textbf{35\,m} & \textbf{70\textdegree} & \textbf{8\,m/s} & \textbf{99.97\%} & \textbf{12.6\,Wh} & \textbf{0.87} & \textbf{Selected --- best compromise} \\
+    2 & 30\,m & 65\textdegree & 7.3\,m/s & 99.99\% & 14.8\,Wh & 0.85 & 17\% more energy for 0.02\% more detection \\
+    3 & 40\,m & 75\textdegree & 8.7\,m/s & 99.94\% & 10.1\,Wh & 0.84 & Target width drops to 9\,px --- thin margin \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+Configuration \#1 wins because it sits at the ``sweet spot'' of the trade-off frontier (Figure~\ref{fig:pareto-parallel}): moving in either direction trades a large penalty in one objective for a negligible gain in another. Compared to \#2, it saves 17\% energy while sacrificing an unobservable 0.02~percentage points of detection. Compared to \#3, it provides 3$\times$ more detection margin (10 vs 7~pixels of target width) for only 2.5\,Wh of extra energy.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\linewidth]{top3_paths}
+  \caption{Top three lawnmower configurations overlaid on the survey polygon. Left: \#1 (35\,m, 70\textdegree, selected). Centre: \#2 (30\,m, 65\textdegree). Right: \#3 (40\,m, 75\textdegree). The SSSI no-fly zone (red) and 20\,m buffer (dashed) are shown.}\label{fig:top3-paths}
+\end{figure}
+
+% ════════════════════════════════════════════════════════════════════════
+\section{The Result}\label{sec:df-result}
+
+\begin{table}[H]
+  \centering\compactTable
+  \caption{Final operating configuration and predicted performance.}\label{tab:df-final}
+  \begin{tabularx}{\linewidth}{@{}l c l@{}}
+    \toprule
+    \textbf{Parameter} & \textbf{Value} & \textbf{Rationale} \\
+    \midrule
+    Search altitude       & 35\,m             & 30\% margin below detection ceiling \\
+    Search speed          & 8\,m/s            & 14 frames per target (10 required) \\
+    Scan angle            & 70\textdegree     & Longest-edge alignment, fewest U-turns \\
+    Swath overlap         & 20\%              & Covers 4.6\,m lane error with 1.8\,m spare \\
+    NFZ buffer            & 30\,m             & 2.2$\times$ safety factor over RSS margin \\
+    \midrule
+    Detection probability & $>$99.97\%        & 14 frames $\times$ 95\% per-frame \\
+    Coverage              & 96\%              & 4\% gap in fenced reserve \\
+    Search time           & 112\,s            & 6 scan lines + 5 U-turns \\
+    Search energy         & 12.6\,Wh          & 10.9\% of battery (14\,min remaining) \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+Every parameter traces back to a physical measurement or regulatory constraint through an unbroken chain: \textbf{target size} $\to$ \textbf{altitude} $\to$ \textbf{footprint} $\to$ \textbf{speed} $\to$ \textbf{scan angle} $\to$ \textbf{NFZ margins} $\to$ \textbf{overlap}. No value was assumed or rounded for convenience.
+
+% ════════════════════════════════════════════════════════════════════════
+\section{Sensitivity and Robustness}\label{sec:df-sensitivity}
+
+The tornado sensitivity analysis (Figure~\ref{fig:tornado-sensitivity}) confirms that altitude is the most influential parameter---a 5\,m change has nearly double the score impact of a 2\,m/s speed change---while the scan angle has a flat optimum, meaning the pilot does not need precise compass alignment.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.75\linewidth]{tornado_sensitivity}
+  \caption{Tornado chart of parameter sensitivities. Each bar shows the change in composite score when one variable is perturbed while the others are held at their selected values. Altitude dominates: a $\pm$5\,m change has nearly double the effect of a $\pm$2\,m/s speed change.}\label{fig:tornado-sensitivity}
+\end{figure}
+
+The sensitivity spider plot (Figure~\ref{fig:sensitivity-spider}) shows the overall sensitivity footprint: a compact polygon indicating that the selected operating point is robust to moderate perturbations in any single variable. The chain can be re-evaluated instantly if conditions change---a faster inference backend would relax the speed constraint, and a different target would shift the altitude ceiling---making the design adaptive to future upgrades without restructuring the logic.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.55\linewidth]{sensitivity_spider}
+  \caption{Spider plot of normalised sensitivities. Polygon area indicates the overall sensitivity footprint. A compact polygon means the design is robust to perturbations.}\label{fig:sensitivity-spider}
+\end{figure}
+
+% ════════════════════════════════════════════════════════════════════════
+\section{Pareto Optimality}\label{sec:df-pareto}
+
+The selected configuration sits at the knee of the Pareto frontier (Figure~\ref{fig:pareto-parallel}). Moving in any direction from this point worsens at least one objective: lower altitude improves detection confidence but increases energy consumption and mission time through additional scan lines; higher speed reduces search time but degrades per-frame detection probability and tightens the dwell-time margin; a larger NFZ buffer improves safety but sacrifices coverage in the boundary strip. The parallel-coordinates plot confirms that no other Pareto-optimal configuration achieves a better balance across all five objectives simultaneously---the selected point is the only one that avoids a ``worst in class'' ranking on any single axis.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\linewidth]{pareto_parallel}
+  \caption{Parallel coordinates plot showing all five objectives simultaneously. Orange lines indicate Pareto-optimal configurations; the selected configuration (thick blue) achieves balanced performance across all axes.}\label{fig:pareto-parallel}
+\end{figure}
+
+% ════════════════════════════════════════════════════════════════════════
+\section{Sequential Measurement Chain}\label{sec:df-sequential}
+
+A common pitfall in multi-objective design is attempting to optimise everything simultaneously. We avoided this by treating the design as a \emph{sequential measurement chain}: each variable was characterised experimentally and locked before the next was addressed.
+
+\paragraph{Step~1: Train a reliable vision model.}
+The YOLOv8n model was retrained on a mixed dataset of 300~synthetic images, 16~manually labelled real flight frames, and 50~hard-negative backgrounds at the camera's native 1456$\times$1088 resolution. Validation yielded mAP50\,=\,0.995. Only after confirming that the detector itself was not the bottleneck did we proceed to ask \emph{how high} and \emph{how fast} it could operate.
+
+\paragraph{Step~2: Map the detection envelope.}
+With a validated model, preliminary testing determined the maximum altitude at which a person-sized target remained detectable under varying lighting.
+
+\begin{table}[H]
+  \centering\compactTable
+  \caption{Detection envelope: maximum reliable detection altitude under different lighting conditions.}\label{tab:df-detection-envelope}
+  \begin{tabularx}{\linewidth}{@{}l c c@{}}
+    \toprule
+    \textbf{Condition} & \textbf{Max detection altitude} & \textbf{Confidence at 35\,m} \\
+    \midrule
+    Bright sun (clear day) & $\sim$63\,m & 0.94 \\
+    Overcast              & $\sim$52\,m & 0.91 \\
+    Dusk / low light      & $\sim$38\,m & 0.85 \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\paragraph{Step~3: Determine speed limits at the chosen altitude.}
+
+\begin{table}[H]
+  \centering\compactTable
+  \caption{Speed envelope at 35\,m altitude under different lighting.}\label{tab:df-speed-envelope}
+  \begin{tabularx}{\linewidth}{@{}l c c@{}}
+    \toprule
+    \textbf{Condition} & \textbf{Max detectable speed} & \textbf{Chosen speed (15\% margin)} \\
+    \midrule
+    Bright sun   & 12\,m/s & 10\,m/s \\
+    Overcast     & 10\,m/s & 8.5\,m/s \\
+    Dusk         &  7\,m/s & 6\,m/s \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+For the baseline configuration we adopted \textbf{8\,m/s}, which sits within the overcast envelope and provides margin under bright conditions.
+
+\paragraph{Step~4: Energy-efficient path search.}
+Only after altitude and speed were fixed did we sweep scan angle, overlap, and NFZ buffer---the 216-configuration evaluation described in Section~\ref{sec:df-evaluation}.
+
+% ════════════════════════════════════════════════════════════════════════
+\section{Non-Quantifiable Design Choices}\label{sec:df-qualitative}
+
+Not every decision admits numerical optimisation. Three choices were made on engineering judgement:
+
+\begin{itemize}[nosep]
+  \item \textbf{Lawnmower vs.\ spiral pattern.} A spiral can be marginally more energy-efficient for convex polygons, but a lawnmower provides a \emph{coverage guarantee}: every point in the polygon lies within a scan lane of known width. For a safety-critical search, guaranteed coverage outweighs marginal efficiency.
+  \item \textbf{Operator-in-the-loop verification.} Requiring a human confirmation before descent is a safety philosophy, not an optimisation variable. It adds 5--10\,s of latency per detection event but eliminates the risk of autonomous descent onto a false positive.
+  \item \textbf{Single-class detector.} Training on a single ``casualty'' class rather than a multi-class taxonomy simplifies the model and reduces false-positive modes. This is a deliberate simplification for first-flight reliability.
+\end{itemize}
+
+These choices reflect constraints that sit outside the quantitative model---regulatory requirements, operational risk tolerance, and project timeline.
+
+\end{document}
