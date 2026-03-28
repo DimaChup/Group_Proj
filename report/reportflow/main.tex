@@ -124,6 +124,185 @@ Figure~\ref{fig:sensitivity-spider} shows the performance profile our selected c
 \end{figure}
 
 % ════════════════════════════════════════════════════════════════════════
+\section{Scoring the Five Dimensions}\label{sec:df-scoring}
+
+Each axis of the spider chart (Figure~\ref{fig:sensitivity-spider}) corresponds to a normalised score $S \in [0,1]$, where 1 represents the theoretical best and 0 represents failure. This section defines precisely how each score is computed. Three of the five dimensions --- detection, coverage, and energy --- are scored on a continuous scale and combined into a composite objective for the 216-configuration sweep. The remaining two --- safety and time --- are treated as \emph{pass/fail constraints} rather than continuous scores. The rationale for this asymmetry is explained at the end of this section.
+
+% ── Safety ────────────────────────────────────────────────────────────
+\subsection{Safety ($S_\text{safety}$)}\label{sec:score-safety}
+
+Safety is a composite of six binary and continuous sub-elements, each capturing a distinct layer of the NFZ protection architecture:
+
+\begin{enumerate}[nosep]
+  \item \textbf{NFZ margin adequacy.} The ratio of the configured buffer distance to the required minimum clearance, capped at 1.0:
+  \begin{equation}
+    s_\text{margin} = \min\!\left(\frac{d_\text{buffer}}{d_\text{required}},\; 1.0\right)
+  \end{equation}
+  where $d_\text{required}$ is the RSS stopping distance (20.4\,m at 8\,m/s with 1.5\,s reaction time plus braking). Our 30\,m buffer gives $s_\text{margin} = 1.0$ with a 1.5$\times$ safety factor.
+
+  \item \textbf{Waypoint filtering.} The fraction of generated waypoints that lie outside the NFZ buffer polygon. This should be 100\%; any value below 1.0 indicates a path-planning fault:
+  \begin{equation}
+    s_\text{wp} = \frac{N_\text{waypoints outside buffer}}{N_\text{waypoints total}}
+  \end{equation}
+
+  \item \textbf{Speed reduction near boundary.} A scalar repulsive field reduces commanded speed as the drone approaches the NFZ. The sub-score captures whether this field activates within the buffer zone and how aggressively it decelerates:
+  \begin{equation}
+    s_\text{speed} = \begin{cases} 1.0 & \text{if scalar field active and } v \to 0 \text{ at boundary} \\ 0.5 & \text{if field active but residual speed } > 0 \\ 0.0 & \text{if no field configured} \end{cases}
+  \end{equation}
+
+  \item \textbf{Repulsive vector field.} Within 3\,m of the boundary, a vector field pushes the drone away from the NFZ. Sub-score is binary: 1.0 if active, 0.0 if absent.
+
+  \item \textbf{Hard boundary protection.} An automatic mode switch to MANUAL is triggered if the drone enters the NFZ polygon itself. This is the last-resort failsafe. Sub-score: 1.0 if implemented, 0.0 otherwise.
+
+  \item \textbf{RC kill switch.} The pilot can override to STABILIZE or LOITER at any time via the RC transmitter, independently of the autonomy software. Sub-score: 1.0 if available (always true for our hardware).
+\end{enumerate}
+
+The composite safety score is a weighted sum:
+\begin{equation}\label{eq:safety-composite}
+  S_\text{safety} = 0.30\,s_\text{margin} + 0.25\,s_\text{wp} + 0.15\,s_\text{speed} + 0.10\,s_\text{repulsive} + 0.10\,s_\text{hard} + 0.10\,s_\text{kill}
+\end{equation}
+
+The margin and waypoint terms carry the highest weights because they determine whether the planned path is geometrically safe \emph{before} the drone takes off. The reactive terms (speed field, repulsive vector, hard boundary, kill switch) are defence-in-depth layers that matter only if the geometric planning fails. For our selected configuration all six sub-scores are 1.0, giving $S_\text{safety} = 1.0$.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.5\linewidth]{safety_subscore}
+  \caption{Safety score decomposition. The overall safety score (0.96) is a weighted composite of six sub-elements. Pre-flight geometric checks (NFZ margin, waypoint filtering) carry the highest weights; reactive layers provide defence-in-depth.}\label{fig:safety-subscore}
+\end{figure}
+
+% ── Detection ─────────────────────────────────────────────────────────
+\subsection{Detection ($S_\text{detection}$)}\label{sec:score-detection}
+
+Detection score captures the probability of spotting the casualty during a single search pass. It is the product of four normalised sub-scores:
+
+\begin{enumerate}[nosep]
+  \item \textbf{Per-frame confidence ($s_\text{conf}$).} The model's mean detection confidence at the operating altitude under the relevant lighting condition, normalised against the confidence threshold:
+  \begin{equation}
+    s_\text{conf} = \frac{c_\text{mean} - c_\text{threshold}}{1.0 - c_\text{threshold}}
+  \end{equation}
+  At 35\,m in overcast conditions, $c_\text{mean} = 0.91$ and $c_\text{threshold} = 0.40$, giving $s_\text{conf} = 0.85$.
+
+  \item \textbf{Frames on target ($s_\text{frames}$).} The number of inference frames during which the target is inside the camera footprint, relative to the minimum required (10~frames):
+  \begin{equation}
+    n_\text{frames} = \frac{w_\text{footprint}}{v_\text{search}} \times f_\text{fps}, \qquad
+    s_\text{frames} = \min\!\left(\frac{n_\text{frames}}{n_\text{required}},\; 1.0\right)
+  \end{equation}
+  At 35\,m altitude, the along-track footprint is 31.1\,m. At 8\,m/s and 4.8\,FPS, the target is visible for $31.1 / 8 \times 4.8 \approx 18.7$ frames, giving $s_\text{frames} = 1.0$.
+
+  \item \textbf{Cumulative detection probability ($s_\text{cum}$).} Assuming frame independence, the probability of detecting the target in at least one of $n$ frames:
+  \begin{equation}
+    P_d = 1 - (1 - p)^n
+  \end{equation}
+  where $p$ is the per-frame detection probability (approximately equal to the confidence). With $p = 0.91$ and $n = 18.7$ independent frames, $P_d > 0.9999$. We use $s_\text{cum} = P_d$ directly.
+
+  \item \textbf{Target pixel size ($s_\text{px}$).} The target's width in the model input frame, normalised against a minimum viable size of 5\,px:
+  \begin{equation}
+    w_\text{px} = \frac{w_\text{target} \times f_\text{focal}}{h_\text{alt} \times w_\text{sensor}} \times W_\text{model}, \qquad
+    s_\text{px} = \min\!\left(\frac{w_\text{px}}{w_\text{min}},\; 1.0\right)
+  \end{equation}
+  At 35\,m the dummy's 0.5\,m width subtends approximately 10\,px in the 640$\times$640 model input, giving $s_\text{px} = 1.0$.
+\end{enumerate}
+
+The overall detection score is the product:
+\begin{equation}\label{eq:detection-composite}
+  S_\text{detection} = s_\text{conf} \times s_\text{frames} \times s_\text{cum} \times s_\text{px}
+\end{equation}
+
+A multiplicative combination is used rather than a weighted sum because a zero in \emph{any} sub-component (e.g.\ zero frames on target, or target below minimum pixel size) should collapse the entire detection score to zero --- you cannot compensate for an invisible target by having a confident model. Model mAP50 (0.995) is not included as a sub-score because it is constant across all configurations; it serves as a prerequisite validated in Step~1 of the decision chain.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.5\linewidth]{detection_subscore}
+  \caption{Detection score decomposition. The overall detection score (0.93) is the product of four normalised sub-scores. Target pixel size (0.85) is the weakest axis --- flying lower would improve it but at the cost of coverage and energy.}\label{fig:detection-subscore}
+\end{figure}
+
+% ── Time ──────────────────────────────────────────────────────────────
+\subsection{Time ($S_\text{time}$)}\label{sec:score-time}
+
+Total search time is the sum of straight-leg time and turn time:
+\begin{equation}
+  T_\text{search} = \frac{L_\text{path}}{v_\text{search}} + N_\text{turns} \times t_\text{turn}
+\end{equation}
+where $L_\text{path}$ is the total scan-line length (m), $v_\text{search}$ is the cruise speed, $N_\text{turns}$ is the number of U-turns, and $t_\text{turn}$ is the time per turn (approximately 8\,s for a decelerating 180\textdegree\ reversal at 8\,m/s). Transit time to and from the search area is added separately.
+
+The time score is normalised as the ratio of the best achievable time to the actual time:
+\begin{equation}\label{eq:time-score}
+  S_\text{time} = \frac{T_\text{best}}{T_\text{actual}}
+\end{equation}
+where $T_\text{best}$ is the shortest search time among all 216 evaluated configurations (82\,s, achieved at 50\,m altitude and 10\,m/s). Our selected configuration achieves $T_\text{actual} = 112$\,s, giving $S_\text{time} = 82/112 = 0.73$. This score penalises longer searches proportionally, with diminishing returns as configurations approach the theoretical minimum.
+
+% ── Energy ────────────────────────────────────────────────────────────
+\subsection{Energy ($S_\text{energy}$)}\label{sec:score-energy}
+
+Energy consumption is derived from a physics-based simulation with three components:
+
+\begin{enumerate}[nosep]
+  \item \textbf{Hover power} (momentum theory):
+  \begin{equation}
+    P_\text{hover} = \frac{(mg)^{3/2}}{\sqrt{2 \rho A_\text{disk}}}
+  \end{equation}
+  where $m$ is the all-up mass, $g$ is gravitational acceleration, $\rho$ is air density, and $A_\text{disk}$ is the total rotor disk area.
+
+  \item \textbf{Forward-flight power} (quadratic parasitic drag added to induced power):
+  \begin{equation}
+    P_\text{forward}(v) = P_\text{hover} + \tfrac{1}{2}\,\rho\,C_D A_\text{flat}\,v^3
+  \end{equation}
+  where $C_D A_\text{flat}$ is the drag area of the airframe.
+
+  \item \textbf{Turn energy} (deceleration to hover, yaw, reacceleration):
+  \begin{equation}
+    E_\text{turn} = P_\text{hover} \times t_\text{turn}
+  \end{equation}
+  This approximation assumes the drone decelerates to near-hover for each U-turn, which is conservative (actual turning may retain partial forward speed).
+\end{enumerate}
+
+The total mission energy integrates over the flight profile:
+\begin{equation}
+  E_\text{total} = \sum_{\text{legs}} P_\text{forward}(v) \times \frac{L_\text{leg}}{v} \;+\; N_\text{turns} \times E_\text{turn} \;+\; E_\text{transit}
+\end{equation}
+
+The energy score normalises against the battery capacity:
+\begin{equation}\label{eq:energy-score}
+  S_\text{energy} = 1 - \frac{E_\text{total}}{E_\text{battery}}
+\end{equation}
+where $E_\text{battery} = 115.4$\,Wh (6S 5200\,mAh LiPo). Our selected configuration uses $E_\text{total} = 12.6$\,Wh, giving $S_\text{energy} = 0.89$. A score of 1.0 would mean zero energy consumed (impossible); a score of 0.0 would mean the battery is fully depleted.
+
+% ── Coverage ──────────────────────────────────────────────────────────
+\subsection{Coverage ($S_\text{coverage}$)}\label{sec:score-coverage}
+
+Coverage is the fraction of the accessible search area that lies within at least one camera footprint during the scan:
+\begin{equation}\label{eq:coverage-score}
+  S_\text{coverage} = \frac{A_\text{scanned}}{A_\text{total}}
+\end{equation}
+
+The scanned area is computed geometrically by buffering each scan line by half the cross-track footprint width, unioning the resulting polygons, and intersecting with the search area polygon. Overlap between adjacent swaths contributes to detection reliability but does not increase the coverage score beyond 1.0 (redundant coverage is still counted as coverage, not double-counted as area).
+
+The NFZ buffer removes approximately 4\% of the total search area from the accessible polygon. This is deliberate: the 30\,m buffer sacrifices a thin strip of coverage in exchange for guaranteed NFZ clearance. Our selected configuration achieves $S_\text{coverage} = 0.96$, meaning 96\% of the total area is covered and the remaining 4\% lies within the fenced reserve where a casualty is unlikely to be found.
+
+% ── Composite Score ───────────────────────────────────────────────────
+\subsection{Composite Score and the Constraint--Objective Split}\label{sec:score-composite}
+
+The 216-configuration sweep ranks candidates using a weighted composite of \emph{three} continuous scores:
+\begin{equation}\label{eq:composite}
+  S_\text{composite} = 0.40\,S_\text{detection} + 0.35\,S_\text{coverage} + 0.25\,S_\text{energy}
+\end{equation}
+
+The weights reflect the priority ordering established in Section~\ref{sec:df-dimensions}: detection is highest (a missed casualty is irrecoverable), coverage is second (incomplete search leaves uncertainty), and energy is lowest (the selected configuration uses only 11\% of battery capacity, so energy is far from the binding constraint).
+
+\textbf{Why safety and time are constraints, not continuous scores.} Safety is binary by nature: either the drone stays clear of the SSSI or it does not. There is no useful gradient between ``30\,m buffer'' and ``31\,m buffer'' --- both are safe, and no configuration that violates the NFZ is acceptable at \emph{any} score. Including safety as a weighted term would allow a high detection score to ``compensate'' for a marginal NFZ clearance, which is precisely the trade-off we refuse to make. Any configuration where $S_\text{safety} < 1.0$ (i.e.\ any sub-element fails) is eliminated before scoring.
+
+Time is treated similarly: SAR missions have a maximum acceptable search duration dictated by the operational scenario, not by optimisation. In our case, any configuration that completes the search in under 300\,s is operationally acceptable --- the difference between 112\,s and 150\,s matters far less than the difference between 99.97\% and 95\% detection probability. Configurations exceeding 300\,s are eliminated; among those that pass, time differences are too small to justify influencing the ranking. Time \emph{is} computed and reported (see Section~\ref{sec:df-result}) but does not enter the composite.
+
+This constraint--objective split ensures that the optimisation never trades safety for performance or accepts a dangerously slow search because it scores well on other axes. The spider chart (Figure~\ref{fig:sensitivity-spider}) still displays all five dimensions for visual comparison, but the composite score that drives configuration selection uses only the three continuously traded objectives.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\linewidth]{scoring_overview}
+  \caption{Mission scoring framework. Safety and Time are pass/fail constraints (you either meet them or you don't). Detection, Coverage, and Energy are continuously optimised with weights reflecting the priority stack. The composite score of 0.93 represents the selected configuration's quality.}\label{fig:scoring-overview}
+\end{figure}
+
+
+% ════════════════════════════════════════════════════════════════════════
 \section{The Variables We Can Choose}\label{sec:df-variables}
 
 Seven parameters define the search configuration. Each affects multiple objectives; altitude alone touches all five. Critically, the \emph{search pattern type} is itself a design variable --- it must suit the irregular polygon and NFZ geometry of our mission. Table~\ref{tab:df-variables} lists the seven decision variables, the ranges we explored, and which objectives each one influences.
