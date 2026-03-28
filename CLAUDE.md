@@ -336,9 +336,27 @@ tests/ ................ All test scripts (hardware/, flight/, diagnostics/, cali
 
 ## How to Run
 
+> Full CLI reference with all flags: `report/README_FLAGS.md`
+
+### CLI Flags (v5.8)
+```
+--dry-run              No arming/flying/GPS. Print waypoints, timing, save pattern image.
+--headless             No cv2 windows. Auto-enabled on Pi when $DISPLAY is empty.
+--alt <m>              Override search altitude (default 35m).
+--speed <factor>       SITL speedup (default 1). Only affects SIMULATION mode.
+--model <path>         TFLite model path (default best.tflite).
+--transit <file>       Transit waypoints JSON (default flight_plans/transit.json).
+--beacon-delay <s>     Auto-trigger PLB redirect after N seconds of search (default 0 = off).
+--smart-detect         Require consecutive confirmed frames before investigating a target.
+--center-verify        GPS-average the target position after centering, before VERIFY.
+--no-nfz               Disable SSSI geofence.
+--no-stream            Disable MJPEG stream server (port 8090).
+```
+
 ### Dry-run (no GPS, no Cube, no flying)
 ```bash
 python main.py --dry-run                           # verify lawnmower pattern
+python main.py --dry-run --alt 20                  # check pattern at lower altitude
 python main.py --dry-run --model models/best2.tflite  # verify with alt model
 ```
 
@@ -348,21 +366,23 @@ python main.py --dry-run --model models/best2.tflite  # verify with alt model
 set DRONE_MODE=SIMULATION      # Windows (cmd)
 # export DRONE_MODE=SIMULATION  # Linux/WSL
 python main.py
-python main.py --model models/best2.tflite    # with alternate model
+python main.py --speed 5 --beacon-delay 300        # 5x speed, beacon after 5min
+python main.py --model cv_models/sar_v2_1088/best.tflite --smart-detect
 ```
 
 ### Real mode on laptop (webcam + SITL)
 ```bash
 set DRONE_MODE=REAL
 python main.py
-# Point webcam at printed dummy
+python main.py --alt 25 --center-verify            # lower altitude, GPS averaging
 ```
 
-### On Pi (future)
+### On Pi (headless over SSH)
 ```bash
 source pienv/bin/activate
 cd ~/sar-drone
-python main.py                 # config.py auto-detects Cube on /dev/ttyAMA0
+python main.py --headless                          # auto-detects Cube on /dev/ttyAMA0
+# Browser ground station: http://PI_IP:8090/
 ```
 
 ## Recreating the Environment
