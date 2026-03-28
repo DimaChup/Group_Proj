@@ -255,6 +255,7 @@ class VisualFlightMission(StateHandlersMixin):
         self.current_conf = 0.0
         self.final_dist = 0.0
         self.rejected_targets = []
+        self._detect_queue = []
         self.departure_lat = 0; self.departure_lon = 0
         self.manual_departure_lat = 0; self.manual_departure_lon = 0; self.manual_departure_alt = 0
         self.max_rescan_passes = config.MAX_RESCAN_PASSES
@@ -650,7 +651,7 @@ class VisualFlightMission(StateHandlersMixin):
 
             key = -1
             if not HEADLESS:
-                key = cv2.waitKey(20) & 0xFF
+                key = cv2.waitKey(1) & 0xFF
                 if key == 27: break
             else:
                 time.sleep(0.02)

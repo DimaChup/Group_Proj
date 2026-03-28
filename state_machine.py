@@ -517,7 +517,20 @@ class StateHandlersMixin:
             print("[WARN] VERIFY TIMEOUT (120s) — no operator response. Auto-rejecting target.")
             self.rejected_targets.append((self.target_lat, self.target_lon))
             self.waiting_for_confirmation = False
-            self._set_state(State.SEARCH)
+            self.selecting_landing_side = False   # FIX 3: reset stale flags
+            self._confirmed_y = False
+            # FIX 3: check detection queue before falling back to SEARCH
+            next_target = self._pop_valid_target()
+            if next_target:
+                q_lat, q_lon, _qc = next_target
+                print(f"Next queued target at ({q_lat:.6f}, {q_lon:.6f}) — {len(self._detect_queue)} remaining")
+                self.target_lat, self.target_lon = q_lat, q_lon
+                self._locked_target = (q_lat, q_lon)
+                self._set_state(State.CENTERING)
+            elif hasattr(self, 'departure_lat') and self.departure_lat:
+                self._set_state(State.RETURN_TO_SEARCH)
+            else:
+                self._set_state(State.SEARCH)
             return
 
         # Periodic terminal warnings so operator knows time is running out
@@ -639,6 +652,13 @@ class StateHandlersMixin:
             print("WARNING: GPS never fixed — home position unknown. Landing in place.")
             self._set_state(State.LANDING)
             return
+        # FIX 1: Altitude climb guard — climb to search alt before flying home
+        return_alt = self._current_search_alt()
+        if self.alt < return_alt - 3.0:
+            if time.time() - self.last_req > 2.0:
+                self.nav.send_global_target(self.lat, self.lon, return_alt)
+                self.last_req = time.time()
+            return  # wait for climb
         self.nav.set_speed(config.TRANSIT_SPEED_MPS)
         if time.time() - self.last_req > 2.0:
             self.nav.send_global_target(self.home_lat, self.home_lon, config.TARGET_ALT)
@@ -894,6 +914,28 @@ class StateHandlersMixin:
         elif key == ord('n') or key == ord('N'):
             self.rejected_targets.append((self.target_lat, self.target_lon))
             print(f"USER REJECTED TARGET at ({self.target_lat:.6f}, {self.target_lon:.6f}). RESUMING.")
+            self.waiting_for_confirmation = False
+            self.target_lat = self.target_lon = 0
+            self.last_req = 0
+            result = self._pop_valid_target()
+            if result:
+                q_lat, q_lon, _qc = result
+                print(f"Next queued target at ({q_lat:.6f}, {q_lon:.6f}) — {len(self._detect_queue)} remaining")
+                self.target_lat, self.target_lon = q_lat, q_lon
+                self._locked_target = (q_lat, q_lon)
+                self._set_state(State.CENTERING)
+            elif self.manual_departure_lat != 0 and self.previous_state == State.MANUAL:
+                print("  Returning to manual departure point")
+                self._set_state(State.RETURN_FROM_MANUAL)
+            elif self.departure_lat != 0:
+                print("  Returning to search departure point")
+                self._set_state(State.RETURN_TO_SEARCH)
+            else:
+                self._set_state(State.SEARCH)
+        elif key == ord('x') or key == ord('X'):
+            # FIX 2: X key — false positive rejection (same as N but labelled differently)
+            print(f"[VERIFY] FALSE POSITIVE — target rejected as false positive")
+            self.rejected_targets.append((self.target_lat, self.target_lon))
             self.waiting_for_confirmation = False
             self.target_lat = self.target_lon = 0
             self.last_req = 0
