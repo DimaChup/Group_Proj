@@ -81,7 +81,7 @@
 % ════════════════════════════════════════════════════════════════════════
 \section{The Problem}\label{sec:df-problem}
 
-A hiker is missing. The drone has one battery, one camera, and roughly twenty minutes of flight time to scan a 3.2-hectare field bordered by a protected wildlife reserve. Five things compete:
+The mission is to locate a lost casualty as quickly as possible. Given our hardware constraints (Hexsoon EDU-450, Raspberry Pi~5, YOLOv8n at 4.8\,FPS), regulatory constraints (R01--R04: flight area, SSSI no-fly zone, 50\,m altitude limit), and operational constraints (single battery, one search pass), this breaks down into five competing dimensions that must be balanced:
 
 \begin{itemize}[nosep]
   \item \textbf{Coverage} --- scan every square metre of the search area.
@@ -93,7 +93,7 @@ A hiker is missing. The drone has one battery, one camera, and roughly twenty mi
 
 No single configuration maximises all five simultaneously. Flying higher covers ground faster but shrinks the target to a few pixels. Flying lower improves detection but burns more energy on extra scan lines. Flying near the boundary maximises coverage but risks an incursion.
 
-We adopted a clear priority stack: \textbf{safety $>$ detection $>$ speed $>$ energy}. An NFZ violation grounds the project. A missed casualty defeats its purpose. A slow search wastes the critical early hours. High energy use is undesirable but survivable.
+We adopted a clear priority stack: \textbf{safety $>$ detection $>$ speed $>$ energy}. An NFZ violation grounds the project. A missed casualty defeats its purpose. A slow search wastes the critical early hours. High energy use is undesirable but survivable. Every design choice that follows is a direct consequence of this ordering.
 
 % ════════════════════════════════════════════════════════════════════════
 \section{The Variables We Control}\label{sec:df-variables}
@@ -234,9 +234,9 @@ The selected configuration sits at the knee of the Pareto frontier (Figure~\ref{
 \end{figure}
 
 % ════════════════════════════════════════════════════════════════════════
-\section{Sequential Measurement Chain}\label{sec:df-sequential}
+\section{Sequential Decision Chain}\label{sec:df-sequential}
 
-A common pitfall in multi-objective design is attempting to optimise everything simultaneously. We avoided this by treating the design as a \emph{sequential measurement chain}: each variable was characterised experimentally and locked before the next was addressed.
+A common pitfall in multi-objective design is attempting to optimise everything simultaneously. We avoided this by treating the design as a \emph{sequential decision tree}: at each node we state the constraint, measure the feasible range, apply the 15\% safety margin, lock the value, and move to the next node. The reasoning chain is: \textbf{mission} (find casualty fastest) $\to$ \textbf{constraints} (battery, camera, NFZ) $\to$ \textbf{what we optimise} (the five dimensions) $\to$ \textbf{what we prioritise} (safety $>$ detection $>$ speed $>$ energy) $\to$ \textbf{strategy} (sequential parameter lock-in). Each step below follows this logic.
 
 \paragraph{Step~1: Train a reliable vision model.}
 The YOLOv8n model was retrained on a mixed dataset of 300~synthetic images, 16~manually labelled real flight frames, and 50~hard-negative backgrounds at the camera's native 1456$\times$1088 resolution. Validation yielded mAP50\,=\,0.995. Only after confirming that the detector itself was not the bottleneck did we proceed to ask \emph{how high} and \emph{how fast} it could operate.
@@ -276,16 +276,19 @@ With a validated model, preliminary bench tests using the DJI video replay tool 
 
 For the baseline configuration we adopted \textbf{8\,m/s}, which sits within the overcast envelope and provides margin under bright conditions.
 
+The search speed adapts to ambient lighting. In bright conditions the camera captures sharper frames, allowing faster flight (10\,m/s). In overcast conditions we reduce to 8.5\,m/s. In dusk or low light, 6\,m/s. This is implemented through the altitude-dependent speed schedule in Table~\ref{tab:df-speed-envelope}, which can be further tuned for lighting conditions on flight day.
+
 \paragraph{Step~4: Energy-efficient path search.}
 Only after altitude and speed were fixed did we sweep scan angle, overlap, and NFZ buffer---the 216-configuration evaluation described in Section~\ref{sec:df-evaluation}.
 
 % ════════════════════════════════════════════════════════════════════════
 \section{Non-Quantifiable Design Choices}\label{sec:df-qualitative}
 
-Not every decision admits numerical optimisation. Three choices were made on engineering judgement:
+Not every decision admits numerical optimisation. Four choices were made on engineering judgement:
 
 \begin{itemize}[nosep]
-  \item \textbf{Lawnmower vs.\ spiral pattern.} A spiral can be marginally more energy-efficient for convex polygons, but a lawnmower provides a \emph{coverage guarantee}: every point in the polygon lies within a scan lane of known width. For a safety-critical search, guaranteed coverage outweighs marginal efficiency.
+  \item \textbf{Lawnmower vs.\ spiral pattern.} A spiral can be marginally more energy-efficient for convex polygons, but a lawnmower provides a \emph{coverage guarantee}: every point in the polygon lies within a scan lane of known width. For a safety-critical search, guaranteed coverage outweighs marginal efficiency. We also tested different scan patterns and compared configurations where the drone \emph{yaws to face the direction of travel} on each leg versus maintaining a fixed heading throughout. The fixed-heading (no-yaw) approach proved more energy-efficient: eliminating yaw rotations at each U-turn saves both the energy cost of the rotation itself and the time spent decelerating, turning, and re-accelerating. The lawnmower with fixed heading was therefore adopted.
+  \item \textbf{Speed adaptation to lighting conditions.} As shown in Table~\ref{tab:df-speed-envelope}, the maximum detectable speed varies significantly with ambient light. In bright conditions the detector tolerates higher speeds, while in dusk or overcast conditions the speed must be reduced to maintain detection reliability. Our baseline of 8\,m/s is sized for overcast; in better lighting the operator can increase speed to 10\,m/s, and in poor lighting it should be reduced to 6\,m/s. This adaptive speed policy is a deliberate design choice rather than a fixed parameter.
   \item \textbf{Operator-in-the-loop verification.} Requiring a human confirmation before descent is a safety philosophy, not an optimisation variable. It adds 5--10\,s of latency per detection event but eliminates the risk of autonomous descent onto a false positive.
   \item \textbf{Single-class detector.} Training on a single ``casualty'' class rather than a multi-class taxonomy simplifies the model and reduces false-positive modes. This is a deliberate simplification for first-flight reliability.
 \end{itemize}
