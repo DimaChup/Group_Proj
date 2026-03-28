@@ -80,26 +80,53 @@
 \vspace{4pt}
 
 % ════════════════════════════════════════════════════════════════════════
-\section{The Problem}\label{sec:df-problem}
+\section{Objective}\label{sec:df-objective}
 
-The mission is to locate a lost casualty as quickly as possible. Given our hardware constraints (Hexsoon EDU-450, Raspberry Pi~5, YOLOv8n at 4.8\,FPS), regulatory constraints (R01--R04: flight area, SSSI no-fly zone, 50\,m altitude limit), and operational constraints (single battery, one search pass), this breaks down into five competing dimensions that must be balanced:
-
-\begin{itemize}[nosep]
-  \item \textbf{Coverage} --- scan every square metre of the search area.
-  \item \textbf{Detection} --- actually see a person-sized target from altitude.
-  \item \textbf{Time} --- the critical early hours of hypothermia survivability are ticking.
-  \item \textbf{Energy} --- the battery must last the search \emph{plus} transit, descent, verification, and return.
-  \item \textbf{Safety} --- the drone must never enter the adjacent SSSI no-fly zone.
-\end{itemize}
-
-No single configuration maximises all five simultaneously. Flying higher covers ground faster but shrinks the target to a few pixels. Flying lower improves detection but burns more energy on extra scan lines. Flying near the boundary maximises coverage but risks an incursion.
-
-We adopted a clear priority stack: \textbf{safety $>$ detection $>$ speed $>$ energy}. An NFZ violation grounds the project. A missed casualty defeats its purpose. A slow search wastes the critical early hours. High energy use is undesirable but survivable. Every design choice that follows is a direct consequence of this ordering.
+The mission objective is to \textbf{find the casualty as fast as possible}.
 
 % ════════════════════════════════════════════════════════════════════════
-\section{The Variables We Control}\label{sec:df-variables}
+\section{Constraints}\label{sec:df-constraints}
 
-Six parameters define the search configuration. Each affects multiple objectives; altitude alone touches all five.
+This objective is bounded by hard constraints that cannot be relaxed:
+
+\begin{itemize}[nosep]
+  \item \textbf{No-Fly Zone (SSSI)} --- a protected ecological site borders the search area; entry is prohibited.
+  \item \textbf{Flight area boundary} --- the search polygon is fixed by the mission brief (R01).
+  \item \textbf{Altitude limit} --- 50\,m maximum (regulation R03).
+  \item \textbf{Single battery} --- one LiPo pack must cover transit, search, descent, verification, and return.
+  \item \textbf{One pass} --- there is no opportunity to re-fly missed strips; the pattern must cover every accessible point in a single traversal.
+  \item \textbf{Hardware ceiling} --- onboard inference runs at 4.8\,FPS (YOLOv8n on Raspberry Pi~5), setting a hard limit on how fast the drone can fly while still detecting targets.
+\end{itemize}
+
+% ════════════════════════════════════════════════════════════════════════
+\section{Five Competing Dimensions}\label{sec:df-dimensions}
+
+These constraints give us five competing performance dimensions that must be balanced:
+
+\begin{enumerate}[nosep]
+  \item \textbf{Safety} --- the drone must never enter the SSSI no-fly zone.
+  \item \textbf{Detection} --- actually see a person-sized target from altitude.
+  \item \textbf{Time} --- the critical early hours of hypothermia survivability are ticking.
+  \item \textbf{Energy} --- the battery must last the full mission profile, not just the search.
+  \item \textbf{Coverage} --- scan every square metre of the accessible search area.
+\end{enumerate}
+
+No single configuration maximises all five simultaneously. Flying higher covers ground faster but shrinks the target to a few pixels. Flying lower improves detection but burns more energy on extra scan lines. Flying near the boundary maximises coverage but risks an NFZ incursion.
+
+We adopted a clear priority stack: \textbf{safety $>$ detection $>$ time $>$ energy $>$ coverage}. An NFZ violation grounds the project. A missed casualty defeats its purpose. A slow search wastes the critical early hours. High energy use is undesirable but survivable. Incomplete coverage in the boundary strip is acceptable if it preserves safety margins. Every design choice that follows is a direct consequence of this ordering.
+
+Figure~\ref{fig:sensitivity-spider} shows the performance profile our selected configuration should achieve: strong safety and detection scores, with time and energy traded as secondary objectives. This spider chart is the target shape --- the optimisation that follows aims to produce a configuration whose profile fills this envelope.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.55\linewidth]{sensitivity_spider}
+  \caption{Target performance profile. Each axis shows the achieved score relative to the theoretical best. Our selected configuration should fill this envelope: maximum safety and detection, with time and energy as secondary trade-offs.}\label{fig:sensitivity-spider}
+\end{figure}
+
+% ════════════════════════════════════════════════════════════════════════
+\section{The Variables We Can Choose}\label{sec:df-variables}
+
+Seven parameters define the search configuration. Each affects multiple objectives; altitude alone touches all five. Critically, the \emph{search pattern type} is itself a design variable --- it must suit the irregular polygon and NFZ geometry of our mission.
 
 \begin{table}[H]
   \centering\compactTable
@@ -108,23 +135,36 @@ Six parameters define the search configuration. Each affects multiple objectives
     \toprule
     \textbf{Variable} & \textbf{Range tested} & \textbf{Affects} \\
     \midrule
-    Altitude         & 20--50\,m          & Detection, coverage, time, energy, safety \\
-    Speed            & 6--10\,m/s         & Detection (dwell time), time, energy \\
-    Scan angle       & 0--175\textdegree  & Energy (number of U-turns), time \\
-    Swath overlap    & 10--30\%           & Coverage reliability, energy \\
-    NFZ buffer       & 16--50\,m          & Safety margin, coverage completeness \\
-    Heading mode     & Fixed vs.\ yaw    & Energy (turn cost), NFZ margin geometry \\
+    Altitude            & 20--50\,m          & Detection, coverage, time, energy, safety \\
+    Speed               & 6--10\,m/s         & Detection (dwell time), time, energy \\
+    Search pattern type & 4 types evaluated  & Coverage guarantee, energy, NFZ compatibility \\
+    Scan angle          & 0--175\textdegree  & Energy (number of U-turns), time \\
+    Swath overlap       & 10--30\%           & Coverage reliability, energy \\
+    NFZ buffer          & 16--50\,m          & Safety margin, coverage completeness \\
+    Heading mode        & Fixed vs.\ yaw    & Energy (turn cost), NFZ margin geometry \\
     \bottomrule
   \end{tabularx}
 \end{table}
 
-The coupling structure is shown in Figure~\ref{fig:sensitivity-matrix}: darker cells indicate stronger influence. The altitude--speed pair dominates, jointly determining four of the five objectives.
+% ════════════════════════════════════════════════════════════════════════
+\section{How They Interconnect}\label{sec:df-coupling}
+
+These variables are not independent. Figure~\ref{fig:sensitivity-matrix} shows the coupling structure: darker cells indicate stronger influence of each input on each output metric. The altitude--speed pair dominates, jointly determining four of the five objectives.
 
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.55\linewidth]{sensitivity_matrix}
-  \caption{Sensitivity matrix: darker cells indicate stronger influence of each input parameter on each derived metric.}\label{fig:sensitivity-matrix}
+  \caption{Sensitivity matrix: darker cells indicate stronger influence of each input parameter on each derived metric. Altitude and speed dominate the coupling structure.}\label{fig:sensitivity-matrix}
 \end{figure}
+
+This dense coupling means we cannot optimise each variable in isolation. Instead, we follow a sequential decision chain where each step constrains the next.
+
+% ════════════════════════════════════════════════════════════════════════
+\section{The Decision Chain}\label{sec:df-chain}
+
+Rather than optimising all variables simultaneously, we followed a sequential chain where each decision logically constrains the next. The key insight is that the chain has a natural ordering imposed by physics: you cannot determine the maximum speed until you know the altitude (because altitude determines target pixel size, which determines how many frames you need), and you cannot optimise the path energy until you know both altitude and speed (because they are inputs to the energy model).
+
+The chain splits into two phases. \textbf{Phase~A (Steps~1--4): Measure.} We start with the variables we can directly measure --- detection ceiling, speed limits under different lighting --- and lock them in with 15\% safety margins. These are empirical constraints, not design choices. \textbf{Phase~B (Steps~5--9): Optimise.} Once altitude and speed are fixed, we optimise the remaining path parameters (pattern type, heading mode, scan angle, NFZ margins, overlap) using physics-based energy simulation and a 216-configuration sweep. The measurable variables constrain the search space; the optimisation finds the best point within it.
 
 % ── Decision flow infographic ──────────────────────────────────────────
 \begin{figure}[H]
@@ -132,13 +172,6 @@ The coupling structure is shown in Figure~\ref{fig:sensitivity-matrix}: darker c
   \includegraphics[width=0.82\linewidth]{decision_flow}
   \caption{Decision flow infographic: the nine-step sequential chain from model training through altitude, speed, pattern selection, scan angle, and NFZ margins to the final operating configuration. Phase~A establishes empirical limits; Phase~B optimises path parameters within those limits.}\label{fig:decision-flow}
 \end{figure}
-
-% ════════════════════════════════════════════════════════════════════════
-\section{The Reasoning Chain}\label{sec:df-chain}
-
-Rather than optimising all variables simultaneously, we followed a sequential chain where each decision logically constrains the next. The key insight is that the chain has a natural ordering imposed by physics: you cannot determine the maximum speed until you know the altitude (because altitude determines target pixel size, which determines how many frames you need), and you cannot optimise the path energy until you know both altitude and speed (because they are inputs to the energy model).
-
-The chain splits into two phases. \textbf{Phase~A (Steps~1--4): Measure.} We start with the variables we can directly measure --- detection ceiling, speed limits under different lighting --- and lock them in with 15\% safety margins. These are empirical constraints, not design choices. \textbf{Phase~B (Steps~5--9): Optimise.} Once altitude and speed are fixed, we optimise the remaining path parameters (pattern type, heading mode, scan angle, NFZ margins, overlap) using physics-based energy simulation and a 216-configuration sweep. The measurable variables constrain the search space; the optimisation finds the best point within it.
 
 The full chain runs as follows:
 
@@ -426,13 +459,7 @@ The tornado sensitivity analysis (Figure~\ref{fig:tornado-sensitivity}) confirms
   \caption{Tornado chart of parameter sensitivities. Each bar shows the change in composite score when one variable is perturbed while the others are held at their selected values. Altitude dominates: a $\pm$7\,m change ($\pm$20\%) has nearly double the effect of a $\pm$1.6\,m/s speed change.}\label{fig:tornado-sensitivity}
 \end{figure}
 
-The sensitivity spider plot (Figure~\ref{fig:sensitivity-spider}) shows the overall sensitivity footprint: a compact polygon indicating that the selected operating point is robust to moderate perturbations in any single variable. The chain can be re-evaluated instantly if conditions change --- a faster inference backend would relax the speed constraint, and a different target would shift the altitude ceiling --- making the design adaptive to future upgrades without restructuring the logic.
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.55\linewidth]{sensitivity_spider}
-  \caption{Performance profile of the selected configuration. Each axis shows the achieved score relative to the theoretical best: coverage 96\%, detection 93\%, safety 100\%, with time and energy traded as secondary objectives.}\label{fig:sensitivity-spider}
-\end{figure}
+The sensitivity spider plot (Figure~\ref{fig:sensitivity-spider}, introduced in Section~\ref{sec:df-dimensions}) confirms that the selected operating point achieves the target profile: strong safety and detection scores with a compact, balanced polygon. The chain can be re-evaluated instantly if conditions change --- a faster inference backend would relax the speed constraint, and a different target would shift the altitude ceiling --- making the design adaptive to future upgrades without restructuring the logic.
 
 
 % ════════════════════════════════════════════════════════════════════════
