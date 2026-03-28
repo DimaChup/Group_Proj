@@ -115,12 +115,12 @@ No single configuration maximises all five simultaneously. Flying higher covers 
 
 We adopted a clear priority stack: \textbf{safety $>$ detection $>$ time $>$ energy $>$ coverage}. An NFZ violation grounds the project. A missed casualty defeats its purpose. A slow search wastes the critical early hours. High energy use is undesirable but survivable. Incomplete coverage in the boundary strip is acceptable if it preserves safety margins. Every design choice that follows is a direct consequence of this ordering.
 
-Figure~\ref{fig:sensitivity-spider} shows the performance profile our selected configuration should achieve: strong safety and detection scores, with time and energy traded as secondary objectives. This spider chart is the target shape --- the optimisation that follows aims to produce a configuration whose profile fills this envelope.
+Figure~\ref{fig:sensitivity-spider} shows the \emph{desired performance envelope} --- the target shape our selected configuration should fill. The grey dashed polygon represents the theoretical best on each axis; the blue polygon shows what the selected configuration actually achieves. Safety and detection are pushed to the outer edge (these are non-negotiable), while time and energy are allowed to sit lower (these are acceptable trade-offs). The envelope is deliberately \emph{not} circular: hard constraints (safety, detection) define a minimum acceptable radius, while preferential objectives (time, energy, coverage) are optimised within whatever budget remains. The optimisation that follows aims to find the configuration whose profile best fills this envelope.
 
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.55\linewidth]{sensitivity_spider}
-  \caption{Target performance profile. Each axis shows the achieved score relative to the theoretical best. Our selected configuration should fill this envelope: maximum safety and detection, with time and energy as secondary trade-offs.}\label{fig:sensitivity-spider}
+  \caption{Desired envelope (grey dashed) vs.\ actual performance (blue) for the selected configuration. Safety and detection are pushed to the outer edge as non-negotiable constraints; time and energy sit lower as acceptable trade-offs. The envelope shape reflects the priority ordering: the target is not a circle but a shape that prioritises the axes that matter most.}\label{fig:sensitivity-spider}
 \end{figure}
 
 % ════════════════════════════════════════════════════════════════════════
@@ -162,7 +162,9 @@ The composite safety score is a weighted sum:
   S_\text{safety} = 0.30\,s_\text{margin} + 0.25\,s_\text{wp} + 0.15\,s_\text{speed} + 0.10\,s_\text{repulsive} + 0.10\,s_\text{hard} + 0.10\,s_\text{kill}
 \end{equation}
 
-The margin and waypoint terms carry the highest weights because they determine whether the planned path is geometrically safe \emph{before} the drone takes off. The reactive terms (speed field, repulsive vector, hard boundary, kill switch) are defence-in-depth layers that matter only if the geometric planning fails. For our selected configuration all six sub-scores are 1.0, giving $S_\text{safety} = 1.0$.
+The margin and waypoint terms carry the highest weights because they determine whether the planned path is geometrically safe \emph{before} the drone takes off. The reactive terms (speed field, repulsive vector, hard boundary, kill switch) are defence-in-depth layers that matter only if the geometric planning fails. For our selected configuration, the geometric sub-scores (margin, waypoint filtering, hard boundary, kill switch) are all 1.0, while the reactive sub-scores are slightly below 1.0 ($s_\text{speed} = 0.9$, $s_\text{repulsive} = 0.85$) because the scalar field does not drive speed fully to zero and the repulsive vector field activates only within 3\,m. This gives $S_\text{safety} = 0.96$ (Figure~\ref{fig:safety-subscore}), confirming that the dominant protection comes from pre-flight geometric design rather than runtime reaction.
+
+\textbf{NFZ incursion risk.} The buffer distance is the primary defence against NFZ entry. The 30\,m buffer exceeds the RSS stopping distance (20.4\,m) by a factor of 1.5$\times$. For the drone to enter the NFZ, it would need to breach \emph{all} of the following layers simultaneously: (1)~the path planner would have to generate a waypoint inside the buffer (eliminated by geometric filtering), (2)~the speed ramp would have to fail to decelerate (software fault), (3)~the repulsive vector field at 3\,m would have to fail (independent code path), (4)~the hard boundary MANUAL switch would have to fail (independent mode change), and (5)~the pilot's RC kill switch would have to be unavailable. With five independent protection layers, the probability of an NFZ incursion is the product of five independent failure probabilities --- negligibly small for any realistic failure rate per layer.
 
 \begin{figure}[H]
   \centering
@@ -208,12 +210,14 @@ The overall detection score is the product:
   S_\text{detection} = s_\text{conf} \times s_\text{frames} \times s_\text{cum} \times s_\text{px}
 \end{equation}
 
-A multiplicative combination is used rather than a weighted sum because a zero in \emph{any} sub-component (e.g.\ zero frames on target, or target below minimum pixel size) should collapse the entire detection score to zero --- you cannot compensate for an invisible target by having a confident model. Model mAP50 (0.995) is not included as a sub-score because it is constant across all configurations; it serves as a prerequisite validated in Step~1 of the decision chain.
+A multiplicative combination is used rather than a weighted sum because a zero in \emph{any} sub-component (e.g.\ zero frames on target, or target below minimum pixel size) should collapse the entire detection score to zero --- you cannot compensate for an invisible target by having a confident model. Model mAP50 (0.995) is not included in the composite product because it is constant across all configurations; it serves as a prerequisite validated in Step~1 of the decision chain.
+
+Figure~\ref{fig:detection-subscore} visualises all five detection-related metrics, including the constant mAP50 for completeness. The weakest axis is target pixel size (0.85), reflecting the trade-off inherent in flying at 35\,m: flying lower would push this score closer to 1.0 but at the cost of more scan lines, more energy, and longer search time.
 
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.5\linewidth]{detection_subscore}
-  \caption{Detection score decomposition. The overall detection score (0.93) is the product of four normalised sub-scores. Target pixel size (0.85) is the weakest axis --- flying lower would improve it but at the cost of coverage and energy.}\label{fig:detection-subscore}
+  \caption{Detection score decomposition. The spider shows all five detection-related metrics; the overall score (0.93) is driven by the four variable sub-scores. Target pixel size (0.85) is the weakest axis --- flying lower would improve it but at the cost of coverage and energy.}\label{fig:detection-subscore}
 \end{figure}
 
 % ── Time ──────────────────────────────────────────────────────────────
@@ -289,7 +293,7 @@ The 216-configuration sweep ranks candidates using a weighted composite of \emph
 
 The weights reflect the priority ordering established in Section~\ref{sec:df-dimensions}: detection is highest (a missed casualty is irrecoverable), coverage is second (incomplete search leaves uncertainty), and energy is lowest (the selected configuration uses only 11\% of battery capacity, so energy is far from the binding constraint).
 
-\textbf{Why safety and time are constraints, not continuous scores.} Safety is binary by nature: either the drone stays clear of the SSSI or it does not. There is no useful gradient between ``30\,m buffer'' and ``31\,m buffer'' --- both are safe, and no configuration that violates the NFZ is acceptable at \emph{any} score. Including safety as a weighted term would allow a high detection score to ``compensate'' for a marginal NFZ clearance, which is precisely the trade-off we refuse to make. Any configuration where $S_\text{safety} < 1.0$ (i.e.\ any sub-element fails) is eliminated before scoring.
+\textbf{Why safety and time are constraints, not continuous scores.} Safety is a hard pass/fail gate: either the drone stays clear of the SSSI or it does not. There is no useful gradient between ``30\,m buffer'' and ``31\,m buffer'' --- both are safe, and no configuration that violates the NFZ is acceptable at \emph{any} score. Including safety as a weighted term would allow a high detection score to ``compensate'' for a marginal NFZ clearance, which is precisely the trade-off we refuse to make. Any configuration where $S_\text{safety}$ falls below an acceptable threshold (i.e.\ a protection layer is missing) is eliminated before scoring.
 
 Time is treated similarly: SAR missions have a maximum acceptable search duration dictated by the operational scenario, not by optimisation. In our case, any configuration that completes the search in under 300\,s is operationally acceptable --- the difference between 112\,s and 150\,s matters far less than the difference between 99.97\% and 95\% detection probability. Configurations exceeding 300\,s are eliminated; among those that pass, time differences are too small to justify influencing the ranking. Time \emph{is} computed and reported (see Section~\ref{sec:df-result}) but does not enter the composite.
 
@@ -426,10 +430,10 @@ At 35\,m, the camera footprint on the ground is approximately 46\,m $\times$ 34\
 
 \textbf{Why this comes after altitude.} Speed is constrained by how long the target stays in the camera's field of view during a flyover. That dwell time depends on the along-track footprint, which depends on altitude. Without knowing the altitude, we cannot compute the speed limit.
 
-\textbf{The physics.} At 35\,m, the along-track (flight-direction) footprint is approximately 24\,m. The inference engine runs at 4.8\,FPS (benchmarked on the Raspberry Pi~5). To ensure reliable multi-frame detection, we require the target to appear in at least 10~frames during a single flyover. The maximum speed is therefore:
+\textbf{The physics.} At 35\,m, the camera footprint is 46$\times$34\,m. With a fixed heading (no yaw, decided in Step~6), the along-track dimension depends on the angle between the heading and the scan direction; in the worst case (short axis aligned with flight), the along-track extent is approximately 34\,m. We use a conservative estimate of 24\,m to account for the target not being centred in the footprint (the target is reliably detectable only within the central portion where it subtends sufficient pixels). The inference engine runs at 4.8\,FPS (benchmarked on the Raspberry Pi~5). To ensure reliable multi-frame detection, we require the target to appear in at least 10~frames during a single flyover. The maximum speed is therefore:
 
 \[
-v_{\max} = \frac{\text{along-track footprint}}{\text{required frames} / \text{FPS}} = \frac{24\,\text{m}}{10 / 4.8} = 11.5\,\text{m/s}
+v_{\max} = \frac{\text{effective along-track extent}}{\text{required frames} / \text{FPS}} = \frac{24\,\text{m}}{10 / 4.8} = 11.5\,\text{m/s}
 \]
 
 However, speed also affects detection through motion blur. Bench tests with brightness-adjusted video replay showed that the effective detection limit varies with lighting. Table~\ref{tab:df-speed-envelope} quantifies these limits and the corresponding 15\% safety margins.
@@ -501,14 +505,7 @@ The deployed NCNN backend achieves approximately 9\,FPS in the full pipeline. At
 
 \textbf{Why this comes after pattern type and heading mode.} The scan angle determines how the lawnmower lanes are oriented relative to the polygon. Different angles produce different numbers of scan lines and U-turns, which directly affects energy. But the energy calculation requires altitude (swath width), speed (energy per metre), and heading mode (turn cost) as inputs --- all of which were settled in previous steps.
 
-\textbf{The energy model.} We did not use simplified energy estimates. The simulation uses a physics-based energy model with two components:
-
-\begin{itemize}[nosep]
-  \item \textbf{Hover power} from momentum theory: $P_{\text{hover}} = \sqrt{(mg)^3 / (2 \rho A)}$, where $m$ is the drone mass (3.5\,kg), $g$ is gravitational acceleration, $\rho$ is air density, and $A$ is the rotor disc area.
-  \item \textbf{Forward flight power} with quadratic parasitic drag: $P_{\text{forward}} = P_{\text{hover}} + \tfrac{1}{2} \rho C_D A_{\text{front}} v^3$, where $C_D A_{\text{front}}$ is the drag area and $v$ is the airspeed.
-\end{itemize}
-
-U-turns are modelled as a decelerate--turn--reaccelerate sequence with energy cost proportional to the square of the entry speed. This means that \emph{fewer U-turns} translates directly to \emph{less energy}, and the scan angle that minimises U-turns is the one that aligns the scan lines with the polygon's longest edge.
+\textbf{The energy model.} The physics-based energy simulation defined in Section~\ref{sec:score-energy} (momentum-theory hover power plus quadratic parasitic drag) was applied to every candidate angle. U-turns are modelled as decelerate--turn--reaccelerate sequences with energy cost proportional to the square of the entry speed; \emph{fewer U-turns} therefore translates directly to \emph{less energy}, and the scan angle that minimises U-turns is the one that aligns the scan lines with the polygon's longest edge.
 
 \textbf{The 216-configuration sweep.} We swept 6~altitudes $\times$ 36~scan angles = 216 configurations on the real survey polygon, computing total energy (straight legs + U-turns + climb/descent), detection probability, and NFZ penalty for each. The results are shown in Figure~\ref{fig:energy-heatmap}: a clear low-energy valley runs through 65--75\textdegree{} at all altitudes.
 
@@ -627,14 +624,14 @@ Table~\ref{tab:df-final} consolidates the selected values and their predicted pe
     \textbf{Parameter} & \textbf{Value} & \textbf{Rationale} \\
     \midrule
     Search altitude       & 35\,m             & 15\% margin below detection ceiling \\
-    Search speed          & 8\,m/s            & 14 frames per target at 4.8\,FPS (10 required) \\
-    Inference rate         & 4.8\,FPS (TFLite) / 9\,FPS (NCNN) & YOLOv8n on Raspberry Pi~5 \\
+    Search speed          & 8\,m/s            & 27 frames on target at 9\,FPS NCNN (5 required) \\
+    Inference rate         & 9\,FPS (NCNN) / 4.8\,FPS (TFLite fallback) & YOLOv8n on Raspberry Pi~5 \\
     Scan angle            & 70\textdegree     & Longest-edge alignment, fewest U-turns \\
     Heading mode          & Fixed (no yaw)    & 3--5\% energy saving; wider NFZ margin compensates \\
     Swath overlap         & 20\%              & Covers 4.6\,m lane error with 2.2\,m spare \\
     NFZ buffer            & 30\,m             & 1.5$\times$ safety factor over RSS margin \\
     \midrule
-    Detection probability & $>$99.97\%\textsuperscript{$\dagger$} & 14 frames $\times$ 95\% per-frame (at 4.8\,FPS) \\
+    Detection probability & $>$99.97\%\textsuperscript{$\dagger$} & 27 frames $\times$ 91\% per-frame (at 9\,FPS NCNN) \\
     Coverage              & 96\%              & 4\% gap in fenced reserve \\
     Search time           & 112\,s            & 6 scan lines + 5 U-turns \\
     Search energy         & 12.6\,Wh          & 10.9\% of battery (14\,min remaining) \\
@@ -659,7 +656,7 @@ The tornado sensitivity analysis (Figure~\ref{fig:tornado-sensitivity}) confirms
   \caption{Tornado chart of parameter sensitivities. Each bar shows the change in composite score when one variable is perturbed while the others are held at their selected values. Altitude dominates: a $\pm$7\,m change ($\pm$20\%) has nearly double the effect of a $\pm$1.6\,m/s speed change.}\label{fig:tornado-sensitivity}
 \end{figure}
 
-The sensitivity spider plot (Figure~\ref{fig:sensitivity-spider}, introduced in Section~\ref{sec:df-dimensions}) confirms that the selected operating point achieves the target profile: strong safety and detection scores with a compact, balanced polygon. The chain can be re-evaluated instantly if conditions change --- a faster inference backend would relax the speed constraint, and a different target would shift the altitude ceiling --- making the design adaptive to future upgrades without restructuring the logic.
+The sensitivity spider plot (Figure~\ref{fig:sensitivity-spider}, introduced in Section~\ref{sec:df-dimensions}) confirms that the selected operating point fills the desired envelope: safety and detection are pushed to the outer edge (matching the non-negotiable constraint targets), while time and energy sit at acceptable lower radii. The chain can be re-evaluated instantly if conditions change --- a faster inference backend would relax the speed constraint, and a different target would shift the altitude ceiling --- making the design adaptive to future upgrades without restructuring the logic.
 
 
 % ════════════════════════════════════════════════════════════════════════

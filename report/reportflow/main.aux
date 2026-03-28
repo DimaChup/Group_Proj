@@ -8,9 +8,9 @@
 \newlabel{sec:df-constraints}{{2}{1}{Constraints}{section.2}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {3}Five Competing Dimensions}{1}{section.3}\protected@file@percent }
 \newlabel{sec:df-dimensions}{{3}{1}{Five Competing Dimensions}{section.3}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Target performance profile. Each axis shows the achieved score relative to the theoretical best. Our selected configuration should fill this envelope: maximum safety and detection, with time and energy as secondary trade-offs.}}{2}{figure.caption.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Desired envelope (grey dashed) vs.\ actual performance (blue) for the selected configuration. Safety and detection are pushed to the outer edge as non-negotiable constraints; time and energy sit lower as acceptable trade-offs. The envelope shape reflects the priority ordering: the target is not a circle but a shape that prioritises the axes that matter most.}}{2}{figure.caption.1}\protected@file@percent }
 \providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
-\newlabel{fig:sensitivity-spider}{{1}{2}{Target performance profile. Each axis shows the achieved score relative to the theoretical best. Our selected configuration should fill this envelope: maximum safety and detection, with time and energy as secondary trade-offs}{figure.caption.1}{}}
+\newlabel{fig:sensitivity-spider}{{1}{2}{Desired envelope (grey dashed) vs.\ actual performance (blue) for the selected configuration. Safety and detection are pushed to the outer edge as non-negotiable constraints; time and energy sit lower as acceptable trade-offs. The envelope shape reflects the priority ordering: the target is not a circle but a shape that prioritises the axes that matter most}{figure.caption.1}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {4}Scoring the Five Dimensions}{2}{section.4}\protected@file@percent }
 \newlabel{sec:df-scoring}{{4}{2}{Scoring the Five Dimensions}{section.4}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Safety ($S_\text  {safety}$)}{2}{subsection.4.1}\protected@file@percent }
@@ -21,28 +21,28 @@
 \@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Detection ($S_\text  {detection}$)}{3}{subsection.4.2}\protected@file@percent }
 \newlabel{sec:score-detection}{{4.2}{3}{Detection ($S_\text {detection}$)}{subsection.4.2}{}}
 \newlabel{eq:detection-composite}{{9}{4}{Detection ($S_\text {detection}$)}{equation.9}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Detection score decomposition. The overall detection score (0.93) is the product of four normalised sub-scores. Target pixel size (0.85) is the weakest axis --- flying lower would improve it but at the cost of coverage and energy.}}{4}{figure.caption.3}\protected@file@percent }
-\newlabel{fig:detection-subscore}{{3}{4}{Detection score decomposition. The overall detection score (0.93) is the product of four normalised sub-scores. Target pixel size (0.85) is the weakest axis --- flying lower would improve it but at the cost of coverage and energy}{figure.caption.3}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Detection score decomposition. The spider shows all five detection-related metrics; the overall score (0.93) is driven by the four variable sub-scores. Target pixel size (0.85) is the weakest axis --- flying lower would improve it but at the cost of coverage and energy.}}{4}{figure.caption.3}\protected@file@percent }
+\newlabel{fig:detection-subscore}{{3}{4}{Detection score decomposition. The spider shows all five detection-related metrics; the overall score (0.93) is driven by the four variable sub-scores. Target pixel size (0.85) is the weakest axis --- flying lower would improve it but at the cost of coverage and energy}{figure.caption.3}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Time ($S_\text  {time}$)}{4}{subsection.4.3}\protected@file@percent }
 \newlabel{sec:score-time}{{4.3}{4}{Time ($S_\text {time}$)}{subsection.4.3}{}}
-\newlabel{eq:time-score}{{11}{4}{Time ($S_\text {time}$)}{equation.11}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}Energy ($S_\text  {energy}$)}{4}{subsection.4.4}\protected@file@percent }
-\newlabel{sec:score-energy}{{4.4}{4}{Energy ($S_\text {energy}$)}{subsection.4.4}{}}
+\newlabel{eq:time-score}{{11}{5}{Time ($S_\text {time}$)}{equation.11}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}Energy ($S_\text  {energy}$)}{5}{subsection.4.4}\protected@file@percent }
+\newlabel{sec:score-energy}{{4.4}{5}{Energy ($S_\text {energy}$)}{subsection.4.4}{}}
 \newlabel{eq:energy-score}{{16}{5}{Energy ($S_\text {energy}$)}{equation.16}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {4.5}Coverage ($S_\text  {coverage}$)}{5}{subsection.4.5}\protected@file@percent }
 \newlabel{sec:score-coverage}{{4.5}{5}{Coverage ($S_\text {coverage}$)}{subsection.4.5}{}}
 \newlabel{eq:coverage-score}{{17}{5}{Coverage ($S_\text {coverage}$)}{equation.17}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.6}Composite Score and the Constraint--Objective Split}{5}{subsection.4.6}\protected@file@percent }
-\newlabel{sec:score-composite}{{4.6}{5}{Composite Score and the Constraint--Objective Split}{subsection.4.6}{}}
-\newlabel{eq:composite}{{18}{5}{Composite Score and the Constraint--Objective Split}{equation.18}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.6}Composite Score and the Constraint--Objective Split}{6}{subsection.4.6}\protected@file@percent }
+\newlabel{sec:score-composite}{{4.6}{6}{Composite Score and the Constraint--Objective Split}{subsection.4.6}{}}
+\newlabel{eq:composite}{{18}{6}{Composite Score and the Constraint--Objective Split}{equation.18}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Mission scoring framework. Safety and Time are pass/fail constraints (you either meet them or you don't). Detection, Coverage, and Energy are continuously optimised with weights reflecting the priority stack. The composite score of 0.93 represents the selected configuration's quality.}}{6}{figure.caption.4}\protected@file@percent }
 \newlabel{fig:scoring-overview}{{4}{6}{Mission scoring framework. Safety and Time are pass/fail constraints (you either meet them or you don't). Detection, Coverage, and Energy are continuously optimised with weights reflecting the priority stack. The composite score of 0.93 represents the selected configuration's quality}{figure.caption.4}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {5}The Variables We Can Choose}{6}{section.5}\protected@file@percent }
 \newlabel{sec:df-variables}{{5}{6}{The Variables We Can Choose}{section.5}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Decision variables and the objectives they influence.}}{6}{table.caption.5}\protected@file@percent }
-\newlabel{tab:df-variables}{{1}{6}{Decision variables and the objectives they influence}{table.caption.5}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {6}How They Interconnect}{6}{section.6}\protected@file@percent }
-\newlabel{sec:df-coupling}{{6}{6}{How They Interconnect}{section.6}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Decision variables and the objectives they influence.}}{7}{table.caption.5}\protected@file@percent }
+\newlabel{tab:df-variables}{{1}{7}{Decision variables and the objectives they influence}{table.caption.5}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}How They Interconnect}{7}{section.6}\protected@file@percent }
+\newlabel{sec:df-coupling}{{6}{7}{How They Interconnect}{section.6}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Sensitivity matrix: darker cells indicate stronger influence of each input parameter on each derived metric. Altitude and speed dominate the coupling structure.}}{7}{figure.caption.6}\protected@file@percent }
 \newlabel{fig:sensitivity-matrix}{{5}{7}{Sensitivity matrix: darker cells indicate stronger influence of each input parameter on each derived metric. Altitude and speed dominate the coupling structure}{figure.caption.6}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {7}The Decision Chain}{7}{section.7}\protected@file@percent }

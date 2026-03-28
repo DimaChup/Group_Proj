@@ -47,3 +47,10 @@
 - **Spider chart** must be introduced as "this is the shape our mission outcome should fit" — the TARGET profile.
 - **Search pattern** is itself a design variable that must fit the mission well. Quantify pattern quality via energy efficiency scoring.
 - **Flow from top**: Objective → Constraints → 5 dimensions (with priority + spider as target shape) → Variables we control + interconnections → Decision chain (Phase A measure, Phase B optimise) → Result
+
+## Additional Requirements (v12 review)
+- **Scoring methodology must be legit** — every sub-score must be grounded in real measurable quantities from the project (benchmarks, calibration, code). Nothing made up or arbitrary.
+- **Spider chart = desired envelope + actual** — the spider chart should show a DESIRED envelope (the target shape the mission outcome should fit) AND how well the actual selected configuration scored against it. Two layers: target vs achieved.
+- **Safety explicitly includes NFZ distance** — "how far from the NFZ boundary" is a core part of the safety score. The risk of flying into the no-fly zone must be explicitly quantified (buffer distance, stopping distance, reaction time, layered protections). NFZ risk = risk of incursion.
+- **Some dimensions are hard pass/fail, some are preferential** — this is WHY the spider has a desired envelope shape (not a circle). Safety and time are pass/fail constraints with a minimum bar. Detection, coverage, energy are continuously optimised. The envelope shape reflects this asymmetry.
+- **Need to ensure small risk of flying into NFZ** — the safety scoring should quantify the probability/risk of NFZ incursion, not just list protections. Show that the layered architecture makes incursion probability negligibly small.
