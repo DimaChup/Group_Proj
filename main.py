@@ -642,7 +642,9 @@ class VisualFlightMission(StateHandlersMixin):
             self._last_repulsion_vec = None
             if (self.geofence and self.master and self.lat != 0
                     and self.state not in (State.INIT, State.CONNECTING, State.ARMING,
-                                           State.TAKEOFF, State.LANDING, State.DONE)):
+                                           State.TAKEOFF, State.LANDING, State.DONE,
+                                           State.HOVER_TARGET, State.RETURN_TRANSIT,
+                                           State.RETURN_HOME, State.APPROACH)):
                 self._enforce_geofence()
 
             if self.state == State.DONE:
