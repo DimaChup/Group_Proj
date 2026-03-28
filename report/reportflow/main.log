@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.3.27)  28 MAR 2026 15:29
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.3.27)  28 MAR 2026 15:37
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -718,58 +718,65 @@ File: ../figs/sensitivity_matrix.pdf Graphic file (type pdf)
 Package pdftex.def Info: ../figs/sensitivity_matrix.pdf  used on input line 123
 .
 (pdftex.def)             Requested size: 281.68385pt x 161.75967pt.
-<../figs/altitude_speed_tradeoff.pdf, id=185, 491.61806pt x 400.5803pt>
+<../figs/altitude_speed_tradeoff.pdf, id=186, 491.61806pt x 400.5803pt>
 File: ../figs/altitude_speed_tradeoff.pdf Graphic file (type pdf)
 <use ../figs/altitude_speed_tradeoff.pdf>
 Package pdftex.def Info: ../figs/altitude_speed_tradeoff.pdf  used on input lin
-e 143.
+e 134.
 (pdftex.def)             Requested size: 435.3303pt x 354.73053pt.
 [3{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-ts1.enc
 }{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathit.e
-nc} <../figs/sensitivity_matrix.pdf>]
-<../figs/real_energy_heatmap.png, id=319, 867.24pt x 578.16pt>
+nc}{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathsy
+.enc} <../figs/sensitivity_matrix.pdf>]
+<../figs/real_energy_heatmap.png, id=317, 867.24pt x 578.16pt>
 File: ../figs/real_energy_heatmap.png Graphic file (type png)
 <use ../figs/real_energy_heatmap.png>
-Package pdftex.def Info: ../figs/real_energy_heatmap.png  used on input line 15
-2.
+Package pdftex.def Info: ../figs/real_energy_heatmap.png  used on input line 14
+0.
 (pdftex.def)             Requested size: 435.3303pt x 290.22615pt.
- [4 <../figs/altitude_speed_tradeoff.pdf>]
-<../figs/top3_paths.pdf, id=422, 1111.90283pt x 425.66428pt>
+ [4 <../figs/altitude_speed_tradeoff.pdf> <../figs/real_energy_heatmap.png>]
+<../figs/top3_paths.pdf, id=419, 1111.90283pt x 425.66428pt>
 File: ../figs/top3_paths.pdf Graphic file (type pdf)
 <use ../figs/top3_paths.pdf>
-Package pdftex.def Info: ../figs/top3_paths.pdf  used on input line 185.
+Package pdftex.def Info: ../figs/top3_paths.pdf  used on input line 167.
 (pdftex.def)             Requested size: 435.3303pt x 166.65791pt.
-[5{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathsy.
-enc} <../figs/real_energy_heatmap.png>]
-Underfull \hbox (badness 10000) in alignment at lines 210--210
+<../figs/objective_conflict.pdf, id=420, 736.75905pt x 587.34618pt>
+File: ../figs/objective_conflict.pdf Graphic file (type pdf)
+<use ../figs/objective_conflict.pdf>
+Package pdftex.def Info: ../figs/objective_conflict.pdf  used on input line 173
+.
+(pdftex.def)             Requested size: 486.54057pt x 387.87373pt.
+ [5 <../figs/top3_paths.pdf>]
+Underfull \hbox (badness 10000) in alignment at lines 198--198
 [][][] 
  []
 
-<../figs/tornado_sensitivity.pdf, id=437, 571.04657pt x 285.1285pt>
+[6 <../figs/objective_conflict.pdf>]
+<../figs/tornado_sensitivity.pdf, id=670, 571.04657pt x 285.1285pt>
 File: ../figs/tornado_sensitivity.pdf Graphic file (type pdf)
 <use ../figs/tornado_sensitivity.pdf>
-Package pdftex.def Info: ../figs/tornado_sensitivity.pdf  used on input line 22
-2.
+Package pdftex.def Info: ../figs/tornado_sensitivity.pdf  used on input line 21
+3.
 (pdftex.def)             Requested size: 384.11221pt x 191.79211pt.
-[6 <../figs/top3_paths.pdf>]
-<../figs/sensitivity_spider.pdf, id=563, 462.53987pt x 427.51283pt>
+<../figs/sensitivity_spider.pdf, id=672, 462.53987pt x 427.51283pt>
 File: ../figs/sensitivity_spider.pdf Graphic file (type pdf)
 <use ../figs/sensitivity_spider.pdf>
-Package pdftex.def Info: ../figs/sensitivity_spider.pdf  used on input line 230
+Package pdftex.def Info: ../figs/sensitivity_spider.pdf  used on input line 221
 .
 (pdftex.def)             Requested size: 281.68385pt x 260.3519pt.
-<../figs/pareto_parallel.pdf, id=565, 611.26181pt x 379.18648pt>
+ [7 <../figs/tornado_sensitivity.pdf> <../figs/sensitivity_spider.pdf>]
+<../figs/pareto_parallel.pdf, id=876, 611.26181pt x 379.18648pt>
 File: ../figs/pareto_parallel.pdf Graphic file (type pdf)
 <use ../figs/pareto_parallel.pdf>
-Package pdftex.def Info: ../figs/pareto_parallel.pdf  used on input line 241.
+Package pdftex.def Info: ../figs/pareto_parallel.pdf  used on input line 232.
 (pdftex.def)             Requested size: 486.54057pt x 301.82211pt.
- [7 <../figs/tornado_sensitivity.pdf> <../figs/sensitivity_spider.pdf>]
-Underfull \hbox (badness 10000) in alignment at lines 267--267
+
+Underfull \hbox (badness 10000) in alignment at lines 258--258
 [][][] 
  []
 
 
-Underfull \hbox (badness 10000) in alignment at lines 283--283
+Underfull \hbox (badness 10000) in alignment at lines 274--274
 [][][] 
  []
 
@@ -778,34 +785,44 @@ Underfull \hbox (badness 10000) in alignment at lines 283--283
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-01-19>
  ***********
+
+
+LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
+
 Package rerunfilecheck Info: File `main.out' has not changed.
 (rerunfilecheck)             Checksum: FE6593FD31BBFC197274F69210F8070C;1493.
  ) 
 Here is how much of TeX's memory you used:
- 19597 strings out of 467866
- 375734 string characters out of 5417351
- 800101 words of memory out of 5000000
- 48074 multiletter control sequences out of 15000+600000
- 683232 words of font info for 149 fonts, out of 8000000 for 9000
+ 19591 strings out of 467866
+ 375908 string characters out of 5417351
+ 798148 words of memory out of 5000000
+ 48083 multiletter control sequences out of 15000+600000
+ 682449 words of font info for 143 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 75i,11n,84p,1003b,1175s stack positions out of 10000i,1000n,20000p,200000b,200000s
-<C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx10.
-pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx1
-2.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmb
-x9.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lm
-mi10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/
-lmmi6.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm
-/lmmi9.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/l
-m/lmr10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/
-lm/lmr12.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public
-/lm/lmr8.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public
-/lm/lmr9.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public
-/lm/lmri10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/publ
-ic/lm/lmsy10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/pu
+ 75i,14n,84p,1003b,1175s stack positions out of 10000i,1000n,20000p,200000b,200000s
+
+pdfTeX warning (dest): name{figure.caption.9} has been referenced but does not 
+exist, replaced by a fixed one
+
+<C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx10.pf
+b><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx12.
+pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx9
+.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmmi
+10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lm
+mi6.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/l
+mmi9.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/
+lmr10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm
+/lmr12.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/l
+m/lmr8.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/l
+m/lmr9.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/l
+m/lmri10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public
+/lm/lmsy10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/publ
+ic/lm/lmsy6.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/pub
+lic/lm/lmsy7.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/pu
 blic/lm/lmsy9.pfb>
-Output written on main.pdf (9 pages, 807933 bytes).
+Output written on main.pdf (9 pages, 861337 bytes).
 PDF statistics:
- 946 PDF objects out of 1000 (max. 8388607)
- 42 named destinations out of 1000 (max. 500000)
- 36977 words of extra memory for PDF output out of 42996 (max. 10000000)
+ 1063 PDF objects out of 1200 (max. 8388607)
+ 38 named destinations out of 1000 (max. 500000)
+ 34934 words of extra memory for PDF output out of 35830 (max. 10000000)
 
