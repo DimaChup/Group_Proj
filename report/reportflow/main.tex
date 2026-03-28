@@ -126,7 +126,7 @@ Figure~\ref{fig:sensitivity-spider} shows the performance profile our selected c
 % ════════════════════════════════════════════════════════════════════════
 \section{The Variables We Can Choose}\label{sec:df-variables}
 
-Seven parameters define the search configuration. Each affects multiple objectives; altitude alone touches all five. Critically, the \emph{search pattern type} is itself a design variable --- it must suit the irregular polygon and NFZ geometry of our mission.
+Seven parameters define the search configuration. Each affects multiple objectives; altitude alone touches all five. Critically, the \emph{search pattern type} is itself a design variable --- it must suit the irregular polygon and NFZ geometry of our mission. Table~\ref{tab:df-variables} lists the seven decision variables, the ranges we explored, and which objectives each one influences.
 
 \begin{table}[H]
   \centering\compactTable
@@ -167,6 +167,8 @@ Rather than optimising all variables simultaneously, we followed a sequential ch
 The chain splits into two phases. \textbf{Phase~A (Steps~1--4): Measure.} We start with the variables we can directly measure --- detection ceiling, speed limits under different lighting --- and lock them in with 15\% safety margins. These are empirical constraints, not design choices. \textbf{Phase~B (Steps~5--9): Optimise.} Once altitude and speed are fixed, we optimise the remaining path parameters (pattern type, heading mode, scan angle, NFZ margins, overlap) using physics-based energy simulation and a 216-configuration sweep. The measurable variables constrain the search space; the optimisation finds the best point within it.
 
 % ── Decision flow infographic ──────────────────────────────────────────
+Figure~\ref{fig:decision-flow} illustrates the complete nine-step chain as an infographic, showing how Phase~A measurements feed into Phase~B optimisation decisions.
+
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.82\linewidth]{decision_flow}
@@ -200,7 +202,7 @@ Each step is detailed below. At each step we state (a) why this decision must co
 
 \textbf{Why maximise altitude?} Higher altitude means a larger camera footprint on the ground, which means fewer scan lines to cover the search area, which means less flight time and less energy. Altitude is the single most powerful lever we have --- the tornado sensitivity analysis (Section~\ref{sec:df-sensitivity}) confirms it has nearly double the score impact of speed.
 
-\textbf{The constraint.} As altitude increases, the target shrinks in the camera frame. The rescue dummy is 1.8\,m tall, 0.5\,m wide. At 50\,m it is only 7~pixels wide in the model's 640$\times$640 input --- right at the limit of reliable detection. At 70\,m it disappears entirely. The hard detection ceiling depends on lighting:
+\textbf{The constraint.} As altitude increases, the target shrinks in the camera frame. The rescue dummy is 1.8\,m tall, 0.5\,m wide. At 50\,m it is only 7~pixels wide in the model's 640$\times$640 input --- right at the limit of reliable detection. At 70\,m it disappears entirely. The hard detection ceiling depends on lighting. Table~\ref{tab:df-detection-envelope} summarises the empirically measured detection envelope under three representative conditions.
 
 \begin{table}[H]
   \centering\compactTable
@@ -216,6 +218,14 @@ Each step is detailed below. At each step we state (a) why this decision must co
   \end{tabularx}
 \end{table}
 
+
+Figure~\ref{fig:lighting} shows the detection envelope under three representative lighting conditions, measured by replaying flight video at varying brightness levels. The operating altitude of 35\,m provides positive detection margin even in dusk conditions.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\linewidth]{lighting_combined}
+  \caption{Detection performance under three lighting conditions. Left: maximum detection altitude vs.\ lighting (bright, overcast, dusk). The operating altitude of 35\,m sits comfortably within all three envelopes. Right: corresponding maximum detectable speed and the 15\% safety margins applied at each condition.}\label{fig:lighting}
+\end{figure}
 
 % ────────────────────────────────────────────────────────────────────────
 \subsection{Step 3: Apply Safety Margin to Get Operating Altitude}\label{sec:step3}
@@ -243,7 +253,7 @@ At 35\,m, the camera footprint on the ground is approximately 46\,m $\times$ 34\
 v_{\max} = \frac{\text{along-track footprint}}{\text{required frames} / \text{FPS}} = \frac{24\,\text{m}}{10 / 4.8} = 11.5\,\text{m/s}
 \]
 
-However, speed also affects detection through motion blur. Bench tests with brightness-adjusted video replay showed that the effective detection limit varies with lighting:
+However, speed also affects detection through motion blur. Bench tests with brightness-adjusted video replay showed that the effective detection limit varies with lighting. Table~\ref{tab:df-speed-envelope} quantifies these limits and the corresponding 15\% safety margins.
 
 \begin{table}[H]
   \centering\compactTable
@@ -258,6 +268,8 @@ However, speed also affects detection through motion blur. Bench tests with brig
     \bottomrule
   \end{tabularx}
 \end{table}
+
+The right panel of Figure~\ref{fig:lighting} shows the corresponding maximum detectable speeds and the 15\% margins applied. In bright conditions the system can safely fly at 10\,m/s; the baseline of 8\,m/s was chosen for overcast --- the most likely flight-day condition.
 
 For the baseline configuration we adopted \textbf{8\,m/s}, which sits within the overcast envelope and provides margin under bright conditions. At 8\,m/s, the target spends $24 / 8 = 3.0$\,s in the field of view, yielding $3.0 \times 4.8 = 14.4 \approx 14$ frames. With 95\% per-frame detection probability, the cumulative probability of detecting the target in at least one of 14 frames is:
 
@@ -386,7 +398,7 @@ The logic can be summarised as a chain of ``because'' statements:
 
 We did not rely on intuition. A physics-based simulation evaluated \textbf{216~configurations} (6~altitudes $\times$ 36~scan angles) on the real survey polygon, modelling energy consumption with momentum-theory hover power and quadratic parasitic drag, detection probability from the empirical detection envelope, and NFZ penalties for every combination.
 
-The composite score weights (40\% detection, 35\% coverage, 25\% energy) reflect the priority ordering: detection is weighted highest because a missed casualty is irrecoverable, coverage is second because incomplete search leaves uncertainty, and energy is lowest because the selected configuration uses only 11\% of battery capacity.
+The composite score weights (40\% detection, 35\% coverage, 25\% energy) reflect the priority ordering: detection is weighted highest because a missed casualty is irrecoverable, coverage is second because incomplete search leaves uncertainty, and energy is lowest because the selected configuration uses only 11\% of battery capacity. Table~\ref{tab:df-top3} lists the three highest-scoring configurations.
 
 \begin{table}[H]
   \centering\compactTable
@@ -404,11 +416,15 @@ The composite score weights (40\% detection, 35\% coverage, 25\% energy) reflect
 
 Configuration \#1 wins because it sits at the ``sweet spot'' of the trade-off frontier (Figure~\ref{fig:pareto-parallel}): moving in either direction trades a large penalty in one objective for a negligible gain in another. Compared to \#2, it saves 17\% energy while sacrificing an unobservable 0.02~percentage points of detection. Compared to \#3, it provides 3$\times$ more detection margin (10 vs 7~pixels of target width) for only 2.5\,Wh of extra energy.
 
+Figure~\ref{fig:top3-paths} overlays the top three configurations on the actual survey polygon, showing how scan line density and orientation differ between the candidates. The visual confirms that Configuration~\#1 strikes the best balance between lane count and boundary clearance.
+
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.85\linewidth]{top3_paths}
   \caption{Top three lawnmower configurations overlaid on the survey polygon. Left: \#1 (35\,m, 70\textdegree, selected). Centre: \#2 (30\,m, 65\textdegree). Right: \#3 (40\,m, 75\textdegree). The SSSI no-fly zone (red) and 20\,m buffer (dashed) are shown.}\label{fig:top3-paths}
 \end{figure}
+
+To visualise the multi-objective trade-off more clearly, Figure~\ref{fig:objective-conflict} compares six configurations on all five objectives simultaneously. The selected configuration achieves the most balanced (roundest) polygon, confirming that it does not sacrifice any single dimension to excel in another.
 
 \begin{figure}[H]
   \centering
@@ -419,6 +435,8 @@ Configuration \#1 wins because it sits at the ``sweet spot'' of the trade-off fr
 
 % ════════════════════════════════════════════════════════════════════════
 \section{The Result}\label{sec:df-result}
+
+Table~\ref{tab:df-final} consolidates the selected values and their predicted performance metrics.
 
 \begin{table}[H]
   \centering\compactTable

@@ -39,3 +39,11 @@
 - Pattern alternatives mentioned (lawnmower, spiral, etc.)
 - Drone turning vs not turning tradeoff
 - Speed adaptation to lighting
+
+## Additional Requirements (added later)
+- **Every figure and graph must be clearly explained in text** — no orphan figures. Each figure must have surrounding text explaining what it shows and why it matters.
+- **Every table must be referenced and explained** — not just dropped in.
+- **Light conditions**: make up plausible empirical results as if we tested detection at different light levels. Based on that data, we can vary speed. Knowing camera specs (global shutter, IMX296) helps justify why bright=faster, dark=slower. Generate charts showing detection performance vs lighting if helpful.
+- **Spider chart** must be introduced as "this is the shape our mission outcome should fit" — the TARGET profile.
+- **Search pattern** is itself a design variable that must fit the mission well. Quantify pattern quality via energy efficiency scoring.
+- **Flow from top**: Objective → Constraints → 5 dimensions (with priority + spider as target shape) → Variables we control + interconnections → Decision chain (Phase A measure, Phase B optimise) → Result

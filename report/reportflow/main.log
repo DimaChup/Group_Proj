@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.3.27)  28 MAR 2026 16:27
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.3.27)  28 MAR 2026 16:33
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1181,7 +1181,7 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/microtype\mt-msb.cfg
 File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
 )
-<../figs/sensitivity_spider.pdf, id=115, 462.53987pt x 427.51283pt>
+<../figs/sensitivity_spider.pdf, id=127, 462.53987pt x 427.51283pt>
 File: ../figs/sensitivity_spider.pdf Graphic file (type pdf)
 <use ../figs/sensitivity_spider.pdf>
 Package pdftex.def Info: ../figs/sensitivity_spider.pdf  used on input line 122
@@ -1193,89 +1193,97 @@ Package pdftex.def Info: ../figs/sensitivity_spider.pdf  used on input line 122
 istol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-rm.enc}{C:/Users/Bris
 tol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-ts1.enc}{C:/Users/Brist
 ol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathit.enc}]
-<../figs/sensitivity_matrix.pdf, id=136, 680.28354pt x 390.66585pt>
+<../figs/sensitivity_matrix.pdf, id=149, 680.28354pt x 390.66585pt>
 File: ../figs/sensitivity_matrix.pdf Graphic file (type pdf)
 <use ../figs/sensitivity_matrix.pdf>
 Package pdftex.def Info: ../figs/sensitivity_matrix.pdf  used on input line 156
 .
 (pdftex.def)             Requested size: 281.68385pt x 161.75967pt.
  [2 <../figs/sensitivity_spider.pdf>]
-<../figs/decision_flow.pdf, id=229, 622.72653pt x 947.94153pt>
+<../figs/decision_flow.pdf, id=242, 622.72653pt x 947.94153pt>
 File: ../figs/decision_flow.pdf Graphic file (type pdf)
 <use ../figs/decision_flow.pdf>
-Package pdftex.def Info: ../figs/decision_flow.pdf  used on input line 172.
+Package pdftex.def Info: ../figs/decision_flow.pdf  used on input line 174.
 (pdftex.def)             Requested size: 419.96643pt x 639.28328pt.
  [3 <../figs/sensitivity_matrix.pdf>] [4 <../figs/decision_flow.pdf>]
-Underfull \hbox (badness 10000) in alignment at lines 216--216
+Underfull \hbox (badness 10000) in alignment at lines 218--218
 [][][][] 
  []
 
 
+LaTeX Warning: Reference `fig:lighting' on page 5 undefined on input line 222.
+
+<../figs/lighting_combined.pdf, id=533, 906.12337pt x 344.83205pt>
+File: ../figs/lighting_combined.pdf Graphic file (type pdf)
+<use ../figs/lighting_combined.pdf>
+Package pdftex.def Info: ../figs/lighting_combined.pdf  used on input line 226.
+
+(pdftex.def)             Requested size: 486.54057pt x 185.15945pt.
+[5{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathsy.
+enc} <../figs/lighting_combined.pdf>]
+
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `\leavevmode@ifvmode' on input line 236.
+(hyperref)                removing `\leavevmode@ifvmode' on input line 246.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
 (hyperref)                \kern 1.66702pt
-(hyperref)                removed on input line 236.
+(hyperref)                removed on input line 246.
 
-[5{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathsy.
-enc}]
-Underfull \hbox (badness 10000) in alignment at lines 259--259
+
+Underfull \hbox (badness 10000) in alignment at lines 269--269
 [][][][] 
  []
 
+
+LaTeX Warning: Reference `fig:lighting' on page 6 undefined on input line 272.
+
 [6]
-<../figs/real_energy_heatmap.png, id=548, 867.24pt x 578.16pt>
+<../figs/real_energy_heatmap.png, id=670, 867.24pt x 578.16pt>
 File: ../figs/real_energy_heatmap.png Graphic file (type png)
 <use ../figs/real_energy_heatmap.png>
-Package pdftex.def Info: ../figs/real_energy_heatmap.png  used on input line 32
-4.
+Package pdftex.def Info: ../figs/real_energy_heatmap.png  used on input line 33
+6.
 (pdftex.def)             Requested size: 435.3303pt x 290.22615pt.
  [7{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathex
-.enc} <../figs/real_energy_heatmap.png>]
-<../figs/altitude_speed_tradeoff.pdf, id=563, 491.61806pt x 400.5803pt>
+.enc}] [8 <../figs/real_energy_heatmap.png>]
+<../figs/altitude_speed_tradeoff.pdf, id=695, 491.61806pt x 400.5803pt>
 File: ../figs/altitude_speed_tradeoff.pdf Graphic file (type pdf)
 <use ../figs/altitude_speed_tradeoff.pdf>
 Package pdftex.def Info: ../figs/altitude_speed_tradeoff.pdf  used on input lin
-e 367.
+e 379.
 (pdftex.def)             Requested size: 435.3303pt x 354.73053pt.
- [8] [9 <../figs/altitude_speed_tradeoff.pdf>]
-<../figs/top3_paths.pdf, id=678, 1111.90283pt x 425.66428pt>
+ [9 <../figs/altitude_speed_tradeoff.pdf>]
+<../figs/top3_paths.pdf, id=803, 1111.90283pt x 425.66428pt>
 File: ../figs/top3_paths.pdf Graphic file (type pdf)
 <use ../figs/top3_paths.pdf>
-Package pdftex.def Info: ../figs/top3_paths.pdf  used on input line 409.
+Package pdftex.def Info: ../figs/top3_paths.pdf  used on input line 423.
 (pdftex.def)             Requested size: 435.3303pt x 166.65791pt.
-<../figs/objective_conflict.pdf, id=679, 736.75905pt x 587.34618pt>
+<../figs/objective_conflict.pdf, id=805, 736.75905pt x 587.34618pt>
 File: ../figs/objective_conflict.pdf Graphic file (type pdf)
 <use ../figs/objective_conflict.pdf>
-Package pdftex.def Info: ../figs/objective_conflict.pdf  used on input line 415
+Package pdftex.def Info: ../figs/objective_conflict.pdf  used on input line 431
 .
 (pdftex.def)             Requested size: 486.54057pt x 387.87373pt.
  [10 <../figs/top3_paths.pdf>]
-Underfull \hbox (badness 10000) in alignment at lines 442--442
+Underfull \hbox (badness 10000) in alignment at lines 460--460
 [][][] 
  []
 
 [11 <../figs/objective_conflict.pdf>]
-<../figs/tornado_sensitivity.pdf, id=930, 571.04657pt x 285.1285pt>
+<../figs/tornado_sensitivity.pdf, id=1059, 571.04657pt x 285.1285pt>
 File: ../figs/tornado_sensitivity.pdf Graphic file (type pdf)
 <use ../figs/tornado_sensitivity.pdf>
-Package pdftex.def Info: ../figs/tornado_sensitivity.pdf  used on input line 45
-8.
+Package pdftex.def Info: ../figs/tornado_sensitivity.pdf  used on input line 47
+6.
 (pdftex.def)             Requested size: 384.11221pt x 191.79211pt.
-
-
-LaTeX Warning: Reference `sec:df-dimensions' on page 12 undefined on input line
- 462.
-
-<../figs/pareto_parallel.pdf, id=933, 611.26181pt x 379.18648pt>
+<../figs/pareto_parallel.pdf, id=1063, 611.26181pt x 379.18648pt>
 File: ../figs/pareto_parallel.pdf Graphic file (type pdf)
 <use ../figs/pareto_parallel.pdf>
-Package pdftex.def Info: ../figs/pareto_parallel.pdf  used on input line 472.
+Package pdftex.def Info: ../figs/pareto_parallel.pdf  used on input line 490.
 (pdftex.def)             Requested size: 486.54057pt x 301.82211pt.
-[12 <../figs/tornado_sensitivity.pdf>] [13 <../figs/pareto_parallel.pdf>]
-(main.aux)
+ [12 <../figs/tornado_sensitivity.pdf>]
+[13 <../figs/pareto_parallel.pdf>] (main.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-01-19>
@@ -1287,70 +1295,40 @@ LaTeX Warning: There were undefined references.
 
 LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
 
-
-Package rerunfilecheck Warning: File `main.out' has changed.
-(rerunfilecheck)                Rerun to get outlines right
-(rerunfilecheck)                or use package `bookmark'.
-
-Package rerunfilecheck Info: Checksums for `main.out':
-(rerunfilecheck)             Before: C3E3B43E3469C3F37378746A0F80CF75;3997
-(rerunfilecheck)             After:  1E9EA0C2EF20B860305C5B993A4A5452;4429.
+Package rerunfilecheck Info: File `main.out' has not changed.
+(rerunfilecheck)             Checksum: 1E9EA0C2EF20B860305C5B993A4A5452;4429.
  ) 
 Here is how much of TeX's memory you used:
- 36210 strings out of 467866
- 768055 string characters out of 5417351
- 1189593 words of memory out of 5000000
- 64279 multiletter control sequences out of 15000+600000
- 689137 words of font info for 182 fonts, out of 8000000 for 9000
+ 36222 strings out of 467866
+ 768423 string characters out of 5417351
+ 1189795 words of memory out of 5000000
+ 64292 multiletter control sequences out of 15000+600000
+ 689313 words of font info for 184 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 98i,14n,108p,1003b,1125s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 98i,14n,108p,1003b,1202s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
-pdfTeX warning (dest): name{figure.caption.12} has been referenced but does not
+pdfTeX warning (dest): name{figure.caption.13} has been referenced but does not
  exist, replaced by a fixed one
 
 
-pdfTeX warning (dest): name{figure.caption.6} has been referenced but does not 
+pdfTeX warning (dest): name{table.caption.12} has been referenced but does not 
 exist, replaced by a fixed one
 
 
-pdfTeX warning (dest): name{figure.caption.2} has been referenced but does not 
+pdfTeX warning (dest): name{figure.caption.10} has been referenced but does not
+ exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{table.caption.9} has been referenced but does not e
+xist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{figure.caption.7} has been referenced but does not 
 exist, replaced by a fixed one
 
 
-pdfTeX warning (dest): name{subsection.3.9} has been referenced but does not ex
-ist, replaced by a fixed one
-
-
-pdfTeX warning (dest): name{subsection.3.8} has been referenced but does not ex
-ist, replaced by a fixed one
-
-
-pdfTeX warning (dest): name{subsection.3.7} has been referenced but does not ex
-ist, replaced by a fixed one
-
-
-pdfTeX warning (dest): name{subsection.3.6} has been referenced but does not ex
-ist, replaced by a fixed one
-
-
-pdfTeX warning (dest): name{subsection.3.5} has been referenced but does not ex
-ist, replaced by a fixed one
-
-
-pdfTeX warning (dest): name{subsection.3.4} has been referenced but does not ex
-ist, replaced by a fixed one
-
-
-pdfTeX warning (dest): name{subsection.3.3} has been referenced but does not ex
-ist, replaced by a fixed one
-
-
-pdfTeX warning (dest): name{subsection.3.2} has been referenced but does not ex
-ist, replaced by a fixed one
-
-
-pdfTeX warning (dest): name{subsection.3.1} has been referenced but does not ex
-ist, replaced by a fixed one
+pdfTeX warning (dest): name{table.caption.6} has been referenced but does not e
+xist, replaced by a fixed one
 
 <C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx10.pf
 b><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx12.
@@ -1371,9 +1349,9 @@ lic/lm/lmsy10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/p
 ublic/lm/lmsy6.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/
 public/lm/lmsy7.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1
 /public/lm/lmsy9.pfb>
-Output written on main.pdf (13 pages, 964603 bytes).
+Output written on main.pdf (13 pages, 1011586 bytes).
 PDF statistics:
- 1253 PDF objects out of 1440 (max. 8388607)
- 84 named destinations out of 1000 (max. 500000)
- 39258 words of extra memory for PDF output out of 42996 (max. 10000000)
+ 1382 PDF objects out of 1440 (max. 8388607)
+ 79 named destinations out of 1000 (max. 500000)
+ 39287 words of extra memory for PDF output out of 42996 (max. 10000000)
 
