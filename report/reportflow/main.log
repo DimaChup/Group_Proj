@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.3.27)  28 MAR 2026 16:33
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.3.27)  28 MAR 2026 16:36
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1210,10 +1210,7 @@ Underfull \hbox (badness 10000) in alignment at lines 218--218
 [][][][] 
  []
 
-
-LaTeX Warning: Reference `fig:lighting' on page 5 undefined on input line 222.
-
-<../figs/lighting_combined.pdf, id=533, 906.12337pt x 344.83205pt>
+<../figs/lighting_combined.pdf, id=534, 906.12337pt x 344.83205pt>
 File: ../figs/lighting_combined.pdf Graphic file (type pdf)
 <use ../figs/lighting_combined.pdf>
 Package pdftex.def Info: ../figs/lighting_combined.pdf  used on input line 226.
@@ -1235,11 +1232,8 @@ Underfull \hbox (badness 10000) in alignment at lines 269--269
 [][][][] 
  []
 
-
-LaTeX Warning: Reference `fig:lighting' on page 6 undefined on input line 272.
-
 [6]
-<../figs/real_energy_heatmap.png, id=670, 867.24pt x 578.16pt>
+<../figs/real_energy_heatmap.png, id=669, 867.24pt x 578.16pt>
 File: ../figs/real_energy_heatmap.png Graphic file (type png)
 <use ../figs/real_energy_heatmap.png>
 Package pdftex.def Info: ../figs/real_energy_heatmap.png  used on input line 33
@@ -1271,13 +1265,13 @@ Underfull \hbox (badness 10000) in alignment at lines 460--460
  []
 
 [11 <../figs/objective_conflict.pdf>]
-<../figs/tornado_sensitivity.pdf, id=1059, 571.04657pt x 285.1285pt>
+<../figs/tornado_sensitivity.pdf, id=1056, 571.04657pt x 285.1285pt>
 File: ../figs/tornado_sensitivity.pdf Graphic file (type pdf)
 <use ../figs/tornado_sensitivity.pdf>
 Package pdftex.def Info: ../figs/tornado_sensitivity.pdf  used on input line 47
 6.
 (pdftex.def)             Requested size: 384.11221pt x 191.79211pt.
-<../figs/pareto_parallel.pdf, id=1063, 611.26181pt x 379.18648pt>
+<../figs/pareto_parallel.pdf, id=1060, 611.26181pt x 379.18648pt>
 File: ../figs/pareto_parallel.pdf Graphic file (type pdf)
 <use ../figs/pareto_parallel.pdf>
 Package pdftex.def Info: ../figs/pareto_parallel.pdf  used on input line 490.
@@ -1288,70 +1282,39 @@ Package pdftex.def Info: ../figs/pareto_parallel.pdf  used on input line 490.
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-01-19>
  ***********
-
-
-LaTeX Warning: There were undefined references.
-
-
-LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
-
 Package rerunfilecheck Info: File `main.out' has not changed.
 (rerunfilecheck)             Checksum: 1E9EA0C2EF20B860305C5B993A4A5452;4429.
  ) 
 Here is how much of TeX's memory you used:
- 36222 strings out of 467866
- 768423 string characters out of 5417351
- 1189795 words of memory out of 5000000
+ 36216 strings out of 467866
+ 768327 string characters out of 5417351
+ 1190129 words of memory out of 5000000
  64292 multiletter control sequences out of 15000+600000
  689313 words of font info for 184 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 98i,14n,108p,1003b,1202s stack positions out of 10000i,1000n,20000p,200000b,200000s
-
-pdfTeX warning (dest): name{figure.caption.13} has been referenced but does not
- exist, replaced by a fixed one
-
-
-pdfTeX warning (dest): name{table.caption.12} has been referenced but does not 
-exist, replaced by a fixed one
-
-
-pdfTeX warning (dest): name{figure.caption.10} has been referenced but does not
- exist, replaced by a fixed one
-
-
-pdfTeX warning (dest): name{table.caption.9} has been referenced but does not e
-xist, replaced by a fixed one
-
-
-pdfTeX warning (dest): name{figure.caption.7} has been referenced but does not 
-exist, replaced by a fixed one
-
-
-pdfTeX warning (dest): name{table.caption.6} has been referenced but does not e
-xist, replaced by a fixed one
-
-<C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx10.pf
-b><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx12.
-pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx9
-.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmex
-10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lm
-mi10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/
-lmmi6.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm
-/lmmi7.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/l
-m/lmmi9.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/
-lm/lmr10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public
-/lm/lmr12.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/publi
-c/lm/lmr7.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/publi
-c/lm/lmr8.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/publi
-c/lm/lmr9.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/publi
-c/lm/lmri10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/pub
-lic/lm/lmsy10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/p
-ublic/lm/lmsy6.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/
-public/lm/lmsy7.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1
-/public/lm/lmsy9.pfb>
-Output written on main.pdf (13 pages, 1011586 bytes).
+ 98i,14n,108p,1003b,1196s stack positions out of 10000i,1000n,20000p,200000b,200000s
+<C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx10.
+pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx1
+2.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmb
+x9.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lm
+ex10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/
+lmmi10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/l
+m/lmmi6.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/
+lm/lmmi7.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public
+/lm/lmmi9.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/publi
+c/lm/lmr10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/publ
+ic/lm/lmr12.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/pub
+lic/lm/lmr7.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/pub
+lic/lm/lmr8.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/pub
+lic/lm/lmr9.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/pub
+lic/lm/lmri10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/p
+ublic/lm/lmsy10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1
+/public/lm/lmsy6.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type
+1/public/lm/lmsy7.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/typ
+e1/public/lm/lmsy9.pfb>
+Output written on main.pdf (13 pages, 1011698 bytes).
 PDF statistics:
- 1382 PDF objects out of 1440 (max. 8388607)
- 79 named destinations out of 1000 (max. 500000)
+ 1377 PDF objects out of 1440 (max. 8388607)
+ 73 named destinations out of 1000 (max. 500000)
  39287 words of extra memory for PDF output out of 42996 (max. 10000000)
 

@@ -269,7 +269,7 @@ However, speed also affects detection through motion blur. Bench tests with brig
   \end{tabularx}
 \end{table}
 
-The right panel of Figure~\ref{fig:lighting} shows the corresponding maximum detectable speeds and the 15\% margins applied. In bright conditions the system can safely fly at 10\,m/s; the baseline of 8\,m/s was chosen for overcast --- the most likely flight-day condition.
+The right panel of Figure~\ref{fig:lighting} shows the corresponding maximum detectable speeds and the 15\% margins applied. The IMX296 global shutter is critical here: unlike a rolling shutter that reads the sensor row-by-row (introducing motion smear proportional to flight speed), the global shutter captures the entire frame simultaneously, eliminating in-frame distortion regardless of speed. This is why bright conditions---where shorter exposure times further reduce motion blur---permit significantly higher flight speeds (12\,m/s tested, 10\,m/s adopted). In overcast or low-light conditions, longer exposures are needed, increasing per-frame blur and requiring slower flight. The baseline of 8\,m/s was chosen for overcast --- the most likely flight-day condition.
 
 For the baseline configuration we adopted \textbf{8\,m/s}, which sits within the overcast envelope and provides margin under bright conditions. At 8\,m/s, the target spends $24 / 8 = 3.0$\,s in the field of view, yielding $3.0 \times 4.8 = 14.4 \approx 14$ frames. With 95\% per-frame detection probability, the cumulative probability of detecting the target in at least one of 14 frames is:
 
