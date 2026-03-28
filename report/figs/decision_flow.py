@@ -86,7 +86,7 @@ gap = 0.45   # space between boxes (includes arrow)
 
 decisions = [
     ('Max detection altitude',   '63 m  (20 px minimum target)',   BLUE, BLUE_L),
-    ('Apply 30% safety margin',  '35 m  operating altitude',       GREEN, GREEN_L),
+    ('Apply 15% safety margin',  '35 m  operating altitude',       GREEN, GREEN_L),
     ('Max speed for 10+ frames', '8 m/s  (altitude-dependent)',    BLUE, BLUE_L),
     ('Energy-optimal scan angle','70°  (longest edge, 4 turns)',   GREY, GREY_L),
     ('NFZ margin (footprint + GPS)', '30 m buffer, 96% coverage', GREEN, GREEN_L),

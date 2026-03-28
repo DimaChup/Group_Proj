@@ -138,11 +138,14 @@ The coupling structure is shown in Figure~\ref{fig:sensitivity-matrix}: darker c
 
 Rather than optimising all variables simultaneously, we followed a sequential chain where each decision logically constrains the next. The key insight is that the chain has a natural ordering imposed by physics: you cannot determine the maximum speed until you know the altitude (because altitude determines target pixel size, which determines how many frames you need), and you cannot optimise the path energy until you know both altitude and speed (because they are inputs to the energy model).
 
-The chain runs as follows:
+The chain splits into two phases. \textbf{Phase~A (Steps~1--4): Measure.} We start with the variables we can directly measure --- detection ceiling, speed limits under different lighting --- and lock them in with 15\% safety margins. These are empirical constraints, not design choices. \textbf{Phase~B (Steps~5--9): Optimise.} Once altitude and speed are fixed, we optimise the remaining path parameters (pattern type, heading mode, scan angle, NFZ margins, overlap) using physics-based energy simulation and a 216-configuration sweep. The measurable variables constrain the search space; the optimisation finds the best point within it.
+
+The full chain runs as follows:
 
 \begin{center}
 \fbox{\parbox{0.9\linewidth}{\centering\small\bfseries
-Target size $\to$ Maximum altitude $\to$ Light conditions $\to$ Operating altitude $\to$ Maximum speed $\to$ Search pattern type $\to$ Heading mode $\to$ Scan angle (energy sweep) $\to$ NFZ margins $\to$ Overlap
+\textcolor{blue!70}{[Measure]} Target size $\to$ Maximum altitude $\to$ Light conditions $\to$ Operating altitude $\to$ Maximum speed\\[2pt]
+$\to$ \textcolor{headblue}{[Optimise]} Search pattern type $\to$ Heading mode $\to$ Scan angle (energy sweep) $\to$ NFZ margins $\to$ Overlap
 }}
 \end{center}
 

@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.3.27)  28 MAR 2026 15:55
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.3.27)  28 MAR 2026 16:03
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1134,7 +1134,7 @@ Package: inputenc 2024/02/08 v1.3d Input encoding file
 \inpenc@prehook=\toks50
 \inpenc@posthook=\toks51
 )
-<../figs/decision_flow.pdf, id=78, 622.72653pt x 839.53653pt>
+<../figs/decision_flow.pdf, id=114, 622.72653pt x 839.53653pt>
 File: ../figs/decision_flow.pdf Graphic file (type pdf)
 <use ../figs/decision_flow.pdf>
 Package pdftex.def Info: ../figs/decision_flow.pdf  used on input line 85.
@@ -1192,7 +1192,7 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/microtype\mt-msb.cfg
 File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
 )
-<../figs/sensitivity_matrix.pdf, id=223, 680.28354pt x 390.66585pt>
+<../figs/sensitivity_matrix.pdf, id=259, 680.28354pt x 390.66585pt>
 File: ../figs/sensitivity_matrix.pdf Graphic file (type pdf)
 <use ../figs/sensitivity_matrix.pdf>
 Package pdftex.def Info: ../figs/sensitivity_matrix.pdf  used on input line 132
@@ -1200,148 +1200,115 @@ Package pdftex.def Info: ../figs/sensitivity_matrix.pdf  used on input line 132
 (pdftex.def)             Requested size: 281.68385pt x 161.75967pt.
 [3{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-ts1.enc
 }{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathit.e
-nc}{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathsy
-.enc} <../figs/sensitivity_matrix.pdf>]
-Underfull \hbox (badness 10000) in alignment at lines 180--180
+nc} <../figs/sensitivity_matrix.pdf>]
+Underfull \hbox (badness 10000) in alignment at lines 183--183
 [][][][] 
  []
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `\leavevmode@ifvmode' on input line 200.
+(hyperref)                removing `\leavevmode@ifvmode' on input line 203.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
 (hyperref)                \kern 1.66702pt
-(hyperref)                removed on input line 200.
+(hyperref)                removed on input line 203.
 
-
-Underfull \hbox (badness 10000) in alignment at lines 223--223
+[4{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathsy.
+enc}]
+Underfull \hbox (badness 10000) in alignment at lines 226--226
 [][][][] 
  []
 
-[4] [5]
-<../figs/real_energy_heatmap.png, id=382, 867.24pt x 578.16pt>
+[5]
+<../figs/real_energy_heatmap.png, id=412, 867.24pt x 578.16pt>
 File: ../figs/real_energy_heatmap.png Graphic file (type png)
 <use ../figs/real_energy_heatmap.png>
-Package pdftex.def Info: ../figs/real_energy_heatmap.png  used on input line 28
-8.
+Package pdftex.def Info: ../figs/real_energy_heatmap.png  used on input line 29
+1.
 (pdftex.def)             Requested size: 435.3303pt x 290.22615pt.
  [6{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathex
 .enc} <../figs/real_energy_heatmap.png>]
-<../figs/altitude_speed_tradeoff.pdf, id=396, 491.61806pt x 400.5803pt>
+<../figs/altitude_speed_tradeoff.pdf, id=423, 491.61806pt x 400.5803pt>
 File: ../figs/altitude_speed_tradeoff.pdf Graphic file (type pdf)
 <use ../figs/altitude_speed_tradeoff.pdf>
 Package pdftex.def Info: ../figs/altitude_speed_tradeoff.pdf  used on input lin
-e 331.
+e 334.
 (pdftex.def)             Requested size: 435.3303pt x 354.73053pt.
  [7] [8 <../figs/altitude_speed_tradeoff.pdf>]
-<../figs/top3_paths.pdf, id=513, 1111.90283pt x 425.66428pt>
+<../figs/top3_paths.pdf, id=538, 1111.90283pt x 425.66428pt>
 File: ../figs/top3_paths.pdf Graphic file (type pdf)
 <use ../figs/top3_paths.pdf>
-Package pdftex.def Info: ../figs/top3_paths.pdf  used on input line 373.
+Package pdftex.def Info: ../figs/top3_paths.pdf  used on input line 376.
 (pdftex.def)             Requested size: 435.3303pt x 166.65791pt.
-<../figs/objective_conflict.pdf, id=514, 736.75905pt x 587.34618pt>
+<../figs/objective_conflict.pdf, id=539, 736.75905pt x 587.34618pt>
 File: ../figs/objective_conflict.pdf Graphic file (type pdf)
 <use ../figs/objective_conflict.pdf>
-Package pdftex.def Info: ../figs/objective_conflict.pdf  used on input line 379
+Package pdftex.def Info: ../figs/objective_conflict.pdf  used on input line 382
 .
 (pdftex.def)             Requested size: 486.54057pt x 387.87373pt.
  [9 <../figs/top3_paths.pdf>]
-Underfull \hbox (badness 10000) in alignment at lines 406--406
+Underfull \hbox (badness 10000) in alignment at lines 409--409
 [][][] 
  []
 
-
-LaTeX Warning: Reference `sec:df-chain' on page 10 undefined on input line 409.
-
-
 [10 <../figs/objective_conflict.pdf>]
-<../figs/tornado_sensitivity.pdf, id=763, 571.04657pt x 285.1285pt>
+<../figs/tornado_sensitivity.pdf, id=789, 571.04657pt x 285.1285pt>
 File: ../figs/tornado_sensitivity.pdf Graphic file (type pdf)
 <use ../figs/tornado_sensitivity.pdf>
 Package pdftex.def Info: ../figs/tornado_sensitivity.pdf  used on input line 42
-2.
+5.
 (pdftex.def)             Requested size: 384.11221pt x 191.79211pt.
-<../figs/sensitivity_spider.pdf, id=765, 462.53987pt x 427.51283pt>
+<../figs/sensitivity_spider.pdf, id=791, 462.53987pt x 427.51283pt>
 File: ../figs/sensitivity_spider.pdf Graphic file (type pdf)
 <use ../figs/sensitivity_spider.pdf>
-Package pdftex.def Info: ../figs/sensitivity_spider.pdf  used on input line 430
+Package pdftex.def Info: ../figs/sensitivity_spider.pdf  used on input line 433
 .
 (pdftex.def)             Requested size: 281.68385pt x 260.3519pt.
  [11 <../figs/tornado_sensitivity.pdf> <../figs/sensitivity_spider.pdf>]
-<../figs/pareto_parallel.pdf, id=968, 611.26181pt x 379.18648pt>
+<../figs/pareto_parallel.pdf, id=994, 611.26181pt x 379.18648pt>
 File: ../figs/pareto_parallel.pdf Graphic file (type pdf)
 <use ../figs/pareto_parallel.pdf>
-Package pdftex.def Info: ../figs/pareto_parallel.pdf  used on input line 442.
+Package pdftex.def Info: ../figs/pareto_parallel.pdf  used on input line 445.
 (pdftex.def)             Requested size: 486.54057pt x 301.82211pt.
  [12 <../figs/pareto_parallel.pdf>] (main.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-01-19>
  ***********
-
-
-LaTeX Warning: There were undefined references.
-
-
-LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
-
-
-Package rerunfilecheck Warning: File `main.out' has changed.
-(rerunfilecheck)                Rerun to get outlines right
-(rerunfilecheck)                or use package `bookmark'.
-
-Package rerunfilecheck Info: Checksums for `main.out':
-(rerunfilecheck)             Before: 4E0CCEF50EC8F8829D54E269B2EC9F54;1478
-(rerunfilecheck)             After:  C3E3B43E3469C3F37378746A0F80CF75;3997.
+Package rerunfilecheck Info: File `main.out' has not changed.
+(rerunfilecheck)             Checksum: C3E3B43E3469C3F37378746A0F80CF75;3997.
  ) 
 Here is how much of TeX's memory you used:
- 36176 strings out of 467866
- 767618 string characters out of 5417351
- 1188725 words of memory out of 5000000
- 64266 multiletter control sequences out of 15000+600000
- 688920 words of font info for 180 fonts, out of 8000000 for 9000
+ 36183 strings out of 467866
+ 767712 string characters out of 5417351
+ 1189471 words of memory out of 5000000
+ 64275 multiletter control sequences out of 15000+600000
+ 689010 words of font info for 181 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 98i,14n,108p,1003b,1162s stack positions out of 10000i,1000n,20000p,200000b,200000s
-
-pdfTeX warning (dest): name{table.caption.17} has been referenced but does not 
-exist, replaced by a fixed one
-
-
-pdfTeX warning (dest): name{figure.caption.11} has been referenced but does not
- exist, replaced by a fixed one
-
-
-pdfTeX warning (dest): name{figure.caption.4} has been referenced but does not 
-exist, replaced by a fixed one
-
-
-pdfTeX warning (dest): name{figure.caption.5} has been referenced but does not 
-exist, replaced by a fixed one
-
-<C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx10.pf
-b><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx12.
-pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx9
-.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmex
-10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lm
-mi10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/
-lmmi6.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm
-/lmmi7.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/l
-m/lmmi9.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/
-lm/lmr10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public
-/lm/lmr12.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/publi
-c/lm/lmr7.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/publi
-c/lm/lmr8.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/publi
-c/lm/lmr9.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/publi
-c/lm/lmri10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/pub
-lic/lm/lmsy10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/p
-ublic/lm/lmsy6.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/
-public/lm/lmsy7.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1
-/public/lm/lmsy9.pfb>
-Output written on main.pdf (12 pages, 940918 bytes).
+ 98i,14n,108p,1003b,1104s stack positions out of 10000i,1000n,20000p,200000b,200000s
+<C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx10.
+pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx1
+2.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmb
+x9.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lm
+ex10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/
+lmmi10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/l
+m/lmmi6.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/
+lm/lmmi7.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public
+/lm/lmmi9.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/publi
+c/lm/lmr10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/publ
+ic/lm/lmr12.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/pub
+lic/lm/lmr7.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/pub
+lic/lm/lmr8.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/pub
+lic/lm/lmr9.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/pub
+lic/lm/lmri10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/p
+ublic/lm/lmsy10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1
+/public/lm/lmsy6.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type
+1/public/lm/lmsy7.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/typ
+e1/public/lm/lmsy9.pfb>
+Output written on main.pdf (12 pages, 946540 bytes).
 PDF statistics:
- 1166 PDF objects out of 1200 (max. 8388607)
- 67 named destinations out of 1000 (max. 500000)
- 39186 words of extra memory for PDF output out of 42996 (max. 10000000)
+ 1189 PDF objects out of 1200 (max. 8388607)
+ 63 named destinations out of 1000 (max. 500000)
+ 39258 words of extra memory for PDF output out of 42996 (max. 10000000)
 
