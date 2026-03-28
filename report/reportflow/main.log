@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.3.27)  28 MAR 2026 16:03
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.3.27)  28 MAR 2026 16:14
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1134,49 +1134,38 @@ Package: inputenc 2024/02/08 v1.3d Input encoding file
 \inpenc@prehook=\toks50
 \inpenc@posthook=\toks51
 )
-<../figs/decision_flow.pdf, id=114, 622.72653pt x 839.53653pt>
-File: ../figs/decision_flow.pdf Graphic file (type pdf)
-<use ../figs/decision_flow.pdf>
-Package pdftex.def Info: ../figs/decision_flow.pdf  used on input line 85.
-(pdftex.def)             Requested size: 486.54057pt x 655.93755pt.
-
-[1
-
-{C:/Users/Bristol/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map}{C:/Users/Br
-istol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-rm.enc}] [2 <../figs/
-decision_flow.pdf>]
-LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 9
-5.
+LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 8
+8.
 
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/lm\ts1lmr.fd
 File: ts1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
-LaTeX Font Info:    Trying to load font information for OML+lmm on input line 1
-04.
+LaTeX Font Info:    Trying to load font information for OML+lmm on input line 9
+7.
 
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/lm\omllmm.fd
 File: omllmm.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    Trying to load font information for OMS+lmsy on input line 
-104.
+97.
 
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/lm\omslmsy.fd
 File: omslmsy.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    Trying to load font information for OMX+lmex on input line 
-104.
+97.
 
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/lm\omxlmex.fd
 File: omxlmex.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <10> on input line 104.
+(Font)              <10> on input line 97.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <7> on input line 104.
+(Font)              <7> on input line 97.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <5> on input line 104.
-LaTeX Font Info:    Trying to load font information for U+msa on input line 104
-.
+(Font)              <5> on input line 97.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 97.
+
 
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
@@ -1184,23 +1173,32 @@ File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/microtype\mt-msa.cfg
 File: mt-msa.cfg 2006/02/04 v1.1 microtype config. file: AMS symbols (a) (RS)
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 104
-.
+LaTeX Font Info:    Trying to load font information for U+msb on input line 97.
+
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/microtype\mt-msb.cfg
 File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
 )
-<../figs/sensitivity_matrix.pdf, id=259, 680.28354pt x 390.66585pt>
+<../figs/sensitivity_matrix.pdf, id=115, 680.28354pt x 390.66585pt>
 File: ../figs/sensitivity_matrix.pdf Graphic file (type pdf)
 <use ../figs/sensitivity_matrix.pdf>
-Package pdftex.def Info: ../figs/sensitivity_matrix.pdf  used on input line 132
+Package pdftex.def Info: ../figs/sensitivity_matrix.pdf  used on input line 125
 .
 (pdftex.def)             Requested size: 281.68385pt x 161.75967pt.
-[3{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-ts1.enc
-}{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathit.e
-nc} <../figs/sensitivity_matrix.pdf>]
+<../figs/decision_flow.pdf, id=116, 622.72653pt x 947.94153pt>
+File: ../figs/decision_flow.pdf Graphic file (type pdf)
+<use ../figs/decision_flow.pdf>
+Package pdftex.def Info: ../figs/decision_flow.pdf  used on input line 132.
+(pdftex.def)             Requested size: 419.96643pt x 639.28328pt.
+[1
+
+{C:/Users/Bristol/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map}{C:/Users/Br
+istol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-rm.enc}{C:/Users/Bris
+tol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-ts1.enc}{C:/Users/Brist
+ol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathit.enc} <../figs/sen
+sitivity_matrix.pdf>] [2 <../figs/decision_flow.pdf>]
 Underfull \hbox (badness 10000) in alignment at lines 183--183
 [][][][] 
  []
@@ -1214,64 +1212,64 @@ Package hyperref Warning: Token not allowed in a PDF string (Unicode):
 (hyperref)                \kern 1.66702pt
 (hyperref)                removed on input line 203.
 
-[4{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathsy.
+[3{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathsy.
 enc}]
 Underfull \hbox (badness 10000) in alignment at lines 226--226
 [][][][] 
  []
 
-[5]
-<../figs/real_energy_heatmap.png, id=412, 867.24pt x 578.16pt>
+[4]
+<../figs/real_energy_heatmap.png, id=441, 867.24pt x 578.16pt>
 File: ../figs/real_energy_heatmap.png Graphic file (type png)
 <use ../figs/real_energy_heatmap.png>
 Package pdftex.def Info: ../figs/real_energy_heatmap.png  used on input line 29
 1.
 (pdftex.def)             Requested size: 435.3303pt x 290.22615pt.
- [6{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathex
-.enc} <../figs/real_energy_heatmap.png>]
-<../figs/altitude_speed_tradeoff.pdf, id=423, 491.61806pt x 400.5803pt>
+ [5{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathex
+.enc}] [6 <../figs/real_energy_heatmap.png>]
+<../figs/altitude_speed_tradeoff.pdf, id=461, 491.61806pt x 400.5803pt>
 File: ../figs/altitude_speed_tradeoff.pdf Graphic file (type pdf)
 <use ../figs/altitude_speed_tradeoff.pdf>
 Package pdftex.def Info: ../figs/altitude_speed_tradeoff.pdf  used on input lin
 e 334.
 (pdftex.def)             Requested size: 435.3303pt x 354.73053pt.
- [7] [8 <../figs/altitude_speed_tradeoff.pdf>]
-<../figs/top3_paths.pdf, id=538, 1111.90283pt x 425.66428pt>
+ [7 <../figs/altitude_speed_tradeoff.pdf>]
+<../figs/top3_paths.pdf, id=568, 1111.90283pt x 425.66428pt>
 File: ../figs/top3_paths.pdf Graphic file (type pdf)
 <use ../figs/top3_paths.pdf>
 Package pdftex.def Info: ../figs/top3_paths.pdf  used on input line 376.
 (pdftex.def)             Requested size: 435.3303pt x 166.65791pt.
-<../figs/objective_conflict.pdf, id=539, 736.75905pt x 587.34618pt>
+<../figs/objective_conflict.pdf, id=569, 736.75905pt x 587.34618pt>
 File: ../figs/objective_conflict.pdf Graphic file (type pdf)
 <use ../figs/objective_conflict.pdf>
 Package pdftex.def Info: ../figs/objective_conflict.pdf  used on input line 382
 .
 (pdftex.def)             Requested size: 486.54057pt x 387.87373pt.
- [9 <../figs/top3_paths.pdf>]
+ [8 <../figs/top3_paths.pdf>]
 Underfull \hbox (badness 10000) in alignment at lines 409--409
 [][][] 
  []
 
-[10 <../figs/objective_conflict.pdf>]
-<../figs/tornado_sensitivity.pdf, id=789, 571.04657pt x 285.1285pt>
+[9 <../figs/objective_conflict.pdf>]
+<../figs/tornado_sensitivity.pdf, id=819, 571.04657pt x 285.1285pt>
 File: ../figs/tornado_sensitivity.pdf Graphic file (type pdf)
 <use ../figs/tornado_sensitivity.pdf>
 Package pdftex.def Info: ../figs/tornado_sensitivity.pdf  used on input line 42
 5.
 (pdftex.def)             Requested size: 384.11221pt x 191.79211pt.
-<../figs/sensitivity_spider.pdf, id=791, 462.53987pt x 427.51283pt>
+<../figs/sensitivity_spider.pdf, id=821, 462.53987pt x 427.51283pt>
 File: ../figs/sensitivity_spider.pdf Graphic file (type pdf)
 <use ../figs/sensitivity_spider.pdf>
 Package pdftex.def Info: ../figs/sensitivity_spider.pdf  used on input line 433
 .
 (pdftex.def)             Requested size: 281.68385pt x 260.3519pt.
- [11 <../figs/tornado_sensitivity.pdf> <../figs/sensitivity_spider.pdf>]
-<../figs/pareto_parallel.pdf, id=994, 611.26181pt x 379.18648pt>
+ [10 <../figs/tornado_sensitivity.pdf> <../figs/sensitivity_spider.pdf>]
+<../figs/pareto_parallel.pdf, id=1024, 611.26181pt x 379.18648pt>
 File: ../figs/pareto_parallel.pdf Graphic file (type pdf)
 <use ../figs/pareto_parallel.pdf>
 Package pdftex.def Info: ../figs/pareto_parallel.pdf  used on input line 445.
 (pdftex.def)             Requested size: 486.54057pt x 301.82211pt.
- [12 <../figs/pareto_parallel.pdf>] (main.aux)
+ [11 <../figs/pareto_parallel.pdf>] (main.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-01-19>
@@ -1280,13 +1278,13 @@ Package rerunfilecheck Info: File `main.out' has not changed.
 (rerunfilecheck)             Checksum: C3E3B43E3469C3F37378746A0F80CF75;3997.
  ) 
 Here is how much of TeX's memory you used:
- 36183 strings out of 467866
- 767712 string characters out of 5417351
- 1189471 words of memory out of 5000000
+ 36182 strings out of 467866
+ 767705 string characters out of 5417351
+ 1190593 words of memory out of 5000000
  64275 multiletter control sequences out of 15000+600000
  689010 words of font info for 181 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 98i,14n,108p,1003b,1104s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 98i,14n,108p,1003b,1200s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx10.
 pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx1
 2.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmb
@@ -1306,9 +1304,9 @@ ublic/lm/lmsy10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1
 /public/lm/lmsy6.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type
 1/public/lm/lmsy7.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/typ
 e1/public/lm/lmsy9.pfb>
-Output written on main.pdf (12 pages, 946540 bytes).
+Output written on main.pdf (11 pages, 958544 bytes).
 PDF statistics:
- 1189 PDF objects out of 1200 (max. 8388607)
- 63 named destinations out of 1000 (max. 500000)
+ 1219 PDF objects out of 1440 (max. 8388607)
+ 62 named destinations out of 1000 (max. 500000)
  39258 words of extra memory for PDF output out of 42996 (max. 10000000)
 

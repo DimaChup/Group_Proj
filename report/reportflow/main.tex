@@ -71,20 +71,13 @@
 
 % ── Title ───────────────────────────────────────────────────────────────
 \begin{center}
-  {\LARGE\bfseries\color{headblue} SAR Drone Search Parameter Optimisation\\[4pt] Decision Flow}\\[8pt]
-  {\large AENGM0074 Group Design Project}\\[4pt]
+  {\LARGE\bfseries\color{headblue} SAR Drone Search Parameter Optimisation\\[3pt] Decision Flow}\\[4pt]
+  {\large AENGM0074 Group Design Project}\\[2pt]
   {\small University of Bristol \quad---\quad 2025--26}
 \end{center}
-\vspace{6pt}
+\vspace{2pt}
 \hrule height 0.6pt
-\vspace{10pt}
-
-% ── Decision flow infographic ──────────────────────────────────────────
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.95\linewidth]{decision_flow}
-  \caption{Decision flow infographic: the sequential chain from target size through altitude, speed, scan angle, and NFZ margins to the final operating configuration.}\label{fig:decision-flow}
-\end{figure}
+\vspace{4pt}
 
 % ════════════════════════════════════════════════════════════════════════
 \section{The Problem}\label{sec:df-problem}
@@ -131,6 +124,13 @@ The coupling structure is shown in Figure~\ref{fig:sensitivity-matrix}: darker c
   \centering
   \includegraphics[width=0.55\linewidth]{sensitivity_matrix}
   \caption{Sensitivity matrix: darker cells indicate stronger influence of each input parameter on each derived metric.}\label{fig:sensitivity-matrix}
+\end{figure}
+
+% ── Decision flow infographic ──────────────────────────────────────────
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.82\linewidth]{decision_flow}
+  \caption{Decision flow infographic: the nine-step sequential chain from model training through altitude, speed, pattern selection, scan angle, and NFZ margins to the final operating configuration. Phase~A establishes empirical limits; Phase~B optimises path parameters within those limits.}\label{fig:decision-flow}
 \end{figure}
 
 % ════════════════════════════════════════════════════════════════════════
