@@ -679,8 +679,12 @@ class VisualFlightMission(StateHandlersMixin):
             return
 
         if NFZ_DIRECTIONAL and not nfz_inside and nfz_dist < config.NFZ_SLOW_ZONE_M:
-            ratio = nfz_dist / config.NFZ_SLOW_ZONE_M
-            max_approach = config.NFZ_MIN_SPEED_MPS + ratio * (config.NFZ_ZONE_MAX_SPEED_MPS - config.NFZ_MIN_SPEED_MPS)
+            # Ramp: 0 m/s at SCALAR_ZERO_M (2m), linearly up to ZONE_MAX at SLOW_ZONE_M (20m)
+            if nfz_dist <= config.NFZ_SCALAR_ZERO_M:
+                max_approach = 0.0
+            else:
+                ratio = (nfz_dist - config.NFZ_SCALAR_ZERO_M) / (config.NFZ_SLOW_ZONE_M - config.NFZ_SCALAR_ZERO_M)
+                max_approach = ratio * config.NFZ_ZONE_MAX_SPEED_MPS
             # Compute unit vector toward nearest NFZ boundary point
             best_dist_sq = float('inf')
             nfz_lat, nfz_lon = self.lat, self.lon
@@ -718,9 +722,12 @@ class VisualFlightMission(StateHandlersMixin):
                     excess = v_toward - max_approach
                     self.nav.send_velocity(vn - ny * excess, ve - nx * excess, 0, current_yaw=0)
         elif not NFZ_DIRECTIONAL and not nfz_inside and nfz_dist < config.NFZ_SLOW_ZONE_M:
-            # Original: cap total speed
-            ratio = nfz_dist / config.NFZ_SLOW_ZONE_M
-            max_spd = config.NFZ_MIN_SPEED_MPS + ratio * (config.NFZ_ZONE_MAX_SPEED_MPS - config.NFZ_MIN_SPEED_MPS)
+            # Original: cap total speed. Ramp: 0 at SCALAR_ZERO_M, ZONE_MAX at SLOW_ZONE_M
+            if nfz_dist <= config.NFZ_SCALAR_ZERO_M:
+                max_spd = 0.0
+            else:
+                ratio = (nfz_dist - config.NFZ_SCALAR_ZERO_M) / (config.NFZ_SLOW_ZONE_M - config.NFZ_SCALAR_ZERO_M)
+                max_spd = ratio * config.NFZ_ZONE_MAX_SPEED_MPS
             self.nav.last_speed_req = 0
             self.nav.set_speed(max_spd)
 

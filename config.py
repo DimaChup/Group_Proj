@@ -114,12 +114,13 @@ CONE_HEIGHT_M = 0.5             # Traffic cone height
 NFZ_HARD_BOUNDARY_M = 3.0      # Inside this → force MANUAL
 NFZ_SOFT_BOUNDARY_M = 8.0      # Quadratic repulsion zone (legacy --nfz-repel)
 NFZ_WAYPOINT_BUFFER_M = 30.0   # Skip waypoints within this of NFZ
-NFZ_SLOW_ZONE_M = 20.0         # Speed scalar field active within this
-NFZ_MIN_SPEED_MPS = 0.3        # Speed at NFZ boundary
-NFZ_ZONE_MAX_SPEED_MPS = 3.0   # Speed at outer edge of slow zone
+NFZ_SLOW_ZONE_M = 20.0         # Speed scalar field active within this (20m → 2m ramp)
+NFZ_SCALAR_ZERO_M = 2.0        # Speed drops to 0 at this distance (full stop zone)
+NFZ_MIN_SPEED_MPS = 0.0        # Speed at NFZ_SCALAR_ZERO_M and below (0 = full stop)
+NFZ_ZONE_MAX_SPEED_MPS = 3.0   # Speed at outer edge of slow zone (20m out)
 NFZ_INNER_OFFSET_M = 20.0      # Inner (pink) polygon offset inside NFZ
-NFZ_INNER_RANGE_M = 23.0       # Repulsion active within this from inner polygon
-NFZ_PUSH_SPEED_MPS = 3.0       # Constant repulsive push speed
+NFZ_INNER_RANGE_M = 23.0       # Repulsion active within this from inner polygon (~3m from boundary)
+NFZ_PUSH_SPEED_MPS = 5.0       # Constant repulsive push speed (away from NFZ)
 
 
 # ============================================================
