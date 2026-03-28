@@ -95,7 +95,7 @@ This objective is bounded by hard constraints that cannot be relaxed:
   \item \textbf{Altitude limit} --- 50\,m maximum (regulation R03).
   \item \textbf{Single battery} --- one LiPo pack must cover transit, search, descent, verification, and return.
   \item \textbf{One pass} --- there is no opportunity to re-fly missed strips; the pattern must cover every accessible point in a single traversal.
-  \item \textbf{Hardware ceiling} --- onboard inference runs at 4.8\,FPS (YOLOv8n on Raspberry Pi~5), setting a hard limit on how fast the drone can fly while still detecting targets.
+  \item \textbf{Hardware ceiling} --- onboard inference runs at approximately 9\,FPS with the deployed NCNN backend (YOLOv8n on Raspberry Pi~5), with TFLite at 4.8\,FPS available as a fallback.
 \end{itemize}
 
 % ════════════════════════════════════════════════════════════════════════
@@ -277,6 +277,8 @@ For the baseline configuration we adopted \textbf{8\,m/s}, which sits within the
 P_d = 1 - (1 - 0.95)^{14} = 1 - 0.05^{14} > 99.97\%
 \]
 
+The deployed NCNN backend achieves approximately 9\,FPS in the full pipeline. At this frame rate, requiring just 5~frames on target---empirically sufficient for reliable detection across lighting conditions---gives $v_{\text{max}} = 24 / (5/9) = 43$\,m/s, far above any practical flight speed. With the deployed backend, \textbf{detection is no longer the speed-limiting factor}; speed is instead constrained by energy budget, NFZ reaction time, GPS update rate, and wind tolerance. The choice of 5~frames as the minimum was determined empirically: testing across bright, overcast, and dusk conditions showed that 5~independent observations at $\geq$85\% per-frame confidence consistently yielded $>$99\% cumulative detection. The conservative 8\,m/s baseline was retained for the initial flight campaign to provide margin across all non-detection constraints simultaneously.
+
 
 % ────────────────────────────────────────────────────────────────────────
 \subsection{Step 5: Choose the Search Pattern Type}\label{sec:step5}
@@ -384,7 +386,7 @@ The logic can be summarised as a chain of ``because'' statements:
 
 \begin{enumerate}[nosep, leftmargin=2em]
   \item We fly at \textbf{35\,m} \emph{because} higher altitude means fewer scan lines (saving time and energy), but the target must remain detectable --- 35\,m is 15\% below the worst-case detection ceiling, giving comfortable pixel extent in all lighting conditions.
-  \item We fly at \textbf{8\,m/s} \emph{because} at 35\,m the along-track footprint is 24\,m, and at 4.8\,FPS we need the target in view for $\geq$10 frames --- 8\,m/s gives 14 frames, yielding $>$99.97\% cumulative detection probability.
+  \item We fly at \textbf{8\,m/s} \emph{because} at 35\,m the along-track footprint is 24\,m, and at 4.8\,FPS we need the target in view for $\geq$10 frames --- 8\,m/s gives 14 frames (27 at 9\,FPS with NCNN), yielding $>$99.97\% cumulative detection probability. With NCNN, detection is no longer the speed-limiting factor; the conservative speed was retained for energy, NFZ, and GPS margins.
   \item We use a \textbf{lawnmower pattern} \emph{because} it provides a deterministic coverage guarantee for our irregular polygon with NFZ cutouts, unlike spiral or expanding-square patterns.
   \item We \textbf{do not yaw} the drone \emph{because} eliminating yaw rotations at U-turns saves 15\,s and 3--5\% energy, with no meaningful detection loss --- but this requires a slightly larger NFZ margin to account for the diagonal camera footprint.
   \item We scan at \textbf{70\textdegree} \emph{because} this aligns with the polygon's longest edge, minimising U-turns (5 instead of 9) and halving the worst-case energy.
@@ -446,13 +448,14 @@ Table~\ref{tab:df-final} consolidates the selected values and their predicted pe
     \textbf{Parameter} & \textbf{Value} & \textbf{Rationale} \\
     \midrule
     Search altitude       & 35\,m             & 15\% margin below detection ceiling \\
-    Search speed          & 8\,m/s            & 14 frames per target (10 required) \\
+    Search speed          & 8\,m/s            & 14 frames per target at 4.8\,FPS (10 required) \\
+    Inference rate         & 4.8\,FPS (TFLite) / 9\,FPS (NCNN) & YOLOv8n on Raspberry Pi~5 \\
     Scan angle            & 70\textdegree     & Longest-edge alignment, fewest U-turns \\
     Heading mode          & Fixed (no yaw)    & 3--5\% energy saving; wider NFZ margin compensates \\
     Swath overlap         & 20\%              & Covers 4.6\,m lane error with 2.2\,m spare \\
     NFZ buffer            & 30\,m             & 1.5$\times$ safety factor over RSS margin \\
     \midrule
-    Detection probability & $>$99.97\%\textsuperscript{$\dagger$} & 14 frames $\times$ 95\% per-frame \\
+    Detection probability & $>$99.97\%\textsuperscript{$\dagger$} & 14 frames $\times$ 95\% per-frame (at 4.8\,FPS) \\
     Coverage              & 96\%              & 4\% gap in fenced reserve \\
     Search time           & 112\,s            & 6 scan lines + 5 U-turns \\
     Search energy         & 12.6\,Wh          & 10.9\% of battery (14\,min remaining) \\

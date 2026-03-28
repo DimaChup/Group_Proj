@@ -90,7 +90,7 @@ decisions = [
     ('Train reliable vision model',        'mAP50 = 0.995 (retrained YOLOv8n)',    BLUE,  BLUE_L),
     ('Find max detection altitude',        '63 m ceiling  (20 px minimum target)', BLUE,  BLUE_L),
     ('Apply 15% safety margin',            '35 m operating alt  (36 px target height)', GREEN, GREEN_L),
-    ('Max speed for 10+ frames',           '8 m/s  (14 frames, >99.97% detection)',    BLUE,  BLUE_L),
+    ('Max speed for 10+ frames',           '8 m/s  (14 frames at 4.8 FPS, 27 at 9 FPS)',    BLUE,  BLUE_L),
     # Phase B: Optimise (Steps 5-9)
     ('Choose search pattern type',         'Lawnmower  (coverage guarantee)',      GREY,  GREY_L),
     ('Fixed heading vs. yaw-to-face',      'Fixed heading  (3\u20135% energy saving)',  GREY,  GREY_L),

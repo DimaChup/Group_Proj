@@ -54,7 +54,9 @@ The rescue dummy is 1.8\,m tall, 0.5\,m wide. As altitude increases, the target 
 Real conditions degrade detection: haze, unusual target pose, altitude excursions during turns. A 30\% margin below the ceiling gives us \textbf{35\,m operating altitude}, where the target is 36~pixels tall and 10~pixels wide---comfortably above the minimum.
 
 \paragraph{3. At 35\,m, how fast can we fly?}
-The camera sees a 24\,m strip of ground along the flight direction. At 4.8~frames per second (benchmarked on the Pi~5), the target must stay in view for at least 10~frames to ensure reliable multi-frame detection. That caps speed at 11.5\,m/s. We chose \textbf{8\,m/s}---giving 14~frames per flyover and a cumulative detection probability above 99.97\%.
+The camera sees a 24\,m strip of ground along the flight direction. At 4.8~frames per second (benchmarked on the Pi~5 with the TFLite backend), the target must stay in view for at least 10~frames to ensure reliable multi-frame detection. That caps speed at 11.5\,m/s. We chose \textbf{8\,m/s}---giving 14~frames per flyover and a cumulative detection probability above 99.97\%.
+
+A subsequent backend upgrade to NCNN increased the effective pipeline rate to approximately 9\,FPS. At this frame rate, the minimum-frames constraint relaxes significantly: requiring 5~frames on target at 35\,m gives $v_\text{max} = 24 / (5/9) = 43$\,m/s---far above any practical flight speed. With the faster backend, \textbf{detection is no longer the speed-limiting factor}; instead, speed is constrained by energy budget, NFZ reaction time, GPS update rate, and wind tolerance. Nevertheless, the conservative 8\,m/s baseline was retained for the initial flight campaign to provide margin across all constraints simultaneously.
 
 \paragraph{4. What scan angle minimises energy?}
 With altitude and speed locked, the only lever left for the lawnmower pattern is its orientation. We swept 36~angles and found that aligning with the polygon's longest edge (\textbf{70\textdegree}) cuts U-turns from 9 to 5 and halves the energy compared to the worst orientation (Figure~\ref{fig:energy-heatmap}).
@@ -101,12 +103,13 @@ The top three lawnmower paths overlaid on the survey polygon are shown in Figure
     \textbf{Parameter} & \textbf{Value} & \textbf{Rationale} \\
     \midrule
     Search altitude       & 35\,m             & 30\% margin below detection ceiling \\
-    Search speed          & 8\,m/s            & 14 frames per target (10 required) \\
+    Search speed          & 8\,m/s            & 14 frames per target at 4.8\,FPS (10 required) \\
+    Inference rate         & 4.8\,FPS (TFLite) / 9\,FPS (NCNN) & YOLOv8n on Raspberry Pi~5 \\
     Scan angle            & 70\textdegree     & Longest-edge alignment, fewest U-turns \\
     Swath overlap         & 20\%              & Covers 4.6\,m lane error with 1.8\,m spare \\
     NFZ buffer            & 30\,m             & 2.2$\times$ safety factor over RSS margin \\
     \midrule
-    Detection probability & $>$99.97\%        & 14 frames $\times$ 95\% per-frame \\
+    Detection probability & $>$99.97\%        & 14 frames $\times$ 95\% per-frame (at 4.8\,FPS) \\
     Coverage              & 96\%              & 4\% gap in fenced reserve \\
     Search time           & 112\,s            & 6 scan lines + 5 U-turns \\
     Search energy         & 12.6\,Wh          & 10.9\% of battery (14\,min remaining) \\
