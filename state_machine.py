@@ -578,7 +578,7 @@ class StateHandlersMixin:
         if time.time() - self.last_req > 0.5:
             self.nav.send_global_target(self.landing_lat, self.landing_lon, 3.0)
             self.last_req = time.time()
-        if self.get_dist_to_point(self.landing_lat, self.landing_lon) < 2.0 and self.alt < 4.0:
+        if self.get_dist_to_point(self.landing_lat, self.landing_lon) < 2.0 and self.alt < 3.5:
             print("  Hovering at 3m above target — payload deploy sequence (15s)")
             self._set_state(State.HOVER_TARGET)
 
@@ -630,10 +630,11 @@ class StateHandlersMixin:
     def _handle_return_transit(self, target_found, px_u, px_v, key):
         return_alt = self._current_search_alt()
         if self.alt < return_alt - 3.0:
-            if time.time() - self.last_req > 2.0:
-                self.nav.send_global_target(self.lat, self.lon, return_alt)
-                self.last_req = time.time()
-                print(f"  [CLIMB] {self.alt:.0f}m → {return_alt:.0f}m before heading home...")
+            # Climb using velocity (send_global_target doesn't reliably climb from low alt in SITL)
+            self.nav.send_velocity(0, 0, -3.0, current_yaw=self.yaw)  # NED: -Z = up, 3 m/s
+            if time.time() - getattr(self, '_climb_print_time', 0) > 3.0:
+                print(f"  [CLIMB] {self.alt:.1f}m → {return_alt:.0f}m before heading home...")
+                self._climb_print_time = time.time()
             return
         self.nav.set_speed(config.TRANSIT_SPEED_MPS)
         if self.return_wp_index >= 0:
@@ -659,10 +660,11 @@ class StateHandlersMixin:
         # FIX 1: Altitude climb guard — climb to search alt before flying home
         return_alt = self._current_search_alt()
         if self.alt < return_alt - 3.0:
-            if time.time() - self.last_req > 2.0:
-                self.nav.send_global_target(self.lat, self.lon, return_alt)
-                self.last_req = time.time()
-                print(f"  [CLIMB] {self.alt:.0f}m → {return_alt:.0f}m before heading home...")
+            # Climb using velocity (send_global_target doesn't reliably climb from low alt in SITL)
+            self.nav.send_velocity(0, 0, -3.0, current_yaw=self.yaw)  # NED: -Z = up, 3 m/s
+            if time.time() - getattr(self, '_climb_print_time', 0) > 3.0:
+                print(f"  [CLIMB] {self.alt:.1f}m → {return_alt:.0f}m before heading home...")
+                self._climb_print_time = time.time()
             return  # wait for climb
         self.nav.set_speed(config.TRANSIT_SPEED_MPS)
         if time.time() - self.last_req > 2.0:
