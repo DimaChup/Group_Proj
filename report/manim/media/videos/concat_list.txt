@@ -1,0 +1,8 @@
+file 'cinematic_part1/480p15/OverviewScene.mp4'
+file 'cinematic_part1/480p15/TransitScene.mp4'
+file 'cinematic_part1/480p15/SearchScene.mp4'
+file 'cinematic_part1/480p15/BeaconScene.mp4'
+file 'cinematic_part2/480p15/DetectionScene.mp4'
+file 'cinematic_part2/480p15/PayloadDescentScene.mp4'
+file 'cinematic_part2/480p15/ReturnHomeScene.mp4'
+file 'cinematic_part2/480p15/MissionCompleteScene.mp4'

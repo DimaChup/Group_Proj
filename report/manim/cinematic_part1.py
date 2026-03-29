@@ -3,9 +3,9 @@ Cinematic SAR Drone Mission Animation -- Part 1 (Scenes 1-4).
 
 Scenes:
   1. OverviewScene   (5 s) — bird's eye, all zones labelled, title
-  2. TransitScene    (5 s) — takeoff, TOL -> T1 -> T2 -> T3, altitude gauge
-  3. SearchScene     (8 s) — lawnmower with camera footprint, coverage strips
-  4. BeaconScene     (4 s) — PLB flash, focus area, tighter pattern at 5 m/s
+  2. TransitScene    (5 s) — takeoff, TOL -> T1 -> T2 -> T3 -> first search WP
+  3. SearchScene     (8 s) — inward spiral with camera footprint, coverage fill
+  4. BeaconScene     (4 s) — PLB flash, focus area, zoom in, tighter spiral at 5 m/s
 
 Run individual scenes:
   python -m manim -ql cinematic_part1.py OverviewScene
@@ -17,6 +17,7 @@ Run individual scenes:
 from manim import *
 import numpy as np
 from shapely.geometry import Polygon as ShapelyPolygon, LineString
+from shapely.ops import unary_union
 
 # ═══════════════════════════════════════════════════════════════
 #  GPS DATA (from config.py / AENGM0074.kml)
@@ -91,7 +92,7 @@ def gps_to_meters(lat, lon, ref_lat, ref_lon):
 
 
 def _compute_transform():
-    """Compute ref point, scale, and offset so the field fits nicely on screen."""
+    """Compute ref point, scale, and offset so the field fills ~80% of screen."""
     all_lats = [p[0] for p in FLIGHT_AREA_GPS + SEARCH_AREA_GPS + SSSI_GPS]
     all_lons = [p[1] for p in FLIGHT_AREA_GPS + SEARCH_AREA_GPS + SSSI_GPS]
     ref_lat = np.mean(all_lats)
@@ -102,11 +103,14 @@ def _compute_transform():
         extents.append(gps_to_meters(lat, lon, ref_lat, ref_lon))
     xs = [p[0] for p in extents]
     ys = [p[1] for p in extents]
-    extent = max(max(xs) - min(xs), max(ys) - min(ys))
+    width = max(xs) - min(xs)
+    height = max(ys) - min(ys)
+    extent = max(width, height)
 
-    frame_size = 5.5
+    # Scale to fill ~80% of manim frame (frame is ~14 units wide at default)
+    frame_size = 10.0
     scale = frame_size / extent
-    offset = np.array([0.0, -0.3])
+    offset = np.array([0.0, 0.0])
     return ref_lat, ref_lon, scale, offset
 
 
@@ -135,14 +139,79 @@ FLIGHT_PTS = gps_poly_to_screen(FLIGHT_AREA_GPS)
 SSSI_PTS = gps_poly_to_screen(SSSI_GPS)
 FOCUS_PTS = gps_poly_to_screen(FOCUS_AREA_GPS)
 TOL_PT = gps_to_screen(*TAKEOFF_GPS)
-TRANSIT_PTS = [gps_to_screen(lat, lon) for lat, lon, *_ in
-               [(51.42176480, -2.67011737),
-                (51.42247427, -2.66713882),
-                (51.42410412, -2.66830869)]]
+TRANSIT_PTS = [gps_to_screen(lat, lon) for lat, lon in TRANSIT_WAYPOINTS_GPS]
 
 
 # ═══════════════════════════════════════════════════════════════
-#  LAWNMOWER PATTERN GENERATION (using Shapely for clipping)
+#  SPIRAL PATTERN GENERATION
+# ═══════════════════════════════════════════════════════════════
+
+def generate_spiral_path(screen_pts, strip_spacing_m, num_loops=6):
+    """Generate an inward spiral path that follows the polygon shape.
+
+    Returns a list of np.array([x, y, 0]) waypoints forming the spiral.
+    The spiral starts from the outer edge and works inward.
+    """
+    pts_2d = [(p[0], p[1]) for p in screen_pts]
+    shapely_poly = ShapelyPolygon(pts_2d)
+    spacing_screen = m2s(strip_spacing_m)
+
+    # Generate concentric inset polygons
+    rings = []
+    for i in range(num_loops + 1):
+        inset = spacing_screen * i * 0.5
+        shrunk = shapely_poly.buffer(-inset)
+        if shrunk.is_empty or shrunk.area < spacing_screen * spacing_screen * 0.1:
+            break
+        if shrunk.geom_type == 'MultiPolygon':
+            shrunk = max(shrunk.geoms, key=lambda g: g.area)
+        rings.append(shrunk)
+
+    if len(rings) < 2:
+        # Fallback: just return polygon boundary
+        coords = list(shapely_poly.exterior.coords)
+        return [np.array([c[0], c[1], 0.0]) for c in coords]
+
+    # Build spiral by interpolating between consecutive rings
+    waypoints = []
+    num_points_per_ring = 40  # points sampled around each ring
+
+    for ring_idx in range(len(rings) - 1):
+        outer_ring = rings[ring_idx]
+        inner_ring = rings[ring_idx + 1]
+
+        outer_coords = list(outer_ring.exterior.coords)[:-1]  # remove closing duplicate
+        inner_coords = list(inner_ring.exterior.coords)[:-1]
+
+        # Resample both rings to same number of points
+        outer_line = LineString(list(outer_ring.exterior.coords))
+        inner_line = LineString(list(inner_ring.exterior.coords))
+
+        for j in range(num_points_per_ring):
+            t = j / num_points_per_ring
+            # Progress around the ring
+            frac_along = t
+            # Blend between outer and inner ring
+            blend = (ring_idx + t) / len(rings)
+
+            outer_pt = outer_line.interpolate(frac_along, normalized=True)
+            inner_pt = inner_line.interpolate(frac_along, normalized=True)
+
+            # Linear interpolation between outer and inner
+            x = outer_pt.x * (1 - t) + inner_pt.x * t
+            y = outer_pt.y * (1 - t) + inner_pt.y * t
+
+            waypoints.append(np.array([x, y, 0.0]))
+
+    # Add center point
+    cx, cy = shapely_poly.centroid.x, shapely_poly.centroid.y
+    waypoints.append(np.array([cx, cy, 0.0]))
+
+    return waypoints
+
+
+# ═══════════════════════════════════════════════════════════════
+#  LAWNMOWER PATTERN GENERATION (kept for reference/coverage calc)
 # ═══════════════════════════════════════════════════════════════
 
 def _find_scan_angle(pts_2d):
@@ -161,15 +230,10 @@ def _find_scan_angle(pts_2d):
 
 
 def generate_lawnmower(screen_pts, strip_spacing_m, inset_frac=1.0 / 3.0):
-    """Generate lawnmower scan lines clipped to a polygon.
-
-    Returns list of (start_screen, end_screen) pairs forming the zigzag path,
-    where each pair is a np.array([x, y, 0]).
-    """
+    """Generate lawnmower scan lines clipped to a polygon."""
     pts_2d = [(p[0], p[1]) for p in screen_pts]
     shapely_poly = ShapelyPolygon(pts_2d)
 
-    # Inset the polygon slightly so lines don't touch edges
     inset_m = strip_spacing_m * inset_frac
     inset_screen = m2s(inset_m)
     inset_poly = shapely_poly.buffer(-inset_screen)
@@ -189,7 +253,6 @@ def generate_lawnmower(screen_pts, strip_spacing_m, inset_frac=1.0 / 3.0):
         dx, dy = x - cx, y - cy
         return cx + dx * cos_t + dy * sin_t, cy - dx * sin_t + dy * cos_t
 
-    # Rotate polygon to find extent
     rotated_coords = [rotate(x, y) for x, y in pts_2d]
     ry = [p[1] for p in rotated_coords]
     rx = [p[0] for p in rotated_coords]
@@ -216,7 +279,6 @@ def generate_lawnmower(screen_pts, strip_spacing_m, inset_frac=1.0 / 3.0):
         if clipped.is_empty:
             continue
 
-        # Handle MultiLineString or LineString
         if clipped.geom_type == "LineString":
             coords = list(clipped.coords)
             if len(coords) >= 2:
@@ -244,24 +306,12 @@ def generate_lawnmower(screen_pts, strip_spacing_m, inset_frac=1.0 / 3.0):
     return lines
 
 
-def _build_waypoint_path(scan_lines):
-    """Convert scan lines into a single ordered list of waypoints for the drone."""
-    if not scan_lines:
-        return []
-    waypoints = [scan_lines[0][0], scan_lines[0][1]]
-    for i in range(1, len(scan_lines)):
-        waypoints.append(scan_lines[i][0])
-        waypoints.append(scan_lines[i][1])
-    return waypoints
-
-
 # ═══════════════════════════════════════════════════════════════
 #  HELPER: build background zone polygons (used by multiple scenes)
 # ═══════════════════════════════════════════════════════════════
 
 def _make_zones(dim=False):
-    """Return (flight_poly, search_poly, sssi_poly) manim objects.
-    If dim=True, reduce fill opacity for background use."""
+    """Return (flight_poly, search_poly, sssi_poly) manim objects."""
     f_op = 0.03 if dim else 0.0
     s_op = 0.06 if dim else 0.15
     n_op = 0.12 if dim else 0.25
@@ -296,6 +346,51 @@ def _angle_between(p1, p2):
     return np.arctan2(d[1], d[0])
 
 
+def _clip_footprint_to_poly(center, fw, fh, poly_pts):
+    """Create a camera footprint rectangle clipped to a polygon boundary.
+
+    Returns a manim Polygon clipped to the search area.
+    """
+    from shapely.geometry import box as shapely_box
+
+    half_w = fw / 2
+    half_h = fh / 2
+    cx, cy = center[0], center[1]
+
+    rect = shapely_box(cx - half_w, cy - half_h, cx + half_w, cy + half_h)
+    poly_2d = [(p[0], p[1]) for p in poly_pts]
+    shapely_poly = ShapelyPolygon(poly_2d)
+
+    clipped = rect.intersection(shapely_poly)
+
+    if clipped.is_empty:
+        # Return a tiny invisible polygon
+        return Polygon(
+            np.array([cx, cy, 0]), np.array([cx + 0.01, cy, 0]),
+            np.array([cx + 0.01, cy + 0.01, 0]),
+            stroke_color=TEAL, stroke_width=1.5,
+            fill_opacity=0.05, fill_color=TEAL,
+        )
+
+    if clipped.geom_type == 'MultiPolygon':
+        clipped = max(clipped.geoms, key=lambda g: g.area)
+
+    coords = list(clipped.exterior.coords)[:-1]
+    pts_3d = [np.array([c[0], c[1], 0.0]) for c in coords]
+
+    if len(pts_3d) < 3:
+        return Polygon(
+            np.array([cx, cy, 0]), np.array([cx + 0.01, cy, 0]),
+            np.array([cx + 0.01, cy + 0.01, 0]),
+            stroke_color=TEAL, stroke_width=1.5,
+            fill_opacity=0.05, fill_color=TEAL,
+        )
+
+    return Polygon(*pts_3d,
+                   stroke_color=TEAL, stroke_width=1.5,
+                   fill_opacity=0.05, fill_color=TEAL)
+
+
 # ═══════════════════════════════════════════════════════════════
 #  SCENE 1: OVERVIEW (5 seconds)
 # ═══════════════════════════════════════════════════════════════
@@ -312,57 +407,33 @@ class OverviewScene(Scene):
         flight_poly, search_poly, sssi_poly = _make_zones(dim=False)
 
         # TOL marker
-        tol_dot = Dot(TOL_PT, radius=0.08, color=GREEN)
-        tol_label = Text("TOL", font_size=16, color=GREEN).next_to(tol_dot, DOWN, buff=0.1)
+        tol_dot = Dot(TOL_PT, radius=0.10, color=GREEN)
+        tol_label = Text("TOL", font_size=18, color=GREEN).next_to(tol_dot, DOWN, buff=0.12)
 
         # Zone labels
         sssi_centroid = _centroid(SSSI_PTS)
         search_centroid = _centroid(SEARCH_PTS)
-        sssi_label = Text("SSSI No-Fly Zone", font_size=14, color=RED)
+        sssi_label = Text("SSSI No-Fly Zone", font_size=16, color=RED)
         sssi_label.move_to(sssi_centroid)
-        search_label = Text("Search Area", font_size=14, color=BLUE)
-        search_label.move_to(search_centroid + np.array([0, -0.25, 0]))
+        search_label = Text("Search Area", font_size=16, color=BLUE)
+        search_label.move_to(search_centroid + np.array([0, -0.3, 0]))
 
         # Flight area label
-        flight_centroid = _centroid(FLIGHT_PTS)
-        flight_label = Text("Flight Area", font_size=12, color=GREY_B)
+        flight_label = Text("Flight Area", font_size=14, color=GREY_B)
         flight_label.next_to(
-            Polygon(*FLIGHT_PTS, stroke_opacity=0), DOWN, buff=0.08
+            Polygon(*FLIGHT_PTS, stroke_opacity=0), DOWN, buff=0.1
         )
 
-        # ── Animate ──
-        # 0.0-0.5s: title
+        # Animate
         self.play(
             FadeIn(title, shift=DOWN * 0.2),
             FadeIn(subtitle),
             run_time=0.5,
         )
-
-        # 0.5-1.5s: flight area boundary
         self.play(Create(flight_poly), FadeIn(flight_label), run_time=1.0)
-
-        # 1.5-2.5s: SSSI
-        self.play(
-            FadeIn(sssi_poly),
-            FadeIn(sssi_label),
-            run_time=1.0,
-        )
-
-        # 2.5-3.5s: search area
-        self.play(
-            FadeIn(search_poly),
-            FadeIn(search_label),
-            run_time=1.0,
-        )
-
-        # 3.5-4.0s: TOL
-        self.play(
-            FadeIn(tol_dot, scale=0.5),
-            FadeIn(tol_label),
-            run_time=0.5,
-        )
-
-        # 4.0-5.0s: hold
+        self.play(FadeIn(sssi_poly), FadeIn(sssi_label), run_time=1.0)
+        self.play(FadeIn(search_poly), FadeIn(search_label), run_time=1.0)
+        self.play(FadeIn(tol_dot, scale=0.5), FadeIn(tol_label), run_time=0.5)
         self.wait(1.0)
 
 
@@ -372,45 +443,25 @@ class OverviewScene(Scene):
 
 class TransitScene(Scene):
     def construct(self):
-        # ── Background zones (dimmed) ──
+        # Background zones (dimmed)
         flight_poly, search_poly, sssi_poly = _make_zones(dim=True)
         self.add(flight_poly, search_poly, sssi_poly)
 
         # TOL dot
-        tol_dot = Dot(TOL_PT, radius=0.06, color=GREEN)
-        tol_label = Text("TOL", font_size=13, color=GREEN).next_to(tol_dot, DOWN, buff=0.08)
+        tol_dot = Dot(TOL_PT, radius=0.08, color=GREEN)
+        tol_label = Text("TOL", font_size=14, color=GREEN).next_to(tol_dot, DOWN, buff=0.08)
         self.add(tol_dot, tol_label)
 
-        # ── Drone ──
-        drone = _make_drone(0.12)
+        # Drone
+        drone = _make_drone(0.14)
         drone.move_to(TOL_PT)
 
-        # ── Altitude gauge (right side) ──
-        gauge_x = 3.2
-        gauge_bottom = -2.5
-        gauge_height = 2.0  # full height = 35 m
+        # Compute the first search waypoint (closest search polygon vertex to T3)
+        t3_pt = TRANSIT_PTS[2]
+        dists = [np.linalg.norm(sp - t3_pt) for sp in SEARCH_PTS]
+        first_search_wp = SEARCH_PTS[np.argmin(dists)]
 
-        gauge_bg = Rectangle(
-            width=0.18, height=gauge_height,
-            fill_color=DARK_GREY, fill_opacity=0.6,
-            stroke_color=GREY, stroke_width=1,
-        ).move_to(np.array([gauge_x, gauge_bottom + gauge_height / 2, 0]))
-        gauge_fill = Rectangle(
-            width=0.14, height=0.01,
-            fill_color=TEAL, fill_opacity=0.9,
-            stroke_width=0,
-        )
-        gauge_fill.move_to(np.array([gauge_x, gauge_bottom, 0]), aligned_edge=DOWN)
-
-        alt_text = Text("0 m", font_size=13, color=TEAL)
-        alt_text.next_to(gauge_bg, RIGHT, buff=0.1).align_to(gauge_bg, DOWN)
-
-        gauge_label = Text("Alt", font_size=11, color=GREY_B)
-        gauge_label.next_to(gauge_bg, UP, buff=0.05)
-
-        self.add(gauge_bg, gauge_fill, alt_text, gauge_label)
-
-        # ── State badge (top right) ──
+        # State badge (top right)
         state_bg = RoundedRectangle(
             corner_radius=0.05, width=2.4, height=0.35,
             fill_color=DARK_GREY, fill_opacity=0.8,
@@ -418,32 +469,33 @@ class TransitScene(Scene):
         ).to_corner(UR, buff=0.15)
         state_text = Text("ARMING", font_size=14, color=YELLOW)
         state_text.move_to(state_bg)
-        state_group = VGroup(state_bg, state_text)
-        self.add(state_group)
+        self.add(state_bg, state_text)
 
         # Speed label
         speed_label = Text("15 m/s", font_size=14, color=YELLOW)
         speed_label.next_to(state_bg, DOWN, buff=0.1)
 
-        # ── Animate ──
+        # Small altitude indicator (compact, left side)
+        alt_label = Text("ALT: 0 m", font_size=13, color=TEAL)
+        alt_label.to_corner(UL, buff=0.2)
 
-        # 0.0-0.5s: drone appears, ARMING
+        self.add(alt_label)
+
+        # Animate
+
+        # 0.0-0.5s: drone appears
         self.play(FadeIn(drone, scale=0.5), run_time=0.5)
 
-        # 0.5-1.5s: takeoff -- altitude 0->35, state TAKEOFF
+        # 0.5-1.3s: takeoff
         new_state = Text("TAKEOFF", font_size=14, color=YELLOW).move_to(state_bg)
+        new_alt = Text("ALT: 35 m", font_size=13, color=TEAL).to_corner(UL, buff=0.2)
         self.play(
             Transform(state_text, new_state),
-            gauge_fill.animate.stretch_to_fit_height(gauge_height).move_to(
-                np.array([gauge_x, gauge_bottom, 0]), aligned_edge=DOWN
-            ),
-            run_time=1.0,
+            Transform(alt_label, new_alt),
+            run_time=0.8,
         )
-        new_alt = Text("35 m", font_size=13, color=TEAL)
-        new_alt.next_to(gauge_bg, RIGHT, buff=0.1).align_to(gauge_bg, UP)
-        self.play(Transform(alt_text, new_alt), run_time=0.2)
 
-        # 1.5-2.0s: state PRE_WAYPOINTS, speed appears, start to T1
+        # 1.3-1.6s: state PRE_WAYPOINTS
         new_state2 = Text("PRE_WAYPOINTS", font_size=12, color=YELLOW).move_to(state_bg)
         self.play(
             Transform(state_text, new_state2),
@@ -451,114 +503,93 @@ class TransitScene(Scene):
             run_time=0.3,
         )
 
-        # Build transit waypoints: TOL -> T1 -> T2 -> T3
+        # Build transit path: TOL -> T1 -> T2 -> T3
         path_points = [TOL_PT] + TRANSIT_PTS
         wp_names = ["T1", "T2", "T3"]
 
-        # Traced path (yellow dashed)
+        # Traced path
         traced = TracedPath(drone.get_center, stroke_color=YELLOW,
                             stroke_width=2, stroke_opacity=0.8)
         self.add(traced)
 
-        # 2.0-4.5s: fly TOL -> T1 -> T2 -> T3
-        segment_times = [0.5, 1.0, 1.0]  # seconds per segment
+        # 1.6-3.7s: fly TOL -> T1 -> T2 -> T3
+        segment_times = [0.5, 0.8, 0.8]
         for i in range(3):
             target = path_points[i + 1]
             angle = _angle_between(path_points[i], target)
-            drone.rotate(angle - drone.get_angle() if hasattr(drone, '_angle') else angle - PI / 2)
 
-            # Waypoint dot + label on arrival
-            wp_dot = Dot(target, radius=0.05, color=YELLOW)
-            wp_label = Text(wp_names[i], font_size=13, color=YELLOW)
+            wp_dot = Dot(target, radius=0.06, color=YELLOW)
+            wp_label = Text(wp_names[i], font_size=14, color=YELLOW)
             wp_label.next_to(wp_dot, DOWN, buff=0.06)
 
             self.play(
-                drone.animate.move_to(target).rotate(
-                    _angle_between(path_points[i], target) - PI / 2
-                    if i == 0 else
-                    _angle_between(path_points[i], target)
-                    - _angle_between(path_points[max(0, i - 1)], path_points[i])
-                ),
+                drone.animate.move_to(target),
                 run_time=segment_times[i],
+                rate_func=linear,
             )
             self.play(FadeIn(wp_dot), FadeIn(wp_label), run_time=0.1)
 
-        # 4.5-5.0s: state TRANSIT_TO_SEARCH, drone moves toward search entry
+        # 3.7-4.5s: T3 -> first search waypoint (smooth transition)
         new_state3 = Text("TRANSIT_TO_SEARCH", font_size=10, color=YELLOW).move_to(state_bg)
-        search_entry = SEARCH_PTS[0]  # first search polygon corner
         self.play(
             Transform(state_text, new_state3),
-            drone.animate.move_to(search_entry),
-            run_time=0.5,
+            drone.animate.move_to(first_search_wp),
+            run_time=0.8,
+            rate_func=smooth,
         )
+
+        # Entry dot
+        entry_dot = Dot(first_search_wp, radius=0.06, color=BLUE)
+        entry_label = Text("Search Entry", font_size=12, color=BLUE)
+        entry_label.next_to(entry_dot, DOWN, buff=0.06)
+        self.play(FadeIn(entry_dot), FadeIn(entry_label), run_time=0.3)
+
+        self.wait(0.3)
 
 
 # ═══════════════════════════════════════════════════════════════
-#  SCENE 3: SEARCH PATTERN (8 seconds)
+#  SCENE 3: SEARCH PATTERN -- SPIRAL (8 seconds)
 # ═══════════════════════════════════════════════════════════════
 
 class SearchScene(Scene):
     def construct(self):
-        # ── Background zones ──
+        # Background zones
         flight_poly, search_poly, sssi_poly = _make_zones(dim=True)
-        # Slightly brighter search area
         search_poly_vis = Polygon(*SEARCH_PTS, fill_color=BLUE_C, fill_opacity=0.10,
                                   stroke_color=BLUE, stroke_width=1.5)
         self.add(flight_poly, search_poly_vis, sssi_poly)
 
-        # NFZ buffer polygon (30m inset toward search area)
-        # Approximate: shrink SSSI toward its centroid by buffer distance in screen
-        sssi_centroid = _centroid(SSSI_PTS)
-        buffer_screen = m2s(NFZ_WAYPOINT_BUFFER_M)
-        nfz_buffer_pts = []
-        for pt in SSSI_PTS:
-            d = pt - sssi_centroid
-            norm = np.linalg.norm(d[:2])
-            if norm > 1e-6:
-                shrunk = sssi_centroid + d * max(0, (norm + buffer_screen)) / norm
-            else:
-                shrunk = pt.copy()
-            nfz_buffer_pts.append(shrunk)
+        # Generate spiral waypoints
+        strip_spacing_m = GROUND_FOOTPRINT_W_M * 0.8
+        spiral_wps = generate_spiral_path(SEARCH_PTS, strip_spacing_m, num_loops=10)
 
-        nfz_buffer_raw = Polygon(*nfz_buffer_pts, color=PINK, stroke_width=1, stroke_opacity=0.5,
-                                 fill_opacity=0)
-        nfz_buffer = DashedVMobject(nfz_buffer_raw, num_dashes=20)
-        nfz_buffer_label = Text("NFZ Buffer 30m", font_size=10, color=PINK)
-        nfz_buffer_label.move_to(sssi_centroid + np.array([0, 0.6, 0]))
-
-        # ── Generate lawnmower pattern ──
-        strip_spacing_m = GROUND_FOOTPRINT_W_M * 0.8  # ~25.7 m
-        scan_lines = generate_lawnmower(SEARCH_PTS, strip_spacing_m)
-        waypoints = _build_waypoint_path(scan_lines)
-
-        if not waypoints:
-            self.add(Text("No waypoints generated", color=RED))
+        if len(spiral_wps) < 2:
+            self.add(Text("No spiral waypoints generated", color=RED))
             self.wait(2)
             return
 
-        # Draw faint upcoming pattern
-        pattern_lines = VGroup()
-        for s, e in scan_lines:
-            pattern_lines.add(Line(s, e, stroke_color=WHITE, stroke_width=0.5, stroke_opacity=0.2))
-        self.add(pattern_lines)
+        # Draw faint spiral preview
+        spiral_preview = VGroup()
+        for i in range(len(spiral_wps) - 1):
+            spiral_preview.add(
+                Line(spiral_wps[i], spiral_wps[i + 1],
+                     stroke_color=WHITE, stroke_width=0.5, stroke_opacity=0.15)
+            )
+        self.add(spiral_preview)
 
-        # ── Drone + camera footprint ──
-        drone = _make_drone(0.10)
-        drone.move_to(waypoints[0])
+        # Drone
+        drone = _make_drone(0.12)
+        drone.move_to(spiral_wps[0])
 
+        # Camera footprint dimensions
         fw = m2s(GROUND_FOOTPRINT_W_M)
         fh = m2s(GROUND_FOOTPRINT_H_M)
-        cam_footprint = Rectangle(
-            width=fw, height=fh,
-            stroke_color=TEAL, stroke_width=1.5,
-            fill_opacity=0.05, fill_color=TEAL,
-        )
-        cam_footprint.move_to(waypoints[0])
 
-        # Always keep footprint with drone
-        cam_footprint.add_updater(lambda m: m.move_to(drone.get_center()))
+        # Clipped camera footprint (updated each frame)
+        cam_footprint = _clip_footprint_to_poly(spiral_wps[0], fw, fh, SEARCH_PTS)
+        self.add(cam_footprint)
 
-        # ── State badge ──
+        # State badge
         state_bg = RoundedRectangle(
             corner_radius=0.05, width=2.0, height=0.3,
             fill_color=DARK_GREY, fill_opacity=0.8,
@@ -568,49 +599,79 @@ class SearchScene(Scene):
         speed_label = Text("8 m/s", font_size=13, color=YELLOW)
         speed_label.next_to(state_bg, DOWN, buff=0.08)
 
-        # ── Coverage counter ──
+        # Coverage counter
         coverage_text = Text("Coverage: 0%", font_size=16, color=GREEN)
         coverage_text.to_corner(UL, buff=0.2)
 
-        # ── Coverage strips (filled as drone passes) ──
-        coverage_strips = VGroup()
-
         self.add(state_bg, state_text, speed_label, coverage_text)
 
-        # ── Animate ──
+        # Animate
 
-        # 0.0-0.5s: drone enters, footprint appears
-        self.play(FadeIn(drone, scale=0.5), FadeIn(cam_footprint), run_time=0.5)
+        # 0.0-0.5s: drone enters
+        self.play(FadeIn(drone, scale=0.5), run_time=0.5)
 
-        # Add NFZ buffer
-        self.play(FadeIn(nfz_buffer), FadeIn(nfz_buffer_label), run_time=0.3)
+        # 0.5-7.0s: fly the spiral
+        # Group waypoints into segments for smooth animation
+        total_wps = len(spiral_wps)
+        num_segments = min(20, total_wps - 1)  # animate in chunks
+        segment_size = max(1, (total_wps - 1) // num_segments)
+        time_per_segment = 6.0 / num_segments
 
-        # 0.5-7.0s: fly the lawnmower pattern
-        total_strips = len(scan_lines)
-        # Time per strip: distribute ~6.5s across all strips
-        time_per_strip = 6.2 / max(total_strips, 1)
+        # Shapely polygon for coverage tracking
+        search_shapely = ShapelyPolygon([(p[0], p[1]) for p in SEARCH_PTS])
+        covered_area = None
 
-        for idx, (s, e) in enumerate(scan_lines):
-            # Move drone along scan line (start -> end)
+        for seg_idx in range(num_segments):
+            start_idx = seg_idx * segment_size
+            end_idx = min(start_idx + segment_size, total_wps - 1)
+            if start_idx >= total_wps - 1:
+                break
+
+            target_pt = spiral_wps[end_idx]
+
+            # Remove old footprint
+            self.remove(cam_footprint)
+
+            # Move drone
             self.play(
-                drone.animate.move_to(s),
-                run_time=min(time_per_strip * 0.15, 0.15),
+                drone.animate.move_to(target_pt),
+                run_time=time_per_segment,
                 rate_func=linear,
             )
-            self.play(
-                drone.animate.move_to(e),
-                run_time=time_per_strip * 0.85,
-                rate_func=linear,
-            )
 
-            # Add coverage strip
-            strip_rect = Line(s, e, stroke_color=GREEN, stroke_width=max(fw * 8, 3),
-                              stroke_opacity=0.2)
-            coverage_strips.add(strip_rect)
-            self.add(strip_rect)
+            # Add coverage trail (circle around each visited point, clipped)
+            for wp_idx in range(start_idx, end_idx + 1):
+                wp = spiral_wps[wp_idx]
+                from shapely.geometry import Point as ShapelyPoint
+                cov_circle = ShapelyPoint(wp[0], wp[1]).buffer(fw * 0.4)
+                cov_clipped = cov_circle.intersection(search_shapely)
+                if not cov_clipped.is_empty:
+                    if covered_area is None:
+                        covered_area = cov_clipped
+                    else:
+                        covered_area = covered_area.union(cov_clipped)
 
-            # Update coverage counter
-            pct = int(100 * (idx + 1) / total_strips)
+            # Draw coverage fill
+            if covered_area is not None and not covered_area.is_empty:
+                pct = int(100 * covered_area.area / search_shapely.area)
+                pct = min(pct, 100)
+            else:
+                pct = 0
+
+            # Add a small green trail segment
+            if end_idx > 0:
+                trail_line = Line(
+                    spiral_wps[start_idx], spiral_wps[end_idx],
+                    stroke_color=GREEN, stroke_width=max(fw * 5, 3),
+                    stroke_opacity=0.15,
+                )
+                self.add(trail_line)
+
+            # New clipped footprint
+            cam_footprint = _clip_footprint_to_poly(target_pt, fw, fh, SEARCH_PTS)
+            self.add(cam_footprint)
+
+            # Update coverage text
             new_cov = Text(f"Coverage: {pct}%", font_size=16, color=GREEN)
             new_cov.to_corner(UL, buff=0.2)
             self.remove(coverage_text)
@@ -627,28 +688,31 @@ class SearchScene(Scene):
 
 class BeaconScene(Scene):
     def construct(self):
-        # ── Background zones (dimmed) ──
+        # Background zones (dimmed)
         flight_poly, search_poly, sssi_poly = _make_zones(dim=True)
         self.add(flight_poly, search_poly, sssi_poly)
 
-        # Faint old coverage (show drone was searching)
-        strip_spacing_m = GROUND_FOOTPRINT_W_M * 0.8
-        old_scan_lines = generate_lawnmower(SEARCH_PTS, strip_spacing_m)
-        old_coverage = VGroup()
+        # Show partial coverage from earlier search
         fw = m2s(GROUND_FOOTPRINT_W_M)
-        # Show first ~60% of strips as faint green
-        show_count = int(len(old_scan_lines) * 0.6)
-        for s, e in old_scan_lines[:show_count]:
+
+        # Generate partial spiral coverage (first 60%)
+        strip_spacing_m = GROUND_FOOTPRINT_W_M * 0.8
+        spiral_wps = generate_spiral_path(SEARCH_PTS, strip_spacing_m, num_loops=10)
+        show_count = int(len(spiral_wps) * 0.4)
+
+        old_coverage = VGroup()
+        for i in range(0, show_count - 1, 2):
             old_coverage.add(
-                Line(s, e, stroke_color=GREEN, stroke_width=max(fw * 8, 3),
+                Line(spiral_wps[i], spiral_wps[i + 1],
+                     stroke_color=GREEN, stroke_width=max(fw * 5, 3),
                      stroke_opacity=0.1)
             )
         self.add(old_coverage)
 
         # Drone mid-search
-        drone = _make_drone(0.10)
+        drone = _make_drone(0.12)
         if show_count > 0:
-            drone.move_to(old_scan_lines[show_count - 1][1])
+            drone.move_to(spiral_wps[show_count - 1])
         else:
             drone.move_to(SEARCH_PTS[0])
         self.add(drone)
@@ -667,13 +731,12 @@ class BeaconScene(Scene):
         # Focus area centroid
         focus_centroid = _centroid(FOCUS_PTS)
 
-        # ── 0.0-0.5s: PLB FLASH ──
+        # 0.0-0.5s: PLB FLASH
         plb_text = Text("PLB SIGNAL RECEIVED", font_size=36, color=ORANGE, weight=BOLD)
         plb_text.move_to(ORIGIN + UP * 0.5)
 
-        # Radio rings
         rings = VGroup()
-        for r in [0.3, 0.6, 0.9]:
+        for r in [0.4, 0.8, 1.2]:
             ring = Circle(radius=r, stroke_color=ORANGE, stroke_width=2, stroke_opacity=0.6)
             ring.move_to(focus_centroid)
             rings.add(ring)
@@ -684,7 +747,7 @@ class BeaconScene(Scene):
             run_time=0.5,
         )
 
-        # 0.5-1.5s: focus area appears, rings fade, old coverage dims
+        # 0.5-1.2s: focus area appears, rings fade
         focus_poly = Polygon(*FOCUS_PTS, fill_color=ORANGE, fill_opacity=0.2,
                              stroke_color=ORANGE, stroke_width=2)
         focus_label = Text("Focus Area", font_size=14, color=ORANGE)
@@ -696,29 +759,22 @@ class BeaconScene(Scene):
             FadeIn(focus_poly),
             FadeIn(focus_label),
             old_coverage.animate.set_opacity(0.05),
-            run_time=1.0,
+            run_time=0.7,
         )
 
-        # 1.5-2.5s: zoom in on focus area, generate tighter pattern, speed change
-        # Generate tighter lawnmower inside focus area
-        focus_strip_spacing = GROUND_FOOTPRINT_W_M * 0.6  # tighter
-        focus_scan_lines = generate_lawnmower(FOCUS_PTS, focus_strip_spacing)
-        focus_waypoints = _build_waypoint_path(focus_scan_lines)
+        # 1.2-2.0s: zoom in on focus area + speed change
+        # Generate spiral inside focus area
+        focus_spiral_wps = generate_spiral_path(FOCUS_PTS, GROUND_FOOTPRINT_W_M * 0.5, num_loops=4)
 
-        # Draw faint pattern lines
-        focus_pattern = VGroup()
-        for s, e in focus_scan_lines:
-            focus_pattern.add(
-                Line(s, e, stroke_color=WHITE, stroke_width=0.5, stroke_opacity=0.3)
-            )
-
-        # New speed
+        # New speed label
         new_speed = Text("5 m/s", font_size=13, color=YELLOW)
         new_speed.next_to(state_bg, DOWN, buff=0.08)
 
-        # Camera zoom (scale up + shift to focus area)
-        zoom_scale = 3.0
-        shift_vec = -focus_centroid  # center on focus area
+        new_state = Text("BEACON_REDIRECT", font_size=11, color=ORANGE).move_to(state_bg)
+
+        # Zoom: scale up and center on focus area
+        zoom_scale = 4.0
+        shift_vec = -focus_centroid
 
         # Group everything for zoom
         scene_group = VGroup(
@@ -726,18 +782,29 @@ class BeaconScene(Scene):
             focus_poly, focus_label, drone,
         )
 
+        # Draw faint focus spiral (in pre-zoom coords, will be scaled with group)
+        focus_spiral_preview = VGroup()
+        for i in range(len(focus_spiral_wps) - 1):
+            focus_spiral_preview.add(
+                Line(focus_spiral_wps[i], focus_spiral_wps[i + 1],
+                     stroke_color=WHITE, stroke_width=0.5, stroke_opacity=0.3)
+            )
+
         self.play(
             scene_group.animate.scale(zoom_scale).shift(shift_vec * zoom_scale),
-            FadeIn(focus_pattern.scale(zoom_scale).shift(shift_vec * zoom_scale)),
+            FadeIn(focus_spiral_preview.scale(zoom_scale).shift(shift_vec * zoom_scale)),
             Transform(speed_label, new_speed),
-            run_time=1.0,
+            Transform(state_text, new_state),
+            run_time=0.8,
         )
 
+        # 2.0-3.7s: fly focus spiral (zoomed coordinates)
         # Camera footprint (scaled)
-        fh = m2s(GROUND_FOOTPRINT_H_M) * zoom_scale
-        fw_s = m2s(GROUND_FOOTPRINT_W_M) * zoom_scale
+        fh_z = m2s(GROUND_FOOTPRINT_H_M) * zoom_scale
+        fw_z = m2s(GROUND_FOOTPRINT_W_M) * zoom_scale
+
         cam_footprint = Rectangle(
-            width=fw_s, height=fh,
+            width=fw_z, height=fh_z,
             stroke_color=TEAL, stroke_width=1.5,
             fill_opacity=0.05, fill_color=TEAL,
         )
@@ -745,33 +812,48 @@ class BeaconScene(Scene):
         cam_footprint.add_updater(lambda m: m.move_to(drone.get_center()))
         self.add(cam_footprint)
 
-        # 2.5-4.0s: fly 2-3 strips of focus pattern
+        # Fly through focus spiral waypoints
         focus_coverage = VGroup()
-        strips_to_show = min(3, len(focus_scan_lines))
-        time_per_strip = 1.3 / max(strips_to_show, 1)
+        num_focus_wps = len(focus_spiral_wps)
+        segments_to_show = min(8, num_focus_wps - 1)
+        seg_size = max(1, (num_focus_wps - 1) // segments_to_show)
+        time_per = 1.5 / max(segments_to_show, 1)
 
-        for idx in range(strips_to_show):
-            s, e = focus_scan_lines[idx]
+        for seg_idx in range(segments_to_show):
+            start_i = seg_idx * seg_size
+            end_i = min(start_i + seg_size, num_focus_wps - 1)
+            if start_i >= num_focus_wps - 1:
+                break
+
+            target = focus_spiral_wps[end_i]
             # Transform to zoomed coordinates
-            s_z = s * zoom_scale + np.array([*shift_vec[:2] * zoom_scale, 0])
-            e_z = e * zoom_scale + np.array([*shift_vec[:2] * zoom_scale, 0])
+            t_z = target * zoom_scale + np.array([*shift_vec[:2] * zoom_scale, 0])
 
             self.play(
-                drone.animate.move_to(s_z),
-                run_time=time_per_strip * 0.2,
-                rate_func=linear,
-            )
-            self.play(
-                drone.animate.move_to(e_z),
-                run_time=time_per_strip * 0.8,
+                drone.animate.move_to(t_z),
+                run_time=time_per,
                 rate_func=linear,
             )
 
-            # Coverage strip
-            strip = Line(s_z, e_z, stroke_color=GREEN, stroke_width=max(fw_s * 6, 4),
-                         stroke_opacity=0.25)
-            focus_coverage.add(strip)
-            self.add(strip)
+            # Coverage trail
+            if end_i > 0:
+                s_z = focus_spiral_wps[start_i] * zoom_scale + np.array([*shift_vec[:2] * zoom_scale, 0])
+                strip = Line(s_z, t_z, stroke_color=GREEN,
+                             stroke_width=max(fw_z * 4, 4), stroke_opacity=0.2)
+                focus_coverage.add(strip)
+                self.add(strip)
 
-        # Hold
-        self.wait(0.3)
+        # 3.7-4.0s: detection flash
+        det_flash = Circle(radius=0.3, stroke_color=RED, stroke_width=3,
+                           fill_color=RED, fill_opacity=0.3)
+        det_flash.move_to(drone.get_center())
+        det_label = Text("TARGET DETECTED", font_size=16, color=RED, weight=BOLD)
+        det_label.next_to(det_flash, UP, buff=0.15)
+
+        self.play(
+            GrowFromCenter(det_flash),
+            FadeIn(det_label),
+            run_time=0.3,
+        )
+
+        self.wait(0.2)
