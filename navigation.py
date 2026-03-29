@@ -33,8 +33,14 @@ class NavigationController:
 
     # ── Position commands ────────────────────────────────────────────
 
-    def send_global_target(self, lat, lon, alt, yaw=None):
-        """Fly to (lat, lon, alt) via SET_POSITION_TARGET_GLOBAL_INT (relative-alt frame)."""
+    def send_global_target(self, lat, lon, alt, yaw=None, vz=0):
+        """Fly to (lat, lon, alt) via SET_POSITION_TARGET_GLOBAL_INT (relative-alt frame).
+
+        Args:
+            vz: vertical velocity hint in NED (negative=climb, positive=descend).
+                Gives the altitude controller a feed-forward boost so it doesn't
+                rely solely on P-gain for small altitude changes.
+        """
         if math.isnan(lat) or math.isnan(lon) or math.isnan(alt):
             print(f"WARNING: NaN in target position (lat={lat}, lon={lon}, alt={alt}) — skipping")
             return
@@ -48,18 +54,23 @@ class NavigationController:
         if yaw is None and self.no_turn and self._get_yaw is not None:
             yaw = self._get_yaw()
 
+        # Type mask: position always used. Enable vz when non-zero for altitude feed-forward.
+        #   Bits: 0=x 1=y 2=z 3=vx 4=vy 5=vz 6-8=accel 9=force 10=yaw 11=yaw_rate
+        #   0 = use, 1 = ignore
         if yaw is not None:
+            mask = 0b100111000000 if vz != 0 else 0b100111111000
             self.master.mav.set_position_target_global_int_send(
                 0, self.master.target_system, self.master.target_component,
                 mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT_INT,
-                0b100111111000, int(lat * 1e7), int(lon * 1e7), alt,
-                0, 0, 0, 0, 0, 0, yaw, 0)
+                mask, int(lat * 1e7), int(lon * 1e7), alt,
+                0, 0, vz, 0, 0, 0, yaw, 0)
         else:
+            mask = 0b110111000000 if vz != 0 else 0b110111111000
             self.master.mav.set_position_target_global_int_send(
                 0, self.master.target_system, self.master.target_component,
                 mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT_INT,
-                0b110111111000, int(lat * 1e7), int(lon * 1e7), alt,
-                0, 0, 0, 0, 0, 0, 0, 0)
+                mask, int(lat * 1e7), int(lon * 1e7), alt,
+                0, 0, vz, 0, 0, 0, 0, 0)
 
     def send_velocity(self, vx, vy, vz, yaw_rate=0, current_yaw=None):
         """Send body-frame velocity command, rotated to NED before transmission."""
