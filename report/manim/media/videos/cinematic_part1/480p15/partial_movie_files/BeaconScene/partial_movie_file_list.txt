@@ -1,0 +1,5 @@
+# This file is used internally by FFMPEG.
+file 'file:C:/Users/Bristol/Desktop/AI for Robotics/v3/report/manim/media/videos/cinematic_part1/480p15/partial_movie_files/BeaconScene/1584795214_662583839_2317008542.mp4'
+file 'file:C:/Users/Bristol/Desktop/AI for Robotics/v3/report/manim/media/videos/cinematic_part1/480p15/partial_movie_files/BeaconScene/4072820271_3619384102_3442390171.mp4'
+file 'file:C:/Users/Bristol/Desktop/AI for Robotics/v3/report/manim/media/videos/cinematic_part1/480p15/partial_movie_files/BeaconScene/4072820271_2056426567_1873172596.mp4'
+file 'file:C:/Users/Bristol/Desktop/AI for Robotics/v3/report/manim/media/videos/cinematic_part1/480p15/partial_movie_files/BeaconScene/4072820271_4079250704_3855492828.mp4'

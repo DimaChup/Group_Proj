@@ -1,0 +1,9 @@
+# This file is used internally by FFMPEG.
+file 'file:C:/Users/Bristol/Desktop/AI for Robotics/v3/report/manim/media/videos/cinematic_part2/480p15/partial_movie_files/DetectionScene/1584795214_1946281993_1414376581.mp4'
+file 'file:C:/Users/Bristol/Desktop/AI for Robotics/v3/report/manim/media/videos/cinematic_part2/480p15/partial_movie_files/DetectionScene/4072820271_2195358283_1484159450.mp4'
+file 'file:C:/Users/Bristol/Desktop/AI for Robotics/v3/report/manim/media/videos/cinematic_part2/480p15/partial_movie_files/DetectionScene/4072820271_3985896276_718362850.mp4'
+file 'file:C:/Users/Bristol/Desktop/AI for Robotics/v3/report/manim/media/videos/cinematic_part2/480p15/partial_movie_files/DetectionScene/4072820271_904995614_2539077448.mp4'
+file 'file:C:/Users/Bristol/Desktop/AI for Robotics/v3/report/manim/media/videos/cinematic_part2/480p15/partial_movie_files/DetectionScene/4072820271_402525674_1316812793.mp4'
+file 'file:C:/Users/Bristol/Desktop/AI for Robotics/v3/report/manim/media/videos/cinematic_part2/480p15/partial_movie_files/DetectionScene/4072820271_3142935987_95227456.mp4'
+file 'file:C:/Users/Bristol/Desktop/AI for Robotics/v3/report/manim/media/videos/cinematic_part2/480p15/partial_movie_files/DetectionScene/4072820271_1287716789_166156247.mp4'
+file 'file:C:/Users/Bristol/Desktop/AI for Robotics/v3/report/manim/media/videos/cinematic_part2/480p15/partial_movie_files/DetectionScene/4072820271_2587720847_2562647532.mp4'
