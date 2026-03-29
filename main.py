@@ -522,7 +522,30 @@ class VisualFlightMission(StateHandlersMixin):
     def calculate_landing_spot(self, direction_key):
         self.landing_lat, self.landing_lon = landing_offset_7_5m(
             self.target_lat, self.target_lon, direction_key)
-        print(f"Landing Spot: {direction_key.upper()} of target")
+
+        # Check if landing spot is too close to NFZ — try other directions if so
+        if self.geofence:
+            dist, inside = self.geofence.distance_to_boundary(
+                self.landing_lat, self.landing_lon)
+            if inside or dist < config.NFZ_HARD_BOUNDARY_M:
+                print(f"  [NFZ] Landing spot {direction_key.upper()} is {dist:.0f}m from NFZ — too close!")
+                # Try all 4 directions, pick the one furthest from NFZ
+                best_dir, best_dist = direction_key, dist
+                for d in ['n', 's', 'e', 'w']:
+                    lat, lon = landing_offset_7_5m(self.target_lat, self.target_lon, d)
+                    dd, di = self.geofence.distance_to_boundary(lat, lon)
+                    if not di and dd > best_dist:
+                        best_dist = dd
+                        best_dir = d
+                        self.landing_lat, self.landing_lon = lat, lon
+                if best_dir != direction_key:
+                    print(f"  [NFZ] Redirected to {best_dir.upper()} ({best_dist:.0f}m from NFZ)")
+                else:
+                    print(f"  [NFZ] WARNING: all directions near NFZ — proceeding with caution")
+            else:
+                print(f"  Landing Spot: {direction_key.upper()} of target ({dist:.0f}m from NFZ — safe)")
+        else:
+            print(f"Landing Spot: {direction_key.upper()} of target")
 
     # ── Dashboard / HUD ───────────────────────────────────────────────
 
@@ -736,10 +759,10 @@ class VisualFlightMission(StateHandlersMixin):
             self._last_repulsion_vec = None
             if (self.geofence and self.master and self.lat != 0
                     and self.state not in (State.INIT, State.CONNECTING, State.ARMING,
-                                           State.TAKEOFF, State.LANDING, State.DONE,
-                                           State.HOVER_TARGET, State.APPROACH,
-                                           State.RETURN_TRANSIT, State.RETURN_HOME)):
-                self._enforce_geofence()
+                                           State.TAKEOFF, State.LANDING, State.DONE)):
+                skip_speed = self.state in (State.HOVER_TARGET, State.APPROACH,
+                                            State.RETURN_TRANSIT, State.RETURN_HOME)
+                self._enforce_geofence(skip_speed_clamp=skip_speed)
 
             if self.state == State.DONE:
                 (cv2.waitKey(3000) if not HEADLESS else time.sleep(3.0))
@@ -758,8 +781,10 @@ class VisualFlightMission(StateHandlersMixin):
                 pass
             if key == 27: break
 
-    def _enforce_geofence(self):
-        """NFZ speed cap + inner polygon repulsion."""
+    def _enforce_geofence(self, skip_speed_clamp=False):
+        """NFZ speed cap + inner polygon repulsion.
+        skip_speed_clamp: if True, only enforce hard boundary and repulsion
+        (used during approach/return where speed clamping fights altitude changes)."""
         nfz_dist, nfz_inside = self.geofence.distance_to_boundary(self.lat, self.lon)
 
         # Compute NFZ approach limit + toward vector (used by manual AND navigation)
@@ -811,7 +836,9 @@ class VisualFlightMission(StateHandlersMixin):
             if self.nav: self.nav.send_velocity(0, 0, 0)
             return
 
-        if NFZ_DIRECTIONAL and not nfz_inside and nfz_dist < config.NFZ_SLOW_ZONE_M:
+        if skip_speed_clamp:
+            pass  # During approach/return: hard boundary above is enough, skip speed clamping
+        elif NFZ_DIRECTIONAL and not nfz_inside and nfz_dist < config.NFZ_SLOW_ZONE_M:
             # Ramp: 0 m/s at SCALAR_ZERO_M (2m), linearly up to ZONE_MAX at SLOW_ZONE_M (20m)
             if nfz_dist <= config.NFZ_SCALAR_ZERO_M:
                 max_approach = 0.0

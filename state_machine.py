@@ -507,8 +507,24 @@ class StateHandlersMixin:
             print(f"  ACTION: Y=Confirm  N=Reject  I=Interest (120s timeout)")
 
     def _handle_descending(self, target_found, px_u, px_v, key):
-        # No-descend mode: skip straight to VERIFY
-        self._set_state(State.VERIFY)
+        # Descend to verify altitude (config value or halfway to 3m, whichever is higher)
+        search_alt = self._current_search_alt()
+        verify_alt = max(config.VERIFY_ALT, (search_alt + 3.0) / 2.0)
+        verify_alt = min(verify_alt, search_alt - 2.0)  # at least 2m below search alt
+        alt_error = self.alt - verify_alt
+        if alt_error > 0.5:
+            vz = min(0.5 * alt_error, 1.5)
+        elif alt_error < -0.5:
+            vz = max(0.5 * alt_error, -1.5)
+        else:
+            vz = 0
+        if time.time() - self.last_req > 0.3:
+            self.nav.send_global_target(self.target_lat, self.target_lon, verify_alt, vz=vz)
+            self.last_req = time.time()
+        # Transition when at verify altitude
+        if abs(alt_error) < 1.0:
+            print(f"  At {self.alt:.0f}m — ready for operator verification")
+            self._set_state(State.VERIFY)
 
     def _handle_verify(self, target_found, px_u, px_v, key):
         self.waiting_for_confirmation = True
@@ -575,17 +591,20 @@ class StateHandlersMixin:
             self._set_state(State.DONE)
 
     def _handle_approach(self, target_found, px_u, px_v, key):
+        # Fly to landing spot and descend for payload deploy
+        deploy_alt = 3.0
         if time.time() - self.last_req > 0.5:
-            # vz hint: descend at 1.5 m/s when above target, 0 when close
-            vz = 1.5 if self.alt > 3.5 else 0
-            self.nav.send_global_target(self.landing_lat, self.landing_lon, 3.0, vz=vz)
+            self.nav.send_global_target(self.landing_lat, self.landing_lon, deploy_alt)
             self.last_req = time.time()
-        if self.get_dist_to_point(self.landing_lat, self.landing_lon) < 2.0 and self.alt < 3.5:
-            print("  Hovering at 3m above target — payload deploy sequence (15s)")
+            if self.alt > deploy_alt + 1.0:
+                print(f"  [DESCENT] {self.alt:.1f}m → {deploy_alt}m")
+        if self.get_dist_to_point(self.landing_lat, self.landing_lon) < 2.0 and self.alt < deploy_alt + 2.0:
+            print(f"  At {self.alt:.1f}m above target — payload deploy sequence (15s)")
             self._set_state(State.HOVER_TARGET)
 
     def _handle_hover_target(self, target_found, px_u, px_v, key):
         from pymavlink import mavutil
+        # Hold at deploy altitude — let ArduCopter position controller handle
         self.nav.send_global_target(self.landing_lat, self.landing_lon, 3.0)
         elapsed = time.time() - self.state_start_time
         self._hover_elapsed = elapsed
@@ -597,7 +616,7 @@ class StateHandlersMixin:
 
         if elapsed >= 3.0 and not hasattr(self, '_servo_stage1_done'):
             self._servo_stage1_done = True
-            print(f"  SERVO STAGE 1 — partial release (ch{SERVO_CH}, PWM {SERVO_S1})")
+            print(f"  SERVO STAGE 1 — partial release at {self.alt:.1f}m (ch{SERVO_CH}, PWM {SERVO_S1})")
             if self.master:
                 self.master.mav.command_long_send(
                     self.master.target_system, self.master.target_component,
@@ -605,7 +624,7 @@ class StateHandlersMixin:
 
         if elapsed >= 6.0 and not self._servo_released:
             self._servo_released = True
-            print(f"  SERVO STAGE 2 — full release (ch{SERVO_CH}, PWM {SERVO_S2})")
+            print(f"  SERVO STAGE 2 — full release at {self.alt:.1f}m (ch{SERVO_CH}, PWM {SERVO_S2})")
             if self.master:
                 self.master.mav.command_long_send(
                     self.master.target_system, self.master.target_component,
@@ -620,9 +639,6 @@ class StateHandlersMixin:
             if hasattr(self, '_servo_stage1_done'):
                 del self._servo_stage1_done
             print(f"Hover complete ({elapsed:.0f}s). Climbing and returning home.")
-            if self.master:
-                self.nav.send_global_target(self.lat, self.lon, self._current_search_alt())
-                self._climb_start = time.time()
             if self.pre_waypoints:
                 self.return_wp_index = len(self.pre_waypoints) - 1
                 self._set_state(State.RETURN_TRANSIT)
@@ -631,12 +647,6 @@ class StateHandlersMixin:
 
     def _handle_return_transit(self, target_found, px_u, px_v, key):
         return_alt = self._current_search_alt()
-        if self.alt < return_alt - 3.0:
-            if time.time() - self.last_req > 1.0:
-                self.nav.send_global_target(self.lat, self.lon, return_alt, vz=-3.0)
-                self.last_req = time.time()
-                print(f"  [CLIMB] {self.alt:.1f}m → {return_alt:.0f}m before heading home...")
-            return
         self.nav.set_speed(config.TRANSIT_SPEED_MPS)
         if self.return_wp_index >= 0:
             wp = self.pre_waypoints[self.return_wp_index]
@@ -658,14 +668,6 @@ class StateHandlersMixin:
             print("WARNING: GPS never fixed — home position unknown. Landing in place.")
             self._set_state(State.LANDING)
             return
-        # Altitude climb guard — climb to search alt before flying home
-        return_alt = self._current_search_alt()
-        if self.alt < return_alt - 3.0:
-            if time.time() - self.last_req > 1.0:
-                self.nav.send_global_target(self.lat, self.lon, return_alt, vz=-3.0)
-                self.last_req = time.time()
-                print(f"  [CLIMB] {self.alt:.1f}m → {return_alt:.0f}m before heading home...")
-            return  # wait for climb
         self.nav.set_speed(config.TRANSIT_SPEED_MPS)
         if time.time() - self.last_req > 2.0:
             self.nav.send_global_target(self.home_lat, self.home_lon, config.TARGET_ALT)
