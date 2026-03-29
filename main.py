@@ -837,7 +837,11 @@ class VisualFlightMission(StateHandlersMixin):
             return
 
         if skip_speed_clamp:
-            pass  # During approach/return: hard boundary above is enough, skip speed clamping
+            # During approach/return: hard boundary (above) is enough.
+            # NO set_speed (bleeds into vertical via 3D position controller).
+            # NO send_velocity repulsion (overrides position target, blocks climb with Z=0).
+            # If wind pushes into NFZ → hard boundary triggers MANUAL → repulsion kicks in there.
+            pass
         elif NFZ_DIRECTIONAL and not nfz_inside and nfz_dist < config.NFZ_SLOW_ZONE_M:
             # Ramp: 0 m/s at SCALAR_ZERO_M (2m), linearly up to ZONE_MAX at SLOW_ZONE_M (20m)
             if nfz_dist <= config.NFZ_SCALAR_ZERO_M:
