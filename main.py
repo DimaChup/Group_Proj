@@ -667,15 +667,43 @@ class VisualFlightMission(StateHandlersMixin):
         """NFZ speed cap + inner polygon repulsion."""
         nfz_dist, nfz_inside = self.geofence.distance_to_boundary(self.lat, self.lon)
 
-        # Compute manual speed limit for WASD (used by _handle_manual_flight)
+        # Compute NFZ approach limit + toward vector (used by manual AND navigation)
         if not nfz_inside and nfz_dist < config.NFZ_SLOW_ZONE_M:
             if nfz_dist <= config.NFZ_SCALAR_ZERO_M:
                 self._nfz_manual_max_speed = 0.3
             else:
                 ratio = (nfz_dist - config.NFZ_SCALAR_ZERO_M) / (config.NFZ_SLOW_ZONE_M - config.NFZ_SCALAR_ZERO_M)
                 self._nfz_manual_max_speed = ratio * config.NFZ_ZONE_MAX_SPEED_MPS
+            # Compute toward-NFZ unit vector for directional clamping
+            best_dist_sq = float('inf')
+            nfz_lat, nfz_lon = self.lat, self.lon
+            poly = self.geofence.sssi_polygon_gps
+            for i in range(len(poly)):
+                p1_lat, p1_lon = poly[i]
+                p2_lat, p2_lon = poly[(i + 1) % len(poly)]
+                e_n = (p2_lat - p1_lat) * 111320
+                e_e = (p2_lon - p1_lon) * 111320 * math.cos(math.radians(self.lat))
+                d_n = (self.lat - p1_lat) * 111320
+                d_e = (self.lon - p1_lon) * 111320 * math.cos(math.radians(self.lat))
+                e_len_sq = e_n * e_n + e_e * e_e
+                t = max(0.0, min(1.0, (d_n * e_n + d_e * e_e) / e_len_sq)) if e_len_sq > 1e-12 else 0.0
+                c_lat = p1_lat + t * (p2_lat - p1_lat)
+                c_lon = p1_lon + t * (p2_lon - p1_lon)
+                dsq = ((self.lat - c_lat) * 111320) ** 2 + \
+                      ((self.lon - c_lon) * 111320 * math.cos(math.radians(self.lat))) ** 2
+                if dsq < best_dist_sq:
+                    best_dist_sq = dsq
+                    nfz_lat, nfz_lon = c_lat, c_lon
+            dx = (nfz_lon - self.lon) * 111320 * math.cos(math.radians(self.lat))
+            dy = (nfz_lat - self.lat) * 111320
+            dist = math.sqrt(dx * dx + dy * dy)
+            if dist > 0.1:
+                self._nfz_toward_vec = (dy / dist, dx / dist)  # (north, east) toward NFZ
+            else:
+                self._nfz_toward_vec = None
         else:
-            self._nfz_manual_max_speed = None  # no limit
+            self._nfz_manual_max_speed = None
+            self._nfz_toward_vec = None
 
         if nfz_inside and self.state != State.MANUAL:
             print(f"[GEOFENCE] INSIDE NFZ! Switching to MANUAL")
@@ -753,7 +781,8 @@ class VisualFlightMission(StateHandlersMixin):
             self.nav.last_speed_req = 0
             self.nav.set_speed(max_spd)
 
-        if self.nav:
+        # Repulsive push — only in MANUAL mode (send_velocity fights navigation in other states)
+        if self.nav and self.state == State.MANUAL:
             signed_dist = nfz_dist if not nfz_inside else -nfz_dist
             dist_to_inner = signed_dist + config.NFZ_INNER_OFFSET_M
             if 0 < dist_to_inner < config.NFZ_INNER_RANGE_M:

@@ -850,21 +850,51 @@ class StateHandlersMixin:
                         self._set_state(self.previous_state)
 
     def _handle_manual_flight(self, key):
-        """WASD/RF velocity commands and QE yaw in MANUAL mode."""
+        """WASD/RF velocity commands and QE yaw in MANUAL mode.
+        NFZ viscous field: clamps ONLY the velocity component toward NFZ."""
+        import math
         spd = config.MANUAL_FLY_SPEED_MPS
-        # If near NFZ, limit manual speed toward NFZ using scalar field
-        nfz_max = getattr(self, '_nfz_manual_max_speed', None)
-        if nfz_max is not None and nfz_max < spd:
-            spd = max(0.3, nfz_max)
         climb = config.MANUAL_CLIMB_RATE_MPS
         yaw_rate = config.MANUAL_YAW_RATE_DEGS
         k = chr(key).lower() if key else ''
-        if k == 'w':   self.nav.send_velocity(spd, 0, 0)
-        elif k == 's': self.nav.send_velocity(-spd, 0, 0)
-        elif k == 'a': self.nav.send_velocity(0, -spd, 0)
-        elif k == 'd': self.nav.send_velocity(0, spd, 0)
-        elif k == 'r': self.nav.send_velocity(0, 0, -climb)
-        elif k == 'f': self.nav.send_velocity(0, 0, climb)
+        # Build velocity command in body frame
+        vf, vr, vd = 0, 0, 0  # forward, right, down
+        if k == 'w':   vf = spd
+        elif k == 's': vf = -spd
+        elif k == 'a': vr = -spd
+        elif k == 'd': vr = spd
+        elif k == 'r': vd = -climb
+        elif k == 'f': vd = climb
+        elif k in ('q', 'e'):
+            from pymavlink import mavutil
+            direction = -1 if k == 'q' else 1
+            self.master.mav.command_long_send(
+                self.master.target_system, self.master.target_component,
+                mavutil.mavlink.MAV_CMD_CONDITION_YAW, 0,
+                config.MANUAL_YAW_STEP_DEG, yaw_rate, direction, 1, 0, 0, 0)
+            return
+        # Apply NFZ viscous field to horizontal velocity
+        nfz_toward = getattr(self, '_nfz_toward_vec', None)  # (toward_n, toward_e)
+        nfz_max = getattr(self, '_nfz_manual_max_speed', None)
+        if nfz_toward is not None and nfz_max is not None and (vf != 0 or vr != 0):
+            toward_n, toward_e = nfz_toward
+            # Convert body-frame velocity to NED using yaw
+            yaw = math.radians(getattr(self, 'yaw', 0))
+            vn = vf * math.cos(yaw) - vr * math.sin(yaw)
+            ve = vf * math.sin(yaw) + vr * math.cos(yaw)
+            # Approach component toward NFZ
+            v_toward = vn * toward_n + ve * toward_e
+            if v_toward > nfz_max:
+                # Clamp approach component, keep tangential
+                reduction = v_toward - nfz_max
+                vn -= toward_n * reduction
+                ve -= toward_e * reduction
+            # Send clamped velocity directly in NED (bypass body rotation)
+            self.nav.send_velocity(vn, ve, vd, current_yaw=0)
+            return
+        # No NFZ limit — send normally in body frame
+        if vf != 0 or vr != 0 or vd != 0:
+            self.nav.send_velocity(vf, vr, vd)
         elif k in ('q', 'e'):
             from pymavlink import mavutil
             direction = -1 if k == 'q' else 1
