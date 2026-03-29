@@ -12,7 +12,7 @@ Controls:
     Sliders adjust altitude, overlap, scan angle, and NFZ buffer in real time.
     LEFT-CLICK  = add polygon vertex (in --draw mode)
     RIGHT-CLICK = place drone entry point (green dot)
-    P           = toggle pattern type (Lawnmower / Spiral)
+    P           = toggle pattern type (Lawnmower / Spiral / Zian Spiral)
     H           = toggle speed heatmap (colors segments by expected speed near NFZ)
     R           = reset polygon (enter drawing mode)
     S           = save current view to pattern_visualizer.png
@@ -191,6 +191,251 @@ def coverage_area_m2(waypoints_gps, footprint_cross_m, search_poly_gps=None,
     return swept.area if not swept.is_empty else 0.0
 
 
+# ── Zian's Perimeter Spiral Algorithm ────────────────────────────────
+#
+# Adapted from Zian/path_planner/perimeter_planner.py
+# Progressively insets the search polygon by HALF_SWATH + k*SWATH,
+# handling edge degeneration as edges collapse inward.
+# CCW traversal starting from the vertex nearest the drone entry point.
+
+def _zian_offset_line(poly_m, edge_idx, offset):
+    """Inset line for edge edge_idx of a CCW polygon shifted inward by offset metres.
+    Returns (point_on_line, unit_direction).
+    Inward normal for CCW = (-ey, ex)."""
+    n = len(poly_m)
+    ax, ay = poly_m[edge_idx]
+    bx, by = poly_m[(edge_idx + 1) % n]
+    ex, ey = bx - ax, by - ay
+    length = math.hypot(ex, ey)
+    if length < 1e-12:
+        return (ax, ay), (1.0, 0.0)
+    ex, ey = ex / length, ey / length
+    nx, ny = -ey, ex  # inward normal (CCW)
+    return (ax + nx * offset, ay + ny * offset), (ex, ey)
+
+
+def _zian_line_intersection(p1, d1, p2, d2):
+    """Intersect lines L1 = p1+t*d1 and L2 = p2+s*d2. Returns (x, y) or None."""
+    dx, dy = p2[0] - p1[0], p2[1] - p1[1]
+    cross = d1[0] * d2[1] - d1[1] * d2[0]
+    if abs(cross) < 1e-12:
+        return None
+    t = (dx * d2[1] - dy * d2[0]) / cross
+    return (p1[0] + t * d1[0], p1[1] + t * d1[1])
+
+
+def _zian_inset_polygon(poly_m, offset):
+    """Full inset of poly_m by offset metres.
+    Returns list of vertices or None if collapsed (negative area)."""
+    n = len(poly_m)
+    if n < 3:
+        return None
+    lines = [_zian_offset_line(poly_m, i, offset) for i in range(n)]
+    verts = []
+    for i in range(n):
+        pt = _zian_line_intersection(
+            lines[(i - 1) % n][0], lines[(i - 1) % n][1],
+            lines[i][0], lines[i][1])
+        if pt is None:
+            return None
+        verts.append(pt)
+    # Signed area check: positive means CCW (valid)
+    area2 = sum(verts[i][0] * verts[(i + 1) % n][1] -
+                verts[(i + 1) % n][0] * verts[i][1] for i in range(n))
+    return verts if area2 > 0 else None
+
+
+def _zian_edge_length_at_offset(poly_m, edge_idx, offset):
+    """Return the length of edge edge_idx when polygon is inset by offset."""
+    n = len(poly_m)
+    line_prev = _zian_offset_line(poly_m, (edge_idx - 1) % n, offset)
+    line_cur = _zian_offset_line(poly_m, edge_idx, offset)
+    line_next = _zian_offset_line(poly_m, (edge_idx + 1) % n, offset)
+    p_start = _zian_line_intersection(line_prev[0], line_prev[1],
+                                       line_cur[0], line_cur[1])
+    p_end = _zian_line_intersection(line_cur[0], line_cur[1],
+                                     line_next[0], line_next[1])
+    if p_start is None or p_end is None:
+        return 0.0
+    return math.hypot(p_end[0] - p_start[0], p_end[1] - p_start[1])
+
+
+def _zian_segments_cross(a1, a2, b1, b2, tol=1e-6):
+    """True if segment a1->a2 properly crosses b1->b2 (interior intersection)."""
+    def cross2(o, a, b):
+        return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
+    d1 = cross2(b1, b2, a1)
+    d2 = cross2(b1, b2, a2)
+    d3 = cross2(a1, a2, b1)
+    d4 = cross2(a1, a2, b2)
+    if ((d1 > tol and d2 < -tol) or (d1 < -tol and d2 > tol)) and \
+       ((d3 > tol and d4 < -tol) or (d3 < -tol and d4 > tol)):
+        return True
+    return False
+
+
+def generate_zian_spiral(search_poly_gps, strip_spacing_m, drone_gps=None,
+                         edge_margin_m=0.0):
+    """Generate Zian's perimeter spiral pattern.
+
+    Algorithm:
+    1. Convert GPS polygon to local metres
+    2. Ensure CCW winding
+    3. For each lap k, inset by edge_margin + HALF_SWATH + k*SWATH
+       (where HALF_SWATH = strip_spacing/2, SWATH = strip_spacing)
+    4. Handle edge degeneration (drop collapsed edges)
+    5. Start from vertex nearest drone, traverse CCW
+    6. Stop when inset collapses, crosses previous segments, or proximity limit
+
+    Returns list of (lat, lon) waypoints.
+    """
+    if len(search_poly_gps) < 3 or strip_spacing_m <= 0:
+        return []
+
+    # Convert GPS to local metres (relative to centroid)
+    ref_lat = sum(p[0] for p in search_poly_gps) / len(search_poly_gps)
+    ref_lon = sum(p[1] for p in search_poly_gps) / len(search_poly_gps)
+    cos_lat = math.cos(math.radians(ref_lat))
+
+    def to_m(lat, lon):
+        return ((lon - ref_lon) * 111320 * cos_lat,
+                (lat - ref_lat) * 111320)
+
+    def to_gps(x, y):
+        return (y / 111320 + ref_lat,
+                x / (111320 * cos_lat) + ref_lon)
+
+    poly_m = [to_m(lat, lon) for lat, lon in search_poly_gps]
+
+    # Ensure CCW winding (positive signed area)
+    area2 = sum(poly_m[i][0] * poly_m[(i + 1) % len(poly_m)][1] -
+                poly_m[(i + 1) % len(poly_m)][0] * poly_m[i][1]
+                for i in range(len(poly_m)))
+    if area2 < 0:
+        poly_m = poly_m[::-1]
+
+    half_swath = strip_spacing_m / 2.0
+    swath = strip_spacing_m
+
+    # Max radius for sanity check
+    cx_m = sum(p[0] for p in poly_m) / len(poly_m)
+    cy_m = sum(p[1] for p in poly_m) / len(poly_m)
+    max_poly_r = max(math.hypot(p[0] - cx_m, p[1] - cy_m) for p in poly_m)
+
+    # Find start vertex: nearest to drone entry point
+    if drone_gps:
+        drone_m = to_m(drone_gps[0], drone_gps[1])
+    else:
+        drone_m = poly_m[0]
+
+    # Working polygon starts as the full polygon
+    orig_poly = list(poly_m)
+    all_lap_points = []   # list of lists of (x, y) per lap
+    survey_segs = []      # accumulated survey segments for crossing check
+
+    k = 0
+    max_laps = 100  # safety limit
+    while k < max_laps:
+        offset = edge_margin_m + half_swath + k * swath
+
+        # Try to inset the current working polygon
+        inset = _zian_inset_polygon(orig_poly, offset)
+        if inset is None:
+            break
+
+        # Sanity: reject if any vertex is far beyond original polygon
+        if any(math.hypot(v[0] - cx_m, v[1] - cy_m) > max_poly_r * 1.5
+               for v in inset):
+            break
+
+        # Edge degeneration: check which edges survive at this offset
+        n = len(orig_poly)
+        surviving = []
+        for i in range(n):
+            edge_len = _zian_edge_length_at_offset(orig_poly, i, offset)
+            if edge_len > 0.01:  # threshold for edge survival
+                surviving.append(i)
+
+        if len(surviving) < 3:
+            break
+
+        # If some edges collapsed, rebuild reduced polygon and re-inset
+        if len(surviving) < n:
+            # Keep only vertices where both adjacent edges survive
+            surviving_verts = []
+            for v in range(n):
+                if (v - 1) % n in surviving and v in surviving:
+                    surviving_verts.append(v)
+            if len(surviving_verts) < 3:
+                break
+            # Never reduce below quad (4 vertices) — triangle insets are unstable
+            if len(surviving_verts) < 4:
+                break
+            reduced = [orig_poly[v] for v in surviving_verts]
+            inset = _zian_inset_polygon(reduced, offset)
+            if inset is None:
+                break
+            # Update working polygon for future laps
+            orig_poly = reduced
+
+        # Rotate vertices so the first is nearest to drone (or last lap's end)
+        if all_lap_points:
+            ref_pt = all_lap_points[-1][-1]
+        else:
+            ref_pt = drone_m
+
+        best_j = 0
+        best_d = float('inf')
+        for j, v in enumerate(inset):
+            d = (v[0] - ref_pt[0]) ** 2 + (v[1] - ref_pt[1]) ** 2
+            if d < best_d:
+                best_d = d
+                best_j = j
+        # Rotate to start from best_j
+        lap_pts = inset[best_j:] + inset[:best_j]
+        # Close the loop back to the start
+        lap_pts.append(lap_pts[0])
+
+        # Crossing check: does any new segment cross a previous survey segment?
+        crossing = False
+        new_segs = []
+        for i in range(len(lap_pts) - 1):
+            seg = (lap_pts[i], lap_pts[i + 1])
+            for prev_seg in survey_segs:
+                if _zian_segments_cross(seg[0], seg[1], prev_seg[0], prev_seg[1]):
+                    crossing = True
+                    break
+            if crossing:
+                break
+            new_segs.append(seg)
+
+        if crossing:
+            break
+
+        # Commit this lap
+        survey_segs.extend(new_segs)
+        all_lap_points.append(lap_pts)
+
+        k += 1
+
+    # Flatten all laps into a single waypoint list
+    waypoints_m = []
+    for lap_pts in all_lap_points:
+        for pt in lap_pts:
+            # Deduplicate consecutive points
+            if waypoints_m and math.hypot(pt[0] - waypoints_m[-1][0],
+                                           pt[1] - waypoints_m[-1][1]) < 0.01:
+                continue
+            waypoints_m.append(pt)
+
+    # Add centroid as final waypoint (like Zian's algorithm)
+    if waypoints_m:
+        waypoints_m.append((cx_m, cy_m))
+
+    # Convert back to GPS
+    return [to_gps(x, y) for x, y in waypoints_m]
+
+
 # ── Main Visualizer ──────────────────────────────────────────────────
 
 class PatternVisualizer:
@@ -237,8 +482,9 @@ class PatternVisualizer:
         self.scan_angle = 181       # 181 = auto
         self.nfz_buffer = int(config.NFZ_WAYPOINT_BUFFER_M)
 
-        # Pattern type: "lawnmower" or "spiral"
+        # Pattern type: "lawnmower", "spiral", or "zian_spiral"
         self.pattern_type = "lawnmower"
+        self._pattern_types = ["lawnmower", "spiral", "zian_spiral"]
 
         # Speed heatmap toggle (H key)
         self.show_heatmap = False
@@ -436,7 +682,20 @@ class PatternVisualizer:
             return waypoints
 
         # Choose pattern generator based on pattern type
-        if self.pattern_type == "spiral":
+        if self.pattern_type == "zian_spiral":
+            # Zian's perimeter spiral: progressive polygon inset with degeneration
+            ground_footprint_m = (config.SENSOR_WIDTH_MM * alt) / config.FOCAL_LENGTH_MM
+            strip_spacing_m = ground_footprint_m * (1.0 - custom_overlap)
+            if strip_spacing_m <= 0:
+                strip_spacing_m = ground_footprint_m * 0.8
+            edge_margin = float(self.nfz_buffer)
+            waypoints = generate_zian_spiral(
+                self.search_poly_gps,
+                strip_spacing_m,
+                drone_gps=self.drone_gps,
+                edge_margin_m=edge_margin,
+            )
+        elif self.pattern_type == "spiral":
             # Shapely-based polygon-following spiral
             # 1. Compute strip spacing in metres (same formula as lawnmower)
             ground_footprint_m = (config.SENSOR_WIDTH_MM * alt) / config.FOCAL_LENGTH_MM
@@ -568,7 +827,7 @@ class PatternVisualizer:
 
             # Coverage — Shapely-based (handles overlaps correctly)
             search_area = polygon_area_m2(self.search_poly_gps)
-            if self.pattern_type == "spiral":
+            if self.pattern_type in ("spiral", "zian_spiral"):
                 # Spiral: all segments are scan segments
                 covered = coverage_area_m2(waypoints, ground_fp_w,
                                            search_poly_gps=self.search_poly_gps,
@@ -587,7 +846,7 @@ class PatternVisualizer:
             coverage_pct = min(100.0, (covered / search_area * 100)) if search_area > 0 else 0
 
             # Energy (momentum theory model)
-            if self.pattern_type == "spiral":
+            if self.pattern_type in ("spiral", "zian_spiral"):
                 n_strips = len(waypoints)
                 n_uturns = 0  # spiral has no U-turns
             else:
@@ -661,7 +920,7 @@ class PatternVisualizer:
             seg_len = gps_distance_m(wp_a, wp_b)
 
             # Is this a U-turn segment? (odd index in lawnmower mode)
-            is_uturn = (self.pattern_type != "spiral" and seg_idx % 2 == 1)
+            is_uturn = (self.pattern_type not in ("spiral", "zian_spiral") and seg_idx % 2 == 1)
 
             # How many sub-segments?
             n_sub = max(1, int(math.ceil(seg_len / SUB_SEG_M)))
@@ -871,7 +1130,7 @@ class PatternVisualizer:
                 cv2.line(vis, sub["px1"], sub["px2"], color, 2, cv2.LINE_AA)
         else:
             for i in range(len(wp_px) - 1):
-                if self.pattern_type == "spiral":
+                if self.pattern_type in ("spiral", "zian_spiral"):
                     cv2.line(vis, wp_px[i], wp_px[i + 1], CLR_SCAN, 2, cv2.LINE_AA)
                 elif i % 2 == 0:
                     cv2.line(vis, wp_px[i], wp_px[i + 1], CLR_SCAN, 2, cv2.LINE_AA)
@@ -880,7 +1139,7 @@ class PatternVisualizer:
 
         # Draw waypoint dots and numbers
         # Spiral has many more waypoints — label less frequently
-        label_every = 20 if self.pattern_type == "spiral" else 4
+        label_every = 20 if self.pattern_type in ("spiral", "zian_spiral") else 4
         for i, pt in enumerate(wp_px):
             cv2.circle(vis, pt, 3, CLR_WP, -1)
             if i % label_every == 0 or i == 0 or i == len(wp_px) - 1:
@@ -927,11 +1186,12 @@ class PatternVisualizer:
             if stats.get("scan_angle") is not None:
                 angle_str += f" ({stats['scan_angle']:.1f})"
 
-            pat_label = "Spiral" if self.pattern_type == "spiral" else "Lawnmower"
+            pat_labels = {"lawnmower": "Lawnmower", "spiral": "Spiral", "zian_spiral": "Zian Spiral"}
+            pat_label = pat_labels.get(self.pattern_type, self.pattern_type)
             lines = [
                 f"Pattern: {pat_label}   (P to toggle)",
                 f"Altitude: {self.altitude}m   Speed: {stats['speed_mps']:.1f} m/s",
-                f"Waypoints: {stats['n_wp']}   {'Points' if self.pattern_type == 'spiral' else 'Strips'}: {stats['n_strips']}",
+                f"Waypoints: {stats['n_wp']}   {'Points' if self.pattern_type in ('spiral', 'zian_spiral') else 'Strips'}: {stats['n_strips']}",
                 f"NFZ filtered: {stats['n_filtered']}",
                 f"Search dist: {stats['total_dist_m']:.0f}m   Transit: {stats['transit_dist_m']:.0f}m",
                 f"Search time: {stats['search_time_s']:.0f}s ({stats['search_time_s']/60:.1f}min)",
@@ -1070,7 +1330,7 @@ class PatternVisualizer:
         print(f"  Pattern generated at {CANVAS_SIZE}x{CANVAS_SIZE} (same as main.py)")
         print(f"  Sliders: Altitude, Overlap (0=no-turn), Scan Angle (181=auto), Edge Margin")
         print(f"  LEFT-CLICK: add vertex (draw mode)   RIGHT-CLICK: set drone entry point")
-        print(f"  Keys: P=toggle pattern, H=speed heatmap, R=reset/draw, S=save, Q=quit")
+        print(f"  Keys: P=toggle pattern (Lawnmower/Spiral/Zian Spiral), H=heatmap, R=reset, S=save, Q=quit")
 
         while True:
             vis = self._draw()
@@ -1086,10 +1346,8 @@ class PatternVisualizer:
                 self._cached_key = None
                 print("  Polygon reset. Draw a new one (LEFT-CLICK, RIGHT-CLICK to close).")
             elif key == ord('p'):
-                if self.pattern_type == "lawnmower":
-                    self.pattern_type = "spiral"
-                else:
-                    self.pattern_type = "lawnmower"
+                idx = self._pattern_types.index(self.pattern_type)
+                self.pattern_type = self._pattern_types[(idx + 1) % len(self._pattern_types)]
                 self._cached_key = None
                 print(f"  Pattern type: {self.pattern_type}")
             elif key == ord('h'):
