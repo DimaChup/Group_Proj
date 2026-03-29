@@ -667,6 +667,16 @@ class VisualFlightMission(StateHandlersMixin):
         """NFZ speed cap + inner polygon repulsion."""
         nfz_dist, nfz_inside = self.geofence.distance_to_boundary(self.lat, self.lon)
 
+        # Compute manual speed limit for WASD (used by _handle_manual_flight)
+        if not nfz_inside and nfz_dist < config.NFZ_SLOW_ZONE_M:
+            if nfz_dist <= config.NFZ_SCALAR_ZERO_M:
+                self._nfz_manual_max_speed = 0.3
+            else:
+                ratio = (nfz_dist - config.NFZ_SCALAR_ZERO_M) / (config.NFZ_SLOW_ZONE_M - config.NFZ_SCALAR_ZERO_M)
+                self._nfz_manual_max_speed = ratio * config.NFZ_ZONE_MAX_SPEED_MPS
+        else:
+            self._nfz_manual_max_speed = None  # no limit
+
         if nfz_inside and self.state != State.MANUAL:
             print(f"[GEOFENCE] INSIDE NFZ! Switching to MANUAL")
             if self.state != State.RETURN_FROM_MANUAL:

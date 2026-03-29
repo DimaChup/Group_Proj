@@ -852,6 +852,10 @@ class StateHandlersMixin:
     def _handle_manual_flight(self, key):
         """WASD/RF velocity commands and QE yaw in MANUAL mode."""
         spd = config.MANUAL_FLY_SPEED_MPS
+        # If near NFZ, limit manual speed toward NFZ using scalar field
+        nfz_max = getattr(self, '_nfz_manual_max_speed', None)
+        if nfz_max is not None and nfz_max < spd:
+            spd = max(0.3, nfz_max)
         climb = config.MANUAL_CLIMB_RATE_MPS
         yaw_rate = config.MANUAL_YAW_RATE_DEGS
         k = chr(key).lower() if key else ''
