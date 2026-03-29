@@ -12,6 +12,7 @@ Controls:
     Sliders adjust altitude, overlap, scan angle, and NFZ buffer in real time.
     LEFT-CLICK  = add polygon vertex (in --draw mode)
     RIGHT-CLICK = place drone entry point (green dot)
+    P           = toggle pattern type (Lawnmower / Spiral)
     R           = reset polygon (enter drawing mode)
     S           = save current view to pattern_visualizer.png
     Q / ESC     = quit
@@ -24,6 +25,7 @@ import argparse
 
 import cv2
 import numpy as np
+from shapely.geometry import Polygon as ShapelyPolygon, LineString
 
 # Add project root to path
 _proj_root = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
@@ -164,6 +166,9 @@ class PatternVisualizer:
         self.scan_angle = 181       # 181 = auto
         self.nfz_buffer = int(config.NFZ_WAYPOINT_BUFFER_M)
 
+        # Pattern type: "lawnmower" or "spiral"
+        self.pattern_type = "lawnmower"
+
         # Cached results
         self._cached_key = None
         self._cached_waypoints = []
@@ -185,6 +190,7 @@ class PatternVisualizer:
             tuple(self.search_poly_gps), self.altitude, self.overlap_pct,
             self.scan_angle, self.nfz_buffer,
             self.drone_gps[0], self.drone_gps[1],
+            self.pattern_type,
         )
         if cache_key == self._cached_key:
             return self._cached_waypoints
@@ -355,16 +361,78 @@ class PatternVisualizer:
 
             return waypoints
 
-        # Use the real planner directly when no custom overlap/angle needed
-        if self.overlap_pct == 0 and self.scan_angle > 180:
-            # Default behavior matches main.py exactly
+        # Choose pattern generator based on pattern type
+        if self.pattern_type == "spiral":
+            # Shapely-based polygon-following spiral
+            # 1. Compute strip spacing in metres (same formula as lawnmower)
+            ground_footprint_m = (config.SENSOR_WIDTH_MM * alt) / config.FOCAL_LENGTH_MM
+            strip_spacing_m = ground_footprint_m * (1.0 - custom_overlap)
+            if strip_spacing_m <= 0:
+                strip_spacing_m = ground_footprint_m * 0.8
+
+            # 2. Convert search polygon GPS to metres relative to centroid
+            ref_lat = sum(p[0] for p in self.search_poly_gps) / len(self.search_poly_gps)
+            ref_lon = sum(p[1] for p in self.search_poly_gps) / len(self.search_poly_gps)
+            cos_lat = math.cos(math.radians(ref_lat))
+            poly_m = [((lon - ref_lon) * 111320 * cos_lat, (lat - ref_lat) * 111320)
+                       for lat, lon in self.search_poly_gps]
+            shape_poly = ShapelyPolygon(poly_m)
+            if not shape_poly.is_valid:
+                shape_poly = shape_poly.buffer(0)
+
+            # 3. Generate concentric inset rings
+            spiral_waypoints = []
+            offset = strip_spacing_m / 2  # start half a lane inside
+            all_rings = []
+            while True:
+                inset = shape_poly.buffer(-offset)
+                if inset.is_empty or inset.area < strip_spacing_m ** 2:
+                    break
+                if inset.geom_type == 'Polygon':
+                    coords = list(inset.exterior.coords)
+                elif inset.geom_type == 'MultiPolygon':
+                    # Use the largest polygon fragment
+                    largest = max(inset.geoms, key=lambda g: g.area)
+                    coords = list(largest.exterior.coords)
+                else:
+                    break
+                all_rings.append(coords)
+                offset += strip_spacing_m
+
+            # 4. Optionally reverse ring order so outermost is first (inward spiral)
+            #    and connect rings with short transitions
+            for ring_coords in all_rings:
+                ring_line = LineString(ring_coords)
+                num_points = max(4, int(ring_line.length / strip_spacing_m))
+                for i in range(num_points):
+                    frac = i / num_points
+                    pt = ring_line.interpolate(frac, normalized=True)
+                    # Convert back to GPS
+                    gps_lat = pt.y / 111320 + ref_lat
+                    gps_lon = pt.x / (111320 * cos_lat) + ref_lon
+                    spiral_waypoints.append((gps_lat, gps_lon))
+
+            # 5. Start from corner nearest drone entry point
+            if spiral_waypoints and self.drone_gps:
+                best_idx = 0
+                best_dist = float('inf')
+                for i, wp in enumerate(spiral_waypoints):
+                    d = gps_distance_m(self.drone_gps, wp)
+                    if d < best_dist:
+                        best_dist = d
+                        best_idx = i
+                spiral_waypoints = spiral_waypoints[best_idx:] + spiral_waypoints[:best_idx]
+
+            waypoints = spiral_waypoints
+        elif self.overlap_pct == 0 and self.scan_angle > 180:
+            # Default lawnmower behavior matches main.py exactly
             waypoints = planner.generate_search_pattern(
                 CANVAS_SIZE, CANVAS_SIZE,
                 drone_gps=self.drone_gps,
                 alt_override=alt,
             )
         else:
-            # Custom overlap or angle: use patched version
+            # Custom overlap or angle: use patched lawnmower version
             waypoints = _patched_generate(
                 CANVAS_SIZE, CANVAS_SIZE,
                 drone_gps=self.drone_gps,
@@ -395,12 +463,20 @@ class PatternVisualizer:
 
             # Coverage
             search_area = polygon_area_m2(self.search_poly_gps)
-            covered = coverage_area_m2(waypoints, ground_fp_h)
+            if self.pattern_type == "spiral":
+                # Spiral: approximate coverage as path length * footprint width
+                covered = total_dist * ground_fp_w if total_dist > 0 else 0
+            else:
+                covered = coverage_area_m2(waypoints, ground_fp_h)
             coverage_pct = min(100.0, (covered / search_area * 100)) if search_area > 0 else 0
 
             # Energy (momentum theory model)
-            n_strips = len(waypoints) // 2
-            n_uturns = max(0, n_strips - 1)
+            if self.pattern_type == "spiral":
+                n_strips = len(waypoints)
+                n_uturns = 0  # spiral has no U-turns
+            else:
+                n_strips = len(waypoints) // 2
+                n_uturns = max(0, n_strips - 1)
             total_energy = energy_wh(total_dist + 2 * transit_dist, speed, n_uturns)
 
             scan_angle_val = getattr(planner, 'last_scan_angle', None)
@@ -505,17 +581,21 @@ class PatternVisualizer:
 
         wp_px = [self._gps_to_disp(w[0], w[1]) for w in waypoints]
 
-        # Draw path segments (green scan, yellow U-turn)
+        # Draw path segments (green scan, yellow U-turn for lawnmower; all green for spiral)
         for i in range(len(wp_px) - 1):
-            if i % 2 == 0:
+            if self.pattern_type == "spiral":
+                cv2.line(vis, wp_px[i], wp_px[i + 1], CLR_SCAN, 2, cv2.LINE_AA)
+            elif i % 2 == 0:
                 cv2.line(vis, wp_px[i], wp_px[i + 1], CLR_SCAN, 2, cv2.LINE_AA)
             else:
                 cv2.line(vis, wp_px[i], wp_px[i + 1], CLR_UTURN, 1, cv2.LINE_AA)
 
         # Draw waypoint dots and numbers
+        # Spiral has many more waypoints — label less frequently
+        label_every = 20 if self.pattern_type == "spiral" else 4
         for i, pt in enumerate(wp_px):
             cv2.circle(vis, pt, 3, CLR_WP, -1)
-            if i % 4 == 0 or i == 0 or i == len(wp_px) - 1:
+            if i % label_every == 0 or i == 0 or i == len(wp_px) - 1:
                 cv2.putText(vis, str(i + 1), (pt[0] + 5, pt[1] - 5),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.28, CLR_WP, 1, cv2.LINE_AA)
 
@@ -559,9 +639,11 @@ class PatternVisualizer:
             if stats.get("scan_angle") is not None:
                 angle_str += f" ({stats['scan_angle']:.1f})"
 
+            pat_label = "Spiral" if self.pattern_type == "spiral" else "Lawnmower"
             lines = [
+                f"Pattern: {pat_label}   (P to toggle)",
                 f"Altitude: {self.altitude}m   Speed: {stats['speed_mps']:.1f} m/s",
-                f"Waypoints: {stats['n_wp']}   Strips: {stats['n_strips']}",
+                f"Waypoints: {stats['n_wp']}   {'Points' if self.pattern_type == 'spiral' else 'Strips'}: {stats['n_strips']}",
                 f"NFZ filtered: {stats['n_filtered']}",
                 f"Search dist: {stats['total_dist_m']:.0f}m   Transit: {stats['transit_dist_m']:.0f}m",
                 f"Search time: {stats['search_time_s']:.0f}s ({stats['search_time_s']/60:.1f}min)",
@@ -644,7 +726,7 @@ class PatternVisualizer:
         print(f"  Pattern generated at {CANVAS_SIZE}x{CANVAS_SIZE} (same as main.py)")
         print(f"  Sliders: Altitude, Overlap (0=no-turn), Scan Angle (181=auto), Edge Margin")
         print(f"  LEFT-CLICK: add vertex (draw mode)   RIGHT-CLICK: set drone entry point")
-        print(f"  Keys: R=reset/draw, S=save, Q=quit")
+        print(f"  Keys: P=toggle pattern, R=reset/draw, S=save, Q=quit")
 
         while True:
             vis = self._draw()
@@ -659,6 +741,13 @@ class PatternVisualizer:
                 self.draw_mode = True
                 self._cached_key = None
                 print("  Polygon reset. Draw a new one (LEFT-CLICK, RIGHT-CLICK to close).")
+            elif key == ord('p'):
+                if self.pattern_type == "lawnmower":
+                    self.pattern_type = "spiral"
+                else:
+                    self.pattern_type = "lawnmower"
+                self._cached_key = None
+                print(f"  Pattern type: {self.pattern_type}")
             elif key == ord('s'):
                 out_path = os.path.join(_proj_root, "pattern_visualizer.png")
                 cv2.imwrite(out_path, vis)
