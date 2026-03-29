@@ -113,16 +113,82 @@ def energy_wh(distance_m, speed_mps, n_uturns):
     return total_j / 3600.0  # Joules to Wh
 
 
-def coverage_area_m2(waypoints_gps, footprint_h_m):
-    """Compute scanned area as sum of strip_length * footprint_height."""
-    if len(waypoints_gps) < 2:
+def coverage_area_m2(waypoints_gps, footprint_cross_m, search_poly_gps=None,
+                     scan_only=True):
+    """Compute unique scanned area using Shapely geometry (handles overlaps).
+
+    For each path segment, creates a swept rectangle (segment_length x footprint_cross_m),
+    unions them all (removing double-counted overlap), then clips to the search polygon.
+
+    Args:
+        waypoints_gps: list of (lat, lon) waypoints
+        footprint_cross_m: cross-track footprint width in metres
+        search_poly_gps: optional (lat, lon) polygon to clip coverage to
+        scan_only: if True, only count scan segments (even indices: 0-1, 2-3, ...)
+                   if False, count all segments (useful for spiral patterns)
+
+    Returns:
+        covered area in square metres
+    """
+    from shapely.ops import unary_union
+
+    if len(waypoints_gps) < 2 or footprint_cross_m <= 0:
         return 0.0
-    area = 0.0
-    # Scan segments are at even indices (0-1, 2-3, 4-5, ...)
-    for i in range(0, len(waypoints_gps) - 1, 2):
-        strip_len = gps_distance_m(waypoints_gps[i], waypoints_gps[i + 1])
-        area += strip_len * footprint_h_m
-    return area
+
+    # Convert GPS to local metres (relative to first waypoint)
+    ref_lat = waypoints_gps[0][0]
+    ref_lon = waypoints_gps[0][1]
+    cos_lat = math.cos(math.radians(ref_lat))
+
+    def to_m(lat, lon):
+        return ((lon - ref_lon) * 111320 * cos_lat,
+                (lat - ref_lat) * 111320)
+
+    half_w = footprint_cross_m / 2.0
+    strips = []
+
+    if scan_only:
+        # Lawnmower: scan segments at even indices (0-1, 2-3, ...)
+        indices = range(0, len(waypoints_gps) - 1, 2)
+    else:
+        # Spiral / all segments
+        indices = range(len(waypoints_gps) - 1)
+
+    for i in indices:
+        ax, ay = to_m(*waypoints_gps[i])
+        bx, by = to_m(*waypoints_gps[i + 1])
+        dx, dy = bx - ax, by - ay
+        seg_len = math.sqrt(dx * dx + dy * dy)
+        if seg_len < 0.01:
+            continue
+        # Unit normal (perpendicular to segment direction)
+        nx, ny = -dy / seg_len, dx / seg_len
+        # Four corners of the swept rectangle
+        corners = [
+            (ax + nx * half_w, ay + ny * half_w),
+            (ax - nx * half_w, ay - ny * half_w),
+            (bx - nx * half_w, by - ny * half_w),
+            (bx + nx * half_w, by + ny * half_w),
+        ]
+        rect = ShapelyPolygon(corners)
+        if rect.is_valid and rect.area > 0:
+            strips.append(rect)
+
+    if not strips:
+        return 0.0
+
+    # Union all strips (removes double-counted overlaps)
+    swept = unary_union(strips)
+
+    # Clip to search polygon if provided
+    if search_poly_gps and len(search_poly_gps) >= 3:
+        search_m = [to_m(lat, lon) for lat, lon in search_poly_gps]
+        search_shape = ShapelyPolygon(search_m)
+        if not search_shape.is_valid:
+            search_shape = search_shape.buffer(0)
+        swept = swept.intersection(search_shape)
+
+    return swept.area if not swept.is_empty else 0.0
 
 
 # ── Main Visualizer ──────────────────────────────────────────────────
@@ -396,7 +462,7 @@ class PatternVisualizer:
             offset = edge_margin
             all_rings = []
             while True:
-                inset = shape_poly.buffer(-offset)
+                inset = shape_poly.buffer(-offset, join_style='mitre', mitre_limit=5.0)
                 if inset.is_empty or inset.area < strip_spacing_m ** 2:
                     break
                 if inset.geom_type == 'Polygon':
@@ -416,7 +482,7 @@ class PatternVisualizer:
             for coords in all_rings:
                 ring_poly = ShapelyPolygon(coords)
                 # Simplify to remove redundant points along edges, keep corners
-                simplified = ring_poly.simplify(strip_spacing_m * 0.5, preserve_topology=True)
+                simplified = ring_poly.simplify(strip_spacing_m * 0.1, preserve_topology=True)
                 if simplified.is_empty or simplified.geom_type != 'Polygon':
                     continue
                 # Get corner vertices (drop closing duplicate)
@@ -500,13 +566,24 @@ class PatternVisualizer:
             ground_fp_w = (config.SENSOR_WIDTH_MM * alt) / config.FOCAL_LENGTH_MM
             ground_fp_h = ground_fp_w * config.IMAGE_H / config.IMAGE_W
 
-            # Coverage
+            # Coverage — Shapely-based (handles overlaps correctly)
             search_area = polygon_area_m2(self.search_poly_gps)
             if self.pattern_type == "spiral":
-                # Spiral: approximate coverage as path length * footprint width
-                covered = total_dist * ground_fp_w if total_dist > 0 else 0
+                # Spiral: all segments are scan segments
+                covered = coverage_area_m2(waypoints, ground_fp_w,
+                                           search_poly_gps=self.search_poly_gps,
+                                           scan_only=False)
             else:
-                covered = coverage_area_m2(waypoints, ground_fp_h)
+                # Lawnmower: cross-track footprint depends on yaw mode
+                # _no_turn=True (overlap==0): drone doesn't yaw, narrow dim is cross-track
+                # _no_turn=False (overlap>0): drone yaws, full sensor width is cross-track
+                if self.overlap_pct == 0:
+                    cross_track = ground_fp_h   # narrow (IMAGE_H based)
+                else:
+                    cross_track = ground_fp_w   # wide (full sensor)
+                covered = coverage_area_m2(waypoints, cross_track,
+                                           search_poly_gps=self.search_poly_gps,
+                                           scan_only=True)
             coverage_pct = min(100.0, (covered / search_area * 100)) if search_area > 0 else 0
 
             # Energy (momentum theory model)
@@ -541,11 +618,31 @@ class PatternVisualizer:
 
         return waypoints
 
-    def _compute_segment_speeds(self, waypoints):
-        """Compute expected speed for each segment considering NFZ slowdown + momentum.
+    def _compute_continuous_speeds(self, waypoints):
+        """Compute speed at sub-segment resolution along the entire path.
 
-        Returns a list of (speed_mps, is_nfz_zone) tuples, one per segment.
+        Subdivides every segment into ~2m sub-segments. For each sub-segment
+        midpoint, computes the NFZ scalar-field target speed. Then applies a
+        continuous momentum model (acceleration/deceleration at ACCEL_MPS2)
+        along the whole path so speed ramps smoothly.
+
+        At U-turns (odd-indexed segments in lawnmower mode), the drone
+        decelerates to ~1 m/s then accelerates back.
+
+        Returns a list of dicts, one per sub-segment:
+            {
+                "lat1", "lon1", "lat2", "lon2":  GPS endpoints,
+                "px1", "px2":  display pixel endpoints (int tuples),
+                "speed":       actual speed after momentum (m/s),
+                "target":      target speed from scalar field (m/s),
+                "in_nfz":      bool — inside NFZ slow zone,
+                "dist_m":      sub-segment length (m),
+                "seg_idx":     index of the parent segment,
+            }
         """
+        SUB_SEG_M = 2.0   # target sub-segment length in metres
+        U_TURN_SPEED = 1.0  # speed at U-turn apex
+
         if len(waypoints) < 2:
             return []
 
@@ -556,76 +653,129 @@ class PatternVisualizer:
         geofence = NFZGeofence(self.geo_canvas)
         has_nfz = bool(config.SSSI_GPS) and len(config.SSSI_GPS) >= 3
 
-        segment_speeds = []
-        prev_speed = cruise_speed  # assume starting at cruise
-
-        for i in range(len(waypoints) - 1):
-            wp_a = waypoints[i]
-            wp_b = waypoints[i + 1]
-
-            # Midpoint GPS
-            mid_lat = (wp_a[0] + wp_b[0]) / 2.0
-            mid_lon = (wp_a[1] + wp_b[1]) / 2.0
-
+        # --- Pass 1: build all sub-segments with their TARGET speeds ---
+        all_subs = []
+        for seg_idx in range(len(waypoints) - 1):
+            wp_a = waypoints[seg_idx]
+            wp_b = waypoints[seg_idx + 1]
             seg_len = gps_distance_m(wp_a, wp_b)
 
-            # Target speed based on NFZ distance
-            target_speed = cruise_speed
-            in_nfz_zone = False
+            # Is this a U-turn segment? (odd index in lawnmower mode)
+            is_uturn = (self.pattern_type != "spiral" and seg_idx % 2 == 1)
 
-            if has_nfz:
-                dist_m, is_inside = geofence.distance_to_boundary(mid_lat, mid_lon)
-                if is_inside or dist_m <= config.NFZ_SCALAR_ZERO_M:
-                    target_speed = config.NFZ_MIN_SPEED_MPS
-                    in_nfz_zone = True
-                elif dist_m < config.NFZ_SLOW_ZONE_M:
-                    ratio = (dist_m - config.NFZ_SCALAR_ZERO_M) / (
-                        config.NFZ_SLOW_ZONE_M - config.NFZ_SCALAR_ZERO_M)
-                    target_speed = min(ratio * config.NFZ_ZONE_MAX_SPEED_MPS, cruise_speed)
-                    in_nfz_zone = True
+            # How many sub-segments?
+            n_sub = max(1, int(math.ceil(seg_len / SUB_SEG_M)))
+            for k in range(n_sub):
+                t0 = k / n_sub
+                t1 = (k + 1) / n_sub
+                t_mid = (t0 + t1) / 2.0
 
-            # Momentum model: can't instantly reach target speed
-            # v_new = min(v_target, v_prev + accel * dt) where dt = seg_len / v_avg
-            if seg_len > 0.01 and prev_speed < target_speed:
-                # Estimate time to traverse at average of prev and target
-                v_avg = max(0.5, (prev_speed + target_speed) / 2.0)
-                dt = seg_len / v_avg
-                actual_speed = min(target_speed, prev_speed + ACCEL_MPS2 * dt)
-            elif seg_len > 0.01 and prev_speed > target_speed:
-                # Decelerating: assume same accel for braking
-                v_avg = max(0.5, (prev_speed + target_speed) / 2.0)
-                dt = seg_len / v_avg
-                actual_speed = max(target_speed, prev_speed - ACCEL_MPS2 * dt)
+                lat1 = wp_a[0] + (wp_b[0] - wp_a[0]) * t0
+                lon1 = wp_a[1] + (wp_b[1] - wp_a[1]) * t0
+                lat2 = wp_a[0] + (wp_b[0] - wp_a[0]) * t1
+                lon2 = wp_a[1] + (wp_b[1] - wp_a[1]) * t1
+                mid_lat = wp_a[0] + (wp_b[0] - wp_a[0]) * t_mid
+                mid_lon = wp_a[1] + (wp_b[1] - wp_a[1]) * t_mid
+
+                sub_dist = seg_len / n_sub  # uniform subdivision
+
+                # Target speed from NFZ scalar field
+                target = cruise_speed
+                in_nfz = False
+
+                if has_nfz:
+                    dist_m, is_inside = geofence.distance_to_boundary(mid_lat, mid_lon)
+                    if is_inside or dist_m <= config.NFZ_SCALAR_ZERO_M:
+                        target = config.NFZ_MIN_SPEED_MPS
+                        in_nfz = True
+                    elif dist_m < config.NFZ_SLOW_ZONE_M:
+                        ratio = (dist_m - config.NFZ_SCALAR_ZERO_M) / (
+                            config.NFZ_SLOW_ZONE_M - config.NFZ_SCALAR_ZERO_M)
+                        target = min(ratio * config.NFZ_ZONE_MAX_SPEED_MPS, cruise_speed)
+                        in_nfz = True
+
+                # U-turn override: target speed drops to U_TURN_SPEED
+                if is_uturn:
+                    target = min(target, U_TURN_SPEED)
+
+                px1 = self._gps_to_disp(lat1, lon1)
+                px2 = self._gps_to_disp(lat2, lon2)
+
+                all_subs.append({
+                    "lat1": lat1, "lon1": lon1,
+                    "lat2": lat2, "lon2": lon2,
+                    "px1": px1, "px2": px2,
+                    "target": target,
+                    "in_nfz": in_nfz,
+                    "dist_m": sub_dist,
+                    "seg_idx": seg_idx,
+                    "speed": 0.0,  # filled in pass 2
+                })
+
+        if not all_subs:
+            return all_subs
+
+        # --- Pass 2: forward pass — apply acceleration/deceleration momentum ---
+        cur_speed = 0.0  # start from rest
+        for sub in all_subs:
+            target = sub["target"]
+            d = sub["dist_m"]
+            if d < 0.001:
+                sub["speed"] = target
+                cur_speed = target
+                continue
+
+            if cur_speed < target:
+                # Accelerating: v^2 = v0^2 + 2*a*d
+                v_new = math.sqrt(cur_speed ** 2 + 2.0 * ACCEL_MPS2 * d)
+                cur_speed = min(v_new, target)
+            elif cur_speed > target:
+                # Decelerating: v^2 = v0^2 - 2*a*d
+                v_sq = cur_speed ** 2 - 2.0 * ACCEL_MPS2 * d
+                cur_speed = max(math.sqrt(max(v_sq, 0.0)), target)
             else:
-                actual_speed = target_speed
+                cur_speed = target
+            sub["speed"] = cur_speed
 
-            actual_speed = max(actual_speed, 0.0)
-            segment_speeds.append((actual_speed, in_nfz_zone))
-            prev_speed = actual_speed
+        # --- Pass 3: backward pass — ensure drone can decelerate in time ---
+        # Walk backwards: if a future sub-segment requires a lower speed,
+        # the drone must start slowing down earlier.
+        cur_speed = all_subs[-1]["speed"]
+        for sub in reversed(all_subs):
+            target = sub["target"]
+            d = sub["dist_m"]
+            # The speed here can't be so high that the drone can't slow
+            # to the NEXT sub-segment's speed in time.
+            if cur_speed < sub["speed"]:
+                # Need to be slower here to decelerate to cur_speed ahead
+                v_sq = cur_speed ** 2 + 2.0 * ACCEL_MPS2 * d
+                max_here = math.sqrt(max(v_sq, 0.0))
+                sub["speed"] = min(sub["speed"], max_here)
+            cur_speed = sub["speed"]
 
-        return segment_speeds
+        return all_subs
 
     def _speed_to_color(self, speed, cruise_speed):
-        """Map speed to BGR color: green (fast), yellow (medium), red (slow)."""
+        """Map speed to BGR color: smooth green-yellow-red gradient.
+
+        ratio 1.0  -> pure green  (0, 220, 0)
+        ratio 0.5  -> yellow      (0, 220, 220)
+        ratio 0.0  -> red         (0, 0, 220)
+        """
         if cruise_speed <= 0:
             return CLR_HEAT_SLOW
-        ratio = speed / cruise_speed
-        if ratio > 0.8:
-            return CLR_HEAT_FAST
-        elif ratio > 0.4:
-            # Interpolate green to yellow
-            t = (ratio - 0.4) / 0.4  # 0..1
-            b = int(0 * (1 - t) + 0 * t)
-            g = int(0 * (1 - t) + 200 * t)
-            r = int(220 * (1 - t) + 200 * t)
-            return (b, g, r)
+        ratio = max(0.0, min(1.0, speed / cruise_speed))
+        if ratio >= 0.5:
+            # green to yellow: green channel stays high, red ramps up as ratio drops
+            t = (ratio - 0.5) / 0.5   # 1 at ratio=1, 0 at ratio=0.5
+            r = int(220 * (1.0 - t))   # 0 at full speed, 220 at half
+            g = 220
         else:
-            # Interpolate red to yellow
-            t = ratio / 0.4  # 0..1
-            b = int(0 * (1 - t) + 0 * t)
-            g = int(0 * (1 - t) + 0 * t)
-            r = int(220 * (1 - t) + 220 * t)
-            return (b, g, r)
+            # yellow to red: red stays high, green drops
+            t = ratio / 0.5           # 1 at ratio=0.5, 0 at ratio=0
+            r = 220
+            g = int(220 * t)           # 220 at half, 0 at zero
+        return (0, g, r)
 
     def _draw(self):
         """Render the current state to a display image."""
@@ -707,23 +857,26 @@ class PatternVisualizer:
 
         wp_px = [self._gps_to_disp(w[0], w[1]) for w in waypoints]
 
-        # Compute segment speeds if heatmap is enabled
-        seg_speeds = None
+        # Compute sub-segment speeds if heatmap is enabled
+        sub_segs = None
         if self.show_heatmap:
-            seg_speeds = self._compute_segment_speeds(waypoints)
+            sub_segs = self._compute_continuous_speeds(waypoints)
             cruise_speed = config.speed_for_altitude(float(self.altitude))
 
         # Draw path segments
-        for i in range(len(wp_px) - 1):
-            if self.show_heatmap and seg_speeds:
-                color = self._speed_to_color(seg_speeds[i][0], cruise_speed)
-                cv2.line(vis, wp_px[i], wp_px[i + 1], color, 2, cv2.LINE_AA)
-            elif self.pattern_type == "spiral":
-                cv2.line(vis, wp_px[i], wp_px[i + 1], CLR_SCAN, 2, cv2.LINE_AA)
-            elif i % 2 == 0:
-                cv2.line(vis, wp_px[i], wp_px[i + 1], CLR_SCAN, 2, cv2.LINE_AA)
-            else:
-                cv2.line(vis, wp_px[i], wp_px[i + 1], CLR_UTURN, 1, cv2.LINE_AA)
+        if self.show_heatmap and sub_segs:
+            # Draw each sub-segment with its own color
+            for sub in sub_segs:
+                color = self._speed_to_color(sub["speed"], cruise_speed)
+                cv2.line(vis, sub["px1"], sub["px2"], color, 2, cv2.LINE_AA)
+        else:
+            for i in range(len(wp_px) - 1):
+                if self.pattern_type == "spiral":
+                    cv2.line(vis, wp_px[i], wp_px[i + 1], CLR_SCAN, 2, cv2.LINE_AA)
+                elif i % 2 == 0:
+                    cv2.line(vis, wp_px[i], wp_px[i + 1], CLR_SCAN, 2, cv2.LINE_AA)
+                else:
+                    cv2.line(vis, wp_px[i], wp_px[i + 1], CLR_UTURN, 1, cv2.LINE_AA)
 
         # Draw waypoint dots and numbers
         # Spiral has many more waypoints — label less frequently
@@ -791,21 +944,31 @@ class PatternVisualizer:
             ]
 
             # Heatmap stats (only when enabled and computed)
-            if self.show_heatmap and seg_speeds:
+            if self.show_heatmap and sub_segs:
                 nfz_time_s = 0.0
                 total_time_hm = 0.0
+                total_energy_j = 0.0
                 speed_sum = 0.0
-                for idx, (spd, in_zone) in enumerate(seg_speeds):
-                    seg_dist = gps_distance_m(waypoints[idx], waypoints[idx + 1])
-                    seg_time = seg_dist / max(spd, 0.1)
+                dist_sum = 0.0
+                for sub in sub_segs:
+                    spd = max(sub["speed"], 0.1)
+                    d = sub["dist_m"]
+                    seg_time = d / spd
                     total_time_hm += seg_time
-                    speed_sum += spd
-                    if in_zone:
+                    speed_sum += spd * d  # distance-weighted speed
+                    dist_sum += d
+                    if sub["in_nfz"]:
                         nfz_time_s += seg_time
-                avg_speed = speed_sum / len(seg_speeds) if seg_speeds else 0
+                    # Energy: hover + drag for this sub-segment
+                    drag_power = DRAG_COEFF_W * (spd / DRAG_REF_SPEED) ** 2
+                    total_energy_j += (HOVER_POWER_W + drag_power) * seg_time
+                avg_speed = speed_sum / dist_sum if dist_sum > 0 else 0
                 nfz_pct = (nfz_time_s / total_time_hm * 100) if total_time_hm > 0 else 0
+                total_energy_wh = total_energy_j / 3600.0
                 lines.append(f"Heatmap ON   Avg speed: {avg_speed:.1f} m/s")
                 lines.append(f"NFZ zone time: {nfz_time_s:.0f}s ({nfz_pct:.0f}%)")
+                lines.append(f"Est. energy: {total_energy_wh:.1f} Wh")
+                lines.append(f"Est. search time: {total_time_hm:.0f}s ({total_time_hm/60:.1f}min)")
             elif self.show_heatmap:
                 lines.append("Heatmap ON (no NFZ data)")
 
