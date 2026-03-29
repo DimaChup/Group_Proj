@@ -879,7 +879,7 @@ class StateHandlersMixin:
         if nfz_toward is not None and nfz_max is not None and (vf != 0 or vr != 0):
             toward_n, toward_e = nfz_toward
             # Convert body-frame velocity to NED using yaw
-            yaw = math.radians(getattr(self, 'yaw', 0))
+            yaw = getattr(self, 'yaw', 0)  # already in radians from MAVLink ATTITUDE
             vn = vf * math.cos(yaw) - vr * math.sin(yaw)
             ve = vf * math.sin(yaw) + vr * math.cos(yaw)
             # Approach component toward NFZ
