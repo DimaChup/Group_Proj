@@ -389,8 +389,11 @@ class PatternVisualizer:
                 shape_poly = shape_poly.buffer(0)
 
             # 3. Generate concentric inset rings
+            #    First ring starts at edge_margin metres inside the polygon,
+            #    each subsequent ring is strip_spacing_m deeper.
             spiral_waypoints = []
-            offset = strip_spacing_m / 2  # start half a lane inside
+            edge_margin = max(float(self.nfz_buffer), strip_spacing_m * 0.5)
+            offset = edge_margin
             all_rings = []
             while True:
                 inset = shape_poly.buffer(-offset)
@@ -413,7 +416,7 @@ class PatternVisualizer:
             for coords in all_rings:
                 ring_poly = ShapelyPolygon(coords)
                 # Simplify to remove redundant points along edges, keep corners
-                simplified = ring_poly.simplify(strip_spacing_m * 0.3, preserve_topology=True)
+                simplified = ring_poly.simplify(strip_spacing_m * 0.5, preserve_topology=True)
                 if simplified.is_empty or simplified.geom_type != 'Polygon':
                     continue
                 # Get corner vertices (drop closing duplicate)
@@ -634,10 +637,11 @@ class PatternVisualizer:
             sssi_px = self._gps_poly_to_disp(config.SSSI_GPS)
             sssi_arr = np.array(sssi_px, np.int32)
 
-            # NFZ buffer zone visualization
-            if self.nfz_buffer > 0:
+            # NFZ buffer zone visualization (fixed to config value, NOT affected by Edge Margin slider)
+            nfz_vis_buffer = config.NFZ_WAYPOINT_BUFFER_M
+            if nfz_vis_buffer > 0:
                 # Draw a buffer around the SSSI using centroid expansion (visual only)
-                buf_gps = _offset_polygon_centroid(config.SSSI_GPS, self.nfz_buffer)
+                buf_gps = _offset_polygon_centroid(config.SSSI_GPS, nfz_vis_buffer)
                 buf_px = self._gps_poly_to_disp(buf_gps)
                 buf_arr = np.array(buf_px, np.int32)
                 overlay = vis.copy()
