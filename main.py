@@ -42,7 +42,7 @@ SIM_SPEED = 1
 CENTER_VERIFY = "--center-verify" in sys.argv
 SMART_DETECT = "--smart-detect" in sys.argv
 NO_NFZ = "--no-nfz" in sys.argv
-NFZ_DIRECTIONAL = "--nfz-directional" in sys.argv  # opt-in until bug is fixed
+NFZ_DIRECTIONAL = "--nfz-total-speed" not in sys.argv  # directional is default
 BEACON_DELAY = 0
 
 for _i, _arg in enumerate(sys.argv):
@@ -714,13 +714,22 @@ class VisualFlightMission(StateHandlersMixin):
             dy = (nfz_lat - self.lat) * 111320
             dist = math.sqrt(dx * dx + dy * dy)
             if dist > 0.1:
-                nx, ny = dx / dist, dy / dist  # unit vector toward NFZ
-                vn = getattr(self, 'vx', 0)    # north m/s (from GLOBAL_POSITION_INT)
+                nx, ny = dx / dist, dy / dist  # unit vector toward NFZ (east, north)
+                vn = getattr(self, 'vx', 0)    # north m/s
                 ve = getattr(self, 'vy', 0)    # east m/s
-                v_toward = vn * ny + ve * nx    # dot product: positive = approaching
-                if v_toward > max_approach:
-                    excess = v_toward - max_approach
-                    self.nav.send_velocity(vn - ny * excess, ve - nx * excess, 0, current_yaw=0)
+                speed = math.sqrt(vn * vn + ve * ve)
+                if speed > 0.1:
+                    # cos(angle) between velocity and toward-NFZ direction
+                    cos_angle = (vn * ny + ve * nx) / speed
+                    if cos_angle > 0.05:  # approaching NFZ
+                        # speed * cos_angle = approach component
+                        # we want: speed * cos_angle <= max_approach
+                        # so: speed <= max_approach / cos_angle
+                        allowed_speed = max_approach / cos_angle
+                        if allowed_speed < speed:
+                            self.nav.last_speed_req = 0
+                            self.nav.set_speed(allowed_speed)
+                    # cos_angle <= 0 means flying away — no speed limit needed
         elif not NFZ_DIRECTIONAL and not nfz_inside and nfz_dist < config.NFZ_SLOW_ZONE_M:
             # Original: cap total speed. Ramp: 0 at SCALAR_ZERO_M, ZONE_MAX at SLOW_ZONE_M
             if nfz_dist <= config.NFZ_SCALAR_ZERO_M:
