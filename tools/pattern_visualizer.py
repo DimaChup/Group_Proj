@@ -488,6 +488,8 @@ class PatternVisualizer:
 
         # Speed heatmap toggle (H key)
         self.show_heatmap = False
+        self.heatmap_range = None   # None = auto (cruise_speed); float = manual override
+        self.heatmap_thickness = 2  # line thickness in pixels (toggle with T)
 
         # Cached results
         self._cached_key = None
@@ -773,11 +775,21 @@ class PatternVisualizer:
                         best_j = j
                 simplified_rings[ring_idx] = verts[best_j:] + verts[:best_j]
 
-            # 6. Build spiral waypoints: all corners of each ring, inward
+            # 6. Build ONE continuous spiral path: walk each ring fully,
+            #    then step inward to next ring (short diagonal connection)
             for verts in simplified_rings:
-                for v in verts:
+                # Close the ring: walk all vertices then back to start
+                closed_verts = list(verts) + [verts[0]]
+                for v in closed_verts:
                     gps_lat = v[1] / 111320 + ref_lat
                     gps_lon = v[0] / (111320 * cos_lat) + ref_lon
+                    # Deduplicate consecutive points
+                    if spiral_waypoints:
+                        prev = spiral_waypoints[-1]
+                        dx = gps_lat - prev[0]
+                        dy = gps_lon - prev[1]
+                        if abs(dx) < 1e-9 and abs(dy) < 1e-9:
+                            continue
                     spiral_waypoints.append((gps_lat, gps_lon))
 
             # 7. Add center point as final waypoint
@@ -1121,13 +1133,14 @@ class PatternVisualizer:
         if self.show_heatmap:
             sub_segs = self._compute_continuous_speeds(waypoints)
             cruise_speed = config.speed_for_altitude(float(self.altitude))
+            heatmap_max = self.heatmap_range if self.heatmap_range is not None else cruise_speed
 
         # Draw path segments
         if self.show_heatmap and sub_segs:
             # Draw each sub-segment with its own color
             for sub in sub_segs:
-                color = self._speed_to_color(sub["speed"], cruise_speed)
-                cv2.line(vis, sub["px1"], sub["px2"], color, 2, cv2.LINE_AA)
+                color = self._speed_to_color(sub["speed"], heatmap_max)
+                cv2.line(vis, sub["px1"], sub["px2"], color, self.heatmap_thickness, cv2.LINE_AA)
         else:
             for i in range(len(wp_px) - 1):
                 if self.pattern_type in ("spiral", "zian_spiral"):
