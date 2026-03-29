@@ -163,7 +163,7 @@ class SearchPatternExecution(Scene):
             stroke_opacity=0.8,
             fill_opacity=0.0,
         )
-        flight_poly.set_stroke(dash_length=0.15)
+        flight_poly = DashedVMobject(flight_poly, num_dashes=30)
 
         flight_label = Text("Flight Area", font_size=12, color=BLUE_B)
         flight_label.next_to(flight_poly, DOWN, buff=0.1)
@@ -253,7 +253,7 @@ class SearchPatternExecution(Scene):
             stroke_opacity=0.7,
             fill_opacity=0.0,
         )
-        buffer_poly.set_stroke(dash_length=0.1)
+        buffer_poly = DashedVMobject(buffer_poly, num_dashes=40)
 
         buffer_label = Text("30m Buffer", font_size=10, color=ORANGE)
         buffer_label.next_to(buffer_poly, LEFT, buff=0.05)
@@ -318,7 +318,7 @@ class SearchPatternExecution(Scene):
         first_wp = pattern_points[0]
         transit_line = DashedLine(
             tol_screen, first_wp,
-            color=YELLOW_A, stroke_width=1.5, dash_length=0.08,
+            color=YELLOW_A, stroke_width=1.5,
         )
         self.play(Create(transit_line), run_time=0.3)
         self.play(drone.animate.move_to(first_wp), run_time=0.7)
@@ -480,7 +480,7 @@ class SearchPatternExecution(Scene):
 
         return_path = DashedLine(
             landing_pos, tol_screen,
-            color=GREY_B, stroke_width=1.5, dash_length=0.1,
+            color=GREY_B, stroke_width=1.5,
         )
         return_label = Text("RTL", font_size=10, color=GREY_B)
         return_label.move_to((landing_pos + tol_screen) / 2 + np.array([0.2, 0.15, 0]))
