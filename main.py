@@ -42,7 +42,7 @@ SIM_SPEED = 1
 CENTER_VERIFY = "--center-verify" in sys.argv
 SMART_DETECT = "--smart-detect" in sys.argv
 NO_NFZ = "--no-nfz" in sys.argv
-NFZ_DIRECTIONAL = "--nfz-total-speed" not in sys.argv  # directional is default in 5.9
+NFZ_DIRECTIONAL = "--nfz-directional" in sys.argv  # opt-in until bug is fixed
 BEACON_DELAY = 0
 
 for _i, _arg in enumerate(sys.argv):
