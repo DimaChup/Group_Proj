@@ -393,13 +393,6 @@ class StateHandlersMixin:
             if time.time() - self.last_req > 2.0:
                 self.nav.send_global_target(target[0], target[1], self._current_search_alt())
                 self.last_req = time.time()
-                # Maintain search yaw orientation throughout the pattern
-                if getattr(self, '_search_yaw_target', None) is not None:
-                    from pymavlink import mavutil
-                    self.master.mav.command_long_send(
-                        self.master.target_system, self.master.target_component,
-                        mavutil.mavlink.MAV_CMD_CONDITION_YAW, 0,
-                        self._search_yaw_target, 45, 1, 0, 0, 0, 0)
             if self.get_dist_to_point(target[0], target[1]) < 2.0:
                 self.wp_index += 1
         elif self.rescan_pass < self.max_rescan_passes:
