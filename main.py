@@ -715,20 +715,24 @@ class VisualFlightMission(StateHandlersMixin):
             dist = math.sqrt(dx * dx + dy * dy)
             if dist > 0.1:
                 # Unit vector toward NFZ
-                toward_n = dy / dist   # north component
-                toward_e = dx / dist   # east component
-                # Current drone velocity
-                vn = getattr(self, 'vx', 0)  # north m/s
-                ve = getattr(self, 'vy', 0)  # east m/s
-                # Approach component (positive = flying toward NFZ)
-                v_toward = vn * toward_n + ve * toward_e
-                if v_toward > max_approach:
-                    # Reduce ONLY the approach component to max_approach
-                    # Keep tangential component untouched
-                    reduction = v_toward - max_approach
-                    new_vn = vn - toward_n * reduction
-                    new_ve = ve - toward_e * reduction
-                    self.nav.send_velocity(new_vn, new_ve, 0)
+                toward_n = dy / dist
+                toward_e = dx / dist
+                # Current drone velocity from telemetry
+                vn = getattr(self, 'vx', 0)
+                ve = getattr(self, 'vy', 0)
+                speed = math.sqrt(vn * vn + ve * ve)
+                if speed > 0.3:
+                    # cos(angle) between flight direction and toward-NFZ
+                    cos_angle = (vn * toward_n + ve * toward_e) / speed
+                    if cos_angle > 0.05:
+                        # Flying toward NFZ — limit speed so approach component stays within max_approach
+                        # approach = speed * cos(angle), we want approach <= max_approach
+                        # so speed <= max_approach / cos(angle)
+                        allowed = max_approach / cos_angle
+                        if allowed < speed:
+                            self.nav.last_speed_req = 0
+                            self.nav.set_speed(max(0.3, allowed))
+                    # Flying parallel or away: no speed limit from NFZ
         elif not NFZ_DIRECTIONAL and not nfz_inside and nfz_dist < config.NFZ_SLOW_ZONE_M:
             # Original: cap total speed. Ramp: 0 at SCALAR_ZERO_M, ZONE_MAX at SLOW_ZONE_M
             if nfz_dist <= config.NFZ_SCALAR_ZERO_M:
