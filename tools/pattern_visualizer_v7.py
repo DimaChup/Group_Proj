@@ -484,7 +484,7 @@ class PatternVisualizer:
         self.altitude = int(config.TARGET_ALT)
         self.overlap_pct = 20       # percent (0 = _no_turn mode like main.py)
         self.scan_angle = 181       # 181 = auto
-        self.nfz_buffer = int(config.NFZ_WAYPOINT_BUFFER_M)
+        self.margin_pct = 33  # edge margin as % of strip spacing (33% = 1/3, like lawnmower)
 
         # Pattern type: "lawnmower", "spiral", or "zian_spiral"
         self.pattern_type = "lawnmower"
@@ -514,7 +514,7 @@ class PatternVisualizer:
         """Generate pattern using the REAL PathPlanner at CANVAS_SIZE."""
         cache_key = (
             tuple(self.search_poly_gps), self.altitude, self.overlap_pct,
-            self.scan_angle, self.nfz_buffer,
+            self.scan_angle, self.margin_pct,
             self.drone_gps[0], self.drone_gps[1],
             self.pattern_type,
         )
@@ -612,7 +612,7 @@ class PatternVisualizer:
             # 4. Scan lines
             all_strips = []
             # Edge margin slider controls how far waypoints are from polygon edges
-            inset_px = max(1, int(self.nfz_buffer * planner.pix_per_m)) if self.nfz_buffer > 0 else strip_spacing_px // 3
+            inset_px = max(1, int(strip_spacing_px * self.margin_pct / 100))
             bottom_limit = bbox_y + bbox_h - inset_px
             prev_scan_y = -999
 
@@ -691,8 +691,9 @@ class PatternVisualizer:
         if self.pattern_type == "zian_spiral":
             # Call Zian's actual plan() function but patch parameters
             # so our sliders control spacing, entry point, and margin
-            ground_footprint_m = (config.SENSOR_WIDTH_MM * alt) / config.FOCAL_LENGTH_MM
-            strip_spacing_m = ground_footprint_m * (1.0 - custom_overlap)
+            ground_footprint_w = (config.SENSOR_WIDTH_MM * alt) / config.FOCAL_LENGTH_MM
+            ground_footprint_h = ground_footprint_w * config.IMAGE_H / config.IMAGE_W
+            strip_spacing_m = ground_footprint_h * (1.0 - custom_overlap)
             if strip_spacing_m <= 0:
                 strip_spacing_m = ground_footprint_m * 0.8
             try:
@@ -705,30 +706,33 @@ class PatternVisualizer:
                     spec.loader.exec_module(mod)
                     return mod
                 _pp = _load_zian("perimeter_planner")
-                # Patch spacing from our sliders (altitude + overlap)
-                _pp.HALF_SWATH = strip_spacing_m / 2.0
+                # Edge margin = percentage of strip spacing
+                edge_margin_m = strip_spacing_m * self.margin_pct / 100.0
+                _pp.HALF_SWATH = edge_margin_m
                 _pp.SWATH = strip_spacing_m
-                # Patch entry point from our drone position
                 if self.drone_gps:
                     _pp.TAKEOFF_LAT = self.drone_gps[0]
                     _pp.TAKEOFF_LON = self.drone_gps[1]
-                # Patch enter offset from edge margin slider
-                _pp.ENTER_OFFSET_M = float(self.nfz_buffer)
+                _pp.ENTER_OFFSET_M = edge_margin_m
                 zian_wps = _pp.plan()
-                waypoints = [(wp["lat"], wp["lon"]) for wp in zian_wps]
+                # Skip "enter" point — path starts from first ring
+                waypoints = [(wp["lat"], wp["lon"]) for wp in zian_wps
+                             if wp["name"] != "enter"]
             except Exception as e:
                 print(f"[WARN] Zian planner failed: {e}, falling back to reimplementation")
+                edge_margin_m = strip_spacing_m * self.margin_pct / 100.0
                 waypoints = generate_zian_spiral(
                     self.search_poly_gps, strip_spacing_m,
                     drone_gps=self.drone_gps,
-                    edge_margin_m=float(self.nfz_buffer),
+                    edge_margin_m=edge_margin_m,
                 )
         elif self.pattern_type == "spiral":
             # Concentric shells: shrinking copies of the polygon, connected
             # into one continuous path. Each shell is walked fully (closed),
             # then a short diagonal connects to the next inner shell.
-            ground_footprint_m = (config.SENSOR_WIDTH_MM * alt) / config.FOCAL_LENGTH_MM
-            strip_spacing_m = ground_footprint_m * (1.0 - custom_overlap)
+            ground_footprint_w = (config.SENSOR_WIDTH_MM * alt) / config.FOCAL_LENGTH_MM
+            ground_footprint_h = ground_footprint_w * config.IMAGE_H / config.IMAGE_W
+            strip_spacing_m = ground_footprint_h * (1.0 - custom_overlap)
             if strip_spacing_m <= 0:
                 strip_spacing_m = ground_footprint_m * 0.8
 
@@ -743,7 +747,7 @@ class PatternVisualizer:
                 shape_poly = shape_poly.buffer(0)
 
             # Generate concentric inset shells
-            edge_margin = max(float(self.nfz_buffer), strip_spacing_m * 0.5)
+            edge_margin = strip_spacing_m * self.margin_pct / 100.0
             shells = []  # list of vertex lists (metres)
             offset = edge_margin
             while True:
@@ -1231,7 +1235,7 @@ class PatternVisualizer:
                 f"Energy est: {stats['energy_wh']:.1f} Wh (hover+drag+turns)",
                 f"Footprint: {stats['footprint_w']:.1f}x{stats['footprint_h']:.1f}m",
                 f"Overlap: {self.overlap_pct}%   Scan angle: {angle_str}",
-                f"Edge margin: {self.nfz_buffer}m",
+                f"Edge margin: {self.margin_pct}% of strip spacing",
             ]
 
             # Heatmap stats (only when enabled and computed)
@@ -1347,8 +1351,8 @@ class PatternVisualizer:
         self.scan_angle = val
         self._cached_key = None
 
-    def _on_nfz_buffer(self, val):
-        self.nfz_buffer = val
+    def _on_margin_pct(self, val):
+        self.margin_pct = val
         self._cached_key = None
 
     def run(self):
@@ -1360,7 +1364,7 @@ class PatternVisualizer:
         cv2.setTrackbarMin("Altitude (m)", WIN_NAME, 15)
         cv2.createTrackbar("Overlap (%)", WIN_NAME, self.overlap_pct, 50, self._on_overlap)
         cv2.createTrackbar("Scan Angle", WIN_NAME, self.scan_angle, 181, self._on_angle)
-        cv2.createTrackbar("Edge Margin (m)", WIN_NAME, self.nfz_buffer, 50, self._on_nfz_buffer)
+        cv2.createTrackbar("Edge Margin (%)", WIN_NAME, self.margin_pct, 100, self._on_margin_pct)
 
         print(f"\nVisualizer ready. Window: {self.disp_w}x{self.disp_h}")
         print(f"  Pattern generated at {CANVAS_SIZE}x{CANVAS_SIZE} (same as main.py)")

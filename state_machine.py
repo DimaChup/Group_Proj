@@ -315,7 +315,7 @@ class StateHandlersMixin:
         """Align drone yaw to scan direction + diagonal offset. Returns True while orienting."""
         if getattr(self, '_search_yaw_done', False):
             return False
-        if not hasattr(self.planner, 'last_scan_angle'):
+        if len(self.waypoints) < 2 and not hasattr(self.planner, 'last_scan_angle'):
             return False
 
         from pymavlink import mavutil
@@ -325,8 +325,11 @@ class StateHandlersMixin:
                 wp0, wp1 = self.waypoints[0], self.waypoints[1]
                 dlat, dlon = wp1[0] - wp0[0], wp1[1] - wp0[1]
                 yaw_deg = math.degrees(math.atan2(dlon * math.cos(math.radians(wp0[0])), dlat)) % 360
-            else:
+            elif hasattr(self.planner, 'last_scan_angle'):
                 yaw_deg = self.planner.last_scan_angle
+            else:
+                self._search_yaw_done = True
+                return False
             if config.DIAGONAL_YAW_OFFSET_DEG is not None:
                 diag_offset = config.DIAGONAL_YAW_OFFSET_DEG
             else:
@@ -630,6 +633,7 @@ class StateHandlersMixin:
             if time.time() - self.last_req > 2.0:
                 self.nav.send_global_target(self.lat, self.lon, return_alt)
                 self.last_req = time.time()
+                print(f"  [CLIMB] {self.alt:.0f}m → {return_alt:.0f}m before heading home...")
             return
         self.nav.set_speed(config.TRANSIT_SPEED_MPS)
         if self.return_wp_index >= 0:
@@ -658,6 +662,7 @@ class StateHandlersMixin:
             if time.time() - self.last_req > 2.0:
                 self.nav.send_global_target(self.lat, self.lon, return_alt)
                 self.last_req = time.time()
+                print(f"  [CLIMB] {self.alt:.0f}m → {return_alt:.0f}m before heading home...")
             return  # wait for climb
         self.nav.set_speed(config.TRANSIT_SPEED_MPS)
         if time.time() - self.last_req > 2.0:

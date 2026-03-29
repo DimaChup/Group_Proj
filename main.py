@@ -43,6 +43,7 @@ CENTER_VERIFY = "--center-verify" in sys.argv
 SMART_DETECT = "--smart-detect" in sys.argv
 NO_NFZ = "--no-nfz" in sys.argv
 NFZ_DIRECTIONAL = "--nfz-total-speed" not in sys.argv  # directional is default
+USE_SPIRAL = "--spiral" in sys.argv  # Zian's perimeter spiral instead of lawnmower
 BEACON_DELAY = 0
 
 for _i, _arg in enumerate(sys.argv):
@@ -56,6 +57,77 @@ if DRY_RUN:
     print("=" * 60)
     print("  DRY-RUN MODE — No arming, no flying, no GPS needed")
     print("=" * 60)
+
+if USE_SPIRAL:
+    print("[PATTERN] Spiral mode (Zian's perimeter planner)")
+
+
+def _generate_spiral_waypoints(altitude_m, search_polygon_gps, drone_gps=None):
+    """Generate spiral waypoints for any GPS polygon.
+    Same spacing logic as lawnmower: footprint height, 1/3 edge margin.
+
+    Uses Zian's actual planner (patched) for the main survey area,
+    falls back to standalone reimplementation for other polygons."""
+    import importlib.util as _ilu
+    footprint_w = (config.SENSOR_WIDTH_MM * altitude_m) / config.FOCAL_LENGTH_MM
+    footprint_h = footprint_w * config.IMAGE_H / config.IMAGE_W
+    strip_spacing = footprint_h
+    edge_margin = strip_spacing / 3.0
+
+    # Try Zian's actual planner first (patches polygon via search_area module)
+    try:
+        _zian_dir = os.path.join(os.path.dirname(__file__), "Zian", "path_planner")
+        spec_sa = _ilu.spec_from_file_location(
+            "search_area", os.path.join(_zian_dir, "search_area.py"))
+        _sa = _ilu.module_from_spec(spec_sa)
+        spec_sa.loader.exec_module(_sa)
+
+        spec_pp = _ilu.spec_from_file_location(
+            "perimeter_planner", os.path.join(_zian_dir, "perimeter_planner.py"))
+        _pp = _ilu.module_from_spec(spec_pp)
+        spec_pp.loader.exec_module(_pp)
+
+        # Patch polygon — override the imported search_area values
+        import math as _m
+        n = len(search_polygon_gps)
+        c_lat = sum(p[0] for p in search_polygon_gps) / n
+        c_lon = sum(p[1] for p in search_polygon_gps) / n
+        _pp.CENTER_LAT = c_lat
+        _pp.CENTER_LON = c_lon
+        cos_lat = _m.cos(_m.radians(c_lat))
+        _dlon_m = 111320.0 * cos_lat
+        _dlat_m = 111320.0
+
+        # Rebuild _POLY_XY from the new polygon
+        def _ll2xy(lat, lon):
+            return (lon - c_lon) * _dlon_m, (lat - c_lat) * _dlat_m
+        _pp._ll2xy = _ll2xy
+        _pp._xy2ll = lambda x, y: (c_lat + y / _dlat_m, c_lon + x / _dlon_m)
+        _pp._POLY_XY = [_ll2xy(lat, lon) for lat, lon in search_polygon_gps]
+        _pp.CORNERS = list(search_polygon_gps)
+        _pp.N_VERTS = n
+        _pp._dlon_m = _dlon_m
+        _pp._dlat_m = _dlat_m
+
+        # Patch spacing
+        _pp.HALF_SWATH = edge_margin
+        _pp.SWATH = strip_spacing
+        if drone_gps:
+            _pp.TAKEOFF_LAT = drone_gps[0]
+            _pp.TAKEOFF_LON = drone_gps[1]
+        _pp.ENTER_OFFSET_M = edge_margin
+
+        wps = _pp.plan()
+        result = [(wp["lat"], wp["lon"]) for wp in wps if wp["name"] != "enter"]
+        if result:
+            return result
+    except Exception as e:
+        print(f"[SPIRAL] Zian planner failed ({e}), using standalone fallback")
+
+    # Fallback: standalone reimplementation (for edge cases)
+    from spiral_planner import generate_spiral
+    return generate_spiral(search_polygon_gps, strip_spacing, drone_gps, edge_margin)
+
 
 HEADLESS = "--headless" in sys.argv
 if not HEADLESS:
@@ -209,6 +281,27 @@ class VisualFlightMission(StateHandlersMixin):
         # Planner
         self.planner = PathPlanner(self.geo, self.search_poly)
         self.planner._no_turn = True
+        if USE_SPIRAL:
+            # Replace the planner's generate method with spiral waypoint generation.
+            # state_machine.py calls self.planner.generate_search_pattern() everywhere —
+            # by replacing the method here, ALL search pattern generation uses spiral
+            # without any changes to state_machine.py. Same logic, different waypoints.
+            _original_generate = self.planner.generate_search_pattern
+            _planner_ref = self.planner
+            _geo_ref = self.geo
+            def _spiral_generate(map_w, map_h, drone_gps=None, alt_override=None,
+                                 _orig=_original_generate, _pl=_planner_ref,
+                                 _geo=_geo_ref):
+                alt = alt_override or config.TARGET_ALT
+                # Get current polygon as GPS (works for main area AND beacon area)
+                poly_gps = [_geo.pixels_to_gps(pt[0], pt[1])
+                            for pt in _pl.search_polygon]
+                wps = _generate_spiral_waypoints(alt, poly_gps, drone_gps)
+                if not wps:
+                    # Fallback to lawnmower if spiral fails (e.g. polygon too small)
+                    return _orig(map_w, map_h, drone_gps, alt_override)
+                return wps
+            self.planner.generate_search_pattern = _spiral_generate
 
         # Connection
         self.master = None
@@ -830,7 +923,7 @@ class VisualFlightMission(StateHandlersMixin):
 def _dry_run(mission):
     """Visualize search pattern without flying. No Cube needed."""
     print("\n" + "=" * 60)
-    print("  DRY-RUN: Generating lawnmower search pattern")
+    print(f"  DRY-RUN: Generating {'spiral' if USE_SPIRAL else 'lawnmower'} search pattern")
     print("=" * 60)
 
     if not mission.search_poly or len(mission.search_poly) < 3:
@@ -846,6 +939,7 @@ def _dry_run(mission):
     print(f"\n  Start: ({drone_gps[0]:.6f}, {drone_gps[1]:.6f})  Alt: {config.TARGET_ALT}m  Speed: {config.SEARCH_SPEED_MPS}m/s")
 
     waypoints = mission.planner.generate_search_pattern(REAL_CANVAS_SIZE, REAL_CANVAS_SIZE, drone_gps)
+    print(f"  Pattern: {'Spiral' if USE_SPIRAL else 'Lawnmower'}")
     if not waypoints:
         print("  ERROR: No waypoints generated!")
         return
