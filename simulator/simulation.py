@@ -365,23 +365,32 @@ class SimulationEnvironment:
                 if not hasattr(self, '_nfz_inner_contours'):
                     inner_px = int(config.NFZ_INNER_OFFSET_M * geo_tool.pix_per_m)
                     h_map, w_map = self.full_map.shape[:2]
-                    mask_inner = np.zeros((h_map, w_map), dtype=np.uint8)
-                    cv2.fillPoly(mask_inner, [sssi_pts], 255)
-                    kernel_inner = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (inner_px * 2 + 1, inner_px * 2 + 1))
-                    eroded = cv2.erode(mask_inner, kernel_inner)
-                    self._nfz_inner_contours, _ = cv2.findContours(eroded, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                    # Work at 1/4 resolution for fast morphological ops
+                    S = 4
+                    sh, sw = h_map // S, w_map // S
+                    small_pts = (sssi_pts // S).astype(np.int32)
+                    mask_s = np.zeros((sh, sw), dtype=np.uint8)
+                    cv2.fillPoly(mask_s, [small_pts], 255)
+                    k = max(3, (inner_px // S) * 2 + 1)
+                    eroded = cv2.erode(mask_s, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (k, k)))
+                    contours_s, _ = cv2.findContours(eroded, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                    self._nfz_inner_contours = [c * S for c in contours_s]  # scale back up
                 if self._nfz_inner_contours:
-                    cv2.drawContours(display_map, self._nfz_inner_contours, -1, (255, 0, 255), 3)  # bright pink, bold
-            # Repulsion buffer (orange outline) — only when --nfz-repel active
+                    cv2.drawContours(display_map, self._nfz_inner_contours, -1, (255, 0, 255), 3)
+            # Repulsion buffer (orange outline)
             if nfz_buffer_m > 0:
                 if not hasattr(self, '_nfz_buffer_contours'):
                     buf_px = int(nfz_buffer_m * geo_tool.pix_per_m)
                     h_map, w_map = self.full_map.shape[:2]
-                    mask = np.zeros((h_map, w_map), dtype=np.uint8)
-                    cv2.fillPoly(mask, [sssi_pts], 255)
-                    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (buf_px * 2 + 1, buf_px * 2 + 1))
-                    self._nfz_buffer_contours, _ = cv2.findContours(
-                        cv2.dilate(mask, kernel), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                    S = 4
+                    sh, sw = h_map // S, w_map // S
+                    small_pts = (sssi_pts // S).astype(np.int32)
+                    mask_s = np.zeros((sh, sw), dtype=np.uint8)
+                    cv2.fillPoly(mask_s, [small_pts], 255)
+                    k = max(3, (buf_px // S) * 2 + 1)
+                    dilated = cv2.dilate(mask_s, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (k, k)))
+                    contours_s, _ = cv2.findContours(dilated, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                    self._nfz_buffer_contours = [c * S for c in contours_s]
                 if self._nfz_buffer_contours:
                     cv2.drawContours(display_map, self._nfz_buffer_contours, -1, (0, 140, 255), 2)
             # Vector field around SSSI (only with --arrows flag)
