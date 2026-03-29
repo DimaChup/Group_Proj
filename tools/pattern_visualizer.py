@@ -408,7 +408,7 @@ class PatternVisualizer:
             self._cached_stats = {
                 "n_wp": len(waypoints),
                 "n_strips": n_strips,
-                "n_filtered": len(filtered_out),
+                "n_filtered": 0,
                 "total_dist_m": total_dist,
                 "transit_dist_m": transit_dist,
                 "search_time_s": search_time,
