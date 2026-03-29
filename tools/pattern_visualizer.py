@@ -14,6 +14,10 @@ Controls:
     RIGHT-CLICK = place drone entry point (green dot)
     P           = toggle pattern type (Lawnmower / Spiral / Zian Spiral)
     H           = toggle speed heatmap (colors segments by expected speed near NFZ)
+    + / =       = increase heatmap sensitivity (narrower speed range, more vivid)
+    - / _       = decrease heatmap sensitivity (wider speed range, more subtle)
+    0           = reset heatmap range to auto (cruise speed)
+    T           = toggle heatmap line thickness (thin 1px / thick 3px)
     R           = reset polygon (enter drawing mode)
     S           = save current view to pattern_visualizer.png
     Q / ESC     = quit
@@ -1256,28 +1260,33 @@ class PatternVisualizer:
         # ── Speed heatmap color bar legend ──
         if self.show_heatmap and waypoints:
             cruise_spd = config.speed_for_altitude(float(self.altitude))
-            bar_x = self.disp_w - 180
+            hm_max = self.heatmap_range if self.heatmap_range is not None else cruise_spd
+            bar_x = self.disp_w - 200
             bar_y = 10
-            bar_w = 160
+            bar_w = 180
             bar_h = 16
             # Background
             cv2.rectangle(vis, (bar_x - 5, bar_y - 5),
-                          (bar_x + bar_w + 5, bar_y + bar_h + 22), (0, 0, 0), -1)
+                          (bar_x + bar_w + 5, bar_y + bar_h + 36), (0, 0, 0), -1)
             cv2.rectangle(vis, (bar_x - 5, bar_y - 5),
-                          (bar_x + bar_w + 5, bar_y + bar_h + 22), (60, 60, 60), 1)
+                          (bar_x + bar_w + 5, bar_y + bar_h + 36), (60, 60, 60), 1)
             # Gradient bar
             for px_i in range(bar_w):
                 frac = px_i / bar_w
-                spd = frac * cruise_spd
-                col = self._speed_to_color(spd, cruise_spd)
+                spd = frac * hm_max
+                col = self._speed_to_color(spd, hm_max)
                 cv2.line(vis, (bar_x + px_i, bar_y),
                          (bar_x + px_i, bar_y + bar_h), col, 1)
-            # Labels
-            cv2.putText(vis, "Speed: 0", (bar_x, bar_y + bar_h + 14),
+            # Labels: "Speed: 0 --- X.X m/s"
+            range_label = f"Speed: 0 --- {hm_max:.1f} m/s"
+            cv2.putText(vis, range_label, (bar_x, bar_y + bar_h + 14),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.3, CLR_TEXT, 1, cv2.LINE_AA)
-            label_r = f"{cruise_spd:.0f} m/s"
-            cv2.putText(vis, label_r, (bar_x + bar_w - 40, bar_y + bar_h + 14),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.3, CLR_TEXT, 1, cv2.LINE_AA)
+            # Sub-label: range mode + line thickness
+            mode_str = "auto" if self.heatmap_range is None else "manual"
+            th_str = f"thick" if self.heatmap_thickness >= 3 else "thin"
+            sub_label = f"[+/-] range ({mode_str})   [T] line ({th_str})"
+            cv2.putText(vis, sub_label, (bar_x, bar_y + bar_h + 28),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.26, (160, 160, 160), 1, cv2.LINE_AA)
 
         # ── Scale bar (bottom-right) ──
         scale_m = 50
@@ -1343,7 +1352,7 @@ class PatternVisualizer:
         print(f"  Pattern generated at {CANVAS_SIZE}x{CANVAS_SIZE} (same as main.py)")
         print(f"  Sliders: Altitude, Overlap (0=no-turn), Scan Angle (181=auto), Edge Margin")
         print(f"  LEFT-CLICK: add vertex (draw mode)   RIGHT-CLICK: set drone entry point")
-        print(f"  Keys: P=toggle pattern (Lawnmower/Spiral/Zian Spiral), H=heatmap, R=reset, S=save, Q=quit")
+        print(f"  Keys: P=toggle pattern, H=heatmap, +/-=range, T=thickness, 0=auto range, R=reset, S=save, Q=quit")
 
         while True:
             vis = self._draw()
@@ -1366,6 +1375,27 @@ class PatternVisualizer:
             elif key == ord('h'):
                 self.show_heatmap = not self.show_heatmap
                 print(f"  Speed heatmap: {'ON' if self.show_heatmap else 'OFF'}")
+            elif key == ord('t'):
+                self.heatmap_thickness = 1 if self.heatmap_thickness >= 3 else 3
+                print(f"  Heatmap line thickness: {self.heatmap_thickness}px")
+            elif key in (ord('+'), ord('='), ord(']')):
+                # Increase sensitivity (narrower range)
+                cruise = config.speed_for_altitude(float(self.altitude))
+                current = self.heatmap_range if self.heatmap_range is not None else cruise
+                new_range = max(1.0, current - 1.0)
+                self.heatmap_range = new_range
+                print(f"  Heatmap range: 0 - {new_range:.1f} m/s (narrower = more vivid)")
+            elif key in (ord('-'), ord('_'), ord('[')):
+                # Decrease sensitivity (wider range)
+                cruise = config.speed_for_altitude(float(self.altitude))
+                current = self.heatmap_range if self.heatmap_range is not None else cruise
+                new_range = current + 1.0
+                self.heatmap_range = new_range
+                print(f"  Heatmap range: 0 - {new_range:.1f} m/s (wider = more subtle)")
+            elif key == ord('0'):
+                # Reset heatmap range to auto
+                self.heatmap_range = None
+                print(f"  Heatmap range: auto (cruise speed)")
             elif key == ord('s'):
                 out_path = os.path.join(_proj_root, "pattern_visualizer.png")
                 cv2.imwrite(out_path, vis)
