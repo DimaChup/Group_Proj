@@ -40,6 +40,13 @@ SSSI_GPS = [
 ]
 TAKEOFF_GPS = (51.42340640206451, -2.671446029622069)
 
+# Transit waypoints from flight_plans/transit.json (path around NFZ)
+TRANSIT_GPS = [
+    (51.421764800829834, -2.6701173714965023),  # T1
+    (51.422474266363814, -2.667138823903503),    # T2
+    (51.42410411961755, -2.6683086927255597),    # T3
+]
+
 # NFZ parameters (from config.py)
 NFZ_HARD_M = 3.0
 NFZ_SLOW_ZONE_M = 20.0
@@ -170,9 +177,29 @@ def clip_line_to_polygon(p1, p2, poly_pts):
     return segments
 
 
-def generate_lawnmower_lines(search_pts_screen, angle_deg, num_lines):
+def inset_polygon(poly_pts, inset_screen):
+    """Inset (shrink) a polygon by moving each vertex toward the centroid.
+    inset_screen is in screen units.  Returns new list of 3-element arrays."""
+    arr = np.array(poly_pts)
+    c = arr.mean(axis=0)
+    result = []
+    for pt in arr:
+        d = pt - c
+        norm = np.linalg.norm(d[:2])
+        if norm < 1e-6:
+            result.append(pt.copy())
+        else:
+            # Move toward centroid by inset_screen
+            shrink = max(0, norm - inset_screen) / norm
+            result.append(c + d * shrink)
+    return result
+
+
+def generate_lawnmower_lines(search_pts_screen, angle_deg, num_lines, lane_inset_frac=1.0/3.0):
     """Generate lawnmower scan lines across the search polygon at a given angle.
-    Returns list of (start, end) point pairs CLIPPED to the search polygon."""
+    lane_inset_frac: fraction of lane spacing to inset from polygon edges (matches planning.py).
+    Returns list of (start, end) point pairs CLIPPED to the inset polygon,
+    with alternating direction so consecutive lines form a U-turn pattern."""
     pts = np.array(search_pts_screen)[:, :2]
     cx, cy = pts.mean(axis=0)
 
@@ -199,8 +226,15 @@ def generate_lawnmower_lines(search_pts_screen, angle_deg, num_lines):
     y_min, y_max = rotated[:, 1].min(), rotated[:, 1].max()
     x_min, x_max = rotated[:, 0].min(), rotated[:, 0].max()
 
-    margin = 0.03 * (y_max - y_min)
-    ys = np.linspace(y_min + margin, y_max - margin, num_lines)
+    # Lane spacing = total height / num_lines
+    lane_spacing = (y_max - y_min) / num_lines
+    # Inset from polygon edges by fraction of lane spacing (matches planning.py inset_px = strip_spacing // 3)
+    inset = lane_spacing * lane_inset_frac
+
+    # Inset the clipping polygon so scan lines don't touch edges
+    inset_pts = inset_polygon(search_pts_screen, inset)
+
+    ys = np.linspace(y_min + inset, y_max - inset, num_lines)
 
     lines = []
     for i, y in enumerate(ys):
@@ -217,8 +251,8 @@ def generate_lawnmower_lines(search_pts_screen, angle_deg, num_lines):
         raw_start = np.array([start_s[0], start_s[1], 0])
         raw_end = np.array([end_s[0], end_s[1], 0])
 
-        # Clip to polygon
-        clipped = clip_line_to_polygon(raw_start, raw_end, search_pts_screen)
+        # Clip to inset polygon
+        clipped = clip_line_to_polygon(raw_start, raw_end, inset_pts)
         for seg_s, seg_e in clipped:
             lines.append((seg_s, seg_e))
 
@@ -366,39 +400,77 @@ class NFZFieldScene(Scene):
         self.play(Create(bar_20m), FadeIn(bar_text), run_time=0.3)
 
         # ══════════════════════════════════════════════════════
-        # 3. TRANSIT PATH from TOL to search area
+        # 3. TRANSIT PATH from TOL around NFZ to search area
         # ══════════════════════════════════════════════════════
-        # Find the closest search area vertex to TOL as transit endpoint
-        dists = [np.linalg.norm(np.array(sp) - tol_screen) for sp in search_pts]
-        transit_target_idx = np.argmin(dists)
-        transit_target = search_pts[transit_target_idx]
+        # Convert transit waypoints to screen coords
+        transit_screen_pts = [
+            gps_point_to_screen(lat, lon, ref_lat, ref_lon, scale, offset)
+            for lat, lon in TRANSIT_GPS
+        ]
+        # Find first search waypoint (closest to last transit point)
+        dists = [np.linalg.norm(np.array(sp) - transit_screen_pts[-1]) for sp in search_pts]
+        first_search_idx = np.argmin(dists)
+        first_search_pt = search_pts[first_search_idx]
 
-        transit_line = DashedLine(
-            tol_screen, transit_target,
-            color=YELLOW_A, stroke_width=2,
+        # Full transit path: TOL -> T1 -> T2 -> T3 -> first search waypoint
+        transit_path_pts = [tol_screen] + transit_screen_pts + [first_search_pt]
+
+        transit_lines = VGroup()
+        transit_dots = VGroup()
+        for i in range(len(transit_path_pts) - 1):
+            seg = DashedLine(
+                transit_path_pts[i], transit_path_pts[i + 1],
+                color=YELLOW_A, stroke_width=2,
+            )
+            transit_lines.add(seg)
+        for i, tpt in enumerate(transit_screen_pts):
+            tdot = Dot(tpt, radius=0.05, color=YELLOW_A, fill_opacity=0.8)
+            transit_dots.add(tdot)
+
+        transit_label = Text("Transit (avoids NFZ)", font_size=10, color=YELLOW_A)
+        transit_mid = (transit_screen_pts[0] + transit_screen_pts[1]) / 2
+        transit_label.move_to(transit_mid + np.array([0.0, -0.2, 0]))
+
+        self.play(
+            LaggedStart(*[Create(l) for l in transit_lines], lag_ratio=0.3),
+            FadeIn(transit_dots),
+            run_time=0.8,
         )
-        transit_label = Text("Transit", font_size=10, color=YELLOW_A)
-        transit_mid = (tol_screen + transit_target) / 2
-        transit_label.move_to(transit_mid + np.array([0.2, 0.12, 0]))
-
-        self.play(Create(transit_line), FadeIn(transit_label), run_time=0.5)
+        self.play(FadeIn(transit_label), run_time=0.3)
         self.wait(0.3)
 
         # ══════════════════════════════════════════════════════
-        # 4. LAWNMOWER SEARCH PATTERN (clipped to search polygon)
+        # 4. LAWNMOWER SEARCH PATTERN (clipped, inset, with U-turns)
         # ══════════════════════════════════════════════════════
         scan_angle = 70
         num_scan_lines = 7
         lawnmower = generate_lawnmower_lines(search_pts, scan_angle, num_scan_lines)
 
-        pattern_lines = VGroup()
+        pattern_group = VGroup()
+        # Draw scan lines
         for start, end in lawnmower:
             line = Line(start, end, color=GREEN_A, stroke_width=1.5, stroke_opacity=0.6)
-            pattern_lines.add(line)
+            pattern_group.add(line)
+
+        # Draw U-turn connectors between consecutive scan lines
+        uturn_group = VGroup()
+        for i in range(len(lawnmower) - 1):
+            _, end_cur = lawnmower[i]
+            start_next, _ = lawnmower[i + 1]
+            # Small arc connector
+            connector = Line(
+                end_cur, start_next,
+                color=GREEN_A, stroke_width=1.2, stroke_opacity=0.4,
+            )
+            uturn_group.add(connector)
 
         self.play(
-            LaggedStart(*[Create(l) for l in pattern_lines], lag_ratio=0.12),
-            run_time=1.8,
+            LaggedStart(*[Create(l) for l in pattern_group], lag_ratio=0.12),
+            run_time=1.5,
+        )
+        self.play(
+            LaggedStart(*[Create(l) for l in uturn_group], lag_ratio=0.1),
+            run_time=0.6,
         )
         self.wait(0.5)
 
@@ -574,8 +646,8 @@ class NFZFieldScene(Scene):
         near_idx = max(0, best_line_idx - 1)
         path_lines = lawnmower[near_idx:min(near_idx + 3, len(lawnmower))]
 
-        # Drone start position
-        drone_start = path_lines[0][0]
+        # Drone starts at TOL (takeoff location)
+        drone_start = tol_screen.copy()
         drone = Dot(drone_start, radius=0.1, color=BLUE, fill_opacity=1.0)
         drone_ring = Circle(radius=0.16, color=BLUE_B, stroke_width=2,
                             stroke_opacity=0.5, fill_opacity=0.0)
@@ -604,6 +676,15 @@ class NFZFieldScene(Scene):
             FadeIn(speed_txt), FadeIn(speed_lbl),
             run_time=0.4,
         )
+
+        # ── Fly transit path: TOL -> T1 -> T2 -> T3 -> first scan line ──
+        for tpt in transit_path_pts[1:]:  # skip TOL (already there)
+            self.play(drone.animate.move_to(tpt), run_time=0.5, rate_func=linear)
+
+        # Move to start of first scan line
+        first_scan_start = path_lines[0][0]
+        if np.linalg.norm(drone.get_center() - first_scan_start) > 0.05:
+            self.play(drone.animate.move_to(first_scan_start), run_time=0.4, rate_func=linear)
 
         # ── Fly each scan line with physics (scalar + repulsion) ──
         # Velocity arrow on drone
