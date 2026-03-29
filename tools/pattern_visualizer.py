@@ -279,7 +279,8 @@ class PatternVisualizer:
 
             # 4. Scan lines
             all_strips = []
-            inset_px = strip_spacing_px // 3
+            # Edge margin slider controls how far waypoints are from polygon edges
+            inset_px = max(1, int(self.nfz_buffer * planner.pix_per_m)) if self.nfz_buffer > 0 else strip_spacing_px // 3
             bottom_limit = bbox_y + bbox_h - inset_px
             prev_scan_y = -999
 
@@ -370,20 +371,10 @@ class PatternVisualizer:
                 alt_override=alt,
             )
 
-        # NFZ filtering
-        filtered_out = []
-        if self.nfz_buffer > 0 and config.SSSI_GPS and len(config.SSSI_GPS) >= 3:
-            nfz = NFZGeofence(self.geo_canvas)
-            # Temporarily override buffer distance
-            nfz.WAYPOINT_BUFFER = float(self.nfz_buffer)
-            kept, n_removed = nfz.filter_waypoints(waypoints)
-            # Find which waypoints were removed
-            kept_set = set(kept)
-            filtered_out = [wp for wp in waypoints if wp not in kept_set]
-            waypoints = kept
-
+        # No waypoint filtering — edge margin slider pushes waypoints back from edges
+        # (handled by inset_px in the pattern generation above)
         self._cached_waypoints = waypoints
-        self._cached_filtered_wps = filtered_out
+        self._cached_filtered_wps = []
         self._cached_key = cache_key
 
         # Compute stats
@@ -579,7 +570,7 @@ class PatternVisualizer:
                 f"Energy est: {stats['energy_wh']:.1f} Wh (hover+drag+turns)",
                 f"Footprint: {stats['footprint_w']:.1f}x{stats['footprint_h']:.1f}m",
                 f"Overlap: {self.overlap_pct}%   Scan angle: {angle_str}",
-                f"NFZ buffer: {self.nfz_buffer}m",
+                f"Edge margin: {self.nfz_buffer}m",
             ]
             panel_h = 14 * len(lines) + 10
             panel_w = 360
@@ -647,11 +638,11 @@ class PatternVisualizer:
         cv2.setTrackbarMin("Altitude (m)", WIN_NAME, 15)
         cv2.createTrackbar("Overlap (%)", WIN_NAME, self.overlap_pct, 50, self._on_overlap)
         cv2.createTrackbar("Scan Angle", WIN_NAME, self.scan_angle, 181, self._on_angle)
-        cv2.createTrackbar("NFZ Buffer (m)", WIN_NAME, self.nfz_buffer, 50, self._on_nfz_buffer)
+        cv2.createTrackbar("Edge Margin (m)", WIN_NAME, self.nfz_buffer, 50, self._on_nfz_buffer)
 
         print(f"\nVisualizer ready. Window: {self.disp_w}x{self.disp_h}")
         print(f"  Pattern generated at {CANVAS_SIZE}x{CANVAS_SIZE} (same as main.py)")
-        print(f"  Sliders: Altitude, Overlap (0=no-turn), Scan Angle (181=auto), NFZ Buffer")
+        print(f"  Sliders: Altitude, Overlap (0=no-turn), Scan Angle (181=auto), Edge Margin")
         print(f"  LEFT-CLICK: add vertex (draw mode)   RIGHT-CLICK: set drone entry point")
         print(f"  Keys: R=reset/draw, S=save, Q=quit")
 
