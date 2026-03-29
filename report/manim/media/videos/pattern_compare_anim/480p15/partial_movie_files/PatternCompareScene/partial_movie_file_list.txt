@@ -1,0 +1,12 @@
+# This file is used internally by FFMPEG.
+file 'file:C:/Users/Bristol/Desktop/AI for Robotics/v3/report/manim/media/videos/pattern_compare_anim/480p15/partial_movie_files/PatternCompareScene/1584795214_2630428715_223132457.mp4'
+file 'file:C:/Users/Bristol/Desktop/AI for Robotics/v3/report/manim/media/videos/pattern_compare_anim/480p15/partial_movie_files/PatternCompareScene/4072820271_4033512683_1795585639.mp4'
+file 'file:C:/Users/Bristol/Desktop/AI for Robotics/v3/report/manim/media/videos/pattern_compare_anim/480p15/partial_movie_files/PatternCompareScene/4072820271_3480435590_2894551245.mp4'
+file 'file:C:/Users/Bristol/Desktop/AI for Robotics/v3/report/manim/media/videos/pattern_compare_anim/480p15/partial_movie_files/PatternCompareScene/4072820271_1427408274_3454442689.mp4'
+file 'file:C:/Users/Bristol/Desktop/AI for Robotics/v3/report/manim/media/videos/pattern_compare_anim/480p15/partial_movie_files/PatternCompareScene/4072820271_108541578_2815847547.mp4'
+file 'file:C:/Users/Bristol/Desktop/AI for Robotics/v3/report/manim/media/videos/pattern_compare_anim/480p15/partial_movie_files/PatternCompareScene/4072820271_3368156686_3091919578.mp4'
+file 'file:C:/Users/Bristol/Desktop/AI for Robotics/v3/report/manim/media/videos/pattern_compare_anim/480p15/partial_movie_files/PatternCompareScene/4072820271_2231676139_1408891169.mp4'
+file 'file:C:/Users/Bristol/Desktop/AI for Robotics/v3/report/manim/media/videos/pattern_compare_anim/480p15/partial_movie_files/PatternCompareScene/4072820271_887848106_3524331156.mp4'
+file 'file:C:/Users/Bristol/Desktop/AI for Robotics/v3/report/manim/media/videos/pattern_compare_anim/480p15/partial_movie_files/PatternCompareScene/4072820271_2574473371_3764622209.mp4'
+file 'file:C:/Users/Bristol/Desktop/AI for Robotics/v3/report/manim/media/videos/pattern_compare_anim/480p15/partial_movie_files/PatternCompareScene/4072820271_617252542_2395684908.mp4'
+file 'file:C:/Users/Bristol/Desktop/AI for Robotics/v3/report/manim/media/videos/pattern_compare_anim/480p15/partial_movie_files/PatternCompareScene/4072820271_310540274_2349360354.mp4'

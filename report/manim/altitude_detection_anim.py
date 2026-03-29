@@ -128,6 +128,7 @@ class AltitudeDetectionScene(Scene):
         start_alt = 10
         drone = make_drone_icon(scale=0.4)
         drone.move_to(np.array([DRONE_X, alt_to_y(start_alt), 0]))
+        self.current_alt = start_alt
 
         # Altitude label next to drone
         alt_text = always_redraw(
@@ -136,7 +137,6 @@ class AltitudeDetectionScene(Scene):
                 font_size=20, color=WHITE,
             ).next_to(drone, LEFT, buff=0.2)
         )
-        self.current_alt = start_alt
 
         # FOV cone: two lines from drone down to ground
         def make_fov_lines():
