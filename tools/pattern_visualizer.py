@@ -13,6 +13,7 @@ Controls:
     LEFT-CLICK  = add polygon vertex (in --draw mode)
     RIGHT-CLICK = place drone entry point (green dot)
     P           = toggle pattern type (Lawnmower / Spiral)
+    H           = toggle speed heatmap (colors segments by expected speed near NFZ)
     R           = reset polygon (enter drawing mode)
     S           = save current view to pattern_visualizer.png
     Q / ESC     = quit
@@ -25,7 +26,7 @@ import argparse
 
 import cv2
 import numpy as np
-from shapely.geometry import Polygon as ShapelyPolygon, LineString
+from shapely.geometry import Polygon as ShapelyPolygon
 
 # Add project root to path
 _proj_root = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
@@ -59,12 +60,16 @@ CLR_FILTERED   = (0, 0, 255)       # red    -- filtered waypoints (X marks)
 CLR_FOCUS      = (255, 165, 0)     # orange -- focus area
 CLR_DRONE      = (0, 255, 0)       # green  -- drone entry point
 CLR_TEXT       = (220, 220, 220)   # light grey
+CLR_HEAT_FAST  = (0, 200, 0)      # green  -- full speed (>80% cruise)
+CLR_HEAT_MED   = (0, 200, 200)    # yellow -- medium speed (40-80% cruise)
+CLR_HEAT_SLOW  = (0, 0, 220)      # red    -- slow (<40% cruise or NFZ zone)
 
 # Energy model constants (from optimize_path.py momentum theory)
 HOVER_POWER_W  = 150.0    # Watts to stay airborne
 DRAG_COEFF_W   = 50.0     # Watts at DRAG_REF_SPEED
 DRAG_REF_SPEED = 5.0      # m/s reference
 U_TURN_TIME_S  = 2.0      # seconds per U-turn
+ACCEL_MPS2     = 3.0      # acceleration for momentum model (m/s^2)
 
 
 # ── Helpers ────────────────────────────────────────────────────────────
@@ -168,6 +173,9 @@ class PatternVisualizer:
 
         # Pattern type: "lawnmower" or "spiral"
         self.pattern_type = "lawnmower"
+
+        # Speed heatmap toggle (H key)
+        self.show_heatmap = False
 
         # Cached results
         self._cached_key = None
@@ -399,29 +407,57 @@ class PatternVisualizer:
                 all_rings.append(coords)
                 offset += strip_spacing_m
 
-            # 4. Optionally reverse ring order so outermost is first (inward spiral)
-            #    and connect rings with short transitions
-            for ring_coords in all_rings:
-                ring_line = LineString(ring_coords)
-                num_points = max(4, int(ring_line.length / strip_spacing_m))
-                for i in range(num_points):
-                    frac = i / num_points
-                    pt = ring_line.interpolate(frac, normalized=True)
-                    # Convert back to GPS
-                    gps_lat = pt.y / 111320 + ref_lat
-                    gps_lon = pt.x / (111320 * cos_lat) + ref_lon
+            # 4. Simplify each ring to essential corners only, then
+            #    connect rings inward: Ring1 corners -> Ring2 corners -> ... -> center
+            simplified_rings = []
+            for coords in all_rings:
+                ring_poly = ShapelyPolygon(coords)
+                # Simplify to remove redundant points along edges, keep corners
+                simplified = ring_poly.simplify(strip_spacing_m * 0.3, preserve_topology=True)
+                if simplified.is_empty or simplified.geom_type != 'Polygon':
+                    continue
+                # Get corner vertices (drop closing duplicate)
+                verts = list(simplified.exterior.coords)[:-1]
+                if len(verts) >= 3:
+                    simplified_rings.append(verts)
+
+            # 5. For each ring, rotate its vertices so the first vertex is
+            #    closest to the last vertex of the previous ring (smooth connection)
+            for ring_idx, verts in enumerate(simplified_rings):
+                if ring_idx == 0 and self.drone_gps:
+                    # First ring: start from corner nearest drone entry
+                    drone_m = ((self.drone_gps[1] - ref_lon) * 111320 * cos_lat,
+                               (self.drone_gps[0] - ref_lat) * 111320)
+                    ref_pt = drone_m
+                elif ring_idx > 0 and simplified_rings[ring_idx - 1]:
+                    ref_pt = simplified_rings[ring_idx - 1][-1]
+                else:
+                    continue
+                # Find closest vertex to ref_pt
+                best_j = 0
+                best_d = float('inf')
+                for j, v in enumerate(verts):
+                    dx = v[0] - ref_pt[0]
+                    dy = v[1] - ref_pt[1]
+                    d = dx * dx + dy * dy
+                    if d < best_d:
+                        best_d = d
+                        best_j = j
+                simplified_rings[ring_idx] = verts[best_j:] + verts[:best_j]
+
+            # 6. Build spiral waypoints: all corners of each ring, inward
+            for verts in simplified_rings:
+                for v in verts:
+                    gps_lat = v[1] / 111320 + ref_lat
+                    gps_lon = v[0] / (111320 * cos_lat) + ref_lon
                     spiral_waypoints.append((gps_lat, gps_lon))
 
-            # 5. Start from corner nearest drone entry point
-            if spiral_waypoints and self.drone_gps:
-                best_idx = 0
-                best_dist = float('inf')
-                for i, wp in enumerate(spiral_waypoints):
-                    d = gps_distance_m(self.drone_gps, wp)
-                    if d < best_dist:
-                        best_dist = d
-                        best_idx = i
-                spiral_waypoints = spiral_waypoints[best_idx:] + spiral_waypoints[:best_idx]
+            # 7. Add center point as final waypoint
+            centroid = shape_poly.centroid
+            if not centroid.is_empty:
+                center_lat = centroid.y / 111320 + ref_lat
+                center_lon = centroid.x / (111320 * cos_lat) + ref_lon
+                spiral_waypoints.append((center_lat, center_lon))
 
             waypoints = spiral_waypoints
         elif self.overlap_pct == 0 and self.scan_angle > 180:
@@ -502,6 +538,92 @@ class PatternVisualizer:
 
         return waypoints
 
+    def _compute_segment_speeds(self, waypoints):
+        """Compute expected speed for each segment considering NFZ slowdown + momentum.
+
+        Returns a list of (speed_mps, is_nfz_zone) tuples, one per segment.
+        """
+        if len(waypoints) < 2:
+            return []
+
+        alt = float(self.altitude)
+        cruise_speed = config.speed_for_altitude(alt)
+
+        # Build geofence for distance queries
+        geofence = NFZGeofence(self.geo_canvas)
+        has_nfz = bool(config.SSSI_GPS) and len(config.SSSI_GPS) >= 3
+
+        segment_speeds = []
+        prev_speed = cruise_speed  # assume starting at cruise
+
+        for i in range(len(waypoints) - 1):
+            wp_a = waypoints[i]
+            wp_b = waypoints[i + 1]
+
+            # Midpoint GPS
+            mid_lat = (wp_a[0] + wp_b[0]) / 2.0
+            mid_lon = (wp_a[1] + wp_b[1]) / 2.0
+
+            seg_len = gps_distance_m(wp_a, wp_b)
+
+            # Target speed based on NFZ distance
+            target_speed = cruise_speed
+            in_nfz_zone = False
+
+            if has_nfz:
+                dist_m, is_inside = geofence.distance_to_boundary(mid_lat, mid_lon)
+                if is_inside or dist_m <= config.NFZ_SCALAR_ZERO_M:
+                    target_speed = config.NFZ_MIN_SPEED_MPS
+                    in_nfz_zone = True
+                elif dist_m < config.NFZ_SLOW_ZONE_M:
+                    ratio = (dist_m - config.NFZ_SCALAR_ZERO_M) / (
+                        config.NFZ_SLOW_ZONE_M - config.NFZ_SCALAR_ZERO_M)
+                    target_speed = min(ratio * config.NFZ_ZONE_MAX_SPEED_MPS, cruise_speed)
+                    in_nfz_zone = True
+
+            # Momentum model: can't instantly reach target speed
+            # v_new = min(v_target, v_prev + accel * dt) where dt = seg_len / v_avg
+            if seg_len > 0.01 and prev_speed < target_speed:
+                # Estimate time to traverse at average of prev and target
+                v_avg = max(0.5, (prev_speed + target_speed) / 2.0)
+                dt = seg_len / v_avg
+                actual_speed = min(target_speed, prev_speed + ACCEL_MPS2 * dt)
+            elif seg_len > 0.01 and prev_speed > target_speed:
+                # Decelerating: assume same accel for braking
+                v_avg = max(0.5, (prev_speed + target_speed) / 2.0)
+                dt = seg_len / v_avg
+                actual_speed = max(target_speed, prev_speed - ACCEL_MPS2 * dt)
+            else:
+                actual_speed = target_speed
+
+            actual_speed = max(actual_speed, 0.0)
+            segment_speeds.append((actual_speed, in_nfz_zone))
+            prev_speed = actual_speed
+
+        return segment_speeds
+
+    def _speed_to_color(self, speed, cruise_speed):
+        """Map speed to BGR color: green (fast), yellow (medium), red (slow)."""
+        if cruise_speed <= 0:
+            return CLR_HEAT_SLOW
+        ratio = speed / cruise_speed
+        if ratio > 0.8:
+            return CLR_HEAT_FAST
+        elif ratio > 0.4:
+            # Interpolate green to yellow
+            t = (ratio - 0.4) / 0.4  # 0..1
+            b = int(0 * (1 - t) + 0 * t)
+            g = int(0 * (1 - t) + 200 * t)
+            r = int(220 * (1 - t) + 200 * t)
+            return (b, g, r)
+        else:
+            # Interpolate red to yellow
+            t = ratio / 0.4  # 0..1
+            b = int(0 * (1 - t) + 0 * t)
+            g = int(0 * (1 - t) + 0 * t)
+            r = int(220 * (1 - t) + 220 * t)
+            return (b, g, r)
+
     def _draw(self):
         """Render the current state to a display image."""
         vis = self.map_disp.copy()
@@ -581,9 +703,18 @@ class PatternVisualizer:
 
         wp_px = [self._gps_to_disp(w[0], w[1]) for w in waypoints]
 
-        # Draw path segments (green scan, yellow U-turn for lawnmower; all green for spiral)
+        # Compute segment speeds if heatmap is enabled
+        seg_speeds = None
+        if self.show_heatmap:
+            seg_speeds = self._compute_segment_speeds(waypoints)
+            cruise_speed = config.speed_for_altitude(float(self.altitude))
+
+        # Draw path segments
         for i in range(len(wp_px) - 1):
-            if self.pattern_type == "spiral":
+            if self.show_heatmap and seg_speeds:
+                color = self._speed_to_color(seg_speeds[i][0], cruise_speed)
+                cv2.line(vis, wp_px[i], wp_px[i + 1], color, 2, cv2.LINE_AA)
+            elif self.pattern_type == "spiral":
                 cv2.line(vis, wp_px[i], wp_px[i + 1], CLR_SCAN, 2, cv2.LINE_AA)
             elif i % 2 == 0:
                 cv2.line(vis, wp_px[i], wp_px[i + 1], CLR_SCAN, 2, cv2.LINE_AA)
@@ -654,6 +785,26 @@ class PatternVisualizer:
                 f"Overlap: {self.overlap_pct}%   Scan angle: {angle_str}",
                 f"Edge margin: {self.nfz_buffer}m",
             ]
+
+            # Heatmap stats (only when enabled and computed)
+            if self.show_heatmap and seg_speeds:
+                nfz_time_s = 0.0
+                total_time_hm = 0.0
+                speed_sum = 0.0
+                for idx, (spd, in_zone) in enumerate(seg_speeds):
+                    seg_dist = gps_distance_m(waypoints[idx], waypoints[idx + 1])
+                    seg_time = seg_dist / max(spd, 0.1)
+                    total_time_hm += seg_time
+                    speed_sum += spd
+                    if in_zone:
+                        nfz_time_s += seg_time
+                avg_speed = speed_sum / len(seg_speeds) if seg_speeds else 0
+                nfz_pct = (nfz_time_s / total_time_hm * 100) if total_time_hm > 0 else 0
+                lines.append(f"Heatmap ON   Avg speed: {avg_speed:.1f} m/s")
+                lines.append(f"NFZ zone time: {nfz_time_s:.0f}s ({nfz_pct:.0f}%)")
+            elif self.show_heatmap:
+                lines.append("Heatmap ON (no NFZ data)")
+
             panel_h = 14 * len(lines) + 10
             panel_w = 360
             cv2.rectangle(vis, (0, 0), (panel_w, panel_h), (0, 0, 0), -1)
@@ -661,6 +812,32 @@ class PatternVisualizer:
             for i, line in enumerate(lines):
                 cv2.putText(vis, line, (6, 14 + i * 14),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.36, CLR_TEXT, 1, cv2.LINE_AA)
+
+        # ── Speed heatmap color bar legend ──
+        if self.show_heatmap and waypoints:
+            cruise_spd = config.speed_for_altitude(float(self.altitude))
+            bar_x = self.disp_w - 180
+            bar_y = 10
+            bar_w = 160
+            bar_h = 16
+            # Background
+            cv2.rectangle(vis, (bar_x - 5, bar_y - 5),
+                          (bar_x + bar_w + 5, bar_y + bar_h + 22), (0, 0, 0), -1)
+            cv2.rectangle(vis, (bar_x - 5, bar_y - 5),
+                          (bar_x + bar_w + 5, bar_y + bar_h + 22), (60, 60, 60), 1)
+            # Gradient bar
+            for px_i in range(bar_w):
+                frac = px_i / bar_w
+                spd = frac * cruise_spd
+                col = self._speed_to_color(spd, cruise_spd)
+                cv2.line(vis, (bar_x + px_i, bar_y),
+                         (bar_x + px_i, bar_y + bar_h), col, 1)
+            # Labels
+            cv2.putText(vis, "Speed: 0", (bar_x, bar_y + bar_h + 14),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.3, CLR_TEXT, 1, cv2.LINE_AA)
+            label_r = f"{cruise_spd:.0f} m/s"
+            cv2.putText(vis, label_r, (bar_x + bar_w - 40, bar_y + bar_h + 14),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.3, CLR_TEXT, 1, cv2.LINE_AA)
 
         # ── Scale bar (bottom-right) ──
         scale_m = 50
@@ -726,7 +903,7 @@ class PatternVisualizer:
         print(f"  Pattern generated at {CANVAS_SIZE}x{CANVAS_SIZE} (same as main.py)")
         print(f"  Sliders: Altitude, Overlap (0=no-turn), Scan Angle (181=auto), Edge Margin")
         print(f"  LEFT-CLICK: add vertex (draw mode)   RIGHT-CLICK: set drone entry point")
-        print(f"  Keys: P=toggle pattern, R=reset/draw, S=save, Q=quit")
+        print(f"  Keys: P=toggle pattern, H=speed heatmap, R=reset/draw, S=save, Q=quit")
 
         while True:
             vis = self._draw()
@@ -748,6 +925,9 @@ class PatternVisualizer:
                     self.pattern_type = "lawnmower"
                 self._cached_key = None
                 print(f"  Pattern type: {self.pattern_type}")
+            elif key == ord('h'):
+                self.show_heatmap = not self.show_heatmap
+                print(f"  Speed heatmap: {'ON' if self.show_heatmap else 'OFF'}")
             elif key == ord('s'):
                 out_path = os.path.join(_proj_root, "pattern_visualizer.png")
                 cv2.imwrite(out_path, vis)
