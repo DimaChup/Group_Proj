@@ -593,19 +593,11 @@ class StateHandlersMixin:
     def _handle_approach(self, target_found, px_u, px_v, key):
         # Fly to landing spot and descend for payload deploy
         deploy_alt = 3.0
-        if time.time() - self.last_req > 0.3:
-            # P-controller descent with vz feed-forward (same pattern as DESCENDING)
-            alt_error = self.alt - deploy_alt
-            if alt_error > 0.5:
-                vz = min(0.5 * alt_error, 1.5)   # descend (positive = down in NED)
-            elif alt_error < -0.5:
-                vz = max(0.5 * alt_error, -1.5)   # brake if overshot
-            else:
-                vz = 0
-            self.nav.send_global_target(self.landing_lat, self.landing_lon, deploy_alt, vz=vz)
+        if time.time() - self.last_req > 0.5:
+            self.nav.send_global_target(self.landing_lat, self.landing_lon, deploy_alt)
             self.last_req = time.time()
             if self.alt > deploy_alt + 1.0:
-                print(f"  [DESCENT] {self.alt:.1f}m → {deploy_alt}m  vz={vz:.1f}")
+                print(f"  [DESCENT] {self.alt:.1f}m → {deploy_alt}m")
         if self.get_dist_to_point(self.landing_lat, self.landing_lon) < 2.0 and self.alt < deploy_alt + 2.0:
             print(f"  At {self.alt:.1f}m above target — payload deploy sequence (15s)")
             self._set_state(State.HOVER_TARGET)
