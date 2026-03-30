@@ -826,6 +826,15 @@ class VisualFlightMission(StateHandlersMixin):
             self._nfz_toward_vec = None
 
         if nfz_inside and self.state != State.MANUAL:
+            if skip_speed_clamp:
+                # During approach/return/hover: do NOT switch to MANUAL.
+                # Don't send velocity commands (they override position targets and
+                # kill altitude control with vz=0).  The state handler's
+                # send_global_target already ran this tick — just let it work.
+                # The position target pulls the drone back outside NFZ naturally.
+                print(f"[GEOFENCE] Brief NFZ incursion during {self.state.name} — "
+                      f"position target active, no MANUAL switch")
+                return
             print(f"[GEOFENCE] INSIDE NFZ! Switching to MANUAL")
             if self.state != State.RETURN_FROM_MANUAL:
                 self.previous_state = self.state
@@ -836,76 +845,10 @@ class VisualFlightMission(StateHandlersMixin):
             if self.nav: self.nav.send_velocity(0, 0, 0)
             return
 
-        if skip_speed_clamp:
-            # During approach/return: hard boundary (above) is enough.
-            # NO set_speed (bleeds into vertical via 3D position controller).
-            # NO send_velocity repulsion (overrides position target, blocks climb with Z=0).
-            # If wind pushes into NFZ → hard boundary triggers MANUAL → repulsion kicks in there.
-            pass
-        elif NFZ_DIRECTIONAL and not nfz_inside and nfz_dist < config.NFZ_SLOW_ZONE_M:
-            # Ramp: 0 m/s at SCALAR_ZERO_M (2m), linearly up to ZONE_MAX at SLOW_ZONE_M (20m)
-            if nfz_dist <= config.NFZ_SCALAR_ZERO_M:
-                max_approach = 0.0
-            else:
-                ratio = (nfz_dist - config.NFZ_SCALAR_ZERO_M) / (config.NFZ_SLOW_ZONE_M - config.NFZ_SCALAR_ZERO_M)
-                max_approach = ratio * config.NFZ_ZONE_MAX_SPEED_MPS
-            # Compute unit vector toward nearest NFZ boundary point
-            best_dist_sq = float('inf')
-            nfz_lat, nfz_lon = self.lat, self.lon
-            poly = self.geofence.sssi_polygon_gps
-            for i in range(len(poly)):
-                p1_lat, p1_lon = poly[i]
-                p2_lat, p2_lon = poly[(i + 1) % len(poly)]
-                # Project drone position onto edge segment in metre space
-                e_n = (p2_lat - p1_lat) * 111320
-                e_e = (p2_lon - p1_lon) * 111320 * math.cos(math.radians(self.lat))
-                d_n = (self.lat - p1_lat) * 111320
-                d_e = (self.lon - p1_lon) * 111320 * math.cos(math.radians(self.lat))
-                e_len_sq = e_n * e_n + e_e * e_e
-                if e_len_sq < 1e-12:
-                    t = 0.0
-                else:
-                    t = max(0.0, min(1.0, (d_n * e_n + d_e * e_e) / e_len_sq))
-                c_lat = p1_lat + t * (p2_lat - p1_lat)
-                c_lon = p1_lon + t * (p2_lon - p1_lon)
-                dsq = ((self.lat - c_lat) * 111320) ** 2 + \
-                      ((self.lon - c_lon) * 111320 * math.cos(math.radians(self.lat))) ** 2
-                if dsq < best_dist_sq:
-                    best_dist_sq = dsq
-                    nfz_lat, nfz_lon = c_lat, c_lon
-            # Direction toward nearest NFZ boundary point
-            dx = (nfz_lon - self.lon) * 111320 * math.cos(math.radians(self.lat))
-            dy = (nfz_lat - self.lat) * 111320
-            dist = math.sqrt(dx * dx + dy * dy)
-            if dist > 0.1:
-                # Unit vector toward NFZ
-                toward_n = dy / dist
-                toward_e = dx / dist
-                # Current drone velocity from telemetry
-                vn = getattr(self, 'vx', 0)
-                ve = getattr(self, 'vy', 0)
-                speed = math.sqrt(vn * vn + ve * ve)
-                if speed > 0.3:
-                    # cos(angle) between flight direction and toward-NFZ
-                    cos_angle = (vn * toward_n + ve * toward_e) / speed
-                    if cos_angle > 0.05:
-                        # Flying toward NFZ — limit speed so approach component stays within max_approach
-                        # approach = speed * cos(angle), we want approach <= max_approach
-                        # so speed <= max_approach / cos(angle)
-                        allowed = max_approach / cos_angle
-                        if allowed < speed:
-                            self.nav.last_speed_req = 0
-                            self.nav.set_speed(max(0.3, allowed))
-                    # Flying parallel or away: no speed limit from NFZ
-        elif not NFZ_DIRECTIONAL and not nfz_inside and nfz_dist < config.NFZ_SLOW_ZONE_M:
-            # Original: cap total speed. Ramp: 0 at SCALAR_ZERO_M, ZONE_MAX at SLOW_ZONE_M
-            if nfz_dist <= config.NFZ_SCALAR_ZERO_M:
-                max_spd = 0.0
-            else:
-                ratio = (nfz_dist - config.NFZ_SCALAR_ZERO_M) / (config.NFZ_SLOW_ZONE_M - config.NFZ_SCALAR_ZERO_M)
-                max_spd = ratio * config.NFZ_ZONE_MAX_SPEED_MPS
-            self.nav.last_speed_req = 0
-            self.nav.set_speed(max_spd)
+        # 20m speed scalar field DISABLED — it bled into vertical control via
+        # ArduCopter's 3D position controller, preventing descent/climb near NFZ.
+        # Safety is provided by: hard boundary (3m → MANUAL) for search states,
+        # and the skip_speed_clamp path above for approach/return states.
 
         # Repulsive push — only in MANUAL mode (send_velocity fights navigation in other states)
         if self.nav and self.state == State.MANUAL:
