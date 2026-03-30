@@ -527,7 +527,7 @@ class VisualFlightMission(StateHandlersMixin):
         if self.geofence:
             dist, inside = self.geofence.distance_to_boundary(
                 self.landing_lat, self.landing_lon)
-            if inside or dist < config.NFZ_HARD_BOUNDARY_M:
+            if inside or dist < 15.0:  # 15m buffer — descent/climb near NFZ is risky
                 print(f"  [NFZ] Landing spot {direction_key.upper()} is {dist:.0f}m from NFZ — too close!")
                 # Try all 4 directions, pick the one furthest from NFZ
                 best_dir, best_dist = direction_key, dist

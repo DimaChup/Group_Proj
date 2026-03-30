@@ -651,7 +651,8 @@ class StateHandlersMixin:
         if self.return_wp_index >= 0:
             wp = self.pre_waypoints[self.return_wp_index]
             if time.time() - self.last_req > 2.0:
-                self.nav.send_global_target(wp[0], wp[1], return_alt)
+                vz = -1.5 if self.alt < return_alt - 2.0 else 0
+                self.nav.send_global_target(wp[0], wp[1], return_alt, vz=vz)
                 self.last_req = time.time()
             if self.get_dist_to_point(wp[0], wp[1]) < 2.0:
                 print(f"Return transit WP {len(self.pre_waypoints) - self.return_wp_index}/{len(self.pre_waypoints)} reached.")
@@ -670,7 +671,8 @@ class StateHandlersMixin:
             return
         self.nav.set_speed(config.TRANSIT_SPEED_MPS)
         if time.time() - self.last_req > 2.0:
-            self.nav.send_global_target(self.home_lat, self.home_lon, config.TARGET_ALT)
+            vz = -1.5 if self.alt < config.TARGET_ALT - 2.0 else 0
+            self.nav.send_global_target(self.home_lat, self.home_lon, config.TARGET_ALT, vz=vz)
             self.last_req = time.time()
         if self.get_dist_to_point(self.home_lat, self.home_lon) < 2.0:
             print("Home reached. Landing.")
