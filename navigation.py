@@ -58,14 +58,20 @@ class NavigationController:
         #   Bits: 0=x 1=y 2=z 3=vx 4=vy 5=vz 6-8=accel 9=force 10=yaw 11=yaw_rate
         #   0 = use, 1 = ignore
         if yaw is not None:
-            mask = 0b100111000000 if vz != 0 else 0b100111111000
+            #              bit: 11 10 9 8 7 6  5  4  3  2 1 0
+            # pos+yaw:          1  0 1 1 1 1  1  1  1  0 0 0 = 0b101111111000
+            # pos+vz+yaw:       1  0 1 1 1 1  0  1  1  0 0 0 = 0b101111011000
+            mask = 0b101111011000 if vz != 0 else 0b101111111000
             self.master.mav.set_position_target_global_int_send(
                 0, self.master.target_system, self.master.target_component,
                 mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT_INT,
                 mask, int(lat * 1e7), int(lon * 1e7), alt,
                 0, 0, vz, 0, 0, 0, yaw, 0)
         else:
-            mask = 0b110111000000 if vz != 0 else 0b110111111000
+            #              bit: 11 10 9 8 7 6  5  4  3  2 1 0
+            # pos only:          1  1 1 1 1 1  1  1  1  0 0 0 = 0b111111111000
+            # pos+vz:            1  1 1 1 1 1  0  1  1  0 0 0 = 0b111111011000
+            mask = 0b111111011000 if vz != 0 else 0b111111111000
             self.master.mav.set_position_target_global_int_send(
                 0, self.master.target_system, self.master.target_component,
                 mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT_INT,
