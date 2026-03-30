@@ -845,10 +845,64 @@ class VisualFlightMission(StateHandlersMixin):
             if self.nav: self.nav.send_velocity(0, 0, 0)
             return
 
-        # 20m speed scalar field DISABLED — it bled into vertical control via
-        # ArduCopter's 3D position controller, preventing descent/climb near NFZ.
-        # Safety is provided by: hard boundary (3m → MANUAL) for search states,
-        # and the skip_speed_clamp path above for approach/return states.
+        if skip_speed_clamp:
+            # After Y confirmed: approach/return/hover — no speed clamping
+            # (it bleeds into vertical via 3D position controller, blocks descent/climb).
+            pass
+        elif NFZ_DIRECTIONAL and not nfz_inside and nfz_dist < config.NFZ_SLOW_ZONE_M:
+            # Ramp: 0 m/s at SCALAR_ZERO_M (2m), linearly up to ZONE_MAX at SLOW_ZONE_M (20m)
+            if nfz_dist <= config.NFZ_SCALAR_ZERO_M:
+                max_approach = 0.0
+            else:
+                ratio = (nfz_dist - config.NFZ_SCALAR_ZERO_M) / (config.NFZ_SLOW_ZONE_M - config.NFZ_SCALAR_ZERO_M)
+                max_approach = ratio * config.NFZ_ZONE_MAX_SPEED_MPS
+            # Compute unit vector toward nearest NFZ boundary point
+            best_dist_sq = float('inf')
+            nfz_lat, nfz_lon = self.lat, self.lon
+            poly = self.geofence.sssi_polygon_gps
+            for i in range(len(poly)):
+                p1_lat, p1_lon = poly[i]
+                p2_lat, p2_lon = poly[(i + 1) % len(poly)]
+                e_n = (p2_lat - p1_lat) * 111320
+                e_e = (p2_lon - p1_lon) * 111320 * math.cos(math.radians(self.lat))
+                d_n = (self.lat - p1_lat) * 111320
+                d_e = (self.lon - p1_lon) * 111320 * math.cos(math.radians(self.lat))
+                e_len_sq = e_n * e_n + e_e * e_e
+                if e_len_sq < 1e-12:
+                    t = 0.0
+                else:
+                    t = max(0.0, min(1.0, (d_n * e_n + d_e * e_e) / e_len_sq))
+                c_lat = p1_lat + t * (p2_lat - p1_lat)
+                c_lon = p1_lon + t * (p2_lon - p1_lon)
+                dsq = ((self.lat - c_lat) * 111320) ** 2 + \
+                      ((self.lon - c_lon) * 111320 * math.cos(math.radians(self.lat))) ** 2
+                if dsq < best_dist_sq:
+                    best_dist_sq = dsq
+                    nfz_lat, nfz_lon = c_lat, c_lon
+            dx = (nfz_lon - self.lon) * 111320 * math.cos(math.radians(self.lat))
+            dy = (nfz_lat - self.lat) * 111320
+            dist = math.sqrt(dx * dx + dy * dy)
+            if dist > 0.1:
+                toward_n = dy / dist
+                toward_e = dx / dist
+                vn = getattr(self, 'vx', 0)
+                ve = getattr(self, 'vy', 0)
+                speed = math.sqrt(vn * vn + ve * ve)
+                if speed > 0.3:
+                    cos_angle = (vn * toward_n + ve * toward_e) / speed
+                    if cos_angle > 0.05:
+                        allowed = max_approach / cos_angle
+                        if allowed < speed:
+                            self.nav.last_speed_req = 0
+                            self.nav.set_speed(max(0.3, allowed))
+        elif not NFZ_DIRECTIONAL and not nfz_inside and nfz_dist < config.NFZ_SLOW_ZONE_M:
+            if nfz_dist <= config.NFZ_SCALAR_ZERO_M:
+                max_spd = 0.0
+            else:
+                ratio = (nfz_dist - config.NFZ_SCALAR_ZERO_M) / (config.NFZ_SLOW_ZONE_M - config.NFZ_SCALAR_ZERO_M)
+                max_spd = ratio * config.NFZ_ZONE_MAX_SPEED_MPS
+            self.nav.last_speed_req = 0
+            self.nav.set_speed(max_spd)
 
         # Repulsive push — only in MANUAL mode (send_velocity fights navigation in other states)
         if self.nav and self.state == State.MANUAL:
