@@ -494,6 +494,7 @@ def main():
     wp_index = 0
     consecutive_detections = 0
     consecutive_lost = 0
+    lost_start_time = 0
     total_detections = 0
     frame_count = 0
     center_start_time = 0
@@ -608,13 +609,16 @@ def main():
                         print(f"  CENTERING: {dir_str}  vx={vx:.2f} vy={vy:.2f}  conf={conf:.2f}")
 
                 else:
+                    if consecutive_lost == 0:
+                        lost_start_time = time.time()
                     consecutive_lost += 1
                     send_velocity(mav, 0, 0)  # hold position
 
-                    if consecutive_lost > 20:  # ~5 seconds at 4fps
+                    if time.time() - lost_start_time > 5.0:
                         print(f"  Target lost for 5s — resuming waypoints")
                         state = STATE_WAYPOINTS
                         consecutive_detections = 0
+                        consecutive_lost = 0
 
             elif state == STATE_HOVERING:
                 # Holding position — maintain center if target drifts

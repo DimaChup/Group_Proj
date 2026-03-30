@@ -351,11 +351,10 @@ def main():
                     if not DRY_RUN:
                         set_mode(mav, 4, "GUIDED")
                         beep(mav, "MFT200L8CEGC")
-                        state = STATE_CENTERING
                     else:
                         print("  [DRY RUN] Would switch to GUIDED + center here")
                         beep(mav, "MFT200L16CD")
-                        consecutive_detections = 0
+                    state = STATE_CENTERING
 
             elif state == STATE_CENTERING:
                 # Moving to hover above target

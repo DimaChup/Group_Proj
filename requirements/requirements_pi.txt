@@ -14,3 +14,4 @@ opencv-python-headless
 numpy<2
 tflite-runtime; python_version < "3.13"
 ai-edge-litert; python_version >= "3.13"
+ncnn                                        # Optional: ~3x faster inference (--backend ncnn)

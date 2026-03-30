@@ -149,8 +149,12 @@ def _terminal_input_thread():
             time.sleep(0.05)
     else:
         import tty, termios
-        fd = sys.stdin.fileno()
-        old = termios.tcgetattr(fd)
+        try:
+            fd = sys.stdin.fileno()
+            old = termios.tcgetattr(fd)
+        except OSError:
+            print("[INPUT] No terminal — use browser buttons at http://PI_IP:8090")
+            return
         try:
             tty.setcbreak(fd)
             while True:
@@ -322,6 +326,7 @@ class VisualFlightMission(StateHandlersMixin):
         self._gps_warn_printed = 0        # throttle warnings
         self._last_gps_status_print = 0
         self._last_mode_warn = -1
+        self._cube_mode = 4  # Assume GUIDED until first heartbeat
         self._arming_timeout_warned = False
         self._takeoff_timeout_warned = False
         self._centering_timeout_warned = False
@@ -461,12 +466,13 @@ class VisualFlightMission(StateHandlersMixin):
                     self.master.target_system = msg.get_srcSystem()
                     self.master.target_component = msg.get_srcComponent()
                     print(f"[LINK] Autopilot found: system {self.master.target_system}")
+                self._cube_mode = getattr(msg, 'custom_mode', 4)
                 if hasattr(msg, 'custom_mode') and self.state not in (
                         State.MANUAL, State.DONE, State.INIT, State.CONNECTING):
                     if msg.custom_mode != 4 and self._last_mode_warn != msg.custom_mode:
                         modes = {0:'STABILIZE',2:'ALT_HOLD',3:'AUTO',4:'GUIDED',
                                  5:'LOITER',6:'RTL',9:'LAND',16:'POSHOLD'}
-                        print(f"WARNING: Cube in {modes.get(msg.custom_mode, f'MODE_{msg.custom_mode}')} (not GUIDED)")
+                        print(f"WARNING: Cube in {modes.get(msg.custom_mode, f'MODE_{msg.custom_mode}')} — RC OVERRIDE ACTIVE, commands paused")
                         self._last_mode_warn = msg.custom_mode
             elif mtype == 'GPS_RAW_INT':
                 self.gps_fix_type = msg.fix_type
@@ -748,6 +754,15 @@ class VisualFlightMission(StateHandlersMixin):
                 self.logger.writerow([datetime.now(), self.state, self.lat, self.lon, self.alt, self.current_conf])
                 self.log_file.flush()
                 self._last_log_time = now
+
+            # RC OVERRIDE GUARD: if pilot switched away from GUIDED,
+            # stop ALL commands. This prevents fighting the RC pilot.
+            # Modes 4=GUIDED, 9=LAND are ours. Anything else = pilot has control.
+            _pilot_override = self._cube_mode not in (4, 9) and self.state not in (
+                State.INIT, State.CONNECTING, State.ARMING, State.DONE)
+            if _pilot_override:
+                time.sleep(0.05)
+                continue  # Skip keys + state handler + geofence — pilot is flying
 
             self._handle_keys(key, target_found, px_u, px_v)
 

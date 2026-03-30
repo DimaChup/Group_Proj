@@ -129,14 +129,35 @@ class VisionSystem:
             pass
 
         print(f"[VISION] Opening Camera Index {camera_index} ({cam_w}x{cam_h})...")
-        self.cap = cv2.VideoCapture(camera_index)
+        if sys.platform == 'win32':
+            self.cap = cv2.VideoCapture(camera_index, cv2.CAP_DSHOW)
+        else:
+            self.cap = cv2.VideoCapture(camera_index)
         if self.cap.isOpened():
-            ret, _ = self.cap.read()
+            # First read at default resolution to verify camera works
+            ret, test_frame = self.cap.read()
             if ret:
+                native_h, native_w = test_frame.shape[:2]
+                # Try requested resolution
                 self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, cam_w)
                 self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, cam_h)
                 self.cap.set(cv2.CAP_PROP_FPS, 30)
-                print("[VISION] Camera opened via OpenCV")
+                # Verify with a second read
+                ret2, test_frame2 = self.cap.read()
+                if ret2:
+                    actual_h, actual_w = test_frame2.shape[:2]
+                else:
+                    # Second read failed — fall back to native
+                    actual_w, actual_h = native_w, native_h
+                    self.cap.release()
+                    if sys.platform == 'win32':
+                        self.cap = cv2.VideoCapture(camera_index, cv2.CAP_DSHOW)
+                    else:
+                        self.cap = cv2.VideoCapture(camera_index)
+                if actual_w != cam_w or actual_h != cam_h:
+                    print(f"[VISION] Camera doesn't support {cam_w}x{cam_h}, using {actual_w}x{actual_h}")
+                    cam_w, cam_h = actual_w, actual_h
+                print(f"[VISION] Camera opened via OpenCV ({cam_w}x{cam_h})")
                 return cam_w, cam_h
             else:
                 self.cap.release()

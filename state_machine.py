@@ -276,7 +276,26 @@ class StateHandlersMixin:
                 self._set_state(State.HOVER)
 
     def _handle_return_from_manual(self, target_found, px_u, px_v, key):
+        # Safety checks before resuming autonomous flight
+        if not getattr(self, '_resume_validated', False):
+            issues = []
+            if self.gps_fix_type < 3 or self.gps_satellites < 4:
+                issues.append(f"GPS poor (fix={self.gps_fix_type}, sats={self.gps_satellites})")
+            if hasattr(self, 'geofence') and self.geofence:
+                _, nfz_inside = self.geofence.distance_to_boundary(self.lat, self.lon)
+                if nfz_inside:
+                    issues.append("INSIDE NFZ — fly out before resuming")
+            if issues:
+                if time.time() - getattr(self, '_resume_warn_time', 0) > 5.0:
+                    for iss in issues:
+                        print(f"[RESUME BLOCKED] {iss}")
+                    self._resume_warn_time = time.time()
+                return  # Stay in RETURN_FROM_MANUAL until safe
+            self._resume_validated = True
+            print(f"[RESUME] Safety checks passed. Returning to departure point at {self.manual_departure_alt:.0f}m.")
+
         self.nav.set_speed(config.TRANSIT_SPEED_MPS)
+        # Always return at the departure altitude (safe altitude)
         if time.time() - self.last_req > 2.0:
             self.nav.send_global_target(self.manual_departure_lat,
                                         self.manual_departure_lon,
@@ -285,6 +304,7 @@ class StateHandlersMixin:
         if self.get_dist_to_point(self.manual_departure_lat, self.manual_departure_lon) < 3.0:
             print(f"Back at manual departure point. Resuming {self.previous_state}.")
             self.last_req = 0
+            self._resume_validated = False
             self._set_state(self.previous_state)
 
     def _handle_transit_to_search(self, target_found, px_u, px_v, key):
