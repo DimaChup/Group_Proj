@@ -593,6 +593,9 @@ class StateHandlersMixin:
     def _handle_approach(self, target_found, px_u, px_v, key):
         # Fly to landing spot and descend for payload deploy
         deploy_alt = 3.0
+        # Reset speed — SEARCH leaves a low speed (6 m/s) that starves the
+        # vertical velocity budget.  TRANSIT_SPEED gives full 3D envelope.
+        self.nav.set_speed(config.TRANSIT_SPEED_MPS)
         if time.time() - self.last_req > 0.5:
             self.nav.send_global_target(self.landing_lat, self.landing_lon, deploy_alt)
             self.last_req = time.time()
