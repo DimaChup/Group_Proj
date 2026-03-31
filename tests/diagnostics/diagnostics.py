@@ -153,8 +153,12 @@ MODELS = [
     ("best.tflite", "original"),
     ("cv_models/sar_v2_1088/best.tflite", "v2-1088"),
     ("cv_models/sar_v2_1088/ncnn/best_ncnn_model", "v2-1088-NCNN"),
+    ("cv_models/human.tflite", "COCO-human-80class"),
 ]
 current_model_idx = 0
+_ai_thread = None
+_ai_result_frame = None
+_ai_busy = False
 
 print("[2/5] Checking AI model...")
 eyes = None
@@ -617,9 +621,22 @@ def draw_view_camera(frame):
     if frame is not None:
         display_frame = frame.copy()
 
-        # Run AI if toggled on (modifies display_frame in-place with boxes)
+        # Run AI in background thread — don't block camera FPS
         if ai_overlay_on and eyes and eyes.using_ai:
-            run_ai_on_frame(display_frame)
+            global _ai_thread, _ai_result_frame, _ai_busy
+            if not _ai_busy:
+                _ai_busy = True
+                def _run_ai(f):
+                    global _ai_result_frame, _ai_busy
+                    run_ai_on_frame(f)
+                    _ai_result_frame = f
+                    _ai_busy = False
+                import threading
+                _ai_thread = threading.Thread(target=_run_ai, args=(display_frame.copy(),), daemon=True)
+                _ai_thread.start()
+            # Overlay last AI result onto current frame
+            if _ai_result_frame is not None:
+                display_frame = _ai_result_frame
 
         img[fy:fy + fh, 0:fw] = display_frame
     else:
