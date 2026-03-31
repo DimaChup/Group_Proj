@@ -20,6 +20,7 @@ Controls:
     T           = toggle heatmap line thickness (thin 1px / thick 3px)
     R           = reset polygon (enter drawing mode)
     S           = save current view to pattern_visualizer.png
+    W           = export waypoints to flight_plans/search_waypoints.json
     Q / ESC     = quit
 """
 
@@ -890,6 +891,11 @@ class PatternVisualizer:
 
             scan_angle_val = getattr(planner, 'last_scan_angle', None)
 
+            # Strip spacing (distance between parallel scan lines)
+            _strip_spacing = ground_fp_h * (1.0 - self.overlap_pct / 100.0)
+            if _strip_spacing <= 0:
+                _strip_spacing = ground_fp_w * 0.8
+
             self._cached_stats = {
                 "n_wp": len(waypoints),
                 "n_strips": n_strips,
@@ -905,6 +911,7 @@ class PatternVisualizer:
                 "footprint_w": ground_fp_w,
                 "footprint_h": ground_fp_h,
                 "scan_angle": scan_angle_val,
+                "strip_spacing_m": _strip_spacing,
             }
         else:
             self._cached_stats = {}
@@ -1234,8 +1241,9 @@ class PatternVisualizer:
                 f"Coverage: {stats['coverage_pct']:.0f}%   Area: {stats['search_area_m2']:.0f}m2",
                 f"Energy est: {stats['energy_wh']:.1f} Wh (hover+drag+turns)",
                 f"Footprint: {stats['footprint_w']:.1f}x{stats['footprint_h']:.1f}m",
-                f"Overlap: {self.overlap_pct}%   Scan angle: {angle_str}",
-                f"Edge margin: {self.margin_pct}% of strip spacing",
+                f"Strip spacing: {stats['strip_spacing_m']:.1f}m   Overlap: {self.overlap_pct}%",
+                f"Scan angle: {angle_str}",
+                f"Edge margin: {stats['strip_spacing_m'] * self.margin_pct / 100:.1f}m ({self.margin_pct}% of strip spacing)",
             ]
 
             # Heatmap stats (only when enabled and computed)
@@ -1370,7 +1378,7 @@ class PatternVisualizer:
         print(f"  Pattern generated at {CANVAS_SIZE}x{CANVAS_SIZE} (same as main.py)")
         print(f"  Sliders: Altitude, Overlap (0=no-turn), Scan Angle (181=auto), Edge Margin")
         print(f"  LEFT-CLICK: add vertex (draw mode)   RIGHT-CLICK: set drone entry point")
-        print(f"  Keys: P=toggle pattern, H=heatmap, +/-=range, T=thickness, 0=auto range, R=reset, S=save, Q=quit")
+        print(f"  Keys: P=toggle pattern, H=heatmap, +/-=range, T=thickness, 0=auto range, R=reset, S=save, W=export waypoints, Q=quit")
 
         while True:
             vis = self._draw()
@@ -1418,6 +1426,24 @@ class PatternVisualizer:
                 out_path = os.path.join(_proj_root, "pattern_visualizer.png")
                 cv2.imwrite(out_path, vis)
                 print(f"  Saved: {out_path}")
+            elif key == ord('w'):
+                # Export waypoints to JSON
+                import json as _json
+                wps = self._cached_waypoints
+                if not wps:
+                    print("  No waypoints to export.")
+                else:
+                    out = []
+                    for i, (lat, lon) in enumerate(wps):
+                        out.append({"lat": lat, "lon": lon, "label": f"WP{i+1}"})
+                    out_path = os.path.join(_proj_root, "flight_plans", "search_waypoints.json")
+                    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+                    with open(out_path, 'w') as f:
+                        _json.dump(out, f, indent=2)
+                    print(f"  EXPORTED {len(wps)} waypoints to {out_path}")
+                    print(f"  Pattern: {self.pattern_type}, Alt: {self.altitude}m")
+                    for i, (lat, lon) in enumerate(wps):
+                        print(f"    WP{i+1}: {lat:.7f}, {lon:.7f}")
 
         cv2.destroyAllWindows()
 

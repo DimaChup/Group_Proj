@@ -66,6 +66,7 @@ parser.add_argument('--save-dir', default='detections')
 parser.add_argument('--no-save', action='store_true')
 parser.add_argument('--no-mavlink', action='store_true', help='Skip mavproxy connection (no GPS)')
 parser.add_argument('--model', default='best.tflite', help='Path to .tflite model (default: best.tflite)')
+parser.add_argument('--simple-names', action='store_true', help='Simple filenames (no det_ prefix, no JSON sidecars)')
 args = parser.parse_args()
 
 
@@ -634,10 +635,16 @@ def main():
                     alt = gps_data["alt"]
                     ts = datetime.now().strftime("%H:%M:%S")
 
-                    if lat != 0.0 or lon != 0.0:
-                        fname = f"det_{saved_count:04d}_{conf:.2f}_{lat:.5f}_{lon:.5f}.jpg"
+                    if args.simple_names:
+                        if lat != 0.0 or lon != 0.0:
+                            fname = f"{saved_count:04d}_{lat:.5f}_{lon:.5f}.jpg"
+                        else:
+                            fname = f"{saved_count:04d}_nogps.jpg"
                     else:
-                        fname = f"det_{saved_count:04d}_{conf:.2f}_nogps.jpg"
+                        if lat != 0.0 or lon != 0.0:
+                            fname = f"det_{saved_count:04d}_{conf:.2f}_{lat:.5f}_{lon:.5f}.jpg"
+                        else:
+                            fname = f"det_{saved_count:04d}_{conf:.2f}_nogps.jpg"
 
                     # Stamp: time + conf + drone pos + dummy est (right side, stacked)
                     stamp_lines = [f"{ts} conf:{conf:.2f}"]
@@ -657,42 +664,43 @@ def main():
 
                     cv2.imwrite(os.path.join(args.save_dir, fname), save_frame)
 
-                    # JSON sidecar metadata (same name, .json)
-                    g_w, g_h = ground_coverage(d_alt) if d_alt > 0.5 else (0, 0)
-                    meta = {
-                        "timestamp": datetime.now().isoformat(),
-                        "frame": frame_count,
-                        "detection": {
-                            "confidence": round(conf, 3),
-                            "pixel_x": cx, "pixel_y": cy,
-                            "bbox_centre": [cx, cy],
-                        },
-                        "drone": {
-                            "lat": round(d_lat, 7), "lon": round(d_lon, 7),
-                            "alt_m": round(d_alt, 1),
-                            "yaw_deg": round(gps_data["yaw"], 1),
-                            "pitch_deg": round(gps_data["pitch"], 1),
-                            "roll_deg": round(gps_data["roll"], 1),
-                            "sats": gps_data["sats"],
-                            "mode": gps_data["mode"],
-                        },
-                        "fov": {
-                            "focal_mm": FOV["focal_mm"],
-                            "sensor_w_mm": FOV["sensor_w"],
-                            "hfov_deg": round(FOV["hfov_deg"], 1),
-                            "ground_w_m": round(g_w, 2) if d_alt > 0.5 else None,
-                            "ground_h_m": round(g_h, 2) if d_alt > 0.5 else None,
-                        },
-                        "estimate": {
-                            "lat": round(est_snap[0], 7) if est_snap else None,
-                            "lon": round(est_snap[1], 7) if est_snap else None,
-                            "n_observations": est_snap[2] if est_snap else 0,
-                        },
-                        "image": fname,
-                    }
-                    json_fname = fname.replace('.jpg', '.json')
-                    with open(os.path.join(args.save_dir, json_fname), 'w') as jf:
-                        json.dump(meta, jf, indent=2)
+                    # JSON sidecar metadata (skip if --simple-names)
+                    if not args.simple_names:
+                        g_w, g_h = ground_coverage(d_alt) if d_alt > 0.5 else (0, 0)
+                        meta = {
+                            "timestamp": datetime.now().isoformat(),
+                            "frame": frame_count,
+                            "detection": {
+                                "confidence": round(conf, 3),
+                                "pixel_x": cx, "pixel_y": cy,
+                                "bbox_centre": [cx, cy],
+                            },
+                            "drone": {
+                                "lat": round(d_lat, 7), "lon": round(d_lon, 7),
+                                "alt_m": round(d_alt, 1),
+                                "yaw_deg": round(gps_data["yaw"], 1),
+                                "pitch_deg": round(gps_data["pitch"], 1),
+                                "roll_deg": round(gps_data["roll"], 1),
+                                "sats": gps_data["sats"],
+                                "mode": gps_data["mode"],
+                            },
+                            "fov": {
+                                "focal_mm": FOV["focal_mm"],
+                                "sensor_w_mm": FOV["sensor_w"],
+                                "hfov_deg": round(FOV["hfov_deg"], 1),
+                                "ground_w_m": round(g_w, 2) if d_alt > 0.5 else None,
+                                "ground_h_m": round(g_h, 2) if d_alt > 0.5 else None,
+                            },
+                            "estimate": {
+                                "lat": round(est_snap[0], 7) if est_snap else None,
+                                "lon": round(est_snap[1], 7) if est_snap else None,
+                                "n_observations": est_snap[2] if est_snap else 0,
+                            },
+                            "image": fname,
+                        }
+                        json_fname = fname.replace('.jpg', '.json')
+                        with open(os.path.join(args.save_dir, json_fname), 'w') as jf:
+                            json.dump(meta, jf, indent=2)
 
                     # CSV log
                     if csv_writer:
