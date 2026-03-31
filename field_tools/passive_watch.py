@@ -56,6 +56,8 @@ from vision import VisionSystem
 latest_jpeg = None
 latest_det_jpeg = None
 frame_lock = threading.Lock()
+_det_busy = False
+_det_result = None
 
 # ── Args ──
 parser = argparse.ArgumentParser(description="Passive camera watch + stream + snapshots")
@@ -612,10 +614,25 @@ def main():
         h, w = frame.shape[:2]
         cam_fps_tracker.tick()
 
-        # Run detection (throttled)
-        if eyes.using_ai and (now - last_inference) >= min_interval:
+        # Run detection in background thread (doesn't block stream)
+        if eyes.using_ai and (now - last_inference) >= min_interval and not _det_busy:
             last_inference = now
-            found, x, y, conf = eyes.detect_in_image(frame)
+            _det_busy = True
+            def _run_det(f, eyes_ref):
+                global _det_busy, _det_result
+                try:
+                    result = eyes_ref.detect_in_image(f)
+                    _det_result = result
+                except Exception:
+                    _det_result = (False, 0, 0, 0.0)
+                finally:
+                    _det_busy = False
+            threading.Thread(target=_run_det, args=(frame.copy(), eyes), daemon=True).start()
+
+        # Process latest detection result
+        if _det_result is not None:
+            found, x, y, conf = _det_result
+            _det_result = None
             vis_fps_tracker.tick()
 
             if found and conf >= args.conf:
