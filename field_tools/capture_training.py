@@ -44,6 +44,8 @@ if not os.environ.get('DISPLAY'):
 
 import cv2
 import numpy as np
+import csv
+import math
 
 # Optional mavlink for GPS tagging
 try:
@@ -166,6 +168,7 @@ def main():
     parser.add_argument('--fps', type=int, default=30, help='Video recording FPS (default 30)')
     parser.add_argument('--res', default='640x480', help='Camera resolution WxH (default 640x480)')
     parser.add_argument('--no-mavlink', action='store_true', help='Skip mavlink connection')
+    parser.add_argument('--undistort', action='store_true', help='Apply lens undistortion (needs calibration_data.npz)')
     args = parser.parse_args()
 
     # Create output dirs
@@ -219,6 +222,22 @@ def main():
         return
     print(f"[CAM] Opened via {cam_info[0]}")
 
+    # Lens undistortion (de-fisheye)
+    undistort_map1, undistort_map2 = None, None
+    if args.undistort:
+        calib_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                                  "calibration_data.npz")
+        if os.path.exists(calib_path):
+            calib = np.load(calib_path)
+            mtx = calib["camera_matrix"]
+            dist = calib["dist_coeffs"]
+            new_mtx, _ = cv2.getOptimalNewCameraMatrix(mtx, dist, (cam_w, cam_h), 0, (cam_w, cam_h))
+            undistort_map1, undistort_map2 = cv2.initUndistortRectifyMap(
+                mtx, dist, None, new_mtx, (cam_w, cam_h), cv2.CV_16SC2)
+            print(f"[CAM] Lens undistortion loaded (RMS={float(calib['rms_error']):.3f})")
+        else:
+            print(f"[CAM] WARNING: --undistort requested but calibration_data.npz not found")
+
     # Start stream server
     server = ThreadedServer(('0.0.0.0', args.port), StreamHandler)
     threading.Thread(target=server.serve_forever, daemon=True).start()
@@ -246,6 +265,8 @@ def main():
     last_auto = 0
 
     vid_frame_count = 0
+    gps_log_file = None
+    gps_log_writer = None
     if recording:
         vpath = os.path.join(video_dir, f"flight_{datetime.now().strftime('%Y%m%d_%H%M%S')}.avi")
         video_writer = cv2.VideoWriter(vpath, cv2.VideoWriter_fourcc(*'MJPG'), args.fps, (cam_w, cam_h))
@@ -254,6 +275,12 @@ def main():
             recording = False
         else:
             print(f"[REC] Recording to {vpath} ({cam_w}x{cam_h} @{args.fps}fps)")
+            # GPS telemetry log per frame (like DJI SRT)
+            gps_log_path = vpath.replace('.avi', '_telemetry.csv')
+            gps_log_file = open(gps_log_path, 'w', newline='')
+            gps_log_writer = csv.writer(gps_log_file)
+            gps_log_writer.writerow(['frame', 'timestamp', 'lat', 'lon', 'alt_m', 'yaw', 'sats'])
+            print(f"[REC] GPS log: {gps_log_path}")
 
     try:
         while True:
@@ -264,15 +291,29 @@ def main():
             # Flip 180° (camera mounted upside down)
             frame = cv2.flip(frame, -1)
 
+            # De-fisheye
+            if undistort_map1 is not None:
+                frame = cv2.remap(frame, undistort_map1, undistort_map2, cv2.INTER_LINEAR)
+
             # Update stream
             _, jpg = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
             with frame_lock:
                 latest_jpeg = jpg.tobytes()
 
-            # Write video
+            # Write video + per-frame GPS log
             if recording and video_writer:
                 video_writer.write(frame)
                 vid_frame_count += 1
+                if gps_log_writer:
+                    gps_log_writer.writerow([
+                        vid_frame_count,
+                        datetime.now().isoformat(),
+                        f"{gps_data['lat']:.7f}",
+                        f"{gps_data['lon']:.7f}",
+                        f"{gps_data['alt']:.1f}",
+                        f"{gps_data['yaw']:.1f}",
+                        gps_data['sats']
+                    ])
 
             now = time.time()
 
@@ -306,15 +347,25 @@ def main():
                             if video_writer:
                                 video_writer.release()
                                 video_writer = None
+                            if gps_log_file:
+                                gps_log_file.close()
+                                gps_log_file = None
+                                gps_log_writer = None
                             print(f"  [REC] Stopped recording ({vid_frame_count} frames written)")
                             vid_frame_count = 0
                         else:
                             recording = True
+                            vid_frame_count = 0
                             vpath = os.path.join(video_dir,
                                                  f"flight_{datetime.now().strftime('%Y%m%d_%H%M%S')}.avi")
                             video_writer = cv2.VideoWriter(vpath,
                                                            cv2.VideoWriter_fourcc(*'MJPG'), args.fps, (cam_w, cam_h))
+                            gps_log_path = vpath.replace('.avi', '_telemetry.csv')
+                            gps_log_file = open(gps_log_path, 'w', newline='')
+                            gps_log_writer = csv.writer(gps_log_file)
+                            gps_log_writer.writerow(['frame', 'timestamp', 'lat', 'lon', 'alt_m', 'yaw', 'sats'])
                             print(f"  [REC] Recording to {vpath}")
+                            print(f"  [REC] GPS log: {gps_log_path}")
 
                     elif key.lower() == 'q':
                         break
@@ -326,6 +377,8 @@ def main():
             termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
         if video_writer:
             video_writer.release()
+        if gps_log_file:
+            gps_log_file.close()
 
     print(f"\n  Done! {photo_count} photos saved to {photo_dir}/")
     if recording:
