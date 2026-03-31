@@ -67,6 +67,7 @@ parser.add_argument('--no-save', action='store_true')
 parser.add_argument('--no-mavlink', action='store_true', help='Skip mavproxy connection (no GPS)')
 parser.add_argument('--model', default='best.tflite', help='Path to .tflite model (default: best.tflite)')
 parser.add_argument('--simple-names', action='store_true', help='Simple filenames (no det_ prefix, no JSON sidecars)')
+parser.add_argument('--class-filter', type=str, default=None, help='Only save detections of this class (e.g. "person")')
 args = parser.parse_args()
 
 
@@ -609,6 +610,11 @@ def main():
             vis_fps_tracker.tick()
 
             if found and conf >= args.conf:
+                # Class filter: skip if detection class doesn't match
+                if args.class_filter and hasattr(eyes, 'last_class_name'):
+                    if eyes.last_class_name.lower() != args.class_filter.lower():
+                        continue  # skip this detection
+
                 det_count += 1
                 cx, cy = int(x * w), int(y * h)
                 last_det = (cx, cy, conf, 0.0)
