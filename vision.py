@@ -561,21 +561,26 @@ class VisionSystem:
             return False, 0, 0, 0.0
 
         best_box = max(results[0].boxes, key=lambda b: b.conf[0])
-        x, y, bw, bh = best_box.xywh[0].cpu().numpy()
         conf = float(best_box.conf[0])
 
-        self.last_bbox_w = int(bw)
-        self.last_bbox_h = int(bh)
+        # Use xyxy (always reliable) to compute center and size
+        x1, y1, x2, y2 = best_box.xyxy[0].cpu().numpy()
+        cx = int((x1 + x2) / 2)
+        cy = int((y1 + y2) / 2)
+        bw = int(x2 - x1)
+        bh = int(y2 - y1)
+
+        self.last_bbox_w = bw
+        self.last_bbox_h = bh
         cls_id = int(best_box.cls[0])
         names = self.model.names if hasattr(self.model, 'names') else {}
         self.last_class_name = names.get(cls_id, f"cls{cls_id}")
 
-        x1, y1, x2, y2 = best_box.xyxy[0].cpu().numpy()
         label = f"AI {conf:.2f} [{self.last_class_name}]"
         cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
         cv2.putText(frame, label, (int(x1), int(y1) - 10),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-        return True, int(x), int(y), conf
+        return True, cx, cy, conf
 
     # ------------------------------------------------------------------
     # Shared detection helpers
