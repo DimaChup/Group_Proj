@@ -616,7 +616,8 @@ def main():
                         continue  # skip this detection
 
                 det_count += 1
-                cx, cy = int(x * w), int(y * h)
+                # detect_in_image returns pixel coords already scaled to frame size
+                cx, cy = int(x), int(y)
                 last_det = (cx, cy, conf, 0.0)
                 last_det_time = now
 
