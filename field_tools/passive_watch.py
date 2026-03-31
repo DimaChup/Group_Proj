@@ -568,7 +568,7 @@ def main():
     print(f"[OK] Stream serving on port {args.port}\n")
 
     # CSV log for detections
-    csv_path = os.path.join(args.save_dir, "detection_log.csv") if not args.no_save else None
+    csv_path = os.path.join(args.save_dir, "detection_log.csv") if (not args.no_save and not args.simple_names) else None
     csv_file = None
     csv_writer = None
     if csv_path:
