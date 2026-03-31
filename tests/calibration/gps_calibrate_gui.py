@@ -326,8 +326,7 @@ def main():
     f_px = config.FOCAL_LENGTH_MM * config.IMAGE_W / config.SENSOR_WIDTH_MM
 
     win = "GPS Calibration"
-    cv2.namedWindow(win, cv2.WINDOW_NORMAL)
-    cv2.resizeWindow(win, 1456, 900)
+    # Window created implicitly by first cv2.imshow (same pattern as diagnostics.py)
 
     state = S_SETUP
     buf = ""
