@@ -68,6 +68,8 @@ parser.add_argument('--no-mavlink', action='store_true', help='Skip mavproxy con
 parser.add_argument('--model', default='best.tflite', help='Path to .tflite model (default: best.tflite)')
 parser.add_argument('--simple-names', action='store_true', help='Simple filenames (no det_ prefix, no JSON sidecars)')
 parser.add_argument('--class-filter', type=str, default=None, help='Only save detections of this class (e.g. "person")')
+parser.add_argument('--stream-scale', type=float, default=0.75, help='Stream resolution scale (0.5=half, 0.75=3/4, 1.0=full)')
+parser.add_argument('--stream-quality', type=int, default=50, help='Stream JPEG quality (default 50, lower=faster)')
 args = parser.parse_args()
 
 
@@ -123,17 +125,24 @@ class Handler(BaseHTTPRequestHandler):
         elif self.path == '/stream':
             self.send_response(200)
             self.send_header('Content-Type', 'multipart/x-mixed-replace; boundary=frame')
+            self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
+            self.send_header('Connection', 'keep-alive')
             self.end_headers()
+            _last_sent = None
             while True:
                 try:
                     with frame_lock:
                         jpeg = latest_jpeg
-                    if jpeg:
+                    if jpeg is not None and jpeg is not _last_sent:
+                        _last_sent = jpeg
                         self.wfile.write(b'--frame\r\n')
-                        self.wfile.write(b'Content-Type: image/jpeg\r\n\r\n')
+                        self.wfile.write(b'Content-Type: image/jpeg\r\n')
+                        self.wfile.write(f'Content-Length: {len(jpeg)}\r\n'.encode())
+                        self.wfile.write(b'\r\n')
                         self.wfile.write(jpeg)
                         self.wfile.write(b'\r\n')
-                    time.sleep(0.05)
+                        self.wfile.flush()
+                    time.sleep(0.002)  # 2ms — was 50ms, main latency fix
                 except BrokenPipeError:
                     break
 
@@ -735,8 +744,14 @@ def main():
         # Draw overlay (detection box + GPS) on every frame for stream
         display = draw_overlay(frame, last_det)
 
-        # Encode for stream
-        _, jpg = cv2.imencode('.jpg', display, [cv2.IMWRITE_JPEG_QUALITY, 70])
+        # Scale down for faster streaming (saves encoding time + bandwidth)
+        stream_display = display
+        if args.stream_scale != 1.0:
+            sh, sw = display.shape[:2]
+            stream_display = cv2.resize(display, (int(sw * args.stream_scale), int(sh * args.stream_scale)))
+
+        # Encode for stream (lower quality = faster encode + less bandwidth)
+        _, jpg = cv2.imencode('.jpg', stream_display, [cv2.IMWRITE_JPEG_QUALITY, args.stream_quality])
         with frame_lock:
             latest_jpeg = jpg.tobytes()
         stream_fps_tracker.tick()
