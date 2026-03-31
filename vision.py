@@ -102,9 +102,10 @@ class VisionSystem:
         found, cx, cy, conf = vs.detect_in_image(frame)
     """
 
-    def __init__(self, camera_index=0, model_path="best.tflite"):
+    def __init__(self, camera_index=0, model_path="best.tflite", backend=None):
         self.cap = None
         self._picam = None
+        self._requested_backend = backend  # "ncnn", "tflite", or None (auto)
         cam_w, cam_h = DEFAULT_CAM_W, DEFAULT_CAM_H
 
         if camera_index is not None:
@@ -309,7 +310,8 @@ class VisionSystem:
 
         Returns True if NCNN was loaded successfully.
         """
-        ncnn_requested = "--backend" in " ".join(sys.argv) and "ncnn" in " ".join(sys.argv)
+        ncnn_requested = (self._requested_backend == "ncnn" or
+                          ("--backend" in " ".join(sys.argv) and "ncnn" in " ".join(sys.argv)))
         if not (ncnn_available and ncnn_requested):
             return False
 

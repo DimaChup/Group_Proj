@@ -159,6 +159,8 @@ current_model_idx = 0
 _ai_thread = None
 _ai_result_frame = None
 _ai_busy = False
+import threading as _threading
+_ai_lock = _threading.Lock()
 
 print("[2/5] Checking AI model...")
 eyes = None
@@ -356,6 +358,7 @@ ai_frame_count = 0         # frames processed by AI
 fps_window_start = time.time()
 raw_fps = 0.0              # camera-only FPS
 ai_fps = 0.0               # FPS when AI is running
+_last_frame_hash = [None]  # mutable container for frame dedup
 last_inference_ms = 0.0    # last single inference time
 inference_times = []       # recent inference times for averaging
 total_detections = 0
@@ -626,17 +629,37 @@ def draw_view_camera(frame):
             global _ai_thread, _ai_result_frame, _ai_busy
             if not _ai_busy:
                 _ai_busy = True
-                def _run_ai(f):
+                def _run_ai(f, model_ref):
                     global _ai_result_frame, _ai_busy
-                    run_ai_on_frame(f)
-                    _ai_result_frame = f
-                    _ai_busy = False
-                import threading
-                _ai_thread = threading.Thread(target=_run_ai, args=(display_frame.copy(),), daemon=True)
+                    try:
+                        # Use the model reference captured at launch time
+                        t0 = time.time()
+                        found, dx, dy, conf = model_ref.detect_in_image(f)
+                        ms = (time.time() - t0) * 1000
+                        global last_inference_ms, total_detections, total_ai_frames
+                        global last_det_conf, last_det_x, last_det_y, ai_frame_count
+                        last_inference_ms = ms
+                        inference_times.append(ms)
+                        ai_frame_count += 1
+                        total_ai_frames += 1
+                        if found:
+                            total_detections += 1
+                            last_det_conf = conf
+                            last_det_x = dx
+                            last_det_y = dy
+                        with _ai_lock:
+                            _ai_result_frame = f
+                    except Exception as e:
+                        print(f"  [AI] Error: {e}")
+                    finally:
+                        _ai_busy = False
+                _ai_thread = _threading.Thread(target=_run_ai,
+                    args=(display_frame.copy(), eyes), daemon=True)
                 _ai_thread.start()
             # Overlay last AI result onto current frame
-            if _ai_result_frame is not None:
-                display_frame = _ai_result_frame
+            with _ai_lock:
+                if _ai_result_frame is not None:
+                    display_frame = _ai_result_frame
 
         img[fy:fy + fh, 0:fw] = display_frame
     else:
@@ -1017,7 +1040,11 @@ try:
         if cam_s.ok:
             frame = get_frame()
             if frame is not None:
-                raw_frame_count += 1
+                # Only count genuinely new frames (not cached re-reads from picamera2)
+                _fh = hash(frame[:4, :4].tobytes())
+                if _fh != _last_frame_hash[0]:
+                    _last_frame_hash[0] = _fh
+                    raw_frame_count += 1
 
         # FPS recalculation every 2s
         fps_elapsed = time.time() - fps_window_start
@@ -1063,12 +1090,19 @@ try:
                 check_gs_port()
                 print(f"  GS recheck: {gs_s.text}")
             elif key == ord('m'):
+                # Wait for AI thread to finish before switching
+                if _ai_thread and _ai_thread.is_alive():
+                    print("  Waiting for AI thread to finish...")
+                    _ai_thread.join(timeout=2.0)
+                _ai_busy = False
+                with _ai_lock:
+                    _ai_result_frame = None
+
                 current_model_idx = (current_model_idx + 1) % len(MODELS)
                 mpath, mname = MODELS[current_model_idx]
                 print(f"  Switching model → {mname} ({mpath})")
-                # Clean backend selection — no sys.argv hacking
                 is_ncnn = "ncnn" in mname.lower() or os.path.isdir(mpath)
-                backend = "ncnn" if is_ncnn else "auto"
+                backend = "ncnn" if is_ncnn else None
                 try:
                     load_path = mpath
                     if is_ncnn and os.path.isdir(mpath):
@@ -1081,6 +1115,11 @@ try:
                         ai_backend = eyes.backend_name.upper()
                         ai_s.ok = True
                         ai_s.text = "LOADED"
+                        # Reset inference stats for new model
+                        inference_times.clear()
+                        total_detections = 0
+                        total_ai_frames = 0
+                        ai_frame_count = 0
                         print(f"  OK  Model: {mname} ({ai_backend})")
                     else:
                         ai_s.text = "NOT LOADED"
