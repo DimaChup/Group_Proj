@@ -561,7 +561,7 @@ def _stop_video_recording():
 
 # ── Main ──
 def main():
-    global latest_jpeg, latest_det_jpeg, _vid_frame_count
+    global latest_jpeg, latest_det_jpeg, _vid_frame_count, _det_busy, _det_result
 
     # Auto-detect IP
     pi_ip = "localhost"
