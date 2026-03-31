@@ -440,7 +440,11 @@ class VisionSystem:
         if not self._use_ncnn and not self._use_tflite_direct and self.model is None:
             return False, 0, 0, 0.0
 
-        frame = self.undistort(frame)
+        undistorted = self.undistort(frame)
+        # Copy undistorted back into original frame so caller sees the changes
+        # (undistort may return a new array, but we need to draw on the original)
+        if undistorted is not frame:
+            np.copyto(frame, undistorted)
 
         if self._use_ncnn:
             return self._detect_ncnn(frame)
