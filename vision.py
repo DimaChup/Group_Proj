@@ -527,10 +527,22 @@ class VisionSystem:
         if best_det is None:
             return False, 0, 0, 0.0
 
-        cx = int(best_det[0] * w)
-        cy = int(best_det[1] * h)
-        bw = int(best_det[2] * w)
-        bh = int(best_det[3] * h)
+        raw_cx, raw_cy = best_det[0], best_det[1]
+        raw_bw, raw_bh = best_det[2], best_det[3]
+
+        # YOLOv8 TFLite output may be in pixel coords (0-640) or normalised (0-1)
+        if raw_cx > PIXEL_COORD_THRESHOLD:
+            # Pixel coords relative to model input size — scale to frame
+            cx = int(raw_cx * w / input_w)
+            cy = int(raw_cy * h / input_h)
+            bw = int(raw_bw * w / input_w)
+            bh = int(raw_bh * h / input_h)
+        else:
+            # Normalised 0-1 — scale to frame
+            cx = int(raw_cx * w)
+            cy = int(raw_cy * h)
+            bw = int(raw_bw * w)
+            bh = int(raw_bh * h)
 
         self._store_bbox_metadata(best_det, bw, bh)
         self._draw_detection(frame, cx, cy, bw, bh, w, h, best_conf)
