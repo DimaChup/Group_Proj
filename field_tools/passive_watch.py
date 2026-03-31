@@ -59,6 +59,13 @@ frame_lock = threading.Lock()
 _det_busy = False
 _det_result = None
 
+# ── Video recording ──
+_video_writer = None
+_video_recording = False
+_gps_log_file = None
+_gps_log_writer = None
+_vid_frame_count = 0
+
 # ── Args ──
 parser = argparse.ArgumentParser(description="Passive camera watch + stream + snapshots")
 parser.add_argument('--port', type=int, default=8090)
@@ -72,6 +79,8 @@ parser.add_argument('--simple-names', action='store_true', help='Simple filename
 parser.add_argument('--class-filter', type=str, default=None, help='Only save detections of this class (e.g. "person")')
 parser.add_argument('--stream-scale', type=float, default=0.75, help='Stream resolution scale (0.5=half, 0.75=3/4, 1.0=full)')
 parser.add_argument('--stream-quality', type=int, default=50, help='Stream JPEG quality (default 50, lower=faster)')
+parser.add_argument('--record', action='store_true', help='Record raw video + GPS telemetry CSV (V key toggles)')
+parser.add_argument('--video-dir', default='video_recordings', help='Where to save video + telemetry')
 args = parser.parse_args()
 
 
@@ -514,9 +523,45 @@ def draw_overlay(frame, last_det):
     return display
 
 
+# ── Video recording helpers ──
+def _start_video_recording():
+    global _video_writer, _gps_log_file, _gps_log_writer, _vid_frame_count, _video_recording
+    _vid_frame_count = 0
+    cam_w, cam_h = config.IMAGE_W, config.IMAGE_H
+    os.makedirs(args.video_dir, exist_ok=True)
+    vpath = os.path.join(args.video_dir, f"flight_{datetime.now().strftime('%Y%m%d_%H%M%S')}.avi")
+    _video_writer = cv2.VideoWriter(vpath, cv2.VideoWriter_fourcc(*'MJPG'), 30, (cam_w, cam_h))
+    if not _video_writer.isOpened():
+        print(f"  [REC] ERROR: VideoWriter failed!")
+        _video_recording = False
+        _video_writer = None
+        return
+    print(f"  [REC] Recording to {vpath} ({cam_w}x{cam_h} @30fps)")
+    gps_log_path = vpath.replace('.avi', '_telemetry.csv')
+    _gps_log_file = open(gps_log_path, 'w', newline='')
+    _gps_log_writer = csv.writer(_gps_log_file)
+    _gps_log_writer.writerow(['frame', 'timestamp', 'lat', 'lon', 'alt_m', 'yaw', 'sats'])
+    print(f"  [REC] GPS log: {gps_log_path}")
+    _video_recording = True
+
+
+def _stop_video_recording():
+    global _video_writer, _gps_log_file, _gps_log_writer, _vid_frame_count, _video_recording
+    _video_recording = False
+    if _video_writer:
+        _video_writer.release()
+        _video_writer = None
+    if _gps_log_file:
+        _gps_log_file.close()
+        _gps_log_file = None
+        _gps_log_writer = None
+    print(f"  [REC] Stopped ({_vid_frame_count} frames)")
+    _vid_frame_count = 0
+
+
 # ── Main ──
 def main():
-    global latest_jpeg, latest_det_jpeg
+    global latest_jpeg, latest_det_jpeg, _vid_frame_count
 
     # Auto-detect IP
     pi_ip = "localhost"
@@ -571,7 +616,12 @@ def main():
     eyes = VisionSystem(camera_index=0, model_path=args.model)
     if not eyes.using_ai:
         print("[WARN] AI model not loaded — stream only, no detection")
+    print("  Controls:   V = start/stop video recording")
     print("[OK] Camera ready. Ctrl+C to stop.\n")
+
+    # Start recording if --record flag
+    if args.record:
+        _start_video_recording()
 
     # Start HTTP server
     server = ThreadedServer(('0.0.0.0', args.port), Handler)
@@ -613,6 +663,17 @@ def main():
         now = time.time()
         h, w = frame.shape[:2]
         cam_fps_tracker.tick()
+
+        # Record RAW frame (before overlay) + per-frame GPS telemetry
+        if _video_recording and _video_writer:
+            _video_writer.write(frame)
+            _vid_frame_count += 1
+            if _gps_log_writer:
+                _gps_log_writer.writerow([
+                    _vid_frame_count, datetime.now().isoformat(),
+                    f"{gps_data['lat']:.7f}", f"{gps_data['lon']:.7f}",
+                    f"{gps_data['alt']:.1f}", f"{gps_data['yaw']:.1f}",
+                    gps_data['sats']])
 
         # Run detection in background thread (doesn't block stream)
         if eyes.using_ai and (now - last_inference) >= min_interval and not _det_busy:
@@ -801,8 +862,24 @@ def main():
         # Terminal output every 50 frames
         if frame_count % 50 == 0:
             gps_str = f"GPS:{lat:.5f},{lon:.5f}" if lat != 0 else "GPS:---"
-            print(f"  #{frame_count} CAM:{c_fps:.1f} VIS:{v_fps:.1f} STR:{s_fps:.1f} Det:{det_count} ({det_pct:.0f}%) Saved:{saved_count} {gps_str}")
+            rec_str = f" REC:{_vid_frame_count}" if _video_recording else ""
+            print(f"  #{frame_count} CAM:{c_fps:.1f} VIS:{v_fps:.1f} STR:{s_fps:.1f} Det:{det_count} ({det_pct:.0f}%) Saved:{saved_count}{rec_str} {gps_str}")
 
+        # V key to toggle video recording (non-blocking stdin check)
+        try:
+            import select as _sel
+            if sys.stdin.isatty() and _sel.select([sys.stdin], [], [], 0)[0]:
+                _key = sys.stdin.read(1)
+                if _key.lower() == 'v':
+                    if _video_recording:
+                        _stop_video_recording()
+                    else:
+                        _start_video_recording()
+        except Exception:
+            pass
+
+    if _video_recording:
+        _stop_video_recording()
     if csv_file:
         csv_file.close()
     eyes.release()
