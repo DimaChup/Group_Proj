@@ -642,7 +642,11 @@ def main():
                     ts = datetime.now().strftime("%H:%M:%S")
 
                     if args.simple_names:
-                        if lat != 0.0 or lon != 0.0:
+                        # Use estimated dummy GPS (not drone GPS) in filename
+                        est_snap = dummy_estimator.get_estimate()
+                        if est_snap:
+                            fname = f"{saved_count:04d}_{est_snap[0]:.5f}_{est_snap[1]:.5f}.jpg"
+                        elif lat != 0.0 or lon != 0.0:
                             fname = f"{saved_count:04d}_{lat:.5f}_{lon:.5f}.jpg"
                         else:
                             fname = f"{saved_count:04d}_nogps.jpg"
