@@ -626,8 +626,11 @@ def main():
                 d_alt = gps_data["alt"]
                 d_yaw = gps_data["yaw"]
                 if d_lat != 0.0 or d_lon != 0.0:
+                    # Normalise pixel coords to 0-1 (estimator expects normalised)
+                    norm_x = x / w if w > 0 else 0.5
+                    norm_y = y / h if h > 0 else 0.5
                     est_result = dummy_estimator.add_observation(
-                        d_lat, d_lon, d_alt, d_yaw, x, y
+                        d_lat, d_lon, d_alt, d_yaw, norm_x, norm_y
                     )
 
                 # Save snapshot with GPS overlay
