@@ -304,6 +304,10 @@ def main():
     target_estimates = []  # list of (lat, lon, conf, frame_num, center_dist, alt)
     smart_frames = []     # list of (frame, center_dist_m, est_lat, est_lon, fnum) — MAD inliers
     _all_smart_snaps = [] # ALL detection snapshots (MAD picks from these)
+    _smart_locked = [False]  # True once first valid cluster found
+    _smart_locked_central = [None]  # locked cluster data
+    _smart_locked_outliers = [None]
+    _smart_locked_spread = [0]
     best_snapshot = [None]  # snapshot of the most central detection
     best_center_dist = [999.0]
     # CSV log for later analysis
@@ -332,8 +336,6 @@ def main():
     def find_tightest_cluster(estimates, target_size=10):
         """Find tightest cluster of target_size points — greedy core approach."""
         n = len(estimates)
-        if n <= target_size:
-            return list(range(n)), 0
 
         # Pairwise distances in meters
         dists = {}
@@ -342,6 +344,11 @@ def main():
                 dn = (estimates[i][0] - estimates[j][0]) * 111320
                 de = (estimates[i][1] - estimates[j][1]) * 111320 * math.cos(math.radians(estimates[i][0]))
                 dists[(i, j)] = math.sqrt(dn**2 + de**2)
+
+        if n <= target_size:
+            # Return all with actual spread
+            spread = max(dists.values()) if dists else 0
+            return list(range(n)), spread
 
         # Find closest pair as seed
         min_pair = min(dists, key=dists.get)
@@ -375,68 +382,56 @@ def main():
         return cluster_list, spread
 
     def draw_smart_bullseye():
-        """SMART mode: tightest cluster of 10 — greedy core approach."""
+        """SMART mode: greedy tightest 10 with spread < 1m."""
         plot = np.zeros((plot_size, plot_size, 3), dtype=np.uint8)
         n_total = len(target_estimates)
+        MAX_SPREAD = 0.5  # tight cluster
 
-        if n_total < 10:
-            cv2.putText(plot, f"SMART (tightest cluster)", (10, 25),
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.50, (255, 0, 255), 2)
-            cv2.putText(plot, f"Waiting... {n_total}/10 detections", (60, plot_size // 2),
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.55, (150, 0, 150), 1)
-            return plot
-
-        # MAD outlier rejection on ALL detections
-        all_lats = [e[0] for e in target_estimates]
-        all_lons = [e[1] for e in target_estimates]
-        med_lat = sorted(all_lats)[len(all_lats) // 2]
-        med_lon = sorted(all_lons)[len(all_lons) // 2]
-
-        # Compute distances from median in meters
-        dists_from_med = []
-        for lat, lon, conf, fnum, cdist, alt in target_estimates:
-            dn = (lat - med_lat) * 111320
-            de = (lon - med_lon) * 111320 * math.cos(math.radians(med_lat))
-            dists_from_med.append(math.sqrt(dn**2 + de**2))
-
-        # MAD = median of distances from median
-        mad = sorted(dists_from_med)[len(dists_from_med) // 2]
-        mad = max(mad, 0.1)  # floor to avoid zero
-        sigma = 3.5
-        threshold = sigma * mad
-
-        # Split into inliers and outliers
-        inliers = []
-        outliers = []
-        for i, (lat, lon, conf, fnum, cdist, alt) in enumerate(target_estimates):
-            if dists_from_med[i] <= threshold:
-                inliers.append((lat, lon, conf, fnum, cdist, alt))
+        # If already locked, use cached result
+        if _smart_locked[0]:
+            central = _smart_locked_central[0]
+            outliers = _smart_locked_outliers[0]
+            spread = _smart_locked_spread[0]
+            is_ready = True
+        else:
+            if n_total < 10:
+                # Not enough yet — show all as candidates
+                central = list(target_estimates)
+                outliers = []
+                spread = 0
+                if n_total >= 2:
+                    _, spread = find_tightest_cluster(target_estimates, min(n_total, 10))
+                is_ready = False
             else:
-                outliers.append((lat, lon, conf, fnum, cdist, alt))
+                # Find tightest 10 from all detections so far
+                cluster_indices, spread = find_tightest_cluster(target_estimates, 10)
+                cluster_set = set(cluster_indices)
+                central = [target_estimates[i] for i in cluster_indices]
+                outliers = [target_estimates[i] for i in range(n_total) if i not in cluster_set]
+                is_ready = spread < MAX_SPREAD and len(central) >= 10
 
-        # Update smart_frames — keep only inlier frames (first 10)
+                # LOCK once found
+                if is_ready:
+                    _smart_locked[0] = True
+                    _smart_locked_central[0] = central
+                    _smart_locked_outliers[0] = outliers
+                    _smart_locked_spread[0] = spread
+
+        # Update smart_frames
         smart_frames.clear()
-        for lat, lon, conf, fnum, cdist, alt in inliers[:10]:
-            # Find matching snapshot if available
+        for lat, lon, conf, fnum, cdist, alt in central:
             for sf in _all_smart_snaps:
                 if sf[4] == fnum:
                     smart_frames.append(sf)
                     break
 
         # Title
-        cv2.putText(plot, f"SMART (MAD): {len(inliers)} inliers, {len(outliers)} rejected", (10, 25),
-                   cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 0, 255), 2)
-        cv2.putText(plot, f"Total: {n_total} | MAD: {mad:.2f}m | Threshold: {threshold:.1f}m",
-                   (10, 45), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (150, 150, 150), 1)
-
-        # Use inliers for plot (or all if not enough inliers yet)
-        # Stop at first 10 inliers — that's our final estimate
-        central = inliers[:10]
-
-        if not central:
-            cv2.putText(plot, "No inliers yet...", (60, plot_size // 2),
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.55, (150, 0, 150), 1)
-            return plot
+        status = "LOCKED" if is_ready else "searching..."
+        color = (0, 255, 0) if is_ready else (255, 0, 255)
+        cv2.putText(plot, f"SMART: {status} (spread: {spread:.2f}m)", (10, 25),
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.50, color, 2)
+        cv2.putText(plot, f"Total: {n_total} | Cluster: {len(central)} | Rejected: {len(outliers)} | Need <{MAX_SPREAD}m",
+                   (10, 45), cv2.FONT_HERSHEY_SIMPLEX, 0.30, (150, 150, 150), 1)
 
         # Convert to meters from TRUE position
         pts_m = []
@@ -445,10 +440,10 @@ def main():
             e = (lon - TRUE_DUMMY_LON) * 111320 * math.cos(math.radians(TRUE_DUMMY_LAT))
             pts_m.append((e, n, cdist, conf))
 
-        # Auto-scale: tight fit around actual data with 30% margin
+        # Auto-scale: zoom to fit the 10 dots with margin
         pts_dists = [math.sqrt(p[0]**2 + p[1]**2) for p in pts_m]
-        max_d = max(pts_dists) * 1.3 if pts_dists else 5.0
-        max_d = max(max_d, 1.0)  # at least 1m range
+        max_d = max(pts_dists) * 1.5 if pts_dists else 5.0
+        max_d = max(max_d, max(spread * 3, 0.5))  # at least 3x spread or 0.5m
         margin = 70
         usable = plot_size - 2 * margin
         scale = usable / (2 * max_d)
@@ -472,22 +467,32 @@ def main():
         cv2.drawMarker(plot, (cx, cy), (0, 255, 255), cv2.MARKER_CROSS, 25, 3)
         cv2.circle(plot, (cx, cy), 5, (0, 255, 255), -1)
 
-        # Plot OUTLIERS as red X marks
-        for lat, lon, conf, fnum, cdist, alt in outliers:
-            on = (lat - TRUE_DUMMY_LAT) * 111320
-            oe = (lon - TRUE_DUMMY_LON) * 111320 * math.cos(math.radians(TRUE_DUMMY_LAT))
-            opx = cx + int(oe * scale)
-            opy = cy - int(on * scale)
-            if margin < opx < plot_size - margin and margin < opy < plot_size - margin:
-                cv2.drawMarker(plot, (opx, opy), (0, 0, 200), cv2.MARKER_TILTED_CROSS, 8, 1)
+        # Plot rejected as small red X (while searching)
+        if not _smart_locked[0]:
+            for lat, lon, conf, fnum, cdist, alt in outliers:
+                on = (lat - TRUE_DUMMY_LAT) * 111320
+                oe = (lon - TRUE_DUMMY_LON) * 111320 * math.cos(math.radians(TRUE_DUMMY_LAT))
+                opx = cx + int(oe * scale)
+                opy = cy - int(on * scale)
+                if margin < opx < plot_size - margin and margin < opy < plot_size - margin:
+                    cv2.drawMarker(plot, (opx, opy), (0, 0, 150), cv2.MARKER_TILTED_CROSS, 6, 1)
 
-        # Plot INLIERS — small dots, colored by absolute centrality (0m=green, 8m=red)
+        # Plot accepted dots — colored RELATIVE to the 10 (green=most central, red=least)
+        cdists = [e[2] for e in central]
+        min_cd = min(cdists) if cdists else 0
+        max_cd = max(cdists) if cdists else 1
+        cd_range = max(max_cd - min_cd, 0.01)
+
         for i, (e_m, n_m, cdist, conf) in enumerate(pts_m):
             px = cx + int(e_m * scale)
             py = cy - int(n_m * scale)
             cv2.line(plot, (cx, cy), (px, py), (50, 50, 50), 1)
-            color = heat_color(min(1.0, cdist / 8.0))  # 0m=green, 8m=red
-            cv2.circle(plot, (px, py), 4, color, -1)
+            val = (cdist - min_cd) / cd_range  # 0=most central, 1=least central
+            color = heat_color(val)
+            cv2.circle(plot, (px, py), 6, color, -1)
+            cv2.circle(plot, (px, py), 6, (255, 255, 255), 1)
+            cv2.putText(plot, str(i+1), (px + 8, py - 2),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.3, (200, 200, 200), 1)
 
         # Compute median
         if len(central) >= 10:
@@ -535,7 +540,7 @@ def main():
             cv2.putText(plot, f"Inliers: {len(central)} | Rejected: {len(outliers)}", (10, plot_size - 30),
                        cv2.FONT_HERSHEY_SIMPLEX, 0.38, (200, 200, 200), 1)
         else:
-            cv2.putText(plot, f"Need {10 - len(central)} more inliers ({len(inliers)} so far, {len(outliers)} rejected)...",
+            cv2.putText(plot, f"Searching... {len(central)}/10 (spread: {spread:.2f}m, need <{MAX_SPREAD}m)",
                        (10, plot_size - 35), cv2.FONT_HERSHEY_SIMPLEX, 0.38, (150, 0, 150), 1)
 
         # True position label
@@ -1888,10 +1893,14 @@ def main():
             target_estimates.clear()
             smart_frames.clear()
             _all_smart_snaps.clear()
+            _smart_locked[0] = False
+            _smart_locked_central[0] = None
+            _smart_locked_outliers[0] = None
+            _smart_locked_spread[0] = 0
             det_count[0] = 0
             best_snapshot[0] = None
             best_center_dist[0] = 999.0
-            print("  CLEARED all: GPS estimates, smart frames, best detection")
+            print("  CLEARED all: GPS estimates, smart frames, best detection, lock")
         elif key == ord('x'):
             best_snapshot[0] = None
             best_center_dist[0] = 999.0
