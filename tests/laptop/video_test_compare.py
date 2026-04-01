@@ -381,6 +381,108 @@ def main():
 
         return cluster_list, spread
 
+    def draw_4m_bullseye():
+        """Old approach: first 10 detections within 4m of frame center."""
+        plot = np.zeros((plot_size, plot_size, 3), dtype=np.uint8)
+        central_4m = [e for e in target_estimates if e[4] < 4.0][:10]
+        n_total = len(target_estimates)
+        n_4m = len([e for e in target_estimates if e[4] < 4.0])
+
+        cv2.putText(plot, f"4m FILTER ({len(central_4m)}/10)", (10, 25),
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.50, (0, 200, 255), 2)
+        cv2.putText(plot, f"Total: {n_total} | Within 4m: {n_4m}",
+                   (10, 45), cv2.FONT_HERSHEY_SIMPLEX, 0.30, (150, 150, 150), 1)
+
+        if not central_4m:
+            cv2.putText(plot, "No central detections...", (60, plot_size // 2),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.5, (100, 100, 100), 1)
+            return plot
+
+        pts_m = []
+        for lat, lon, conf, fnum, cdist, alt in central_4m:
+            n = (lat - TRUE_DUMMY_LAT) * 111320
+            e_m = (lon - TRUE_DUMMY_LON) * 111320 * math.cos(math.radians(TRUE_DUMMY_LAT))
+            pts_m.append((e_m, n, cdist, conf))
+
+        pts_dists = [math.sqrt(p[0]**2 + p[1]**2) for p in pts_m]
+        max_d = max(pts_dists) * 1.5 if pts_dists else 5.0
+        max_d = max(max_d, 0.5)
+        margin = 70
+        usable = plot_size - 2 * margin
+        scale = usable / (2 * max_d)
+        cx_p, cy_p = plot_size // 2, plot_size // 2 + 10
+
+        # Rings
+        for r_m in [1, 2, 3, 5, 10]:
+            r_px = int(r_m * scale)
+            if 5 < r_px < usable // 2:
+                cv2.circle(plot, (cx_p, cy_p), r_px, (40, 40, 40), 1)
+                cv2.putText(plot, f"{r_m}m", (cx_p + r_px + 2, cy_p - 2),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.25, (80, 80, 80), 1)
+
+        # Yellow cross = true position
+        cv2.drawMarker(plot, (cx_p, cy_p), (0, 255, 255), cv2.MARKER_CROSS, 25, 3)
+
+        # Dots
+        cdists = [e[2] for e in central_4m]
+        min_cd = min(cdists) if cdists else 0
+        max_cd = max(cdists) if cdists else 1
+        cd_range = max(max_cd - min_cd, 0.01)
+        for i, (e_m, n_m, cdist, conf) in enumerate(pts_m):
+            px = cx_p + int(e_m * scale)
+            py = cy_p - int(n_m * scale)
+            val = (cdist - min_cd) / cd_range
+            color = heat_color(val)
+            cv2.circle(plot, (px, py), 5, color, -1)
+
+        # Median + Weighted
+        if len(central_4m) >= 10:
+            m_lats = sorted(e[0] for e in central_4m)
+            m_lons = sorted(e[1] for e in central_4m)
+            mid = len(m_lats) // 2
+            med_lat = m_lats[mid]
+            med_lon = m_lons[mid]
+            med_n = (med_lat - TRUE_DUMMY_LAT) * 111320
+            med_e = (med_lon - TRUE_DUMMY_LON) * 111320 * math.cos(math.radians(TRUE_DUMMY_LAT))
+            med_err = math.sqrt(med_n**2 + med_e**2)
+            # Median diamond
+            med_px = cx_p + int(med_e * scale)
+            med_py = cy_p - int(med_n * scale)
+            pts_d = np.array([[med_px, med_py-8], [med_px+8, med_py],
+                              [med_px, med_py+8], [med_px-8, med_py]], np.int32)
+            cv2.polylines(plot, [pts_d], True, (255, 0, 255), 2)
+
+            # Weighted mean
+            wt = wlat = wlon = 0
+            for lat, lon, conf, fnum, cdist, alt in central_4m:
+                w = 1.0 / max(0.1, cdist) ** 2
+                wlat += lat * w
+                wlon += lon * w
+                wt += w
+            wm_lat = wlat / wt
+            wm_lon = wlon / wt
+            wm_n = (wm_lat - TRUE_DUMMY_LAT) * 111320
+            wm_e = (wm_lon - TRUE_DUMMY_LON) * 111320 * math.cos(math.radians(TRUE_DUMMY_LAT))
+            wm_err = math.sqrt(wm_n**2 + wm_e**2)
+            # Weighted square
+            wm_px = cx_p + int(wm_e * scale)
+            wm_py = cy_p - int(wm_n * scale)
+            cv2.rectangle(plot, (wm_px-6, wm_py-6), (wm_px+6, wm_py+6), (255, 255, 0), 2)
+
+            cv2.putText(plot, f"Median:   {med_err:.2f}m", (10, plot_size - 70),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.42, (255, 0, 255), 1)
+            cv2.putText(plot, f"Weighted: {wm_err:.2f}m", (10, plot_size - 50),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.42, (255, 255, 0), 1)
+            cv2.putText(plot, f"Inliers: {len(central_4m)}", (10, plot_size - 30),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.38, (200, 200, 200), 1)
+        else:
+            cv2.putText(plot, f"{len(central_4m)}/10 within 4m...", (10, plot_size - 35),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.42, (150, 0, 150), 1)
+
+        cv2.putText(plot, f"ORIGIN = TRUE", (10, plot_size - 12),
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.30, (0, 255, 255), 1)
+        return plot
+
     def draw_smart_bullseye():
         """SMART mode: greedy tightest 10 with spread < 1m."""
         plot = np.zeros((plot_size, plot_size, 3), dtype=np.uint8)
@@ -1773,7 +1875,8 @@ def main():
                 sep = np.zeros((plot_size, 2, 3), dtype=np.uint8)
                 sep[:] = (60, 60, 60)
                 plot_conv = draw_error_convergence()
-                gps_combined = np.hstack([plot_smart, sep, plot_center, sep.copy(), plot_conv, sep.copy(), plot_alt])
+                plot_4m = draw_4m_bullseye()
+                gps_combined = np.hstack([plot_smart, sep, plot_4m, sep.copy(), plot_center, sep.copy(), plot_conv, sep.copy(), plot_alt])
             else:
                 plot_center = draw_gps_plot_by_center()
                 plot_alt = draw_gps_plot_by_alt()
