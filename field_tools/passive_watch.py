@@ -72,8 +72,43 @@ parser.add_argument('--simple-names', action='store_true', help='Simple filename
 parser.add_argument('--class-filter', type=str, default=None, help='Only save detections of this class (e.g. "person")')
 parser.add_argument('--smart-estimate', action='store_true', help='Accumulate central detections, save after 10+ with median GPS')
 parser.add_argument('--smart-min', type=int, default=10, help='Min central detections before saving (default 10)')
-parser.add_argument('--smart-radius', type=float, default=4.0, help='Max meters from frame center to count as central (default 4)')
+parser.add_argument('--smart-radius', type=float, default=0.5, help='Max spread for smart cluster (default 0.5m)')
+parser.add_argument('--fake', action='store_true', help='Replay DJI video + SRT telemetry (no camera/mavproxy)')
+parser.add_argument('--fake-video', default='RealVideo/DJI_0001_1456x1088_cropped_30fps.mp4')
+parser.add_argument('--fake-srt', default='RealVideo/DJI_20260311172332_0001_V.SRT')
 args = parser.parse_args()
+
+
+# ── SRT parser for fake mode ──
+def parse_srt(srt_path):
+    """Parse DJI SRT → dict of frame_num → {lat, lon, alt, yaw}."""
+    import re
+    with open(srt_path, 'r') as f:
+        text = f.read()
+    entries = {}
+    blocks = re.split(r'\n\n+', text.strip())
+    frame = 0
+    for block in blocks:
+        lines = block.strip().split('\n')
+        if len(lines) < 3:
+            continue
+        try:
+            int(lines[0])
+        except ValueError:
+            continue
+        frame += 1
+        data = ' '.join(lines[2:])
+        lat = lon = alt = yaw = 0.0
+        m = re.search(r'\[latitude:\s*([-\d.]+)\]', data)
+        if m: lat = float(m.group(1))
+        m = re.search(r'\[longitude:\s*([-\d.]+)\]', data)
+        if m: lon = float(m.group(1))
+        m = re.search(r'\[rel_alt:\s*([-\d.]+)', data)
+        if m: alt = float(m.group(1))
+        m = re.search(r'gb_yaw:\s*([-\d.]+)', data)
+        if m: yaw = float(m.group(1))
+        entries[frame] = {'lat': lat, 'lon': lon, 'alt': alt, 'yaw': yaw}
+    return entries
 
 
 # ── HTML page ──
@@ -820,32 +855,55 @@ def main():
     print(f"  Snapshot:   http://{pi_ip}:{args.port}/snapshot")
     print()
 
-    # Connect to mavproxy (read-only) for GPS
-    mav = None
-    if not args.no_mavlink:
-        try:
-            from pymavlink import mavutil
-            print("[MAV] Connecting to udpin:0.0.0.0:14550 (read-only)...")
-            mav = mavutil.mavlink_connection('udpin:0.0.0.0:14550')
-            msg = mav.recv_match(type='HEARTBEAT', blocking=True, timeout=5)
-            if msg:
-                print(f"[MAV] Connected! Reading telemetry (zero commands)")
-                t = threading.Thread(target=mavlink_reader, args=(mav,), daemon=True)
-                t.start()
-            else:
-                print("[MAV] No heartbeat — running without GPS")
-                mav = None
-        except Exception as e:
-            print(f"[MAV] Could not connect: {e} — running without GPS")
-            mav = None
+    # Fake mode: replay video + SRT telemetry
+    fake_cap = None
+    fake_telem = None
+    fake_frame_idx = [0]
+    fake_fps = 30
+
+    if args.fake:
+        print(f"[FAKE] Loading video: {args.fake_video}")
+        fake_cap = cv2.VideoCapture(args.fake_video)
+        if not fake_cap.isOpened():
+            print(f"[FAKE] ERROR: Cannot open {args.fake_video}")
+            return
+        fake_fps = fake_cap.get(cv2.CAP_PROP_FPS) or 30
+        total = int(fake_cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        print(f"[FAKE] Video: {int(fake_cap.get(cv2.CAP_PROP_FRAME_WIDTH))}x{int(fake_cap.get(cv2.CAP_PROP_FRAME_HEIGHT))} @ {fake_fps}fps, {total} frames")
+        print(f"[FAKE] Loading SRT: {args.fake_srt}")
+        fake_telem = parse_srt(args.fake_srt)
+        print(f"[FAKE] SRT loaded: {len(fake_telem)} entries")
+        print("[FAKE] Mavproxy disabled — using SRT telemetry")
     else:
-        print("[MAV] Skipped (--no-mavlink)")
+        # Connect to mavproxy (read-only) for GPS
+        mav = None
+        if not args.no_mavlink:
+            try:
+                from pymavlink import mavutil
+                print("[MAV] Connecting to udpin:0.0.0.0:14550 (read-only)...")
+                mav = mavutil.mavlink_connection('udpin:0.0.0.0:14550')
+                msg = mav.recv_match(type='HEARTBEAT', blocking=True, timeout=5)
+                if msg:
+                    print(f"[MAV] Connected! Reading telemetry (zero commands)")
+                    t = threading.Thread(target=mavlink_reader, args=(mav,), daemon=True)
+                    t.start()
+                else:
+                    print("[MAV] No heartbeat — running without GPS")
+                    mav = None
+            except Exception as e:
+                print(f"[MAV] Could not connect: {e} — running without GPS")
+                mav = None
+        else:
+            print("[MAV] Skipped (--no-mavlink)")
 
     # Start camera + AI
-    eyes = VisionSystem(camera_index=0, model_path=args.model)
+    if args.fake:
+        eyes = VisionSystem(camera_index=None, model_path=args.model)
+    else:
+        eyes = VisionSystem(camera_index=0, model_path=args.model)
     if not eyes.using_ai:
         print("[WARN] AI model not loaded — stream only, no detection")
-    print("[OK] Camera ready. Ctrl+C to stop.\n")
+    print("[OK] Ready. Ctrl+C to stop.\n")
 
     # Start HTTP server
     server = ThreadedServer(('0.0.0.0', args.port), Handler)
@@ -878,10 +936,27 @@ def main():
     last_det_time = 0
 
     while True:
-        frame = eyes.get_frame()
-        if frame is None:
-            time.sleep(0.01)
-            continue
+        if args.fake:
+            ret, frame = fake_cap.read()
+            if not ret:
+                fake_cap.set(cv2.CAP_PROP_POS_FRAMES, 0)  # loop video
+                continue
+            fake_frame_idx[0] += 1
+            # Update GPS from SRT telemetry
+            t = fake_telem.get(fake_frame_idx[0])
+            if t:
+                gps_data["lat"] = t["lat"]
+                gps_data["lon"] = t["lon"]
+                gps_data["alt"] = t["alt"]
+                gps_data["yaw"] = t["yaw"]
+                gps_data["sats"] = 12
+                gps_data["mode"] = "FAKE"
+            time.sleep(1.0 / fake_fps)  # play at video speed
+        else:
+            frame = eyes.get_frame()
+            if frame is None:
+                time.sleep(0.01)
+                continue
 
         frame_count += 1
         now = time.time()
