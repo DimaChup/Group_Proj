@@ -55,9 +55,13 @@ from vision import VisionSystem
 # ── Globals for streaming ──
 latest_jpeg = None
 latest_det_jpeg = None
-latest_bullseye = None  # rendered bullseye plot JPEG
+latest_bullseye = None
+latest_detection_jpeg = None   # latest detection snapshot
+latest_smart_grid_jpeg = None  # 5x2 smart frames grid
+latest_map_jpeg = None         # satellite map overlay
 frame_lock = threading.Lock()
-_all_gps_estimates = []  # (est_lat, est_lon, pixel_dist) for bullseye plotting
+_all_gps_estimates = []
+_map_base = None  # loaded map.jpg (once)
 
 # ── Args ──
 parser = argparse.ArgumentParser(description="Passive camera watch + stream + snapshots")
@@ -115,38 +119,72 @@ def parse_srt(srt_path):
 HTML_PAGE = """<!DOCTYPE html>
 <html><head><title>SAR Passive Watch</title>
 <style>
-  body { background:#111; color:#eee; font-family:monospace; margin:0; padding:20px; }
-  h1 { color:#0f0; margin:0 0 10px; }
-  .stats { color:#888; margin-bottom:10px; }
-  .gps { color:#0af; margin-bottom:5px; }
-  .est { color:#ff00ff; margin-bottom:5px; font-weight:bold; }
-  .fov { color:#b90; margin-bottom:10px; font-size:0.85em; }
-  img { max-width:100%; border:1px solid #333; }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#111;color:#eee;font-family:monospace;padding:15px}
+  h1{color:#0f0;margin-bottom:8px}
+  h2{color:#0ff;font-size:0.85em;margin:10px 0 5px}
+  .stats{color:#888;margin-bottom:3px;font-size:0.85em}
+  .gps{color:#0af;margin-bottom:3px;font-size:0.85em}
+  .est{color:#ff00ff;margin-bottom:3px;font-weight:bold;font-size:0.85em}
+  .fov{color:#b90;margin-bottom:8px;font-size:0.75em}
+  img{border:1px solid #333;display:block}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+  .left img,.right img{width:100%;height:auto}
+  .bottom{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  .bottom img{width:100%;height:auto}
+  @media(max-width:1000px){.grid,.bottom{grid-template-columns:1fr}}
 </style>
 </head><body>
 <h1>SAR Passive Watch</h1>
 <div class="stats" id="stats">Starting...</div>
 <div class="gps" id="gps">GPS: waiting...</div>
-<div class="est" id="est">DUMMY EST: waiting...</div>
+<div class="est" id="est">ESTIMATE: waiting...</div>
 <div class="fov" id="fov">FOV: ---</div>
-<img src="/stream" alt="Camera Feed">
-<h2 style="color:#0ff; margin-top:15px;">GPS Estimate Plots</h2>
-<img id="bullseye" src="/bullseye" alt="Bullseye Plot" style="max-width:100%; border:1px solid #333;">
+
+<div class="grid">
+  <div class="left">
+    <h2>Camera Feed</h2>
+    <img src="/stream" alt="Stream">
+  </div>
+  <div class="right">
+    <h2>Latest Detection</h2>
+    <img id="latest" src="/latest" alt="Detection" style="min-height:150px">
+    <h2>SMART Frames (10)</h2>
+    <img id="smart-grid" src="/smart-grid" alt="Grid" style="min-height:100px">
+  </div>
+</div>
+
+<div class="bottom">
+  <div>
+    <h2>Satellite Map</h2>
+    <img id="map" src="/map" alt="Map">
+  </div>
+  <div>
+    <h2>GPS Bullseye</h2>
+    <img id="bullseye" src="/bullseye" alt="Bullseye">
+  </div>
+  <div>
+    <h2>Detection Log</h2>
+    <img id="smart-grid2" src="/smart-grid" alt="Grid2">
+  </div>
+</div>
+
 <script>
-  setInterval(()=>{
-    fetch('/api/status').then(r=>r.json()).then(d=>{
-      document.getElementById('stats').textContent =
-        `CAM: ${d.cam_fps} fps | VISION: ${d.vis_fps} fps | STREAM: ${d.stream_fps} fps | Det: ${d.detections} (${d.det_pct}%) | Saved: ${d.saved}`;
-      document.getElementById('gps').textContent =
-        `DRONE: ${d.gps_lat}, ${d.gps_lon} | Alt: ${d.alt}m | Sats: ${d.sats} | Mode: ${d.flight_mode}`;
-      document.getElementById('est').textContent = d.est_obs > 0
-        ? `DUMMY EST: ${d.est_lat}, ${d.est_lon} (${d.est_obs} observations)`
-        : `DUMMY EST: waiting for detection...`;
-      document.getElementById('fov').textContent =
-        `FOV: ${d.fov_deg}° | Cal@1m: ${d.cal_1m_w}x${d.cal_1m_h}cm (measure this to calibrate)`;
-      document.getElementById('bullseye').src = '/bullseye?' + Date.now();
-    });
-  }, 2000);
+setInterval(()=>{
+  fetch('/api/status').then(r=>r.json()).then(d=>{
+    document.getElementById('stats').textContent=
+      `CAM:${d.cam_fps} VIS:${d.vis_fps} STR:${d.stream_fps} Det:${d.detections}(${d.det_pct}%) Saved:${d.saved}`;
+    document.getElementById('gps').textContent=
+      `DRONE:${d.gps_lat},${d.gps_lon} Alt:${d.alt}m Sats:${d.sats} Mode:${d.flight_mode}`;
+    document.getElementById('est').textContent=d.est_obs>0
+      ?`EST:${d.est_lat},${d.est_lon}(${d.est_obs}obs)`:'EST: waiting...';
+    const t=Date.now();
+    document.getElementById('latest').src='/latest?'+t;
+    document.getElementById('smart-grid').src='/smart-grid?'+t;
+    document.getElementById('map').src='/map?'+t;
+    document.getElementById('bullseye').src='/bullseye?'+t;
+  });
+},2000);
 </script>
 </body></html>"""
 
@@ -196,6 +234,45 @@ class Handler(BaseHTTPRequestHandler):
         elif path == '/bullseye':
             with frame_lock:
                 jpeg = latest_bullseye
+            if jpeg:
+                self.send_response(200)
+                self.send_header('Content-Type', 'image/jpeg')
+                self.send_header('Cache-Control', 'no-cache')
+                self.end_headers()
+                self.wfile.write(jpeg)
+            else:
+                self.send_response(503)
+                self.end_headers()
+
+        elif path == '/latest':
+            with frame_lock:
+                jpeg = latest_detection_jpeg
+            if jpeg:
+                self.send_response(200)
+                self.send_header('Content-Type', 'image/jpeg')
+                self.send_header('Cache-Control', 'no-cache')
+                self.end_headers()
+                self.wfile.write(jpeg)
+            else:
+                self.send_response(503)
+                self.end_headers()
+
+        elif path == '/smart-grid':
+            with frame_lock:
+                jpeg = latest_smart_grid_jpeg
+            if jpeg:
+                self.send_response(200)
+                self.send_header('Content-Type', 'image/jpeg')
+                self.send_header('Cache-Control', 'no-cache')
+                self.end_headers()
+                self.wfile.write(jpeg)
+            else:
+                self.send_response(503)
+                self.end_headers()
+
+        elif path == '/map':
+            with frame_lock:
+                jpeg = latest_map_jpeg
             if jpeg:
                 self.send_response(200)
                 self.send_header('Content-Type', 'image/jpeg')
@@ -504,6 +581,106 @@ class SmartEstimator:
 smart_estimator = None  # initialized in main() if --smart-estimate
 
 
+def render_latest_detection(frame, last_det, gps_d):
+    """Render latest detection thumbnail with arrow from center."""
+    global latest_detection_jpeg
+    if frame is None or last_det is None:
+        return
+    h, w = frame.shape[:2]
+    thumb_w = 480
+    s = thumb_w / w
+    thumb = cv2.resize(frame, (thumb_w, int(h * s)))
+    th = thumb.shape[0]
+    dcx, dcy = int(last_det[0] * s), int(last_det[1] * s)
+    fcx, fcy = thumb_w // 2, th // 2
+    # Arrow center→detection
+    cv2.arrowedLine(thumb, (fcx, fcy), (dcx, dcy), (255, 255, 0), 2, tipLength=0.2)
+    # Info bar
+    cv2.rectangle(thumb, (0, th - 25), (thumb_w, th), (0, 0, 0), -1)
+    info = f"{getattr(draw_overlay, '_last_class', '?')} {last_det[2]:.2f} | {gps_d['alt']:.0f}m | {gps_d['lat']:.5f},{gps_d['lon']:.5f}"
+    cv2.putText(thumb, info, (5, th - 7), cv2.FONT_HERSHEY_SIMPLEX, 0.32, (200, 200, 200), 1)
+    _, jpg = cv2.imencode('.jpg', thumb, [cv2.IMWRITE_JPEG_QUALITY, 80])
+    with frame_lock:
+        latest_detection_jpeg = jpg.tobytes()
+
+
+def render_smart_grid(smart_est):
+    """Render 5x2 grid of locked smart frames."""
+    global latest_smart_grid_jpeg
+    if not smart_est or not smart_est.all_estimates:
+        return
+    frames = [e[3] for e in smart_est.all_estimates if len(e) >= 4 and e[3] is not None][:10]
+    if not frames:
+        return
+    cw, ch = 240, 180
+    grid = np.zeros((ch * 2, cw * 5, 3), dtype=np.uint8)
+    for i, f in enumerate(frames[:10]):
+        r, c = i // 5, i % 5
+        thumb = cv2.resize(f, (cw, ch))
+        grid[r*ch:(r+1)*ch, c*cw:(c+1)*cw] = thumb
+        cv2.putText(grid, f"#{i+1}", (c*cw+5, r*ch+18), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 0), 1)
+        if smart_est.locked:
+            cv2.rectangle(grid, (c*cw, r*ch), ((c+1)*cw-1, (r+1)*ch-1), (0, 255, 0), 2)
+    _, jpg = cv2.imencode('.jpg', grid, [cv2.IMWRITE_JPEG_QUALITY, 80])
+    with frame_lock:
+        latest_smart_grid_jpeg = jpg.tobytes()
+
+
+def render_map(all_estimates, smart_est=None):
+    """Render GPS estimates on satellite map."""
+    global latest_map_jpeg, _map_base
+    if _map_base is None:
+        # Try loading map
+        map_path = config.MAP_FILE
+        if os.path.exists(map_path):
+            img = cv2.imread(map_path)
+            if img is not None:
+                _map_base = cv2.resize(img, (600, int(img.shape[0] * 600 / img.shape[1])))
+        if _map_base is None:
+            # Placeholder
+            _map_base = np.zeros((400, 600, 3), dtype=np.uint8)
+            cv2.putText(_map_base, "map.jpg not found", (150, 200),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.7, (100, 100, 100), 1)
+    disp = _map_base.copy()
+    mh, mw = disp.shape[:2]
+
+    def gps_to_px(lat, lon):
+        dn = (config.REF_LAT - lat) * 111320
+        de = (lon - config.REF_LON) * 111320 * math.cos(math.radians(config.REF_LAT))
+        px = int(de / config.MAP_WIDTH_METERS * mw)
+        py = int(dn / config.MAP_WIDTH_METERS * mw)
+        return px, py
+
+    # Plot all estimates
+    for lat, lon, pdist in all_estimates:
+        px, py = gps_to_px(lat, lon)
+        if 0 <= px < mw and 0 <= py < mh:
+            cv2.circle(disp, (px, py), 3, (0, 255, 0), -1)
+
+    # Smart median star
+    if smart_est and smart_est.locked:
+        med = smart_est.get_median()
+        if med:
+            px, py = gps_to_px(med[0], med[1])
+            if 0 <= px < mw and 0 <= py < mh:
+                cv2.drawMarker(disp, (px, py), (255, 0, 255), cv2.MARKER_STAR, 15, 2)
+
+    # Drone position
+    if gps_data["lat"] != 0:
+        px, py = gps_to_px(gps_data["lat"], gps_data["lon"])
+        if 0 <= px < mw and 0 <= py < mh:
+            cv2.circle(disp, (px, py), 5, (255, 0, 0), -1)
+
+    # Title
+    cv2.rectangle(disp, (0, 0), (mw, 20), (0, 0, 0), -1)
+    cv2.putText(disp, f"MAP: {len(all_estimates)} estimates", (5, 15),
+               cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 255), 1)
+
+    _, jpg = cv2.imencode('.jpg', disp, [cv2.IMWRITE_JPEG_QUALITY, 80])
+    with frame_lock:
+        latest_map_jpeg = jpg.tobytes()
+
+
 def render_bullseye(all_estimates, smart_est=None):
     """Render bullseye plot showing all GPS estimates + smart cluster."""
     global latest_bullseye
@@ -706,6 +883,13 @@ def draw_overlay(frame, last_det):
     cross_len = 15
     cv2.line(display, (cx - cross_len, cy), (cx + cross_len, cy), cross_color, 1)
     cv2.line(display, (cx, cy - cross_len), (cx, cy + cross_len), cross_color, 1)
+
+    # Cyan arrow: center → detection
+    if last_det is not None:
+        det_cx, det_cy, conf, age = last_det
+        if age < 2.0:
+            cv2.arrowedLine(display, (cx, cy), (int(det_cx), int(det_cy)),
+                           (255, 255, 0), 2, tipLength=0.2)
 
     # GPS overlay (bottom of frame)
     lat, lon = gps_data["lat"], gps_data["lon"]
@@ -1147,9 +1331,14 @@ def main():
             age = now - last_det_time
             last_det = (last_det[0], last_det[1], last_det[2], age)
 
-        # Update bullseye every 2 seconds
+        # Update all plots every 2 seconds
         if frame_count % max(1, int(fake_fps * 2 if args.fake else 10)) == 0:
             render_bullseye(_all_gps_estimates, smart_estimator)
+            render_map(_all_gps_estimates, smart_estimator)
+            if smart_estimator:
+                render_smart_grid(smart_estimator)
+            if last_det is not None:
+                render_latest_detection(frame, last_det, gps_data)
 
         # Draw overlay (detection box + GPS) on every frame for stream
         display = draw_overlay(frame, last_det)
