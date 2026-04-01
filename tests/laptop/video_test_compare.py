@@ -329,14 +329,59 @@ def main():
         r = int(255 * min(1, val))
         return (0, g, r)
 
+    def find_tightest_cluster(estimates, target_size=10):
+        """Find tightest cluster of target_size points — greedy core approach."""
+        n = len(estimates)
+        if n <= target_size:
+            return list(range(n)), 0
+
+        # Pairwise distances in meters
+        dists = {}
+        for i in range(n):
+            for j in range(i + 1, n):
+                dn = (estimates[i][0] - estimates[j][0]) * 111320
+                de = (estimates[i][1] - estimates[j][1]) * 111320 * math.cos(math.radians(estimates[i][0]))
+                dists[(i, j)] = math.sqrt(dn**2 + de**2)
+
+        # Find closest pair as seed
+        min_pair = min(dists, key=dists.get)
+        cluster = set(min_pair)
+
+        # Greedily add point that minimizes cluster spread
+        while len(cluster) < target_size:
+            best_pt = -1
+            best_spread = float('inf')
+            for c in range(n):
+                if c in cluster:
+                    continue
+                # Max distance from candidate to any cluster member
+                max_d = max(dists.get((min(c, m), max(c, m)), 0) for m in cluster)
+                if max_d < best_spread:
+                    best_spread = max_d
+                    best_pt = c
+            if best_pt >= 0:
+                cluster.add(best_pt)
+            else:
+                break
+
+        # Compute final spread
+        cluster_list = sorted(cluster)
+        spread = 0
+        for i in cluster_list:
+            for j in cluster_list:
+                if i < j:
+                    spread = max(spread, dists.get((i, j), 0))
+
+        return cluster_list, spread
+
     def draw_smart_bullseye():
-        """SMART mode: MAD-based clustering — no centrality filter, reject outliers."""
+        """SMART mode: tightest cluster of 10 — greedy core approach."""
         plot = np.zeros((plot_size, plot_size, 3), dtype=np.uint8)
         n_total = len(target_estimates)
 
-        if n_total < 3:
-            cv2.putText(plot, f"SMART ESTIMATE (MAD)", (10, 25),
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.55, (255, 0, 255), 2)
+        if n_total < 10:
+            cv2.putText(plot, f"SMART (tightest cluster)", (10, 25),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.50, (255, 0, 255), 2)
             cv2.putText(plot, f"Waiting... {n_total}/10 detections", (60, plot_size // 2),
                        cv2.FONT_HERSHEY_SIMPLEX, 0.55, (150, 0, 150), 1)
             return plot
