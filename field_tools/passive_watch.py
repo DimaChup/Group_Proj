@@ -55,7 +55,9 @@ from vision import VisionSystem
 # ── Globals for streaming ──
 latest_jpeg = None
 latest_det_jpeg = None
+latest_bullseye = None  # rendered bullseye plot JPEG
 frame_lock = threading.Lock()
+_all_gps_estimates = []  # (est_lat, est_lon, pixel_dist) for bullseye plotting
 
 # ── Args ──
 parser = argparse.ArgumentParser(description="Passive camera watch + stream + snapshots")
@@ -93,6 +95,8 @@ HTML_PAGE = """<!DOCTYPE html>
 <div class="est" id="est">DUMMY EST: waiting...</div>
 <div class="fov" id="fov">FOV: ---</div>
 <img src="/stream" alt="Camera Feed">
+<h2 style="color:#0ff; margin-top:15px;">GPS Estimate Plots</h2>
+<img id="bullseye" src="/bullseye" alt="Bullseye Plot" style="max-width:100%; border:1px solid #333;">
 <script>
   setInterval(()=>{
     fetch('/api/status').then(r=>r.json()).then(d=>{
@@ -105,8 +109,9 @@ HTML_PAGE = """<!DOCTYPE html>
         : `DUMMY EST: waiting for detection...`;
       document.getElementById('fov').textContent =
         `FOV: ${d.fov_deg}° | Cal@1m: ${d.cal_1m_w}x${d.cal_1m_h}cm (measure this to calibrate)`;
+      document.getElementById('bullseye').src = '/bullseye?' + Date.now();
     });
-  }, 1000);
+  }, 2000);
 </script>
 </body></html>"""
 
@@ -146,6 +151,19 @@ class Handler(BaseHTTPRequestHandler):
             if jpeg:
                 self.send_response(200)
                 self.send_header('Content-Type', 'image/jpeg')
+                self.end_headers()
+                self.wfile.write(jpeg)
+            else:
+                self.send_response(503)
+                self.end_headers()
+
+        elif self.path == '/bullseye':
+            with frame_lock:
+                jpeg = latest_bullseye
+            if jpeg:
+                self.send_response(200)
+                self.send_header('Content-Type', 'image/jpeg')
+                self.send_header('Cache-Control', 'no-cache')
                 self.end_headers()
                 self.wfile.write(jpeg)
             else:
@@ -448,6 +466,135 @@ class SmartEstimator:
         return dists[len(dists) // 2] if dists else 0
 
 smart_estimator = None  # initialized in main() if --smart-estimate
+
+
+def render_bullseye(all_estimates, smart_est=None):
+    """Render bullseye plot showing all GPS estimates + smart cluster."""
+    global latest_bullseye
+    size = 400
+    plot = np.zeros((size, size * 2, 3), dtype=np.uint8)  # two plots side by side
+
+    if not all_estimates:
+        cv2.putText(plot, "Waiting for detections...", (50, size // 2),
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.6, (100, 100, 100), 1)
+        _, jpg = cv2.imencode('.jpg', plot, [cv2.IMWRITE_JPEG_QUALITY, 80])
+        with frame_lock:
+            latest_bullseye = jpg.tobytes()
+        return
+
+    # LEFT PLOT: all estimates centered on mean
+    lats = [e[0] for e in all_estimates]
+    lons = [e[1] for e in all_estimates]
+    mean_lat = sum(lats) / len(lats)
+    mean_lon = sum(lons) / len(lons)
+
+    pts_m = []
+    for lat, lon, pdist in all_estimates:
+        n = (lat - mean_lat) * 111320
+        e = (lon - mean_lon) * 111320 * math.cos(math.radians(mean_lat))
+        pts_m.append((e, n, pdist))
+
+    dists = [math.sqrt(p[0]**2 + p[1]**2) for p in pts_m]
+    p95 = sorted(dists)[int(len(dists) * 0.95)] if dists else 5.0
+    max_range = max(p95 * 2, 3.0)
+    margin = 40
+    usable = size - 2 * margin
+    scale = usable / max_range
+    cx, cy = size // 2, size // 2
+
+    # Title
+    cv2.putText(plot, f"ALL DETECTIONS (N={len(all_estimates)})", (10, 20),
+               cv2.FONT_HERSHEY_SIMPLEX, 0.45, (200, 200, 200), 1)
+
+    # Rings
+    for r_m in [1, 2, 3, 5, 10, 20]:
+        r_px = int(r_m * scale)
+        if 5 < r_px < usable // 2:
+            cv2.circle(plot, (cx, cy), r_px, (40, 40, 40), 1)
+            cv2.putText(plot, f"{r_m}m", (cx + r_px + 2, cy - 2),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.25, (60, 60, 60), 1)
+
+    # Cross at mean
+    cv2.drawMarker(plot, (cx, cy), (0, 255, 0), cv2.MARKER_CROSS, 15, 2)
+
+    # Dots colored by pixel centrality
+    max_pd = max(e[2] for e in all_estimates) if all_estimates else 1
+    for e_m, n_m, pdist in pts_m:
+        px = cx + int(e_m * scale)
+        py = cy - int(n_m * scale)
+        if margin < px < size - margin and margin < py < size - margin:
+            val = min(1.0, pdist / max(max_pd, 1))
+            g = int(255 * (1 - val))
+            r = int(255 * val)
+            cv2.circle(plot, (px, py), 3, (0, g, r), -1)
+
+    # Weighted + median estimate
+    est = dummy_estimator.get_estimate()
+    if est:
+        cv2.putText(plot, f"Est: {est[0]:.6f}, {est[1]:.6f} ({est[2]}obs)",
+                   (10, size - 15), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (255, 0, 255), 1)
+
+    # RIGHT PLOT: smart cluster (if active)
+    ox = size  # offset for right plot
+    if smart_est and smart_est.locked:
+        cluster = smart_est.locked_cluster
+        cv2.putText(plot, f"SMART LOCKED (spread: {smart_est.locked_spread:.2f}m)",
+                   (ox + 10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.40, (0, 255, 0), 2)
+
+        c_pts = []
+        c_lats = [e[0] for e in cluster]
+        c_lons = [e[1] for e in cluster]
+        c_mean_lat = sum(c_lats) / len(c_lats)
+        c_mean_lon = sum(c_lons) / len(c_lons)
+        for lat, lon, pdist in cluster:
+            n = (lat - c_mean_lat) * 111320
+            e = (lon - c_mean_lon) * 111320 * math.cos(math.radians(c_mean_lat))
+            c_pts.append((e, n, pdist))
+
+        c_dists = [math.sqrt(p[0]**2 + p[1]**2) for p in c_pts]
+        c_max = max(c_dists) * 1.5 if c_dists else 1.0
+        c_max = max(c_max, 0.5)
+        c_scale = usable / (2 * c_max)
+        c_cx = ox + size // 2
+        c_cy = size // 2
+
+        # Rings
+        for r_m in [0.1, 0.2, 0.5, 1.0]:
+            r_px = int(r_m * c_scale)
+            if 5 < r_px < usable // 2:
+                cv2.circle(plot, (c_cx, c_cy), r_px, (40, 40, 40), 1)
+                cv2.putText(plot, f"{r_m}m", (c_cx + r_px + 2, c_cy - 2),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.25, (60, 60, 60), 1)
+
+        # Cross at median
+        cv2.drawMarker(plot, (c_cx, c_cy), (0, 255, 255), cv2.MARKER_CROSS, 20, 2)
+
+        # Dots
+        for i, (e_m, n_m, pdist) in enumerate(c_pts):
+            px = c_cx + int(e_m * c_scale)
+            py = c_cy - int(n_m * c_scale)
+            cv2.circle(plot, (px, py), 5, (0, 255, 255), -1)
+            cv2.circle(plot, (px, py), 5, (255, 255, 255), 1)
+
+        med = smart_est.get_median()
+        if med:
+            cv2.putText(plot, f"Median: {med[0]:.7f}, {med[1]:.7f}",
+                       (ox + 10, size - 30), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (255, 0, 255), 1)
+            cv2.putText(plot, f"Samples: {med[2]} | Spread: {smart_est.locked_spread:.2f}m",
+                       (ox + 10, size - 12), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (200, 200, 200), 1)
+    elif smart_est:
+        n_est = len(smart_est.all_estimates)
+        cv2.putText(plot, f"SMART: searching... ({n_est} detections)",
+                   (ox + 10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.40, (255, 0, 255), 1)
+        cv2.putText(plot, f"Need tightest 10 within {smart_est.max_spread}m",
+                   (ox + 10, 45), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (150, 150, 150), 1)
+    else:
+        cv2.putText(plot, "SMART: disabled (use --smart-estimate)",
+                   (ox + 10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (100, 100, 100), 1)
+
+    _, jpg = cv2.imencode('.jpg', plot, [cv2.IMWRITE_JPEG_QUALITY, 80])
+    with frame_lock:
+        latest_bullseye = jpg.tobytes()
 
 
 # ── GPS state (read-only from mavproxy) ──
@@ -777,11 +924,18 @@ def main():
                         d_lat, d_lon, d_alt, d_yaw, norm_x, norm_y
                     )
 
-                    # Smart estimate: add ALL detections, greedy cluster finds tightest 10
-                    if smart_estimator and est_result:
+                    # Store for bullseye plotting
+                    if est_result:
                         est_lat, est_lon = est_result
                         pixel_dist = math.sqrt((cx - w/2)**2 + (cy - h/2)**2)
-                        smart_estimator.add(est_lat, est_lon, pixel_dist, frame)
+                        _all_gps_estimates.append((est_lat, est_lon, pixel_dist))
+
+                        # Smart estimate: greedy cluster finds tightest 10
+                        if smart_estimator:
+                            smart_estimator.add(est_lat, est_lon, pixel_dist, frame)
+
+                        # Update bullseye plot
+                        render_bullseye(_all_gps_estimates, smart_estimator)
 
                 # Smart estimate: save ONLY when threshold reached, use median + most central image
                 if args.smart_estimate and smart_estimator and not args.no_save:
