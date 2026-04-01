@@ -1449,11 +1449,19 @@ def main():
             cv2.imshow(win, disp)
 
             # GPS plots window (center distance + altitude side by side)
-            plot_center = draw_smart_bullseye() if args.smart_estimate else draw_gps_plot_by_center()
-            plot_alt = draw_gps_plot_by_alt()
-            sep = np.zeros((plot_size, 2, 3), dtype=np.uint8)
-            sep[:] = (60, 60, 60)
-            gps_combined = np.hstack([plot_center, sep, plot_alt])
+            if args.smart_estimate:
+                plot_smart = draw_smart_bullseye()
+                plot_center = draw_gps_plot_by_center()
+                plot_alt = draw_gps_plot_by_alt()
+                sep = np.zeros((plot_size, 2, 3), dtype=np.uint8)
+                sep[:] = (60, 60, 60)
+                gps_combined = np.hstack([plot_smart, sep, plot_center, sep.copy(), plot_alt])
+            else:
+                plot_center = draw_gps_plot_by_center()
+                plot_alt = draw_gps_plot_by_alt()
+                sep = np.zeros((plot_size, 2, 3), dtype=np.uint8)
+                sep[:] = (60, 60, 60)
+                gps_combined = np.hstack([plot_center, sep, plot_alt])
             cv2.imshow("Target GPS Estimates", gps_combined)
 
             # Smart frames grid (first 10 central detections)
