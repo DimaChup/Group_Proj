@@ -80,16 +80,16 @@ def speed_for_altitude(alt):
 # ============================================================
 SENSOR_WIDTH_MM = 5.02          # IMX296 sensor width
 FOCAL_LENGTH_MM = 5.46          # Calibrated 2026-03-11 (92 cm visible at 1 m)
-IMAGE_W = 640                   # TEMP laptop (Pi: 1456)
-IMAGE_H = 480                   # TEMP laptop (Pi: 1088)
+IMAGE_W = 1456                  # IMX296 native width
+IMAGE_H = 1088                  # IMX296 native height
 REAL_CAMERA_INDEX = 0           # /dev/video0 on Pi
 
 # White balance (Pi picamera2 only)
 CAMERA_AWB_MODE = "auto"        # "auto", "daylight", "cloudy", "indoor", "manual"
 CAMERA_COLOUR_GAINS = (1.5, 1.2)  # (red, blue) — used only when AWB_MODE = "manual"
 CAMERA_COLOR_CORRECTION = False # Software gray-world correction (not needed)
-CAMERA_FLIP_180 = False         # TEMP laptop (Pi: True)
-UNDISTORT_ENABLED = False       # TEMP laptop (Pi: True)
+CAMERA_FLIP_180 = True          # Camera mounted inverted on drone
+UNDISTORT_ENABLED = False       # OFF until real calibration_data.npz exists
 
 
 # ============================================================

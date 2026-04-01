@@ -157,13 +157,14 @@ class Handler(BaseHTTPRequestHandler):
         pass  # silent
 
     def do_GET(self):
-        if self.path == '/':
+        path = self.path.split('?')[0]  # strip query string for matching
+        if path == '/':
             self.send_response(200)
             self.send_header('Content-Type', 'text/html')
             self.end_headers()
             self.wfile.write(HTML_PAGE.encode())
 
-        elif self.path == '/stream':
+        elif path == '/stream':
             self.send_response(200)
             self.send_header('Content-Type', 'multipart/x-mixed-replace; boundary=frame')
             self.end_headers()
@@ -180,7 +181,7 @@ class Handler(BaseHTTPRequestHandler):
                 except BrokenPipeError:
                     break
 
-        elif self.path == '/snapshot':
+        elif path == '/snapshot':
             with frame_lock:
                 jpeg = latest_det_jpeg or latest_jpeg
             if jpeg:
@@ -192,7 +193,7 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_response(503)
                 self.end_headers()
 
-        elif self.path == '/bullseye':
+        elif path == '/bullseye':
             with frame_lock:
                 jpeg = latest_bullseye
             if jpeg:
@@ -205,7 +206,7 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_response(503)
                 self.end_headers()
 
-        elif self.path == '/api/status':
+        elif path == '/api/status':
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
             self.end_headers()
