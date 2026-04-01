@@ -53,22 +53,23 @@ try:
 except ImportError:
     pass
 
-# Priority 2: TFLite direct — lightweight, for Raspberry Pi
+# Priority 2: TFLite direct — always try loading (needed for .tflite models
+# even on laptop where Ultralytics is available, since Ultralytics breaks
+# bbox coords for .tflite wrapped models)
 TFLiteInterpreter = None
-if YOLO is None:
+try:
+    from tflite_runtime.interpreter import Interpreter
+    TFLiteInterpreter = Interpreter
+except ImportError:
     try:
-        from tflite_runtime.interpreter import Interpreter
+        from ai_edge_litert.interpreter import Interpreter
         TFLiteInterpreter = Interpreter
     except ImportError:
         try:
-            from ai_edge_litert.interpreter import Interpreter
-            TFLiteInterpreter = Interpreter
+            import tensorflow as tf
+            TFLiteInterpreter = tf.lite.Interpreter
         except ImportError:
-            try:
-                import tensorflow as tf
-                TFLiteInterpreter = tf.lite.Interpreter
-            except ImportError:
-                pass
+            pass
 
 # Priority 3: NCNN — ARM-optimized, fastest on Pi 5
 ncnn_available = False
@@ -102,16 +103,29 @@ class VisionSystem:
         found, cx, cy, conf = vs.detect_in_image(frame)
     """
 
-    def __init__(self, camera_index=0, model_path="best.tflite", backend=None):
+    def __init__(self, camera_index=0, model_path="best.tflite", backend=None, undistort=True):
         self.cap = None
         self._picam = None
         self._requested_backend = backend  # "ncnn", "tflite", or None (auto)
+        self.undistort_enabled = undistort  # False = ignore calibration_data.npz
         cam_w, cam_h = DEFAULT_CAM_W, DEFAULT_CAM_H
 
         if camera_index is not None:
             cam_w, cam_h = self._open_camera(camera_index, cam_w, cam_h)
+        else:
+            # No camera — use config resolution (matches video/frame size)
+            try:
+                import config as _cfg
+                cam_w, cam_h = _cfg.IMAGE_W, _cfg.IMAGE_H
+            except Exception:
+                pass
 
-        self._init_undistortion(cam_w, cam_h)
+        if undistort:
+            self._init_undistortion(cam_w, cam_h)
+        else:
+            self._undistort_map1 = None
+            self._undistort_map2 = None
+            print("[VISION] Undistortion DISABLED")
         self._init_model(model_path)
 
     # ------------------------------------------------------------------
@@ -364,6 +378,13 @@ class VisionSystem:
         if self.using_ai or YOLO is None:
             return False
 
+        # Skip Ultralytics for .tflite files — its bbox coords are broken
+        # (returns frame dimensions instead of detection coords). Use direct
+        # TFLite backend instead which handles coords correctly.
+        if model_path.endswith('.tflite'):
+            print(f"[VISION] Skipping Ultralytics for .tflite — using direct TFLite backend")
+            return False
+
         try:
             print(f"[VISION] Loading Model via Ultralytics: {model_path}...")
             self.model = YOLO(model_path, task='detect')
@@ -569,6 +590,7 @@ class VisionSystem:
         cy = int((y1 + y2) / 2)
         bw = int(x2 - x1)
         bh = int(y2 - y1)
+        # xyxy coords verified correct for .pt models (not .tflite — see _try_load_ultralytics skip)
 
         self.last_bbox_w = bw
         self.last_bbox_h = bh

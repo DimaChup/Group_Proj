@@ -886,3 +886,99 @@ of truth.
 - Causes diagonal spread in target estimates (CEP50=2.3m, max=16.5m from DJI video test)
 - Fix: offset GPS by speed*lag in heading direction, or average from multiple passes
 - See `memory/gps-timing-lag.md` for details
+
+### Session: 2026-03-30/31 — Pi readiness, safety, testing, calibration
+
+**Major safety improvements (main.py + state_machine.py):**
+- RC override guard: if pilot switches away from GUIDED, main.py stops ALL commands
+  (keys, state handler, geofence). Guard runs BEFORE handle_keys to prevent leaks.
+- Resume safety checks: validates GPS fix + NFZ position before resuming after manual override
+- Drone can't fight the pilot — tested and verified by 6 parallel agents
+
+**Pi compatibility fixes:**
+- vision.py: `cv2.CAP_DSHOW` platform-guarded (Windows-only, crashed on Pi)
+- main.py: terminal input thread wrapped in try/except for no-TTY (SSH/nohup)
+- requirements_pi.txt: added `ncnn` package for faster inference backend
+
+**Critical bug fixes:**
+- TFLite bounding box coords: was treating pixel coords (0-640) as normalised (0-1)
+  → green boxes drawn off-screen. Added `PIXEL_COORD_THRESHOLD` check (same as NCNN path)
+- passive_watch.py double-scaling: `detect_in_image` returns pixel coords, but script
+  multiplied by w,h again → overlay + GPS estimate 100m+ off. Fixed both.
+- GPS estimate normalisation: pixel coords now properly normalised to 0-1 before
+  passing to DummyEstimator
+- `calibration_data.npz` corruption: empty file on Pi caused remap to mangle frames.
+  Deleting it fixed detection. Undistortion is optional (IMX296 distortion is minimal).
+- 3_auto_detect.py: dry-run state transition fixed (was stuck in WATCHING)
+- 4_detect_and_center.py: consecutive_lost counter reset + time-based timeout
+
+**New test scripts (fill gaps in progressive test ladder):**
+- `tests/flight/0d_planning_test.py` — lawnmower pattern, bounds, NFZ avoidance (6 tests)
+- `tests/flight/0e_geofence_test.py` — NFZ boundaries, waypoint filter, repulsion (7 tests)
+- `tests/flight/0f_servo_test.py` — payload servo PWM on bench (interactive)
+
+**New tools:**
+- `field_tools/passive_watch_clean.py` — saves RAW detection images (no overlay) as PNG
+  with estimated GPS in filename. For training data collection.
+- `tests/calibration/gps_estimate_calibrate.py` — terminal-based focal length calibration
+- `tests/calibration/gps_calibrate_gui.py` — OpenCV GUI focal length calibration with
+  live camera feed, step-by-step workflow, progress bar, summary screen
+
+**passive_watch.py enhancements:**
+- `--simple-names` flag: clean filenames (no det_ prefix), no JSON/CSV, estimated dummy GPS in name
+- `--class-filter person` flag: only save detections matching class (for COCO human.tflite)
+- Fixed GPS estimate to use estimated dummy position (not drone position) in simple-names
+
+**capture_training.py enhancements:**
+- Per-frame GPS telemetry CSV alongside video (like DJI SRT): frame, timestamp, lat, lon, alt, yaw, sats
+- `--undistort` flag for lens correction (needs valid calibration_data.npz)
+
+**diagnostics.py enhancements:**
+- 4 models via M key: original, v2-1088, v2-NCNN, COCO-human-80class
+- Threaded AI: camera runs at ~30fps, detection overlay updates at inference speed
+- Camera FPS dedup: no longer inflated by picamera2 cached reads
+- Thread-safe model switching with lock + AI thread join
+
+**vision.py improvements:**
+- `backend` parameter in VisionSystem.__init__: supports "ncnn", "tflite", or None (auto)
+  NCNN no longer requires sys.argv hack — can be loaded programmatically
+- TFLite bbox fix: handles both pixel coords (0-640) and normalised (0-1) output
+
+**pattern_visualizer_v7.py:**
+- W key exports waypoints to `flight_plans/search_waypoints.json`
+- Strip spacing (m) and edge margin (m) displayed in info box, updates with sliders
+
+**Working7.6 branch (experimental, fast stream):**
+- Stream sleep 50ms → 2ms (main latency fix)
+- Frame dropping + Content-Length header + wfile.flush()
+- `--stream-scale 0.75` + `--stream-quality 50` defaults
+- Threaded detection: camera runs at full FPS, AI in background
+- `--record` flag: saves raw video + per-frame GPS telemetry CSV
+
+**Pi field testing results (2026-03-31):**
+- Camera: IMX296 at 1456x1088, ~13-14fps with TFLite detection
+- human.tflite (COCO 80-class): ~2.3fps inference, detects persons
+- best.tflite (custom dummy): ~5fps inference
+- calibration_data.npz was corrupt → deleted, everything works without it
+- GPS estimate accuracy: improved after normalisation fix, needs focal length calibration
+- Pi IP on network: 192.168.1.121
+
+**Branches:**
+- Working7.4 — stable, all fixes, push to Pi for flight
+- Working7.6 — experimental fast stream + video recording
+
+**Commits (Working7.4, this session):**
+- 5bd6d87: Pi readiness (RC guard, gap tests, bug fixes)
+- a237d57: simple-names, waypoint export, strip spacing
+- a56a05c: Skip CSV with simple-names
+- 9f05fe2: capture_training GPS telemetry + undistort
+- 3d62e6a: Fix TFLite bbox coords (pixel vs normalised)
+- 37f51b4: diagnostics threaded AI + human model
+- cb39098: Fix model switching + thread safety + FPS accuracy
+- a7fd2cc: class-filter flag
+- 7e7bc2e: simple-names uses estimated dummy GPS
+- 297aab2: Fix GPS estimate normalisation
+- 7eb7cc8: Fix double-scaling of detection coords
+- 7acc965: GPS estimate calibration script
+- ea13d56: GPS calibrate GUI (OpenCV)
+- 71602b8: Fix GUI implicit window

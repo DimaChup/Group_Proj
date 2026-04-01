@@ -609,10 +609,16 @@ def main():
             found, x, y, conf = eyes.detect_in_image(frame)
             vis_fps_tracker.tick()
 
+            # DEBUG: print every detection regardless of threshold
+            if found:
+                print(f"  [DEBUG] det: x={x} y={y} conf={conf:.3f} class={getattr(eyes, 'last_class_name', '?')} "
+                      f"bbox_w={eyes.last_bbox_w} bbox_h={eyes.last_bbox_h} frame={w}x{h} backend={eyes.backend_name}")
+
             if found and conf >= args.conf:
                 # Class filter: skip if detection class doesn't match
                 if args.class_filter and hasattr(eyes, 'last_class_name'):
                     if eyes.last_class_name.lower() != args.class_filter.lower():
+                        print(f"  [DEBUG] SKIPPED: class '{eyes.last_class_name}' != filter '{args.class_filter}'")
                         continue  # skip this detection
 
                 det_count += 1
@@ -620,6 +626,7 @@ def main():
                 cx, cy = int(x), int(y)
                 last_det = (cx, cy, conf, 0.0)
                 last_det_time = now
+                print(f"  [DEBUG] SAVED: cx={cx} cy={cy} conf={conf:.3f}")
 
                 # Estimate dummy GPS position
                 est_result = None

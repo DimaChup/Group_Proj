@@ -54,6 +54,26 @@ import cv2
 import numpy as np
 import re, math
 from vision import VisionSystem
+import config
+
+
+# ─── Distortion / Undistortion ───
+
+def create_synthetic_distortion_maps(h, w, k1=0.15, k2=0.02):
+    """Create barrel distortion + undistortion maps (simulates Pi fisheye)."""
+    cx, cy = w / 2.0, h / 2.0
+    f = max(w, h)
+    mtx = np.array([[f, 0, cx], [0, f, cy], [0, 0, 1]], dtype=np.float32)
+    dist = np.array([k1, k2, 0, 0, 0], dtype=np.float32)
+    new_mtx, _ = cv2.getOptimalNewCameraMatrix(mtx, dist, (w, h), 0, (w, h))
+    # Undistortion map (removes distortion)
+    undist_map1, undist_map2 = cv2.initUndistortRectifyMap(
+        mtx, dist, None, new_mtx, (w, h), cv2.CV_16SC2)
+    # Distortion map (adds distortion — use negative coefficients)
+    dist_neg = np.array([-k1, -k2, 0, 0, 0], dtype=np.float32)
+    dist_map1, dist_map2 = cv2.initUndistortRectifyMap(
+        mtx, dist_neg, None, new_mtx, (w, h), cv2.CV_16SC2)
+    return dist_map1, dist_map2, undist_map1, undist_map2
 
 
 # ─── SRT telemetry parser ───
@@ -95,8 +115,14 @@ def find_srt(video_path):
     return None
 
 
-def estimate_target_gps(drone_lat, drone_lon, alt, yaw, pixel_x, pixel_y, img_w, img_h, fov_h=54.4):
+def _get_config_fov():
+    """Get HFOV in degrees from config.py."""
+    return 2 * math.degrees(math.atan(config.SENSOR_WIDTH_MM / (2 * config.FOCAL_LENGTH_MM)))
+
+def estimate_target_gps(drone_lat, drone_lon, alt, yaw, pixel_x, pixel_y, img_w, img_h, fov_h=None):
     """Estimate target GPS from drone position + pixel offset. Returns (lat, lon)."""
+    if fov_h is None:
+        fov_h = _get_config_fov()
     fov_h_rad = math.radians(fov_h)
     ground_w = 2 * alt * math.tan(fov_h_rad / 2)
     ground_h = ground_w * img_h / img_w
@@ -180,8 +206,10 @@ def iou_calc(a, b):
 def main():
     parser = argparse.ArgumentParser(description="Run video with tiled detection")
     parser.add_argument("video", help="Path to video file")
-    parser.add_argument("--model", default="best.tflite", help="Model 1 path (default: best.tflite)")
-    parser.add_argument("--model2", default="cv_models/sar_v2_1088/best.tflite", help="Model 2 path (press M to switch)")
+    parser.add_argument("--model", default="cv_models/human.tflite", help="Model 1 (default: COCO human)")
+    parser.add_argument("--model2", default="best.tflite", help="Model 2 (default: original dummy)")
+    parser.add_argument("--model3", default="cv_models/sar_v2_1088/best.tflite", help="Model 3 (default: v2 retrained)")
+    parser.add_argument("--model4", default="cv_models/sar_v2_1088/best.tflite", help="Model 4 (NCNN backend)")
     parser.add_argument("--save", default=None, help="Save output video to file")
     parser.add_argument("--conf", type=float, default=0.3, help="Confidence threshold (default 0.3)")
     parser.add_argument("--every", type=int, default=3, help="Run AI every Nth frame (default 3)")
@@ -203,18 +231,25 @@ def main():
     cv2.imshow(win, splash)
     cv2.waitKey(1)
 
-    # Load both models
+    # Load all models (model4 uses NCNN backend)
     models = {}
     model_names = {}
-    for i, (path, label) in enumerate([(args.model, "Model 1"), (args.model2, "Model 2")]):
+    model_list = [
+        (args.model, "Model 1 (TFLite)", None),
+        (args.model2, "Model 2 (TFLite)", None),
+        (args.model3, "Model 3 (TFLite)", None),
+        (args.model4, "Model 4 (NCNN)", "ncnn"),
+    ]
+    for i, (path, label, backend) in enumerate(model_list):
         if os.path.exists(path):
-            v = VisionSystem(camera_index=None, model_path=path)
+            v = VisionSystem(camera_index=None, model_path=path, backend=backend, undistort=False)
             if v.using_ai:
                 models[i] = v
-                model_names[i] = f"{label}: {os.path.basename(path)} ({os.path.getsize(path)/1024/1024:.1f}MB)"
+                sz = os.path.getsize(path)/1024/1024 if os.path.isfile(path) else 0
+                model_names[i] = f"{label}: {os.path.basename(path)} ({sz:.1f}MB) [{v.backend_name}]"
                 print(f"  Loaded {model_names[i]}")
             else:
-                print(f"  Failed to load {path}")
+                print(f"  Failed to load {path} ({label})")
         else:
             print(f"  {path} not found, skipping")
 
@@ -255,7 +290,7 @@ def main():
     print(f"Model: {args.model}")
     print(f"Tiling: {args.tile_size}px (every {args.every} frames)")
     print(f"Display at: {disp_w}x{disp_h}")
-    print("Controls: SPACE=pause  Q=quit  A/D=skip 5s  +/-=speed  T=toggle tiling")
+    print("Controls: SPACE=pause  Q=quit  A/D=skip 5s  +/-=speed  T=toggle tiling  F=toggle full-speed playback")
     print()
 
     writer = None
@@ -500,7 +535,7 @@ def main():
     ai_lock = threading.Lock()
     ai_result = {"dets": [], "dt": 0, "busy": False, "frame_num": -1, "snapshot": None, "info_lines": []}
     det_count = [0]
-    use_tiling = [True]
+    use_tiling = [False]  # default: single pass (T to toggle tiling)
 
     def make_snapshot(frame_copy, dets, fnum, dt):
         """Draw detection boxes + telemetry on a snapshot of the inference frame."""
@@ -555,7 +590,7 @@ def main():
                 )
                 lines.append(f"TARGET {t_lat:.6f}, {t_lon:.6f}")
                 # Calculate offset from center in meters
-                fov_h_rad = math.radians(54.4)
+                fov_h_rad = math.radians(_get_config_fov())
                 ground_w = 2 * t_data['rel_alt'] * math.tan(fov_h_rad / 2)
                 ground_h = ground_w * vid_h / vid_w
                 dx_px = dets[0][0] - vid_w / 2
@@ -733,6 +768,9 @@ def main():
         return np.clip(out, 0, 255).astype(np.uint8)
 
     paused = False
+    # F key: toggle RAW (30fps, no processing) vs VISION (undistorted, inference synced)
+    display_mode = [0]  # 0=RAW, 1=VISION
+    DISPLAY_MODES = ["RAW (30fps)", "VISION (undistorted)"]
     speed = 1.0
     frame_num = 0
     frame = None
@@ -754,8 +792,43 @@ def main():
     best_win = "Best Detection (most central)"
     measure_pts = []
     measure_result = [None]
+    best_zoom = [1.0]
+    best_zoom_center = [disp_w // 2, 300]
+    best_drag = [None]
+    latest_zoom = [1.0]
+    latest_zoom_center = [disp_w // 2, 300]
+    latest_drag = [None]
+
+    def _apply_win_zoom(img, zlevel, zcenter):
+        """Apply zoom to any window image."""
+        if zlevel <= 1.01:
+            return img
+        h, w = img.shape[:2]
+        hw, hh = int(w / (2 * zlevel)), int(h / (2 * zlevel))
+        cx = max(hw, min(w - hw, zcenter[0]))
+        cy = max(hh, min(h - hh, zcenter[1]))
+        zcenter[0], zcenter[1] = cx, cy
+        crop = img[cy - hh:cy + hh, cx - hw:cx + hw]
+        return cv2.resize(crop, (w, h), interpolation=cv2.INTER_LINEAR)
 
     def on_best_mouse(event, mx, my, flags, param):
+        if event == cv2.EVENT_MOUSEWHEEL:
+            if flags > 0:
+                best_zoom[0] = min(best_zoom[0] * 1.3, 10.0)
+            else:
+                best_zoom[0] = max(best_zoom[0] / 1.3, 1.0)
+            return
+        if event == cv2.EVENT_LBUTTONDOWN and best_zoom[0] > 1.01:
+            best_drag[0] = (mx, my, best_zoom_center[0], best_zoom_center[1])
+            return
+        if event == cv2.EVENT_MOUSEMOVE and best_drag[0] and (flags & cv2.EVENT_FLAG_LBUTTON):
+            sx, sy, ocx, ocy = best_drag[0]
+            best_zoom_center[0] = max(0, min(disp_w, int(ocx + sx - mx)))
+            best_zoom_center[1] = max(0, min(1000, int(ocy + sy - my)))
+            return
+        if event == cv2.EVENT_LBUTTONUP:
+            best_drag[0] = None
+            return
         if event == cv2.EVENT_LBUTTONDOWN:
             # Correct for window resize
             if best_snapshot[0] is not None:
@@ -771,7 +844,7 @@ def main():
                 best_est = min(target_estimates, key=lambda e: e[4]) if target_estimates else None
                 if best_est:
                     b_alt = best_est[5]
-                    fov_h_rad = math.radians(54.4)
+                    fov_h_rad = math.radians(_get_config_fov())
                     ground_w = 2 * b_alt * math.tan(fov_h_rad / 2)
                     m_per_disp_px = ground_w / (vid_w * bs_scale) if bs_scale else ground_w / vid_w
                     m_dist = px_dist * m_per_disp_px
@@ -795,6 +868,46 @@ def main():
     vid_measure_result = [None]
     last_alt = [20.0]  # track latest altitude for scale
 
+    # FOV Calibration state (B key toggles)
+    calibration_mode = [False]
+    calib_click_pts = []
+    calib_measurements = []  # list of (alt, vid_px_dist, f_px, fov_deg)
+    zoom_level = [1.0]
+    zoom_center = [disp_w // 2, disp_h // 2]
+
+    # Video pixel dimensions for calibration math
+    vid_w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    vid_h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    disp_scale = disp_w / vid_w  # display pixels per video pixel
+
+    # Distortion toggle (O key): 0=RAW, 1=UNDISTORTED
+    distortion_mode = [0]
+    DIST_MODES = ["RAW", "UNDISTORTED"]
+    _dist_map1 = _dist_map2 = _undist_map1 = _undist_map2 = None
+
+    # Try real calibration file first, fall back to synthetic
+    _calib_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(
+        os.path.abspath(__file__)))), "calibration_data.npz")
+    if os.path.exists(_calib_path):
+        try:
+            _calib = np.load(_calib_path)
+            _mtx = _calib["camera_matrix"]
+            _dist = _calib["dist_coeffs"]
+            _new_mtx, _ = cv2.getOptimalNewCameraMatrix(_mtx, _dist, (vid_w, vid_h), 0, (vid_w, vid_h))
+            _undist_map1, _undist_map2 = cv2.initUndistortRectifyMap(
+                _mtx, _dist, None, _new_mtx, (vid_w, vid_h), cv2.CV_16SC2)
+            # For distort mode, use negative coefficients
+            _dist_neg = -_dist.copy()
+            _dist_map1, _dist_map2 = cv2.initUndistortRectifyMap(
+                _mtx, _dist_neg, None, _new_mtx, (vid_w, vid_h), cv2.CV_16SC2)
+            print(f"[DISTORTION] Real calibration loaded (RMS={float(_calib['rms_error']):.3f}). Press O to toggle.")
+        except Exception as e:
+            print(f"[DISTORTION] Calibration load failed: {e} — using synthetic")
+            _dist_map1, _dist_map2, _undist_map1, _undist_map2 = create_synthetic_distortion_maps(vid_h, vid_w)
+    else:
+        _dist_map1, _dist_map2, _undist_map1, _undist_map2 = create_synthetic_distortion_maps(vid_h, vid_w)
+        print(f"[DISTORTION] Synthetic barrel distortion ready. Press O to toggle.")
+
     def correct_mouse_coords(window_name, mx, my, img_w, img_h):
         """Convert window mouse coords to image coords (handles resized WINDOW_NORMAL)."""
         try:
@@ -805,28 +918,119 @@ def main():
             pass
         return mx, my
 
+    def screen_to_display(sx, sy):
+        """Convert screen coords to display coords (accounting for zoom)."""
+        z = zoom_level[0]
+        cx, cy = zoom_center
+        half_w, half_h = disp_w / (2 * z), disp_h / (2 * z)
+        return cx - half_w + sx / z, cy - half_h + sy / z
+
+    def apply_zoom(img):
+        """Crop and scale image for zoom."""
+        z = zoom_level[0]
+        if z <= 1.01:
+            return img
+        h, w = img.shape[:2]
+        cx, cy = zoom_center
+        half_w, half_h = int(w / (2 * z)), int(h / (2 * z))
+        cx = max(half_w, min(w - half_w, cx))
+        cy = max(half_h, min(h - half_h, cy))
+        zoom_center[0], zoom_center[1] = cx, cy
+        crop = img[cy - half_h:cy + half_h, cx - half_w:cx + half_w]
+        return cv2.resize(crop, (w, h), interpolation=cv2.INTER_LINEAR)
+
+    _drag_start = [None]  # for pan dragging in zoom mode
+    _mouse_pos = [0, 0]  # live mouse position in image coords
+
     def on_video_mouse(event, mx, my, flags, param):
-        # Correct for window resize
-        ix, iy = correct_mouse_coords(win, mx, my, disp_w, disp_h)
-        if event == cv2.EVENT_RBUTTONDOWN:
-            vid_measure_pts.append((ix, iy))
-            if len(vid_measure_pts) == 2:
-                p1, p2 = vid_measure_pts
-                px_dist = math.sqrt((p2[0]-p1[0])**2 + (p2[1]-p1[1])**2)
-                # Lock altitude at measurement time
-                alt = last_alt[0]
-                fov_h_rad = math.radians(54.4)
-                ground_w = 2 * alt * math.tan(fov_h_rad / 2)
-                m_per_disp_px = ground_w / disp_w
-                m_dist = px_dist * m_per_disp_px
-                vid_measure_result[0] = (p1, p2, px_dist, m_dist, alt)
-                print(f"  VIDEO MEASURE: {px_dist:.0f} img-px = {m_dist:.2f}m (at {alt:.1f}m alt, FOV 49 deg)")
+        # Mouse coords from OpenCV are relative to the rendered image
+        # getWindowImageRect returns (x_offset, y_offset, rendered_w, rendered_h)
+        try:
+            rx, ry, rw, rh = cv2.getWindowImageRect(win)
+            if rw > 0 and rh > 0:
+                # mx, my are in client area; subtract image offset, then scale to image dims
+                ix = float((mx - rx) * disp_w) / rw
+                iy = float((my - ry) * disp_h) / rh
+                # Clamp to valid range
+                ix = max(0.0, min(float(disp_w), ix))
+                iy = max(0.0, min(float(disp_h), iy))
+            else:
+                ix, iy = float(mx), float(my)
+        except cv2.error:
+            ix, iy = float(mx), float(my)
+        _mouse_pos[0], _mouse_pos[1] = int(ix), int(iy)
+
+        if calibration_mode[0]:
+            # CALIBRATION MODE
+            if event == cv2.EVENT_MOUSEWHEEL:
+                if flags > 0:
+                    zoom_level[0] = min(zoom_level[0] * 1.3, 10.0)
+                else:
+                    zoom_level[0] = max(zoom_level[0] / 1.3, 1.0)
+                dx, dy = screen_to_display(ix, iy)
+                zoom_center[0] = max(0, min(disp_w, int(dx)))
+                zoom_center[1] = max(0, min(disp_h, int(dy)))
+                return
+
+            # Left-click drag to pan when zoomed
+            if event == cv2.EVENT_LBUTTONDOWN and zoom_level[0] > 1.01:
+                _drag_start[0] = (ix, iy, zoom_center[0], zoom_center[1])
+                return
+            if event == cv2.EVENT_MOUSEMOVE and _drag_start[0] is not None and (flags & cv2.EVENT_FLAG_LBUTTON):
+                sx, sy, ocx, ocy = _drag_start[0]
+                dx = (sx - ix)
+                dy = (sy - iy)
+                zoom_center[0] = max(0, min(disp_w, int(ocx + dx)))
+                zoom_center[1] = max(0, min(disp_h, int(ocy + dy)))
+                return
+            if event == cv2.EVENT_LBUTTONUP:
+                _drag_start[0] = None
+                return
+
+            if event == cv2.EVENT_RBUTTONDOWN:
+                dx, dy = screen_to_display(ix, iy)
+                calib_click_pts.append((dx, dy))
+                if len(calib_click_pts) == 2:
+                    p1, p2 = calib_click_pts
+                    disp_px_dist = math.sqrt((p2[0]-p1[0])**2 + (p2[1]-p1[1])**2)
+                    vid_px_dist = disp_px_dist / disp_scale
+                    alt = last_alt[0]
+                    if alt < 1:
+                        print("  No altitude data!")
+                        calib_click_pts.clear()
+                        return
+                    f_px = vid_px_dist * alt / 1.8
+                    fov_h = 2 * math.degrees(math.atan(vid_w / (2 * f_px)))
+                    calib_measurements.append((alt, vid_px_dist, f_px, fov_h))
+                    print(f"  CALIB #{len(calib_measurements)}: alt={alt:.1f}m  {vid_px_dist:.0f}px  f={f_px:.0f}px  FOV={fov_h:.1f}deg")
+                    if len(calib_measurements) > 1:
+                        f_avg = sum(m[2] for m in calib_measurements) / len(calib_measurements)
+                        print(f"    Average: f={f_avg:.0f}px  FOV={2*math.degrees(math.atan(vid_w/(2*f_avg))):.1f}deg")
+                    calib_click_pts.clear()
+                elif len(calib_click_pts) > 2:
+                    calib_click_pts.clear()
+            elif event == cv2.EVENT_MBUTTONDOWN:
+                calib_click_pts.clear()
+        else:
+            # NORMAL MEASURE MODE
+            if event == cv2.EVENT_RBUTTONDOWN:
+                vid_measure_pts.append((ix, iy))
+                if len(vid_measure_pts) == 2:
+                    p1, p2 = vid_measure_pts
+                    px_dist = math.sqrt((p2[0]-p1[0])**2 + (p2[1]-p1[1])**2)
+                    alt = last_alt[0]
+                    fov_h_rad = math.radians(_get_config_fov())
+                    ground_w = 2 * alt * math.tan(fov_h_rad / 2)
+                    m_per_disp_px = ground_w / disp_w
+                    m_dist = px_dist * m_per_disp_px
+                    vid_measure_result[0] = (p1, p2, px_dist, m_dist, alt)
+                    print(f"  VIDEO MEASURE: {px_dist:.0f} img-px = {m_dist:.2f}m (at {alt:.1f}m alt)")
+                    vid_measure_pts.clear()
+                elif len(vid_measure_pts) > 2:
+                    vid_measure_pts.clear()
+            elif event == cv2.EVENT_MBUTTONDOWN or event == cv2.EVENT_LBUTTONDOWN:
                 vid_measure_pts.clear()
-            elif len(vid_measure_pts) > 2:
-                vid_measure_pts.clear()
-        elif event == cv2.EVENT_MBUTTONDOWN:
-            vid_measure_pts.clear()
-            vid_measure_result[0] = None
+                vid_measure_result[0] = None
 
     cv2.setMouseCallback(win, on_video_mouse)
 
@@ -848,6 +1052,10 @@ def main():
                 pass
             need_detect[0] = True
 
+            # Undistort at input level (full resolution, before any resize)
+            if _undist_map1 is not None:
+                frame = cv2.remap(frame, _undist_map1, _undist_map2, cv2.INTER_LINEAR)
+
         # Submit to inference when needed and not busy
         if need_detect[0] and not ai_result["busy"] and frame is not None:
             need_detect[0] = False
@@ -861,10 +1069,12 @@ def main():
             t.start()
 
         timestamp = frame_num / fps if fps > 0 else 0
+        _render_start = time.time()  # measure rendering time for smooth playback
 
         # === DISPLAY ===
         if frame is not None:
             # Show the weather-affected frame so user sees what the model sees
+            # F=VISION shows AI-processed frame (undistorted + boxes), F=RAW shows raw
             disp_frame = apply_weather_effect(frame) if EFFECTS[active_effect[0]] != "none" else frame
             disp = cv2.resize(disp_frame, (disp_w, disp_h))
 
@@ -903,6 +1113,7 @@ def main():
                     f"Alt: {t_data['rel_alt']:.1f}m (AGL)",
                     f"GPS: {t_data['lat']:.6f}, {t_data['lon']:.6f}",
                     f"Yaw: {t_data['yaw']:.0f}  Pitch: {t_data['pitch']:.0f}",
+                    f"Lens: {DIST_MODES[distortion_mode[0]]} (O=toggle)",
                 ]
                 if dets and not stale:
                     cx_det, cy_det = dets[0][0], dets[0][1]
@@ -939,7 +1150,23 @@ def main():
                     cv2.putText(info_strip, line, (8, 16 + i * 20),
                                cv2.FONT_HERSHEY_SIMPLEX, 0.42, color, 1)
                 snap_with_info = np.vstack([snap_resized, info_strip])
+                snap_with_info = _apply_win_zoom(snap_with_info, latest_zoom[0], latest_zoom_center)
                 cv2.imshow("Latest Detection", snap_with_info)
+                def _on_latest_mouse(event, mx, my, flags, param):
+                    if event == cv2.EVENT_MOUSEWHEEL:
+                        if flags > 0:
+                            latest_zoom[0] = min(latest_zoom[0] * 1.3, 10.0)
+                        else:
+                            latest_zoom[0] = max(latest_zoom[0] / 1.3, 1.0)
+                    elif event == cv2.EVENT_LBUTTONDOWN and latest_zoom[0] > 1.01:
+                        latest_drag[0] = (mx, my, latest_zoom_center[0], latest_zoom_center[1])
+                    elif event == cv2.EVENT_MOUSEMOVE and latest_drag[0] and (flags & cv2.EVENT_FLAG_LBUTTON):
+                        sx, sy, ocx, ocy = latest_drag[0]
+                        latest_zoom_center[0] = max(0, min(1000, int(ocx + sx - mx)))
+                        latest_zoom_center[1] = max(0, min(1000, int(ocy + sy - my)))
+                    elif event == cv2.EVENT_LBUTTONUP:
+                        latest_drag[0] = None
+                cv2.setMouseCallback("Latest Detection", _on_latest_mouse)
 
             # Update altitude for scale calculations
             # SRT telemetry may not have every frame — find closest
@@ -972,14 +1199,16 @@ def main():
             # Draw measure line on main video — uses altitude locked at click time
             if vid_measure_result[0]:
                 p1, p2, px_d, m_d, m_alt = vid_measure_result[0]
-                cv2.line(disp, p1, p2, (0, 255, 255), 2)
-                cv2.circle(disp, p1, 4, (0, 255, 255), -1)
-                cv2.circle(disp, p2, 4, (0, 255, 255), -1)
-                mid = ((p1[0]+p2[0])//2, (p1[1]+p2[1])//2)
+                p1i, p2i = (int(p1[0]), int(p1[1])), (int(p2[0]), int(p2[1]))
+                cv2.line(disp, p1i, p2i, (0, 255, 255), 2)
+                cv2.circle(disp, p1i, 4, (0, 255, 255), -1)
+                cv2.circle(disp, p2i, 4, (0, 255, 255), -1)
+                mid = ((p1i[0]+p2i[0])//2, (p1i[1]+p2i[1])//2)
                 cv2.putText(disp, f"{m_d:.2f}m (at {m_alt:.0f}m)", (mid[0]+8, mid[1]-8),
                            cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 255, 255), 2)
             if len(vid_measure_pts) == 1:
-                cv2.circle(disp, vid_measure_pts[0], 4, (0, 255, 255), -1)
+                pt = (int(vid_measure_pts[0][0]), int(vid_measure_pts[0][1]))
+                cv2.circle(disp, pt, 4, (0, 255, 255), -1)
 
             # HUD bar at bottom of video
             bar_y = disp_h - 30
@@ -987,13 +1216,28 @@ def main():
             progress = frame_num / total_frames
             cv2.rectangle(disp, (0, bar_y), (int(disp_w * progress), bar_y + 4), (0, 200, 200), -1)
             mode = f"TILE {args.tile_size}px" if use_tiling[0] else "SINGLE 640"
-            m_name = os.path.basename(os.path.dirname(args.model if active_model[0] == 0 else args.model2)) or "root"
-            m_file = os.path.basename(args.model if active_model[0] == 0 else args.model2)
+            _model_paths = [args.model, args.model2, args.model3, args.model4]
+            _cur_path = _model_paths[active_model[0]] if active_model[0] < len(_model_paths) else _model_paths[0]
+            m_name = os.path.basename(os.path.dirname(_cur_path)) or "root"
+            m_file = os.path.basename(_cur_path)
             model_tag = f"{m_name}/{m_file}" if m_name != "root" else m_file
+            model_num = active_model[0] + 1
+            n_models = len(models)
             eff_name = EFFECTS[active_effect[0]].upper()
             eff_str = f" | WX: {eff_name} {effect_intensity[0]:.0%}" if eff_name != "NONE" else ""
-            info = f"{timestamp:.1f}s / {duration:.1f}s | {dt:.0f}ms | Det: {det_count[0]} | {mode} | {speed:.1f}x | [{model_tag}] M=switch{eff_str}"
-            cv2.putText(disp, info, (10, disp_h - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.38, (200, 200, 200), 1)
+            fps_val = 1000.0 / dt if dt > 0 else 0
+            play_mode = DISPLAY_MODES[display_mode[0]]
+            # Time as MM:SS
+            t_min, t_sec = int(timestamp // 60), timestamp % 60
+            d_min, d_sec = int(duration // 60), duration % 60
+            time_str = f"{t_min}:{t_sec:04.1f} / {d_min}:{d_sec:04.1f}"
+            # Line 1: time + speed (bigger, more visible)
+            line1 = f"{time_str}  |  {speed:.1f}x  |  {play_mode}  |  [{model_tag}] ({model_num}/{n_models})"
+            # Line 2: technical info
+            line2 = f"{dt:.0f}ms {fps_val:.1f}fps | Det: {det_count[0]} | Conf>={args.conf:.2f} | {mode} | M=model F=speed C=clear X=best [/]=conf{eff_str}"
+            cv2.rectangle(disp, (0, disp_h - 50), (disp_w, disp_h), (0, 0, 0), -1)
+            cv2.putText(disp, line1, (10, disp_h - 30), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (255, 255, 255), 1)
+            cv2.putText(disp, line2, (10, disp_h - 8), cv2.FONT_HERSHEY_SIMPLEX, 0.40, (160, 160, 160), 1)
 
             # Weather effect badge (top-right)
             if EFFECTS[active_effect[0]] != "none":
@@ -1002,6 +1246,55 @@ def main():
                 cv2.rectangle(disp, (disp_w - badge_w, 0), (disp_w, 28), (0, 0, 120), -1)
                 cv2.putText(disp, badge, (disp_w - badge_w + 8, 20),
                            cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 200, 255), 1)
+
+            # Calibration mode: zoom FIRST, then draw overlay on top
+            if calibration_mode[0]:
+                disp = apply_zoom(disp)
+
+                # Draw click points (in zoomed screen space)
+                z = zoom_level[0]
+                cx_z, cy_z = zoom_center
+                hw = disp_w / (2 * z)
+                hh = disp_h / (2 * z)
+                for pt in calib_click_pts:
+                    if z > 1.01:
+                        sp_x = int((pt[0] - (cx_z - hw)) * z)
+                        sp_y = int((pt[1] - (cy_z - hh)) * z)
+                    else:
+                        sp_x, sp_y = int(pt[0]), int(pt[1])
+                    cv2.circle(disp, (sp_x, sp_y), 6, (0, 255, 255), -1)
+                    cv2.circle(disp, (sp_x, sp_y), 8, (255, 255, 255), 2)
+                if len(calib_click_pts) == 1:
+                    cv2.putText(disp, "Now click FEET of dummy", (10, 100),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
+
+                # Header (drawn after zoom so text is always readable)
+                z_str = f"  Zoom: {z:.1f}x" if z > 1.01 else ""
+                _calib_h = 100 if calib_measurements else 60
+                cv2.rectangle(disp, (0, 0), (disp_w, _calib_h), (0, 0, 0), -1)
+                cv2.putText(disp, f"CALIBRATION  Alt: {last_alt[0]:.1f}m{z_str}  Frame: {frame_num}", (8, 24),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
+                cv2.putText(disp, "Right-click HEAD then FEET | Scroll=zoom | Drag=pan | B=exit", (8, 48),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.45, (200, 200, 200), 1)
+                if calib_measurements:
+                    f_avg = sum(m[2] for m in calib_measurements) / len(calib_measurements)
+                    fov_avg = 2 * math.degrees(math.atan(vid_w / (2 * f_avg)))
+                    f_vals = [m[2] for m in calib_measurements]
+                    spread = (max(f_vals) - min(f_vals)) / f_avg * 100 if f_avg > 0 else 0
+                    color = (0, 255, 0) if spread < 5 else ((0, 200, 255) if spread < 15 else (0, 0, 255))
+                    # Focal length + FOV
+                    cv2.putText(disp, f"f={f_avg:.0f}px  FOV={fov_avg:.1f}deg  spread={spread:.1f}%  ({len(calib_measurements)} samples)", (8, 72),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+                    # Config.py value (for Pi camera: f_mm = f_px * 5.02 / 1456)
+                    f_mm_pi = f_avg * 5.02 / 1456
+                    cv2.putText(disp, f"config.py: FOCAL_LENGTH_MM = {f_mm_pi:.2f}  (if Pi camera)", (8, 94),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.45, (200, 200, 0), 1)
+
+            # Debug: draw mouse crosshair so we can verify coord accuracy
+            _mx, _my = _mouse_pos
+            if 0 < _mx < disp_w and 0 < _my < disp_h:
+                cv2.line(disp, (_mx - 8, _my), (_mx + 8, _my), (0, 0, 255), 1)
+                cv2.line(disp, (_mx, _my - 8), (_mx, _my + 8), (0, 0, 255), 1)
 
             if writer:
                 writer.write(disp)
@@ -1032,10 +1325,19 @@ def main():
                                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
                 if len(measure_pts) == 1:
                     cv2.circle(bs_resized, measure_pts[0], 4, (0, 255, 255), -1)
+                bs_resized = _apply_win_zoom(bs_resized, best_zoom[0], best_zoom_center)
                 cv2.imshow(best_win, bs_resized)
                 cv2.setMouseCallback(best_win, on_best_mouse)
 
-        delay = max(1, int((1000 / fps) / speed)) if not paused else 50
+        # Adaptive timing: subtract rendering time from target interval
+        _render_ms = (time.time() - _render_start) * 1000
+        if display_mode[0] == 0:  # RAW: play at video fps
+            _target_ms = 1000.0 / fps / speed
+            delay = max(1, int(_target_ms - _render_ms))
+        elif not paused:
+            delay = max(1, int((1000 / fps) / speed))
+        else:
+            delay = 50
         key = cv2.waitKey(delay) & 0xFF
 
         if key == ord('q'):
@@ -1074,6 +1376,82 @@ def main():
         elif key == ord('r'):
             effect_intensity[0] = max(effect_intensity[0] - 0.1, 0.1)
             print(f"  INTENSITY: {effect_intensity[0]:.0%}")
+        elif key == ord('f'):
+            display_mode[0] = 1 - display_mode[0]
+            print(f"  Display: {DISPLAY_MODES[display_mode[0]]}")
+        elif key == ord('c'):
+            target_estimates.clear()
+            det_count[0] = 0
+            print("  CLEARED all GPS estimates and detection count")
+        elif key == ord('x'):
+            best_snapshot[0] = None
+            best_center_dist[0] = 999.0
+            print("  CLEARED best detection — will pick new best from now")
+        elif key == ord('b'):
+            calibration_mode[0] = not calibration_mode[0]
+            if calibration_mode[0]:
+                paused = True
+                zoom_level[0] = 1.0
+                calib_click_pts.clear()
+                # Force undistortion on during calibration
+                if _undist_map1 is not None:
+                    distortion_mode[0] = 1  # UNDISTORTED
+                print("\n  CALIBRATION MODE ON (undistortion forced) — Right-click HEAD then FEET. Scroll=zoom. B=exit.")
+            else:
+                zoom_level[0] = 1.0
+                calib_click_pts.clear()
+                if calib_measurements:
+                    f_avg = sum(m[2] for m in calib_measurements) / len(calib_measurements)
+                    fov_avg = 2 * math.degrees(math.atan(vid_w / (2 * f_avg)))
+                    f_mm_new = f_avg * config.SENSOR_WIDTH_MM / vid_w
+                    print(f"\n  CALIBRATION RESULT: f={f_avg:.0f}px  FOV={fov_avg:.1f}deg  ({len(calib_measurements)} samples)")
+                    print(f"  FOCAL_LENGTH_MM: {config.FOCAL_LENGTH_MM:.2f} -> {f_mm_new:.2f}")
+                    # Update config.py automatically
+                    try:
+                        config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "config.py")
+                        with open(config_path, 'r') as f:
+                            cfg_text = f.read()
+                        import re
+                        cfg_text = re.sub(
+                            r'FOCAL_LENGTH_MM\s*=\s*[\d.]+',
+                            f'FOCAL_LENGTH_MM = {f_mm_new:.2f}',
+                            cfg_text)
+                        with open(config_path, 'w') as f:
+                            f.write(cfg_text)
+                        config.FOCAL_LENGTH_MM = f_mm_new
+                        print(f"  UPDATED config.py: FOCAL_LENGTH_MM = {f_mm_new:.2f}")
+                        print(f"  NOTE: This is correct ONLY if video was from Pi camera (49 deg FOV)")
+                        print(f"        DJI video gives DJI focal length — do NOT use for Pi config!")
+                    except Exception as e:
+                        print(f"  Could not update config.py: {e}")
+                        print(f"  Manually set: FOCAL_LENGTH_MM = {f_mm_new:.2f}")
+                print("  CALIBRATION MODE OFF")
+        elif key == ord('o'):
+            # Toggle undistortion in vision.py
+            if vs and hasattr(vs, 'undistort_enabled'):
+                vs.undistort_enabled = not vs.undistort_enabled
+                if vs.undistort_enabled:
+                    vs._init_undistortion(vid_w, vid_h)
+                    status = "ON"
+                else:
+                    vs._undistort_map1 = None
+                    vs._undistort_map2 = None
+                    status = "OFF"
+                print(f"  UNDISTORTION: {status}")
+                # Also toggle for all loaded models
+                for m in models.values():
+                    m.undistort_enabled = vs.undistort_enabled
+                    if vs.undistort_enabled:
+                        m._init_undistortion(vid_w, vid_h)
+                    else:
+                        m._undistort_map1 = None
+                        m._undistort_map2 = None
+        elif key == 82 or key == ord('['):  # up arrow or [
+            args.conf = min(args.conf + 0.05, 0.95)
+            print(f"  Confidence threshold: {args.conf:.2f}")
+        elif key == 84 or key == ord(']'):  # down arrow or ]
+            args.conf = max(args.conf - 0.05, 0.05)
+            print(f"  Confidence threshold: {args.conf:.2f}")
 
     cap.release()
     if writer:
