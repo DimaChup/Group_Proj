@@ -322,7 +322,7 @@ def main():
     ])
     print(f"CSV log: {csv_path}")
 
-    plot_size = 500
+    plot_size = 350
     # True dummy position (ground truth for accuracy comparison)
     TRUE_DUMMY_LAT = 51.42339
     TRUE_DUMMY_LON = -2.671538

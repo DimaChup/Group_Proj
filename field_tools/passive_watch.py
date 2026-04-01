@@ -443,13 +443,8 @@ def draw_overlay(frame, last_det):
     # Draw last detection box (persists between frames)
     if last_det is not None:
         cx, cy, conf, age = last_det
-        if age < 2.0:  # show box for 2 seconds after last detection
-            alpha = max(0.3, 1.0 - age / 2.0)  # fade out
-            color = (0, int(255 * alpha), 0)
-            box = 40
-            cv2.rectangle(display, (cx - box, cy - box), (cx + box, cy + box), color, 2)
-            cv2.putText(display, f"{conf:.2f}", (cx - box, cy - box - 5),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
+        if age < 2.0:  # show for 2 seconds after last detection
+            pass  # Real detection box already drawn by vision.py detect_in_image()
 
     # Centre crosshair (helps pilot align directly over target)
     cx, cy = w // 2, h // 2
