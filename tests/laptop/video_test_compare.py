@@ -353,9 +353,10 @@ def main():
             e = (lon - TRUE_DUMMY_LON) * 111320 * math.cos(math.radians(TRUE_DUMMY_LAT))
             pts_m.append((e, n, cdist, conf))
 
-        # Auto-scale based on max distance (at least 5m range)
-        max_d = max(max(abs(p[0]) for p in pts_m), max(abs(p[1]) for p in pts_m), 2.0) * 1.5
-        max_d = max(max_d, 5.0)
+        # Auto-scale: tight fit around actual data with 30% margin
+        pts_dists = [math.sqrt(p[0]**2 + p[1]**2) for p in pts_m]
+        max_d = max(pts_dists) * 1.3 if pts_dists else 5.0
+        max_d = max(max_d, 1.0)  # at least 1m range
         margin = 70
         usable = plot_size - 2 * margin
         scale = usable / (2 * max_d)
@@ -376,18 +377,22 @@ def main():
         cv2.putText(plot, "E", (plot_size - margin + 5, cy + 4), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (100, 100, 100), 1)
 
         # TRUE position = ORIGIN (yellow crosshair)
-        cv2.drawMarker(plot, (cx, cy), (0, 255, 255), cv2.MARKER_CROSS, 20, 2)
-        cv2.circle(plot, (cx, cy), 3, (0, 255, 255), -1)
+        cv2.drawMarker(plot, (cx, cy), (0, 255, 255), cv2.MARKER_CROSS, 25, 3)
+        cv2.circle(plot, (cx, cy), 5, (0, 255, 255), -1)
 
-        # Plot the 10 central detection estimates (cyan dots)
+        # Plot the 10 central detection estimates with distance lines
         for i, (e_m, n_m, cdist, conf) in enumerate(pts_m):
             px = cx + int(e_m * scale)
             py = cy - int(n_m * scale)
-            # Color by index (first=bright, later=darker)
-            brightness = int(255 * (1 - i * 0.06))
-            cv2.circle(plot, (px, py), 6, (brightness, brightness, 0), -1)
-            cv2.circle(plot, (px, py), 6, (255, 255, 255), 1)
-            cv2.putText(plot, str(i+1), (px + 8, py + 4),
+            # Thin gray line from dot to center (true position)
+            cv2.line(plot, (cx, cy), (px, py), (70, 70, 70), 1)
+            # Bigger dots, color by index
+            brightness = int(255 * (1 - i * 0.05))
+            cv2.circle(plot, (px, py), 8, (brightness, brightness, 0), -1)
+            cv2.circle(plot, (px, py), 8, (255, 255, 255), 2)
+            # Distance label
+            d_m = math.sqrt(e_m**2 + n_m**2)
+            cv2.putText(plot, f"{i+1}({d_m:.1f}m)", (px + 10, py + 4),
                        cv2.FONT_HERSHEY_SIMPLEX, 0.3, (200, 200, 200), 1)
 
         # Compute median
@@ -437,97 +442,152 @@ def main():
         mean_lat = sum(lats) / len(lats)
         mean_lon = sum(lons) / len(lons)
 
+        # Center plot on TRUE position (yellow cross = origin)
+        center_lat = TRUE_DUMMY_LAT
+        center_lon = TRUE_DUMMY_LON
+
         pts_m = []
         for lat, lon, conf, fnum, cdist, alt in plot_data:
-            north = (lat - mean_lat) * 111320
-            east = (lon - mean_lon) * 111320 * math.cos(math.radians(mean_lat))
+            north = (lat - center_lat) * 111320
+            east = (lon - center_lon) * 111320 * math.cos(math.radians(center_lat))
             pts_m.append((east, north, cdist, alt))
 
-        max_range = max(max(abs(p[0]) for p in pts_m) * 2, max(abs(p[1]) for p in pts_m) * 2, 20.0)
-        margin = 50
+        # Auto-scale: 95th percentile to avoid outliers stretching the plot
+        all_dists = sorted(math.sqrt(p[0]**2 + p[1]**2) for p in pts_m)
+        p95 = all_dists[int(len(all_dists) * 0.95)] if all_dists else 20.0
+        max_range = max(p95 * 2.5, 10.0)  # margin around cluster
+        margin = 60
         usable = plot_size - 2 * margin
         scale = usable / max_range
 
-        # Grid
-        grid_step = 5 if max_range < 50 else 10
+        # Grid with meter labels
+        grid_step = 1 if max_range < 10 else (5 if max_range < 50 else 10)
         for d in range(-int(max_range), int(max_range) + 1, grid_step):
             px = int(plot_size / 2 + d * scale)
             py = int(plot_size / 2 - d * scale)
             if margin < px < plot_size - margin:
-                cv2.line(plot, (px, margin), (px, plot_size - margin), (25, 25, 25), 1)
+                cv2.line(plot, (px, margin), (px, plot_size - margin), (30, 30, 30), 1)
+                if d != 0:
+                    cv2.putText(plot, f"{d}m", (px - 8, margin - 5),
+                               cv2.FONT_HERSHEY_SIMPLEX, 0.25, (80, 80, 80), 1)
             if margin < py < plot_size - margin:
-                cv2.line(plot, (margin, py), (plot_size - margin, py), (25, 25, 25), 1)
+                cv2.line(plot, (margin, py), (plot_size - margin, py), (30, 30, 30), 1)
 
-        # Crosshair
-        cv2.line(plot, (plot_size // 2 - 8, plot_size // 2), (plot_size // 2 + 8, plot_size // 2), (60, 60, 60), 1)
-        cv2.line(plot, (plot_size // 2, plot_size // 2 - 8), (plot_size // 2, plot_size // 2 + 8), (60, 60, 60), 1)
+        # Crosshair at mean
+        cv2.line(plot, (plot_size // 2 - 12, plot_size // 2), (plot_size // 2 + 12, plot_size // 2), (80, 80, 80), 1)
+        cv2.line(plot, (plot_size // 2, plot_size // 2 - 12), (plot_size // 2, plot_size // 2 + 12), (80, 80, 80), 1)
 
-        # Plot points colored by center distance
+        # Plot points colored by center distance (bigger, clearer)
+        # Normalize center_dist for color: 0m=green, 4m+=red
         for east, north, cdist, alt in pts_m:
             px = int(plot_size / 2 + east * scale)
             py = int(plot_size / 2 - north * scale)
-            color = heat_color(min(1.0, cdist))  # 0=center=green, 1=edge=red
-            cv2.circle(plot, (px, py), 5, color, -1)
-            cv2.circle(plot, (px, py), 5, (255, 255, 255), 1)
+            color_val = min(1.0, cdist / 8.0)  # 0m=green, 8m=red
+            color = heat_color(color_val)
+            cv2.circle(plot, (px, py), 3, color, -1)
 
-        # TRUE DUMMY POSITION — pink star (ground truth)
-        t_north = (TRUE_DUMMY_LAT - mean_lat) * 111320
-        t_east = (TRUE_DUMMY_LON - mean_lon) * 111320 * math.cos(math.radians(mean_lat))
-        t_px = int(plot_size / 2 + t_east * scale)
-        t_py = int(plot_size / 2 - t_north * scale)
-        if margin < t_px < plot_size - margin and margin < t_py < plot_size - margin:
-            # Pink star shape
-            cv2.drawMarker(plot, (t_px, t_py), (180, 0, 255), cv2.MARKER_STAR, 16, 2)
-            cv2.circle(plot, (t_px, t_py), 10, (180, 0, 255), 1)
-        # Distance from mean estimate to true position
-        true_err = math.sqrt(t_north**2 + t_east**2)
-        cv2.putText(plot, f"TRUE: {TRUE_DUMMY_LAT:.5f},{TRUE_DUMMY_LON:.5f} err:{true_err:.1f}m",
-                   (8, plot_size - 45), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (180, 0, 255), 1)
-
-        # Stats
-        dists_m = [math.sqrt(p[0]**2 + p[1]**2) for p in pts_m]
-        cep50 = sorted(dists_m)[len(dists_m) // 2] if len(dists_m) > 1 else 0
-
-        # Labels
-        cv2.putText(plot, "Color = distance from image center", (8, 20),
-                   cv2.FONT_HERSHEY_SIMPLEX, 0.40, (150, 150, 150), 1)
-        cv2.putText(plot, "GREEN=center  RED=edge", (8, 40),
-                   cv2.FONT_HERSHEY_SIMPLEX, 0.40, (150, 150, 150), 1)
-        max_spread = max(dists_m) if dists_m else 0
-        mean_err = sum(dists_m) / len(dists_m) if dists_m else 0
-        label = "SMART central" if args.smart_estimate else "All"
-        cv2.putText(plot, f"{label} N={len(plot_data)}  Grid={grid_step}m", (8, plot_size - 10),
-                   cv2.FONT_HERSHEY_SIMPLEX, 0.35, (100, 100, 100), 1)
-        cv2.putText(plot, f"CEP50: {cep50:.1f}m | Max: {max_spread:.1f}m | Avg: {mean_err:.1f}m", (8, plot_size - 28),
-                   cv2.FONT_HERSHEY_SIMPLEX, 0.40, (0, 200, 255), 1)
-        # Plain mean (all equal weight)
-        cv2.putText(plot, f"Mean: {mean_lat:.6f}, {mean_lon:.6f}", (8, 60),
-                   cv2.FONT_HERSHEY_SIMPLEX, 0.40, (0, 255, 0), 1)
-        # Weighted mean (central detections weighted more)
+        # TRUE position = CENTER = yellow cross (same as bullseye)
+        t_cx, t_cy = plot_size // 2, plot_size // 2
+        cv2.drawMarker(plot, (t_cx, t_cy), (0, 255, 255), cv2.MARKER_CROSS, 25, 3)
+        cv2.circle(plot, (t_cx, t_cy), 5, (0, 255, 255), -1)
+        # Bullseye rings from true position
+        for r_m in [1, 2, 3, 5, 10]:
+            r_px = int(r_m * scale)
+            if r_px > 5 and r_px < usable // 2:
+                cv2.circle(plot, (t_cx, t_cy), r_px, (50, 50, 50), 1)
+                cv2.putText(plot, f"{r_m}m", (t_cx + r_px + 2, t_cy - 2),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.25, (80, 80, 80), 1)
+        # Compute weighted mean FIRST (needed for both marker + header)
+        wm_lat = mean_lat
+        wm_lon = mean_lon
+        wm_err = 0
         if target_estimates:
             w_total = 0
             w_lat = 0
             w_lon = 0
             for lat, lon, conf, fnum, cdist, alt in target_estimates:
-                w = 1.0 / max(0.1, cdist) ** 2  # inverse square of center distance
+                w = 1.0 / max(0.1, cdist) ** 2
                 w_lat += lat * w
                 w_lon += lon * w
                 w_total += w
-            wm_lat = w_lat / w_total
-            wm_lon = w_lon / w_total
-            wm_err = math.sqrt(((wm_lat - TRUE_DUMMY_LAT) * 111320)**2 +
-                      ((wm_lon - TRUE_DUMMY_LON) * 111320 * math.cos(math.radians(TRUE_DUMMY_LAT)))**2)
-            cv2.putText(plot, f"Weighted: {wm_lat:.6f}, {wm_lon:.6f} err:{wm_err:.1f}m", (8, 80),
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.40, (0, 255, 255), 1)
-        if args.smart_estimate:
-            cv2.putText(plot, f"MEDIAN(10): {mean_lat:.7f}, {mean_lon:.7f}", (8, 100),
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.40, (255, 0, 255), 2)
-        else:
-            cv2.putText(plot, f"Mean: {mean_lat:.6f}, {mean_lon:.6f}", (8, 100),
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.40, (0, 255, 0), 1)
+            if w_total > 0:
+                wm_lat = w_lat / w_total
+                wm_lon = w_lon / w_total
+                wm_err = math.sqrt(((wm_lat - TRUE_DUMMY_LAT) * 111320)**2 +
+                          ((wm_lon - TRUE_DUMMY_LON) * 111320 * math.cos(math.radians(TRUE_DUMMY_LAT)))**2)
 
-        # Smart estimate section already handled by filtering plot_data above
-        central = []  # disable the old smart block below
+        # PLAIN MEAN marker (green square) + error
+        m_north = (mean_lat - center_lat) * 111320
+        m_east = (mean_lon - center_lon) * 111320 * math.cos(math.radians(center_lat))
+        m_px = int(plot_size / 2 + m_east * scale)
+        m_py = int(plot_size / 2 - m_north * scale)
+        mean_err_m = math.sqrt(m_north**2 + m_east**2)
+        if margin < m_px < plot_size - margin and margin < m_py < plot_size - margin:
+            cv2.rectangle(plot, (m_px - 8, m_py - 8), (m_px + 8, m_py + 8), (0, 255, 0), 2)
+            cv2.putText(plot, f"{mean_err_m:.1f}m", (m_px + 12, m_py - 2),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0), 1)
+
+        # WEIGHTED MEAN marker (cyan diamond) + error
+        if target_estimates and wm_err > 0:
+            wm_north = (wm_lat - center_lat) * 111320
+            wm_east = (wm_lon - center_lon) * 111320 * math.cos(math.radians(center_lat))
+            wm_px = int(plot_size / 2 + wm_east * scale)
+            wm_py = int(plot_size / 2 - wm_north * scale)
+            if margin < wm_px < plot_size - margin and margin < wm_py < plot_size - margin:
+                pts_d = np.array([[wm_px, wm_py-10], [wm_px+10, wm_py],
+                                  [wm_px, wm_py+10], [wm_px-10, wm_py]], np.int32)
+                cv2.polylines(plot, [pts_d], True, (0, 255, 255), 2)
+                cv2.putText(plot, f"{wm_err:.1f}m", (wm_px + 12, wm_py + 5),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 255), 1)
+
+        # Stats
+        dists_m = [math.sqrt(p[0]**2 + p[1]**2) for p in pts_m]
+        cep50 = sorted(dists_m)[len(dists_m) // 2] if len(dists_m) > 1 else 0
+
+        # Compute all 5 errors from TRUE position
+        # 1. Mean
+        mean_err_m = math.sqrt(((mean_lat - TRUE_DUMMY_LAT) * 111320)**2 +
+                     ((mean_lon - TRUE_DUMMY_LON) * 111320 * math.cos(math.radians(TRUE_DUMMY_LAT)))**2)
+        # 2. Weighted (already computed above)
+        # 3. Median
+        s_lats = sorted(lats)
+        s_lons = sorted(lons)
+        mid = len(s_lats) // 2
+        med_lat = (s_lats[mid-1] + s_lats[mid]) / 2 if len(s_lats) % 2 == 0 else s_lats[mid]
+        med_lon = (s_lons[mid-1] + s_lons[mid]) / 2 if len(s_lons) % 2 == 0 else s_lons[mid]
+        med_err = math.sqrt(((med_lat - TRUE_DUMMY_LAT) * 111320)**2 +
+                   ((med_lon - TRUE_DUMMY_LON) * 111320 * math.cos(math.radians(TRUE_DUMMY_LAT)))**2)
+        # 4. Best estimate (most central detection)
+        best_est_err = 0
+        drone_gps_err = 0
+        if target_estimates:
+            best = min(target_estimates, key=lambda e: e[4])
+            best_est_err = math.sqrt(((best[0] - TRUE_DUMMY_LAT) * 111320)**2 +
+                           ((best[1] - TRUE_DUMMY_LON) * 111320 * math.cos(math.radians(TRUE_DUMMY_LAT)))**2)
+            # 5. Drone GPS during best detection
+            t_data_best = telem.get(best[3])  # fnum
+            if t_data_best:
+                drone_gps_err = math.sqrt(((t_data_best['lat'] - TRUE_DUMMY_LAT) * 111320)**2 +
+                                 ((t_data_best['lon'] - TRUE_DUMMY_LON) * 111320 * math.cos(math.radians(TRUE_DUMMY_LAT)))**2)
+
+        # Clean stats panel — all 5 errors clearly listed
+        cv2.rectangle(plot, (0, 0), (plot_size, 135), (0, 0, 0), -1)
+        cv2.putText(plot, f"N={len(plot_data)} | Origin = TRUE | CEP50: {cep50:.1f}m", (8, 16),
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.35, (150, 150, 150), 1)
+        y = 38
+        cv2.putText(plot, f"1. Mean:       {mean_err_m:.2f}m", (8, y), cv2.FONT_HERSHEY_SIMPLEX, 0.42, (0, 255, 0), 1)       # GREEN
+        cv2.putText(plot, f"2. Weighted:   {wm_err:.2f}m", (8, y+20), cv2.FONT_HERSHEY_SIMPLEX, 0.42, (255, 255, 0), 1)  # CYAN-BLUE
+        cv2.putText(plot, f"3. Median:     {med_err:.2f}m", (8, y+40), cv2.FONT_HERSHEY_SIMPLEX, 0.42, (255, 0, 255), 1)  # MAGENTA
+        cv2.putText(plot, f"4. Best Est:   {best_est_err:.2f}m", (8, y+60), cv2.FONT_HERSHEY_SIMPLEX, 0.42, (0, 140, 255), 1)  # ORANGE
+        cv2.putText(plot, f"5. Drone GPS:  {drone_gps_err:.2f}m", (8, y+80), cv2.FONT_HERSHEY_SIMPLEX, 0.42, (0, 0, 255), 1)  # RED
+
+        # Bottom stats
+        max_spread = max(dists_m) if dists_m else 0
+        cv2.putText(plot, f"N={len(plot_data)} | Grid={grid_step}m | Max spread: {max_spread:.1f}m", (8, plot_size - 10),
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.35, (100, 100, 100), 1)
+
+        # Disable old smart block
+        central = []
         if len(central) >= 10:
             c_lats = sorted(e[0] for e in central)
             c_lons = sorted(e[1] for e in central)
@@ -561,32 +621,144 @@ def main():
         cv2.putText(plot, "ctr", (bar_x - 5, margin - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (0, 255, 0), 1)
         cv2.putText(plot, "edge", (bar_x - 10, plot_size - margin + 15), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 255), 1)
 
-        # Best estimate — lowest center_dist
-        if len(target_estimates) > 2:
-            best = min(target_estimates, key=lambda e: e[4])  # min center_dist
-            b_lat, b_lon, b_conf, b_fnum, b_cdist, b_alt = best
-            b_north = (b_lat - mean_lat) * 111320
-            b_east = (b_lon - mean_lon) * 111320 * math.cos(math.radians(mean_lat))
-            bpx = int(plot_size / 2 + b_east * scale)
-            bpy = int(plot_size / 2 - b_north * scale)
-            # Star marker for best estimate
-            cv2.drawMarker(plot, (bpx, bpy), (255, 255, 0), cv2.MARKER_STAR, 18, 2)
-            cv2.putText(plot, f"BEST EST: {b_lat:.6f}, {b_lon:.6f}", (8, 80),
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.38, (255, 255, 0), 1)
-            cv2.putText(plot, f"Frame {b_fnum} | Alt {b_alt:.0f}m | CtrDist {b_cdist:.2f}", (8, 98),
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.36, (255, 255, 0), 1)
+        return plot
 
-            # DRONE GPS at most central frame — "true" dummy position
-            drone_data = telem.get(b_fnum)
-            if drone_data:
-                d_north = (drone_data['lat'] - mean_lat) * 111320
-                d_east = (drone_data['lon'] - mean_lon) * 111320 * math.cos(math.radians(mean_lat))
-                dpx = int(plot_size / 2 + d_east * scale)
-                dpy = int(plot_size / 2 - d_north * scale)
-                cv2.drawMarker(plot, (dpx, dpy), (255, 0, 255), cv2.MARKER_DIAMOND, 20, 3)
-                cv2.circle(plot, (dpx, dpy), 25, (255, 0, 255), 2)
-                cv2.putText(plot, f"DRONE GPS: {drone_data['lat']:.6f}, {drone_data['lon']:.6f}", (8, 116),
-                           cv2.FONT_HERSHEY_SIMPLEX, 0.38, (255, 0, 255), 1)
+    def draw_error_convergence():
+        """Running mean vs weighted mean error over detection count."""
+        plot = np.zeros((plot_size, plot_size, 3), dtype=np.uint8)
+        cv2.putText(plot, "Error vs # Detections", (8, 20),
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.45, (200, 200, 200), 1)
+        cv2.putText(plot, "mean | weighted | median | best est | drone gps", (8, 40),
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.28, (150, 150, 150), 1)
+
+        if len(target_estimates) < 2:
+            cv2.putText(plot, "Waiting for detections...", (60, plot_size // 2),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.5, (100, 100, 100), 1)
+            return plot
+
+        # Compute running mean, weighted mean, and median error at each step
+        mean_errors = []
+        weighted_errors = []
+        median_errors = []
+        r_lat = r_lon = 0
+        w_lat = w_lon = w_total = 0
+        all_lats = []
+        all_lons = []
+
+        for i, (lat, lon, conf, fnum, cdist, alt) in enumerate(target_estimates):
+            all_lats.append(lat)
+            all_lons.append(lon)
+
+            # Running mean
+            r_lat += lat
+            r_lon += lon
+            m_lat = r_lat / (i + 1)
+            m_lon = r_lon / (i + 1)
+            m_err = math.sqrt(((m_lat - TRUE_DUMMY_LAT) * 111320)**2 +
+                     ((m_lon - TRUE_DUMMY_LON) * 111320 * math.cos(math.radians(TRUE_DUMMY_LAT)))**2)
+            mean_errors.append(m_err)
+
+            # Running weighted mean
+            w = 1.0 / max(0.1, cdist) ** 2
+            w_lat += lat * w
+            w_lon += lon * w
+            w_total += w
+            wm_lat_r = w_lat / w_total
+            wm_lon_r = w_lon / w_total
+            wm_err = math.sqrt(((wm_lat_r - TRUE_DUMMY_LAT) * 111320)**2 +
+                      ((wm_lon_r - TRUE_DUMMY_LON) * 111320 * math.cos(math.radians(TRUE_DUMMY_LAT)))**2)
+            weighted_errors.append(wm_err)
+
+            # Running median
+            s_lats = sorted(all_lats)
+            s_lons = sorted(all_lons)
+            mid = len(s_lats) // 2
+            md_lat = (s_lats[mid-1] + s_lats[mid]) / 2 if len(s_lats) % 2 == 0 else s_lats[mid]
+            md_lon = (s_lons[mid-1] + s_lons[mid]) / 2 if len(s_lons) % 2 == 0 else s_lons[mid]
+            md_err = math.sqrt(((md_lat - TRUE_DUMMY_LAT) * 111320)**2 +
+                      ((md_lon - TRUE_DUMMY_LON) * 111320 * math.cos(math.radians(TRUE_DUMMY_LAT)))**2)
+            median_errors.append(md_err)
+
+        # Best Est and Drone GPS — single values, drawn as horizontal lines
+        best_est_err_val = 0
+        drone_gps_err_val = 0
+        if target_estimates:
+            best = min(target_estimates, key=lambda e: e[4])
+            best_est_err_val = math.sqrt(((best[0] - TRUE_DUMMY_LAT) * 111320)**2 +
+                               ((best[1] - TRUE_DUMMY_LON) * 111320 * math.cos(math.radians(TRUE_DUMMY_LAT)))**2)
+            t_best = telem.get(best[3])
+            if t_best:
+                drone_gps_err_val = math.sqrt(((t_best['lat'] - TRUE_DUMMY_LAT) * 111320)**2 +
+                                     ((t_best['lon'] - TRUE_DUMMY_LON) * 111320 * math.cos(math.radians(TRUE_DUMMY_LAT)))**2)
+
+        # Plot axes
+        margin_l = 50
+        margin_b = 40
+        margin_t = 50
+        margin_r = 10
+        pw = plot_size - margin_l - margin_r
+        ph = plot_size - margin_t - margin_b
+
+        n = len(mean_errors)
+        max_err = max(max(mean_errors), max(weighted_errors), max(median_errors),
+                      best_est_err_val, drone_gps_err_val, 1.0)
+        max_err = min(max_err, 50.0)  # cap at 50m
+
+        # Y axis labels
+        for y_m in range(0, int(max_err) + 2, max(1, int(max_err / 5))):
+            y_px = margin_t + ph - int(y_m / max_err * ph)
+            if margin_t < y_px < plot_size - margin_b:
+                cv2.line(plot, (margin_l, y_px), (plot_size - margin_r, y_px), (30, 30, 30), 1)
+                cv2.putText(plot, f"{y_m}m", (5, y_px + 4),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.3, (100, 100, 100), 1)
+
+        # X axis
+        cv2.line(plot, (margin_l, plot_size - margin_b), (plot_size - margin_r, plot_size - margin_b), (60, 60, 60), 1)
+        cv2.putText(plot, f"detections (N={n})", (plot_size // 2 - 40, plot_size - 8),
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.3, (100, 100, 100), 1)
+
+        # Draw lines
+        for i in range(1, n):
+            x1 = margin_l + int((i - 1) / max(1, n - 1) * pw)
+            x2 = margin_l + int(i / max(1, n - 1) * pw)
+            # Mean (green)
+            y1 = margin_t + ph - int(min(mean_errors[i-1], max_err) / max_err * ph)
+            y2 = margin_t + ph - int(min(mean_errors[i], max_err) / max_err * ph)
+            cv2.line(plot, (x1, y1), (x2, y2), (0, 255, 0), 2)
+            # Weighted (cyan)
+            y1 = margin_t + ph - int(min(weighted_errors[i-1], max_err) / max_err * ph)
+            y2 = margin_t + ph - int(min(weighted_errors[i], max_err) / max_err * ph)
+            cv2.line(plot, (x1, y1), (x2, y2), (255, 255, 0), 2)  # CYAN-BLUE
+            # Median (magenta)
+            y1 = margin_t + ph - int(min(median_errors[i-1], max_err) / max_err * ph)
+            y2 = margin_t + ph - int(min(median_errors[i], max_err) / max_err * ph)
+            cv2.line(plot, (x1, y1), (x2, y2), (255, 0, 255), 2)
+
+        # Best Est horizontal line (orange dashed)
+        if best_est_err_val > 0:
+            by = margin_t + ph - int(min(best_est_err_val, max_err) / max_err * ph)
+            if margin_t < by < plot_size - margin_b:
+                for dx in range(margin_l, plot_size - margin_r, 8):
+                    cv2.line(plot, (dx, by), (min(dx + 4, plot_size - margin_r), by), (0, 140, 255), 1)  # ORANGE
+
+        # Drone GPS horizontal line (yellow dashed)
+        if drone_gps_err_val > 0:
+            dy = margin_t + ph - int(min(drone_gps_err_val, max_err) / max_err * ph)
+            if margin_t < dy < plot_size - margin_b:
+                for dx in range(margin_l, plot_size - margin_r, 8):
+                    cv2.line(plot, (dx, dy), (min(dx + 4, plot_size - margin_r), dy), (0, 0, 255), 1)  # RED
+
+        # Final values — all 5
+        cv2.putText(plot, f"Mean: {mean_errors[-1]:.2f}m", (margin_l + 5, margin_t + 12),
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 255, 0), 1)
+        cv2.putText(plot, f"Weighted: {weighted_errors[-1]:.2f}m", (margin_l + 5, margin_t + 27),
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.35, (255, 255, 0), 1)
+        cv2.putText(plot, f"Median: {median_errors[-1]:.2f}m", (margin_l + 5, margin_t + 42),
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.35, (255, 0, 255), 1)
+        cv2.putText(plot, f"Best Est: {best_est_err_val:.2f}m", (margin_l + 5, margin_t + 57),
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 140, 255), 1)
+        cv2.putText(plot, f"Drone GPS: {drone_gps_err_val:.2f}m", (margin_l + 5, margin_t + 72),
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1)
 
         return plot
 
@@ -1477,7 +1649,8 @@ def main():
                 plot_alt = draw_gps_plot_by_alt()
                 sep = np.zeros((plot_size, 2, 3), dtype=np.uint8)
                 sep[:] = (60, 60, 60)
-                gps_combined = np.hstack([plot_smart, sep, plot_center, sep.copy(), plot_alt])
+                plot_conv = draw_error_convergence()
+                gps_combined = np.hstack([plot_smart, sep, plot_center, sep.copy(), plot_conv, sep.copy(), plot_alt])
             else:
                 plot_center = draw_gps_plot_by_center()
                 plot_alt = draw_gps_plot_by_alt()
@@ -1597,7 +1770,9 @@ def main():
             target_estimates.clear()
             smart_frames.clear()
             det_count[0] = 0
-            print("  CLEARED all GPS estimates, smart frames, and detection count")
+            best_snapshot[0] = None
+            best_center_dist[0] = 999.0
+            print("  CLEARED all: GPS estimates, smart frames, best detection")
         elif key == ord('x'):
             best_snapshot[0] = None
             best_center_dist[0] = 999.0
