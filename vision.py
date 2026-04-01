@@ -120,6 +120,14 @@ class VisionSystem:
             except Exception:
                 pass
 
+        # Check global config toggle (overrides parameter if False)
+        try:
+            import config as _cfg
+            if not getattr(_cfg, 'UNDISTORT_ENABLED', True):
+                undistort = False
+        except Exception:
+            pass
+
         if undistort:
             self._init_undistortion(cam_w, cam_h)
         else:
@@ -461,12 +469,6 @@ class VisionSystem:
         if not self._use_ncnn and not self._use_tflite_direct and self.model is None:
             return False, 0, 0, 0.0
 
-        undistorted = self.undistort(frame)
-        # Copy undistorted back into original frame so caller sees the changes
-        # (undistort may return a new array, but we need to draw on the original)
-        if undistorted is not frame:
-            np.copyto(frame, undistorted)
-
         if self._use_ncnn:
             return self._detect_ncnn(frame)
         if self._use_tflite_direct:
@@ -667,6 +669,9 @@ class VisionSystem:
             # No conversion needed — data is already in OpenCV's BGR format.
         else:
             return None
+
+        # Undistort at input level — everything downstream sees clean image
+        frame = self.undistort(frame)
 
         # Apply optional colour correction and flip from config
         try:

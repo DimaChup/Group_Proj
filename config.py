@@ -89,6 +89,7 @@ CAMERA_AWB_MODE = "auto"        # "auto", "daylight", "cloudy", "indoor", "manua
 CAMERA_COLOUR_GAINS = (1.5, 1.2)  # (red, blue) — used only when AWB_MODE = "manual"
 CAMERA_COLOR_CORRECTION = False # Software gray-world correction (not needed)
 CAMERA_FLIP_180 = True          # Camera mounted inverted on drone
+UNDISTORT_ENABLED = False        # Apply lens undistortion (needs calibration_data.npz)
 
 
 # ============================================================

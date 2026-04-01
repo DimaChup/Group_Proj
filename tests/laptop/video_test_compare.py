@@ -242,7 +242,7 @@ def main():
     ]
     for i, (path, label, backend) in enumerate(model_list):
         if os.path.exists(path):
-            v = VisionSystem(camera_index=None, model_path=path, backend=backend, undistort=False)
+            v = VisionSystem(camera_index=None, model_path=path, backend=backend)
             if v.using_ai:
                 models[i] = v
                 sz = os.path.getsize(path)/1024/1024 if os.path.isfile(path) else 0
@@ -1052,8 +1052,9 @@ def main():
                 pass
             need_detect[0] = True
 
-            # Undistort at input level (full resolution, before any resize)
-            if _undist_map1 is not None:
+            # Undistort at input — BEFORE anything sees this frame
+            # Display, AI, GPS estimation all get the same undistorted image
+            if config.UNDISTORT_ENABLED and _undist_map1 is not None:
                 frame = cv2.remap(frame, _undist_map1, _undist_map2, cv2.INTER_LINEAR)
 
         # Submit to inference when needed and not busy

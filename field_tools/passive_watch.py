@@ -68,6 +68,9 @@ parser.add_argument('--no-mavlink', action='store_true', help='Skip mavproxy con
 parser.add_argument('--model', default='best.tflite', help='Path to .tflite model (default: best.tflite)')
 parser.add_argument('--simple-names', action='store_true', help='Simple filenames (no det_ prefix, no JSON sidecars)')
 parser.add_argument('--class-filter', type=str, default=None, help='Only save detections of this class (e.g. "person")')
+parser.add_argument('--smart-estimate', action='store_true', help='Accumulate central detections, save after 10+ with median GPS')
+parser.add_argument('--smart-min', type=int, default=10, help='Min central detections before saving (default 10)')
+parser.add_argument('--smart-radius', type=float, default=4.0, help='Max meters from frame center to count as central (default 4)')
 args = parser.parse_args()
 
 
@@ -326,6 +329,69 @@ class DummyEstimator:
 dummy_estimator = DummyEstimator()
 
 
+class SmartEstimator:
+    """Accumulate central detections, report only when N+ samples exist."""
+    def __init__(self, min_samples=10, central_radius_m=4.0):
+        self.min_samples = min_samples
+        self.central_radius_m = central_radius_m
+        self.estimates = []       # list of (est_lat, est_lon, meters_from_center)
+        self.best_frame = None    # most central raw frame
+        self.best_dist = 999.0    # smallest distance from center
+        self.reported = False     # have we saved yet
+
+    def meters_from_center(self, px, py, img_w, img_h, alt_m):
+        """How far is the detection from frame center in meters."""
+        dx_px = px - img_w / 2
+        dy_px = py - img_h / 2
+        pixel_dist = math.sqrt(dx_px**2 + dy_px**2)
+        gw, _ = ground_coverage(alt_m) if alt_m > 0.5 else (1, 1)
+        return pixel_dist * gw / img_w
+
+    def add(self, est_lat, est_lon, dist_m, frame):
+        """Add a central detection. Returns True if threshold just crossed."""
+        self.estimates.append((est_lat, est_lon, dist_m))
+        if dist_m < self.best_dist:
+            self.best_dist = dist_m
+            self.best_frame = frame.copy()
+        was_below = len(self.estimates) - 1 < self.min_samples
+        return was_below and len(self.estimates) >= self.min_samples
+
+    def ready(self):
+        return len(self.estimates) >= self.min_samples
+
+    def get_median(self):
+        """Return (median_lat, median_lon, n_samples)."""
+        if not self.estimates:
+            return None
+        lats = sorted(e[0] for e in self.estimates)
+        lons = sorted(e[1] for e in self.estimates)
+        n = len(lats)
+        mid = n // 2
+        if n % 2 == 0:
+            m_lat = (lats[mid - 1] + lats[mid]) / 2
+            m_lon = (lons[mid - 1] + lons[mid]) / 2
+        else:
+            m_lat = lats[mid]
+            m_lon = lons[mid]
+        return m_lat, m_lon, n
+
+    def get_cep50(self):
+        """Circular error probable — median distance from median center."""
+        med = self.get_median()
+        if not med:
+            return 0
+        m_lat, m_lon, _ = med
+        dists = []
+        for lat, lon, _ in self.estimates:
+            dn = (lat - m_lat) * 111320
+            de = (lon - m_lon) * 111320 * math.cos(math.radians(m_lat))
+            dists.append(math.sqrt(dn**2 + de**2))
+        dists.sort()
+        return dists[len(dists) // 2] if dists else 0
+
+smart_estimator = None  # initialized in main() if --smart-estimate
+
+
 # ── GPS state (read-only from mavproxy) ──
 gps_data = {
     "lat": 0.0, "lon": 0.0, "alt": 0.0, "sats": 0, "fix": 0,
@@ -505,7 +571,13 @@ def draw_overlay(frame, last_det):
 
 # ── Main ──
 def main():
-    global latest_jpeg, latest_det_jpeg
+    global latest_jpeg, latest_det_jpeg, smart_estimator
+
+    if args.smart_estimate:
+        smart_estimator = SmartEstimator(
+            min_samples=args.smart_min,
+            central_radius_m=args.smart_radius)
+        print(f"[SMART] Enabled: {args.smart_min} central samples within {args.smart_radius}m")
 
     # Auto-detect IP
     pi_ip = "localhost"
@@ -609,24 +681,18 @@ def main():
             found, x, y, conf = eyes.detect_in_image(frame)
             vis_fps_tracker.tick()
 
-            # DEBUG: print every detection regardless of threshold
-            if found:
-                print(f"  [DEBUG] det: x={x} y={y} conf={conf:.3f} class={getattr(eyes, 'last_class_name', '?')} "
-                      f"bbox_w={eyes.last_bbox_w} bbox_h={eyes.last_bbox_h} frame={w}x{h} backend={eyes.backend_name}")
+            # (detection logging removed — enable for debug)
 
             if found and conf >= args.conf:
                 # Class filter: skip if detection class doesn't match
                 if args.class_filter and hasattr(eyes, 'last_class_name'):
                     if eyes.last_class_name.lower() != args.class_filter.lower():
-                        print(f"  [DEBUG] SKIPPED: class '{eyes.last_class_name}' != filter '{args.class_filter}'")
                         continue  # skip this detection
 
                 det_count += 1
-                # detect_in_image returns pixel coords already scaled to frame size
                 cx, cy = int(x), int(y)
                 last_det = (cx, cy, conf, 0.0)
                 last_det_time = now
-                print(f"  [DEBUG] SAVED: cx={cx} cy={cy} conf={conf:.3f}")
 
                 # Estimate dummy GPS position
                 est_result = None
@@ -641,8 +707,45 @@ def main():
                         d_lat, d_lon, d_alt, d_yaw, norm_x, norm_y
                     )
 
-                # Save snapshot with GPS overlay
-                if not args.no_save:
+                    # Smart estimate: accumulate central detections
+                    if smart_estimator and est_result:
+                        est_lat, est_lon = est_result
+                        dist_m = smart_estimator.meters_from_center(cx, cy, w, h, d_alt)
+                        if dist_m < smart_estimator.central_radius_m:
+                            just_ready = smart_estimator.add(est_lat, est_lon, dist_m, frame)
+                            n = len(smart_estimator.estimates)
+                            print(f"  [SMART] Central det #{n}: {dist_m:.1f}m from center → est ({est_lat:.6f}, {est_lon:.6f})")
+                            if just_ready:
+                                med = smart_estimator.get_median()
+                                cep = smart_estimator.get_cep50()
+                                print(f"  [SMART] *** THRESHOLD REACHED ({n} samples) ***")
+                                print(f"  [SMART] Median: {med[0]:.7f}, {med[1]:.7f}  CEP50: {cep:.1f}m")
+
+                # Smart estimate: save ONLY when threshold reached, use median + most central image
+                if args.smart_estimate and smart_estimator and not args.no_save:
+                    if smart_estimator.ready() and not smart_estimator.reported:
+                        smart_estimator.reported = True
+                        med = smart_estimator.get_median()
+                        cep = smart_estimator.get_cep50()
+                        saved_count += 1
+                        fname = f"SMART_{med[0]:.6f}_{med[1]:.6f}_{med[2]}samp_CEP{cep:.1f}m.png"
+                        # Save the most central raw frame (no overlay — clean for colleague's detection)
+                        if smart_estimator.best_frame is not None:
+                            cv2.imwrite(os.path.join(args.save_dir, fname), smart_estimator.best_frame)
+                        print(f"\n  {'='*60}")
+                        print(f"  SMART ESTIMATE SAVED: {fname}")
+                        print(f"  Median GPS: {med[0]:.7f}, {med[1]:.7f}")
+                        print(f"  Samples: {med[2]}  CEP50: {cep:.1f}m")
+                        print(f"  Most central frame: {smart_estimator.best_dist:.2f}m from center")
+                        print(f"  {'='*60}\n")
+                    # Skip normal save when in smart mode
+                    if args.smart_estimate:
+                        pass  # don't save individual frames
+                elif not args.no_save:
+                    pass  # fall through to normal save below
+
+                # Save snapshot with GPS overlay (normal mode, skipped in smart mode)
+                if not args.no_save and not args.smart_estimate:
                     saved_count += 1
                     save_frame = draw_overlay(frame, last_det)
                     sh, sw = save_frame.shape[:2]
