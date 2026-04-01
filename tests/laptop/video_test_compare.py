@@ -500,11 +500,30 @@ def main():
                    cv2.FONT_HERSHEY_SIMPLEX, 0.35, (100, 100, 100), 1)
         cv2.putText(plot, f"CEP50: {cep50:.1f}m | Max: {max_spread:.1f}m | Avg: {mean_err:.1f}m", (8, plot_size - 28),
                    cv2.FONT_HERSHEY_SIMPLEX, 0.40, (0, 200, 255), 1)
+        # Plain mean (all equal weight)
+        cv2.putText(plot, f"Mean: {mean_lat:.6f}, {mean_lon:.6f}", (8, 60),
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.40, (0, 255, 0), 1)
+        # Weighted mean (central detections weighted more)
+        if target_estimates:
+            w_total = 0
+            w_lat = 0
+            w_lon = 0
+            for lat, lon, conf, fnum, cdist, alt in target_estimates:
+                w = 1.0 / max(0.1, cdist) ** 2  # inverse square of center distance
+                w_lat += lat * w
+                w_lon += lon * w
+                w_total += w
+            wm_lat = w_lat / w_total
+            wm_lon = w_lon / w_total
+            wm_err = math.sqrt(((wm_lat - TRUE_DUMMY_LAT) * 111320)**2 +
+                      ((wm_lon - TRUE_DUMMY_LON) * 111320 * math.cos(math.radians(TRUE_DUMMY_LAT)))**2)
+            cv2.putText(plot, f"Weighted: {wm_lat:.6f}, {wm_lon:.6f} err:{wm_err:.1f}m", (8, 80),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.40, (0, 255, 255), 1)
         if args.smart_estimate:
-            cv2.putText(plot, f"MEDIAN: {mean_lat:.7f}, {mean_lon:.7f}", (8, 60),
+            cv2.putText(plot, f"MEDIAN(10): {mean_lat:.7f}, {mean_lon:.7f}", (8, 100),
                        cv2.FONT_HERSHEY_SIMPLEX, 0.40, (255, 0, 255), 2)
         else:
-            cv2.putText(plot, f"Mean: {mean_lat:.6f}, {mean_lon:.6f}", (8, 60),
+            cv2.putText(plot, f"Mean: {mean_lat:.6f}, {mean_lon:.6f}", (8, 100),
                        cv2.FONT_HERSHEY_SIMPLEX, 0.40, (0, 255, 0), 1)
 
         # Smart estimate section already handled by filtering plot_data above
@@ -945,6 +964,9 @@ def main():
     latest_zoom = [1.0]
     latest_zoom_center = [disp_w // 2, 300]
     latest_drag = [None]
+    gps_zoom = [1.0]
+    gps_zoom_center = [500, 250]
+    gps_drag = [None]
 
     def _apply_win_zoom(img, zlevel, zcenter):
         """Apply zoom to any window image."""
@@ -1462,7 +1484,24 @@ def main():
                 sep = np.zeros((plot_size, 2, 3), dtype=np.uint8)
                 sep[:] = (60, 60, 60)
                 gps_combined = np.hstack([plot_center, sep, plot_alt])
+            gps_combined = _apply_win_zoom(gps_combined, gps_zoom[0], gps_zoom_center)
             cv2.imshow("Target GPS Estimates", gps_combined)
+
+            def _on_gps_mouse(event, mx, my, flags, param):
+                if event == cv2.EVENT_MOUSEWHEEL:
+                    if flags > 0:
+                        gps_zoom[0] = min(gps_zoom[0] * 1.3, 10.0)
+                    else:
+                        gps_zoom[0] = max(gps_zoom[0] / 1.3, 1.0)
+                elif event == cv2.EVENT_LBUTTONDOWN and gps_zoom[0] > 1.01:
+                    gps_drag[0] = (mx, my, gps_zoom_center[0], gps_zoom_center[1])
+                elif event == cv2.EVENT_MOUSEMOVE and gps_drag[0] and (flags & cv2.EVENT_FLAG_LBUTTON):
+                    sx, sy, ocx, ocy = gps_drag[0]
+                    gps_zoom_center[0] = max(0, min(2000, int(ocx + sx - mx)))
+                    gps_zoom_center[1] = max(0, min(1000, int(ocy + sy - my)))
+                elif event == cv2.EVENT_LBUTTONUP:
+                    gps_drag[0] = None
+            cv2.setMouseCallback("Target GPS Estimates", _on_gps_mouse)
 
             # Smart frames grid (first 10 central detections)
             if args.smart_estimate and smart_frames:
