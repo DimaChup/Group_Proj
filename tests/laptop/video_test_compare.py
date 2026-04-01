@@ -384,13 +384,14 @@ def main():
     def draw_4m_bullseye():
         """Old approach: first 10 detections within 4m of frame center."""
         plot = np.zeros((plot_size, plot_size, 3), dtype=np.uint8)
-        central_4m = [e for e in target_estimates if e[4] < 4.0][:10]
+        PX_THRESHOLD = 200  # ~4m at 30m altitude, altitude-independent
+        central_4m = [e for e in target_estimates if e[4] < PX_THRESHOLD][:10]
         n_total = len(target_estimates)
-        n_4m = len([e for e in target_estimates if e[4] < 4.0])
+        n_4m = len([e for e in target_estimates if e[4] < PX_THRESHOLD])
 
-        cv2.putText(plot, f"4m FILTER ({len(central_4m)}/10)", (10, 25),
-                   cv2.FONT_HERSHEY_SIMPLEX, 0.50, (0, 200, 255), 2)
-        cv2.putText(plot, f"Total: {n_total} | Within 4m: {n_4m}",
+        cv2.putText(plot, f"CENTRAL ({len(central_4m)}/10, <{PX_THRESHOLD}px)", (10, 25),
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 200, 255), 2)
+        cv2.putText(plot, f"Total: {n_total} | Central: {n_4m}",
                    (10, 45), cv2.FONT_HERSHEY_SIMPLEX, 0.30, (150, 150, 150), 1)
 
         if not central_4m:
@@ -455,7 +456,7 @@ def main():
             # Weighted mean
             wt = wlat = wlon = 0
             for lat, lon, conf, fnum, cdist, alt in central_4m:
-                w = 1.0 / max(0.1, cdist) ** 2
+                w = 1.0 / max(10, cdist) ** 2  # pixel centrality weighting
                 wlat += lat * w
                 wlon += lon * w
                 wt += w
@@ -620,7 +621,7 @@ def main():
             wlat = 0
             wlon = 0
             for lat, lon, conf, fnum, cdist, alt in central:
-                w = 1.0 / max(0.1, cdist) ** 2
+                w = 1.0 / max(10, cdist) ** 2  # pixel centrality weighting
                 wlat += lat * w
                 wlon += lon * w
                 wt += w
@@ -706,7 +707,7 @@ def main():
         for east, north, cdist, alt in pts_m:
             px = int(plot_size / 2 + east * scale)
             py = int(plot_size / 2 - north * scale)
-            color_val = min(1.0, cdist / 8.0)  # 0m=green, 8m=red
+            color_val = min(1.0, cdist / 400.0)  # 0px=green, 400px=red
             color = heat_color(color_val)
             cv2.circle(plot, (px, py), 3, color, -1)
 
@@ -730,7 +731,7 @@ def main():
             w_lat = 0
             w_lon = 0
             for lat, lon, conf, fnum, cdist, alt in target_estimates:
-                w = 1.0 / max(0.1, cdist) ** 2
+                w = 1.0 / max(10, cdist) ** 2  # pixel centrality weighting
                 w_lat += lat * w
                 w_lon += lon * w
                 w_total += w
@@ -1160,8 +1161,9 @@ def main():
                 dy_m = dy_px / vid_h * ground_h
                 offset_m = math.sqrt(dx_m**2 + dy_m**2)
                 lines.append(f"OFFSET {offset_m:.1f}m from center ({dx_m:.1f}m E, {dy_m:.1f}m S)")
-                # center_dist in METERS (for smart estimate 4m threshold)
-                center_dist = offset_m
+                # center_dist in PIXELS (altitude-independent, for weighting + coloring)
+                pixel_dist = math.sqrt(dx_px**2 + dy_px**2)
+                center_dist = pixel_dist  # pixels from frame center
                 target_estimates.append((t_lat, t_lon, dets[0][4], fnum, center_dist, t_data['rel_alt']))
                 # Store detection snapshots for MAD-based smart grid
                 # Stop once we have enough for 10 inliers (checked by bullseye)
