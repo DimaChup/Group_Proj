@@ -302,6 +302,7 @@ def main():
 
     # GPS scatter plot of all target estimates
     target_estimates = []  # list of (lat, lon, conf, frame_num, center_dist, alt)
+    smart_frames = []     # list of (frame, center_dist_m, est_lat, est_lon, fnum) — first 10 central
     best_snapshot = [None]  # snapshot of the most central detection
     best_center_dist = [999.0]
     # CSV log for later analysis
@@ -747,6 +748,9 @@ def main():
                 # center_dist in METERS (for smart estimate 4m threshold)
                 center_dist = offset_m
                 target_estimates.append((t_lat, t_lon, dets[0][4], fnum, center_dist, t_data['rel_alt']))
+                # Store frame for smart estimate grid (first 10 central only)
+                if args.smart_estimate and center_dist < 4.0 and len(smart_frames) < 10:
+                    smart_frames.append((snap_clean.copy(), center_dist, t_lat, t_lon, fnum))
                 # Write to CSV
                 csv_writer.writerow([
                     fnum, f"{fnum / fps:.2f}", f"{dets[0][4]:.3f}",
@@ -1452,6 +1456,25 @@ def main():
             gps_combined = np.hstack([plot_center, sep, plot_alt])
             cv2.imshow("Target GPS Estimates", gps_combined)
 
+            # Smart frames grid (first 10 central detections)
+            if args.smart_estimate and smart_frames:
+                thumb_w, thumb_h = 240, 180
+                cols = 5
+                rows = 2
+                grid = np.zeros((rows * thumb_h, cols * thumb_w, 3), dtype=np.uint8)
+                for i, (sf, sd, slat, slon, sfnum) in enumerate(smart_frames):
+                    r, c = i // cols, i % cols
+                    thumb = cv2.resize(sf, (thumb_w, thumb_h))
+                    # Label: frame number + distance from center
+                    cv2.rectangle(thumb, (0, thumb_h - 22), (thumb_w, thumb_h), (0, 0, 0), -1)
+                    cv2.putText(thumb, f"#{i+1} f{sfnum} {sd:.1f}m", (4, thumb_h - 6),
+                               cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 255, 255), 1)
+                    # Border: green if within 2m, yellow if within 4m
+                    bcolor = (0, 255, 0) if sd < 2.0 else (0, 200, 255)
+                    cv2.rectangle(thumb, (0, 0), (thumb_w - 1, thumb_h - 1), bcolor, 2)
+                    grid[r * thumb_h:(r + 1) * thumb_h, c * thumb_w:(c + 1) * thumb_w] = thumb
+                cv2.imshow("SMART Frames (10 central)", grid)
+
             # Best detection window
             if best_snapshot[0] is not None:
                 bs = best_snapshot[0]
@@ -1525,8 +1548,9 @@ def main():
             print(f"  Display: {DISPLAY_MODES[display_mode[0]]}")
         elif key == ord('c'):
             target_estimates.clear()
+            smart_frames.clear()
             det_count[0] = 0
-            print("  CLEARED all GPS estimates and detection count")
+            print("  CLEARED all GPS estimates, smart frames, and detection count")
         elif key == ord('x'):
             best_snapshot[0] = None
             best_center_dist[0] = 999.0
