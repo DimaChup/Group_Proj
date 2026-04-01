@@ -330,41 +330,99 @@ dummy_estimator = DummyEstimator()
 
 
 class SmartEstimator:
-    """Accumulate central detections, report only when N+ samples exist."""
-    def __init__(self, min_samples=10, central_radius_m=4.0):
+    """Greedy tightest cluster: find 10 estimates closest to each other."""
+    def __init__(self, min_samples=10, max_spread=0.5):
         self.min_samples = min_samples
-        self.central_radius_m = central_radius_m
-        self.estimates = []       # list of (est_lat, est_lon, meters_from_center)
-        self.best_frame = None    # most central raw frame
-        self.best_dist = 999.0    # smallest distance from center
-        self.reported = False     # have we saved yet
+        self.max_spread = max_spread  # meters — all 10 must be within this
+        self.all_estimates = []  # (est_lat, est_lon, pixel_dist, frame)
+        self.locked = False
+        self.locked_cluster = None  # list of (lat, lon, pixel_dist)
+        self.locked_frame = None    # most central frame from cluster
+        self.locked_spread = 0
 
-    def meters_from_center(self, px, py, img_w, img_h, alt_m):
-        """How far is the detection from frame center in meters."""
-        dx_px = px - img_w / 2
-        dy_px = py - img_h / 2
-        pixel_dist = math.sqrt(dx_px**2 + dy_px**2)
-        gw, _ = ground_coverage(alt_m) if alt_m > 0.5 else (1, 1)
-        return pixel_dist * gw / img_w
+    def add(self, est_lat, est_lon, pixel_dist, frame):
+        """Add detection. Returns True if cluster just locked."""
+        if self.locked:
+            return False
+        self.all_estimates.append((est_lat, est_lon, pixel_dist, frame.copy()))
 
-    def add(self, est_lat, est_lon, dist_m, frame):
-        """Add a central detection. Returns True if threshold just crossed."""
-        self.estimates.append((est_lat, est_lon, dist_m))
-        if dist_m < self.best_dist:
-            self.best_dist = dist_m
-            self.best_frame = frame.copy()
-        was_below = len(self.estimates) - 1 < self.min_samples
-        return was_below and len(self.estimates) >= self.min_samples
+        if len(self.all_estimates) < self.min_samples:
+            return False
+
+        # Find tightest 10
+        indices, spread = self._find_tightest(self.min_samples)
+        n = len(self.all_estimates)
+        print(f"  [SMART] {n} detections, tightest {self.min_samples} spread: {spread:.2f}m (need <{self.max_spread}m)")
+
+        if spread < self.max_spread:
+            # LOCKED — save cluster
+            self.locked = True
+            self.locked_spread = spread
+            cluster = [self.all_estimates[i] for i in indices]
+            self.locked_cluster = [(e[0], e[1], e[2]) for e in cluster]
+            # Most central frame (smallest pixel_dist)
+            best = min(cluster, key=lambda e: e[2])
+            self.locked_frame = best[3]
+            med = self.get_median()
+            print(f"  [SMART] *** LOCKED! Spread: {spread:.2f}m ***")
+            print(f"  [SMART] Median: {med[0]:.7f}, {med[1]:.7f} ({med[2]} samples)")
+            return True
+        return False
+
+    def _find_tightest(self, target_size):
+        """Greedy: find target_size points closest to each other."""
+        estimates = self.all_estimates
+        n = len(estimates)
+
+        # Pairwise distances
+        dists = {}
+        for i in range(n):
+            for j in range(i + 1, n):
+                dn = (estimates[i][0] - estimates[j][0]) * 111320
+                de = (estimates[i][1] - estimates[j][1]) * 111320 * math.cos(math.radians(estimates[i][0]))
+                dists[(i, j)] = math.sqrt(dn**2 + de**2)
+
+        if n <= target_size:
+            spread = max(dists.values()) if dists else 0
+            return list(range(n)), spread
+
+        # Seed from closest pair
+        min_pair = min(dists, key=dists.get)
+        cluster = set(min_pair)
+
+        # Greedily add point minimizing max spread
+        while len(cluster) < target_size:
+            best_pt = -1
+            best_spread = float('inf')
+            for c in range(n):
+                if c in cluster:
+                    continue
+                max_d = max(dists.get((min(c, m), max(c, m)), 0) for m in cluster)
+                if max_d < best_spread:
+                    best_spread = max_d
+                    best_pt = c
+            if best_pt >= 0:
+                cluster.add(best_pt)
+            else:
+                break
+
+        cluster_list = sorted(cluster)
+        spread = 0
+        for i in cluster_list:
+            for j in cluster_list:
+                if i < j:
+                    spread = max(spread, dists.get((i, j), 0))
+        return cluster_list, spread
 
     def ready(self):
-        return len(self.estimates) >= self.min_samples
+        return self.locked
 
     def get_median(self):
         """Return (median_lat, median_lon, n_samples)."""
-        if not self.estimates:
+        if not self.locked_cluster:
             return None
-        lats = sorted(e[0] for e in self.estimates)
-        lons = sorted(e[1] for e in self.estimates)
+        lats = sorted(e[0] for e in self.locked_cluster)
+        lons = sorted(e[1] for e in self.locked_cluster)
         n = len(lats)
         mid = n // 2
         if n % 2 == 0:
@@ -584,7 +642,7 @@ def main():
     if args.smart_estimate:
         smart_estimator = SmartEstimator(
             min_samples=args.smart_min,
-            central_radius_m=args.smart_radius)
+            max_spread=args.smart_radius)
         print(f"[SMART] Enabled: {args.smart_min} central samples within {args.smart_radius}m")
 
     # Auto-detect IP
@@ -719,36 +777,26 @@ def main():
                         d_lat, d_lon, d_alt, d_yaw, norm_x, norm_y
                     )
 
-                    # Smart estimate: accumulate central detections
+                    # Smart estimate: add ALL detections, greedy cluster finds tightest 10
                     if smart_estimator and est_result:
                         est_lat, est_lon = est_result
-                        dist_m = smart_estimator.meters_from_center(cx, cy, w, h, d_alt)
-                        if dist_m < smart_estimator.central_radius_m:
-                            just_ready = smart_estimator.add(est_lat, est_lon, dist_m, frame)
-                            n = len(smart_estimator.estimates)
-                            print(f"  [SMART] Central det #{n}: {dist_m:.1f}m from center → est ({est_lat:.6f}, {est_lon:.6f})")
-                            if just_ready:
-                                med = smart_estimator.get_median()
-                                cep = smart_estimator.get_cep50()
-                                print(f"  [SMART] *** THRESHOLD REACHED ({n} samples) ***")
-                                print(f"  [SMART] Median: {med[0]:.7f}, {med[1]:.7f}  CEP50: {cep:.1f}m")
+                        pixel_dist = math.sqrt((cx - w/2)**2 + (cy - h/2)**2)
+                        smart_estimator.add(est_lat, est_lon, pixel_dist, frame)
 
                 # Smart estimate: save ONLY when threshold reached, use median + most central image
                 if args.smart_estimate and smart_estimator and not args.no_save:
-                    if smart_estimator.ready() and not smart_estimator.reported:
-                        smart_estimator.reported = True
+                    if smart_estimator.ready() and not getattr(smart_estimator, '_saved', False):
+                        smart_estimator._saved = True
                         med = smart_estimator.get_median()
-                        cep = smart_estimator.get_cep50()
                         saved_count += 1
-                        fname = f"SMART_{med[0]:.6f}_{med[1]:.6f}_{med[2]}samp_CEP{cep:.1f}m.png"
-                        # Save the most central raw frame (no overlay — clean for colleague's detection)
-                        if smart_estimator.best_frame is not None:
-                            cv2.imwrite(os.path.join(args.save_dir, fname), smart_estimator.best_frame)
+                        fname = f"SMART_{med[0]:.6f}_{med[1]:.6f}_{med[2]}samp.png"
+                        # Save most central frame from cluster (clean, no overlay)
+                        if smart_estimator.locked_frame is not None:
+                            cv2.imwrite(os.path.join(args.save_dir, fname), smart_estimator.locked_frame)
                         print(f"\n  {'='*60}")
                         print(f"  SMART ESTIMATE SAVED: {fname}")
                         print(f"  Median GPS: {med[0]:.7f}, {med[1]:.7f}")
-                        print(f"  Samples: {med[2]}  CEP50: {cep:.1f}m")
-                        print(f"  Most central frame: {smart_estimator.best_dist:.2f}m from center")
+                        print(f"  Cluster: {med[2]} samples, spread: {smart_estimator.locked_spread:.2f}m")
                         print(f"  {'='*60}\n")
                     # Skip normal save when in smart mode
                     if args.smart_estimate:
