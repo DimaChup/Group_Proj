@@ -860,6 +860,7 @@ def main():
     fake_telem = None
     fake_frame_idx = [0]
     fake_fps = 30
+    _fake_start = [time.time()]
 
     if args.fake:
         print(f"[FAKE] Loading video: {args.fake_video}")
@@ -911,6 +912,9 @@ def main():
     server_thread.start()
     print(f"[OK] Stream serving on port {args.port}\n")
 
+    # Render initial empty bullseye
+    render_bullseye([], smart_estimator)
+
     # CSV log for detections
     csv_path = os.path.join(args.save_dir, "detection_log.csv") if (not args.no_save and not args.simple_names) else None
     csv_file = None
@@ -937,11 +941,17 @@ def main():
 
     while True:
         if args.fake:
-            ret, frame = fake_cap.read()
-            if not ret:
-                fake_cap.set(cv2.CAP_PROP_POS_FRAMES, 0)  # loop video
-                continue
-            fake_frame_idx[0] += 1
+            # Skip frames to maintain real-time playback
+            # Read multiple frames to keep pace (inference slows us down)
+            target_frame = int((time.time() - _fake_start[0]) * fake_fps) + 1
+            while fake_frame_idx[0] < target_frame:
+                ret, frame = fake_cap.read()
+                if not ret:
+                    fake_cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                    fake_frame_idx[0] = 0
+                    _fake_start[0] = time.time()
+                    break
+                fake_frame_idx[0] += 1
             # Update GPS from SRT telemetry
             t = fake_telem.get(fake_frame_idx[0])
             if t:
@@ -951,7 +961,8 @@ def main():
                 gps_data["yaw"] = t["yaw"]
                 gps_data["sats"] = 12
                 gps_data["mode"] = "FAKE"
-            time.sleep(1.0 / fake_fps)  # play at video speed
+            if fake_frame_idx[0] % 100 == 1:
+                print(f"  [FAKE] Frame {fake_frame_idx[0]} GPS:{gps_data['lat']:.5f},{gps_data['lon']:.5f} Alt:{gps_data['alt']:.0f}m Yaw:{gps_data['yaw']:.0f}")
         else:
             frame = eyes.get_frame()
             if frame is None:
@@ -1134,6 +1145,10 @@ def main():
         if last_det is not None:
             age = now - last_det_time
             last_det = (last_det[0], last_det[1], last_det[2], age)
+
+        # Update bullseye every 2 seconds
+        if frame_count % max(1, int(fake_fps * 2 if args.fake else 10)) == 0:
+            render_bullseye(_all_gps_estimates, smart_estimator)
 
         # Draw overlay (detection box + GPS) on every frame for stream
         display = draw_overlay(frame, last_det)
