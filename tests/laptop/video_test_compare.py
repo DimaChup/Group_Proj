@@ -327,24 +327,104 @@ def main():
         r = int(255 * min(1, val))
         return (0, g, r)
 
+    def draw_smart_bullseye():
+        """SMART mode: bullseye centered on true position, only first 10 central detections."""
+        plot = np.zeros((plot_size, plot_size, 3), dtype=np.uint8)
+        central = [e for e in target_estimates if e[4] < 4.0][:10]
+        n_central = len([e for e in target_estimates if e[4] < 4.0])
+        n_total = len(target_estimates)
+
+        # Title
+        cv2.putText(plot, f"SMART ESTIMATE ({len(central)}/10 central)", (10, 25),
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.55, (255, 0, 255), 2)
+        cv2.putText(plot, f"Total: {n_total} detections, {n_central} within 4m of center",
+                   (10, 45), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (150, 150, 150), 1)
+
+        if not central:
+            cv2.putText(plot, "Waiting for central detections...", (60, plot_size // 2),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.55, (150, 0, 150), 1)
+            return plot
+
+        # Convert estimates to meters from TRUE position (origin)
+        pts_m = []
+        for lat, lon, conf, fnum, cdist, alt in central:
+            n = (lat - TRUE_DUMMY_LAT) * 111320
+            e = (lon - TRUE_DUMMY_LON) * 111320 * math.cos(math.radians(TRUE_DUMMY_LAT))
+            pts_m.append((e, n, cdist, conf))
+
+        # Auto-scale based on max distance (at least 5m range)
+        max_d = max(max(abs(p[0]) for p in pts_m), max(abs(p[1]) for p in pts_m), 2.0) * 1.5
+        max_d = max(max_d, 5.0)
+        margin = 70
+        usable = plot_size - 2 * margin
+        scale = usable / (2 * max_d)
+        cx, cy = plot_size // 2, plot_size // 2 + 10  # slight offset for title
+
+        # Bullseye rings (1m, 2m, 3m, 5m, 10m)
+        for r_m in [1, 2, 3, 5, 10]:
+            r_px = int(r_m * scale)
+            if r_px > 5 and r_px < usable // 2:
+                cv2.circle(plot, (cx, cy), r_px, (40, 40, 40), 1)
+                cv2.putText(plot, f"{r_m}m", (cx + r_px + 3, cy - 3),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.3, (80, 80, 80), 1)
+
+        # Grid lines
+        cv2.line(plot, (margin, cy), (plot_size - margin, cy), (50, 50, 50), 1)
+        cv2.line(plot, (cx, margin), (cx, plot_size - margin), (50, 50, 50), 1)
+        cv2.putText(plot, "N", (cx - 4, margin - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (100, 100, 100), 1)
+        cv2.putText(plot, "E", (plot_size - margin + 5, cy + 4), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (100, 100, 100), 1)
+
+        # TRUE position = ORIGIN (yellow crosshair)
+        cv2.drawMarker(plot, (cx, cy), (0, 255, 255), cv2.MARKER_CROSS, 20, 2)
+        cv2.circle(plot, (cx, cy), 3, (0, 255, 255), -1)
+
+        # Plot the 10 central detection estimates (cyan dots)
+        for i, (e_m, n_m, cdist, conf) in enumerate(pts_m):
+            px = cx + int(e_m * scale)
+            py = cy - int(n_m * scale)
+            # Color by index (first=bright, later=darker)
+            brightness = int(255 * (1 - i * 0.06))
+            cv2.circle(plot, (px, py), 6, (brightness, brightness, 0), -1)
+            cv2.circle(plot, (px, py), 6, (255, 255, 255), 1)
+            cv2.putText(plot, str(i+1), (px + 8, py + 4),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.3, (200, 200, 200), 1)
+
+        # Compute median
+        if len(central) >= 10:
+            m_lats = sorted(e[0] for e in central)
+            m_lons = sorted(e[1] for e in central)
+            mid = len(m_lats) // 2
+            med_lat = (m_lats[mid-1] + m_lats[mid]) / 2 if len(m_lats) % 2 == 0 else m_lats[mid]
+            med_lon = (m_lons[mid-1] + m_lons[mid]) / 2 if len(m_lons) % 2 == 0 else m_lons[mid]
+            med_n = (med_lat - TRUE_DUMMY_LAT) * 111320
+            med_e = (med_lon - TRUE_DUMMY_LON) * 111320 * math.cos(math.radians(TRUE_DUMMY_LAT))
+            med_px = cx + int(med_e * scale)
+            med_py = cy - int(med_n * scale)
+            # Magenta diamond for median
+            pts_diamond = np.array([[med_px, med_py-10], [med_px+10, med_py],
+                                    [med_px, med_py+10], [med_px-10, med_py]], np.int32)
+            cv2.polylines(plot, [pts_diamond], True, (255, 0, 255), 2)
+            cv2.circle(plot, (med_px, med_py), 3, (255, 0, 255), -1)
+
+            med_err = math.sqrt(med_n**2 + med_e**2)
+            cv2.putText(plot, f"MEDIAN: {med_lat:.7f}, {med_lon:.7f}", (10, plot_size - 55),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 0, 255), 2)
+            cv2.putText(plot, f"Error from TRUE: {med_err:.2f}m", (10, plot_size - 35),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 0, 255), 1)
+        else:
+            cv2.putText(plot, f"Need {10 - len(central)} more central detections...",
+                       (10, plot_size - 35), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (150, 0, 150), 1)
+
+        # True position label
+        cv2.putText(plot, f"ORIGIN = TRUE: {TRUE_DUMMY_LAT:.5f}, {TRUE_DUMMY_LON:.5f}",
+                   (10, plot_size - 15), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 255, 255), 1)
+
+        return plot
+
     def draw_gps_plot_by_center():
         """GPS scatter colored by distance from image center."""
         plot = np.zeros((plot_size, plot_size, 3), dtype=np.uint8)
-
-        # In smart mode: only show first 10 central detections (within 4m)
-        if args.smart_estimate:
-            central = [e for e in target_estimates if e[4] < 4.0][:10]
-            plot_data = central
-            if not central:
-                n_total = len(target_estimates)
-                n_central = len([e for e in target_estimates if e[4] < 4.0])
-                cv2.putText(plot, f"SMART: {n_central}/10 central detections", (40, plot_size // 2 - 20),
-                           cv2.FONT_HERSHEY_SIMPLEX, 0.55, (255, 0, 255), 1)
-                cv2.putText(plot, f"({n_total} total, waiting for central...)", (40, plot_size // 2 + 10),
-                           cv2.FONT_HERSHEY_SIMPLEX, 0.45, (150, 150, 150), 1)
-                return plot
-        else:
-            plot_data = target_estimates
+        plot_data = target_estimates
 
         if not plot_data:
             cv2.putText(plot, "No detections yet", (80, plot_size // 2),
@@ -664,10 +744,8 @@ def main():
                 dy_m = dy_px / vid_h * ground_h
                 offset_m = math.sqrt(dx_m**2 + dy_m**2)
                 lines.append(f"OFFSET {offset_m:.1f}m from center ({dx_m:.1f}m E, {dy_m:.1f}m S)")
-                # Distance from image center (0=center, 1=corner)
-                cx_norm = (dets[0][0] - vid_w / 2) / (vid_w / 2)
-                cy_norm = (dets[0][1] - vid_h / 2) / (vid_h / 2)
-                center_dist = math.sqrt(cx_norm**2 + cy_norm**2)
+                # center_dist in METERS (for smart estimate 4m threshold)
+                center_dist = offset_m
                 target_estimates.append((t_lat, t_lon, dets[0][4], fnum, center_dist, t_data['rel_alt']))
                 # Write to CSV
                 csv_writer.writerow([
@@ -1367,7 +1445,7 @@ def main():
             cv2.imshow(win, disp)
 
             # GPS plots window (center distance + altitude side by side)
-            plot_center = draw_gps_plot_by_center()
+            plot_center = draw_smart_bullseye() if args.smart_estimate else draw_gps_plot_by_center()
             plot_alt = draw_gps_plot_by_alt()
             sep = np.zeros((plot_size, 2, 3), dtype=np.uint8)
             sep[:] = (60, 60, 60)
