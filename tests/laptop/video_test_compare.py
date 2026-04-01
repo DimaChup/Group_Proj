@@ -210,6 +210,7 @@ def main():
     parser.add_argument("--model2", default="best.tflite", help="Model 2 (default: original dummy)")
     parser.add_argument("--model3", default="cv_models/sar_v2_1088/best.tflite", help="Model 3 (default: v2 retrained)")
     parser.add_argument("--model4", default="cv_models/sar_v2_1088/best.tflite", help="Model 4 (NCNN backend)")
+    parser.add_argument("--smart-estimate", action='store_true', help="Show SMART median estimate from central detections")
     parser.add_argument("--save", default=None, help="Save output video to file")
     parser.add_argument("--conf", type=float, default=0.3, help="Confidence threshold (default 0.3)")
     parser.add_argument("--every", type=int, default=3, help="Run AI every Nth frame (default 3)")
@@ -315,7 +316,10 @@ def main():
     ])
     print(f"CSV log: {csv_path}")
 
-    plot_size = 400
+    plot_size = 500
+    # True dummy position (ground truth for accuracy comparison)
+    TRUE_DUMMY_LAT = 51.42339
+    TRUE_DUMMY_LON = -2.671538
 
     def heat_color(val):
         """0.0=green, 1.0=red. Returns BGR tuple."""
@@ -326,18 +330,34 @@ def main():
     def draw_gps_plot_by_center():
         """GPS scatter colored by distance from image center."""
         plot = np.zeros((plot_size, plot_size, 3), dtype=np.uint8)
-        if not target_estimates:
+
+        # In smart mode: only show first 10 central detections (within 4m)
+        if args.smart_estimate:
+            central = [e for e in target_estimates if e[4] < 4.0][:10]
+            plot_data = central
+            if not central:
+                n_total = len(target_estimates)
+                n_central = len([e for e in target_estimates if e[4] < 4.0])
+                cv2.putText(plot, f"SMART: {n_central}/10 central detections", (40, plot_size // 2 - 20),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.55, (255, 0, 255), 1)
+                cv2.putText(plot, f"({n_total} total, waiting for central...)", (40, plot_size // 2 + 10),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.45, (150, 150, 150), 1)
+                return plot
+        else:
+            plot_data = target_estimates
+
+        if not plot_data:
             cv2.putText(plot, "No detections yet", (80, plot_size // 2),
                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (100, 100, 100), 1)
             return plot
 
-        lats = [e[0] for e in target_estimates]
-        lons = [e[1] for e in target_estimates]
+        lats = [e[0] for e in plot_data]
+        lons = [e[1] for e in plot_data]
         mean_lat = sum(lats) / len(lats)
         mean_lon = sum(lons) / len(lons)
 
         pts_m = []
-        for lat, lon, conf, fnum, cdist, alt in target_estimates:
+        for lat, lon, conf, fnum, cdist, alt in plot_data:
             north = (lat - mean_lat) * 111320
             east = (lon - mean_lon) * 111320 * math.cos(math.radians(mean_lat))
             pts_m.append((east, north, cdist, alt))
@@ -369,6 +389,20 @@ def main():
             cv2.circle(plot, (px, py), 5, color, -1)
             cv2.circle(plot, (px, py), 5, (255, 255, 255), 1)
 
+        # TRUE DUMMY POSITION — pink star (ground truth)
+        t_north = (TRUE_DUMMY_LAT - mean_lat) * 111320
+        t_east = (TRUE_DUMMY_LON - mean_lon) * 111320 * math.cos(math.radians(mean_lat))
+        t_px = int(plot_size / 2 + t_east * scale)
+        t_py = int(plot_size / 2 - t_north * scale)
+        if margin < t_px < plot_size - margin and margin < t_py < plot_size - margin:
+            # Pink star shape
+            cv2.drawMarker(plot, (t_px, t_py), (180, 0, 255), cv2.MARKER_STAR, 16, 2)
+            cv2.circle(plot, (t_px, t_py), 10, (180, 0, 255), 1)
+        # Distance from mean estimate to true position
+        true_err = math.sqrt(t_north**2 + t_east**2)
+        cv2.putText(plot, f"TRUE: {TRUE_DUMMY_LAT:.5f},{TRUE_DUMMY_LON:.5f} err:{true_err:.1f}m",
+                   (8, plot_size - 45), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (180, 0, 255), 1)
+
         # Stats
         dists_m = [math.sqrt(p[0]**2 + p[1]**2) for p in pts_m]
         cep50 = sorted(dists_m)[len(dists_m) // 2] if len(dists_m) > 1 else 0
@@ -380,12 +414,43 @@ def main():
                    cv2.FONT_HERSHEY_SIMPLEX, 0.40, (150, 150, 150), 1)
         max_spread = max(dists_m) if dists_m else 0
         mean_err = sum(dists_m) / len(dists_m) if dists_m else 0
-        cv2.putText(plot, f"N={len(target_estimates)}  Grid={grid_step}m", (8, plot_size - 10),
+        label = "SMART central" if args.smart_estimate else "All"
+        cv2.putText(plot, f"{label} N={len(plot_data)}  Grid={grid_step}m", (8, plot_size - 10),
                    cv2.FONT_HERSHEY_SIMPLEX, 0.35, (100, 100, 100), 1)
         cv2.putText(plot, f"CEP50: {cep50:.1f}m | Max: {max_spread:.1f}m | Avg: {mean_err:.1f}m", (8, plot_size - 28),
                    cv2.FONT_HERSHEY_SIMPLEX, 0.40, (0, 200, 255), 1)
-        cv2.putText(plot, f"Mean: {mean_lat:.6f}, {mean_lon:.6f}", (8, 60),
-                   cv2.FONT_HERSHEY_SIMPLEX, 0.40, (0, 255, 0), 1)
+        if args.smart_estimate:
+            cv2.putText(plot, f"MEDIAN: {mean_lat:.7f}, {mean_lon:.7f}", (8, 60),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.40, (255, 0, 255), 2)
+        else:
+            cv2.putText(plot, f"Mean: {mean_lat:.6f}, {mean_lon:.6f}", (8, 60),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.40, (0, 255, 0), 1)
+
+        # Smart estimate section already handled by filtering plot_data above
+        central = []  # disable the old smart block below
+        if len(central) >= 10:
+            c_lats = sorted(e[0] for e in central)
+            c_lons = sorted(e[1] for e in central)
+            mid = len(c_lats) // 2
+            s_lat = (c_lats[mid-1] + c_lats[mid]) / 2 if len(c_lats) % 2 == 0 else c_lats[mid]
+            s_lon = (c_lons[mid-1] + c_lons[mid]) / 2 if len(c_lons) % 2 == 0 else c_lons[mid]
+            s_dists = sorted(math.sqrt(((e[0]-s_lat)*111320)**2 +
+                       ((e[1]-s_lon)*111320*math.cos(math.radians(s_lat)))**2)
+                       for e in central)
+            s_cep = s_dists[len(s_dists)//2]
+            cv2.putText(plot, f"SMART({len(central)}): {s_lat:.6f}, {s_lon:.6f} CEP:{s_cep:.1f}m",
+                       (8, 80), cv2.FONT_HERSHEY_SIMPLEX, 0.40, (255, 0, 255), 2)
+            # Magenta diamond marker
+            s_n = (s_lat - mean_lat) * 111320
+            s_e = (s_lon - mean_lon) * 111320 * math.cos(math.radians(mean_lat))
+            s_px = margin + int(usable / 2 + (s_e / max(1, max_range)) * usable / 2)
+            s_py = margin + int(usable / 2 - (s_n / max(1, max_range)) * usable / 2)
+            if margin < s_px < plot_size - margin and margin < s_py < plot_size - margin:
+                pts = np.array([[s_px, s_py-8], [s_px+8, s_py], [s_px, s_py+8], [s_px-8, s_py]], np.int32)
+                cv2.polylines(plot, [pts], True, (255, 0, 255), 2)
+        elif len(central) > 0:
+            cv2.putText(plot, f"SMART: {len(central)}/10 central...",
+                       (8, 80), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (150, 0, 150), 1)
 
         # Color bar legend on right
         bar_x = plot_size - 25
