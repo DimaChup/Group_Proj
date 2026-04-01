@@ -645,9 +645,9 @@ class VisionSystem:
         x2 = min(frame_w, cx + bw // 2)
         y2 = min(frame_h, cy + bh // 2)
         label = f"AI {conf:.2f} [{self.last_class_name}]"
-        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 3)
         cv2.putText(frame, label, (x1, y1 - 10),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
 
     # ------------------------------------------------------------------
     # Frame capture

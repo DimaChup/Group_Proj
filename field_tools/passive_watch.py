@@ -441,10 +441,23 @@ def draw_overlay(frame, last_det):
     display = frame.copy()
 
     # Draw last detection box (persists between frames)
+    # Persistent detection box — redraw on EVERY frame (vision.py only draws on inference frames)
     if last_det is not None:
-        cx, cy, conf, age = last_det
-        if age < 2.0:  # show for 2 seconds after last detection
-            pass  # Real detection box already drawn by vision.py detect_in_image()
+        det_cx, det_cy, conf, age = last_det
+        if age < 2.0:
+            alpha = max(0.3, 1.0 - age / 2.0)
+            color = (0, int(255 * alpha), 0)
+            bw = getattr(draw_overlay, '_last_bw', 80)
+            bh = getattr(draw_overlay, '_last_bh', 80)
+            x1 = max(0, det_cx - bw // 2)
+            y1 = max(0, det_cy - bh // 2)
+            x2 = min(w, det_cx + bw // 2)
+            y2 = min(h, det_cy + bh // 2)
+            cv2.rectangle(display, (x1, y1), (x2, y2), color, 3)
+            cls_name = getattr(draw_overlay, '_last_class', '')
+            label = f"AI {conf:.2f} [{cls_name}]"
+            cv2.putText(display, label, (x1, y1 - 8),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
 
     # Centre crosshair (helps pilot align directly over target)
     cx, cy = w // 2, h // 2
@@ -688,6 +701,10 @@ def main():
                 cx, cy = int(x), int(y)
                 last_det = (cx, cy, conf, 0.0)
                 last_det_time = now
+                # Store bbox size + class for persistent overlay
+                draw_overlay._last_bw = eyes.last_bbox_w if eyes.last_bbox_w > 0 else 80
+                draw_overlay._last_bh = eyes.last_bbox_h if eyes.last_bbox_h > 0 else 80
+                draw_overlay._last_class = getattr(eyes, 'last_class_name', '')
 
                 # Estimate dummy GPS position
                 est_result = None
