@@ -302,7 +302,8 @@ def main():
 
     # GPS scatter plot of all target estimates
     target_estimates = []  # list of (lat, lon, conf, frame_num, center_dist, alt)
-    smart_frames = []     # list of (frame, center_dist_m, est_lat, est_lon, fnum) — first 10 central
+    smart_frames = []     # list of (frame, center_dist_m, est_lat, est_lon, fnum) — MAD inliers
+    _all_smart_snaps = [] # ALL detection snapshots (MAD picks from these)
     best_snapshot = [None]  # snapshot of the most central detection
     best_center_dist = [999.0]
     # CSV log for later analysis
@@ -329,24 +330,70 @@ def main():
         return (0, g, r)
 
     def draw_smart_bullseye():
-        """SMART mode: bullseye centered on true position, only first 10 central detections."""
+        """SMART mode: MAD-based clustering — no centrality filter, reject outliers."""
         plot = np.zeros((plot_size, plot_size, 3), dtype=np.uint8)
-        central = [e for e in target_estimates if e[4] < 4.0][:10]
-        n_central = len([e for e in target_estimates if e[4] < 4.0])
         n_total = len(target_estimates)
 
-        # Title
-        cv2.putText(plot, f"SMART ESTIMATE ({len(central)}/10 central)", (10, 25),
-                   cv2.FONT_HERSHEY_SIMPLEX, 0.55, (255, 0, 255), 2)
-        cv2.putText(plot, f"Total: {n_total} detections, {n_central} within 4m of center",
-                   (10, 45), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (150, 150, 150), 1)
-
-        if not central:
-            cv2.putText(plot, "Waiting for central detections...", (60, plot_size // 2),
+        if n_total < 3:
+            cv2.putText(plot, f"SMART ESTIMATE (MAD)", (10, 25),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.55, (255, 0, 255), 2)
+            cv2.putText(plot, f"Waiting... {n_total}/10 detections", (60, plot_size // 2),
                        cv2.FONT_HERSHEY_SIMPLEX, 0.55, (150, 0, 150), 1)
             return plot
 
-        # Convert estimates to meters from TRUE position (origin)
+        # MAD outlier rejection on ALL detections
+        all_lats = [e[0] for e in target_estimates]
+        all_lons = [e[1] for e in target_estimates]
+        med_lat = sorted(all_lats)[len(all_lats) // 2]
+        med_lon = sorted(all_lons)[len(all_lons) // 2]
+
+        # Compute distances from median in meters
+        dists_from_med = []
+        for lat, lon, conf, fnum, cdist, alt in target_estimates:
+            dn = (lat - med_lat) * 111320
+            de = (lon - med_lon) * 111320 * math.cos(math.radians(med_lat))
+            dists_from_med.append(math.sqrt(dn**2 + de**2))
+
+        # MAD = median of distances from median
+        mad = sorted(dists_from_med)[len(dists_from_med) // 2]
+        mad = max(mad, 0.1)  # floor to avoid zero
+        sigma = 3.5
+        threshold = sigma * mad
+
+        # Split into inliers and outliers
+        inliers = []
+        outliers = []
+        for i, (lat, lon, conf, fnum, cdist, alt) in enumerate(target_estimates):
+            if dists_from_med[i] <= threshold:
+                inliers.append((lat, lon, conf, fnum, cdist, alt))
+            else:
+                outliers.append((lat, lon, conf, fnum, cdist, alt))
+
+        # Update smart_frames — keep only inlier frames (first 10)
+        smart_frames.clear()
+        for lat, lon, conf, fnum, cdist, alt in inliers[:10]:
+            # Find matching snapshot if available
+            for sf in _all_smart_snaps:
+                if sf[4] == fnum:
+                    smart_frames.append(sf)
+                    break
+
+        # Title
+        cv2.putText(plot, f"SMART (MAD): {len(inliers)} inliers, {len(outliers)} rejected", (10, 25),
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 0, 255), 2)
+        cv2.putText(plot, f"Total: {n_total} | MAD: {mad:.2f}m | Threshold: {threshold:.1f}m",
+                   (10, 45), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (150, 150, 150), 1)
+
+        # Use inliers for plot (or all if not enough inliers yet)
+        # Stop at first 10 inliers — that's our final estimate
+        central = inliers[:10]
+
+        if not central:
+            cv2.putText(plot, "No inliers yet...", (60, plot_size // 2),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.55, (150, 0, 150), 1)
+            return plot
+
+        # Convert to meters from TRUE position
         pts_m = []
         for lat, lon, conf, fnum, cdist, alt in central:
             n = (lat - TRUE_DUMMY_LAT) * 111320
@@ -380,20 +427,22 @@ def main():
         cv2.drawMarker(plot, (cx, cy), (0, 255, 255), cv2.MARKER_CROSS, 25, 3)
         cv2.circle(plot, (cx, cy), 5, (0, 255, 255), -1)
 
-        # Plot the 10 central detection estimates with distance lines
+        # Plot OUTLIERS as red X marks
+        for lat, lon, conf, fnum, cdist, alt in outliers:
+            on = (lat - TRUE_DUMMY_LAT) * 111320
+            oe = (lon - TRUE_DUMMY_LON) * 111320 * math.cos(math.radians(TRUE_DUMMY_LAT))
+            opx = cx + int(oe * scale)
+            opy = cy - int(on * scale)
+            if margin < opx < plot_size - margin and margin < opy < plot_size - margin:
+                cv2.drawMarker(plot, (opx, opy), (0, 0, 200), cv2.MARKER_TILTED_CROSS, 8, 1)
+
+        # Plot INLIERS — small dots, colored by absolute centrality (0m=green, 8m=red)
         for i, (e_m, n_m, cdist, conf) in enumerate(pts_m):
             px = cx + int(e_m * scale)
             py = cy - int(n_m * scale)
-            # Thin gray line from dot to center (true position)
-            cv2.line(plot, (cx, cy), (px, py), (70, 70, 70), 1)
-            # Bigger dots, color by index
-            brightness = int(255 * (1 - i * 0.05))
-            cv2.circle(plot, (px, py), 8, (brightness, brightness, 0), -1)
-            cv2.circle(plot, (px, py), 8, (255, 255, 255), 2)
-            # Distance label
-            d_m = math.sqrt(e_m**2 + n_m**2)
-            cv2.putText(plot, f"{i+1}({d_m:.1f}m)", (px + 10, py + 4),
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.3, (200, 200, 200), 1)
+            cv2.line(plot, (cx, cy), (px, py), (50, 50, 50), 1)
+            color = heat_color(min(1.0, cdist / 8.0))  # 0m=green, 8m=red
+            cv2.circle(plot, (px, py), 4, color, -1)
 
         # Compute median
         if len(central) >= 10:
@@ -413,13 +462,36 @@ def main():
             cv2.circle(plot, (med_px, med_py), 3, (255, 0, 255), -1)
 
             med_err = math.sqrt(med_n**2 + med_e**2)
-            cv2.putText(plot, f"MEDIAN: {med_lat:.7f}, {med_lon:.7f}", (10, plot_size - 55),
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 0, 255), 2)
-            cv2.putText(plot, f"Error from TRUE: {med_err:.2f}m", (10, plot_size - 35),
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 0, 255), 1)
+
+            # Weighted mean of inliers (center=more weight)
+            wt = 0
+            wlat = 0
+            wlon = 0
+            for lat, lon, conf, fnum, cdist, alt in central:
+                w = 1.0 / max(0.1, cdist) ** 2
+                wlat += lat * w
+                wlon += lon * w
+                wt += w
+            wm_lat_s = wlat / wt
+            wm_lon_s = wlon / wt
+            wm_n = (wm_lat_s - TRUE_DUMMY_LAT) * 111320
+            wm_e = (wm_lon_s - TRUE_DUMMY_LON) * 111320 * math.cos(math.radians(TRUE_DUMMY_LAT))
+            wm_px = cx + int(wm_e * scale)
+            wm_py = cy - int(wm_n * scale)
+            wm_err_s = math.sqrt(wm_n**2 + wm_e**2)
+            # Cyan square for weighted mean
+            cv2.rectangle(plot, (wm_px - 7, wm_py - 7), (wm_px + 7, wm_py + 7), (255, 255, 0), 2)
+
+            # Labels
+            cv2.putText(plot, f"Median:   {med_err:.2f}m", (10, plot_size - 70),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.42, (255, 0, 255), 1)
+            cv2.putText(plot, f"Weighted: {wm_err_s:.2f}m", (10, plot_size - 50),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.42, (255, 255, 0), 1)
+            cv2.putText(plot, f"Inliers: {len(central)} | Rejected: {len(outliers)}", (10, plot_size - 30),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.38, (200, 200, 200), 1)
         else:
-            cv2.putText(plot, f"Need {10 - len(central)} more central detections...",
-                       (10, plot_size - 35), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (150, 0, 150), 1)
+            cv2.putText(plot, f"Need {10 - len(central)} more inliers ({len(inliers)} so far, {len(outliers)} rejected)...",
+                       (10, plot_size - 35), cv2.FONT_HERSHEY_SIMPLEX, 0.38, (150, 0, 150), 1)
 
         # True position label
         cv2.putText(plot, f"ORIGIN = TRUE: {TRUE_DUMMY_LAT:.5f}, {TRUE_DUMMY_LON:.5f}",
@@ -939,9 +1011,10 @@ def main():
                 # center_dist in METERS (for smart estimate 4m threshold)
                 center_dist = offset_m
                 target_estimates.append((t_lat, t_lon, dets[0][4], fnum, center_dist, t_data['rel_alt']))
-                # Store frame for smart estimate grid (first 10 central only)
-                if args.smart_estimate and center_dist < 4.0 and len(smart_frames) < 10:
-                    smart_frames.append((snap_clean.copy(), center_dist, t_lat, t_lon, fnum))
+                # Store detection snapshots for MAD-based smart grid
+                # Stop once we have enough for 10 inliers (checked by bullseye)
+                if args.smart_estimate and len(_all_smart_snaps) < 50:  # cap storage
+                    _all_smart_snaps.append((snap_clean.copy(), center_dist, t_lat, t_lon, fnum))
                 # Write to CSV
                 csv_writer.writerow([
                     fnum, f"{fnum / fps:.2f}", f"{dets[0][4]:.3f}",
@@ -1769,6 +1842,7 @@ def main():
         elif key == ord('c'):
             target_estimates.clear()
             smart_frames.clear()
+            _all_smart_snaps.clear()
             det_count[0] = 0
             best_snapshot[0] = None
             best_center_dist[0] = 999.0
