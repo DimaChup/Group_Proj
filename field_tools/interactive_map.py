@@ -339,7 +339,7 @@ def get_interactive_map_html(container_id="map-container", width="100%", height=
 
   function drawCoverage() {{
     if (!coverageEnabled || coverageHistory.length === 0) return;
-    ctx.fillStyle = "rgba(0,200,0,0.03)";
+    ctx.fillStyle = "rgba(80,160,255,0.03)";
     for (let c = 0; c < coverageHistory.length; c++) {{
       const corners = coverageHistory[c];
       ctx.beginPath();
