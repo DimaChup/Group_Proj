@@ -1356,13 +1356,19 @@ def get_gps_charts_html():
     const medCE = sortedCE[Math.floor(sortedCE.length / 2)];
     const medCN = sortedCN[Math.floor(sortedCN.length / 2)];
     const medSx = cx + medCE * cScale, medSy = cy - medCN * cScale;
-    // Magenta diamond for median
+    // Magenta star for median (matches SMART star on satellite map)
+    ctx.fillStyle = "#ff00ff";
     ctx.strokeStyle = "#ff00ff";
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(medSx, medSy - 7); ctx.lineTo(medSx + 5, medSy);
-    ctx.lineTo(medSx, medSy + 7); ctx.lineTo(medSx - 5, medSy);
-    ctx.closePath(); ctx.stroke();
+    for (let si = 0; si < 10; si++) {{
+      const sr = (si % 2 === 0) ? 8 : 3;
+      const sa = -Math.PI / 2 + (si * Math.PI / 5);
+      const stx = medSx + sr * Math.cos(sa);
+      const sty = medSy + sr * Math.sin(sa);
+      if (si === 0) ctx.moveTo(stx, sty); else ctx.lineTo(stx, sty);
+    }}
+    ctx.closePath(); ctx.fill(); ctx.stroke();
 
     // Stats
     const medErr = Math.sqrt(medCE * medCE + medCN * medCN);
