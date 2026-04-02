@@ -610,9 +610,11 @@ class Handler(BaseHTTPRequestHandler):
 
         elif path == '/api/reset-best':
             # Reset only best detection — starts tracking new best
-            import field_tools.passive_watch as _pw2
-            _pw2._best_center_dist = 999.0
-            _pw2.latest_best_jpeg = None
+            # Use sys.modules to get the RUNNING module (handles __main__ vs import)
+            _mod = sys.modules.get('field_tools.passive_watch') or sys.modules.get('__main__')
+            _mod._best_center_dist = 999.0
+            with frame_lock:
+                _mod.latest_best_jpeg = None
             print("[CLEAR] Best detection reset — tracking new best")
             self._send_json_response({"ok": True})
 
@@ -626,11 +628,11 @@ class Handler(BaseHTTPRequestHandler):
             dummy_estimator.reset()
             if smart_estimator:
                 smart_estimator.__init__(min_samples=smart_estimator.min_samples, max_spread=smart_estimator.max_spread)
-            # Clear detection snapshots and plots (mutate globals via module ref)
-            import field_tools.passive_watch as _pw
-            _pw._best_center_dist = 999.0
-            _pw.latest_detection_jpeg = None
-            _pw.latest_best_jpeg = None
+            # Clear detection snapshots and plots (use running module, not reimport)
+            _mod = sys.modules.get('field_tools.passive_watch') or sys.modules.get('__main__')
+            _mod._best_center_dist = 999.0
+            _mod.latest_detection_jpeg = None
+            _mod.latest_best_jpeg = None
             _pw.latest_bullseye = None
             _pw.latest_smart_grid_jpeg = None
             print("[CLEAR] All estimates, detections, and plots reset")
