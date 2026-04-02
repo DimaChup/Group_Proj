@@ -1954,9 +1954,9 @@ def render_bullseye(all_estimates, smart_est=None):
             _med = smart_est.get_median()
             if _med:
                 coord_text = f"{_med[0]:.7f}, {_med[1]:.7f}"
-                cv2.rectangle(p4, (0, 19), (S, 40), (0, 0, 0), -1)  # solid black bar
-                cv2.putText(p4, coord_text, (5, 35),
-                           cv2.FONT_HERSHEY_SIMPLEX, 0.50, (255, 0, 255), 2)
+                cv2.rectangle(p4, (0, 20), (S, 50), (0, 0, 0), -1)
+                cv2.putText(p4, coord_text, (5, 44),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.65, (255, 0, 255), 2)
 
             c_lats = [e[0] for e in cluster]
             c_lons = [e[1] for e in cluster]
