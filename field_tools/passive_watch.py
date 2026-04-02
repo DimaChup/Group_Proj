@@ -821,6 +821,12 @@ class Handler(BaseHTTPRequestHandler):
             return {"ok": False, "error": "missing name"}
         with runtime_lock:
             runtime_state["class_filter"] = name
+        # Reset best detection when class filter changes (old best may be wrong class)
+        _mod = sys.modules.get('field_tools.passive_watch') or sys.modules.get('__main__')
+        _mod._best_center_dist = 999.0
+        _mod._best_detection_gps = None
+        with frame_lock:
+            _mod.latest_best_jpeg = None
         return {"ok": True, "class_filter": name}
 
 
@@ -2432,9 +2438,12 @@ def main():
         _smart_added = False  # True if smart_estimator.add() actually appended this frame
 
         # Run detection (throttled)
+        # Pass a COPY to detect_in_image because vision.py draws bboxes on the
+        # frame in-place.  We keep the original clean so that draw_overlay()
+        # only renders accepted (class-filtered) detections.
         if eyes.using_ai and (now - last_inference) >= min_interval:
             last_inference = now
-            found, x, y, conf = eyes.detect_in_image(frame)
+            found, x, y, conf = eyes.detect_in_image(frame.copy())
             vis_fps_tracker.tick()
 
             # Class filter: reject detection if class doesn't match
@@ -2698,7 +2707,9 @@ def main():
             # Build GPS info for overlay (variables set in detection block above)
             _gps_info = None
             if d_lat != 0.0 or d_lon != 0.0:
-                _cls = getattr(eyes, 'last_class_name', '') or '?'
+                # Use draw_overlay._last_class (only set for accepted detections)
+                # instead of eyes.last_class_name (set for ALL detections including rejected)
+                _cls = getattr(draw_overlay, '_last_class', '') or '?'
                 _det_conf = conf if 'conf' in dir() else 0
                 _gps_info = {"drone_lat": d_lat, "drone_lon": d_lon, "cls": _cls, "conf": _det_conf}
                 if est_result:
@@ -2717,7 +2728,7 @@ def main():
         if _snap_best and display is not None:
             _gps_info_best = None
             if d_lat != 0.0 or d_lon != 0.0:
-                _cls = getattr(eyes, 'last_class_name', '') or '?'
+                _cls = getattr(draw_overlay, '_last_class', '') or '?'
                 _det_conf = conf if 'conf' in dir() else 0
                 _gps_info_best = {"drone_lat": d_lat, "drone_lon": d_lon, "cls": _cls, "conf": _det_conf}
                 if est_result:
