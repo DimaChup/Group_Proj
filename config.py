@@ -173,9 +173,9 @@ DIAGONAL_YAW_OFFSET_DEG = 0    # Yaw offset at turn (0 = face scan line, None = 
 MAP_FILE = "assets/map.jpg"
 DUMMY_FILE = "assets/dummy.png"
 CONE_FILE = "assets/cone.png"
-MAP_WIDTH_METERS = 480.0
-REF_LAT = 51.425106             # Map top-left corner (do NOT change)
-REF_LON = -2.672257             # Map top-left corner (do NOT change)
+MAP_WIDTH_METERS = 491.9
+REF_LAT = 51.42512107           # Map top-left corner (calibrated 2026-04-02, 2-point, 0.11m avg err)
+REF_LON = -2.67222427           # Map top-left corner (calibrated 2026-04-02, 2-point, 0.11m avg err)
 
 
 # ============================================================

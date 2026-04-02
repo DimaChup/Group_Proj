@@ -1,7 +1,7 @@
 # passive_watch.py — Passive Camera Observer Blueprint
 
-> MAP of passive_watch.py (752 lines). Not a code copy — a navigation aid.
-> Updated: 2026-03-11
+> MAP of passive_watch.py (1691 lines). Not a code copy — a navigation aid.
+> Updated: 2026-04-02
 
 ## Purpose
 
@@ -41,19 +41,26 @@ python passive_watch.py --no-save --no-mavlink
 | Section | Lines | Purpose |
 |---------|-------|---------|
 | Docstring + imports | 1-51 | Signal handler, headless DISPLAY check, cv2, numpy, config, VisionSystem |
-| Globals for streaming | 52-55 | `latest_jpeg`, `latest_det_jpeg`, `frame_lock` (threading.Lock) |
-| Argument parsing | 57-65 | argparse: --port, --conf, --fps, --save-dir, --no-save, --no-mavlink |
-| HTML_PAGE | 68-102 | Inline HTML+CSS+JS for browser dashboard. Polls `/api/status` every 1s |
-| Handler (HTTP) | 106-155 | BaseHTTPRequestHandler: routes `/`, `/stream`, `/snapshot`, `/api/status` |
-| ThreadedServer | 158-159 | ThreadingMixIn + HTTPServer, daemon_threads=True |
-| Stats dict | 162-169 | Global stats dict returned by `/api/status` (frames, detections, GPS, FOV, estimate) |
-| RollingFPS class | 172-194 | Rolling window FPS tracker (3s window). Instances: cam, vis, stream |
-| FOV / calibration | 196-231 | `get_fov_info()` and `ground_coverage(alt_m)` — reads config sensor/focal values |
-| DummyEstimator class | 235-320 | Accumulates detection observations, inverse-variance weighted GPS estimate |
-| GPS state + COPTER_MODES | 323-332 | `gps_data` dict (lat, lon, alt, sats, yaw, mode), mode int-to-name map |
-| mavlink_reader() | 335-363 | Background thread: reads GLOBAL_POSITION_INT, GPS_RAW_INT, HEARTBEAT, ATTITUDE |
-| draw_overlay() | 366-490 | Renders detection box, crosshair, GPS bar, FPS bar, compass rose, FOV bar, dummy estimate bar |
-| main() | 494-752 | Entry point: IP detect, mavlink connect, camera+AI init, HTTP server start, camera loop |
+| Globals for streaming | 52-65 | `latest_jpeg`, `latest_det_jpeg`, frame_lock, gps_lock, map/bullseye/smart JPEGs |
+| Argument parsing | 67-85 | argparse: --port, --conf, --fps, --save-dir, --no-save, --no-mavlink, --fake, --simple-names, --class-filter, --smart-estimate |
+| MODEL_TABLE + runtime_state | 87-103 | 4 model definitions (id/name/path/backend), runtime state dict + lock for browser control |
+| parse_srt() | 106-135 | Parse DJI SRT telemetry file → dict frame_num → {lat, lon, alt, yaw} |
+| HTML_PAGE | 139-310 | Inline HTML+CSS+JS. Model selector bar + 2-col grid + 3-col bottom. Polls `/api/status` every 2s, syncs controls |
+| Handler (HTTP) | 313-485 | Routes: `/`, `/stream`, `/snapshot`, `/bullseye`, `/latest`, `/smart-grid`, `/map`, `/api/status`, `/api/switch-model`, `/api/set-conf`, `/api/set-class` |
+| ThreadedServer | 488-489 | ThreadingMixIn + HTTPServer, daemon_threads=True |
+| Stats dict | 491-505 | Global stats dict for `/api/status` (frames, detections, GPS, FOV, estimate, active_model, conf, class) |
+| RollingFPS class | 333-342 | Rolling window FPS tracker (3s window). Instances: cam, vis, stream |
+| FOV / calibration | 343-378 | `get_fov_info()` and `ground_coverage(alt_m)` — reads config sensor/focal values |
+| DummyEstimator class | 381-465 | Accumulates observations, inverse-variance weighted GPS, centrality bonus |
+| SmartEstimator class | 468-587 | Greedy tightest cluster: 10 central estimates within max_spread |
+| render_latest_detection() | 590-624 | Thumbnail with pink line center→detection, crosshair, pixel+real distance, info bar |
+| render_smart_grid() | 627-646 | 5x2 grid of locked smart frame thumbnails |
+| render_map() | 649-703 | GPS estimates on satellite map.jpg with drone position + smart median |
+| render_bullseye() | 706-830 | GPS scatter plot with bullseye rings, weighted mean, median, smart cluster |
+| GPS state + COPTER_MODES | 833-845 | `gps_data` dict, mode int-to-name map |
+| mavlink_reader() | 848-885 | Background thread: GLOBAL_POSITION_INT, GPS_RAW_INT, HEARTBEAT, ATTITUDE |
+| draw_overlay() | ~1070-1230 | Detection box, **pink line center→detection + px/m distance**, crosshair, GPS bar, FPS bar, compass, FOV bar, **scale bar (1m)**, pink dot, dummy estimate |
+| main() | ~1240-1691 | Entry point: fake mode SRT loading, IP detect, mavlink, camera+AI, HTTP server, model switch handler in loop |
 
 ## Key Classes
 
@@ -77,14 +84,22 @@ python passive_watch.py --no-save --no-mavlink
 
 ## HTTP Endpoints
 
-| Method | Path | Lines | Returns |
-|--------|------|-------|---------|
-| GET | `/` | 111-115 | HTML dashboard page (HTML_PAGE constant) |
-| GET | `/stream` | 117-132 | MJPEG multipart stream (continuous push, 50ms sleep between frames) |
-| GET | `/snapshot` | 134-144 | Latest detection frame JPEG (or latest stream frame if no detection) |
-| GET | `/api/status` | 146-151 | JSON stats dict (FPS, detections, GPS, estimate, FOV) |
+| Method | Path | Returns |
+|--------|------|---------|
+| GET | `/` | HTML dashboard page (HTML_PAGE constant) |
+| GET | `/stream` | MJPEG multipart stream (continuous push, 50ms sleep between frames) |
+| GET | `/snapshot` | Latest detection frame JPEG (or latest stream frame if no detection) |
+| GET | `/bullseye` | GPS bullseye scatter plot JPEG |
+| GET | `/latest` | Latest detection thumbnail JPEG |
+| GET | `/smart-grid` | 5x2 smart frames grid JPEG |
+| GET | `/map` | Satellite map overlay JPEG |
+| GET | `/api/status` | JSON stats dict (FPS, detections, GPS, estimate, FOV, active model, conf, class) |
+| GET | `/api/switch-model?id=N` | Switch AI model (0-3). Blocks up to 3s for load. Returns `{ok, model, id}` |
+| GET | `/api/set-conf?val=X` | Set confidence threshold (0.01-0.99). Returns `{ok, conf}` |
+| GET | `/api/set-class?name=X` | Set class filter ("all", "dummy", "person"). Returns `{ok, class_filter}` |
 
-Browser polls `/api/status` every 1000ms. Stream is continuous MJPEG push.
+Browser polls `/api/status` every 2000ms. Stream is continuous MJPEG push.
+Control bar syncs model/conf/class from server state on each poll.
 
 ## Key Data Structures
 

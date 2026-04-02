@@ -60,6 +60,7 @@ latest_detection_jpeg = None   # latest detection snapshot
 latest_smart_grid_jpeg = None  # 5x2 smart frames grid
 latest_map_jpeg = None         # satellite map overlay
 frame_lock = threading.Lock()
+gps_lock = threading.Lock()
 _all_gps_estimates = []
 _map_base = None  # loaded map.jpg (once)
 
@@ -80,7 +81,25 @@ parser.add_argument('--smart-radius', type=float, default=0.5, help='Max spread 
 parser.add_argument('--fake', action='store_true', help='Replay DJI video + SRT telemetry (no camera/mavproxy)')
 parser.add_argument('--fake-video', default='RealVideo/DJI_0001_1456x1088_cropped_30fps.mp4')
 parser.add_argument('--fake-srt', default='RealVideo/DJI_20260311172332_0001_V.SRT')
+parser.add_argument('--no-stream', action='store_true', help='Disable HTTP stream server')
 args = parser.parse_args()
+
+# ── Model definitions for browser switcher ──
+MODEL_TABLE = [
+    {"id": 0, "name": "Original",    "path": "best.tflite",                         "backend": None},
+    {"id": 1, "name": "SAR v2 TFL",  "path": "cv_models/sar_v2_1088/best.tflite",   "backend": None},
+    {"id": 2, "name": "SAR v2 NCNN", "path": "cv_models/sar_v2_1088/best.tflite",   "backend": "ncnn"},
+    {"id": 3, "name": "COCO Person", "path": "cv_models/human.tflite",              "backend": None},
+]
+
+# Runtime state (modified by API endpoints, read by main loop)
+runtime_state = {
+    "active_model_id": 0,       # index into MODEL_TABLE
+    "conf_threshold": args.conf, # current confidence threshold
+    "class_filter": args.class_filter or "all",  # "all", "dummy", "person"
+    "model_switch_request": None,  # set to model_id to trigger reload in main loop
+}
+runtime_lock = threading.Lock()
 
 
 # ── SRT parser for fake mode ──
@@ -133,9 +152,60 @@ HTML_PAGE = """<!DOCTYPE html>
   .bottom{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
   .bottom img{width:100%;height:auto}
   @media(max-width:1000px){.grid,.bottom{grid-template-columns:1fr}}
+
+  /* ── Model selector control bar ── */
+  .ctrl-bar{
+    display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+    background:#1a1a1a;border:1px solid #333;border-radius:4px;
+    padding:6px 12px;margin-bottom:8px;font-size:0.8em;
+  }
+  .ctrl-bar label{color:#999;white-space:nowrap}
+  .ctrl-bar select,.ctrl-bar input[type=text]{
+    background:#222;color:#0f0;border:1px solid #444;border-radius:3px;
+    padding:3px 6px;font-family:monospace;font-size:1em;
+  }
+  .ctrl-bar select:focus,.ctrl-bar input:focus{outline:none;border-color:#0f0}
+  .ctrl-bar .slider-group{display:flex;align-items:center;gap:4px}
+  .ctrl-bar input[type=range]{
+    width:100px;accent-color:#0f0;cursor:pointer;
+  }
+  .ctrl-bar .conf-val{color:#0f0;min-width:32px;text-align:right}
+  .ctrl-bar .sep{color:#333;margin:0 2px}
+  .ctrl-bar .model-status{color:#666;font-size:0.9em}
+  .ctrl-bar .model-status.loading{color:#ff0}
+  .ctrl-bar .model-status.ok{color:#0f0}
+  .ctrl-bar .model-status.err{color:#f44}
 </style>
 </head><body>
 <h1>SAR Passive Watch</h1>
+
+<!-- Model selector control bar -->
+<div class="ctrl-bar">
+  <label>Model:</label>
+  <select id="model-sel">
+    <option value="0">Original (best.tflite)</option>
+    <option value="1">SAR v2 TFLite</option>
+    <option value="2">SAR v2 NCNN</option>
+    <option value="3">COCO Person</option>
+  </select>
+  <span class="model-status" id="model-status"></span>
+  <span class="sep">|</span>
+
+  <label>Conf:</label>
+  <div class="slider-group">
+    <input type="range" id="conf-slider" min="0.05" max="0.95" step="0.05" value="0.20">
+    <span class="conf-val" id="conf-val">0.20</span>
+  </div>
+  <span class="sep">|</span>
+
+  <label>Class:</label>
+  <select id="class-sel">
+    <option value="all">all</option>
+    <option value="dummy">dummy</option>
+    <option value="person">person</option>
+  </select>
+</div>
+
 <div class="stats" id="stats">Starting...</div>
 <div class="gps" id="gps">GPS: waiting...</div>
 <div class="est" id="est">ESTIMATE: waiting...</div>
@@ -149,7 +219,7 @@ HTML_PAGE = """<!DOCTYPE html>
   <div class="right">
     <h2>Latest Detection</h2>
     <img id="latest" src="/latest" alt="Detection" style="min-height:150px">
-    <h2>SMART Frames (10)</h2>
+    <h2>SMART Frames</h2>
     <img id="smart-grid" src="/smart-grid" alt="Grid" style="min-height:100px">
   </div>
 </div>
@@ -157,19 +227,62 @@ HTML_PAGE = """<!DOCTYPE html>
 <div class="bottom">
   <div>
     <h2>Satellite Map</h2>
-    <img id="map" src="/map" alt="Map">
+    <div id="imap-host"></div>
   </div>
   <div>
     <h2>GPS Bullseye</h2>
     <img id="bullseye" src="/bullseye" alt="Bullseye">
   </div>
   <div>
-    <h2>Detection Log</h2>
-    <img id="smart-grid2" src="/smart-grid" alt="Grid2">
+    <h2>SMART Frames (10)</h2>
+    <img id="smart-grid2" src="/smart-grid" alt="Grid" style="min-height:100px">
   </div>
 </div>
 
+<h2 style="margin-top:15px">CV Detection Pipeline</h2>
+<div id="cv-pipeline-host"></div>
+
+<h2 style="margin-top:15px">GPS Estimation Pipeline</h2>
+<div id="gps-pipeline-host"></div>
+
 <script>
+/* ── Control bar logic ── */
+const modelSel = document.getElementById('model-sel');
+const confSlider = document.getElementById('conf-slider');
+const confVal = document.getElementById('conf-val');
+const classSel = document.getElementById('class-sel');
+const modelStatus = document.getElementById('model-status');
+
+function sendCmd(url) {
+  return fetch(url).then(r => r.json()).catch(() => ({ok:false,error:'network'}));
+}
+
+modelSel.addEventListener('change', () => {
+  modelStatus.textContent = 'loading...';
+  modelStatus.className = 'model-status loading';
+  sendCmd('/api/switch-model?id=' + modelSel.value).then(d => {
+    if (d.ok) {
+      modelStatus.textContent = d.model || 'ok';
+      modelStatus.className = 'model-status ok';
+    } else {
+      modelStatus.textContent = d.error || 'failed';
+      modelStatus.className = 'model-status err';
+    }
+  });
+});
+
+confSlider.addEventListener('input', () => {
+  confVal.textContent = parseFloat(confSlider.value).toFixed(2);
+});
+confSlider.addEventListener('change', () => {
+  sendCmd('/api/set-conf?val=' + confSlider.value);
+});
+
+classSel.addEventListener('change', () => {
+  sendCmd('/api/set-class?name=' + classSel.value);
+});
+
+/* ── Status polling (sync active model/conf from server) ── */
 setInterval(()=>{
   fetch('/api/status').then(r=>r.json()).then(d=>{
     document.getElementById('stats').textContent=
@@ -178,11 +291,31 @@ setInterval(()=>{
       `DRONE:${d.gps_lat},${d.gps_lon} Alt:${d.alt}m Sats:${d.sats} Mode:${d.flight_mode}`;
     document.getElementById('est').textContent=d.est_obs>0
       ?`EST:${d.est_lat},${d.est_lon}(${d.est_obs}obs)`:'EST: waiting...';
+    document.getElementById('fov').textContent=
+      `FOV: ${d.fov_deg}\u00b0 | @1m: ${d.cal_1m_w}\u00d7${d.cal_1m_h}cm`;
     const t=Date.now();
     document.getElementById('latest').src='/latest?'+t;
     document.getElementById('smart-grid').src='/smart-grid?'+t;
-    document.getElementById('map').src='/map?'+t;
     document.getElementById('bullseye').src='/bullseye?'+t;
+    document.getElementById('smart-grid2').src='/smart-grid?'+t;
+    /* Update pipeline visuals with live data */
+    if (typeof updatePipelineData === 'function') {
+      updatePipelineData({alt: parseFloat(d.alt)||0, fps: parseFloat(d.vis_fps)||0});
+    }
+    if (typeof updateGPSData === 'function') {
+      updateGPSData({alt: parseFloat(d.alt)||0, fov_deg: parseFloat(d.fov_deg)||49.4});
+    }
+    /* Sync controls from server state */
+    if (d.active_model_id !== undefined && document.activeElement !== modelSel) {
+      modelSel.value = d.active_model_id;
+    }
+    if (d.conf_threshold !== undefined && document.activeElement !== confSlider) {
+      confSlider.value = d.conf_threshold;
+      confVal.textContent = parseFloat(d.conf_threshold).toFixed(2);
+    }
+    if (d.class_filter !== undefined && document.activeElement !== classSel) {
+      classSel.value = d.class_filter;
+    }
   });
 },2000);
 </script>
@@ -200,7 +333,24 @@ class Handler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header('Content-Type', 'text/html')
             self.end_headers()
-            self.wfile.write(HTML_PAGE.encode())
+            # Inject interactive map into the imap-host placeholder
+            from field_tools.interactive_map import get_interactive_map_html
+            from field_tools.cv_pipeline_visual import get_cv_pipeline_html
+            from field_tools.gps_pipeline_visual import get_gps_pipeline_html
+            imap_html = get_interactive_map_html(
+                container_id="map-container", width="100%", height="350px"
+            )
+            page = HTML_PAGE.replace(
+                '<div id="imap-host"></div>',
+                imap_html
+            ).replace(
+                '<div id="cv-pipeline-host"></div>',
+                get_cv_pipeline_html()
+            ).replace(
+                '<div id="gps-pipeline-host"></div>',
+                get_gps_pipeline_html()
+            )
+            self.wfile.write(page.encode())
 
         elif path == '/stream':
             self.send_response(200)
@@ -271,6 +421,24 @@ class Handler(BaseHTTPRequestHandler):
                 self.end_headers()
 
         elif path == '/map':
+            # Serve raw map image (loaded once by interactive canvas)
+            import os as _os
+            map_path = config.MAP_FILE
+            if _os.path.exists(map_path):
+                with open(map_path, 'rb') as f:
+                    data = f.read()
+                self.send_response(200)
+                self.send_header('Content-Type', 'image/jpeg')
+                self.send_header('Cache-Control', 'public, max-age=86400')
+                self.send_header('Content-Length', str(len(data)))
+                self.end_headers()
+                self.wfile.write(data)
+            else:
+                self.send_response(404)
+                self.end_headers()
+
+        elif path == '/map-rendered':
+            # Legacy: server-rendered map with dots (for non-JS clients)
             with frame_lock:
                 jpeg = latest_map_jpeg
             if jpeg:
@@ -283,16 +451,120 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_response(503)
                 self.end_headers()
 
+        elif path == '/api/drone':
+            # Near-realtime drone telemetry for interactive map
+            import json as _json
+            with gps_lock:
+                d = {
+                    "lat": gps_data.get("lat", 0),
+                    "lon": gps_data.get("lon", 0),
+                    "alt": gps_data.get("alt", 0),
+                    "yaw": gps_data.get("yaw", 0),
+                    "sats": gps_data.get("sats", 0),
+                    "mode": gps_data.get("mode", "---"),
+                }
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('Cache-Control', 'no-cache')
+            self.end_headers()
+            self.wfile.write(_json.dumps(d).encode())
+
+        elif path == '/api/estimates':
+            # GPS detection estimates for interactive map
+            import json as _json
+            est_list = [[e[0], e[1]] for e in _all_gps_estimates]
+            smart = None
+            if smart_estimator and smart_estimator.locked:
+                med = smart_estimator.get_median()
+                if med:
+                    smart = [med[0], med[1]]
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('Cache-Control', 'no-cache')
+            self.end_headers()
+            self.wfile.write(_json.dumps({"estimates": est_list, "smart": smart}).encode())
+
         elif path == '/api/status':
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
             self.end_headers()
             import json
-            self.wfile.write(json.dumps(stats).encode())
+            with runtime_lock:
+                stats["active_model_id"] = runtime_state["active_model_id"]
+                stats["conf_threshold"] = runtime_state["conf_threshold"]
+                stats["class_filter"] = runtime_state["class_filter"]
+            with frame_lock:
+                status_json = json.dumps(stats).encode()
+            self.wfile.write(status_json)
+
+        elif path == '/api/switch-model':
+            # GET /api/switch-model?id=0|1|2|3
+            self._send_json_response(self._handle_switch_model())
+
+        elif path == '/api/set-conf':
+            # GET /api/set-conf?val=0.25
+            self._send_json_response(self._handle_set_conf())
+
+        elif path == '/api/set-class':
+            # GET /api/set-class?name=person|dummy|all
+            self._send_json_response(self._handle_set_class())
 
         else:
             self.send_response(404)
             self.end_headers()
+
+    def _send_json_response(self, data):
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/json')
+        self.send_header('Cache-Control', 'no-cache')
+        self.end_headers()
+        self.wfile.write(json.dumps(data).encode())
+
+    def _parse_qs(self):
+        """Parse query string from self.path → dict."""
+        from urllib.parse import urlparse, parse_qs
+        qs = parse_qs(urlparse(self.path).query)
+        return {k: v[0] for k, v in qs.items()}
+
+    def _handle_switch_model(self):
+        params = self._parse_qs()
+        try:
+            mid = int(params.get('id', -1))
+        except (ValueError, TypeError):
+            return {"ok": False, "error": "invalid id"}
+        if mid < 0 or mid >= len(MODEL_TABLE):
+            return {"ok": False, "error": f"id must be 0-{len(MODEL_TABLE)-1}"}
+        with runtime_lock:
+            runtime_state["model_switch_request"] = mid
+        # Wait briefly for main loop to pick it up (up to 3s)
+        for _ in range(30):
+            time.sleep(0.1)
+            with runtime_lock:
+                if runtime_state["model_switch_request"] is None:
+                    return {"ok": True, "model": MODEL_TABLE[mid]["name"],
+                            "id": mid, "path": MODEL_TABLE[mid]["path"]}
+        return {"ok": False, "error": "timeout waiting for model switch"}
+
+    def _handle_set_conf(self):
+        params = self._parse_qs()
+        try:
+            val = float(params.get('val', -1))
+        except (ValueError, TypeError):
+            return {"ok": False, "error": "invalid val"}
+        if val < 0.01 or val > 0.99:
+            return {"ok": False, "error": "val must be 0.01-0.99"}
+        with runtime_lock:
+            runtime_state["conf_threshold"] = val
+        return {"ok": True, "conf": val}
+
+    def _handle_set_class(self):
+        params = self._parse_qs()
+        name = params.get('name', '').strip().lower()
+        if not name:
+            return {"ok": False, "error": "missing name"}
+        with runtime_lock:
+            runtime_state["class_filter"] = name
+        return {"ok": True, "class_filter": name}
 
 
 class ThreadedServer(ThreadingMixIn, HTTPServer):
@@ -378,7 +650,6 @@ class DummyEstimator:
     Uses inverse-variance weighting (lower altitude = more weight).
     """
     def __init__(self):
-        self.observations = []  # (lat, lon, weight)
         self.total_weight = 0.0
         self.weighted_lat = 0.0
         self.weighted_lon = 0.0
@@ -418,8 +689,8 @@ class DummyEstimator:
         east_m = forward_m * math.sin(yaw_rad) + right_m * math.cos(yaw_rad)
 
         # Convert metres to GPS offset
-        lat_m_per_deg = 111132.954 - 559.822 * math.cos(2 * math.radians(drone_lat))
-        lon_m_per_deg = 111132.954 * math.cos(math.radians(drone_lat))
+        lat_m_per_deg = 111320
+        lon_m_per_deg = 111320 * math.cos(math.radians(drone_lat))
 
         est_lat = drone_lat + north_m / lat_m_per_deg
         est_lon = drone_lon + east_m / lon_m_per_deg
@@ -451,7 +722,6 @@ class DummyEstimator:
         )
 
     def reset(self):
-        self.observations = []
         self.total_weight = 0.0
         self.weighted_lat = 0.0
         self.weighted_lon = 0.0
@@ -506,11 +776,12 @@ class SmartEstimator:
         n = len(estimates)
 
         # Pairwise distances
+        mean_lat = sum(e[0] for e in estimates) / n
         dists = {}
         for i in range(n):
             for j in range(i + 1, n):
                 dn = (estimates[i][0] - estimates[j][0]) * 111320
-                de = (estimates[i][1] - estimates[j][1]) * 111320 * math.cos(math.radians(estimates[i][0]))
+                de = (estimates[i][1] - estimates[j][1]) * 111320 * math.cos(math.radians(mean_lat))
                 dists[(i, j)] = math.sqrt(dn**2 + de**2)
 
         if n <= target_size:
@@ -571,7 +842,7 @@ class SmartEstimator:
             return 0
         m_lat, m_lon, _ = med
         dists = []
-        for lat, lon, _ in self.estimates:
+        for lat, lon, _ in self.locked_cluster:
             dn = (lat - m_lat) * 111320
             de = (lon - m_lon) * 111320 * math.cos(math.radians(m_lat))
             dists.append(math.sqrt(dn**2 + de**2))
@@ -593,8 +864,28 @@ def render_latest_detection(frame, last_det, gps_d):
     th = thumb.shape[0]
     dcx, dcy = int(last_det[0] * s), int(last_det[1] * s)
     fcx, fcy = thumb_w // 2, th // 2
-    # Arrow center→detection
-    cv2.arrowedLine(thumb, (fcx, fcy), (dcx, dcy), (255, 255, 0), 2, tipLength=0.2)
+    # Crosshair at frame center
+    cv2.line(thumb, (fcx - 15, fcy), (fcx + 15, fcy), (0, 255, 255), 1)
+    cv2.line(thumb, (fcx, fcy - 15), (fcx, fcy + 15), (0, 255, 255), 1)
+    # Pink line: center → detection (matching draw_overlay style)
+    cv2.line(thumb, (fcx, fcy), (dcx, dcy), (255, 0, 255), 2)
+    # Pink dot at detection center
+    cv2.circle(thumb, (dcx, dcy), 8, (255, 0, 255), -1)
+    cv2.circle(thumb, (dcx, dcy), 8, (255, 255, 255), 1)
+    # Pixel + real distance at midpoint
+    px_dist = math.sqrt((dcx - fcx)**2 + (dcy - fcy)**2)
+    mid_x = (fcx + dcx) // 2
+    mid_y = (fcy + dcy) // 2
+    cv2.putText(thumb, f"{px_dist:.0f}px", (mid_x + 6, mid_y - 6),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.38, (255, 0, 255), 1)
+    alt_snap = gps_d.get('alt', 0)
+    if alt_snap > 0.5:
+        fov_h_rad = math.radians(FOV["hfov_deg"])
+        gw = 2 * alt_snap * math.tan(fov_h_rad / 2)
+        # px_dist is in thumbnail coords, convert back to original scale
+        dist_m = (px_dist / s) / (w / gw)
+        cv2.putText(thumb, f"{dist_m:.1f}m", (mid_x + 6, mid_y + 10),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.38, (0, 255, 255), 1)
     # Info bar
     cv2.rectangle(thumb, (0, th - 25), (thumb_w, th), (0, 0, 0), -1)
     info = f"{getattr(draw_overlay, '_last_class', '?')} {last_det[2]:.2f} | {gps_d['alt']:.0f}m | {gps_d['lat']:.5f},{gps_d['lon']:.5f}"
@@ -666,8 +957,10 @@ def render_map(all_estimates, smart_est=None):
                 cv2.drawMarker(disp, (px, py), (255, 0, 255), cv2.MARKER_STAR, 15, 2)
 
     # Drone position
-    if gps_data["lat"] != 0:
-        px, py = gps_to_px(gps_data["lat"], gps_data["lon"])
+    with gps_lock:
+        _drone_lat, _drone_lon = gps_data["lat"], gps_data["lon"]
+    if _drone_lat != 0:
+        px, py = gps_to_px(_drone_lat, _drone_lon)
         if 0 <= px < mw and 0 <= py < mh:
             cv2.circle(disp, (px, py), 5, (255, 0, 0), -1)
 
@@ -832,22 +1125,26 @@ def mavlink_reader(mav):
             mtype = msg.get_type()
 
             if mtype == 'GLOBAL_POSITION_INT':
-                gps_data["lat"] = msg.lat / 1e7
-                gps_data["lon"] = msg.lon / 1e7
-                gps_data["alt"] = msg.relative_alt / 1000.0
+                with gps_lock:
+                    gps_data["lat"] = msg.lat / 1e7
+                    gps_data["lon"] = msg.lon / 1e7
+                    gps_data["alt"] = msg.relative_alt / 1000.0
 
             elif mtype == 'GPS_RAW_INT':
-                gps_data["sats"] = msg.satellites_visible
-                gps_data["fix"] = msg.fix_type
+                with gps_lock:
+                    gps_data["sats"] = msg.satellites_visible
+                    gps_data["fix"] = msg.fix_type
 
             elif mtype == 'HEARTBEAT':
                 if msg.type != 6:  # skip GCS heartbeats (mavproxy)
-                    gps_data["mode"] = COPTER_MODES.get(msg.custom_mode, f"MODE_{msg.custom_mode}")
+                    with gps_lock:
+                        gps_data["mode"] = COPTER_MODES.get(msg.custom_mode, f"MODE_{msg.custom_mode}")
 
             elif mtype == 'ATTITUDE':
-                gps_data["yaw"] = msg.yaw * 57.2958  # rad to deg
-                gps_data["pitch"] = msg.pitch * 57.2958
-                gps_data["roll"] = msg.roll * 57.2958
+                with gps_lock:
+                    gps_data["yaw"] = msg.yaw * 57.2958  # rad to deg
+                    gps_data["pitch"] = msg.pitch * 57.2958
+                    gps_data["roll"] = msg.roll * 57.2958
 
         except Exception:
             time.sleep(0.1)
@@ -857,6 +1154,10 @@ def draw_overlay(frame, last_det):
     """Draw detection box + GPS info on frame for stream."""
     h, w = frame.shape[:2]
     display = frame.copy()
+
+    # GPS snapshot (needed early for altitude-dependent overlays)
+    with gps_lock:
+        g = dict(gps_data)
 
     # Draw last detection box (persists between frames)
     # Persistent detection box — redraw on EVERY frame (vision.py only draws on inference frames)
@@ -884,18 +1185,34 @@ def draw_overlay(frame, last_det):
     cv2.line(display, (cx - cross_len, cy), (cx + cross_len, cy), cross_color, 1)
     cv2.line(display, (cx, cy - cross_len), (cx, cy + cross_len), cross_color, 1)
 
-    # Cyan arrow: center → detection
+    # ── Pink line: center → detection (like video_test_compare.py) ──
     if last_det is not None:
         det_cx, det_cy, conf, age = last_det
         if age < 2.0:
-            cv2.arrowedLine(display, (cx, cy), (int(det_cx), int(det_cy)),
-                           (255, 255, 0), 2, tipLength=0.2)
+            dcx_i, dcy_i = int(det_cx), int(det_cy)
+            # Pink/magenta line from frame center to detection center
+            cv2.line(display, (cx, cy), (dcx_i, dcy_i), (255, 0, 255), 2)
+            # Pixel distance
+            px_dist = math.sqrt((dcx_i - cx)**2 + (dcy_i - cy)**2)
+            mid_x = (cx + dcx_i) // 2
+            mid_y = (cy + dcy_i) // 2
+            cv2.putText(display, f"{px_dist:.0f}px", (mid_x + 8, mid_y - 8),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 0, 255), 1)
+            # Estimated real distance in meters (using FOV + altitude)
+            alt_now = g["alt"] if g["alt"] > 0.5 else 0
+            if alt_now > 0.5:
+                fov_h_rad = math.radians(FOV["hfov_deg"])
+                ground_w_now = 2 * alt_now * math.tan(fov_h_rad / 2)
+                px_per_m = w / ground_w_now
+                dist_m = px_dist / px_per_m
+                cv2.putText(display, f"{dist_m:.1f}m", (mid_x + 8, mid_y + 12),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 255), 1)
 
     # GPS overlay (bottom of frame)
-    lat, lon = gps_data["lat"], gps_data["lon"]
-    alt = gps_data["alt"]
-    sats = gps_data["sats"]
-    mode = gps_data["mode"]
+    lat, lon = g["lat"], g["lon"]
+    alt = g["alt"]
+    sats = g["sats"]
+    mode = g["mode"]
 
     if lat != 0.0 or lon != 0.0:
         gps_text = f"GPS: {lat:.6f}, {lon:.6f} | Alt: {alt:.1f}m | Sats: {sats}"
@@ -916,9 +1233,9 @@ def draw_overlay(frame, last_det):
     cv2.putText(display, fps_text, (5, 18),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 255), 1)
 
-    yaw_deg = gps_data["yaw"]
-    pitch_deg = gps_data["pitch"]
-    roll_deg = gps_data["roll"]
+    yaw_deg = g["yaw"]
+    pitch_deg = g["pitch"]
+    roll_deg = g["roll"]
     att_text = f"Y:{yaw_deg:.0f} P:{pitch_deg:.1f} R:{roll_deg:.1f}"
     cv2.putText(display, att_text, (w - 220, 18),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.4, (180, 180, 180), 1)
@@ -947,7 +1264,7 @@ def draw_overlay(frame, last_det):
                 cv2.FONT_HERSHEY_SIMPLEX, 0.35, (100, 100, 100), 1)
 
     # ── FOV / calibration info bar (second from bottom) ──
-    alt_val = gps_data["alt"]
+    alt_val = g["alt"]
     gw, gh = ground_coverage(alt_val) if alt_val > 0.5 else (0, 0)
     cal_w, cal_h = ground_coverage(1.0)  # at 1m for calibration reference
 
@@ -973,6 +1290,22 @@ def draw_overlay(frame, last_det):
                     f"sens={FOV['sensor_w']}mm | Cal@1m:{cal_w*100:.0f}x{cal_h*100:.0f}cm")
     cv2.putText(display, fov_text, (5, fov_y + 16),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.35, (180, 140, 0), 1)
+
+    # ── Scale bar: 1m reference at current altitude (like video_test_compare.py) ──
+    alt_scale = g["alt"]
+    if alt_scale > 0.5:
+        fov_h_rad_s = math.radians(FOV["hfov_deg"])
+        ground_w_s = 2 * alt_scale * math.tan(fov_h_rad_s / 2)
+        scale_1m = int(w / ground_w_s)  # pixels per meter
+        if scale_1m > 5:
+            sx2 = w - 20
+            sx1 = sx2 - scale_1m
+            sy1 = h - 100  # above the info bars
+            cv2.line(display, (sx1, sy1), (sx2, sy1), (255, 255, 255), 2)
+            cv2.line(display, (sx1, sy1 - 5), (sx1, sy1 + 5), (255, 255, 255), 2)
+            cv2.line(display, (sx2, sy1 - 5), (sx2, sy1 + 5), (255, 255, 255), 2)
+            cv2.putText(display, f"1m ({alt_scale:.0f}m alt)", (sx1, sy1 - 8),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.35, (255, 255, 255), 1)
 
     # ── Pink dot on detection center ──
     if last_det is not None and last_det[3] < 1.0:  # (cx, cy, conf, age)
@@ -1004,7 +1337,7 @@ def draw_overlay(frame, last_det):
 
 # ── Main ──
 def main():
-    global latest_jpeg, latest_det_jpeg, smart_estimator
+    global latest_jpeg, latest_det_jpeg, smart_estimator, _all_gps_estimates
 
     if args.smart_estimate:
         smart_estimator = SmartEstimator(
@@ -1089,13 +1422,22 @@ def main():
         eyes = VisionSystem(camera_index=0, model_path=args.model)
     if not eyes.using_ai:
         print("[WARN] AI model not loaded — stream only, no detection")
+
+    # Set initial model ID from args.model path
+    for m in MODEL_TABLE:
+        if os.path.abspath(m["path"]) == os.path.abspath(args.model):
+            runtime_state["active_model_id"] = m["id"]
+            break
     print("[OK] Ready. Ctrl+C to stop.\n")
 
     # Start HTTP server
-    server = ThreadedServer(('0.0.0.0', args.port), Handler)
-    server_thread = threading.Thread(target=server.serve_forever, daemon=True)
-    server_thread.start()
-    print(f"[OK] Stream serving on port {args.port}\n")
+    if not args.no_stream:
+        server = ThreadedServer(('0.0.0.0', args.port), Handler)
+        server_thread = threading.Thread(target=server.serve_forever, daemon=True)
+        server_thread.start()
+        print(f"[OK] Stream serving on port {args.port}\n")
+    else:
+        print("[OK] Stream server disabled (--no-stream)\n")
 
     # Render initial empty bullseye
     render_bullseye([], smart_estimator)
@@ -1105,9 +1447,10 @@ def main():
     csv_file = None
     csv_writer = None
     if csv_path:
+        write_header = not os.path.exists(csv_path) or os.path.getsize(csv_path) == 0
         csv_file = open(csv_path, 'a', newline='')
         csv_writer = csv.writer(csv_file)
-        if os.path.getsize(csv_path) == 0:
+        if write_header:
             csv_writer.writerow(['timestamp', 'frame', 'confidence', 'px_x', 'px_y',
                                  'drone_lat', 'drone_lon', 'alt_m', 'sats', 'yaw', 'mode',
                                  'est_dummy_lat', 'est_dummy_lon', 'est_n_obs', 'filename'])
@@ -1140,14 +1483,16 @@ def main():
             # Update GPS from SRT telemetry
             t = fake_telem.get(fake_frame_idx[0])
             if t:
-                gps_data["lat"] = t["lat"]
-                gps_data["lon"] = t["lon"]
-                gps_data["alt"] = t["alt"]
-                gps_data["yaw"] = t["yaw"]
-                gps_data["sats"] = 12
-                gps_data["mode"] = "FAKE"
+                with gps_lock:
+                    gps_data["lat"] = t["lat"]
+                    gps_data["lon"] = t["lon"]
+                    gps_data["alt"] = t["alt"]
+                    gps_data["yaw"] = t["yaw"]
+                    gps_data["sats"] = 12
+                    gps_data["mode"] = "FAKE"
             if fake_frame_idx[0] % 100 == 1:
-                print(f"  [FAKE] Frame {fake_frame_idx[0]} GPS:{gps_data['lat']:.5f},{gps_data['lon']:.5f} Alt:{gps_data['alt']:.0f}m Yaw:{gps_data['yaw']:.0f}")
+                with gps_lock:
+                    print(f"  [FAKE] Frame {fake_frame_idx[0]} GPS:{gps_data['lat']:.5f},{gps_data['lon']:.5f} Alt:{gps_data['alt']:.0f}m Yaw:{gps_data['yaw']:.0f}")
         else:
             frame = eyes.get_frame()
             if frame is None:
@@ -1156,8 +1501,37 @@ def main():
 
         frame_count += 1
         now = time.time()
+        if frame is None:
+            continue
         h, w = frame.shape[:2]
         cam_fps_tracker.tick()
+
+        # ── Handle model switch request from browser ──
+        with runtime_lock:
+            switch_req = runtime_state["model_switch_request"]
+        if switch_req is not None:
+            m = MODEL_TABLE[switch_req]
+            print(f"[MODEL] Switching to {m['name']} ({m['path']}, backend={m['backend']})")
+            try:
+                new_eyes = VisionSystem(
+                    camera_index=None if args.fake else 0,
+                    model_path=m['path'],
+                    backend=m['backend']
+                )
+                eyes = new_eyes
+                print(f"[MODEL] Loaded: {m['name']} (backend={eyes.backend_name})")
+                with runtime_lock:
+                    runtime_state["active_model_id"] = switch_req
+                    runtime_state["model_switch_request"] = None
+            except Exception as e:
+                print(f"[MODEL] ERROR loading {m['name']}: {e}")
+                with runtime_lock:
+                    runtime_state["model_switch_request"] = None  # clear request, keep old model
+
+        # Read runtime conf + class filter
+        with runtime_lock:
+            current_conf = runtime_state["conf_threshold"]
+            current_class_filter = runtime_state["class_filter"]
 
         # Run detection (throttled)
         if eyes.using_ai and (now - last_inference) >= min_interval:
@@ -1167,10 +1541,10 @@ def main():
 
             # (detection logging removed — enable for debug)
 
-            if found and conf >= args.conf:
+            if found and conf >= current_conf:
                 # Class filter: skip if detection class doesn't match
-                if args.class_filter and hasattr(eyes, 'last_class_name'):
-                    if eyes.last_class_name.lower() != args.class_filter.lower():
+                if current_class_filter and current_class_filter != "all" and hasattr(eyes, 'last_class_name'):
+                    if eyes.last_class_name.lower() != current_class_filter.lower():
                         continue  # skip this detection
 
                 det_count += 1
@@ -1182,11 +1556,16 @@ def main():
                 draw_overlay._last_bh = eyes.last_bbox_h if eyes.last_bbox_h > 0 else 80
                 draw_overlay._last_class = getattr(eyes, 'last_class_name', '')
 
-                # Estimate dummy GPS position
+                # Estimate dummy GPS position — snapshot all telemetry under lock
                 est_result = None
-                d_lat, d_lon = gps_data["lat"], gps_data["lon"]
-                d_alt = gps_data["alt"]
-                d_yaw = gps_data["yaw"]
+                with gps_lock:
+                    d_lat, d_lon = gps_data["lat"], gps_data["lon"]
+                    d_alt = gps_data["alt"]
+                    d_yaw = gps_data["yaw"]
+                    d_pitch = gps_data["pitch"]
+                    d_roll = gps_data["roll"]
+                    d_sats = gps_data["sats"]
+                    d_mode = gps_data["mode"]
                 if d_lat != 0.0 or d_lon != 0.0:
                     # Normalise pixel coords to 0-1 (estimator expects normalised)
                     norm_x = x / w if w > 0 else 0.5
@@ -1236,8 +1615,9 @@ def main():
                     sh, sw = save_frame.shape[:2]
 
                     # Add GPS text on saved image (larger, more prominent)
-                    lat, lon = gps_data["lat"], gps_data["lon"]
-                    alt = gps_data["alt"]
+                    with gps_lock:
+                        lat, lon = gps_data["lat"], gps_data["lon"]
+                        alt = gps_data["alt"]
                     ts = datetime.now().strftime("%H:%M:%S")
 
                     if args.simple_names:
@@ -1287,11 +1667,11 @@ def main():
                             "drone": {
                                 "lat": round(d_lat, 7), "lon": round(d_lon, 7),
                                 "alt_m": round(d_alt, 1),
-                                "yaw_deg": round(gps_data["yaw"], 1),
-                                "pitch_deg": round(gps_data["pitch"], 1),
-                                "roll_deg": round(gps_data["roll"], 1),
-                                "sats": gps_data["sats"],
-                                "mode": gps_data["mode"],
+                                "yaw_deg": round(d_yaw, 1),
+                                "pitch_deg": round(d_pitch, 1),
+                                "roll_deg": round(d_roll, 1),
+                                "sats": d_sats,
+                                "mode": d_mode,
                             },
                             "fov": {
                                 "focal_mm": FOV["focal_mm"],
@@ -1317,8 +1697,8 @@ def main():
                         csv_writer.writerow([
                             datetime.now().isoformat(), frame_count, f"{conf:.3f}",
                             cx, cy, f"{d_lat:.7f}", f"{d_lon:.7f}", f"{d_alt:.1f}",
-                            gps_data["sats"], f"{gps_data['yaw']:.0f}",
-                            gps_data["mode"],
+                            d_sats, f"{d_yaw:.0f}",
+                            d_mode,
                             f"{est[0]:.7f}" if est else "",
                             f"{est[1]:.7f}" if est else "",
                             est[2] if est else 0,
@@ -1349,30 +1729,35 @@ def main():
             latest_jpeg = jpg.tobytes()
         stream_fps_tracker.tick()
 
-        # Update stats
+        # Update stats (gps_lock for telemetry reads, frame_lock for stats dict)
         det_pct = (det_count / frame_count * 100) if frame_count > 0 else 0
-        lat, lon = gps_data["lat"], gps_data["lon"]
+        with gps_lock:
+            lat, lon = gps_data["lat"], gps_data["lon"]
+            g_alt = gps_data["alt"]
+            g_sats = gps_data["sats"]
+            g_mode = gps_data["mode"]
         c_fps = cam_fps_tracker.fps()
         v_fps = vis_fps_tracker.fps()
         s_fps = stream_fps_tracker.fps()
         est = dummy_estimator.get_estimate()
-        stats.update({
-            "frames": frame_count,
-            "detections": det_count,
-            "det_pct": f"{det_pct:.0f}",
-            "cam_fps": f"{c_fps:.1f}",
-            "vis_fps": f"{v_fps:.1f}",
-            "stream_fps": f"{s_fps:.1f}",
-            "saved": saved_count,
-            "gps_lat": f"{lat:.6f}" if lat != 0 else "---",
-            "gps_lon": f"{lon:.6f}" if lon != 0 else "---",
-            "alt": f"{gps_data['alt']:.1f}" if gps_data['alt'] != 0 else "---",
-            "sats": gps_data["sats"],
-            "flight_mode": gps_data["mode"],
-            "est_lat": f"{est[0]:.6f}" if est else "---",
-            "est_lon": f"{est[1]:.6f}" if est else "---",
-            "est_obs": est[2] if est else 0,
-        })
+        with frame_lock:
+            stats.update({
+                "frames": frame_count,
+                "detections": det_count,
+                "det_pct": f"{det_pct:.0f}",
+                "cam_fps": f"{c_fps:.1f}",
+                "vis_fps": f"{v_fps:.1f}",
+                "stream_fps": f"{s_fps:.1f}",
+                "saved": saved_count,
+                "gps_lat": f"{lat:.6f}" if lat != 0 else "---",
+                "gps_lon": f"{lon:.6f}" if lon != 0 else "---",
+                "alt": f"{g_alt:.1f}" if g_alt != 0 else "---",
+                "sats": g_sats,
+                "flight_mode": g_mode,
+                "est_lat": f"{est[0]:.6f}" if est else "---",
+                "est_lon": f"{est[1]:.6f}" if est else "---",
+                "est_obs": est[2] if est else 0,
+            })
 
         # Terminal output every 50 frames
         if frame_count % 50 == 0:
