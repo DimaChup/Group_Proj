@@ -170,10 +170,15 @@ def get_gps_charts_html():
     </div>
   </div>
 
-  <!-- Right column: smart cluster -->
+  <!-- Right column: smart cluster + central 4m side by side -->
   <div class="gps-chart-col">
-    <div class="gps-chart-panel" style="width:250px;">
-      <canvas id="cluster-canvas" width="250" height="300"></canvas>
+    <div style="display:flex; gap:8px;">
+      <div class="gps-chart-panel" style="width:250px;">
+        <canvas id="cluster-canvas" width="250" height="300"></canvas>
+      </div>
+      <div class="gps-chart-panel" style="width:250px;">
+        <canvas id="central-canvas" width="250" height="300"></canvas>
+      </div>
     </div>
   </div>
 </div>
@@ -217,6 +222,8 @@ def get_gps_charts_html():
   const convergeCtx = convergeCvs.getContext("2d");
   const clusterCvs = document.getElementById("cluster-canvas");
   const clusterCtx = clusterCvs.getContext("2d");
+  const centralCvs = document.getElementById("central-canvas");
+  const centralCtx = centralCvs.getContext("2d");
   const statsEl = document.getElementById("scatter-stats");
   const tooltip = document.getElementById("gps-tooltip");
 
@@ -232,6 +239,7 @@ def get_gps_charts_html():
   setupHiDPI(scatterCvs, scatterCtx, 500, 400);
   setupHiDPI(convergeCvs, convergeCtx, 500, 200);
   setupHiDPI(clusterCvs, clusterCtx, 250, 300);
+  setupHiDPI(centralCvs, centralCtx, 250, 300);
 
   // ── Color mode buttons ──
   document.querySelectorAll("#scatter-toolbar button[data-mode]").forEach(btn => {{
@@ -347,7 +355,11 @@ def get_gps_charts_html():
 
   // ── Data hash for change detection ──
   function dataHash() {{
-    return estimates.length + ":" + (smartData ? (smartData.locked ? "L" : "S") + (smartData.cluster ? smartData.cluster.length : 0) : "X");
+    // Include length so every new detection triggers redraw
+    const base = estimates.length;
+    const smart = smartData ? (smartData.locked ? "L" : "S") + (smartData.cluster ? smartData.cluster.length : 0) : "X";
+    const central = estimates.filter(e => e[2] < 200).length;
+    return base + ":" + smart + ":" + central + ":" + (smartLocked ? "SL" : "SU");
   }}
 
   // ── Scatter plot ──
@@ -830,7 +842,42 @@ def get_gps_charts_html():
     ctx.fillText("detection count", cl + cw / 2 - 40, cb + 14);
   }}
 
-  // ── Smart cluster mini-chart ──
+  // ── Tightest cluster algorithm (from video_test_compare.py) ──
+  function findTightestCluster(ests, k) {{
+    // For each seed point, find k nearest, return cluster with smallest max pairwise spread
+    if (ests.length < k) return {{ indices: [], spread: Infinity }};
+    let bestSpread = Infinity, bestIndices = [];
+    for (let seed = 0; seed < ests.length; seed++) {{
+      // Sort all points by distance from seed
+      const dArr = ests.map((e, i) => {{
+        const dn = (e[0] - ests[seed][0]) * 111320;
+        const de = (e[1] - ests[seed][1]) * 111320 * Math.cos(ests[seed][0] * Math.PI / 180);
+        return {{ i: i, d: Math.sqrt(dn * dn + de * de) }};
+      }});
+      dArr.sort((a, b) => a.d - b.d);
+      const cluster = dArr.slice(0, k).map(x => x.i);
+      // Compute spread (max pairwise distance)
+      let spread = 0;
+      for (let i = 0; i < cluster.length; i++) {{
+        for (let j = i + 1; j < cluster.length; j++) {{
+          const ci = ests[cluster[i]], cj = ests[cluster[j]];
+          const dn = (ci[0] - cj[0]) * 111320;
+          const de = (ci[1] - cj[1]) * 111320 * Math.cos(ci[0] * Math.PI / 180);
+          const d = Math.sqrt(dn * dn + de * de);
+          if (d > spread) spread = d;
+        }}
+      }}
+      if (spread < bestSpread) {{ bestSpread = spread; bestIndices = cluster.slice(); }}
+    }}
+    return {{ indices: bestIndices, spread: bestSpread }};
+  }}
+
+  // ── Smart cluster mini-chart (continuously updated tightest-10) ──
+  let smartLocked = false;
+  let smartLockedIndices = null;
+  let smartLockedSpread = Infinity;
+  const SMART_LOCK_SPREAD = 0.5;  // meters
+
   function drawCluster() {{
     const W = 250, H = 300;
     const ctx = clusterCtx;
@@ -838,128 +885,343 @@ def get_gps_charts_html():
     ctx.fillStyle = "#1a1a1a";
     ctx.fillRect(0, 0, W, H);
 
-    if (!smartData) {{
-      ctx.fillStyle = "#555";
-      ctx.font = "12px monospace";
-      ctx.textAlign = "center";
-      ctx.fillText("Smart Cluster", W / 2, H / 2 - 10);
-      ctx.fillText("(not active)", W / 2, H / 2 + 10);
-      ctx.textAlign = "start";
-      return;
-    }}
-
     const margin = 30;
     const cx = W / 2, cy = H / 2 + 10;
+    const nTotal = estimates.length;
 
-    if (smartData.locked && smartData.cluster && smartData.cluster.length > 0) {{
-      // LOCKED header
-      ctx.fillStyle = "#00ff00";
-      ctx.font = "bold 13px monospace";
-      ctx.fillText("LOCKED", 8, 18);
-      ctx.fillStyle = "#0f0";
-      ctx.font = "10px monospace";
-      ctx.fillText("spread: " + (smartData.spread || 0).toFixed(2) + "m", 80, 18);
-
-      const cluster = smartData.cluster;
-      // Compute mean of cluster
-      let cSumLat = 0, cSumLon = 0;
-      for (const c of cluster) {{ cSumLat += c[0]; cSumLon += c[1]; }}
-      const cMeanLat = cSumLat / cluster.length;
-      const cMeanLon = cSumLon / cluster.length;
-
-      const cPts = cluster.map(c => {{
-        const [em, nm] = gpsToMeters(c[0], c[1], cMeanLat, cMeanLon);
-        return {{ e: em, n: nm, pdist: c[2] || 0 }};
-      }});
-
-      const cDists = cPts.map(p => Math.sqrt(p.e * p.e + p.n * p.n));
-      const cMax = Math.max(...cDists) * 1.5 || 0.5;
-      const usable = Math.min(W, H) - 2 * margin;
-      const cScale = usable / (2 * Math.max(cMax, 0.3));
-
-      // Rings: 0.1, 0.2, 0.5, 1.0m
-      ctx.setLineDash([3, 3]);
-      ctx.strokeStyle = "#444";
-      ctx.lineWidth = 0.8;
-      ctx.font = "8px monospace";
-      ctx.fillStyle = "#555";
-      for (const r of [0.1, 0.2, 0.5, 1.0]) {{
-        const rpx = r * cScale;
-        if (rpx > 3 && rpx < usable) {{
-          ctx.beginPath();
-          ctx.arc(cx, cy, rpx, 0, Math.PI * 2);
-          ctx.stroke();
-          ctx.fillText(r + "m", cx + rpx + 2, cy - 2);
-        }}
-      }}
-      ctx.setLineDash([]);
-
-      // Center cross (cyan)
-      ctx.strokeStyle = "#00ffff";
-      ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(cx - 10, cy); ctx.lineTo(cx + 10, cy); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(cx, cy - 10); ctx.lineTo(cx, cy + 10); ctx.stroke();
-
-      // Dots with numbers
-      for (let i = 0; i < cPts.length; i++) {{
-        const p = cPts[i];
-        const sx = cx + p.e * cScale;
-        const sy = cy - p.n * cScale;
-
-        // Radial line
-        ctx.strokeStyle = "#333";
-        ctx.lineWidth = 0.5;
-        ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(sx, sy); ctx.stroke();
-
-        // Dot
-        ctx.fillStyle = "#00ffff";
-        ctx.beginPath(); ctx.arc(sx, sy, 5, 0, Math.PI * 2); ctx.fill();
-        ctx.strokeStyle = "#fff";
-        ctx.lineWidth = 1;
-        ctx.beginPath(); ctx.arc(sx, sy, 5, 0, Math.PI * 2); ctx.stroke();
-
-        // Number
-        ctx.fillStyle = "#ccc";
-        ctx.font = "9px monospace";
-        ctx.fillText(String(i + 1), sx + 7, sy + 3);
-      }}
-
-      // Median info
-      if (smartData.median) {{
-        ctx.fillStyle = "#ff00ff";
-        ctx.font = "9px monospace";
-        ctx.fillText("Med: " + smartData.median[0].toFixed(7) + ", " + smartData.median[1].toFixed(7), 5, H - 18);
-      }}
-      ctx.fillStyle = "#aaa";
-      ctx.font = "9px monospace";
-      ctx.fillText("N=" + cluster.length + "  spread=" + (smartData.spread || 0).toFixed(2) + "m", 5, H - 5);
-
-    }} else {{
-      // Searching
+    // Phase 1: not enough detections
+    if (nTotal < 10) {{
       ctx.fillStyle = "#ff00ff";
-      ctx.font = "bold 13px monospace";
-      ctx.fillText("searching...", 8, 18);
+      ctx.font = "bold 12px monospace";
+      ctx.fillText("SMART CLUSTER", 8, 18);
       ctx.fillStyle = "#888";
       ctx.font = "11px monospace";
-      ctx.fillText("Waiting for tightest", 8, 45);
-      ctx.fillText("cluster to lock", 8, 62);
+      ctx.fillText("Gathering " + nTotal + " detections...", 8, 45);
+      ctx.fillText("Need 10 to start", 8, 62);
 
-      // Empty rings for visual reference
-      ctx.setLineDash([3, 3]);
-      ctx.strokeStyle = "#333";
-      ctx.lineWidth = 0.5;
-      for (const r of [0.2, 0.5, 1.0]) {{
-        const rpx = r * 80;
-        ctx.beginPath(); ctx.arc(cx, cy, rpx, 0, Math.PI * 2); ctx.stroke();
+      // Show arriving dots if any
+      if (nTotal > 0) {{
+        let sLat = 0, sLon = 0;
+        for (const e of estimates) {{ sLat += e[0]; sLon += e[1]; }}
+        const mLat = sLat / nTotal, mLon = sLon / nTotal;
+        const usable = Math.min(W, H) - 2 * margin;
+        // Estimate scale from data
+        let maxD = 0.5;
+        for (const e of estimates) {{
+          const [em, nm] = gpsToMeters(e[0], e[1], mLat, mLon);
+          const d = Math.sqrt(em * em + nm * nm);
+          if (d > maxD) maxD = d;
+        }}
+        const cScale = usable / (2 * Math.max(maxD * 1.5, 0.3));
+        // Faint rings
+        ctx.setLineDash([3, 3]);
+        ctx.strokeStyle = "#333";
+        ctx.lineWidth = 0.5;
+        for (const r of [0.2, 0.5, 1.0]) {{
+          const rpx = r * cScale;
+          if (rpx > 3 && rpx < usable) {{
+            ctx.beginPath(); ctx.arc(cx, cy, rpx, 0, Math.PI * 2); ctx.stroke();
+          }}
+        }}
+        ctx.setLineDash([]);
+        // Dots
+        for (const e of estimates) {{
+          const [em, nm] = gpsToMeters(e[0], e[1], mLat, mLon);
+          const sx = cx + em * cScale, sy = cy - nm * cScale;
+          ctx.fillStyle = "#666";
+          ctx.beginPath(); ctx.arc(sx, sy, 3, 0, Math.PI * 2); ctx.fill();
+        }}
       }}
-      ctx.setLineDash([]);
-
       // Center cross
       ctx.strokeStyle = "#444";
       ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(cx - 8, cy); ctx.lineTo(cx + 8, cy); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(cx, cy - 8); ctx.lineTo(cx, cy + 8); ctx.stroke();
+      ctx.fillStyle = "#888";
+      ctx.font = "9px monospace";
+      ctx.fillText("N=" + nTotal + "/10", 5, H - 5);
+      return;
     }}
+
+    // Phase 2 & 3: run tightest cluster continuously (unless locked)
+    let clusterIndices, clusterSpread;
+    if (smartLocked && smartLockedIndices) {{
+      clusterIndices = smartLockedIndices;
+      clusterSpread = smartLockedSpread;
+    }} else {{
+      const result = findTightestCluster(estimates, 10);
+      clusterIndices = result.indices;
+      clusterSpread = result.spread;
+      // Check for lock
+      if (clusterSpread < SMART_LOCK_SPREAD && clusterIndices.length >= 10) {{
+        smartLocked = true;
+        smartLockedIndices = clusterIndices.slice();
+        smartLockedSpread = clusterSpread;
+      }}
+    }}
+
+    const clusterSet = new Set(clusterIndices);
+    const clusterEsts = clusterIndices.map(i => estimates[i]);
+    const outlierEsts = estimates.filter((_, i) => !clusterSet.has(i));
+
+    // Compute cluster mean
+    let cSumLat = 0, cSumLon = 0;
+    for (const c of clusterEsts) {{ cSumLat += c[0]; cSumLon += c[1]; }}
+    const cMeanLat = cSumLat / clusterEsts.length;
+    const cMeanLon = cSumLon / clusterEsts.length;
+
+    // Convert to meters
+    const cPts = clusterEsts.map(c => {{
+      const [em, nm] = gpsToMeters(c[0], c[1], cMeanLat, cMeanLon);
+      return {{ e: em, n: nm, pdist: c[2] || 0 }};
+    }});
+    const oPts = outlierEsts.map(c => {{
+      const [em, nm] = gpsToMeters(c[0], c[1], cMeanLat, cMeanLon);
+      return {{ e: em, n: nm }};
+    }});
+
+    // Scale to fit cluster with margin
+    const cDists = cPts.map(p => Math.sqrt(p.e * p.e + p.n * p.n));
+    const cMax = Math.max(...cDists) * 1.5 || 0.5;
+    const usable = Math.min(W, H) - 2 * margin;
+    const cScale = usable / (2 * Math.max(cMax, 0.3));
+
+    // Header
+    if (smartLocked) {{
+      ctx.fillStyle = "#00ff00";
+      ctx.font = "bold 12px monospace";
+      ctx.fillText("LOCKED", 8, 18);
+      ctx.fillStyle = "#0f0";
+      ctx.font = "10px monospace";
+      ctx.fillText("spread: " + clusterSpread.toFixed(2) + "m", 70, 18);
+    }} else {{
+      ctx.fillStyle = "#ff8800";
+      ctx.font = "bold 12px monospace";
+      ctx.fillText("FINDING CLUSTER...", 8, 18);
+      ctx.fillStyle = "#888";
+      ctx.font = "10px monospace";
+      ctx.fillText(nTotal + " det, spread: " + clusterSpread.toFixed(2) + "m", 8, 33);
+    }}
+
+    // Fine rings: 0.1, 0.2, 0.5, 1.0m
+    ctx.setLineDash([3, 3]);
+    ctx.strokeStyle = "#444";
+    ctx.lineWidth = 0.8;
+    ctx.font = "8px monospace";
+    ctx.fillStyle = "#555";
+    for (const r of [0.1, 0.2, 0.5, 1.0]) {{
+      const rpx = r * cScale;
+      if (rpx > 3 && rpx < usable) {{
+        ctx.beginPath();
+        ctx.arc(cx, cy, rpx, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillText(r + "m", cx + rpx + 2, cy - 2);
+      }}
+    }}
+    ctx.setLineDash([]);
+
+    // Outlier dots (small, dim)
+    for (const p of oPts) {{
+      const sx = cx + p.e * cScale, sy = cy - p.n * cScale;
+      if (sx > 0 && sx < W && sy > 0 && sy < H) {{
+        ctx.fillStyle = "rgba(100,100,100,0.4)";
+        ctx.beginPath(); ctx.arc(sx, sy, 2, 0, Math.PI * 2); ctx.fill();
+      }}
+    }}
+
+    // Cluster dots with numbers and radial lines
+    for (let i = 0; i < cPts.length; i++) {{
+      const p = cPts[i];
+      const sx = cx + p.e * cScale;
+      const sy = cy - p.n * cScale;
+
+      // Radial line from center
+      ctx.strokeStyle = "#333";
+      ctx.lineWidth = 0.5;
+      ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(sx, sy); ctx.stroke();
+
+      // Dot
+      ctx.fillStyle = "#00ffff";
+      ctx.beginPath(); ctx.arc(sx, sy, 5, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = "#fff";
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(sx, sy, 5, 0, Math.PI * 2); ctx.stroke();
+
+      // Number
+      ctx.fillStyle = "#ccc";
+      ctx.font = "9px monospace";
+      ctx.fillText(String(i + 1), sx + 7, sy + 3);
+    }}
+
+    // Center cross (cyan)
+    ctx.strokeStyle = "#00ffff";
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(cx - 10, cy); ctx.lineTo(cx + 10, cy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx, cy - 10); ctx.lineTo(cx, cy + 10); ctx.stroke();
+
+    // Median of cluster
+    const sortedCE = cPts.map(p => p.e).sort((a, b) => a - b);
+    const sortedCN = cPts.map(p => p.n).sort((a, b) => a - b);
+    const medCE = sortedCE[Math.floor(sortedCE.length / 2)];
+    const medCN = sortedCN[Math.floor(sortedCN.length / 2)];
+    const medSx = cx + medCE * cScale, medSy = cy - medCN * cScale;
+    // Magenta diamond for median
+    ctx.strokeStyle = "#ff00ff";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(medSx, medSy - 7); ctx.lineTo(medSx + 5, medSy);
+    ctx.lineTo(medSx, medSy + 7); ctx.lineTo(medSx - 5, medSy);
+    ctx.closePath(); ctx.stroke();
+
+    // Stats
+    const medErr = Math.sqrt(medCE * medCE + medCN * medCN);
+    ctx.fillStyle = "#aaa";
+    ctx.font = "9px monospace";
+    ctx.fillText("Total:" + nTotal + "  Cluster:10  Rejected:" + outlierEsts.length, 5, H - 18);
+    ctx.fillText("Spread:" + clusterSpread.toFixed(2) + "m  Med err:" + medErr.toFixed(2) + "m", 5, H - 5);
+  }}
+
+  // ── Central Only (4m) bullseye chart ──
+  const PX_THRESHOLD = 200;
+  const CENTRAL_TARGET = 10;
+
+  function drawCentral() {{
+    const W = 250, H = 300;
+    const ctx = centralCtx;
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = "#1a1a1a";
+    ctx.fillRect(0, 0, W, H);
+
+    const margin = 30;
+    const cx = W / 2, cy = H / 2 + 10;
+
+    // Filter central detections (pixel_dist < PX_THRESHOLD)
+    const centralAll = estimates.filter(e => e[2] < PX_THRESHOLD);
+    const nCentral = centralAll.length;
+    const nTotal = estimates.length;
+
+    // Title
+    ctx.fillStyle = "#ff00ff";
+    ctx.font = "bold 12px monospace";
+    ctx.fillText("CENTRAL (" + nCentral + "/" + CENTRAL_TARGET + ", <" + PX_THRESHOLD + "px)", 8, 18);
+
+    if (nCentral === 0) {{
+      ctx.fillStyle = "#555";
+      ctx.font = "11px monospace";
+      ctx.textAlign = "center";
+      ctx.fillText("No central detections...", W / 2, H / 2);
+      ctx.fillText("(need pdist < " + PX_THRESHOLD + "px)", W / 2, H / 2 + 18);
+      ctx.textAlign = "start";
+      ctx.fillStyle = "#888";
+      ctx.font = "9px monospace";
+      ctx.fillText("Total: " + nTotal + " | Central: 0", 5, H - 5);
+      return;
+    }}
+
+    // Compute origin = mean of central set
+    let sLat = 0, sLon = 0;
+    for (const e of centralAll) {{ sLat += e[0]; sLon += e[1]; }}
+    const mLat = sLat / nCentral, mLon = sLon / nCentral;
+
+    // Convert to meters relative to central mean
+    const cPts = centralAll.map(e => {{
+      const [em, nm] = gpsToMeters(e[0], e[1], mLat, mLon);
+      return {{ e: em, n: nm, pdist: e[2], alt: e[3], conf: e[4] }};
+    }});
+
+    // Scale: fit to 5m radius (bullseye max)
+    const usable = Math.min(W, H) - 2 * margin;
+    const maxRing = 5;
+    const cScale = usable / (2 * maxRing);
+
+    // Bullseye rings: 1, 2, 3, 5m
+    ctx.setLineDash([3, 3]);
+    ctx.strokeStyle = "#444";
+    ctx.lineWidth = 0.8;
+    ctx.font = "8px monospace";
+    ctx.fillStyle = "#555";
+    for (const r of [1, 2, 3, 5]) {{
+      const rpx = r * cScale;
+      if (rpx > 3 && rpx < usable) {{
+        ctx.beginPath();
+        ctx.arc(cx, cy, rpx, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillText(r + "m", cx + rpx + 2, cy - 2);
+      }}
+    }}
+    ctx.setLineDash([]);
+
+    // Center cross
+    ctx.strokeStyle = "#444";
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(cx - 8, cy); ctx.lineTo(cx + 8, cy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx, cy - 8); ctx.lineTo(cx, cy + 8); ctx.stroke();
+
+    // Color by centrality (green=most central i.e. lowest pdist, red=least)
+    let minPd = Infinity, maxPd = 0;
+    for (const p of cPts) {{
+      if (p.pdist < minPd) minPd = p.pdist;
+      if (p.pdist > maxPd) maxPd = p.pdist;
+    }}
+    const pdRange = Math.max(maxPd - minPd, 1);
+
+    // Draw dots
+    for (const p of cPts) {{
+      const sx = cx + p.e * cScale, sy = cy - p.n * cScale;
+      if (sx < -5 || sx > W + 5 || sy < -5 || sy > H + 5) continue;
+      const val = (p.pdist - minPd) / pdRange;  // 0=green (most central), 1=red
+      ctx.fillStyle = heatColor(val);
+      ctx.beginPath(); ctx.arc(sx, sy, 3.5, 0, Math.PI * 2); ctx.fill();
+    }}
+
+    // Before 10 central: show searching message
+    if (nCentral < CENTRAL_TARGET) {{
+      ctx.fillStyle = "#ff00ff";
+      ctx.font = "11px monospace";
+      ctx.fillText(nCentral + "/" + CENTRAL_TARGET + " searching...", 8, 33);
+    }} else {{
+      // After 10: show median (magenta diamond) and weighted mean (cyan square)
+      // Median
+      const sortedE = cPts.map(p => p.e).sort((a, b) => a - b);
+      const sortedN = cPts.map(p => p.n).sort((a, b) => a - b);
+      const medE = sortedE[Math.floor(sortedE.length / 2)];
+      const medN = sortedN[Math.floor(sortedN.length / 2)];
+      const medSx = cx + medE * cScale, medSy = cy - medN * cScale;
+      // Magenta diamond
+      ctx.strokeStyle = "#ff00ff";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(medSx, medSy - 7); ctx.lineTo(medSx + 5, medSy);
+      ctx.lineTo(medSx, medSy + 7); ctx.lineTo(medSx - 5, medSy);
+      ctx.closePath(); ctx.stroke();
+
+      // Weighted mean (1/pdist^2)
+      let wE = 0, wN = 0, wTot = 0;
+      for (const p of cPts) {{
+        const cd = Math.max(p.pdist, 1);
+        const w = 1 / (cd * cd);
+        wE += p.e * w; wN += p.n * w; wTot += w;
+      }}
+      if (wTot > 0) {{ wE /= wTot; wN /= wTot; }}
+      const wSx = cx + wE * cScale, wSy = cy - wN * cScale;
+      // Cyan square
+      ctx.strokeStyle = "#00ffff";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(wSx - 5, wSy - 5, 10, 10);
+
+      // Stats
+      const medErr = Math.sqrt(medE * medE + medN * medN);
+      const wErr = Math.sqrt(wE * wE + wN * wN);
+      ctx.fillStyle = "#ff00ff";
+      ctx.font = "9px monospace";
+      ctx.fillText("Median err: " + medErr.toFixed(2) + "m", 5, H - 30);
+      ctx.fillStyle = "#00ffff";
+      ctx.fillText("Weighted err: " + wErr.toFixed(2) + "m", 5, H - 18);
+    }}
+
+    ctx.fillStyle = "#888";
+    ctx.font = "9px monospace";
+    ctx.fillText("Total:" + nTotal + " | Central:" + nCentral, 5, H - 5);
   }}
 
   // ── Data polling ──
@@ -991,6 +1253,7 @@ def get_gps_charts_html():
       drawScatter();
       drawConvergence();
       drawCluster();
+      drawCentral();
     }}
     animFrameId = requestAnimationFrame(renderLoop);
   }}
@@ -1006,6 +1269,7 @@ def get_gps_charts_html():
   drawScatter();
   drawConvergence();
   drawCluster();
+  drawCentral();
 
 }})();
 </script>
