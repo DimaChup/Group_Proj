@@ -3004,11 +3004,12 @@ def main():
                 raw_det = None  # fade after 0.5s
 
         # ── Update plots periodically (every ~60 frames ≈ 2s at 30fps) ──
+        # When smart is active, bullseye/grid/map ALSO render from the
+        # _smart_added_flag block below — but we still do periodic renders
+        # so non-smart panels (Panel 1-3) update even between detections.
         if frame_count % max(1, int(fake_fps * 2 if args.fake else 60)) == 0:
             render_bullseye(_all_gps_estimates, smart_estimator)
             render_map(_all_gps_estimates, smart_estimator)
-            if smart_estimator:
-                render_smart_grid(smart_estimator)
 
         # ── Draw overlay on every frame for smooth stream ──
         display = draw_overlay(frame, last_det, raw_det=raw_det)
