@@ -498,15 +498,6 @@ def get_interactive_map_html(container_id="map-container", width="100%", height=
       ctx.stroke();
     }}
 
-    // Ground truth star (yellow)
-    if (groundTruth) {{
-      const gp = gpsToScreen(groundTruth[0], groundTruth[1]);
-      drawStar(gp.x, gp.y, 5, 12, 6, "rgba(255,220,0,1)", "rgba(255,220,0,0.5)");
-      ctx.fillStyle = "#ffdc00";
-      ctx.font = "bold 10px monospace";
-      ctx.fillText("TRUE", gp.x + 14, gp.y + 4);
-    }}
-
     // Smart cluster median star
     if (smartMedian) {{
       const sp = gpsToScreen(smartMedian[0], smartMedian[1]);
@@ -514,6 +505,21 @@ def get_interactive_map_html(container_id="map-container", width="100%", height=
       ctx.fillStyle = "#f0f";
       ctx.font = "bold 10px monospace";
       ctx.fillText("SMART", sp.x + 12, sp.y + 4);
+    }}
+
+    // Ground truth star (yellow, drawn LAST so always on top)
+    if (groundTruth) {{
+      const gp = gpsToScreen(groundTruth[0], groundTruth[1]);
+      // Black outline for visibility
+      drawStar(gp.x, gp.y, 5, 18, 8, "rgba(0,0,0,1)", "rgba(0,0,0,0.6)");
+      // Yellow star on top
+      drawStar(gp.x, gp.y, 5, 16, 7, "rgba(255,220,0,1)", "rgba(255,220,0,0.7)");
+      ctx.fillStyle = "#000";
+      ctx.font = "bold 12px monospace";
+      ctx.fillText("TRUE", gp.x + 18, gp.y + 5);
+      ctx.fillStyle = "#ffdc00";
+      ctx.font = "bold 11px monospace";
+      ctx.fillText("TRUE", gp.x + 19, gp.y + 4);
     }}
   }}
 
