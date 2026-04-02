@@ -2697,7 +2697,9 @@ def main():
         if _snap_best and display is not None:
             _gps_info_best = None
             if d_lat != 0.0 or d_lon != 0.0:
-                _gps_info_best = {"drone_lat": d_lat, "drone_lon": d_lon}
+                _cls = getattr(eyes, 'last_class_name', '') or '?'
+                _det_conf = conf if 'conf' in dir() else 0
+                _gps_info_best = {"drone_lat": d_lat, "drone_lon": d_lon, "cls": _cls, "conf": _det_conf}
                 if est_result:
                     _gps_info_best["est_lat"] = est_lat
                     _gps_info_best["est_lon"] = est_lon
