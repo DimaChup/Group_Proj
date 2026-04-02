@@ -857,10 +857,11 @@ class Handler(BaseHTTPRequestHandler):
             return {"ok": False, "error": "invalid id"}
         if mid < 0 or mid >= len(MODEL_TABLE):
             return {"ok": False, "error": f"id must be 0-{len(MODEL_TABLE)-1}"}
+        _mod = sys.modules.get('field_tools.passive_watch') or sys.modules.get('__main__')
         with runtime_lock:
             runtime_state["model_switch_request"] = mid
             runtime_state["model_switch_error"] = None
-        # Wait for main loop to pick it up (up to 120s — TFLite init can be slow)
+        # Wait for background switch thread (up to 120s — int8 models need dequantization)
         for _ in range(600):
             time.sleep(0.2)
             with runtime_lock:
@@ -868,7 +869,7 @@ class Handler(BaseHTTPRequestHandler):
                 if err is not None:
                     runtime_state["model_switch_error"] = None
                     return {"ok": False, "error": err}
-                if runtime_state["model_switch_request"] is None:
+                if runtime_state["active_model_id"] == mid and not getattr(_mod, '_model_switch_active', False):
                     return {"ok": True, "model": MODEL_TABLE[mid]["name"],
                             "id": mid, "path": MODEL_TABLE[mid]["path"]}
         return {"ok": False, "error": "timeout waiting for model switch"}
@@ -2837,49 +2838,59 @@ def main():
         with _inference_lock:
             _inference_frame = frame.copy()
 
-        # ── Handle model switch request from browser ──
+        # ── Handle model switch request from browser (non-blocking) ──
         with runtime_lock:
             switch_req = runtime_state["model_switch_request"]
-        if switch_req is not None:
-            m = MODEL_TABLE[switch_req]
-            print(f"[MODEL] Switching to {m['name']} ({m['path']}, backend={m['backend']})")
-            t0_switch = time.time()
-            try:
-                new_eyes = VisionSystem(
-                    camera_index=None,  # display loop handles camera, not VisionSystem
-                    model_path=m['path'],
-                    backend=m['backend']
-                )
-                if new_eyes.using_ai:
-                    test_frame = np.zeros((640, 640, 3), dtype=np.uint8)
-                    new_eyes.detect_in_image(test_frame)
-                    print(f"[MODEL] Test inference OK")
-                # Swap the inference eyes reference (thread-safe).
-                # camera_source keeps the camera — new_eyes is inference-only.
-                old_inf_eyes = None
-                with _inference_eyes_lock:
-                    old_inf_eyes = _inference_eyes
-                    _inference_eyes = new_eyes
-                # Release old inference-only VisionSystem (but never camera_source)
-                if old_inf_eyes is not None and old_inf_eyes is not camera_source:
-                    old_inf_eyes.release()
-                dt_switch = time.time() - t0_switch
-                print(f"[MODEL] Loaded: {m['name']} (backend={new_eyes.backend_name}) in {dt_switch:.2f}s")
-                # Reset best detection + class filter for new model
-                _best_center_dist = 999.0
-                _best_detection_gps = None
-                with frame_lock:
-                    latest_best_jpeg = None
-                    latest_detection_jpeg = None
-                with runtime_lock:
-                    runtime_state["active_model_id"] = switch_req
-                    runtime_state["class_filter"] = "all"
-                    runtime_state["model_switch_request"] = None
-            except Exception as e:
-                print(f"[MODEL] ERROR loading {m['name']}: {e}")
-                with runtime_lock:
-                    runtime_state["model_switch_request"] = None
-                    runtime_state["model_switch_error"] = str(e)
+        if switch_req is not None and not getattr(_mod, '_model_switch_active', False):
+            _mod._model_switch_active = True
+            mid = switch_req
+            m = MODEL_TABLE[mid]
+            with runtime_lock:
+                runtime_state["model_switch_request"] = None  # consumed
+
+            def _do_model_switch(mid, m):
+                """Background thread: load + warmup model, then swap into inference."""
+                global _inference_eyes
+                print(f"[MODEL] Loading {m['name']} ({m['path']}, backend={m['backend']}) in background...")
+                t0 = time.time()
+                try:
+                    new_eyes = VisionSystem(
+                        camera_index=None,
+                        model_path=m['path'],
+                        backend=m['backend']
+                    )
+                    if new_eyes.using_ai:
+                        test_frame = np.zeros((640, 640, 3), dtype=np.uint8)
+                        new_eyes.detect_in_image(test_frame)
+                    # Swap
+                    old_inf_eyes = None
+                    with _inference_eyes_lock:
+                        old_inf_eyes = _inference_eyes
+                        _inference_eyes = new_eyes
+                    if old_inf_eyes is not None and old_inf_eyes is not camera_source:
+                        try:
+                            old_inf_eyes.release()
+                        except Exception:
+                            pass
+                    dt = time.time() - t0
+                    print(f"[MODEL] Loaded: {m['name']} (backend={new_eyes.backend_name}) in {dt:.2f}s")
+                    # Reset panels + filter
+                    _mod._best_center_dist = 999.0
+                    _mod._best_detection_gps = None
+                    with frame_lock:
+                        _mod.latest_best_jpeg = None
+                        _mod.latest_detection_jpeg = None
+                    with runtime_lock:
+                        runtime_state["active_model_id"] = mid
+                        runtime_state["class_filter"] = "all"
+                except Exception as e:
+                    print(f"[MODEL] ERROR: {e}")
+                    with runtime_lock:
+                        runtime_state["model_switch_error"] = str(e)
+                finally:
+                    _mod._model_switch_active = False
+
+            threading.Thread(target=_do_model_switch, args=(mid, m), daemon=True).start()
 
         # ── Read last_det from inference thread (tuple = atomic read) ──
         last_det = _mod._last_det
