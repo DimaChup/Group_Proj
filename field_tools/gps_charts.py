@@ -84,25 +84,23 @@ def get_gps_charts_html():
 .gps-chart-toolbar button.active {{ background: #555; color: #0f0; border-color: #0f0; }}
 .gps-chart-toolbar .sep {{ width: 1px; height: 16px; background: #444; margin: 0 4px; }}
 .gps-filter-row {{
-  display: flex;
-  gap: 10px;
   padding: 3px 6px;
   background: #222;
   border-bottom: 1px solid #333;
-  flex-wrap: wrap;
-  align-items: center;
   font: 10px monospace;
   color: #888;
 }}
-.gps-filter-row label {{ color: #0f0; margin-right: 2px; }}
+.gps-filter-row label {{ color: #0f0; margin-right: 4px; }}
 .gps-filter-row input[type=range] {{
-  width: 200px;
+  width: 100%;
   height: 10px;
   accent-color: #0f0;
   vertical-align: middle;
 }}
-.gps-filter-row .fval {{ color: #0f0; min-width: 32px; display: inline-block; text-align: right; }}
-.gps-filter-group {{ display: inline-flex; gap: 4px; align-items: center; }}
+.gps-filter-row .fval {{ color: #0f0; min-width: 36px; display: inline-block; text-align: right; }}
+.gps-filter-group {{ display: block; }}
+.gps-slider-line {{ display: flex; align-items: center; gap: 4px; margin: 1px 0; }}
+.gps-slider-line span.slbl {{ color: #888; min-width: 28px; }}
 .gps-chart-stats {{
   padding: 4px 8px;
   background: #222;
@@ -152,31 +150,23 @@ def get_gps_charts_html():
       <div class="gps-filter-row" id="scatter-filters">
         <div id="filter-pdist" class="gps-filter-group">
           <label>Pdist (px):</label>
-          <span style="color:#888;">Min:</span> <span class="fval" id="fv-pdist-min">0</span>
-          <input type="range" id="f-pdist-min" min="0" max="1000" value="0" step="1">
-          <span style="color:#888;">Max:</span> <span class="fval" id="fv-pdist-max">1000</span>
-          <input type="range" id="f-pdist-max" min="0" max="1000" value="1000" step="1">
+          <div class="gps-slider-line"><span class="slbl">Min:</span> <span class="fval" id="fv-pdist-min">0</span> <input type="range" id="f-pdist-min" min="0" max="1000" value="0" step="1"></div>
+          <div class="gps-slider-line"><span class="slbl">Max:</span> <span class="fval" id="fv-pdist-max">1000</span> <input type="range" id="f-pdist-max" min="0" max="1000" value="1000" step="1"></div>
         </div>
         <div id="filter-dist" class="gps-filter-group" style="display:none;">
           <label>Distance (m):</label>
-          <span style="color:#888;">Min:</span> <span class="fval" id="fv-dist-min">0</span>
-          <input type="range" id="f-dist-min" min="0" max="50" value="0" step="0.1">
-          <span style="color:#888;">Max:</span> <span class="fval" id="fv-dist-max">50</span>
-          <input type="range" id="f-dist-max" min="0" max="50" value="50" step="0.1">
+          <div class="gps-slider-line"><span class="slbl">Min:</span> <span class="fval" id="fv-dist-min">0</span> <input type="range" id="f-dist-min" min="0" max="50" value="0" step="0.1"></div>
+          <div class="gps-slider-line"><span class="slbl">Max:</span> <span class="fval" id="fv-dist-max">50</span> <input type="range" id="f-dist-max" min="0" max="50" value="50" step="0.1"></div>
         </div>
         <div id="filter-alt" class="gps-filter-group" style="display:none;">
           <label>Alt (m):</label>
-          <span style="color:#888;">Min:</span> <span class="fval" id="fv-alt-min">0</span>
-          <input type="range" id="f-alt-min" min="0" max="100" value="0" step="0.5">
-          <span style="color:#888;">Max:</span> <span class="fval" id="fv-alt-max">100</span>
-          <input type="range" id="f-alt-max" min="0" max="100" value="100" step="0.5">
+          <div class="gps-slider-line"><span class="slbl">Min:</span> <span class="fval" id="fv-alt-min">0</span> <input type="range" id="f-alt-min" min="0" max="100" value="0" step="0.5"></div>
+          <div class="gps-slider-line"><span class="slbl">Max:</span> <span class="fval" id="fv-alt-max">100</span> <input type="range" id="f-alt-max" min="0" max="100" value="100" step="0.5"></div>
         </div>
         <div id="filter-conf" class="gps-filter-group" style="display:none;">
           <label>Conf:</label>
-          <span style="color:#888;">Min:</span> <span class="fval" id="fv-conf-min">0</span>
-          <input type="range" id="f-conf-min" min="0" max="1" value="0" step="0.01">
-          <span style="color:#888;">Max:</span> <span class="fval" id="fv-conf-max">1.00</span>
-          <input type="range" id="f-conf-max" min="0" max="1" value="1" step="0.01">
+          <div class="gps-slider-line"><span class="slbl">Min:</span> <span class="fval" id="fv-conf-min">0</span> <input type="range" id="f-conf-min" min="0" max="1" value="0" step="0.01"></div>
+          <div class="gps-slider-line"><span class="slbl">Max:</span> <span class="fval" id="fv-conf-max">1.00</span> <input type="range" id="f-conf-max" min="0" max="1" value="1" step="0.01"></div>
         </div>
       </div>
       <canvas id="scatter-canvas" width="500" height="400" style="cursor:grab;"></canvas>
@@ -266,10 +256,10 @@ def get_gps_charts_html():
 
   // ── Color mode buttons + dynamic filter visibility ──
   function updateFilterVisibility() {{
-    document.getElementById("filter-pdist").style.display = colorMode === "pixel_centrality" ? "inline-flex" : "none";
-    document.getElementById("filter-dist").style.display = colorMode === "distance_centrality" ? "inline-flex" : "none";
-    document.getElementById("filter-alt").style.display = colorMode === "altitude" ? "inline-flex" : "none";
-    document.getElementById("filter-conf").style.display = colorMode === "confidence" ? "inline-flex" : "none";
+    document.getElementById("filter-pdist").style.display = colorMode === "pixel_centrality" ? "block" : "none";
+    document.getElementById("filter-dist").style.display = colorMode === "distance_centrality" ? "block" : "none";
+    document.getElementById("filter-alt").style.display = colorMode === "altitude" ? "block" : "none";
+    document.getElementById("filter-conf").style.display = colorMode === "confidence" ? "block" : "none";
   }}
   // Set initial visibility
   updateFilterVisibility();
