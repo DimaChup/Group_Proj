@@ -63,7 +63,7 @@ frame_lock = threading.Lock()
 gps_lock = threading.Lock()
 _all_gps_estimates = []
 _map_base = None  # loaded map.jpg (once)
-bullseye_map_bg = False  # toggle: dark background vs satellite map crop for bullseye plots 1-2
+bullseye_map_bg = True  # default ON: satellite map crop behind bullseye scatter plots
 latest_best_jpeg = None  # best (most central) detection JPEG
 _best_center_dist = 999.0  # track best center distance
 
@@ -214,6 +214,8 @@ HTML_PAGE = """<!DOCTYPE html>
     <option value="dummy">dummy</option>
     <option value="person">person</option>
   </select>
+  <span class="sep">|</span>
+  <button id="clear-all-btn" onclick="clearAll()" style="padding:3px 10px;background:#600;color:#fff;border:1px solid #f44;border-radius:3px;cursor:pointer;font-family:monospace;font-size:1em">Clear All</button>
 </div>
 
 <div class="stats" id="stats">Starting...</div>
@@ -277,6 +279,13 @@ const modelStatus = document.getElementById('model-status');
 
 function sendCmd(url) {
   return fetch(url).then(r => r.json()).catch(() => ({ok:false,error:'network'}));
+}
+
+function clearAll() {
+  sendCmd('/api/clear-all').then(d => {
+    if(d.ok) document.getElementById('clear-all-btn').textContent = 'Cleared!';
+    setTimeout(()=>document.getElementById('clear-all-btn').textContent='Clear All', 1500);
+  });
 }
 
 modelSel.addEventListener('change', () => {
@@ -590,6 +599,22 @@ class Handler(BaseHTTPRequestHandler):
         elif path == '/api/toggle-bullseye-bg':
             bullseye_map_bg = not bullseye_map_bg
             self._send_json_response({"ok": True, "map_bg": bullseye_map_bg})
+
+        elif path == '/api/clear-all':
+            # Reset all GPS estimates, smart estimator, best detection, dummy estimator
+            _all_gps_estimates.clear()
+            dummy_estimator.reset()
+            if smart_estimator:
+                smart_estimator.__init__(min_samples=smart_estimator.min_samples, max_spread=smart_estimator.max_spread)
+            # Clear detection snapshots and plots (mutate globals via module ref)
+            import field_tools.passive_watch as _pw
+            _pw._best_center_dist = 999.0
+            _pw.latest_detection_jpeg = None
+            _pw.latest_best_jpeg = None
+            _pw.latest_bullseye = None
+            _pw.latest_smart_grid_jpeg = None
+            print("[CLEAR] All estimates, detections, and plots reset")
+            self._send_json_response({"ok": True})
 
         else:
             self.send_response(404)
