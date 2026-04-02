@@ -989,10 +989,14 @@ class SmartEstimator:
         self.locked_spread = 0
 
     def add(self, est_lat, est_lon, pixel_dist, frame):
-        """Add detection. Returns True if cluster just locked."""
+        """Add detection. Returns True if cluster just locked.
+
+        frame can be None — call update_last_frame() afterwards to set the
+        overlayed display frame (so thumbnails in the smart grid have full HUD).
+        """
         if self.locked:
             return False
-        self.all_estimates.append((est_lat, est_lon, pixel_dist, frame.copy()))
+        self.all_estimates.append((est_lat, est_lon, pixel_dist, frame.copy() if frame is not None else None))
 
         if len(self.all_estimates) < self.min_samples:
             return False
@@ -1017,6 +1021,24 @@ class SmartEstimator:
             print(f"  [SMART] Median: {med[0]:.7f}, {med[1]:.7f} ({med[2]} samples)")
             return True
         return False
+
+    def update_last_frame(self, display):
+        """Replace the frame in the most recently added estimate with the overlayed display.
+
+        Called after draw_overlay() so that smart grid thumbnails show the full HUD
+        (detection box, GPS bar, crosshair, etc.) instead of the raw camera frame.
+        Also updates locked_cluster and locked_frame if the cluster was just locked.
+        """
+        if not self.all_estimates:
+            return
+        last = self.all_estimates[-1]
+        self.all_estimates[-1] = (last[0], last[1], last[2], display.copy())
+        # If we just locked, refresh the cluster frames from all_estimates
+        if self.locked and self.locked_cluster_indices is not None:
+            cluster = [self.all_estimates[i] for i in self.locked_cluster_indices]
+            self.locked_cluster = [(e[0], e[1], e[2], e[3]) for e in cluster]
+            best = min(cluster, key=lambda e: e[2])
+            self.locked_frame = best[3]
 
     def _find_tightest(self, target_size):
         """Greedy: find target_size points closest to each other."""
@@ -1130,11 +1152,16 @@ def _snapshot_overlay(display, label=None, thumb_w=728, gps_info=None):
                     font_scale, badge_color, thickness, cv2.LINE_AA)
 
     # --- Info bar at bottom ---
+    # First, paint a fully opaque black rectangle over the bottom 75px to cover
+    # the camera feed's own GPS/FOV/estimate bars that are baked into the display frame.
+    # Without this, those old bars bleed through as faint text behind the snapshot info.
+    cover_h = 75  # covers GPS bar (25px) + FOV bar (25px) + estimate bar (25px)
+    cv2.rectangle(thumb, (0, th - cover_h), (thumb_w, th), (0, 0, 0), -1)
+
     if gps_info:
         bar_h = 52 if thumb_w >= 1024 else 38
-        overlay = thumb.copy()
-        cv2.rectangle(overlay, (0, th - bar_h), (thumb_w, th), (0, 0, 0), -1)
-        cv2.addWeighted(overlay, 0.7, thumb, 0.3, 0, thumb)
+        # Info bar is drawn directly (fully opaque) on the already-cleared area
+        cv2.rectangle(thumb, (0, th - bar_h), (thumb_w, th), (0, 0, 0), -1)
 
         font = cv2.FONT_HERSHEY_SIMPLEX
         fs = 0.45 if thumb_w >= 1024 else 0.32
@@ -1157,9 +1184,10 @@ def _snapshot_overlay(display, label=None, thumb_w=728, gps_info=None):
             de = (d_lon - e_lon) * 111320 * math.cos(math.radians(d_lat))
             offset_m = math.sqrt(dn ** 2 + de ** 2)
             est_txt = f"DUMMY EST: {e_lat:.6f}, {e_lon:.6f}"
-            off_txt = f"OFFSET: {offset_m:.1f}m"
+            cls_name = getattr(draw_overlay, '_last_class', '') or '?'
+            off_txt = f"OFFSET: {offset_m:.1f}m  [{cls_name}]"
             cv2.putText(thumb, est_txt, (6, y_line2), font, fs, (255, 0, 255), lw, cv2.LINE_AA)  # magenta
-            # Offset after estimate text
+            # Offset + class after estimate text
             est_tw, _ = cv2.getTextSize(est_txt, font, fs, lw)
             cv2.putText(thumb, "  " + off_txt, (6 + est_tw[0], y_line2), font, fs, (0, 255, 255), lw, cv2.LINE_AA)  # yellow
         else:
@@ -2387,6 +2415,7 @@ def main():
         # Snapshot flags — set inside detection block, captured after draw_overlay
         _snap_latest = False
         _snap_best = False
+        _smart_added = False  # True if smart_estimator.add() actually appended this frame
 
         # Run detection (throttled)
         if eyes.using_ai and (now - last_inference) >= min_interval:
@@ -2436,9 +2465,10 @@ def main():
                         _all_gps_estimates.append((est_lat, est_lon, pixel_dist, d_alt, conf))
 
                         # Smart estimate: greedy cluster finds tightest 10
-                        if smart_estimator:
-                            smart_estimator.add(est_lat, est_lon, pixel_dist, frame)
-                            render_smart_grid(smart_estimator)
+                        # Pass None as frame — we'll set the overlayed display after draw_overlay
+                        if smart_estimator and not smart_estimator.locked:
+                            smart_estimator.add(est_lat, est_lon, pixel_dist, None)
+                            _smart_added = True
 
                         # Update bullseye plot
                         render_bullseye(_all_gps_estimates, smart_estimator)
@@ -2675,6 +2705,12 @@ def main():
             if snap_bytes:
                 with frame_lock:
                     latest_best_jpeg = snap_bytes
+
+        # Update smart estimator's last frame with the overlayed display
+        # so that smart grid thumbnails show the full HUD (detection box, GPS, etc.)
+        if smart_estimator and _smart_added and display is not None:
+            smart_estimator.update_last_frame(display)
+            render_smart_grid(smart_estimator)
 
         # Encode for stream
         _, jpg = cv2.imencode('.jpg', display, [cv2.IMWRITE_JPEG_QUALITY, 70])
