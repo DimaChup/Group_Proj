@@ -732,6 +732,60 @@ def get_gps_charts_html():
       }}
     }}
 
+    // Smart cluster median marker (magenta 5-pointed star) — when locked
+    let smartMedE = null, smartMedN = null;
+    if (smartData && smartData.locked && smartData.median) {{
+      [smartMedE, smartMedN] = gpsToMeters(smartData.median[0], smartData.median[1], originLat, originLon);
+      const smsx = cx + (smartMedE - viewCenterE) * viewScale;
+      const smsy = cy - (smartMedN - viewCenterN) * viewScale;
+      // 5-pointed star in magenta
+      ctx.fillStyle = "#ff00ff";
+      ctx.strokeStyle = "#ff00ff";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let i = 0; i < 10; i++) {{
+        const r = (i % 2 === 0) ? 9 : 4;
+        const a = -Math.PI / 2 + (i * Math.PI / 5);
+        const sx2 = smsx + r * Math.cos(a);
+        const sy2 = smsy + r * Math.sin(a);
+        if (i === 0) ctx.moveTo(sx2, sy2); else ctx.lineTo(sx2, sy2);
+      }}
+      ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = "#ff00ff";
+      ctx.font = "bold 10px monospace";
+      ctx.textAlign = "center";
+      ctx.fillText("SMART", smsx, smsy - 13);
+      ctx.textAlign = "start";
+    }}
+
+    // Central-10 median marker (orange diamond) — first 10 with pdist < 200
+    let c10MedE = null, c10MedN = null;
+    const central10 = filtered.filter(e => e[2] < 200).slice(0, 10);
+    if (central10.length >= 3) {{
+      const c10pts = central10.map(e => {{
+        const [em2, nm2] = gpsToMeters(e[0], e[1], originLat, originLon);
+        return {{ e: em2, n: nm2 }};
+      }});
+      const c10sortE = c10pts.map(p => p.e).sort((a, b) => a - b);
+      const c10sortN = c10pts.map(p => p.n).sort((a, b) => a - b);
+      c10MedE = c10sortE[Math.floor(c10sortE.length / 2)];
+      c10MedN = c10sortN[Math.floor(c10sortN.length / 2)];
+      const c10sx = cx + (c10MedE - viewCenterE) * viewScale;
+      const c10sy = cy - (c10MedN - viewCenterN) * viewScale;
+      // Orange diamond
+      ctx.fillStyle = "#ff8c00";
+      ctx.strokeStyle = "#ff8c00";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(c10sx, c10sy - 8); ctx.lineTo(c10sx + 6, c10sy);
+      ctx.lineTo(c10sx, c10sy + 8); ctx.lineTo(c10sx - 6, c10sy);
+      ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.font = "bold 10px monospace";
+      ctx.textAlign = "center";
+      ctx.fillText("4m", c10sx, c10sy - 12);
+      ctx.textAlign = "start";
+    }}
+
     // Stats — error is distance from origin (ground truth if set, else mean)
     const cep50 = dists[Math.floor(dists.length / 2)] || 0;
     const maxSpread = dists[dists.length - 1] || 0;
@@ -745,6 +799,22 @@ def get_gps_charts_html():
       const [bestEstE2, bestEstN2] = gpsToMeters(bestData.est_lat, bestData.est_lon, originLat, originLon);
       const bestErr = Math.sqrt(bestEstE2 * bestEstE2 + bestEstN2 * bestEstN2);
       bestErrStr = ` &nbsp; <span class="lbl" style="color:#ff2020;">Best:</span> <span class="val">${{bestErr.toFixed(2)}}m</span>`;
+    }}
+
+    // Smart cluster median error from origin
+    let smartErrStr = "";
+    if (smartMedE !== null && smartMedN !== null) {{
+      const smartErr = Math.sqrt(smartMedE * smartMedE + smartMedN * smartMedN);
+      smartErrStr = ` &nbsp; <span class="lbl" style="color:#ff00ff;">Smart:</span> <span class="val">${{smartErr.toFixed(2)}}m</span>`;
+    }} else {{
+      smartErrStr = ` &nbsp; <span class="lbl" style="color:#666;">SMART: searching...</span>`;
+    }}
+
+    // Central-10 median error from origin
+    let c10ErrStr = "";
+    if (c10MedE !== null && c10MedN !== null) {{
+      const c10Err = Math.sqrt(c10MedE * c10MedE + c10MedN * c10MedN);
+      c10ErrStr = ` &nbsp; <span class="lbl" style="color:#ff8c00;">4m:</span> <span class="val">${{c10Err.toFixed(2)}}m</span>`;
     }}
 
     const filtLabel = filtered.length < estimates.length
@@ -762,7 +832,7 @@ def get_gps_charts_html():
       `<br><span class="lbl" style="color:#ffdc00;">Mean (simple avg):</span> <span class="val">${{meanErr.toFixed(2)}}m</span>` +
       ` &nbsp; <span class="lbl" style="color:#0ff;">Weighted (centrality):</span> <span class="val">${{wErr.toFixed(2)}}m</span>` +
       ` &nbsp; <span class="lbl" style="color:#f0f;">Median:</span> <span class="val">${{medErr.toFixed(2)}}m</span>` +
-      bestErrStr +
+      bestErrStr + smartErrStr + c10ErrStr +
       `<span class="lbl">${{errRefLabel}}</span>`;
   }}
 
