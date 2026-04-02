@@ -236,13 +236,8 @@ HTML_PAGE = """<!DOCTYPE html>
   </div>
 </div>
 
-<h2 style="margin-top:15px">GPS Analysis (5 plots)
-  <button id="toggle-map-bg" onclick="toggleMapBG()" style="margin-left:12px;font-size:0.8em;padding:2px 8px;background:#222;color:#0f0;border:1px solid #444;border-radius:3px;cursor:pointer;font-family:monospace">Toggle Map BG</button>
-  <span id="map-bg-status" style="font-size:0.7em;color:#666;margin-left:6px">off</span>
-</h2>
-<div style="overflow-x:auto;margin-bottom:10px">
-  <img id="bullseye" src="/bullseye" alt="GPS Plots" style="max-width:100%;height:auto;border:1px solid #333">
-</div>
+<h2 style="margin-top:15px">GPS Analysis</h2>
+<div id="gps-charts-host"></div>
 
 <h2 style="margin-top:15px">CV Detection Pipeline</h2>
 <div id="cv-pipeline-host"></div>
@@ -301,7 +296,6 @@ setInterval(()=>{
     const t=Date.now();
     document.getElementById('latest').src='/latest?'+t;
     document.getElementById('smart-grid').src='/smart-grid?'+t;
-    document.getElementById('bullseye').src='/bullseye?'+t;
     document.getElementById('smart-grid2').src='/smart-grid?'+t;
     /* Update pipeline visuals with live data */
     if (typeof updatePipelineData === 'function') {
@@ -321,17 +315,8 @@ setInterval(()=>{
     if (d.class_filter !== undefined && document.activeElement !== classSel) {
       classSel.value = d.class_filter;
     }
-    if (d.bullseye_map_bg !== undefined) {
-      document.getElementById('map-bg-status').textContent = d.bullseye_map_bg ? 'MAP' : 'off';
-    }
   });
 },2000);
-
-function toggleMapBG() {
-  fetch('/api/toggle-bullseye-bg').then(r=>r.json()).then(d=>{
-    if(d.ok) document.getElementById('map-bg-status').textContent = d.map_bg ? 'MAP' : 'off';
-  });
-}
 </script>
 </body></html>"""
 
@@ -352,6 +337,7 @@ class Handler(BaseHTTPRequestHandler):
             from field_tools.interactive_map import get_interactive_map_html
             from field_tools.cv_pipeline_visual import get_cv_pipeline_html
             from field_tools.gps_pipeline_visual import get_gps_pipeline_html
+            from field_tools.gps_charts import get_gps_charts_html
             imap_html = get_interactive_map_html(
                 container_id="map-container", width="100%", height="350px"
             )
@@ -364,6 +350,9 @@ class Handler(BaseHTTPRequestHandler):
             ).replace(
                 '<div id="gps-pipeline-host"></div>',
                 get_gps_pipeline_html()
+            ).replace(
+                '<div id="gps-charts-host"></div>',
+                get_gps_charts_html()
             )
             self.wfile.write(page.encode())
 
@@ -498,6 +487,44 @@ class Handler(BaseHTTPRequestHandler):
             self.send_header('Cache-Control', 'no-cache')
             self.end_headers()
             self.wfile.write(_json.dumps({"estimates": est_list, "smart": smart}).encode())
+
+        elif path == '/api/estimates-full':
+            # Detailed GPS estimates for client-side charting
+            import json as _json
+            # Each entry: [lat, lon, pdist, alt, conf]
+            est_list = [[e[0], e[1], e[2], e[3], e[4]] for e in _all_gps_estimates]
+            # Smart estimator cluster info
+            smart_data = None
+            if smart_estimator:
+                if smart_estimator.locked and smart_estimator.locked_cluster:
+                    med = smart_estimator.get_median()
+                    smart_data = {
+                        "locked": True,
+                        "cluster": [[c[0], c[1], c[2]] for c in smart_estimator.locked_cluster],
+                        "spread": smart_estimator.locked_spread,
+                        "median": [med[0], med[1]] if med else None,
+                    }
+                else:
+                    smart_data = {"locked": False, "cluster": [], "spread": 0, "median": None}
+            # Mean of all estimates
+            mean = None
+            if est_list:
+                mean = [
+                    sum(e[0] for e in est_list) / len(est_list),
+                    sum(e[1] for e in est_list) / len(est_list),
+                ]
+            payload = {
+                "estimates": est_list,
+                "smart": smart_data,
+                "drone": {"lat": gps_data.get("lat", 0), "lon": gps_data.get("lon", 0)},
+                "mean": mean,
+                "n": len(est_list),
+            }
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('Cache-Control', 'no-cache')
+            self.end_headers()
+            self.wfile.write(_json.dumps(payload).encode())
 
         elif path == '/api/status':
             self.send_response(200)

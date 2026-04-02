@@ -210,6 +210,52 @@ def get_gps_pipeline_html():
           <circle cx="130" cy="130" r="3" fill="#fff"/>
         </svg>
       </div>
+
+      <!-- Calibration Reference Card -->
+      <div style="background:#0a0a0a; border:1px solid #333; border-radius:6px; padding:12px; margin-top:12px;">
+        <h3 style="color:#0f0; margin:0 0 10px 0; font-size:14px; text-align:center;">Calibration Reference</h3>
+        <table style="width:100%; border-collapse:collapse; font-family:monospace; font-size:12px;">
+          <thead>
+            <tr style="border-bottom:1px solid #444;">
+              <th style="text-align:left; padding:4px 6px; color:#888;">Alt</th>
+              <th style="text-align:right; padding:4px 6px; color:#888;">Coverage</th>
+              <th style="text-align:right; padding:4px 6px; color:#888;">GSD</th>
+              <th style="text-align:right; padding:4px 6px; color:#888;">Dummy</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom:1px solid #222;">
+              <td style="padding:3px 6px; color:#0ff;">1 m</td>
+              <td style="padding:3px 6px; color:#ddd; text-align:right;" id="gps-cal-cov1">0.92 x 0.69 m</td>
+              <td style="padding:3px 6px; color:#ddd; text-align:right;" id="gps-cal-gsd1">0.63 mm</td>
+              <td style="padding:3px 6px; color:#f0f; text-align:right;" id="gps-cal-dum1">2854 px</td>
+            </tr>
+            <tr style="border-bottom:1px solid #222;">
+              <td style="padding:3px 6px; color:#0ff;">10 m</td>
+              <td style="padding:3px 6px; color:#ddd; text-align:right;" id="gps-cal-cov10">9.2 x 6.9 m</td>
+              <td style="padding:3px 6px; color:#ddd; text-align:right;" id="gps-cal-gsd10">6.3 mm</td>
+              <td style="padding:3px 6px; color:#f0f; text-align:right;" id="gps-cal-dum10">285 px</td>
+            </tr>
+            <tr style="border-bottom:1px solid #222;">
+              <td style="padding:3px 6px; color:#0ff;">30 m</td>
+              <td style="padding:3px 6px; color:#ddd; text-align:right;" id="gps-cal-cov30">27.6 x 20.6 m</td>
+              <td style="padding:3px 6px; color:#ddd; text-align:right;" id="gps-cal-gsd30">19.0 mm</td>
+              <td style="padding:3px 6px; color:#f0f; text-align:right;" id="gps-cal-dum30">95 px</td>
+            </tr>
+            <tr style="background:#111; border-top:1px solid #0ff;">
+              <td style="padding:4px 6px; color:#0ff; font-weight:bold;" id="gps-cal-altcur">35 m</td>
+              <td style="padding:4px 6px; color:#0ff; text-align:right; font-weight:bold;" id="gps-cal-covcur">32.2 x 24.0 m</td>
+              <td style="padding:4px 6px; color:#0ff; text-align:right; font-weight:bold;" id="gps-cal-gsdcur">22.1 mm</td>
+              <td style="padding:4px 6px; color:#f0f; text-align:right; font-weight:bold;" id="gps-cal-dumcur">81 px</td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="margin-top:8px; font-size:11px; color:#666; line-height:1.6; padding-left:4px;">
+          Aspect ratio: <span style="color:#aaa;">4:3</span> ({config.IMAGE_W}x{config.IMAGE_H})<br>
+          Sensor: <span style="color:#aaa;">{config.SENSOR_WIDTH_MM} mm</span> &nbsp; Focal: <span style="color:#aaa;">{config.FOCAL_LENGTH_MM} mm</span><br>
+          Dummy height: <span style="color:#f0f;">1.8 m</span> &nbsp; GSD = ground_w / {config.IMAGE_W}
+        </div>
+      </div>
     </div>
 
     <!-- RIGHT: Step-by-step equations -->
@@ -408,6 +454,30 @@ def get_gps_pipeline_html():
     document.getElementById('gps-summary-dist').textContent = dist.toFixed(2);
     document.getElementById('gps-summary-brg').textContent = brg.toFixed(1);
     document.getElementById('gps-summary-weight').textContent = w.toFixed(4);
+
+    // ── Update Calibration Reference Card ──
+    const DUMMY_H = 1.8;
+    function calRef(a) {{
+      const gw = a * SENSOR_W / FOCAL_MM;
+      const gh = gw * IMG_H / IMG_W;
+      const gsd = gw / IMG_W;
+      const dum = DUMMY_H / gsd;
+      return {{ gw, gh, gsd, dum }};
+    }}
+    const c1 = calRef(1), c10 = calRef(10), c30 = calRef(30), cCur = calRef(alt);
+    document.getElementById('gps-cal-cov1').textContent = c1.gw.toFixed(2) + ' x ' + c1.gh.toFixed(2) + ' m';
+    document.getElementById('gps-cal-gsd1').textContent = (c1.gsd * 1000).toFixed(2) + ' mm';
+    document.getElementById('gps-cal-dum1').textContent = c1.dum.toFixed(0) + ' px';
+    document.getElementById('gps-cal-cov10').textContent = c10.gw.toFixed(1) + ' x ' + c10.gh.toFixed(1) + ' m';
+    document.getElementById('gps-cal-gsd10').textContent = (c10.gsd * 1000).toFixed(1) + ' mm';
+    document.getElementById('gps-cal-dum10').textContent = c10.dum.toFixed(0) + ' px';
+    document.getElementById('gps-cal-cov30').textContent = c30.gw.toFixed(1) + ' x ' + c30.gh.toFixed(1) + ' m';
+    document.getElementById('gps-cal-gsd30').textContent = (c30.gsd * 1000).toFixed(1) + ' mm';
+    document.getElementById('gps-cal-dum30').textContent = c30.dum.toFixed(0) + ' px';
+    document.getElementById('gps-cal-altcur').textContent = alt.toFixed(0) + ' m';
+    document.getElementById('gps-cal-covcur').textContent = cCur.gw.toFixed(1) + ' x ' + cCur.gh.toFixed(1) + ' m';
+    document.getElementById('gps-cal-gsdcur').textContent = (cCur.gsd * 1000).toFixed(1) + ' mm';
+    document.getElementById('gps-cal-dumcur').textContent = cCur.dum.toFixed(0) + ' px';
 
     // ── Update SVG: Camera Geometry ──
     const svgW = 440, groundY = 200, droneY = 54;
