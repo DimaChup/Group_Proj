@@ -756,6 +756,8 @@ class Handler(BaseHTTPRequestHandler):
             _mod = sys.modules.get('field_tools.passive_watch') or sys.modules.get('__main__')
             _mod._best_center_dist = 999.0
             _mod._best_detection_gps = None
+            _mod._snap_request_best = False
+            _mod._snap_jpeg_best = None
             with frame_lock:
                 _mod.latest_best_jpeg = None
             print("[CLEAR] Best detection reset — tracking new best")
@@ -794,6 +796,12 @@ class Handler(BaseHTTPRequestHandler):
             _mod = sys.modules.get('field_tools.passive_watch') or sys.modules.get('__main__')
             _mod._best_center_dist = 999.0
             _mod._best_detection_gps = None
+            _mod._snap_request_best = False
+            _mod._snap_request_latest = False
+            _mod._snap_jpeg_best = None
+            _mod._snap_jpeg_latest = None
+            draw_overlay._last_class = ''
+            _mod._last_det = None
             _mod.latest_detection_jpeg = None
             _mod.latest_best_jpeg = None
             _mod.latest_bullseye = None
@@ -897,6 +905,14 @@ class Handler(BaseHTTPRequestHandler):
         _mod = sys.modules.get('field_tools.passive_watch') or sys.modules.get('__main__')
         _mod._best_center_dist = 999.0
         _mod._best_detection_gps = None
+        # Clear pending snapshot flags so stale pre-filter JPEGs don't get restored
+        _mod._snap_request_best = False
+        _mod._snap_request_latest = False
+        _mod._snap_jpeg_best = None
+        _mod._snap_jpeg_latest = None
+        # Clear the stale class/detection shown on the live overlay
+        draw_overlay._last_class = ''
+        _mod._last_det = None
         with frame_lock:
             _mod.latest_best_jpeg = None
             _mod.latest_detection_jpeg = None
@@ -2050,7 +2066,7 @@ def draw_overlay(frame, last_det, raw_det=None):
     """Draw detection box + GPS info on frame for stream.
 
     raw_det: optional tuple (cx, cy, conf, age, cls_name, bw, bh) for ALL
-             detections regardless of filter.  Drawn as a dim gray marker
+             detections regardless of filter.  Drawn as a YELLOW box
              when the detection was rejected by the class/conf filter.
     """
     h, w = frame.shape[:2]
@@ -2060,7 +2076,7 @@ def draw_overlay(frame, last_det, raw_det=None):
     with gps_lock:
         g = dict(gps_data)
 
-    # ── Dim gray marker for rejected (raw) detections ──
+    # ── Yellow marker for rejected (raw) detections ──
     # Only draw if raw_det exists AND is different from the filtered last_det
     # (i.e. the detection was rejected by class/conf filter).
     if raw_det is not None and raw_det[3] < 0.5:
@@ -2073,18 +2089,20 @@ def draw_overlay(frame, last_det, raw_det=None):
             r_cls = raw_det[4] if len(raw_det) > 4 else ''
             r_bw = int(raw_det[5]) if len(raw_det) > 5 else 60
             r_bh = int(raw_det[6]) if len(raw_det) > 6 else 60
-            gray = (128, 128, 128)
-            # Dim gray bounding box
+            yellow = (0, 255, 255)
+            # Yellow bounding box (rejected detection — informational)
             rx1, ry1 = max(0, rcx - r_bw // 2), max(0, rcy - r_bh // 2)
             rx2, ry2 = min(w, rcx + r_bw // 2), min(h, rcy + r_bh // 2)
-            cv2.rectangle(display, (rx1, ry1), (rx2, ry2), gray, 1)
+            cv2.rectangle(display, (rx1, ry1), (rx2, ry2), yellow, 2)
             # Small crosshair at center
-            cv2.line(display, (rcx - 6, rcy), (rcx + 6, rcy), gray, 1)
-            cv2.line(display, (rcx, rcy - 6), (rcx, rcy + 6), gray, 1)
-            # Class + confidence label in gray above the box
+            cv2.line(display, (rcx - 6, rcy), (rcx + 6, rcy), yellow, 1)
+            cv2.line(display, (rcx, rcy - 6), (rcx, rcy + 6), yellow, 1)
+            # Class + confidence label with black background
             r_label = f"{r_cls} {r_conf:.2f}"
-            cv2.putText(display, r_label, (rx1, ry1 - 4),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.4, gray, 1)
+            (rtw, rth), _ = cv2.getTextSize(r_label, cv2.FONT_HERSHEY_SIMPLEX, 0.7, 2)
+            cv2.rectangle(display, (rx1, ry1 - 28), (rx1 + rtw + 6, ry1 - 2), (0, 0, 0), -1)
+            cv2.putText(display, r_label, (rx1 + 3, ry1 - 8),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, yellow, 2)
 
     # Draw last detection box (persists between frames)
     # Persistent detection box — redraw on EVERY frame (vision.py only draws on inference frames)
@@ -2874,9 +2892,15 @@ def main():
                             pass
                     dt = time.time() - t0
                     print(f"[MODEL] Loaded: {m['name']} (backend={new_eyes.backend_name}) in {dt:.2f}s")
-                    # Reset panels + filter
+                    # Reset panels + filter + pending snapshot flags
                     _mod._best_center_dist = 999.0
                     _mod._best_detection_gps = None
+                    _mod._snap_request_best = False
+                    _mod._snap_request_latest = False
+                    _mod._snap_jpeg_best = None
+                    _mod._snap_jpeg_latest = None
+                    draw_overlay._last_class = ''
+                    _mod._last_det = None
                     with frame_lock:
                         _mod.latest_best_jpeg = None
                         _mod.latest_detection_jpeg = None
