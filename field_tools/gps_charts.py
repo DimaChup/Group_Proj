@@ -678,15 +678,17 @@ def get_gps_charts_html():
     ctx.lineWidth = 2;
     ctx.strokeRect(wsx - 6, wsy - 6, 12, 12);
 
-    // Median marker (magenta diamond)
+    // Median marker (pink/magenta triangle — distinct from SMART star)
     const medsx = cx + (medE - viewCenterE) * viewScale;
     const medsy = cy - (medN - viewCenterN) * viewScale;
-    ctx.strokeStyle = "#ff00ff";
+    ctx.strokeStyle = "#ff66ff";
+    ctx.fillStyle = "rgba(255,102,255,0.4)";
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(medsx, medsy - 7); ctx.lineTo(medsx + 5, medsy);
-    ctx.lineTo(medsx, medsy + 7); ctx.lineTo(medsx - 5, medsy);
-    ctx.closePath(); ctx.stroke();
+    ctx.moveTo(medsx, medsy - 8);
+    ctx.lineTo(medsx + 7, medsy + 5);
+    ctx.lineTo(medsx - 7, medsy + 5);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
 
     // Best Detection markers (red circle = estimate, red X = drone, dashed line between)
     if (bestData && bestData.est_lat !== undefined) {{
