@@ -1982,12 +1982,22 @@ def render_bullseye(all_estimates, smart_est=None):
                 # Radial line from center
                 cv2.line(p4, (c_cx, c_cy), (px, py), (40, 40, 40), 1)
 
+            # Draw median SMART star
             med = smart_est.get_median()
             if med:
-                cv2.putText(p4, f"Med: {med[0]:.7f}, {med[1]:.7f}",
-                           (5, S - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.28, (255, 0, 255), 1)
-                cv2.putText(p4, f"N={med[2]} | CEP: {smart_est.get_cep50():.2f}m",
-                           (5, S - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.28, (200, 200, 200), 1)
+                med_em, med_nm = gps_to_meters(med[0], med[1], c_mean_lat, c_mean_lon)
+                star_px = c_cx + int(med_em * c_scale)
+                star_py = c_cy - int(med_nm * c_scale)
+                cv2.drawMarker(p4, (star_px, star_py), (255, 0, 255), cv2.MARKER_STAR, 18, 2)
+
+                # Bottom info: prominent GPS coordinate + stats
+                cv2.rectangle(p4, (0, S - 50), (S, S), (0, 0, 0), -1)  # black bar
+                cv2.putText(p4, f"SMART: {med[0]:.7f}, {med[1]:.7f}",
+                           (5, S - 30), cv2.FONT_HERSHEY_SIMPLEX, 0.38, (0, 255, 0), 1)
+                cv2.putText(p4, f"Total:{len(smart_est.all_estimates)}  Cluster:{med[2]}  Rejected:{len(smart_est.all_estimates)-med[2]}",
+                           (5, S - 14), cv2.FONT_HERSHEY_SIMPLEX, 0.30, (180, 180, 180), 1)
+                cv2.putText(p4, f"Spread:{smart_est.locked_spread:.2f}m  Med err:{smart_est.get_cep50():.2f}m",
+                           (5, S - 1), cv2.FONT_HERSHEY_SIMPLEX, 0.30, (180, 180, 180), 1)
         else:
             n_est = len(smart_est.all_estimates)
             cv2.putText(p4, "searching...", (5, 15),
