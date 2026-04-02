@@ -1047,22 +1047,57 @@ def _snapshot_overlay(display, label=None):
 
 
 def render_smart_grid(smart_est):
-    """Render 5x2 grid of locked smart frames."""
+    """Render 5x2 grid of smart frames — shows live progress as detections arrive."""
     global latest_smart_grid_jpeg
-    if not smart_est or not smart_est.all_estimates:
+    if not smart_est:
         return
     frames = [e[3] for e in smart_est.all_estimates if len(e) >= 4 and e[3] is not None][:10]
-    if not frames:
-        return
+    n_have = len(frames)
+    n_need = smart_est.min_samples
     cw, ch = 240, 180
-    grid = np.zeros((ch * 2, cw * 5, 3), dtype=np.uint8)
-    for i, f in enumerate(frames[:10]):
+    banner_h = 28
+    grid = np.zeros((ch * 2 + banner_h, cw * 5, 3), dtype=np.uint8)
+
+    # --- Status banner at top ---
+    if smart_est.locked:
+        banner_color = (0, 140, 0)   # dark green
+        status_text = f"LOCKED  {n_need}/{n_need}  spread {smart_est.locked_spread:.2f}m"
+    elif n_have == 0:
+        banner_color = (60, 60, 60)
+        status_text = f"WAITING FOR DETECTIONS  0/{n_need}"
+    else:
+        banner_color = (0, 100, 180)  # dark orange/amber
+        status_text = f"COLLECTING  {n_have}/{n_need}"
+    cv2.rectangle(grid, (0, 0), (cw * 5, banner_h), banner_color, -1)
+    cv2.putText(grid, status_text, (8, banner_h - 8),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.55, (255, 255, 255), 1, cv2.LINE_AA)
+
+    # --- Thumbnail slots ---
+    y_off = banner_h
+    for i in range(min(n_need, 10)):
         r, c = i // 5, i % 5
-        thumb = cv2.resize(f, (cw, ch))
-        grid[r*ch:(r+1)*ch, c*cw:(c+1)*cw] = thumb
-        cv2.putText(grid, f"#{i+1}", (c*cw+5, r*ch+18), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 0), 1)
-        if smart_est.locked:
-            cv2.rectangle(grid, (c*cw, r*ch), ((c+1)*cw-1, (r+1)*ch-1), (0, 255, 0), 2)
+        y0 = y_off + r * ch
+        x0 = c * cw
+        if i < n_have:
+            # Filled slot — show detection frame
+            thumb = cv2.resize(frames[i], (cw, ch))
+            grid[y0:y0 + ch, x0:x0 + cw] = thumb
+            # Number label
+            cv2.putText(grid, f"#{i+1}", (x0 + 5, y0 + 18),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 255, 255), 2, cv2.LINE_AA)
+            cv2.putText(grid, f"#{i+1}", (x0 + 5, y0 + 18),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 200, 255), 1, cv2.LINE_AA)
+            # Border: green if locked, yellow/amber if still collecting
+            if smart_est.locked:
+                cv2.rectangle(grid, (x0, y0), (x0 + cw - 1, y0 + ch - 1), (0, 255, 0), 2)
+            else:
+                cv2.rectangle(grid, (x0, y0), (x0 + cw - 1, y0 + ch - 1), (0, 200, 255), 1)
+        else:
+            # Empty slot — dim placeholder
+            cv2.rectangle(grid, (x0 + 2, y0 + 2), (x0 + cw - 3, y0 + ch - 3), (50, 50, 50), 1)
+            cv2.putText(grid, f"#{i+1}", (x0 + cw // 2 - 12, y0 + ch // 2 + 5),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.45, (50, 50, 50), 1, cv2.LINE_AA)
+
     _, jpg = cv2.imencode('.jpg', grid, [cv2.IMWRITE_JPEG_QUALITY, 80])
     with frame_lock:
         latest_smart_grid_jpeg = jpg.tobytes()
@@ -2066,6 +2101,7 @@ def main():
                         # Smart estimate: greedy cluster finds tightest 10
                         if smart_estimator:
                             smart_estimator.add(est_lat, est_lon, pixel_dist, frame)
+                            render_smart_grid(smart_estimator)
 
                         # Update bullseye plot
                         render_bullseye(_all_gps_estimates, smart_estimator)

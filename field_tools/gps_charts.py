@@ -926,7 +926,21 @@ def get_gps_charts_html():
   // ── Tightest cluster algorithm (from video_test_compare.py) ──
   function findTightestCluster(ests, k) {{
     // For each seed point, find k nearest, return cluster with smallest max pairwise spread
-    if (ests.length < k) return {{ indices: [], spread: Infinity }};
+    // If fewer than k points, return ALL points as the cluster
+    if (ests.length <= k) {{
+      const allIndices = ests.map((_, i) => i);
+      if (ests.length < 2) return {{ indices: allIndices, spread: 0 }};
+      let spread = 0;
+      for (let i = 0; i < ests.length; i++) {{
+        for (let j = i + 1; j < ests.length; j++) {{
+          const dn = (ests[i][0] - ests[j][0]) * 111320;
+          const de = (ests[i][1] - ests[j][1]) * 111320 * Math.cos(ests[i][0] * Math.PI / 180);
+          const d = Math.sqrt(dn * dn + de * de);
+          if (d > spread) spread = d;
+        }}
+      }}
+      return {{ indices: allIndices, spread: spread }};
+    }}
     let bestSpread = Infinity, bestIndices = [];
     for (let seed = 0; seed < ests.length; seed++) {{
       // Sort all points by distance from seed
@@ -970,17 +984,18 @@ def get_gps_charts_html():
     const cx = W / 2, cy = H / 2 + 10;
     const nTotal = estimates.length;
 
-    // Phase 1: not enough detections
+    // Phase 1: fewer than 10 detections — show ALL dots numbered as they arrive
     if (nTotal < 10) {{
-      ctx.fillStyle = "#ff00ff";
+      ctx.fillStyle = "#ff8800";
       ctx.font = "bold 12px monospace";
       ctx.fillText("SMART CLUSTER", 8, 18);
       ctx.fillStyle = "#888";
       ctx.font = "11px monospace";
-      ctx.fillText("Gathering " + nTotal + " detections...", 8, 45);
-      ctx.fillText("Need 10 to start", 8, 62);
+      const spreadInfo = nTotal >= 2 ? findTightestCluster(estimates, nTotal) : null;
+      const spreadStr = spreadInfo ? "  spread: " + spreadInfo.spread.toFixed(1) + "m" : "";
+      ctx.fillText("Gathering " + nTotal + "/10..." + spreadStr, 8, 33);
 
-      // Show arriving dots if any
+      // Show arriving dots with numbers
       if (nTotal > 0) {{
         let sLat = 0, sLon = 0;
         for (const e of estimates) {{ sLat += e[0]; sLon += e[1]; }}
@@ -1005,12 +1020,25 @@ def get_gps_charts_html():
           }}
         }}
         ctx.setLineDash([]);
-        // Dots
-        for (const e of estimates) {{
+        // Numbered dots (cyan, same style as cluster phase)
+        for (let i = 0; i < estimates.length; i++) {{
+          const e = estimates[i];
           const [em, nm] = gpsToMeters(e[0], e[1], mLat, mLon);
           const sx = cx + em * cScale, sy = cy - nm * cScale;
-          ctx.fillStyle = "#666";
-          ctx.beginPath(); ctx.arc(sx, sy, 3, 0, Math.PI * 2); ctx.fill();
+          // Radial line from center
+          ctx.strokeStyle = "#333";
+          ctx.lineWidth = 0.5;
+          ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(sx, sy); ctx.stroke();
+          // Dot
+          ctx.fillStyle = "#00ffff";
+          ctx.beginPath(); ctx.arc(sx, sy, 5, 0, Math.PI * 2); ctx.fill();
+          ctx.strokeStyle = "#fff";
+          ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.arc(sx, sy, 5, 0, Math.PI * 2); ctx.stroke();
+          // Number
+          ctx.fillStyle = "#ccc";
+          ctx.font = "9px monospace";
+          ctx.fillText(String(i + 1), sx + 7, sy + 3);
         }}
       }}
       // Center cross
@@ -1081,7 +1109,8 @@ def get_gps_charts_html():
       ctx.fillText("FINDING CLUSTER...", 8, 18);
       ctx.fillStyle = "#888";
       ctx.font = "10px monospace";
-      ctx.fillText(nTotal + " det, spread: " + clusterSpread.toFixed(2) + "m", 8, 33);
+      ctx.fillText("spread: " + clusterSpread.toFixed(2) + "m (need <" + SMART_LOCK_SPREAD.toFixed(1) + "m)", 8, 33);
+      ctx.fillText(nTotal + " det, best 10 highlighted", 8, 46);
     }}
 
     // Fine rings: 0.1, 0.2, 0.5, 1.0m
@@ -1101,12 +1130,14 @@ def get_gps_charts_html():
     }}
     ctx.setLineDash([]);
 
-    // Outlier dots (small, dim)
+    // Outlier X marks (dim, rejected from cluster)
     for (const p of oPts) {{
       const sx = cx + p.e * cScale, sy = cy - p.n * cScale;
       if (sx > 0 && sx < W && sy > 0 && sy < H) {{
-        ctx.fillStyle = "rgba(100,100,100,0.4)";
-        ctx.beginPath(); ctx.arc(sx, sy, 2, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = "rgba(100,100,100,0.5)";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(sx - 3, sy - 3); ctx.lineTo(sx + 3, sy + 3); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(sx + 3, sy - 3); ctx.lineTo(sx - 3, sy + 3); ctx.stroke();
       }}
     }}
 
