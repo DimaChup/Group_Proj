@@ -1951,6 +1951,10 @@ def render_bullseye(all_estimates, smart_est=None):
                        cv2.FONT_HERSHEY_SIMPLEX, 0.42, (0, 255, 0), 2)
             cv2.putText(p4, f"spread: {smart_est.locked_spread:.2f}m", (80, 15),
                        cv2.FONT_HERSHEY_SIMPLEX, 0.32, (0, 255, 0), 1)
+            _med = smart_est.get_median()
+            if _med:
+                cv2.putText(p4, f"{_med[0]:.7f}, {_med[1]:.7f}",
+                           (5, 32), cv2.FONT_HERSHEY_SIMPLEX, 0.38, (255, 0, 255), 1)
 
             c_lats = [e[0] for e in cluster]
             c_lons = [e[1] for e in cluster]
