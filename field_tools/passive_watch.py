@@ -738,8 +738,10 @@ class Handler(BaseHTTPRequestHandler):
                     # Reset lock so new params can trigger a fresh result
                     smart_estimator.locked = False
                     smart_estimator.locked_cluster = None
+                    smart_estimator.locked_cluster_indices = None
                     smart_estimator.locked_frame = None
                     smart_estimator.locked_spread = 0
+                    smart_estimator.all_estimates = []  # fresh collection
                     if hasattr(smart_estimator, '_saved'):
                         smart_estimator._saved = False
                 _mod._smart_result_saved = False
@@ -981,7 +983,8 @@ class SmartEstimator:
         self.max_spread = max_spread  # meters — all 10 must be within this
         self.all_estimates = []  # (est_lat, est_lon, pixel_dist, frame)
         self.locked = False
-        self.locked_cluster = None  # list of (lat, lon, pixel_dist)
+        self.locked_cluster = None  # list of (lat, lon, pixel_dist, frame)
+        self.locked_cluster_indices = None  # indices into all_estimates
         self.locked_frame = None    # most central frame from cluster
         self.locked_spread = 0
 
@@ -1003,8 +1006,9 @@ class SmartEstimator:
             # LOCKED — save cluster
             self.locked = True
             self.locked_spread = spread
+            self.locked_cluster_indices = indices
             cluster = [self.all_estimates[i] for i in indices]
-            self.locked_cluster = [(e[0], e[1], e[2]) for e in cluster]
+            self.locked_cluster = [(e[0], e[1], e[2], e[3]) for e in cluster]
             # Most central frame (smallest pixel_dist)
             best = min(cluster, key=lambda e: e[2])
             self.locked_frame = best[3]
@@ -1086,7 +1090,7 @@ class SmartEstimator:
             return 0
         m_lat, m_lon, _ = med
         dists = []
-        for lat, lon, _ in self.locked_cluster:
+        for lat, lon, *_ in self.locked_cluster:
             dn = (lat - m_lat) * 111320
             de = (lon - m_lon) * 111320 * math.cos(math.radians(m_lat))
             dists.append(math.sqrt(dn**2 + de**2))
@@ -1348,11 +1352,22 @@ def compute_survey_analysis(all_estimates):
 
 
 def render_smart_grid(smart_est):
-    """Render 5x2 grid of smart frames — shows live progress as detections arrive."""
+    """Render 5x2 grid of smart frames — shows live progress as detections arrive.
+
+    Before lock: shows all collected frames (chronological order).
+    After lock: shows ONLY the frames from the tightest cluster (same as bullseye #1-#10).
+    """
     global latest_smart_grid_jpeg
     if not smart_est:
         return
-    frames = [e[3] for e in smart_est.all_estimates if len(e) >= 4 and e[3] is not None][:10]
+
+    if smart_est.locked and smart_est.locked_cluster:
+        # After lock: show ONLY the tightest cluster frames
+        frames = [e[3] for e in smart_est.locked_cluster if len(e) >= 4 and e[3] is not None]
+    else:
+        # Before lock: show all collected frames chronologically
+        frames = [e[3] for e in smart_est.all_estimates if len(e) >= 4 and e[3] is not None]
+
     n_have = len(frames)
     n_need = smart_est.min_samples
     cw, ch = 240, 180
@@ -1764,7 +1779,7 @@ def render_bullseye(all_estimates, smart_est=None):
     if has_smart:
         p4 = make_panel()
         if smart_est.locked and smart_est.locked_cluster:
-            cluster = smart_est.locked_cluster  # list of (lat, lon, pixel_dist)
+            cluster = smart_est.locked_cluster  # list of (lat, lon, pixel_dist, frame)
             cv2.putText(p4, "LOCKED", (5, 15),
                        cv2.FONT_HERSHEY_SIMPLEX, 0.42, (0, 255, 0), 2)
             cv2.putText(p4, f"spread: {smart_est.locked_spread:.2f}m", (80, 15),
