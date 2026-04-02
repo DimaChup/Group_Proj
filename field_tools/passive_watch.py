@@ -1922,28 +1922,12 @@ def main():
                     model_path=m['path'],
                     backend=m['backend']
                 )
-                # Validate: test inference in a thread with timeout to catch
-                # models that hang on invoke() (e.g. incompatible TFLite exports)
+                # Validate: test inference on main thread (threaded test causes
+                # XNNPACK deadlock on Windows when multiple interpreters exist)
                 if new_eyes.using_ai:
                     test_frame = np.zeros((640, 640, 3), dtype=np.uint8)
-                    _test_ok = [False]
-                    _test_err = [None]
-                    def _test_inference():
-                        try:
-                            new_eyes.detect_in_image(test_frame)
-                            _test_ok[0] = True
-                        except Exception as ex:
-                            _test_err[0] = str(ex)
-                    t = threading.Thread(target=_test_inference, daemon=True)
-                    t.start()
-                    t.join(timeout=5.0)  # 5s max for test inference
-                    if not _test_ok[0]:
-                        if t.is_alive():
-                            raise RuntimeError(f"Model inference hangs (TFLite invoke timeout). Model may be incompatible with this platform.")
-                        elif _test_err[0]:
-                            raise RuntimeError(f"Model test inference failed: {_test_err[0]}")
-                        else:
-                            raise RuntimeError("Model test inference returned no result")
+                    new_eyes.detect_in_image(test_frame)
+                    print(f"[MODEL] Test inference OK")
                 eyes = new_eyes
                 dt_switch = time.time() - t0_switch
                 print(f"[MODEL] Loaded: {m['name']} (backend={eyes.backend_name}) in {dt_switch:.2f}s")
