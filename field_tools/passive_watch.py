@@ -1306,7 +1306,8 @@ def _snapshot_overlay(display, label=None, thumb_w=728, gps_info=None):
 
 
 def generate_result_image(frame, title, gps_lat, gps_lon, stats_text, filename,
-                          title_color=(0, 255, 0), drone_lat=None, drone_lon=None):
+                          title_color=(0, 255, 0), drone_lat=None, drone_lon=None,
+                          gps_label="DUMMY EST"):
     """Generate a final result image with large banner, GPS coordinate, and stats.
 
     Args:
@@ -1317,6 +1318,7 @@ def generate_result_image(frame, title, gps_lat, gps_lon, stats_text, filename,
         filename: full path to save the image
         title_color: BGR color for title text (default green)
         drone_lat, drone_lon: drone GPS at time of result (for DRONE/OFFSET lines)
+        gps_label: label for GPS line (default "DUMMY EST")
 
     Returns:
         The annotated image (BGR numpy array)
@@ -1341,8 +1343,8 @@ def generate_result_image(frame, title, gps_lat, gps_lon, stats_text, filename,
     cv2.putText(result, title, (15, 45), font, 1.4, (0, 0, 0), 6, cv2.LINE_AA)
     cv2.putText(result, title, (15, 45), font, 1.4, title_color, 3, cv2.LINE_AA)
 
-    # GPS coordinate (large monospace-style text) — dummy estimate
-    gps_text = f"DUMMY EST: {gps_lat:.7f}, {gps_lon:.7f}"
+    # GPS coordinate (large monospace-style text)
+    gps_text = f"{gps_label}: {gps_lat:.7f}, {gps_lon:.7f}"
     cv2.putText(result, gps_text, (15, 80), font, 0.7, (0, 0, 0), 4, cv2.LINE_AA)
     cv2.putText(result, gps_text, (15, 80), font, 0.7, (255, 0, 255), 2, cv2.LINE_AA)  # magenta
 
@@ -1364,9 +1366,12 @@ def generate_result_image(frame, title, gps_lat, gps_lon, stats_text, filename,
         cv2.putText(result, offset_text, (15, 170), font, 0.7, (0, 0, 0), 4, cv2.LINE_AA)
         cv2.putText(result, offset_text, (15, 170), font, 0.7, (0, 255, 255), 2, cv2.LINE_AA)  # yellow
 
-    # Save
+    # Save (PNG for lossless, JPEG otherwise)
     os.makedirs(os.path.dirname(filename) or '.', exist_ok=True)
-    cv2.imwrite(filename, result, [cv2.IMWRITE_JPEG_QUALITY, 95])
+    if filename.lower().endswith('.png'):
+        cv2.imwrite(filename, result)
+    else:
+        cv2.imwrite(filename, result, [cv2.IMWRITE_JPEG_QUALITY, 95])
     return result
 
 
@@ -2512,12 +2517,30 @@ def inference_worker(args_ref, csv_writer_ref, csv_file_ref):
                             s_spread = smart_estimator.locked_spread
                             s_cep = smart_estimator.get_cep50()
                             s_stats = f"Spread: {s_spread:.2f}m  CEP50: {s_cep:.2f}m  Conf: {conf:.2f}  N={med[2]}"
-                            result_frame = draw_overlay(frame, _mod._last_det)
-                            s_fname = os.path.join(args_ref.save_dir, f"RESULT_SMART_{s_lat:.7f}_{s_lon:.7f}.jpg")
-                            generate_result_image(result_frame, "TARGET FOUND",
+                            # Use the most central frame from the SMART cluster
+                            central_frame = smart_estimator.locked_frame
+                            if central_frame is not None:
+                                result_frame = central_frame.copy()
+                            else:
+                                result_frame = draw_overlay(frame, _mod._last_det)
+                            # Paint over the old estimate bar and stamp SMART coordinate
+                            rh, rw = result_frame.shape[:2]
+                            est_y = rh - 75
+                            cv2.rectangle(result_frame, (0, est_y), (rw, est_y + 25), (0, 0, 0), -1)
+                            smart_text = f"SMART: {s_lat:.7f}, {s_lon:.7f} (spread {s_spread:.2f}m)"
+                            cv2.putText(result_frame, smart_text, (5, est_y + 16),
+                                        cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 0, 255), 1)
+                            # Save with SMART star (median) coordinate in filename
+                            smart_dir = os.path.join(args_ref.save_dir, "smart_detections")
+                            os.makedirs(smart_dir, exist_ok=True)
+                            existing = [f for f in os.listdir(smart_dir) if f.endswith('.png')]
+                            seq = len(existing) + 1
+                            s_fname = os.path.join(smart_dir, f"{seq:04d}_{s_lat:.7f}_{s_lon:.7f}.png")
+                            generate_result_image(result_frame, "SMART COORDINATE",
                                                   s_lat, s_lon, s_stats, s_fname,
                                                   title_color=(0, 255, 0),
-                                                  drone_lat=d_lat, drone_lon=d_lon)
+                                                  drone_lat=d_lat, drone_lon=d_lon,
+                                                  gps_label="SMART")
                             _result_banner = {"text": "TARGET FOUND", "color": (0, 255, 0),
                                               "until": time.time() + 5}
                             print(f"\n[RESULT] SMART LOCK: {s_lat:.7f}, {s_lon:.7f} (spread: {s_spread:.2f}m)")

@@ -1289,12 +1289,7 @@ def get_gps_charts_html():
       const result = findTightestCluster(estimates, SMART_LOCK_COUNT);
       clusterIndices = result.indices;
       clusterSpread = result.spread;
-      // Local lock check (before server confirms)
-      if (clusterSpread < SMART_LOCK_SPREAD && clusterIndices.length >= SMART_LOCK_COUNT) {{
-        smartLocked = true;
-        smartLockedIndices = clusterIndices.slice();
-        smartLockedSpread = clusterSpread;
-      }}
+      // Only lock when server confirms — keeps bullseye and SMART grid in sync
     }}
 
     const clusterSet = new Set(clusterIndices);
