@@ -1,7 +1,7 @@
 # passive_watch.py — Passive Camera Observer Blueprint
 
-> MAP of passive_watch.py (1691 lines). Not a code copy — a navigation aid.
-> Updated: 2026-04-02
+> MAP of passive_watch.py (2857 lines). Not a code copy — a navigation aid.
+> Updated: 2026-04-02 (threaded inference refactor)
 
 ## Purpose
 
@@ -40,28 +40,32 @@ python passive_watch.py --no-save --no-mavlink
 
 | Section | Lines | Purpose |
 |---------|-------|---------|
-| Docstring + imports | 1-51 | Signal handler, headless DISPLAY check, cv2, numpy, config, VisionSystem |
-| Globals for streaming | 52-65 | `latest_jpeg`, `latest_det_jpeg`, frame_lock, gps_lock, map/bullseye/smart JPEGs |
-| Argument parsing | 67-85 | argparse: --port, --conf, --fps, --save-dir, --no-save, --no-mavlink, --fake, --simple-names, --class-filter, --smart-estimate |
-| MODEL_TABLE + runtime_state | 87-103 | 4 model definitions (id/name/path/backend), runtime state dict + lock for browser control |
-| parse_srt() | 106-135 | Parse DJI SRT telemetry file → dict frame_num → {lat, lon, alt, yaw} |
-| HTML_PAGE | 139-310 | Inline HTML+CSS+JS. Model selector bar + 2-col grid + 3-col bottom. Polls `/api/status` every 2s, syncs controls |
-| Handler (HTTP) | 313-485 | Routes: `/`, `/stream`, `/snapshot`, `/bullseye`, `/latest`, `/smart-grid`, `/map`, `/api/status`, `/api/switch-model`, `/api/set-conf`, `/api/set-class` |
-| ThreadedServer | 488-489 | ThreadingMixIn + HTTPServer, daemon_threads=True |
-| Stats dict | 491-505 | Global stats dict for `/api/status` (frames, detections, GPS, FOV, estimate, active_model, conf, class) |
-| RollingFPS class | 333-342 | Rolling window FPS tracker (3s window). Instances: cam, vis, stream |
-| FOV / calibration | 343-378 | `get_fov_info()` and `ground_coverage(alt_m)` — reads config sensor/focal values |
-| DummyEstimator class | 381-465 | Accumulates observations, inverse-variance weighted GPS, centrality bonus |
-| SmartEstimator class | 468-587 | Greedy tightest cluster: 10 central estimates within max_spread |
-| render_latest_detection() | 590-624 | Thumbnail with pink line center→detection, crosshair, pixel+real distance, info bar |
-| _snapshot_overlay() | ~1031-1097 | Capture resized detection snapshot as JPEG. Supports per-panel width (728 Latest, 1024 Best), GPS info bar (drone+dummy+offset), label badge |
-| render_smart_grid() | 627-646 | 5x2 grid of locked smart frame thumbnails |
-| render_map() | 649-703 | GPS estimates on satellite map.jpg with drone position + smart median |
-| render_bullseye() | 706-830 | GPS scatter plot with bullseye rings, weighted mean, median, smart cluster |
-| GPS state + COPTER_MODES | 833-845 | `gps_data` dict, mode int-to-name map |
-| mavlink_reader() | 848-885 | Background thread: GLOBAL_POSITION_INT, GPS_RAW_INT, HEARTBEAT, ATTITUDE |
-| draw_overlay() | ~1070-1230 | Detection box, **pink line center→detection + px/m distance**, crosshair, GPS bar, FPS bar, compass, FOV bar, **scale bar (1m)**, pink dot, dummy estimate |
-| main() | ~1240-1691 | Entry point: fake mode SRT loading, IP detect, mavlink, camera+AI, HTTP server, model switch handler in loop |
+| Docstring + imports | 1-54 | Signal handler, headless DISPLAY check, cv2, numpy, config, VisionSystem |
+| Globals for streaming | 55-77 | `latest_jpeg`, `latest_det_jpeg`, frame_lock, gps_lock, map/bullseye/smart JPEGs |
+| Threaded inference globals | 78-88 | `_inference_frame`, `_inference_lock`, `_inference_eyes`, snapshot request flags, det/saved counters |
+| Result mode globals | 90-95 | `_smart_result_saved`, `_survey_result_saved`, `SURVEY_TARGET`, `_result_banner` |
+| Argument parsing | 97-115 | argparse: --port, --conf, --fps, --save-dir, --no-save, --no-mavlink, --fake, --simple-names, --class-filter, --smart-estimate |
+| MODEL_TABLE + runtime_state | 117-133 | 4 model definitions (id/name/path/backend), runtime state dict + lock for browser control |
+| parse_srt() | 136-170 | Parse DJI SRT telemetry file → dict frame_num → {lat, lon, alt, yaw} |
+| HTML_PAGE | 172-444 | Inline HTML+CSS+JS. Model selector bar + 2-col grid + 3-col bottom. Polls `/api/status` every 2s, syncs controls |
+| Handler (HTTP) | 447-850 | Routes: `/`, `/stream`, `/snapshot`, `/bullseye`, `/latest`, `/smart-grid`, `/map`, `/api/status`, `/api/switch-model`, `/api/set-conf`, `/api/set-class`, `/api/clear-all`, `/api/set-smart` |
+| ThreadedServer | 852-853 | ThreadingMixIn + HTTPServer, daemon_threads=True |
+| Stats dict | 856-863 | Global stats dict for `/api/status` |
+| RollingFPS class | 866-888 | Rolling window FPS tracker (3s window). Instances: cam, vis, stream |
+| FOV / calibration | 890-925 | `get_fov_info()` and `ground_coverage(alt_m)` |
+| DummyEstimator class | 928-1012 | Accumulates observations, inverse-variance weighted GPS, centrality bonus |
+| SmartEstimator class | 1015-1158 | Greedy tightest cluster: 10 central estimates within max_spread |
+| _snapshot_overlay() | 1161-1235 | Capture resized detection snapshot as JPEG. GPS info bar, label badge |
+| generate_result_image() | 1238-1300 | Final result image with banner, GPS, stats |
+| compute_survey_analysis() | 1303-1417 | Analyze all GPS estimates, pick best coordinate + method |
+| render_smart_grid() | 1419-1484 | 5x2 grid of locked smart frame thumbnails |
+| render_map() | 1487-1542 | GPS estimates on satellite map.jpg with drone position + smart median |
+| render_bullseye() | 1545-1945 | GPS scatter plot with bullseye rings, weighted mean, median, smart cluster (5 panels) |
+| GPS state + COPTER_MODES | 1948-1957 | `gps_data` dict, mode int-to-name map |
+| mavlink_reader() | 1960-1992 | Background thread: GLOBAL_POSITION_INT, GPS_RAW_INT, HEARTBEAT, ATTITUDE |
+| draw_overlay() | 1995-2226 | Detection box, pink line, crosshair, GPS bar, FPS bar, compass, FOV bar, scale bar, pink dot, dummy estimate, result banner |
+| **inference_worker()** | **2229-2514** | **NEW: Background thread — grabs latest frame, runs AI detection, updates GPS estimation, snapshots, smart estimator. All detection logic lives here.** |
+| main() | 2516-2857 | Entry point: fake mode, mavlink, camera+AI, HTTP server, **starts inference thread**, display loop at ~30fps, model switch, overlay, JPEG encode, stats |
 
 ## Key Classes
 
@@ -129,27 +133,79 @@ Updated by `mavlink_reader()` background thread. Read-only from mavproxy.
 - **JSON sidecar**: same name `.json` — structured metadata (detection, drone, FOV, estimate)
 - **CSV row**: appended to `detections/detection_log.csv`
 
-## main() Flow (lines 494-752)
+## Threading Architecture (refactored 2026-04-02)
 
 ```
-1. Auto-detect Pi IP (hostname -I)                    [498-505]
-2. Print banner + config                               [507-523]
-3. Connect to mavproxy (read-only, background thread)  [526-544]
-4. Init VisionSystem (camera + AI model)               [547-550]
-5. Start ThreadedServer on --port                      [553-556]
-6. Open CSV log                                        [558-568]
-7. Camera loop (infinite):                             [582-748]
-   a. Get frame from VisionSystem
-   b. Throttle inference to --fps
-   c. If detection >= --conf:
-      - Update DummyEstimator with GPS projection
-      - Save snapshot JPG + JSON sidecar (unless --no-save)
-      - Append CSV row
-   d. Update detection age for fading overlay
-   e. Draw overlay (detection box, GPS, compass, FOV, estimate)
-   f. Encode JPEG for stream (quality 70)
-   g. Update stats dict
-   h. Print terminal summary every 50 frames
+Thread 1 (Display/Main — the while True loop in main()):
+  - Read video frame (fake or camera) at ~30fps
+  - Hand frame copy to inference thread via _inference_frame
+  - Handle model switch requests
+  - Read last_det from inference thread (tuple = atomic)
+  - Update detection age (fade boxes over 2 seconds)
+  - draw_overlay(frame, last_det) — uses latest detection
+  - Capture snapshots when flagged by inference thread
+  - JPEG encode → update latest_jpeg for stream
+  - Periodic renders (bullseye, map, smart grid) every ~60 frames
+  - Update stats, pace to ~30fps with sleep
+
+Thread 2 (Inference — inference_worker(), daemon thread):
+  - while True: grab frame from _inference_frame
+  - Run detect_in_image(frame)
+  - If detection passes conf + class filter:
+    - Update _mod._last_det (tuple assignment = atomic)
+    - Update draw_overlay attrs (_last_bw, _last_bh, _last_class)
+    - GPS estimation (DummyEstimator + SmartEstimator)
+    - Set _snap_request_latest / _snap_request_best flags
+    - Save snapshots (JPG + JSON + CSV) — file I/O in inference thread
+  - No sleep — runs as fast as inference allows
+
+Thread 3 (Mavlink — mavlink_reader(), daemon thread):
+  - Reads GLOBAL_POSITION_INT, GPS_RAW_INT, HEARTBEAT, ATTITUDE
+  - Updates gps_data dict under gps_lock
+
+Thread 4+ (HTTP — ThreadedServer, daemon threads):
+  - Serves /stream, /snapshot, /api/status, etc.
+```
+
+## Shared State (thread safety)
+
+| Variable | Writer | Reader | Safety |
+|----------|--------|--------|--------|
+| `_inference_frame` | Display | Inference | Protected by `_inference_lock` |
+| `_mod._last_det` | Inference | Display | Tuple (immutable) = atomic ref assignment |
+| `draw_overlay._last_bw/bh/class` | Inference | Display | Simple attribute = atomic |
+| `_all_gps_estimates` | Inference | Display+HTTP | list.append() is GIL-safe |
+| `_snap_request_latest/best` | Inference (set) | Display (clear) | Bool flag, one writer |
+| `gps_data` | Mavlink | Inference+Display | Protected by `gps_lock` |
+| `latest_jpeg` | Display | HTTP stream | Protected by `frame_lock` |
+| `_inference_eyes` | Display (swap) | Inference (read) | Protected by `_inference_eyes_lock` |
+| `smart_estimator` | Inference (write) | Display (read) | Only inference calls add(), display reads locked state |
+
+## main() Flow (lines 2516-2857)
+
+```
+1. Auto-detect Pi IP                                   [2526-2534]
+2. Print banner + config                               [2536-2548]
+3. Fake mode: load video + SRT                         [2554-2573]
+4. Connect to mavproxy (read-only, background thread)  [2576-2594]
+5. Init VisionSystem (camera + AI model)               [2597-2624]
+6. Start ThreadedServer on --port                      [2627-2633]
+7. Open CSV log                                        [2638-2649]
+8. Init shared state + start inference thread          [2651-2672]
+9. Display loop (30fps, infinite):                     [2676-2847]
+   a. Read frame (fake video or camera)
+   b. Hand frame copy to inference thread
+   c. Handle model switch requests
+   d. Read last_det from inference thread
+   e. Update detection age for fading overlay
+   f. Periodic plot renders (~every 2s)
+   g. draw_overlay(frame, last_det) — every frame
+   h. Capture snapshots if flagged by inference
+   i. Update smart grid if new data
+   j. JPEG encode for stream (quality 70)
+   k. Update stats dict
+   l. Terminal output every 50 frames
+   m. Sleep to pace at ~30fps
 ```
 
 ## draw_overlay() Layout (lines 366-490)
@@ -180,9 +236,10 @@ Updated by `mavlink_reader()` background thread. Read-only from mavproxy.
 2. **Headless mode** — if no `DISPLAY` env var, removes `QT_QPA_PLATFORM` to prevent cv2 crash on Pi via SSH.
 3. **Camera BGR** — VisionSystem returns BGR frames directly. No cvtColor conversion (IMX296 outputs BGR despite RGB888 label).
 4. **Detection box persistence** — last detection box stays visible for 2 seconds with fade-out (alpha decay), so pilot can see where detection was even between inference frames.
-5. **Inference throttle** — detection only runs every `1/fps` seconds. Camera captures every frame for smooth stream, but AI runs at throttled rate.
-6. **JPEG quality** — stream encoded at quality 70 (line 710). Snapshots saved at default quality (higher).
+5. **Threaded inference** — display loop runs at ~30fps (smooth stream), inference runs in a background daemon thread at its own speed (~1.4fps laptop, ~4.8fps Pi). The `--fps` throttle is no longer used; inference runs as fast as the model allows.
+6. **JPEG quality** — stream encoded at quality 70. Snapshots saved at higher quality (85-92).
 7. **JSON sidecar** — every saved detection frame gets a `.json` file with structured metadata (drone position, FOV, estimate). Useful for post-flight analysis and retraining.
 8. **CSV log** — appends to `detections/detection_log.csv` (not overwritten between runs). Header written only if file is empty.
 9. **GPS estimate weighting** — inverse altitude squared (10m observation = 9x weight of 30m) plus centre-bonus (detections near frame centre get up to 5x boost).
 10. **Port conflict** — uses port 8090 by default, same as `pi_flight.py` and `capture_training.py` (8091). Don't run simultaneously without changing `--port`.
+11. **Thread safety** — last_det is a tuple (immutable, atomic ref assignment). Frame handoff uses `_inference_lock`. GPS data uses `gps_lock`. Model swap uses `_inference_eyes_lock`. Snapshot requests use bool flags (one writer, one reader).

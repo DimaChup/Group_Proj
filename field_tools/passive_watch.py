@@ -33,6 +33,7 @@ import subprocess
 import csv
 import json
 import math
+import queue
 from datetime import datetime
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from socketserver import ThreadingMixIn
@@ -68,6 +69,63 @@ bullseye_map_bg = True  # default ON: satellite map crop behind bullseye scatter
 latest_best_jpeg = None  # best (most central) detection JPEG
 _best_center_dist = 999.0  # track best center distance
 _best_detection_gps = None  # {"est_lat", "est_lon", "drone_lat", "drone_lon", "center_dist"} or None
+
+# ── Threaded inference shared state ──
+_inference_frame = None        # latest frame from display thread, read by inference thread
+_inference_lock = threading.Lock()
+_inference_eyes = None         # VisionSystem reference, swapped on model switch
+_inference_eyes_lock = threading.Lock()  # protects _inference_eyes swap
+
+# ── Detection result from inference thread → display thread ──
+# last_det is a tuple (immutable) so Python reference assignment is atomic-safe.
+# _snap_request_latest / _snap_request_best are set by inference thread,
+# consumed by display thread after draw_overlay.
+_snap_request_latest = False
+_snap_request_best = False
+_snap_gps_info = None          # GPS info dict for snapshot overlay (set by inference thread)
+_snap_gps_info_best = None     # GPS info dict for best snapshot (set by inference thread)
+_snap_jpeg_latest = None       # pre-rendered JPEG from inference thread (exact detection frame)
+_snap_jpeg_best = None         # pre-rendered JPEG from inference thread (exact detection frame)
+_snap_display_for_smart = None # overlayed frame for smart estimator (set by inference, consumed by display)
+_inference_det_count = 0       # detection count (written by inference thread only)
+_inference_saved_count = 0     # saved count (written by inference thread only)
+# Raw detection (ALL detections regardless of class filter / conf threshold)
+# Used to show dim gray markers for rejected detections on the stream.
+# Tuple: (cx, cy, conf, 0.0, cls_name, bw, bh) or None.  Fades after 0.5s.
+_last_raw_det = None
+_last_raw_det_time = 0
+
+# ── Async file I/O queue (keeps imwrite/json off the inference thread) ──
+_save_queue = queue.Queue(maxsize=50)  # drops oldest if full
+
+
+def _save_worker():
+    """Drain save queue — runs in its own thread so inference isn't blocked."""
+    while True:
+        job = _save_queue.get()
+        if job is None:
+            break  # poison pill
+        try:
+            kind = job["kind"]
+            if kind == "image":
+                cv2.imwrite(job["path"], job["frame"])
+            elif kind == "json":
+                with open(job["path"], 'w') as jf:
+                    json.dump(job["data"], jf, indent=2)
+            elif kind == "csv":
+                job["writer"].writerow(job["row"])
+                job["file"].flush()
+        except Exception as e:
+            print(f"[SAVE] Error: {e}")
+        _save_queue.task_done()
+
+
+def _enqueue_save(job):
+    """Non-blocking put — drops job if queue is full (better than stalling inference)."""
+    try:
+        _save_queue.put_nowait(job)
+    except queue.Full:
+        pass  # drop oldest saves rather than block inference
 
 # ── Result mode globals ──
 _smart_result_saved = False   # prevents saving SMART result multiple times
@@ -214,6 +272,7 @@ HTML_PAGE = """<!DOCTYPE html>
     <option value="3">COCO Person</option>
   </select>
   <span class="model-status" id="model-status"></span>
+  <span id="inference-fps" style="margin-left:8px;padding:2px 8px;background:#003;border:1px solid #0af;border-radius:4px;color:#0af;font-weight:bold;font-size:1.1em">-- FPS</span>
   <span class="sep">|</span>
 
   <label>Conf:</label>
@@ -387,6 +446,12 @@ setInterval(()=>{
       ?`EST:${d.est_lat},${d.est_lon}(${d.est_obs}obs)`:'EST: waiting...';
     document.getElementById('fov').textContent=
       `FOV: ${d.fov_deg}\u00b0 | @1m: ${d.cal_1m_w}\u00d7${d.cal_1m_h}cm`;
+    /* Inference FPS badge */
+    const vfps = parseFloat(d.vis_fps)||0;
+    const fpsEl = document.getElementById('inference-fps');
+    fpsEl.textContent = vfps.toFixed(1) + ' FPS';
+    fpsEl.style.borderColor = vfps >= 4 ? '#0f0' : vfps >= 2 ? '#fa0' : '#f44';
+    fpsEl.style.color = vfps >= 4 ? '#0f0' : vfps >= 2 ? '#fa0' : '#f44';
     const t=Date.now();
     document.getElementById('latest').src='/latest?'+t;
     document.getElementById('best-det').src='/best?'+t;
@@ -411,6 +476,12 @@ setInterval(()=>{
       const cf = d.class_filter;
       if (cf === 'all') {
         document.querySelectorAll('[id^="cls-"]').forEach(cb => cb.checked = true);
+      } else {
+        const allowed = cf.split(',').map(s => s.trim().toLowerCase());
+        document.querySelectorAll('[id^="cls-"]').forEach(cb => {
+          const cls = cb.id.replace('cls-', '');
+          cb.checked = allowed.includes(cls);
+        });
       }
     }
     if (d.smart_spread !== undefined && document.activeElement !== smartSpread) {
@@ -789,9 +860,9 @@ class Handler(BaseHTTPRequestHandler):
         with runtime_lock:
             runtime_state["model_switch_request"] = mid
             runtime_state["model_switch_error"] = None
-        # Wait for main loop to pick it up (up to 10s for large models)
-        for _ in range(100):
-            time.sleep(0.1)
+        # Wait for main loop to pick it up (up to 120s — TFLite init can be slow)
+        for _ in range(600):
+            time.sleep(0.2)
             with runtime_lock:
                 err = runtime_state["model_switch_error"]
                 if err is not None:
@@ -821,12 +892,13 @@ class Handler(BaseHTTPRequestHandler):
             return {"ok": False, "error": "missing name"}
         with runtime_lock:
             runtime_state["class_filter"] = name
-        # Reset best detection when class filter changes (old best may be wrong class)
+        # Reset best + latest detection when class filter changes (old detections may be wrong class)
         _mod = sys.modules.get('field_tools.passive_watch') or sys.modules.get('__main__')
         _mod._best_center_dist = 999.0
         _mod._best_detection_gps = None
         with frame_lock:
             _mod.latest_best_jpeg = None
+            _mod.latest_detection_jpeg = None
         return {"ok": True, "class_filter": name}
 
 
@@ -1973,14 +2045,45 @@ def mavlink_reader(mav):
             time.sleep(0.1)
 
 
-def draw_overlay(frame, last_det):
-    """Draw detection box + GPS info on frame for stream."""
+def draw_overlay(frame, last_det, raw_det=None):
+    """Draw detection box + GPS info on frame for stream.
+
+    raw_det: optional tuple (cx, cy, conf, age, cls_name, bw, bh) for ALL
+             detections regardless of filter.  Drawn as a dim gray marker
+             when the detection was rejected by the class/conf filter.
+    """
     h, w = frame.shape[:2]
     display = frame.copy()
 
     # GPS snapshot (needed early for altitude-dependent overlays)
     with gps_lock:
         g = dict(gps_data)
+
+    # ── Dim gray marker for rejected (raw) detections ──
+    # Only draw if raw_det exists AND is different from the filtered last_det
+    # (i.e. the detection was rejected by class/conf filter).
+    if raw_det is not None and raw_det[3] < 0.5:
+        _is_same = (last_det is not None and last_det[3] < 2.0
+                     and abs(raw_det[0] - last_det[0]) < 5
+                     and abs(raw_det[1] - last_det[1]) < 5)
+        if not _is_same:
+            rcx, rcy = int(raw_det[0]), int(raw_det[1])
+            r_conf = raw_det[2]
+            r_cls = raw_det[4] if len(raw_det) > 4 else ''
+            r_bw = int(raw_det[5]) if len(raw_det) > 5 else 60
+            r_bh = int(raw_det[6]) if len(raw_det) > 6 else 60
+            gray = (128, 128, 128)
+            # Dim gray bounding box
+            rx1, ry1 = max(0, rcx - r_bw // 2), max(0, rcy - r_bh // 2)
+            rx2, ry2 = min(w, rcx + r_bw // 2), min(h, rcy + r_bh // 2)
+            cv2.rectangle(display, (rx1, ry1), (rx2, ry2), gray, 1)
+            # Small crosshair at center
+            cv2.line(display, (rcx - 6, rcy), (rcx + 6, rcy), gray, 1)
+            cv2.line(display, (rcx, rcy - 6), (rcx, rcy + 6), gray, 1)
+            # Class + confidence label in gray above the box
+            r_label = f"{r_cls} {r_conf:.2f}"
+            cv2.putText(display, r_label, (rx1, ry1 - 4),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.4, gray, 1)
 
     # Draw last detection box (persists between frames)
     # Persistent detection box — redraw on EVERY frame (vision.py only draws on inference frames)
@@ -2207,9 +2310,315 @@ def draw_overlay(frame, last_det):
     return display
 
 
+# ── Inference Worker Thread ──
+def inference_worker(args_ref, csv_writer_ref, csv_file_ref):
+    """Background thread: grabs latest frame, runs AI detection, updates shared state.
+
+    Runs as fast as inference allows (~1.4fps laptop, ~4.8fps Pi).
+    The display thread runs independently at ~30fps.
+    """
+    global _inference_frame, _inference_eyes, _snap_request_latest, _snap_request_best
+    global _snap_gps_info, _snap_gps_info_best, _snap_jpeg_latest, _snap_jpeg_best, _snap_display_for_smart
+    global _inference_det_count, _inference_saved_count
+    global _best_center_dist, _best_detection_gps, _smart_result_saved, _survey_result_saved
+    global _result_banner
+
+    # last_det is set on the module so display thread can read it
+    _mod = sys.modules.get('field_tools.passive_watch') or sys.modules.get('__main__')
+
+    while True:
+        # Grab latest frame
+        with _inference_lock:
+            frame = _inference_frame
+        if frame is None:
+            time.sleep(0.01)
+            continue
+
+        # Get current eyes reference (may change on model switch)
+        with _inference_eyes_lock:
+            eyes = _inference_eyes
+        if eyes is None or not eyes.using_ai:
+            time.sleep(0.05)
+            continue
+
+        # Read runtime conf + class filter
+        with runtime_lock:
+            current_conf = runtime_state["conf_threshold"]
+            current_class_filter = runtime_state["class_filter"]
+
+        # Run detection on a COPY so rejected classes don't leave boxes on frame.
+        # If detection passes class filter, we swap frame←det_frame so the bbox
+        # is on the EXACT frame it was detected on (for snapshots + overlays).
+        det_frame = frame.copy()
+        found, x, y, conf = eyes.detect_in_image(det_frame)
+        vis_fps_tracker.tick()
+        h, w = frame.shape[:2]
+
+        # Store RAW detection (before any filter) for dim gray overlay
+        if found:
+            raw_cls = getattr(eyes, 'last_class_name', '') or ''
+            raw_bw = eyes.last_bbox_w if eyes.last_bbox_w > 0 else 80
+            raw_bh = eyes.last_bbox_h if eyes.last_bbox_h > 0 else 80
+            _mod._last_raw_det = (int(x), int(y), conf, 0.0, raw_cls, raw_bw, raw_bh)
+            _mod._last_raw_det_time = time.time()
+
+        # Class filter: reject detection if class doesn't match
+        class_rejected = False
+        if found and conf >= current_conf:
+            if current_class_filter and current_class_filter != "all" and hasattr(eyes, 'last_class_name'):
+                det_cls = eyes.last_class_name.lower()
+                allowed = [c.strip().lower() for c in current_class_filter.split(',')]
+                if 'other' in allowed:
+                    named = {'person', 'bird', 'dummy'}
+                    if det_cls not in named:
+                        pass  # accepted as "other"
+                    elif det_cls not in allowed:
+                        class_rejected = True
+                elif det_cls not in allowed:
+                    class_rejected = True
+
+        if found and conf >= current_conf and not class_rejected:
+            # Accepted — use det_frame (has green bbox from vision.py on exact frame)
+            frame = det_frame
+            _inference_det_count += 1
+            cx, cy = int(x), int(y)
+            now = time.time()
+
+            # Update last_det (tuple = atomic assignment, safe for display thread to read)
+            _mod._last_det = (cx, cy, conf, 0.0)
+            _mod._last_det_time = now
+
+            # Store bbox size + class for persistent overlay
+            draw_overlay._last_bw = eyes.last_bbox_w if eyes.last_bbox_w > 0 else 80
+            draw_overlay._last_bh = eyes.last_bbox_h if eyes.last_bbox_h > 0 else 80
+            draw_overlay._last_class = getattr(eyes, 'last_class_name', '')
+
+            # Estimate dummy GPS position
+            est_result = None
+            with gps_lock:
+                d_lat, d_lon = gps_data["lat"], gps_data["lon"]
+                d_alt = gps_data["alt"]
+                d_yaw = gps_data["yaw"]
+                d_pitch = gps_data["pitch"]
+                d_roll = gps_data["roll"]
+                d_sats = gps_data["sats"]
+                d_mode = gps_data["mode"]
+            if d_lat != 0.0 or d_lon != 0.0:
+                norm_x = x / w if w > 0 else 0.5
+                norm_y = y / h if h > 0 else 0.5
+                est_result = dummy_estimator.add_observation(
+                    d_lat, d_lon, d_alt, d_yaw, norm_x, norm_y
+                )
+
+                if est_result:
+                    est_lat, est_lon = est_result
+                    pixel_dist = math.sqrt((cx - w/2)**2 + (cy - h/2)**2)
+                    _all_gps_estimates.append((est_lat, est_lon, pixel_dist, d_alt, conf))
+
+                    # Smart estimator
+                    _smart_added = False
+                    if smart_estimator and not smart_estimator.locked:
+                        smart_estimator.add(est_lat, est_lon, pixel_dist, None)
+                        _smart_added = True
+                        _mod._smart_added_flag = True  # signal display thread
+
+                    # Bullseye plot updated periodically by display thread (not here — saves ~50-100ms)
+
+                    # ── Mode 1: SMART Quick Lock result ──
+                    if smart_estimator and smart_estimator.locked and not _smart_result_saved:
+                        _smart_result_saved = True
+                        med = smart_estimator.get_median()
+                        if med:
+                            s_lat, s_lon = med[0], med[1]
+                            s_spread = smart_estimator.locked_spread
+                            s_cep = smart_estimator.get_cep50()
+                            s_stats = f"Spread: {s_spread:.2f}m  CEP50: {s_cep:.2f}m  Conf: {conf:.2f}  N={med[2]}"
+                            result_frame = draw_overlay(frame, _mod._last_det)
+                            s_fname = os.path.join(args_ref.save_dir, f"RESULT_SMART_{s_lat:.6f}_{s_lon:.6f}.jpg")
+                            generate_result_image(result_frame, "TARGET FOUND",
+                                                  s_lat, s_lon, s_stats, s_fname,
+                                                  title_color=(0, 255, 0),
+                                                  drone_lat=d_lat, drone_lon=d_lon)
+                            _result_banner = {"text": "TARGET FOUND", "color": (0, 255, 0),
+                                              "until": time.time() + 5}
+                            print(f"\n[RESULT] SMART LOCK: {s_lat:.7f}, {s_lon:.7f} (spread: {s_spread:.2f}m)")
+                            print(f"         Saved: {s_fname}\n")
+
+                    # ── Mode 2: Full Survey result ──
+                    if len(_all_gps_estimates) >= SURVEY_TARGET and not _survey_result_saved:
+                        _survey_result_saved = True
+                        survey = compute_survey_analysis(_all_gps_estimates[:SURVEY_TARGET])
+                        if survey:
+                            sv_lat, sv_lon = survey["lat"], survey["lon"]
+                            sv_stats = survey["stats_text"]
+                            result_frame = draw_overlay(frame, _mod._last_det)
+                            sv_fname = os.path.join(args_ref.save_dir, f"RESULT_SURVEY_{sv_lat:.6f}_{sv_lon:.6f}.jpg")
+                            generate_result_image(result_frame, "SURVEY COMPLETE",
+                                                  sv_lat, sv_lon, sv_stats, sv_fname,
+                                                  title_color=(255, 255, 0))
+                            _result_banner = {"text": "SURVEY COMPLETE", "color": (255, 255, 0),
+                                              "until": time.time() + 5}
+                            print(f"\n[RESULT] SURVEY: {sv_lat:.7f}, {sv_lon:.7f} (N={survey['n']}, CEP50={survey['cep50']:.2f}m)")
+                            print(f"         Method: {survey['method']}  Saved: {sv_fname}\n")
+
+            # Smart save
+            if args_ref.smart_estimate and smart_estimator and not args_ref.no_save:
+                if smart_estimator.ready() and not getattr(smart_estimator, '_saved', False):
+                    smart_estimator._saved = True
+                    med = smart_estimator.get_median()
+                    _inference_saved_count += 1
+                    fname = f"SMART_{med[0]:.6f}_{med[1]:.6f}_{med[2]}samp.png"
+                    if smart_estimator.locked_frame is not None:
+                        _enqueue_save({"kind": "image", "path": os.path.join(args_ref.save_dir, fname), "frame": smart_estimator.locked_frame})
+                    print(f"\n  {'='*60}")
+                    print(f"  SMART ESTIMATE SAVED: {fname}")
+                    print(f"  Median GPS: {med[0]:.7f}, {med[1]:.7f}")
+                    print(f"  Cluster: {med[2]} samples, spread: {smart_estimator.locked_spread:.2f}m")
+                    print(f"  {'='*60}\n")
+
+            # Flag snapshot requests for display thread
+            # Build GPS info dicts here so display thread has everything it needs
+            gps_info_snap = None
+            if d_lat != 0.0 or d_lon != 0.0:
+                _cls = getattr(draw_overlay, '_last_class', '') or '?'
+                gps_info_snap = {"drone_lat": d_lat, "drone_lon": d_lon, "cls": _cls, "conf": conf}
+                if est_result:
+                    gps_info_snap["est_lat"] = est_lat
+                    gps_info_snap["est_lon"] = est_lon
+                else:
+                    _cum_est = dummy_estimator.get_estimate()
+                    if _cum_est:
+                        gps_info_snap["est_lat"] = _cum_est[0]
+                        gps_info_snap["est_lon"] = _cum_est[1]
+
+            _snap_gps_info = gps_info_snap
+
+            # Render snapshot on EXACT detection frame (has green bbox from vision.py)
+            snap_display = draw_overlay(frame, _mod._last_det)
+            _snap_jpeg_latest = _snapshot_overlay(snap_display, label="LATEST", thumb_w=728, gps_info=gps_info_snap)
+            _snap_display_for_smart = snap_display  # for smart estimator frame capture
+            _snap_request_latest = True
+
+            # Check if this detection is closer to center (for Best Detection panel)
+            center_dist = math.sqrt((cx - w/2)**2 + (cy - h/2)**2) / (w/2)
+            if center_dist < _best_center_dist:
+                _best_center_dist = center_dist
+                _snap_gps_info_best = gps_info_snap
+                _snap_jpeg_best = _snapshot_overlay(snap_display, label="BEST", thumb_w=1024, gps_info=gps_info_snap)
+                _snap_request_best = True
+                # Store GPS info for best detection
+                _best_gps_entry = {
+                    "center_dist": round(center_dist, 4),
+                    "drone_lat": round(d_lat, 7),
+                    "drone_lon": round(d_lon, 7),
+                }
+                if est_result:
+                    _best_gps_entry["est_lat"] = round(est_lat, 7)
+                    _best_gps_entry["est_lon"] = round(est_lon, 7)
+                else:
+                    _cum_est = dummy_estimator.get_estimate()
+                    if _cum_est:
+                        _best_gps_entry["est_lat"] = round(_cum_est[0], 7)
+                        _best_gps_entry["est_lon"] = round(_cum_est[1], 7)
+                _best_detection_gps = _best_gps_entry
+
+            # Save snapshot (normal mode, skipped in smart mode)
+            if not args_ref.no_save and not args_ref.smart_estimate:
+                _inference_saved_count += 1
+                save_frame = draw_overlay(frame, _mod._last_det)
+                sh, sw = save_frame.shape[:2]
+
+                with gps_lock:
+                    lat, lon = gps_data["lat"], gps_data["lon"]
+                    alt = gps_data["alt"]
+                ts = datetime.now().strftime("%H:%M:%S")
+
+                if args_ref.simple_names:
+                    est_snap = dummy_estimator.get_estimate()
+                    if est_snap:
+                        fname = f"{_inference_saved_count:04d}_{est_snap[0]:.5f}_{est_snap[1]:.5f}.jpg"
+                    elif lat != 0.0 or lon != 0.0:
+                        fname = f"{_inference_saved_count:04d}_{lat:.5f}_{lon:.5f}.jpg"
+                    else:
+                        fname = f"{_inference_saved_count:04d}_nogps.jpg"
+                else:
+                    if lat != 0.0 or lon != 0.0:
+                        fname = f"det_{_inference_saved_count:04d}_{conf:.2f}_{lat:.5f}_{lon:.5f}.jpg"
+                    else:
+                        fname = f"det_{_inference_saved_count:04d}_{conf:.2f}_nogps.jpg"
+
+                stamp_lines = [f"{ts} conf:{conf:.2f}"]
+                if lat != 0.0 or lon != 0.0:
+                    stamp_lines.append(f"DRONE: {lat:.6f},{lon:.6f} @{alt:.0f}m")
+                else:
+                    stamp_lines.append("DRONE: NO GPS")
+                est_snap = dummy_estimator.get_estimate()
+                if est_snap:
+                    stamp_lines.append(f"DUMMY: {est_snap[0]:.6f},{est_snap[1]:.6f} ({est_snap[2]}obs)")
+                for i, line in enumerate(stamp_lines):
+                    ty = sh // 3 + i * 20
+                    cv2.rectangle(save_frame, (sw - 280, ty - 14), (sw, ty + 4), (0, 0, 0), -1)
+                    cv2.putText(save_frame, line, (sw - 275, ty),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1)
+
+                _enqueue_save({"kind": "image", "path": os.path.join(args_ref.save_dir, fname), "frame": save_frame})
+
+                # JSON sidecar
+                if not args_ref.simple_names:
+                    g_w, g_h = ground_coverage(d_alt) if d_alt > 0.5 else (0, 0)
+                    meta = {
+                        "timestamp": datetime.now().isoformat(),
+                        "frame": _mod._frame_count,
+                        "detection": {
+                            "confidence": round(conf, 3),
+                            "pixel_x": cx, "pixel_y": cy,
+                            "bbox_centre": [cx, cy],
+                        },
+                        "drone": {
+                            "lat": round(d_lat, 7), "lon": round(d_lon, 7),
+                            "alt_m": round(d_alt, 1),
+                            "yaw_deg": round(d_yaw, 1),
+                            "pitch_deg": round(d_pitch, 1),
+                            "roll_deg": round(d_roll, 1),
+                            "sats": d_sats,
+                            "mode": d_mode,
+                        },
+                        "fov": {
+                            "focal_mm": FOV["focal_mm"],
+                            "sensor_w_mm": FOV["sensor_w"],
+                            "hfov_deg": round(FOV["hfov_deg"], 1),
+                            "ground_w_m": round(g_w, 2) if d_alt > 0.5 else None,
+                            "ground_h_m": round(g_h, 2) if d_alt > 0.5 else None,
+                        },
+                        "estimate": {
+                            "lat": round(est_snap[0], 7) if est_snap else None,
+                            "lon": round(est_snap[1], 7) if est_snap else None,
+                            "n_observations": est_snap[2] if est_snap else 0,
+                        },
+                        "image": fname,
+                    }
+                    json_fname = fname.replace('.jpg', '.json')
+                    _enqueue_save({"kind": "json", "path": os.path.join(args_ref.save_dir, json_fname), "data": meta})
+
+                # CSV log
+                if csv_writer_ref[0]:
+                    est = dummy_estimator.get_estimate()
+                    _enqueue_save({"kind": "csv", "writer": csv_writer_ref[0], "file": csv_file_ref[0], "row": [
+                        datetime.now().isoformat(), _mod._frame_count, f"{conf:.3f}",
+                        cx, cy, f"{d_lat:.7f}", f"{d_lon:.7f}", f"{d_alt:.1f}",
+                        d_sats, f"{d_yaw:.0f}",
+                        d_mode,
+                        f"{est[0]:.7f}" if est else "",
+                        f"{est[1]:.7f}" if est else "",
+                        est[2] if est else 0,
+                        fname
+                    ]})
+
+
 # ── Main ──
 def main():
     global latest_jpeg, latest_det_jpeg, smart_estimator, _all_gps_estimates, _best_center_dist, latest_detection_jpeg, latest_best_jpeg, _best_detection_gps, _smart_result_saved, _survey_result_saved, _result_banner
+    global _inference_frame, _inference_eyes, _snap_request_latest, _snap_request_best, _snap_gps_info, _snap_gps_info_best, _snap_jpeg_latest, _snap_jpeg_best, _snap_display_for_smart
 
     if args.smart_estimate:
         smart_estimator = SmartEstimator(
@@ -2288,10 +2697,14 @@ def main():
             print("[MAV] Skipped (--no-mavlink)")
 
     # Start camera + AI
+    # camera_source owns the camera handle and is used ONLY for get_frame().
+    # _inference_eyes is used for detect_in_image() and is swapped on model switch.
+    # They start as the same object, but diverge after the first model switch.
     if args.fake:
         eyes = VisionSystem(camera_index=None, model_path=args.model)
     else:
         eyes = VisionSystem(camera_index=0, model_path=args.model)
+    camera_source = eyes  # never reassigned — owns the camera for the entire session
     if not eyes.using_ai:
         print("[WARN] AI model not loaded — stream only, no detection")
 
@@ -2342,22 +2755,46 @@ def main():
                                  'drone_lat', 'drone_lon', 'alt_m', 'sats', 'yaw', 'mode',
                                  'est_dummy_lat', 'est_dummy_lon', 'est_n_obs', 'filename'])
 
-    # Camera loop
-    frame_count = 0
-    det_count = 0
-    saved_count = 0
-    start_time = time.time()
-    last_inference = 0
-    min_interval = 1.0 / args.fps if args.fps > 0 else 0
+    # ── Shared state for display ↔ inference communication ──
+    # Use module-level attributes so inference_worker can access them
+    _mod = sys.modules.get('field_tools.passive_watch') or sys.modules.get('__main__')
+    _mod._last_det = None       # (cx, cy, conf, age) — written by inference, read by display
+    _mod._last_det_time = 0     # timestamp of last detection
+    _mod._last_raw_det = None   # (cx, cy, conf, age, cls, bw, bh) — ALL detections (pre-filter)
+    _mod._last_raw_det_time = 0
+    _mod._frame_count = 0       # shared frame counter
+    _mod._smart_added_flag = False  # signal from inference that smart estimator got new data
 
-    # Persistent detection state (for overlay)
-    last_det = None  # (cx, cy, conf, time_since_det)
-    last_det_time = 0
+    # Set up inference eyes reference
+    with _inference_eyes_lock:
+        _inference_eyes = eyes
+
+    # Mutable refs so inference thread can access csv objects
+    csv_writer_ref = [csv_writer]
+    csv_file_ref = [csv_file]
+
+    # Start file I/O worker thread (keeps imwrite/json off inference thread)
+    save_thread = threading.Thread(target=_save_worker, daemon=True)
+    save_thread.start()
+
+    # Start inference worker thread
+    inf_thread = threading.Thread(
+        target=inference_worker,
+        args=(args, csv_writer_ref, csv_file_ref),
+        daemon=True
+    )
+    inf_thread.start()
+    print("[OK] Inference thread started (decoupled from stream)\n")
+
+    # Display loop — runs at ~30fps, independent of inference speed
+    frame_count = 0
+    start_time = time.time()
 
     while True:
+        loop_start = time.time()
+
+        # ── Read frame ──
         if args.fake:
-            # Skip frames to maintain real-time playback
-            # Read multiple frames to keep pace (inference slows us down)
             target_frame = int((time.time() - _fake_start[0]) * fake_fps) + 1
             while fake_frame_idx[0] < target_frame:
                 ret, frame = fake_cap.read()
@@ -2383,17 +2820,22 @@ def main():
                 with gps_lock:
                     print(f"  [FAKE] Frame {fake_frame_idx[0]} GPS:{gps_data['lat']:.5f},{gps_data['lon']:.5f} Alt:{gps_data['alt']:.0f}m Yaw:{gps_data['yaw']:.0f}")
         else:
-            frame = eyes.get_frame()
+            frame = camera_source.get_frame()
             if frame is None:
                 time.sleep(0.01)
                 continue
 
-        frame_count += 1
-        now = time.time()
         if frame is None:
             continue
-        h, w = frame.shape[:2]
+
+        frame_count += 1
+        _mod._frame_count = frame_count
+        now = time.time()
         cam_fps_tracker.tick()
+
+        # ── Hand frame to inference thread ──
+        with _inference_lock:
+            _inference_frame = frame.copy()
 
         # ── Handle model switch request from browser ──
         with runtime_lock:
@@ -2404,359 +2846,101 @@ def main():
             t0_switch = time.time()
             try:
                 new_eyes = VisionSystem(
-                    camera_index=None if args.fake else 0,
+                    camera_index=None,  # display loop handles camera, not VisionSystem
                     model_path=m['path'],
                     backend=m['backend']
                 )
-                # Validate: test inference on main thread (threaded test causes
-                # XNNPACK deadlock on Windows when multiple interpreters exist)
                 if new_eyes.using_ai:
                     test_frame = np.zeros((640, 640, 3), dtype=np.uint8)
                     new_eyes.detect_in_image(test_frame)
                     print(f"[MODEL] Test inference OK")
-                eyes = new_eyes
+                # Swap the inference eyes reference (thread-safe).
+                # camera_source keeps the camera — new_eyes is inference-only.
+                old_inf_eyes = None
+                with _inference_eyes_lock:
+                    old_inf_eyes = _inference_eyes
+                    _inference_eyes = new_eyes
+                # Release old inference-only VisionSystem (but never camera_source)
+                if old_inf_eyes is not None and old_inf_eyes is not camera_source:
+                    old_inf_eyes.release()
                 dt_switch = time.time() - t0_switch
-                print(f"[MODEL] Loaded: {m['name']} (backend={eyes.backend_name}) in {dt_switch:.2f}s")
+                print(f"[MODEL] Loaded: {m['name']} (backend={new_eyes.backend_name}) in {dt_switch:.2f}s")
+                # Reset best detection + class filter for new model
+                _best_center_dist = 999.0
+                _best_detection_gps = None
+                with frame_lock:
+                    latest_best_jpeg = None
+                    latest_detection_jpeg = None
                 with runtime_lock:
                     runtime_state["active_model_id"] = switch_req
-                    runtime_state["class_filter"] = "all"  # reset filter on model switch
+                    runtime_state["class_filter"] = "all"
                     runtime_state["model_switch_request"] = None
             except Exception as e:
                 print(f"[MODEL] ERROR loading {m['name']}: {e}")
                 with runtime_lock:
-                    runtime_state["model_switch_request"] = None  # clear request, keep old model
+                    runtime_state["model_switch_request"] = None
                     runtime_state["model_switch_error"] = str(e)
 
-        # Read runtime conf + class filter
-        with runtime_lock:
-            current_conf = runtime_state["conf_threshold"]
-            current_class_filter = runtime_state["class_filter"]
-
-        # Snapshot flags — set inside detection block, captured after draw_overlay
-        _snap_latest = False
-        _snap_best = False
-        _smart_added = False  # True if smart_estimator.add() actually appended this frame
-
-        # Run detection (throttled)
-        # Pass a COPY to detect_in_image because vision.py draws bboxes on the
-        # frame in-place.  We keep the original clean so that draw_overlay()
-        # only renders accepted (class-filtered) detections.
-        if eyes.using_ai and (now - last_inference) >= min_interval:
-            last_inference = now
-            found, x, y, conf = eyes.detect_in_image(frame)
-            vis_fps_tracker.tick()
-
-            # Class filter: reject detection if class doesn't match
-            class_rejected = False
-            if found and conf >= current_conf:
-                if current_class_filter and current_class_filter != "all" and hasattr(eyes, 'last_class_name'):
-                    det_cls = eyes.last_class_name.lower()
-                    allowed = [c.strip().lower() for c in current_class_filter.split(',')]
-                    if 'other' in allowed:
-                        # "other" means accept classes not in the named list
-                        named = {'person', 'bird', 'dummy'}
-                        if det_cls not in named:
-                            pass  # accepted as "other"
-                        elif det_cls not in allowed:
-                            class_rejected = True
-                    elif det_cls not in allowed:
-                        class_rejected = True
-
-            if found and conf >= current_conf and not class_rejected:
-                det_count += 1
-                cx, cy = int(x), int(y)
-                last_det = (cx, cy, conf, 0.0)
-                last_det_time = now
-                # Store bbox size + class for persistent overlay
-                draw_overlay._last_bw = eyes.last_bbox_w if eyes.last_bbox_w > 0 else 80
-                draw_overlay._last_bh = eyes.last_bbox_h if eyes.last_bbox_h > 0 else 80
-                draw_overlay._last_class = getattr(eyes, 'last_class_name', '')
-
-                # Estimate dummy GPS position — snapshot all telemetry under lock
-                est_result = None
-                with gps_lock:
-                    d_lat, d_lon = gps_data["lat"], gps_data["lon"]
-                    d_alt = gps_data["alt"]
-                    d_yaw = gps_data["yaw"]
-                    d_pitch = gps_data["pitch"]
-                    d_roll = gps_data["roll"]
-                    d_sats = gps_data["sats"]
-                    d_mode = gps_data["mode"]
-                if d_lat != 0.0 or d_lon != 0.0:
-                    # Normalise pixel coords to 0-1 (estimator expects normalised)
-                    norm_x = x / w if w > 0 else 0.5
-                    norm_y = y / h if h > 0 else 0.5
-                    est_result = dummy_estimator.add_observation(
-                        d_lat, d_lon, d_alt, d_yaw, norm_x, norm_y
-                    )
-
-                    # Store for bullseye plotting
-                    if est_result:
-                        est_lat, est_lon = est_result
-                        pixel_dist = math.sqrt((cx - w/2)**2 + (cy - h/2)**2)
-                        _all_gps_estimates.append((est_lat, est_lon, pixel_dist, d_alt, conf))
-
-                        # Smart estimate: greedy cluster finds tightest 10
-                        # Pass None as frame — we'll set the overlayed display after draw_overlay
-                        if smart_estimator and not smart_estimator.locked:
-                            smart_estimator.add(est_lat, est_lon, pixel_dist, None)
-                            _smart_added = True
-
-                        # Update bullseye plot
-                        render_bullseye(_all_gps_estimates, smart_estimator)
-
-                        # ── Mode 1: SMART Quick Lock result ──
-                        if smart_estimator and smart_estimator.locked and not _smart_result_saved:
-                            _smart_result_saved = True
-                            med = smart_estimator.get_median()
-                            if med:
-                                s_lat, s_lon = med[0], med[1]
-                                s_spread = smart_estimator.locked_spread
-                                s_cep = smart_estimator.get_cep50()
-                                s_stats = f"Spread: {s_spread:.2f}m  CEP50: {s_cep:.2f}m  Conf: {conf:.2f}  N={med[2]}"
-                                # Use best detection frame or current overlay frame
-                                result_frame = draw_overlay(frame, last_det)
-                                s_fname = os.path.join(args.save_dir, f"RESULT_SMART_{s_lat:.6f}_{s_lon:.6f}.jpg")
-                                generate_result_image(result_frame, "TARGET FOUND",
-                                                      s_lat, s_lon, s_stats, s_fname,
-                                                      title_color=(0, 255, 0),
-                                                      drone_lat=d_lat, drone_lon=d_lon)
-                                _result_banner = {"text": "TARGET FOUND", "color": (0, 255, 0),
-                                                  "until": time.time() + 5}
-                                print(f"\n[RESULT] SMART LOCK: {s_lat:.7f}, {s_lon:.7f} (spread: {s_spread:.2f}m)")
-                                print(f"         Saved: {s_fname}\n")
-
-                        # ── Mode 2: Full Survey result (first N estimates) ──
-                        if len(_all_gps_estimates) >= SURVEY_TARGET and not _survey_result_saved:
-                            _survey_result_saved = True
-                            survey = compute_survey_analysis(_all_gps_estimates[:SURVEY_TARGET])
-                            if survey:
-                                sv_lat, sv_lon = survey["lat"], survey["lon"]
-                                sv_stats = survey["stats_text"]
-                                # Find most central detection frame from the estimates
-                                result_frame = draw_overlay(frame, last_det)
-                                sv_fname = os.path.join(args.save_dir, f"RESULT_SURVEY_{sv_lat:.6f}_{sv_lon:.6f}.jpg")
-                                generate_result_image(result_frame, "SURVEY COMPLETE",
-                                                      sv_lat, sv_lon, sv_stats, sv_fname,
-                                                      title_color=(255, 255, 0))  # cyan in BGR
-                                _result_banner = {"text": "SURVEY COMPLETE", "color": (255, 255, 0),
-                                                  "until": time.time() + 5}
-                                print(f"\n[RESULT] SURVEY: {sv_lat:.7f}, {sv_lon:.7f} (N={survey['n']}, CEP50={survey['cep50']:.2f}m)")
-                                print(f"         Method: {survey['method']}  Saved: {sv_fname}\n")
-
-                # Smart estimate: save ONLY when threshold reached, use median + most central image
-                if args.smart_estimate and smart_estimator and not args.no_save:
-                    if smart_estimator.ready() and not getattr(smart_estimator, '_saved', False):
-                        smart_estimator._saved = True
-                        med = smart_estimator.get_median()
-                        saved_count += 1
-                        fname = f"SMART_{med[0]:.6f}_{med[1]:.6f}_{med[2]}samp.png"
-                        # Save most central frame from cluster (clean, no overlay)
-                        if smart_estimator.locked_frame is not None:
-                            cv2.imwrite(os.path.join(args.save_dir, fname), smart_estimator.locked_frame)
-                        print(f"\n  {'='*60}")
-                        print(f"  SMART ESTIMATE SAVED: {fname}")
-                        print(f"  Median GPS: {med[0]:.7f}, {med[1]:.7f}")
-                        print(f"  Cluster: {med[2]} samples, spread: {smart_estimator.locked_spread:.2f}m")
-                        print(f"  {'='*60}\n")
-                    # Skip normal save when in smart mode
-                    if args.smart_estimate:
-                        pass  # don't save individual frames
-                elif not args.no_save:
-                    pass  # fall through to normal save below
-
-                # Flag: snapshot the overlay frame for Latest Detection panel
-                _snap_latest = True
-
-                # Check if this detection is closer to center (for Best Detection panel)
-                center_dist = math.sqrt((cx - w/2)**2 + (cy - h/2)**2) / (w/2)
-                if center_dist < _best_center_dist:
-                    _best_center_dist = center_dist
-                    _snap_best = True
-                    # Store GPS info for best detection (used by gps_charts scatter plot)
-                    _best_gps_entry = {
-                        "center_dist": round(center_dist, 4),
-                        "drone_lat": round(d_lat, 7),
-                        "drone_lon": round(d_lon, 7),
-                    }
-                    if est_result:
-                        _best_gps_entry["est_lat"] = round(est_lat, 7)
-                        _best_gps_entry["est_lon"] = round(est_lon, 7)
-                    else:
-                        _cum_est = dummy_estimator.get_estimate()
-                        if _cum_est:
-                            _best_gps_entry["est_lat"] = round(_cum_est[0], 7)
-                            _best_gps_entry["est_lon"] = round(_cum_est[1], 7)
-                    _best_detection_gps = _best_gps_entry
-
-                # Save snapshot with GPS overlay (normal mode, skipped in smart mode)
-                if not args.no_save and not args.smart_estimate:
-                    saved_count += 1
-                    save_frame = draw_overlay(frame, last_det)
-                    sh, sw = save_frame.shape[:2]
-
-                    # Add GPS text on saved image (larger, more prominent)
-                    with gps_lock:
-                        lat, lon = gps_data["lat"], gps_data["lon"]
-                        alt = gps_data["alt"]
-                    ts = datetime.now().strftime("%H:%M:%S")
-
-                    if args.simple_names:
-                        # Use estimated dummy GPS (not drone GPS) in filename
-                        est_snap = dummy_estimator.get_estimate()
-                        if est_snap:
-                            fname = f"{saved_count:04d}_{est_snap[0]:.5f}_{est_snap[1]:.5f}.jpg"
-                        elif lat != 0.0 or lon != 0.0:
-                            fname = f"{saved_count:04d}_{lat:.5f}_{lon:.5f}.jpg"
-                        else:
-                            fname = f"{saved_count:04d}_nogps.jpg"
-                    else:
-                        if lat != 0.0 or lon != 0.0:
-                            fname = f"det_{saved_count:04d}_{conf:.2f}_{lat:.5f}_{lon:.5f}.jpg"
-                        else:
-                            fname = f"det_{saved_count:04d}_{conf:.2f}_nogps.jpg"
-
-                    # Stamp: time + conf + drone pos + dummy est (right side, stacked)
-                    stamp_lines = [f"{ts} conf:{conf:.2f}"]
-                    if lat != 0.0 or lon != 0.0:
-                        stamp_lines.append(f"DRONE: {lat:.6f},{lon:.6f} @{alt:.0f}m")
-                    else:
-                        stamp_lines.append("DRONE: NO GPS")
-                    est_snap = dummy_estimator.get_estimate()
-                    if est_snap:
-                        stamp_lines.append(f"DUMMY: {est_snap[0]:.6f},{est_snap[1]:.6f} ({est_snap[2]}obs)")
-                    # Draw with black background for readability
-                    for i, line in enumerate(stamp_lines):
-                        ty = sh // 3 + i * 20
-                        cv2.rectangle(save_frame, (sw - 280, ty - 14), (sw, ty + 4), (0, 0, 0), -1)
-                        cv2.putText(save_frame, line, (sw - 275, ty),
-                                    cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1)
-
-                    cv2.imwrite(os.path.join(args.save_dir, fname), save_frame)
-
-                    # JSON sidecar metadata (skip if --simple-names)
-                    if not args.simple_names:
-                        g_w, g_h = ground_coverage(d_alt) if d_alt > 0.5 else (0, 0)
-                        meta = {
-                            "timestamp": datetime.now().isoformat(),
-                            "frame": frame_count,
-                            "detection": {
-                                "confidence": round(conf, 3),
-                                "pixel_x": cx, "pixel_y": cy,
-                                "bbox_centre": [cx, cy],
-                            },
-                            "drone": {
-                                "lat": round(d_lat, 7), "lon": round(d_lon, 7),
-                                "alt_m": round(d_alt, 1),
-                                "yaw_deg": round(d_yaw, 1),
-                                "pitch_deg": round(d_pitch, 1),
-                                "roll_deg": round(d_roll, 1),
-                                "sats": d_sats,
-                                "mode": d_mode,
-                            },
-                            "fov": {
-                                "focal_mm": FOV["focal_mm"],
-                                "sensor_w_mm": FOV["sensor_w"],
-                                "hfov_deg": round(FOV["hfov_deg"], 1),
-                                "ground_w_m": round(g_w, 2) if d_alt > 0.5 else None,
-                                "ground_h_m": round(g_h, 2) if d_alt > 0.5 else None,
-                            },
-                            "estimate": {
-                                "lat": round(est_snap[0], 7) if est_snap else None,
-                                "lon": round(est_snap[1], 7) if est_snap else None,
-                                "n_observations": est_snap[2] if est_snap else 0,
-                            },
-                            "image": fname,
-                        }
-                        json_fname = fname.replace('.jpg', '.json')
-                        with open(os.path.join(args.save_dir, json_fname), 'w') as jf:
-                            json.dump(meta, jf, indent=2)
-
-                    # CSV log
-                    if csv_writer:
-                        est = dummy_estimator.get_estimate()
-                        csv_writer.writerow([
-                            datetime.now().isoformat(), frame_count, f"{conf:.3f}",
-                            cx, cy, f"{d_lat:.7f}", f"{d_lon:.7f}", f"{d_alt:.1f}",
-                            d_sats, f"{d_yaw:.0f}",
-                            d_mode,
-                            f"{est[0]:.7f}" if est else "",
-                            f"{est[1]:.7f}" if est else "",
-                            est[2] if est else 0,
-                            fname
-                        ])
-                        csv_file.flush()
+        # ── Read last_det from inference thread (tuple = atomic read) ──
+        last_det = _mod._last_det
+        last_det_time = _mod._last_det_time
 
         # Update detection age for fading overlay
         if last_det is not None:
             age = now - last_det_time
             last_det = (last_det[0], last_det[1], last_det[2], age)
 
-        # Update all plots every 2 seconds
-        if frame_count % max(1, int(fake_fps * 2 if args.fake else 10)) == 0:
+        # ── Read raw detection (all detections, pre-filter) ──
+        raw_det = _mod._last_raw_det
+        raw_det_time = _mod._last_raw_det_time
+        if raw_det is not None:
+            raw_age = now - raw_det_time
+            raw_det = (raw_det[0], raw_det[1], raw_det[2], raw_age,
+                       raw_det[4], raw_det[5], raw_det[6])
+            if raw_age > 0.5:
+                raw_det = None  # fade after 0.5s
+
+        # ── Update plots periodically (every ~60 frames ≈ 2s at 30fps) ──
+        if frame_count % max(1, int(fake_fps * 2 if args.fake else 60)) == 0:
             render_bullseye(_all_gps_estimates, smart_estimator)
             render_map(_all_gps_estimates, smart_estimator)
             if smart_estimator:
                 render_smart_grid(smart_estimator)
 
-        # Draw overlay (detection box + GPS) on every frame for stream
-        display = draw_overlay(frame, last_det)
+        # ── Draw overlay on every frame for smooth stream ──
+        display = draw_overlay(frame, last_det, raw_det=raw_det)
 
-        # Capture detection snapshots FROM the overlayed display (identical to live stream)
-        if _snap_latest and display is not None:
-            # Build GPS info for overlay (variables set in detection block above)
-            _gps_info = None
-            if d_lat != 0.0 or d_lon != 0.0:
-                # Use draw_overlay._last_class (only set for accepted detections)
-                # instead of eyes.last_class_name (set for ALL detections including rejected)
-                _cls = getattr(draw_overlay, '_last_class', '') or '?'
-                _det_conf = conf if 'conf' in dir() else 0
-                _gps_info = {"drone_lat": d_lat, "drone_lon": d_lon, "cls": _cls, "conf": _det_conf}
-                if est_result:
-                    _gps_info["est_lat"] = est_lat
-                    _gps_info["est_lon"] = est_lon
-                else:
-                    # Fall back to cumulative estimate
-                    _cum_est = dummy_estimator.get_estimate()
-                    if _cum_est:
-                        _gps_info["est_lat"] = _cum_est[0]
-                        _gps_info["est_lon"] = _cum_est[1]
-            snap_bytes = _snapshot_overlay(display, label="LATEST", thumb_w=728, gps_info=_gps_info)
+        # ── Capture detection snapshots (pre-rendered by inference thread on exact frame) ──
+        if _snap_request_latest:
+            _snap_request_latest = False
+            snap_bytes = _snap_jpeg_latest
             if snap_bytes:
                 with frame_lock:
                     latest_detection_jpeg = snap_bytes
-        if _snap_best and display is not None:
-            _gps_info_best = None
-            if d_lat != 0.0 or d_lon != 0.0:
-                _cls = getattr(draw_overlay, '_last_class', '') or '?'
-                _det_conf = conf if 'conf' in dir() else 0
-                _gps_info_best = {"drone_lat": d_lat, "drone_lon": d_lon, "cls": _cls, "conf": _det_conf}
-                if est_result:
-                    _gps_info_best["est_lat"] = est_lat
-                    _gps_info_best["est_lon"] = est_lon
-                else:
-                    _cum_est = dummy_estimator.get_estimate()
-                    if _cum_est:
-                        _gps_info_best["est_lat"] = _cum_est[0]
-                        _gps_info_best["est_lon"] = _cum_est[1]
-            snap_bytes = _snapshot_overlay(display, label="BEST", thumb_w=1024, gps_info=_gps_info_best)
+        if _snap_request_best:
+            _snap_request_best = False
+            snap_bytes = _snap_jpeg_best
             if snap_bytes:
                 with frame_lock:
                     latest_best_jpeg = snap_bytes
 
-        # Update smart estimator's last frame with the overlayed display
-        # so that smart grid thumbnails show the full HUD (detection box, GPS, etc.)
-        if smart_estimator and _smart_added and display is not None:
-            smart_estimator.update_last_frame(display)
-            render_smart_grid(smart_estimator)
+        # ── Update smart estimator's last frame with exact detection frame ──
+        if smart_estimator and _mod._smart_added_flag:
+            _mod._smart_added_flag = False
+            smart_frame = _snap_display_for_smart
+            if smart_frame is not None:
+                smart_estimator.update_last_frame(smart_frame)
+                render_smart_grid(smart_estimator)
 
-        # Encode for stream
+        # ── Encode JPEG for stream ──
         _, jpg = cv2.imencode('.jpg', display, [cv2.IMWRITE_JPEG_QUALITY, 70])
         with frame_lock:
             latest_jpeg = jpg.tobytes()
         stream_fps_tracker.tick()
 
-        # Update stats (gps_lock for telemetry reads, frame_lock for stats dict)
+        # ── Update stats ──
+        det_count = _inference_det_count
+        saved_count = _inference_saved_count
         det_pct = (det_count / frame_count * 100) if frame_count > 0 else 0
         with gps_lock:
             lat, lon = gps_data["lat"], gps_data["lon"]
@@ -2791,9 +2975,20 @@ def main():
             gps_str = f"GPS:{lat:.5f},{lon:.5f}" if lat != 0 else "GPS:---"
             print(f"  #{frame_count} CAM:{c_fps:.1f} VIS:{v_fps:.1f} STR:{s_fps:.1f} Det:{det_count} ({det_pct:.0f}%) Saved:{saved_count} {gps_str}")
 
+        # ── Pace display loop to ~30fps ──
+        elapsed = time.time() - loop_start
+        sleep_time = max(0, 0.033 - elapsed)
+        if sleep_time > 0:
+            time.sleep(sleep_time)
+
     if csv_file:
         csv_file.close()
-    eyes.release()
+    camera_source.release()
+    # Release inference eyes if it's a separate object from camera_source
+    with _inference_eyes_lock:
+        inf_eyes = _inference_eyes
+    if inf_eyes is not None and inf_eyes is not camera_source:
+        inf_eyes.release()
     server.shutdown()
 
 
