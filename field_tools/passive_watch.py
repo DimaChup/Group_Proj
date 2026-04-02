@@ -88,7 +88,7 @@ parser.add_argument('--simple-names', action='store_true', help='Simple filename
 parser.add_argument('--class-filter', type=str, default=None, help='Only save detections of this class (e.g. "person")')
 parser.add_argument('--smart-estimate', action='store_true', help='Accumulate central detections, save after 10+ with median GPS')
 parser.add_argument('--smart-min', type=int, default=10, help='Min central detections before saving (default 10)')
-parser.add_argument('--smart-radius', type=float, default=0.5, help='Max spread for smart cluster (default 0.5m)')
+parser.add_argument('--smart-radius', type=float, default=0.75, help='Max spread for smart cluster (default 0.75m)')
 parser.add_argument('--fake', action='store_true', help='Replay DJI video + SRT telemetry (no camera/mavproxy)')
 parser.add_argument('--fake-video', default='RealVideo/DJI_0001_1456x1088_cropped_30fps.mp4')
 parser.add_argument('--fake-srt', default='RealVideo/DJI_20260311172332_0001_V.SRT')
@@ -233,6 +233,12 @@ HTML_PAGE = """<!DOCTYPE html>
   <span class="sep">|</span>
   <button id="clear-all-btn" onclick="clearAll()" style="padding:3px 10px;background:#600;color:#fff;border:1px solid #f44;border-radius:3px;cursor:pointer;font-family:monospace;font-size:1em">Clear All</button>
   <button id="reset-best-btn" onclick="resetBest()" style="padding:3px 10px;background:#333;color:#0ff;border:1px solid #0ff;border-radius:3px;cursor:pointer;font-family:monospace;font-size:1em">Reset Best</button>
+  <span class="sep">|</span>
+  <label>Smart:</label>
+  <input type="number" id="smart-spread" value="0.75" min="0.1" max="5" step="0.05" style="width:50px;background:#222;color:#0f0;border:1px solid #444;border-radius:3px;padding:3px 4px;font-family:monospace;font-size:1em">
+  <span style="color:#888">m</span>
+  <input type="number" id="smart-count" value="10" min="3" max="50" step="1" style="width:40px;background:#222;color:#0f0;border:1px solid #444;border-radius:3px;padding:3px 4px;font-family:monospace;font-size:1em">
+  <span style="color:#888">pts</span>
 </div>
 
 <div class="stats" id="stats">Starting...</div>
@@ -336,6 +342,15 @@ classSel.addEventListener('change', () => {
   sendCmd('/api/set-class?name=' + classSel.value);
 });
 
+/* ── Smart cluster parameter controls ── */
+const smartSpread = document.getElementById('smart-spread');
+const smartCount = document.getElementById('smart-count');
+function sendSmart() {
+  sendCmd('/api/set-smart?spread=' + smartSpread.value + '&count=' + smartCount.value);
+}
+smartSpread.addEventListener('change', sendSmart);
+smartCount.addEventListener('change', sendSmart);
+
 /* ── Zoom+Pan on detection images ── */
 document.querySelectorAll('.zoom-wrap').forEach(wrap => {
   let scale = 1, ox = 0, oy = 0, dragging = false, sx, sy;
@@ -386,6 +401,12 @@ setInterval(()=>{
     }
     if (d.class_filter !== undefined && document.activeElement !== classSel) {
       classSel.value = d.class_filter;
+    }
+    if (d.smart_spread !== undefined && document.activeElement !== smartSpread) {
+      smartSpread.value = d.smart_spread;
+    }
+    if (d.smart_count !== undefined && document.activeElement !== smartCount) {
+      smartCount.value = d.smart_count;
     }
   });
 },2000);
@@ -606,6 +627,8 @@ class Handler(BaseHTTPRequestHandler):
                 "n": len(est_list),
                 "ground_truth": _ground_truth,
                 "best": _best_detection_gps,
+                "smart_spread": smart_estimator.max_spread if smart_estimator else args.smart_radius,
+                "smart_count": smart_estimator.min_samples if smart_estimator else args.smart_min,
             }
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
@@ -623,6 +646,12 @@ class Handler(BaseHTTPRequestHandler):
                 stats["conf_threshold"] = runtime_state["conf_threshold"]
                 stats["class_filter"] = runtime_state["class_filter"]
                 stats["bullseye_map_bg"] = bullseye_map_bg
+            if smart_estimator:
+                stats["smart_spread"] = smart_estimator.max_spread
+                stats["smart_count"] = smart_estimator.min_samples
+            else:
+                stats["smart_spread"] = args.smart_radius
+                stats["smart_count"] = args.smart_min
             with frame_lock:
                 status_json = json.dumps(stats).encode()
             self.wfile.write(status_json)
@@ -693,6 +722,31 @@ class Handler(BaseHTTPRequestHandler):
             _mod._result_banner = None
             print("[CLEAR] All estimates, detections, plots, and result flags reset")
             self._send_json_response({"ok": True})
+
+        elif path == '/api/set-smart':
+            # GET /api/set-smart?spread=X&count=Y — update SMART cluster parameters
+            params = self._parse_qs()
+            _mod = sys.modules.get('field_tools.passive_watch') or sys.modules.get('__main__')
+            try:
+                spread = float(params.get('spread', '0.75'))
+                count = int(params.get('count', '10'))
+                spread = max(0.1, min(5.0, spread))
+                count = max(3, min(50, count))
+                if smart_estimator:
+                    smart_estimator.max_spread = spread
+                    smart_estimator.min_samples = count
+                    # Reset lock so new params can trigger a fresh result
+                    smart_estimator.locked = False
+                    smart_estimator.locked_cluster = None
+                    smart_estimator.locked_frame = None
+                    smart_estimator.locked_spread = 0
+                    if hasattr(smart_estimator, '_saved'):
+                        smart_estimator._saved = False
+                _mod._smart_result_saved = False
+                print(f"[SMART] Parameters updated: spread={spread}m, count={count}")
+                self._send_json_response({"ok": True, "spread": spread, "count": count})
+            except (ValueError, TypeError):
+                self._send_json_response({"ok": False, "error": "Invalid spread/count"})
 
         else:
             self.send_response(404)
@@ -1112,7 +1166,8 @@ def _snapshot_overlay(display, label=None, thumb_w=728, gps_info=None):
     return jpg.tobytes()
 
 
-def generate_result_image(frame, title, gps_lat, gps_lon, stats_text, filename, title_color=(0, 255, 0)):
+def generate_result_image(frame, title, gps_lat, gps_lon, stats_text, filename,
+                          title_color=(0, 255, 0), drone_lat=None, drone_lon=None):
     """Generate a final result image with large banner, GPS coordinate, and stats.
 
     Args:
@@ -1122,6 +1177,7 @@ def generate_result_image(frame, title, gps_lat, gps_lon, stats_text, filename, 
         stats_text: additional stats string (spread, CEP50, method, etc.)
         filename: full path to save the image
         title_color: BGR color for title text (default green)
+        drone_lat, drone_lon: drone GPS at time of result (for DRONE/OFFSET lines)
 
     Returns:
         The annotated image (BGR numpy array)
@@ -1131,8 +1187,11 @@ def generate_result_image(frame, title, gps_lat, gps_lon, stats_text, filename, 
     result = frame.copy()
     h, w = result.shape[:2]
 
+    # Determine banner height based on whether we have drone GPS
+    has_drone = drone_lat is not None and drone_lon is not None
+    banner_h = 180 if has_drone else 120
+
     # Large banner at top (semi-transparent black background)
-    banner_h = 120
     overlay = result.copy()
     cv2.rectangle(overlay, (0, 0), (w, banner_h), (0, 0, 0), -1)
     cv2.addWeighted(overlay, 0.7, result, 0.3, 0, result)
@@ -1143,14 +1202,28 @@ def generate_result_image(frame, title, gps_lat, gps_lon, stats_text, filename, 
     cv2.putText(result, title, (15, 45), font, 1.4, (0, 0, 0), 6, cv2.LINE_AA)
     cv2.putText(result, title, (15, 45), font, 1.4, title_color, 3, cv2.LINE_AA)
 
-    # GPS coordinate (large monospace-style text)
-    gps_text = f"{gps_lat:.7f}, {gps_lon:.7f}"
-    cv2.putText(result, gps_text, (15, 80), font, 0.9, (0, 0, 0), 4, cv2.LINE_AA)
-    cv2.putText(result, gps_text, (15, 80), font, 0.9, (255, 255, 255), 2, cv2.LINE_AA)
+    # GPS coordinate (large monospace-style text) — dummy estimate
+    gps_text = f"DUMMY EST: {gps_lat:.7f}, {gps_lon:.7f}"
+    cv2.putText(result, gps_text, (15, 80), font, 0.7, (0, 0, 0), 4, cv2.LINE_AA)
+    cv2.putText(result, gps_text, (15, 80), font, 0.7, (255, 0, 255), 2, cv2.LINE_AA)  # magenta
 
     # Stats text (smaller, below GPS)
     cv2.putText(result, stats_text, (15, 110), font, 0.55, (0, 0, 0), 3, cv2.LINE_AA)
     cv2.putText(result, stats_text, (15, 110), font, 0.55, (200, 200, 200), 1, cv2.LINE_AA)
+
+    # Drone GPS + offset (if available)
+    if has_drone:
+        drone_text = f"DRONE: {drone_lat:.7f}, {drone_lon:.7f}"
+        cv2.putText(result, drone_text, (15, 140), font, 0.65, (0, 0, 0), 4, cv2.LINE_AA)
+        cv2.putText(result, drone_text, (15, 140), font, 0.65, (255, 255, 0), 2, cv2.LINE_AA)  # cyan
+
+        # Compute offset distance
+        dn = (gps_lat - drone_lat) * 111320
+        de = (gps_lon - drone_lon) * 111320 * math.cos(math.radians(drone_lat))
+        offset_m = math.sqrt(dn ** 2 + de ** 2)
+        offset_text = f"OFFSET: {offset_m:.1f}m"
+        cv2.putText(result, offset_text, (15, 170), font, 0.7, (0, 0, 0), 4, cv2.LINE_AA)
+        cv2.putText(result, offset_text, (15, 170), font, 0.7, (0, 255, 255), 2, cv2.LINE_AA)  # yellow
 
     # Save
     os.makedirs(os.path.dirname(filename) or '.', exist_ok=True)
@@ -2363,7 +2436,8 @@ def main():
                                 s_fname = os.path.join(args.save_dir, f"RESULT_SMART_{s_lat:.6f}_{s_lon:.6f}.jpg")
                                 generate_result_image(result_frame, "TARGET FOUND",
                                                       s_lat, s_lon, s_stats, s_fname,
-                                                      title_color=(0, 255, 0))
+                                                      title_color=(0, 255, 0),
+                                                      drone_lat=d_lat, drone_lon=d_lon)
                                 _result_banner = {"text": "TARGET FOUND", "color": (0, 255, 0),
                                                   "until": time.time() + 5}
                                 print(f"\n[RESULT] SMART LOCK: {s_lat:.7f}, {s_lon:.7f} (spread: {s_spread:.2f}m)")

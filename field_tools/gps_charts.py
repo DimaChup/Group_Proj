@@ -1151,7 +1151,8 @@ def get_gps_charts_html():
   let smartLocked = false;
   let smartLockedIndices = null;
   let smartLockedSpread = Infinity;
-  const SMART_LOCK_SPREAD = 0.5;  // meters
+  let SMART_LOCK_SPREAD = 0.75;  // meters — updated from server via /api/estimates-full
+  let SMART_LOCK_COUNT = 10;     // min samples — updated from server
 
   function drawCluster() {{
     const W = 250, H = 300;
@@ -1228,8 +1229,15 @@ def get_gps_charts_html():
       ctx.beginPath(); ctx.moveTo(cx, cy - 8); ctx.lineTo(cx, cy + 8); ctx.stroke();
       ctx.fillStyle = "#888";
       ctx.font = "9px monospace";
-      ctx.fillText("N=" + nTotal + "/10", 5, H - 5);
+      ctx.fillText("N=" + nTotal + "/" + SMART_LOCK_COUNT, 5, H - 5);
       return;
+    }}
+
+    // Sync lock state from server (reset when params change via /api/set-smart)
+    if (smartData && !smartData.locked && smartLocked) {{
+      smartLocked = false;
+      smartLockedIndices = null;
+      smartLockedSpread = Infinity;
     }}
 
     // Phase 2 & 3: run tightest cluster continuously (unless locked)
@@ -1238,11 +1246,11 @@ def get_gps_charts_html():
       clusterIndices = smartLockedIndices;
       clusterSpread = smartLockedSpread;
     }} else {{
-      const result = findTightestCluster(estimates, 10);
+      const result = findTightestCluster(estimates, SMART_LOCK_COUNT);
       clusterIndices = result.indices;
       clusterSpread = result.spread;
       // Check for lock
-      if (clusterSpread < SMART_LOCK_SPREAD && clusterIndices.length >= 10) {{
+      if (clusterSpread < SMART_LOCK_SPREAD && clusterIndices.length >= SMART_LOCK_COUNT) {{
         smartLocked = true;
         smartLockedIndices = clusterIndices.slice();
         smartLockedSpread = clusterSpread;
@@ -1290,7 +1298,7 @@ def get_gps_charts_html():
       ctx.fillStyle = "#888";
       ctx.font = "10px monospace";
       ctx.fillText("spread: " + clusterSpread.toFixed(2) + "m (need <" + SMART_LOCK_SPREAD.toFixed(1) + "m)", 8, 33);
-      ctx.fillText(nTotal + " det, best 10 highlighted", 8, 46);
+      ctx.fillText(nTotal + " det, best " + SMART_LOCK_COUNT + " highlighted", 8, 46);
     }}
 
     // Fine rings: 0.1, 0.2, 0.5, 1.0m
@@ -1542,6 +1550,9 @@ def get_gps_charts_html():
         smartData = d.smart || null;
         dronePos = d.drone || null;
         bestData = d.best || null;
+        // Sync SMART cluster parameters from server
+        if (d.smart_spread !== undefined) SMART_LOCK_SPREAD = d.smart_spread;
+        if (d.smart_count !== undefined) SMART_LOCK_COUNT = d.smart_count;
         // Load ground truth from server if not set locally
         if (d.ground_truth && !groundTruth) {{
           groundTruth = d.ground_truth;
