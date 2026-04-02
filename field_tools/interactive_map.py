@@ -675,9 +675,13 @@ def get_interactive_map_html(container_id="map-container", width="100%", height=
   function pollEstimates() {{
     fetch("/api/estimates-full").then(r => r.json()).then(d => {{
       const newEst = d.estimates || [];  // [[lat, lon, pdist, alt, conf], ...]
-      const newSmart = d.smart || null;
+      // Extract smart median from nested format: smart.median when smart.locked
+      let newSmart = null;
+      if (d.smart && d.smart.locked && d.smart.median) {{
+        newSmart = d.smart.median;  // [lat, lon]
+      }}
       // Only redraw if data changed
-      if (newEst.length !== estimates.length || newSmart !== smartMedian) {{
+      if (newEst.length !== estimates.length || JSON.stringify(newSmart) !== JSON.stringify(smartMedian)) {{
         estimates = newEst;
         smartMedian = newSmart;
         requestRedraw();

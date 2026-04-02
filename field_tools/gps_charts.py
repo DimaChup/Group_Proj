@@ -102,6 +102,7 @@ def get_gps_charts_html():
   vertical-align: middle;
 }}
 .gps-filter-row .fval {{ color: #0f0; min-width: 32px; display: inline-block; text-align: right; }}
+.gps-filter-group {{ display: inline-flex; gap: 4px; align-items: center; }}
 .gps-chart-stats {{
   padding: 4px 8px;
   background: #222;
@@ -133,8 +134,9 @@ def get_gps_charts_html():
     <div class="gps-chart-panel" style="width:500px;">
       <div class="gps-chart-toolbar" id="scatter-toolbar">
         <span style="color:#888;font-size:10px;">Color:</span>
-        <button id="btn-color-alt" class="active" data-mode="altitude">Altitude</button>
-        <button id="btn-color-cent" data-mode="centrality">Centrality</button>
+        <button id="btn-color-pcent" class="active" data-mode="pixel_centrality">Pixel Centrality</button>
+        <button id="btn-color-dcent" data-mode="distance_centrality">Distance Centrality</button>
+        <button id="btn-color-alt" data-mode="altitude">Altitude</button>
         <button id="btn-color-conf" data-mode="confidence">Confidence</button>
         <div class="sep"></div>
         <button id="btn-map-bg">Map BG: off</button>
@@ -148,23 +150,34 @@ def get_gps_charts_html():
         <button id="gt-clear-btn" style="display:none;">Clear</button>
       </div>
       <div class="gps-filter-row" id="scatter-filters">
-        <label>Pdist:</label>
-        <span class="fval" id="fv-pdist-min">0</span>
-        <input type="range" id="f-pdist-min" min="0" max="1000" value="0" step="1">
-        <input type="range" id="f-pdist-max" min="0" max="1000" value="1000" step="1">
-        <span class="fval" id="fv-pdist-max">1000</span>
-        <span class="sep"></span>
-        <label>Alt:</label>
-        <span class="fval" id="fv-alt-min">0</span>
-        <input type="range" id="f-alt-min" min="0" max="200" value="0" step="0.5">
-        <input type="range" id="f-alt-max" min="0" max="200" value="200" step="0.5">
-        <span class="fval" id="fv-alt-max">200</span>
-        <span class="sep"></span>
-        <label>Conf:</label>
-        <span class="fval" id="fv-conf-min">0</span>
-        <input type="range" id="f-conf-min" min="0" max="1" value="0" step="0.01">
-        <input type="range" id="f-conf-max" min="0" max="1" value="1" step="0.01">
-        <span class="fval" id="fv-conf-max">1.00</span>
+        <div id="filter-pdist" class="gps-filter-group">
+          <label>Pdist (px):</label>
+          <span class="fval" id="fv-pdist-min">0</span>
+          <input type="range" id="f-pdist-min" min="0" max="1000" value="0" step="1">
+          <input type="range" id="f-pdist-max" min="0" max="1000" value="1000" step="1">
+          <span class="fval" id="fv-pdist-max">1000</span>
+        </div>
+        <div id="filter-dist" class="gps-filter-group" style="display:none;">
+          <label>Distance (m):</label>
+          <span class="fval" id="fv-dist-min">0</span>
+          <input type="range" id="f-dist-min" min="0" max="50" value="0" step="0.1">
+          <input type="range" id="f-dist-max" min="0" max="50" value="50" step="0.1">
+          <span class="fval" id="fv-dist-max">50</span>
+        </div>
+        <div id="filter-alt" class="gps-filter-group" style="display:none;">
+          <label>Alt (m):</label>
+          <span class="fval" id="fv-alt-min">0</span>
+          <input type="range" id="f-alt-min" min="0" max="100" value="0" step="0.5">
+          <input type="range" id="f-alt-max" min="0" max="100" value="100" step="0.5">
+          <span class="fval" id="fv-alt-max">100</span>
+        </div>
+        <div id="filter-conf" class="gps-filter-group" style="display:none;">
+          <label>Conf:</label>
+          <span class="fval" id="fv-conf-min">0</span>
+          <input type="range" id="f-conf-min" min="0" max="1" value="0" step="0.01">
+          <input type="range" id="f-conf-max" min="0" max="1" value="1" step="0.01">
+          <span class="fval" id="fv-conf-max">1.00</span>
+        </div>
       </div>
       <canvas id="scatter-canvas" width="500" height="400" style="cursor:grab;"></canvas>
       <div class="gps-chart-stats" id="scatter-stats">
@@ -208,7 +221,8 @@ def get_gps_charts_html():
   let dronePos = null;      // {{lat, lon}}
   let groundTruth = null;   // {{lat, lon}} or null
   let prevDataHash = "";
-  let colorMode = "altitude";   // altitude | centrality | confidence
+  let colorMode = "pixel_centrality";   // pixel_centrality | distance_centrality | altitude | confidence
+  const F_PX = 1584;  // focal length in pixels for distance centrality
   let mapBgOn = true;  // default ON
   let mapImg = null;
   let mapLoading = false;
@@ -249,12 +263,22 @@ def get_gps_charts_html():
   setupHiDPI(clusterCvs, clusterCtx, 250, 300);
   setupHiDPI(centralCvs, centralCtx, 250, 300);
 
-  // ── Color mode buttons ──
+  // ── Color mode buttons + dynamic filter visibility ──
+  function updateFilterVisibility() {{
+    document.getElementById("filter-pdist").style.display = colorMode === "pixel_centrality" ? "inline-flex" : "none";
+    document.getElementById("filter-dist").style.display = colorMode === "distance_centrality" ? "inline-flex" : "none";
+    document.getElementById("filter-alt").style.display = colorMode === "altitude" ? "inline-flex" : "none";
+    document.getElementById("filter-conf").style.display = colorMode === "confidence" ? "inline-flex" : "none";
+  }}
+  // Set initial visibility
+  updateFilterVisibility();
+
   document.querySelectorAll("#scatter-toolbar button[data-mode]").forEach(btn => {{
     btn.addEventListener("click", () => {{
       colorMode = btn.dataset.mode;
       document.querySelectorAll("#scatter-toolbar button[data-mode]").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
+      updateFilterVisibility();
       drawScatter();
     }});
   }});
@@ -320,25 +344,32 @@ def get_gps_charts_html():
 
   // ── Filter state ──
   let filterPdistMin = 0, filterPdistMax = 1000;
-  let filterAltMin = 0, filterAltMax = 200;
+  let filterDistMin = 0, filterDistMax = 50;
+  let filterAltMin = 0, filterAltMax = 100;
   let filterConfMin = 0, filterConfMax = 1;
 
   function updateFilterRanges() {{
     // Adjust slider max values based on actual data
     if (estimates.length > 0) {{
-      let maxPd = 0, maxA = 0;
+      let maxPd = 0, maxA = 0, maxDist = 0;
       for (const e of estimates) {{
         if (e[2] > maxPd) maxPd = e[2];
         if (e[3] > maxA) maxA = e[3];
+        const dm = e[2] * e[3] / F_PX;
+        if (dm > maxDist) maxDist = dm;
       }}
       maxPd = Math.ceil(maxPd) || 1000;
-      maxA = Math.ceil(maxA) || 200;
+      maxA = Math.ceil(maxA) || 100;
+      maxDist = Math.ceil(maxDist * 10) / 10 || 50;
       const pdMinEl = document.getElementById("f-pdist-min");
       const pdMaxEl = document.getElementById("f-pdist-max");
       const altMinEl = document.getElementById("f-alt-min");
       const altMaxEl = document.getElementById("f-alt-max");
+      const distMinEl = document.getElementById("f-dist-min");
+      const distMaxEl = document.getElementById("f-dist-max");
       pdMinEl.max = maxPd; pdMaxEl.max = maxPd;
       altMinEl.max = maxA; altMaxEl.max = maxA;
+      distMinEl.max = maxDist; distMaxEl.max = maxDist;
       // If max slider is at old max, snap to new max
       if (parseFloat(pdMaxEl.value) >= parseFloat(pdMaxEl.max) - 1 || filterPdistMax >= maxPd) {{
         pdMaxEl.value = maxPd; filterPdistMax = maxPd;
@@ -348,23 +379,32 @@ def get_gps_charts_html():
         altMaxEl.value = maxA; filterAltMax = maxA;
         document.getElementById("fv-alt-max").textContent = maxA;
       }}
+      if (parseFloat(distMaxEl.value) >= parseFloat(distMaxEl.max) - 0.1 || filterDistMax >= maxDist) {{
+        distMaxEl.value = maxDist; filterDistMax = maxDist;
+        document.getElementById("fv-dist-max").textContent = maxDist.toFixed(1);
+      }}
     }}
   }}
 
   function onFilterChange() {{
     filterPdistMin = parseFloat(document.getElementById("f-pdist-min").value);
     filterPdistMax = parseFloat(document.getElementById("f-pdist-max").value);
+    filterDistMin = parseFloat(document.getElementById("f-dist-min").value);
+    filterDistMax = parseFloat(document.getElementById("f-dist-max").value);
     filterAltMin = parseFloat(document.getElementById("f-alt-min").value);
     filterAltMax = parseFloat(document.getElementById("f-alt-max").value);
     filterConfMin = parseFloat(document.getElementById("f-conf-min").value);
     filterConfMax = parseFloat(document.getElementById("f-conf-max").value);
     // Clamp min <= max
     if (filterPdistMin > filterPdistMax) filterPdistMin = filterPdistMax;
+    if (filterDistMin > filterDistMax) filterDistMin = filterDistMax;
     if (filterAltMin > filterAltMax) filterAltMin = filterAltMax;
     if (filterConfMin > filterConfMax) filterConfMin = filterConfMax;
     // Update display values
     document.getElementById("fv-pdist-min").textContent = filterPdistMin.toFixed(0);
     document.getElementById("fv-pdist-max").textContent = filterPdistMax.toFixed(0);
+    document.getElementById("fv-dist-min").textContent = filterDistMin.toFixed(1);
+    document.getElementById("fv-dist-max").textContent = filterDistMax.toFixed(1);
     document.getElementById("fv-alt-min").textContent = filterAltMin.toFixed(1);
     document.getElementById("fv-alt-max").textContent = filterAltMax.toFixed(1);
     document.getElementById("fv-conf-min").textContent = filterConfMin.toFixed(2);
@@ -421,12 +461,20 @@ def get_gps_charts_html():
       return;
     }}
 
-    // Apply filters
+    // Apply filter based on active color mode
     const filtered = estimates.filter(e => {{
       const pdist = e[2], alt = e[3], conf = e[4];
-      return pdist >= filterPdistMin && pdist <= filterPdistMax
-          && alt >= filterAltMin && alt <= filterAltMax
-          && conf >= filterConfMin && conf <= filterConfMax;
+      if (colorMode === "pixel_centrality") {{
+        return pdist >= filterPdistMin && pdist <= filterPdistMax;
+      }} else if (colorMode === "distance_centrality") {{
+        const dist_m = pdist * alt / F_PX;
+        return dist_m >= filterDistMin && dist_m <= filterDistMax;
+      }} else if (colorMode === "altitude") {{
+        return alt >= filterAltMin && alt <= filterAltMax;
+      }} else if (colorMode === "confidence") {{
+        return conf >= filterConfMin && conf <= filterConfMax;
+      }}
+      return true;
     }});
 
     if (filtered.length === 0) {{
@@ -533,15 +581,19 @@ def get_gps_charts_html():
 
     // Color values
     let minAlt = Infinity, maxAlt = -Infinity, maxPd = 0, minConf = 1, maxConf = 0;
+    let maxDistM = 0;
     for (const p of pts) {{
       if (p.alt < minAlt) minAlt = p.alt;
       if (p.alt > maxAlt) maxAlt = p.alt;
       if (p.pdist > maxPd) maxPd = p.pdist;
       if (p.conf < minConf) minConf = p.conf;
       if (p.conf > maxConf) maxConf = p.conf;
+      const dm = p.pdist * p.alt / F_PX;
+      if (dm > maxDistM) maxDistM = dm;
     }}
     const altRange = Math.max(maxAlt - minAlt, 0.1);
     maxPd = Math.max(maxPd, 1);
+    maxDistM = Math.max(maxDistM, 0.1);
     const confRange = Math.max(maxConf - minConf, 0.01);
 
     // Draw dots (skip when toggled off)
@@ -552,8 +604,9 @@ def get_gps_charts_html():
         if (sx < -10 || sx > W + 10 || sy < -10 || sy > H + 10) continue;
 
         let val = 0;
-        if (colorMode === "altitude") val = (p.alt - minAlt) / altRange;
-        else if (colorMode === "centrality") val = Math.min(1, p.pdist / maxPd);
+        if (colorMode === "pixel_centrality") val = Math.min(1, p.pdist / maxPd);
+        else if (colorMode === "distance_centrality") val = Math.min(1, (p.pdist * p.alt / F_PX) / maxDistM);
+        else if (colorMode === "altitude") val = (p.alt - minAlt) / altRange;
         else if (colorMode === "confidence") val = 1 - (p.conf - minConf) / confRange;
 
         ctx.fillStyle = heatColor(val);
@@ -783,13 +836,14 @@ def get_gps_charts_html():
       tooltip.style.display = "block";
       tooltip.style.left = (e.clientX + 12) + "px";
       tooltip.style.top = (e.clientY - 10) + "px";
+      const distM = (est[2] * est[3] / F_PX).toFixed(2);
       tooltip.textContent =
         `#${{closest + 1}}\\n` +
         `Lat: ${{est[0].toFixed(7)}}\\n` +
         `Lon: ${{est[1].toFixed(7)}}\\n` +
         `Alt: ${{est[3].toFixed(1)}}m\\n` +
         `Conf: ${{est[4].toFixed(3)}}\\n` +
-        `CenterDist: ${{est[2].toFixed(0)}}px`;
+        `CenterDist: ${{est[2].toFixed(0)}}px (${{distM}}m)`;
       // Auto-hide after 3 seconds
       setTimeout(() => {{ tooltip.style.display = "none"; }}, 3000);
     }} else {{
