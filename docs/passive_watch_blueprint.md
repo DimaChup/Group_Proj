@@ -1,7 +1,7 @@
 # passive_watch.py — Passive Camera Observer Blueprint
 
-> MAP of passive_watch.py (2857 lines). Not a code copy — a navigation aid.
-> Updated: 2026-04-02 (threaded inference refactor)
+> MAP of passive_watch.py (3031 lines). Not a code copy — a navigation aid.
+> Updated: 2026-04-02 (threaded inference refactor + class filter race fix)
 
 ## Purpose
 
