@@ -283,6 +283,15 @@ classSel.addEventListener('change', () => {
 });
 
 /* ── Status polling (sync active model/conf from server) ── */
+/* Fast poll: detection images (500ms) */
+setInterval(()=>{
+  const t=Date.now();
+  document.getElementById('latest').src='/latest?'+t;
+  document.getElementById('smart-grid').src='/smart-grid?'+t;
+  document.getElementById('smart-grid2').src='/smart-grid?'+t;
+},500);
+
+/* Status poll: text + controls + pipelines (2s) */
 setInterval(()=>{
   fetch('/api/status').then(r=>r.json()).then(d=>{
     document.getElementById('stats').textContent=
@@ -293,18 +302,12 @@ setInterval(()=>{
       ?`EST:${d.est_lat},${d.est_lon}(${d.est_obs}obs)`:'EST: waiting...';
     document.getElementById('fov').textContent=
       `FOV: ${d.fov_deg}\u00b0 | @1m: ${d.cal_1m_w}\u00d7${d.cal_1m_h}cm`;
-    const t=Date.now();
-    document.getElementById('latest').src='/latest?'+t;
-    document.getElementById('smart-grid').src='/smart-grid?'+t;
-    document.getElementById('smart-grid2').src='/smart-grid?'+t;
-    /* Update pipeline visuals with live data */
     if (typeof updatePipelineData === 'function') {
       updatePipelineData({alt: parseFloat(d.alt)||0, fps: parseFloat(d.vis_fps)||0});
     }
     if (typeof updateGPSData === 'function') {
       updateGPSData({alt: parseFloat(d.alt)||0, fov_deg: parseFloat(d.fov_deg)||49.4});
     }
-    /* Sync controls from server state */
     if (d.active_model_id !== undefined && document.activeElement !== modelSel) {
       modelSel.value = d.active_model_id;
     }
@@ -905,7 +908,7 @@ def render_latest_detection(frame, last_det, gps_d):
     if frame is None or last_det is None:
         return
     h, w = frame.shape[:2]
-    thumb_w = 480
+    thumb_w = 728  # half of 1456 — sharp enough for browser column
     s = thumb_w / w
     thumb = cv2.resize(frame, (thumb_w, int(h * s)))
     th = thumb.shape[0]
@@ -937,7 +940,7 @@ def render_latest_detection(frame, last_det, gps_d):
     cv2.rectangle(thumb, (0, th - 25), (thumb_w, th), (0, 0, 0), -1)
     info = f"{getattr(draw_overlay, '_last_class', '?')} {last_det[2]:.2f} | {gps_d['alt']:.0f}m | {gps_d['lat']:.5f},{gps_d['lon']:.5f}"
     cv2.putText(thumb, info, (5, th - 7), cv2.FONT_HERSHEY_SIMPLEX, 0.32, (200, 200, 200), 1)
-    _, jpg = cv2.imencode('.jpg', thumb, [cv2.IMWRITE_JPEG_QUALITY, 80])
+    _, jpg = cv2.imencode('.jpg', thumb, [cv2.IMWRITE_JPEG_QUALITY, 90])
     with frame_lock:
         latest_detection_jpeg = jpg.tobytes()
 
@@ -1878,6 +1881,8 @@ def main():
                 draw_overlay._last_bw = eyes.last_bbox_w if eyes.last_bbox_w > 0 else 80
                 draw_overlay._last_bh = eyes.last_bbox_h if eyes.last_bbox_h > 0 else 80
                 draw_overlay._last_class = getattr(eyes, 'last_class_name', '')
+                # Immediately render latest detection thumbnail (don't wait for periodic update)
+                render_latest_detection(frame, last_det, gps_data)
 
                 # Estimate dummy GPS position — snapshot all telemetry under lock
                 est_result = None
