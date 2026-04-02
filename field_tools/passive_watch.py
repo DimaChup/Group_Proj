@@ -2122,10 +2122,10 @@ def draw_overlay(frame, last_det):
     est_y = h - 75  # above FOV bar
     cv2.rectangle(display, (0, est_y), (w, est_y + 25), (0, 0, 0), -1)
 
+    cls = getattr(draw_overlay, '_last_class', '') or ''
     if est is not None:
         e_lat, e_lon, n_obs = est
-        cls = getattr(draw_overlay, '_last_class', '') or '?'
-        est_text = f"DUMMY EST: {e_lat:.6f}, {e_lon:.6f} ({n_obs} obs) [{cls}]"
+        est_text = f"DUMMY EST: {e_lat:.6f}, {e_lon:.6f} ({n_obs} obs)"
         est_color = (255, 0, 255)  # pink/magenta
     elif lat == 0.0 and lon == 0.0:
         est_text = "DUMMY EST: NO GPS — cannot estimate"
@@ -2135,6 +2135,11 @@ def draw_overlay(frame, last_det):
         est_color = (100, 100, 100)  # grey
     cv2.putText(display, est_text, (5, est_y + 16),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.4, est_color, 1)
+    # Class name — prominent yellow at end of estimate bar
+    if cls:
+        txt_w = cv2.getTextSize(est_text, cv2.FONT_HERSHEY_SIMPLEX, 0.4, 1)[0][0]
+        cv2.putText(display, f"[{cls}]", (txt_w + 12, est_y + 16),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 255), 2)
 
     # ── Result banner (shown for 5 seconds after SMART lock or SURVEY complete) ──
     if _result_banner is not None and time.time() < _result_banner["until"]:
