@@ -556,8 +556,8 @@ class Handler(BaseHTTPRequestHandler):
             return {"ok": False, "error": f"id must be 0-{len(MODEL_TABLE)-1}"}
         with runtime_lock:
             runtime_state["model_switch_request"] = mid
-        # Wait briefly for main loop to pick it up (up to 3s)
-        for _ in range(30):
+        # Wait for main loop to pick it up (up to 10s for large models)
+        for _ in range(100):
             time.sleep(0.1)
             with runtime_lock:
                 if runtime_state["model_switch_request"] is None:
