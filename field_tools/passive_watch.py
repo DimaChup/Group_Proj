@@ -62,6 +62,7 @@ latest_map_jpeg = None         # satellite map overlay
 frame_lock = threading.Lock()
 gps_lock = threading.Lock()
 _all_gps_estimates = []
+_ground_truth = None  # {"lat": float, "lon": float} or None
 _map_base = None  # loaded map.jpg (once)
 bullseye_map_bg = True  # default ON: satellite map crop behind bullseye scatter plots
 latest_best_jpeg = None  # best (most central) detection JPEG
@@ -391,7 +392,7 @@ class Handler(BaseHTTPRequestHandler):
         pass  # silent
 
     def do_GET(self):
-        global bullseye_map_bg
+        global bullseye_map_bg, _ground_truth
         path = self.path.split('?')[0]  # strip query string for matching
         if path == '/':
             self.send_response(200)
@@ -596,6 +597,7 @@ class Handler(BaseHTTPRequestHandler):
                 "drone": {"lat": gps_data.get("lat", 0), "lon": gps_data.get("lon", 0)},
                 "mean": mean,
                 "n": len(est_list),
+                "ground_truth": _ground_truth,
             }
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
@@ -638,6 +640,25 @@ class Handler(BaseHTTPRequestHandler):
                 _mod.latest_best_jpeg = None
             print("[CLEAR] Best detection reset — tracking new best")
             self._send_json_response({"ok": True})
+
+        elif path == '/api/set-ground-truth':
+            # GET /api/set-ground-truth?lat=X&lon=Y
+            params = self._parse_qs()
+            try:
+                gt_lat = float(params.get('lat', ''))
+                gt_lon = float(params.get('lon', ''))
+                _ground_truth = {"lat": gt_lat, "lon": gt_lon}
+                print(f"[GT] Ground truth set: {gt_lat:.7f}, {gt_lon:.7f}")
+                self._send_json_response({"ok": True, "ground_truth": _ground_truth})
+            except (ValueError, TypeError):
+                self._send_json_response({"ok": False, "error": "Invalid lat/lon"})
+            return
+
+        elif path == '/api/clear-ground-truth':
+            _ground_truth = None
+            print("[GT] Ground truth cleared")
+            self._send_json_response({"ok": True})
+            return
 
         elif path == '/api/toggle-bullseye-bg':
             bullseye_map_bg = not bullseye_map_bg

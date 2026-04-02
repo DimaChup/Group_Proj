@@ -140,6 +140,11 @@ def get_gps_charts_html():
         <button id="btn-map-bg">Map BG: off</button>
         <div class="sep"></div>
         <button id="btn-reset-view">Reset View</button>
+        <div class="sep"></div>
+        <label style="color:#888;font-size:10px;">Ground Truth:</label>
+        <input type="text" id="gt-input" placeholder="lat,lon" style="width:140px;background:#222;color:#0f0;border:1px solid #444;border-radius:3px;padding:2px 4px;font:11px monospace;">
+        <button id="gt-btn">Set</button>
+        <button id="gt-clear-btn" style="display:none;">Clear</button>
       </div>
       <div class="gps-filter-row" id="scatter-filters">
         <label>Pdist:</label>
@@ -200,6 +205,7 @@ def get_gps_charts_html():
   let estimates = [];       // [[lat, lon, pdist, alt, conf], ...]
   let smartData = null;     // {{locked, cluster, spread, median}}
   let dronePos = null;      // {{lat, lon}}
+  let groundTruth = null;   // {{lat, lon}} or null
   let prevDataHash = "";
   let colorMode = "altitude";   // altitude | centrality | confidence
   let mapBgOn = true;  // default ON
@@ -278,6 +284,30 @@ def get_gps_charts_html():
     viewCenterN = 0;
     zoomLevel = 1;
     drawScatter();
+  }});
+
+  document.getElementById("gt-btn").addEventListener("click", () => {{
+    const val = document.getElementById("gt-input").value.trim();
+    const parts = val.split(",").map(s => parseFloat(s.trim()));
+    if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {{
+      groundTruth = {{ lat: parts[0], lon: parts[1] }};
+      // Also send to server so interactive_map.py can use it
+      fetch("/api/set-ground-truth?lat=" + parts[0] + "&lon=" + parts[1]).catch(() => {{}});
+      document.getElementById("gt-clear-btn").style.display = "inline";
+      document.getElementById("gt-input").style.borderColor = "#0f0";
+      needsRedraw = true;
+    }} else {{
+      document.getElementById("gt-input").style.borderColor = "#f00";
+    }}
+  }});
+
+  document.getElementById("gt-clear-btn").addEventListener("click", () => {{
+    groundTruth = null;
+    document.getElementById("gt-input").value = "";
+    document.getElementById("gt-input").style.borderColor = "#444";
+    document.getElementById("gt-clear-btn").style.display = "none";
+    fetch("/api/clear-ground-truth").catch(() => {{}});
+    needsRedraw = true;
   }});
 
   // ── Filter state ──
@@ -359,7 +389,8 @@ def get_gps_charts_html():
     const base = estimates.length;
     const smart = smartData ? (smartData.locked ? "L" : "S") + (smartData.cluster ? smartData.cluster.length : 0) : "X";
     const central = estimates.filter(e => e[2] < 200).length;
-    return base + ":" + smart + ":" + central + ":" + (smartLocked ? "SL" : "SU");
+    const gtKey = groundTruth ? "GT" + groundTruth.lat.toFixed(5) : "noGT";
+    return base + ":" + smart + ":" + central + ":" + (smartLocked ? "SL" : "SU") + ":" + gtKey;
   }}
 
   // ── Scatter plot ──
@@ -406,9 +437,13 @@ def get_gps_charts_html():
     const meanLat = sumLat / filtered.length;
     const meanLon = sumLon / filtered.length;
 
-    // Convert all to meters relative to mean
+    // Origin: ground truth if set, else mean
+    const originLat = groundTruth ? groundTruth.lat : meanLat;
+    const originLon = groundTruth ? groundTruth.lon : meanLon;
+
+    // Convert all to meters relative to origin
     const pts = filtered.map((e, i) => {{
-      const [em, nm] = gpsToMeters(e[0], e[1], meanLat, meanLon);
+      const [em, nm] = gpsToMeters(e[0], e[1], originLat, originLon);
       return {{ e: em, n: nm, pdist: e[2], alt: e[3], conf: e[4], idx: i, lat: e[0], lon: e[1] }};
     }});
 
@@ -426,7 +461,7 @@ def get_gps_charts_html():
 
     // Map background
     if (mapBgOn && mapImg) {{
-      drawMapBackground(ctx, W, H, cx, cy, meanLat, meanLon);
+      drawMapBackground(ctx, W, H, cx, cy, originLat, originLon);
     }}
 
     // Grid lines
@@ -518,6 +553,10 @@ def get_gps_charts_html():
       ctx.fill();
     }}
 
+    // Compute mean position in meters (relative to origin)
+    const meanME = pts.reduce((s, p) => s + p.e, 0) / pts.length;
+    const meanMN = pts.reduce((s, p) => s + p.n, 0) / pts.length;
+
     // Compute weighted mean (weight = 1/cdist^2)
     let wE = 0, wN = 0, wTotal = 0;
     for (const p of pts) {{
@@ -535,23 +574,44 @@ def get_gps_charts_html():
     const medE = sortedE[Math.floor(sortedE.length / 2)];
     const medN = sortedN[Math.floor(sortedN.length / 2)];
 
+    // Ground truth star marker (bright yellow) — at origin when GT is set
+    if (groundTruth) {{
+      const gtsx = cx + (0 - viewCenterE) * viewScale;
+      const gtsy = cy - (0 - viewCenterN) * viewScale;
+      // 5-pointed star
+      ctx.fillStyle = "#ffff00";
+      ctx.strokeStyle = "#ffff00";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let i = 0; i < 10; i++) {{
+        const r = (i % 2 === 0) ? 9 : 4;
+        const a = -Math.PI / 2 + (i * Math.PI / 5);
+        const sx2 = gtsx + r * Math.cos(a);
+        const sy2 = gtsy + r * Math.sin(a);
+        if (i === 0) ctx.moveTo(sx2, sy2); else ctx.lineTo(sx2, sy2);
+      }}
+      ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = "#ffff00";
+      ctx.font = "bold 10px monospace";
+      ctx.textAlign = "center";
+      ctx.fillText("TRUE", gtsx, gtsy - 13);
+      ctx.textAlign = "start";
+    }}
+
     // Mean marker (green cross)
-    const msx = cx + (0 - viewCenterE) * viewScale;
-    const msy = cy - (0 - viewCenterN) * viewScale;
+    const msx = cx + (meanME - viewCenterE) * viewScale;
+    const msy = cy - (meanMN - viewCenterN) * viewScale;
     ctx.strokeStyle = "#00ff00";
     ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(msx - 8, msy); ctx.lineTo(msx + 8, msy); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(msx, msy - 8); ctx.lineTo(msx, msy + 8); ctx.stroke();
 
-    // Weighted mean marker (cyan diamond)
+    // Weighted mean marker (cyan SQUARE)
     const wsx = cx + (wE - viewCenterE) * viewScale;
     const wsy = cy - (wN - viewCenterN) * viewScale;
     ctx.strokeStyle = "#00ffff";
     ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(wsx, wsy - 7); ctx.lineTo(wsx + 5, wsy);
-    ctx.lineTo(wsx, wsy + 7); ctx.lineTo(wsx - 5, wsy);
-    ctx.closePath(); ctx.stroke();
+    ctx.strokeRect(wsx - 6, wsy - 6, 12, 12);
 
     // Median marker (magenta diamond)
     const medsx = cx + (medE - viewCenterE) * viewScale;
@@ -563,24 +623,29 @@ def get_gps_charts_html():
     ctx.lineTo(medsx, medsy + 7); ctx.lineTo(medsx - 5, medsy);
     ctx.closePath(); ctx.stroke();
 
-    // Stats
+    // Stats — error is distance from origin (ground truth if set, else mean)
     const cep50 = dists[Math.floor(dists.length / 2)] || 0;
     const maxSpread = dists[dists.length - 1] || 0;
-    const meanErr = 0;  // mean is origin
+    const meanErr = Math.sqrt(meanME * meanME + meanMN * meanMN);
     const wErr = Math.sqrt(wE * wE + wN * wN);
     const medErr = Math.sqrt(medE * medE + medN * medN);
 
     const filtLabel = filtered.length < estimates.length
       ? `${{filtered.length}}/${{estimates.length}}`
       : `${{estimates.length}}`;
+    const gtLabel = groundTruth
+      ? ` &nbsp; <span class="lbl" style="color:#ff0;">GT:</span> <span class="val">${{groundTruth.lat.toFixed(7)}}, ${{groundTruth.lon.toFixed(7)}}</span>`
+      : ` &nbsp; <span class="lbl">GPS:</span> <span class="val">${{meanLat.toFixed(7)}}, ${{meanLon.toFixed(7)}}</span>`;
+    const errRefLabel = groundTruth ? " (from GT)" : " (from mean)";
     statsEl.innerHTML =
       `<span class="lbl">N:</span> <span class="val">${{filtLabel}}</span>` +
       ` &nbsp; <span class="lbl">CEP50:</span> <span class="val">${{cep50.toFixed(2)}}m</span>` +
       ` &nbsp; <span class="lbl">Max:</span> <span class="val">${{maxSpread.toFixed(2)}}m</span>` +
-      `<br><span class="lbl">Mean err:</span> <span class="val">0.00m</span>` +
-      ` &nbsp; <span class="lbl" style="color:#0ff;">Weighted:</span> <span class="val">${{wErr.toFixed(2)}}m</span>` +
+      gtLabel +
+      `<br><span class="lbl" style="color:#0f0;">Mean (simple avg):</span> <span class="val">${{meanErr.toFixed(2)}}m</span>` +
+      ` &nbsp; <span class="lbl" style="color:#0ff;">Weighted (centrality):</span> <span class="val">${{wErr.toFixed(2)}}m</span>` +
       ` &nbsp; <span class="lbl" style="color:#f0f;">Median:</span> <span class="val">${{medErr.toFixed(2)}}m</span>` +
-      ` &nbsp; <span class="lbl">GPS:</span> <span class="val">${{meanLat.toFixed(7)}}, ${{meanLon.toFixed(7)}}</span>`;
+      `<span class="lbl">${{errRefLabel}}</span>`;
   }}
 
   function drawMapBackground(ctx, W, H, cx, cy, meanLat, meanLon) {{
@@ -689,12 +754,14 @@ def get_gps_charts_html():
 
     let sumLat = 0, sumLon = 0;
     for (const est of estimates) {{ sumLat += est[0]; sumLon += est[1]; }}
-    const meanLat = sumLat / estimates.length;
-    const meanLon = sumLon / estimates.length;
+    const clickMeanLat = sumLat / estimates.length;
+    const clickMeanLon = sumLon / estimates.length;
+    const clickOriginLat = groundTruth ? groundTruth.lat : clickMeanLat;
+    const clickOriginLon = groundTruth ? groundTruth.lon : clickMeanLon;
 
     let closest = null, closestDist = Infinity;
     for (let i = 0; i < estimates.length; i++) {{
-      const [em, nm] = gpsToMeters(estimates[i][0], estimates[i][1], meanLat, meanLon);
+      const [em, nm] = gpsToMeters(estimates[i][0], estimates[i][1], clickOriginLat, clickOriginLon);
       const sx = cx + (em - viewCenterE) * viewScale;
       const sy = H / 2 - (nm - viewCenterN) * viewScale;
       const d = Math.sqrt((mx - sx) ** 2 + (my - sy) ** 2);
@@ -746,17 +813,21 @@ def get_gps_charts_html():
     // Compute mean in meters
     let sumLat = 0, sumLon = 0;
     for (const e of estimates) {{ sumLat += e[0]; sumLon += e[1]; }}
-    const meanLat = sumLat / nPts;
-    const meanLon = sumLon / nPts;
+    const cMeanLat = sumLat / nPts;
+    const cMeanLon = sumLon / nPts;
+
+    // Reference for convergence: ground truth if set, else final mean
+    const refLat = groundTruth ? groundTruth.lat : cMeanLat;
+    const refLon = groundTruth ? groundTruth.lon : cMeanLon;
 
     const pts = estimates.map(e => {{
-      const [em, nm] = gpsToMeters(e[0], e[1], meanLat, meanLon);
+      const [em, nm] = gpsToMeters(e[0], e[1], refLat, refLon);
       return {{ e: em, n: nm, pdist: e[2] }};
     }});
 
-    // Final mean (reference point)
-    const fmE = pts.reduce((s, p) => s + p.e, 0) / nPts;
-    const fmN = pts.reduce((s, p) => s + p.n, 0) / nPts;
+    // Final reference point (0,0 when using GT, final mean when not)
+    const fmE = groundTruth ? 0 : pts.reduce((s, p) => s + p.e, 0) / nPts;
+    const fmN = groundTruth ? 0 : pts.reduce((s, p) => s + p.n, 0) / nPts;
 
     const meanErrs = [], wErrs = [], medErrs = [];
 
@@ -832,9 +903,9 @@ def get_gps_charts_html():
     // Legend
     ctx.font = "10px monospace";
     const ly = H - 6;
-    ctx.fillStyle = "#00ff00"; ctx.fillText("mean", cl, ly);
-    ctx.fillStyle = "#00ffff"; ctx.fillText("weighted", cl + 50, ly);
-    ctx.fillStyle = "#ff00ff"; ctx.fillText("median", cl + 120, ly);
+    ctx.fillStyle = "#00ff00"; ctx.fillText("+mean", cl, ly);
+    ctx.fillStyle = "#00ffff"; ctx.fillText("\u25A0weighted", cl + 55, ly);
+    ctx.fillStyle = "#ff00ff"; ctx.fillText("\u25C6median", cl + 135, ly);
 
     // X axis
     ctx.fillStyle = "#888";
@@ -1237,6 +1308,13 @@ def get_gps_charts_html():
         estimates = d.estimates || [];
         smartData = d.smart || null;
         dronePos = d.drone || null;
+        // Load ground truth from server if not set locally
+        if (d.ground_truth && !groundTruth) {{
+          groundTruth = d.ground_truth;
+          document.getElementById("gt-input").value = groundTruth.lat.toFixed(7) + "," + groundTruth.lon.toFixed(7);
+          document.getElementById("gt-input").style.borderColor = "#0f0";
+          document.getElementById("gt-clear-btn").style.display = "inline";
+        }}
 
         const hash = dataHash();
         if (hash !== prevDataHash) {{
