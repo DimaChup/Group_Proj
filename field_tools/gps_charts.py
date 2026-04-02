@@ -960,20 +960,41 @@ def get_gps_charts_html():
       if (d < closestDist) {{ closestDist = d; closest = i; }}
     }}
 
+    // Check if click is near the SMART star
+    if (smartMedE !== null && smartMedN !== null) {{
+      const smsx = cx + (smartMedE - viewCenterE) * viewScale;
+      const smsy = H / 2 - (smartMedN - viewCenterN) * viewScale;
+      const dStar = Math.sqrt((mx - smsx) ** 2 + (my - smsy) ** 2);
+      if (dStar < 20) {{
+        const med = smartData.median;
+        tooltip.style.display = "block";
+        tooltip.style.left = (e.clientX + 12) + "px";
+        tooltip.style.top = (e.clientY - 10) + "px";
+        tooltip.textContent =
+          `★ SMART MEDIAN\\n` +
+          `Lat: ${{med[0].toFixed(7)}}\\n` +
+          `Lon: ${{med[1].toFixed(7)}}\\n` +
+          `Spread: ${{smartLockedSpread.toFixed(2)}}m\\n` +
+          `Cluster: ${{smartLockedIndices ? smartLockedIndices.length : '?'}} points`;
+        setTimeout(() => {{ tooltip.style.display = "none"; }}, 5000);
+        return;
+      }}
+    }}
+
     if (closest !== null && closestDist < 15) {{
       const est = estimates[closest];
+      const inCluster = smartLockedIndices && smartLockedIndices.includes(closest);
       tooltip.style.display = "block";
       tooltip.style.left = (e.clientX + 12) + "px";
       tooltip.style.top = (e.clientY - 10) + "px";
       const distM = (est[2] * est[3] / F_PX).toFixed(2);
       tooltip.textContent =
-        `#${{closest + 1}}\\n` +
+        `#${{closest + 1}}${{inCluster ? ' [CLUSTER]' : ''}}\\n` +
         `Lat: ${{est[0].toFixed(7)}}\\n` +
         `Lon: ${{est[1].toFixed(7)}}\\n` +
         `Alt: ${{est[3].toFixed(1)}}m\\n` +
         `Conf: ${{est[4].toFixed(3)}}\\n` +
         `CenterDist: ${{est[2].toFixed(0)}}px (${{distM}}m)`;
-      // Auto-hide after 3 seconds
       setTimeout(() => {{ tooltip.style.display = "none"; }}, 3000);
     }} else {{
       tooltip.style.display = "none";
