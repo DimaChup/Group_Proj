@@ -213,6 +213,7 @@ HTML_PAGE = """<!DOCTYPE html>
     <option value="all">all</option>
     <option value="dummy">dummy</option>
     <option value="person">person</option>
+    <option value="bird">bird</option>
   </select>
   <span class="sep">|</span>
   <button id="clear-all-btn" onclick="clearAll()" style="padding:3px 10px;background:#600;color:#fff;border:1px solid #f44;border-radius:3px;cursor:pointer;font-family:monospace;font-size:1em">Clear All</button>
