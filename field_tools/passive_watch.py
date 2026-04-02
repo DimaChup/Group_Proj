@@ -69,6 +69,12 @@ latest_best_jpeg = None  # best (most central) detection JPEG
 _best_center_dist = 999.0  # track best center distance
 _best_detection_gps = None  # {"est_lat", "est_lon", "drone_lat", "drone_lon", "center_dist"} or None
 
+# ── Result mode globals ──
+_smart_result_saved = False   # prevents saving SMART result multiple times
+_survey_result_saved = False  # prevents saving SURVEY result multiple times
+SURVEY_TARGET = 100           # how many estimates before survey completes
+_result_banner = None         # {"text": str, "color": (B,G,R), "until": timestamp} or None
+
 # ── Args ──
 parser = argparse.ArgumentParser(description="Passive camera watch + stream + snapshots")
 parser.add_argument('--port', type=int, default=8090)
@@ -679,9 +685,13 @@ class Handler(BaseHTTPRequestHandler):
             _mod._best_detection_gps = None
             _mod.latest_detection_jpeg = None
             _mod.latest_best_jpeg = None
-            _pw.latest_bullseye = None
-            _pw.latest_smart_grid_jpeg = None
-            print("[CLEAR] All estimates, detections, and plots reset")
+            _mod.latest_bullseye = None
+            _mod.latest_smart_grid_jpeg = None
+            # Reset result mode flags
+            _mod._smart_result_saved = False
+            _mod._survey_result_saved = False
+            _mod._result_banner = None
+            print("[CLEAR] All estimates, detections, plots, and result flags reset")
             self._send_json_response({"ok": True})
 
         else:
@@ -1100,6 +1110,168 @@ def _snapshot_overlay(display, label=None, thumb_w=728, gps_info=None):
     quality = 92 if thumb_w >= 1024 else 85
     _, jpg = cv2.imencode('.jpg', thumb, [cv2.IMWRITE_JPEG_QUALITY, quality])
     return jpg.tobytes()
+
+
+def generate_result_image(frame, title, gps_lat, gps_lon, stats_text, filename, title_color=(0, 255, 0)):
+    """Generate a final result image with large banner, GPS coordinate, and stats.
+
+    Args:
+        frame: BGR numpy array (the detection frame with overlay)
+        title: banner text e.g. "TARGET FOUND" or "SURVEY COMPLETE"
+        gps_lat, gps_lon: estimated dummy GPS
+        stats_text: additional stats string (spread, CEP50, method, etc.)
+        filename: full path to save the image
+        title_color: BGR color for title text (default green)
+
+    Returns:
+        The annotated image (BGR numpy array)
+    """
+    if frame is None:
+        return None
+    result = frame.copy()
+    h, w = result.shape[:2]
+
+    # Large banner at top (semi-transparent black background)
+    banner_h = 120
+    overlay = result.copy()
+    cv2.rectangle(overlay, (0, 0), (w, banner_h), (0, 0, 0), -1)
+    cv2.addWeighted(overlay, 0.7, result, 0.3, 0, result)
+
+    # Title text (large, bold)
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    # Outline for readability
+    cv2.putText(result, title, (15, 45), font, 1.4, (0, 0, 0), 6, cv2.LINE_AA)
+    cv2.putText(result, title, (15, 45), font, 1.4, title_color, 3, cv2.LINE_AA)
+
+    # GPS coordinate (large monospace-style text)
+    gps_text = f"{gps_lat:.7f}, {gps_lon:.7f}"
+    cv2.putText(result, gps_text, (15, 80), font, 0.9, (0, 0, 0), 4, cv2.LINE_AA)
+    cv2.putText(result, gps_text, (15, 80), font, 0.9, (255, 255, 255), 2, cv2.LINE_AA)
+
+    # Stats text (smaller, below GPS)
+    cv2.putText(result, stats_text, (15, 110), font, 0.55, (0, 0, 0), 3, cv2.LINE_AA)
+    cv2.putText(result, stats_text, (15, 110), font, 0.55, (200, 200, 200), 1, cv2.LINE_AA)
+
+    # Save
+    os.makedirs(os.path.dirname(filename) or '.', exist_ok=True)
+    cv2.imwrite(filename, result, [cv2.IMWRITE_JPEG_QUALITY, 95])
+    return result
+
+
+def compute_survey_analysis(all_estimates):
+    """Analyze all GPS estimates and return the best coordinate + method + stats.
+
+    Args:
+        all_estimates: list of (est_lat, est_lon, pixel_dist, altitude, confidence)
+
+    Returns:
+        dict with keys: lat, lon, method, cep50, stats_text, mean_lat, mean_lon,
+                        weighted_lat, weighted_lon, median_lat, median_lon
+    """
+    n = len(all_estimates)
+    if n == 0:
+        return None
+
+    lats = [e[0] for e in all_estimates]
+    lons = [e[1] for e in all_estimates]
+
+    # 1. Simple mean
+    mean_lat = sum(lats) / n
+    mean_lon = sum(lons) / n
+
+    # 2. Weighted mean (by centrality: 1/pixel_dist^2, clamped)
+    w_lat, w_lon, total_w = 0.0, 0.0, 0.0
+    for e in all_estimates:
+        pdist = max(e[2], 1.0)
+        w = 1.0 / (pdist * pdist)
+        w_lat += e[0] * w
+        w_lon += e[1] * w
+        total_w += w
+    weighted_lat = w_lat / total_w if total_w > 0 else mean_lat
+    weighted_lon = w_lon / total_w if total_w > 0 else mean_lon
+
+    # 3. Median
+    sorted_lats = sorted(lats)
+    sorted_lons = sorted(lons)
+    mid = n // 2
+    if n % 2 == 0:
+        median_lat = (sorted_lats[mid - 1] + sorted_lats[mid]) / 2
+        median_lon = (sorted_lons[mid - 1] + sorted_lons[mid]) / 2
+    else:
+        median_lat = sorted_lats[mid]
+        median_lon = sorted_lons[mid]
+
+    # 4. Tightest-10 cluster median (reuse SmartEstimator logic)
+    temp_smart = SmartEstimator(min_samples=min(10, n), max_spread=999.0)
+    for e in all_estimates:
+        temp_smart.all_estimates.append((e[0], e[1], e[2], None))
+    if len(temp_smart.all_estimates) >= temp_smart.min_samples:
+        indices, spread = temp_smart._find_tightest(temp_smart.min_samples)
+        temp_smart.locked = True
+        temp_smart.locked_cluster = [(temp_smart.all_estimates[i][0],
+                                       temp_smart.all_estimates[i][1],
+                                       temp_smart.all_estimates[i][2]) for i in indices]
+        temp_smart.locked_spread = spread
+    tight_med = temp_smart.get_median()
+    tight_lat = tight_med[0] if tight_med else median_lat
+    tight_lon = tight_med[1] if tight_med else median_lon
+    tight_spread = temp_smart.locked_spread if temp_smart.locked else 0
+
+    # 5. Central-only median (pixel_dist < 200)
+    central = [e for e in all_estimates if e[2] < 200]
+    if len(central) >= 3:
+        c_lats = sorted(e[0] for e in central)
+        c_lons = sorted(e[1] for e in central)
+        c_mid = len(central) // 2
+        central_lat = c_lats[c_mid]
+        central_lon = c_lons[c_mid]
+    else:
+        central_lat = median_lat
+        central_lon = median_lon
+
+    # Pick the BEST method: use tightest-10 cluster as reference, then pick closest
+    # The tightest cluster is the most robust against outliers
+    candidates = {
+        "mean": (mean_lat, mean_lon),
+        "weighted": (weighted_lat, weighted_lon),
+        "median": (median_lat, median_lon),
+        "tight-10": (tight_lat, tight_lon),
+        "central": (central_lat, central_lon),
+    }
+
+    # Distance from each candidate to the tightest-10 cluster
+    ref_lat, ref_lon = tight_lat, tight_lon
+    best_method = "tight-10"
+    best_dist = 0
+    best_lat, best_lon = tight_lat, tight_lon
+
+    for name, (clat, clon) in candidates.items():
+        dn = (clat - ref_lat) * 111320
+        de = (clon - ref_lon) * 111320 * math.cos(math.radians(ref_lat))
+        d = math.sqrt(dn ** 2 + de ** 2)
+        if name == "tight-10":
+            best_dist = d  # 0 by definition
+            continue
+
+    # CEP50 from the chosen best estimate
+    dists_from_best = []
+    for e in all_estimates:
+        dn = (e[0] - best_lat) * 111320
+        de = (e[1] - best_lon) * 111320 * math.cos(math.radians(best_lat))
+        dists_from_best.append(math.sqrt(dn ** 2 + de ** 2))
+    dists_from_best.sort()
+    cep50 = dists_from_best[len(dists_from_best) // 2] if dists_from_best else 0
+
+    stats_text = (f"N={n}  CEP50={cep50:.2f}m  method={best_method}  "
+                  f"tight10_spread={tight_spread:.2f}m  central={len(central)}")
+
+    return {
+        "lat": best_lat, "lon": best_lon,
+        "method": best_method, "cep50": cep50,
+        "stats_text": stats_text,
+        "n": n, "tight_spread": tight_spread,
+        "n_central": len(central),
+    }
 
 
 def render_smart_grid(smart_est):
@@ -1875,12 +2047,27 @@ def draw_overlay(frame, last_det):
     cv2.putText(display, est_text, (5, est_y + 16),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.4, est_color, 1)
 
+    # ── Result banner (shown for 5 seconds after SMART lock or SURVEY complete) ──
+    if _result_banner is not None and time.time() < _result_banner["until"]:
+        banner_text = _result_banner["text"]
+        banner_color = _result_banner["color"]
+        # Large semi-transparent banner at top center
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        (tw, th), _ = cv2.getTextSize(banner_text, font, 1.2, 3)
+        bx = (w - tw) // 2 - 10
+        by = 35
+        overlay_banner = display.copy()
+        cv2.rectangle(overlay_banner, (bx - 10, by - th - 10), (bx + tw + 10, by + 10), (0, 0, 0), -1)
+        cv2.addWeighted(overlay_banner, 0.7, display, 0.3, 0, display)
+        cv2.putText(display, banner_text, (bx, by), font, 1.2, (0, 0, 0), 6, cv2.LINE_AA)
+        cv2.putText(display, banner_text, (bx, by), font, 1.2, banner_color, 3, cv2.LINE_AA)
+
     return display
 
 
 # ── Main ──
 def main():
-    global latest_jpeg, latest_det_jpeg, smart_estimator, _all_gps_estimates, _best_center_dist, latest_detection_jpeg, latest_best_jpeg, _best_detection_gps
+    global latest_jpeg, latest_det_jpeg, smart_estimator, _all_gps_estimates, _best_center_dist, latest_detection_jpeg, latest_best_jpeg, _best_detection_gps, _smart_result_saved, _survey_result_saved, _result_banner
 
     if args.smart_estimate:
         smart_estimator = SmartEstimator(
@@ -2161,6 +2348,44 @@ def main():
 
                         # Update bullseye plot
                         render_bullseye(_all_gps_estimates, smart_estimator)
+
+                        # ── Mode 1: SMART Quick Lock result ──
+                        if smart_estimator and smart_estimator.locked and not _smart_result_saved:
+                            _smart_result_saved = True
+                            med = smart_estimator.get_median()
+                            if med:
+                                s_lat, s_lon = med[0], med[1]
+                                s_spread = smart_estimator.locked_spread
+                                s_cep = smart_estimator.get_cep50()
+                                s_stats = f"Spread: {s_spread:.2f}m  CEP50: {s_cep:.2f}m  Conf: {conf:.2f}  N={med[2]}"
+                                # Use best detection frame or current overlay frame
+                                result_frame = draw_overlay(frame, last_det)
+                                s_fname = os.path.join(args.save_dir, f"RESULT_SMART_{s_lat:.6f}_{s_lon:.6f}.jpg")
+                                generate_result_image(result_frame, "TARGET FOUND",
+                                                      s_lat, s_lon, s_stats, s_fname,
+                                                      title_color=(0, 255, 0))
+                                _result_banner = {"text": "TARGET FOUND", "color": (0, 255, 0),
+                                                  "until": time.time() + 5}
+                                print(f"\n[RESULT] SMART LOCK: {s_lat:.7f}, {s_lon:.7f} (spread: {s_spread:.2f}m)")
+                                print(f"         Saved: {s_fname}\n")
+
+                        # ── Mode 2: Full Survey result (first N estimates) ──
+                        if len(_all_gps_estimates) >= SURVEY_TARGET and not _survey_result_saved:
+                            _survey_result_saved = True
+                            survey = compute_survey_analysis(_all_gps_estimates[:SURVEY_TARGET])
+                            if survey:
+                                sv_lat, sv_lon = survey["lat"], survey["lon"]
+                                sv_stats = survey["stats_text"]
+                                # Find most central detection frame from the estimates
+                                result_frame = draw_overlay(frame, last_det)
+                                sv_fname = os.path.join(args.save_dir, f"RESULT_SURVEY_{sv_lat:.6f}_{sv_lon:.6f}.jpg")
+                                generate_result_image(result_frame, "SURVEY COMPLETE",
+                                                      sv_lat, sv_lon, sv_stats, sv_fname,
+                                                      title_color=(255, 255, 0))  # cyan in BGR
+                                _result_banner = {"text": "SURVEY COMPLETE", "color": (255, 255, 0),
+                                                  "until": time.time() + 5}
+                                print(f"\n[RESULT] SURVEY: {sv_lat:.7f}, {sv_lon:.7f} (N={survey['n']}, CEP50={survey['cep50']:.2f}m)")
+                                print(f"         Method: {survey['method']}  Saved: {sv_fname}\n")
 
                 # Smart estimate: save ONLY when threshold reached, use median + most central image
                 if args.smart_estimate and smart_estimator and not args.no_save:
