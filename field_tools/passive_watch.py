@@ -1281,7 +1281,7 @@ def _snapshot_overlay(display, label=None, thumb_w=728, gps_info=None):
         e_lon = gps_info.get("est_lon")
 
         # Line 1: drone position
-        drone_txt = f"DRONE: {d_lat:.6f}, {d_lon:.6f}"
+        drone_txt = f"DRONE: {d_lat:.7f}, {d_lon:.7f}"
         cv2.putText(thumb, drone_txt, (6, y_line1), font, fs, (255, 255, 0), lw, cv2.LINE_AA)  # cyan BGR
 
         # Line 2: dummy estimate + offset
@@ -1289,7 +1289,7 @@ def _snapshot_overlay(display, label=None, thumb_w=728, gps_info=None):
             dn = (d_lat - e_lat) * 111320
             de = (d_lon - e_lon) * 111320 * math.cos(math.radians(d_lat))
             offset_m = math.sqrt(dn ** 2 + de ** 2)
-            est_txt = f"DUMMY EST: {e_lat:.6f}, {e_lon:.6f}"
+            est_txt = f"DUMMY EST: {e_lat:.7f}, {e_lon:.7f}"
             cls_name = gps_info.get("cls", "?")
             det_conf_snap = gps_info.get("conf", 0)
             off_txt = f"OFFSET: {offset_m:.1f}m  [{cls_name} {det_conf_snap:.2f}]"
@@ -1519,7 +1519,7 @@ def render_smart_grid(smart_est):
         banner_color = (0, 140, 0)   # dark green
         med = smart_est.get_median()
         if med:
-            status_text = f"LOCKED  {n_need}/{n_need}  spread {smart_est.locked_spread:.2f}m  |  {med[0]:.6f}, {med[1]:.6f}"
+            status_text = f"LOCKED  {n_need}/{n_need}  spread {smart_est.locked_spread:.2f}m  |  {med[0]:.7f}, {med[1]:.7f}"
         else:
             status_text = f"LOCKED  {n_need}/{n_need}  spread {smart_est.locked_spread:.2f}m"
     elif n_have == 0:
@@ -1554,7 +1554,7 @@ def render_smart_grid(smart_est):
                             cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 0), 1, cv2.LINE_AA)
                 # GPS coordinates of the best frame (from locked cluster)
                 best_entry = smart_est.locked_cluster[best_frame_idx]
-                coord_text = f"{best_entry[0]:.6f}, {best_entry[1]:.6f}"
+                coord_text = f"{best_entry[0]:.7f}, {best_entry[1]:.7f}"
                 cv2.putText(grid, coord_text, (x0 + 5, y0 + ch - 22),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.32, (0, 0, 0), 3, cv2.LINE_AA)
                 cv2.putText(grid, coord_text, (x0 + 5, y0 + ch - 22),
@@ -1805,7 +1805,7 @@ def render_bullseye(all_estimates, smart_est=None):
                cv2.FONT_HERSHEY_SIMPLEX, 0.32, (180, 180, 180), 1)
     est = dummy_estimator.get_estimate()
     if est:
-        cv2.putText(p1, f"Est: {est[0]:.6f}, {est[1]:.6f}", (5, S - 5),
+        cv2.putText(p1, f"Est: {est[0]:.7f}, {est[1]:.7f}", (5, S - 5),
                    cv2.FONT_HERSHEY_SIMPLEX, 0.30, (255, 0, 255), 1)
     panels.append(p1)
 
@@ -2234,7 +2234,7 @@ def draw_overlay(frame, last_det, raw_det=None):
     mode = g["mode"]
 
     if lat != 0.0 or lon != 0.0:
-        gps_text = f"GPS: {lat:.6f}, {lon:.6f} | Alt: {alt:.1f}m | Sats: {sats}"
+        gps_text = f"GPS: {lat:.7f}, {lon:.7f} | Alt: {alt:.1f}m | Sats: {sats}"
     else:
         gps_text = f"GPS: No Fix | Sats: {sats}"
 
@@ -2353,7 +2353,7 @@ def draw_overlay(frame, last_det, raw_det=None):
     cls = getattr(draw_overlay, '_last_class', '') or ''
     if est is not None:
         e_lat, e_lon, n_obs = est
-        est_text = f"DUMMY EST: {e_lat:.6f}, {e_lon:.6f} ({n_obs} obs)"
+        est_text = f"DUMMY EST: {e_lat:.7f}, {e_lon:.7f} ({n_obs} obs)"
         est_color = (255, 0, 255)  # pink/magenta
     elif lat == 0.0 and lon == 0.0:
         est_text = "DUMMY EST: NO GPS — cannot estimate"
@@ -2513,7 +2513,7 @@ def inference_worker(args_ref, csv_writer_ref, csv_file_ref):
                             s_cep = smart_estimator.get_cep50()
                             s_stats = f"Spread: {s_spread:.2f}m  CEP50: {s_cep:.2f}m  Conf: {conf:.2f}  N={med[2]}"
                             result_frame = draw_overlay(frame, _mod._last_det)
-                            s_fname = os.path.join(args_ref.save_dir, f"RESULT_SMART_{s_lat:.6f}_{s_lon:.6f}.jpg")
+                            s_fname = os.path.join(args_ref.save_dir, f"RESULT_SMART_{s_lat:.7f}_{s_lon:.7f}.jpg")
                             generate_result_image(result_frame, "TARGET FOUND",
                                                   s_lat, s_lon, s_stats, s_fname,
                                                   title_color=(0, 255, 0),
@@ -2531,7 +2531,7 @@ def inference_worker(args_ref, csv_writer_ref, csv_file_ref):
                             sv_lat, sv_lon = survey["lat"], survey["lon"]
                             sv_stats = survey["stats_text"]
                             result_frame = draw_overlay(frame, _mod._last_det)
-                            sv_fname = os.path.join(args_ref.save_dir, f"RESULT_SURVEY_{sv_lat:.6f}_{sv_lon:.6f}.jpg")
+                            sv_fname = os.path.join(args_ref.save_dir, f"RESULT_SURVEY_{sv_lat:.7f}_{sv_lon:.7f}.jpg")
                             generate_result_image(result_frame, "SURVEY COMPLETE",
                                                   sv_lat, sv_lon, sv_stats, sv_fname,
                                                   title_color=(255, 255, 0))
@@ -2547,7 +2547,7 @@ def inference_worker(args_ref, csv_writer_ref, csv_file_ref):
                     med = smart_estimator.get_median()
                     _inference_saved_count += 1
                     # Save best frame
-                    fname = f"SMART_{med[0]:.6f}_{med[1]:.6f}_{med[2]}samp.png"
+                    fname = f"SMART_{med[0]:.7f}_{med[1]:.7f}_{med[2]}samp.png"
                     if smart_estimator.locked_frame is not None:
                         _enqueue_save({"kind": "image", "path": os.path.join(args_ref.save_dir, fname), "frame": smart_estimator.locked_frame})
                     # Save all 10 cluster frames with index + GPS
@@ -2556,7 +2556,7 @@ def inference_worker(args_ref, csv_writer_ref, csv_file_ref):
                         for idx, entry in enumerate(smart_estimator.locked_cluster):
                             e_lat, e_lon, e_pdist, e_frame = entry[0], entry[1], entry[2], entry[3]
                             tag = "_BEST" if e_pdist == best_pdist else ""
-                            cf = f"SMART_{idx+1:02d}_{e_lat:.6f}_{e_lon:.6f}{tag}.png"
+                            cf = f"SMART_{idx+1:02d}_{e_lat:.7f}_{e_lon:.7f}{tag}.png"
                             if e_frame is not None:
                                 _enqueue_save({"kind": "image", "path": os.path.join(args_ref.save_dir, cf), "frame": e_frame})
                     print(f"\n  {'='*60}")
@@ -2625,25 +2625,25 @@ def inference_worker(args_ref, csv_writer_ref, csv_file_ref):
                 if args_ref.simple_names:
                     est_snap = dummy_estimator.get_estimate()
                     if est_snap:
-                        fname = f"{_inference_saved_count:04d}_{est_snap[0]:.5f}_{est_snap[1]:.5f}.jpg"
+                        fname = f"{_inference_saved_count:04d}_{est_snap[0]:.7f}_{est_snap[1]:.7f}.jpg"
                     elif lat != 0.0 or lon != 0.0:
-                        fname = f"{_inference_saved_count:04d}_{lat:.5f}_{lon:.5f}.jpg"
+                        fname = f"{_inference_saved_count:04d}_{lat:.7f}_{lon:.7f}.jpg"
                     else:
                         fname = f"{_inference_saved_count:04d}_nogps.jpg"
                 else:
                     if lat != 0.0 or lon != 0.0:
-                        fname = f"det_{_inference_saved_count:04d}_{conf:.2f}_{lat:.5f}_{lon:.5f}.jpg"
+                        fname = f"det_{_inference_saved_count:04d}_{conf:.2f}_{lat:.7f}_{lon:.7f}.jpg"
                     else:
                         fname = f"det_{_inference_saved_count:04d}_{conf:.2f}_nogps.jpg"
 
                 stamp_lines = [f"{ts} conf:{conf:.2f}"]
                 if lat != 0.0 or lon != 0.0:
-                    stamp_lines.append(f"DRONE: {lat:.6f},{lon:.6f} @{alt:.0f}m")
+                    stamp_lines.append(f"DRONE: {lat:.7f},{lon:.7f} @{alt:.0f}m")
                 else:
                     stamp_lines.append("DRONE: NO GPS")
                 est_snap = dummy_estimator.get_estimate()
                 if est_snap:
-                    stamp_lines.append(f"DUMMY: {est_snap[0]:.6f},{est_snap[1]:.6f} ({est_snap[2]}obs)")
+                    stamp_lines.append(f"DUMMY: {est_snap[0]:.7f},{est_snap[1]:.7f} ({est_snap[2]}obs)")
                 for i, line in enumerate(stamp_lines):
                     ty = sh // 3 + i * 20
                     cv2.rectangle(save_frame, (sw - 280, ty - 14), (sw, ty + 4), (0, 0, 0), -1)
@@ -2907,7 +2907,7 @@ def main():
                     gps_data["mode"] = "FAKE"
             if fake_frame_idx[0] % 100 == 1:
                 with gps_lock:
-                    print(f"  [FAKE] Frame {fake_frame_idx[0]} GPS:{gps_data['lat']:.5f},{gps_data['lon']:.5f} Alt:{gps_data['alt']:.0f}m Yaw:{gps_data['yaw']:.0f}")
+                    print(f"  [FAKE] Frame {fake_frame_idx[0]} GPS:{gps_data['lat']:.7f},{gps_data['lon']:.7f} Alt:{gps_data['alt']:.0f}m Yaw:{gps_data['yaw']:.0f}")
         else:
             frame = camera_source.get_frame()
             if frame is None:
@@ -3069,19 +3069,19 @@ def main():
                 "vis_fps": f"{v_fps:.1f}",
                 "stream_fps": f"{s_fps:.1f}",
                 "saved": saved_count,
-                "gps_lat": f"{lat:.6f}" if lat != 0 else "---",
-                "gps_lon": f"{lon:.6f}" if lon != 0 else "---",
+                "gps_lat": f"{lat:.7f}" if lat != 0 else "---",
+                "gps_lon": f"{lon:.7f}" if lon != 0 else "---",
                 "alt": f"{g_alt:.1f}" if g_alt != 0 else "---",
                 "sats": g_sats,
                 "flight_mode": g_mode,
-                "est_lat": f"{est[0]:.6f}" if est else "---",
-                "est_lon": f"{est[1]:.6f}" if est else "---",
+                "est_lat": f"{est[0]:.7f}" if est else "---",
+                "est_lon": f"{est[1]:.7f}" if est else "---",
                 "est_obs": est[2] if est else 0,
             })
 
         # Terminal output every 50 frames
         if frame_count % 50 == 0:
-            gps_str = f"GPS:{lat:.5f},{lon:.5f}" if lat != 0 else "GPS:---"
+            gps_str = f"GPS:{lat:.7f},{lon:.7f}" if lat != 0 else "GPS:---"
             print(f"  #{frame_count} CAM:{c_fps:.1f} VIS:{v_fps:.1f} STR:{s_fps:.1f} Det:{det_count} ({det_pct:.0f}%) Saved:{saved_count} {gps_str}")
 
         # ── Pace display loop to ~30fps ──
