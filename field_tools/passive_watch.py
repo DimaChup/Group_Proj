@@ -1952,10 +1952,10 @@ def draw_overlay(frame, last_det):
             cv2.rectangle(display, (x1, y1), (x2, y2), color, 3)
             cls_name = getattr(draw_overlay, '_last_class', '')
             label = f"AI {conf:.2f} [{cls_name}]"
-            # Outline text for readability on any background
-            cv2.putText(display, label, (x1, y1 - 8),
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 4)
-            cv2.putText(display, label, (x1, y1 - 8),
+            # Black background rectangle behind label for readability
+            (tw, th_txt), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.7, 2)
+            cv2.rectangle(display, (x1, y1 - 28), (x1 + tw + 6, y1 - 2), (0, 0, 0), -1)
+            cv2.putText(display, label, (x1 + 3, y1 - 8),
                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
 
     # Centre crosshair (helps pilot align directly over target)
