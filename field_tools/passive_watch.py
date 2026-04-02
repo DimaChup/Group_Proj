@@ -1185,7 +1185,8 @@ def _snapshot_overlay(display, label=None, thumb_w=728, gps_info=None):
             offset_m = math.sqrt(dn ** 2 + de ** 2)
             est_txt = f"DUMMY EST: {e_lat:.6f}, {e_lon:.6f}"
             cls_name = getattr(draw_overlay, '_last_class', '') or '?'
-            off_txt = f"OFFSET: {offset_m:.1f}m  [{cls_name}]"
+            det_conf_snap = last_det[2] if last_det is not None else 0
+            off_txt = f"OFFSET: {offset_m:.1f}m  [{cls_name} {det_conf_snap:.2f}]"
             cv2.putText(thumb, est_txt, (6, y_line2), font, fs, (255, 0, 255), lw, cv2.LINE_AA)  # magenta
             # Offset + class after estimate text
             est_tw, _ = cv2.getTextSize(est_txt, font, fs, lw)
@@ -2163,10 +2164,12 @@ def draw_overlay(frame, last_det):
         est_color = (100, 100, 100)  # grey
     cv2.putText(display, est_text, (5, est_y + 16),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.4, est_color, 1)
-    # Class name — prominent yellow at end of estimate bar
+    # Class name + confidence — prominent cyan at end of estimate bar
     if cls:
+        det_conf = last_det[2] if last_det is not None else 0
+        cls_conf_text = f"[{cls} {det_conf:.2f}]"
         txt_w = cv2.getTextSize(est_text, cv2.FONT_HERSHEY_SIMPLEX, 0.4, 1)[0][0]
-        cv2.putText(display, f"[{cls}]", (txt_w + 12, est_y + 16),
+        cv2.putText(display, cls_conf_text, (txt_w + 12, est_y + 16),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 255), 2)
 
     # ── Result banner (shown for 5 seconds after SMART lock or SURVEY complete) ──
