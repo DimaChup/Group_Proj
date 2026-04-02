@@ -8,7 +8,7 @@ for an interactive satellite map with:
   - Click+drag pan
   - Near-realtime drone position dot + heading arrow (500ms poll)
   - Camera FOV footprint rectangle rotated by yaw
-  - GPS detection estimate dots (green)
+  - GPS detection estimate dots with centrality heatmap (green=central → red=edge)
   - Smart cluster median star marker (magenta)
   - Search area polygon overlay
   - Scale bar
@@ -58,7 +58,7 @@ def get_interactive_map_html(container_id="map-container", width="100%", height=
     Drop it into any HTML page. Requires:
       - /map endpoint serving the static JPEG map image
       - /api/drone endpoint returning drone telemetry JSON
-      - /api/estimates endpoint returning GPS estimates JSON
+      - /api/estimates-full endpoint returning GPS estimates with pdist JSON
     """
     constants = get_map_constants()
     constants_json = json.dumps(constants)
@@ -461,16 +461,38 @@ def get_interactive_map_html(container_id="map-container", width="100%", height=
 
     const dotR = Math.max(2, 3 * viewScale);
 
+    // Find min/max pdist for heatmap scaling
+    let minPdist = Infinity, maxPdist = -Infinity;
+    for (let i = 0; i < estimates.length; i++) {{
+      const pd = estimates[i][2];  // pdist is index 2
+      if (pd !== undefined && pd !== null) {{
+        if (pd < minPdist) minPdist = pd;
+        if (pd > maxPdist) maxPdist = pd;
+      }}
+    }}
+    const pdistRange = maxPdist - minPdist;
+
     for (let i = 0; i < estimates.length; i++) {{
       const p = gpsToScreen(estimates[i][0], estimates[i][1]);
       // Skip if off-screen
       if (p.x < -10 || p.x > canvasSize.w + 10 || p.y < -10 || p.y > canvasSize.h + 10) continue;
 
+      // Heatmap color based on pdist: green (central, low pdist) → yellow → red (edge, high pdist)
+      let r = 0, g = 255, b = 0;
+      const pd = estimates[i][2];
+      if (pd !== undefined && pd !== null && pdistRange > 0) {{
+        const ratio = (pd - minPdist) / pdistRange;
+        r = Math.round(ratio * 510);          // 0 → 0, 0.5 → 255, 1.0 → 510
+        g = Math.round((1 - ratio) * 510);    // 0 → 510, 0.5 → 255, 1.0 → 0
+        if (r > 255) r = 255;
+        if (g > 255) g = 255;
+      }}
+
       ctx.beginPath();
       ctx.arc(p.x, p.y, dotR, 0, Math.PI * 2);
-      ctx.fillStyle = "rgba(0,255,80,0.7)";
+      ctx.fillStyle = "rgba(" + r + "," + g + ",0,0.7)";
       ctx.fill();
-      ctx.strokeStyle = "rgba(0,255,80,0.3)";
+      ctx.strokeStyle = "rgba(" + r + "," + g + ",0,0.3)";
       ctx.lineWidth = 0.5;
       ctx.stroke();
     }}
@@ -651,8 +673,8 @@ def get_interactive_map_html(container_id="map-container", width="100%", height=
   }}
 
   function pollEstimates() {{
-    fetch("/api/estimates").then(r => r.json()).then(d => {{
-      const newEst = d.estimates || [];
+    fetch("/api/estimates-full").then(r => r.json()).then(d => {{
+      const newEst = d.estimates || [];  // [[lat, lon, pdist, alt, conf], ...]
       const newSmart = d.smart || null;
       // Only redraw if data changed
       if (newEst.length !== estimates.length || newSmart !== smartMedian) {{

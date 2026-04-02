@@ -138,6 +138,7 @@ def get_gps_charts_html():
         <button id="btn-color-conf" data-mode="confidence">Confidence</button>
         <div class="sep"></div>
         <button id="btn-map-bg">Map BG: off</button>
+        <button id="btn-toggle-dots">Dots: ON</button>
         <div class="sep"></div>
         <button id="btn-reset-view">Reset View</button>
         <div class="sep"></div>
@@ -211,6 +212,7 @@ def get_gps_charts_html():
   let mapBgOn = true;  // default ON
   let mapImg = null;
   let mapLoading = false;
+  let showDots = true;
 
   // Scatter view state (zoom/pan in meters)
   let viewCenterE = 0, viewCenterN = 0;  // meters offset from mean
@@ -267,6 +269,12 @@ def get_gps_charts_html():
       img.onerror = () => {{ mapLoading = false; }};
       img.src = "/map";
     }}
+    drawScatter();
+  }});
+
+  document.getElementById("btn-toggle-dots").addEventListener("click", () => {{
+    showDots = !showDots;
+    document.getElementById("btn-toggle-dots").textContent = "Dots: " + (showDots ? "ON" : "OFF");
     drawScatter();
   }});
 
@@ -536,21 +544,23 @@ def get_gps_charts_html():
     maxPd = Math.max(maxPd, 1);
     const confRange = Math.max(maxConf - minConf, 0.01);
 
-    // Draw dots
-    for (const p of pts) {{
-      const sx = cx + (p.e - viewCenterE) * viewScale;
-      const sy = cy - (p.n - viewCenterN) * viewScale;
-      if (sx < -10 || sx > W + 10 || sy < -10 || sy > H + 10) continue;
+    // Draw dots (skip when toggled off)
+    if (showDots) {{
+      for (const p of pts) {{
+        const sx = cx + (p.e - viewCenterE) * viewScale;
+        const sy = cy - (p.n - viewCenterN) * viewScale;
+        if (sx < -10 || sx > W + 10 || sy < -10 || sy > H + 10) continue;
 
-      let val = 0;
-      if (colorMode === "altitude") val = (p.alt - minAlt) / altRange;
-      else if (colorMode === "centrality") val = Math.min(1, p.pdist / maxPd);
-      else if (colorMode === "confidence") val = 1 - (p.conf - minConf) / confRange;
+        let val = 0;
+        if (colorMode === "altitude") val = (p.alt - minAlt) / altRange;
+        else if (colorMode === "centrality") val = Math.min(1, p.pdist / maxPd);
+        else if (colorMode === "confidence") val = 1 - (p.conf - minConf) / confRange;
 
-      ctx.fillStyle = heatColor(val);
-      ctx.beginPath();
-      ctx.arc(sx, sy, 3.5, 0, Math.PI * 2);
-      ctx.fill();
+        ctx.fillStyle = heatColor(val);
+        ctx.beginPath();
+        ctx.arc(sx, sy, 3.5, 0, Math.PI * 2);
+        ctx.fill();
+      }}
     }}
 
     // Compute mean position in meters (relative to origin)
@@ -598,10 +608,10 @@ def get_gps_charts_html():
       ctx.textAlign = "start";
     }}
 
-    // Mean marker (green cross)
+    // Mean marker (yellow cross)
     const msx = cx + (meanME - viewCenterE) * viewScale;
     const msy = cy - (meanMN - viewCenterN) * viewScale;
-    ctx.strokeStyle = "#00ff00";
+    ctx.strokeStyle = "#ffdc00";
     ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(msx - 8, msy); ctx.lineTo(msx + 8, msy); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(msx, msy - 8); ctx.lineTo(msx, msy + 8); ctx.stroke();
@@ -642,7 +652,7 @@ def get_gps_charts_html():
       ` &nbsp; <span class="lbl">CEP50:</span> <span class="val">${{cep50.toFixed(2)}}m</span>` +
       ` &nbsp; <span class="lbl">Max:</span> <span class="val">${{maxSpread.toFixed(2)}}m</span>` +
       gtLabel +
-      `<br><span class="lbl" style="color:#0f0;">Mean (simple avg):</span> <span class="val">${{meanErr.toFixed(2)}}m</span>` +
+      `<br><span class="lbl" style="color:#ffdc00;">Mean (simple avg):</span> <span class="val">${{meanErr.toFixed(2)}}m</span>` +
       ` &nbsp; <span class="lbl" style="color:#0ff;">Weighted (centrality):</span> <span class="val">${{wErr.toFixed(2)}}m</span>` +
       ` &nbsp; <span class="lbl" style="color:#f0f;">Median:</span> <span class="val">${{medErr.toFixed(2)}}m</span>` +
       `<span class="lbl">${{errRefLabel}}</span>`;
@@ -896,14 +906,14 @@ def get_gps_charts_html():
       ctx.stroke();
     }}
 
-    plotLine(meanErrs, "#00ff00");
+    plotLine(meanErrs, "#ffdc00");
     plotLine(wErrs, "#00ffff");
     plotLine(medErrs, "#ff00ff");
 
     // Legend
     ctx.font = "10px monospace";
     const ly = H - 6;
-    ctx.fillStyle = "#00ff00"; ctx.fillText("+mean", cl, ly);
+    ctx.fillStyle = "#ffdc00"; ctx.fillText("+mean", cl, ly);
     ctx.fillStyle = "#00ffff"; ctx.fillText("\u25A0weighted", cl + 55, ly);
     ctx.fillStyle = "#ff00ff"; ctx.fillText("\u25C6median", cl + 135, ly);
 
