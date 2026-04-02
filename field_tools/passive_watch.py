@@ -1552,6 +1552,13 @@ def render_smart_grid(smart_est):
                             cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 0), 3, cv2.LINE_AA)
                 cv2.putText(grid, label, (x0 + 5, y0 + 18),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 0), 1, cv2.LINE_AA)
+                # GPS coordinates of the best frame (from locked cluster)
+                best_entry = smart_est.locked_cluster[best_frame_idx]
+                coord_text = f"{best_entry[0]:.6f}, {best_entry[1]:.6f}"
+                cv2.putText(grid, coord_text, (x0 + 5, y0 + ch - 22),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.32, (0, 0, 0), 3, cv2.LINE_AA)
+                cv2.putText(grid, coord_text, (x0 + 5, y0 + ch - 22),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.32, (0, 255, 0), 1, cv2.LINE_AA)
                 # "BEST" badge bottom-right
                 cv2.putText(grid, "BEST", (x0 + cw - 48, y0 + ch - 8),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 0), 3, cv2.LINE_AA)
@@ -2523,11 +2530,21 @@ def inference_worker(args_ref, csv_writer_ref, csv_file_ref):
                     smart_estimator._saved = True
                     med = smart_estimator.get_median()
                     _inference_saved_count += 1
+                    # Save best frame
                     fname = f"SMART_{med[0]:.6f}_{med[1]:.6f}_{med[2]}samp.png"
                     if smart_estimator.locked_frame is not None:
                         _enqueue_save({"kind": "image", "path": os.path.join(args_ref.save_dir, fname), "frame": smart_estimator.locked_frame})
+                    # Save all 10 cluster frames with index + GPS
+                    if smart_estimator.locked_cluster:
+                        best_pdist = min(e[2] for e in smart_estimator.locked_cluster)
+                        for idx, entry in enumerate(smart_estimator.locked_cluster):
+                            e_lat, e_lon, e_pdist, e_frame = entry[0], entry[1], entry[2], entry[3]
+                            tag = "_BEST" if e_pdist == best_pdist else ""
+                            cf = f"SMART_{idx+1:02d}_{e_lat:.6f}_{e_lon:.6f}{tag}.png"
+                            if e_frame is not None:
+                                _enqueue_save({"kind": "image", "path": os.path.join(args_ref.save_dir, cf), "frame": e_frame})
                     print(f"\n  {'='*60}")
-                    print(f"  SMART ESTIMATE SAVED: {fname}")
+                    print(f"  SMART ESTIMATE SAVED: {fname} + {len(smart_estimator.locked_cluster)} cluster frames")
                     print(f"  Median GPS: {med[0]:.7f}, {med[1]:.7f}")
                     print(f"  Cluster: {med[2]} samples, spread: {smart_estimator.locked_spread:.2f}m")
                     print(f"  {'='*60}\n")

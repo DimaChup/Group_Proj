@@ -756,6 +756,9 @@ def get_gps_charts_html():
       ctx.font = "bold 10px monospace";
       ctx.textAlign = "center";
       ctx.fillText("SMART", smsx, smsy - 13);
+      // Show lat/lon coordinates below the star
+      ctx.font = "9px monospace";
+      ctx.fillText(smartData.median[0].toFixed(7) + ", " + smartData.median[1].toFixed(7), smsx, smsy + 18);
       ctx.textAlign = "start";
     }}
 
