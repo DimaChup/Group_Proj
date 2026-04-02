@@ -67,6 +67,7 @@ _map_base = None  # loaded map.jpg (once)
 bullseye_map_bg = True  # default ON: satellite map crop behind bullseye scatter plots
 latest_best_jpeg = None  # best (most central) detection JPEG
 _best_center_dist = 999.0  # track best center distance
+_best_detection_gps = None  # {"est_lat", "est_lon", "drone_lat", "drone_lon", "center_dist"} or None
 
 # ── Args ──
 parser = argparse.ArgumentParser(description="Passive camera watch + stream + snapshots")
@@ -598,6 +599,7 @@ class Handler(BaseHTTPRequestHandler):
                 "mean": mean,
                 "n": len(est_list),
                 "ground_truth": _ground_truth,
+                "best": _best_detection_gps,
             }
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
@@ -636,6 +638,7 @@ class Handler(BaseHTTPRequestHandler):
             # Use sys.modules to get the RUNNING module (handles __main__ vs import)
             _mod = sys.modules.get('field_tools.passive_watch') or sys.modules.get('__main__')
             _mod._best_center_dist = 999.0
+            _mod._best_detection_gps = None
             with frame_lock:
                 _mod.latest_best_jpeg = None
             print("[CLEAR] Best detection reset — tracking new best")
@@ -673,6 +676,7 @@ class Handler(BaseHTTPRequestHandler):
             # Clear detection snapshots and plots (use running module, not reimport)
             _mod = sys.modules.get('field_tools.passive_watch') or sys.modules.get('__main__')
             _mod._best_center_dist = 999.0
+            _mod._best_detection_gps = None
             _mod.latest_detection_jpeg = None
             _mod.latest_best_jpeg = None
             _pw.latest_bullseye = None
@@ -1876,7 +1880,7 @@ def draw_overlay(frame, last_det):
 
 # ── Main ──
 def main():
-    global latest_jpeg, latest_det_jpeg, smart_estimator, _all_gps_estimates, _best_center_dist, latest_detection_jpeg, latest_best_jpeg
+    global latest_jpeg, latest_det_jpeg, smart_estimator, _all_gps_estimates, _best_center_dist, latest_detection_jpeg, latest_best_jpeg, _best_detection_gps
 
     if args.smart_estimate:
         smart_estimator = SmartEstimator(
@@ -2187,6 +2191,21 @@ def main():
                 if center_dist < _best_center_dist:
                     _best_center_dist = center_dist
                     _snap_best = True
+                    # Store GPS info for best detection (used by gps_charts scatter plot)
+                    _best_gps_entry = {
+                        "center_dist": round(center_dist, 4),
+                        "drone_lat": round(d_lat, 7),
+                        "drone_lon": round(d_lon, 7),
+                    }
+                    if est_result:
+                        _best_gps_entry["est_lat"] = round(est_lat, 7)
+                        _best_gps_entry["est_lon"] = round(est_lon, 7)
+                    else:
+                        _cum_est = dummy_estimator.get_estimate()
+                        if _cum_est:
+                            _best_gps_entry["est_lat"] = round(_cum_est[0], 7)
+                            _best_gps_entry["est_lon"] = round(_cum_est[1], 7)
+                    _best_detection_gps = _best_gps_entry
 
                 # Save snapshot with GPS overlay (normal mode, skipped in smart mode)
                 if not args.no_save and not args.smart_estimate:

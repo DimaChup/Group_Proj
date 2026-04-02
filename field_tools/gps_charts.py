@@ -219,6 +219,7 @@ def get_gps_charts_html():
   let estimates = [];       // [[lat, lon, pdist, alt, conf], ...]
   let smartData = null;     // {{locked, cluster, spread, median}}
   let dronePos = null;      // {{lat, lon}}
+  let bestData = null;      // {{est_lat, est_lon, drone_lat, drone_lon, center_dist}} or null
   let groundTruth = null;   // {{lat, lon}} or null
   let prevDataHash = "";
   let colorMode = "pixel_centrality";   // pixel_centrality | distance_centrality | altitude | confidence
@@ -438,7 +439,8 @@ def get_gps_charts_html():
     const smart = smartData ? (smartData.locked ? "L" : "S") + (smartData.cluster ? smartData.cluster.length : 0) : "X";
     const central = estimates.filter(e => e[2] < 200).length;
     const gtKey = groundTruth ? "GT" + groundTruth.lat.toFixed(5) : "noGT";
-    return base + ":" + smart + ":" + central + ":" + (smartLocked ? "SL" : "SU") + ":" + gtKey;
+    const bestKey = bestData ? "B" + bestData.est_lat.toFixed(5) : "noB";
+    return base + ":" + smart + ":" + central + ":" + (smartLocked ? "SL" : "SU") + ":" + gtKey + ":" + bestKey;
   }}
 
   // ── Scatter plot ──
@@ -686,12 +688,64 @@ def get_gps_charts_html():
     ctx.lineTo(medsx, medsy + 7); ctx.lineTo(medsx - 5, medsy);
     ctx.closePath(); ctx.stroke();
 
+    // Best Detection markers (red circle = estimate, red X = drone, dashed line between)
+    if (bestData && bestData.est_lat !== undefined) {{
+      const [bestEstE, bestEstN] = gpsToMeters(bestData.est_lat, bestData.est_lon, originLat, originLon);
+      const bestEstSx = cx + (bestEstE - viewCenterE) * viewScale;
+      const bestEstSy = cy - (bestEstN - viewCenterN) * viewScale;
+
+      // Red filled circle at estimate position
+      ctx.fillStyle = "#ff2020";
+      ctx.strokeStyle = "#ff2020";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(bestEstSx, bestEstSy, 6, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Label "BEST" near the circle
+      ctx.font = "bold 10px monospace";
+      ctx.textAlign = "center";
+      ctx.fillText("BEST", bestEstSx, bestEstSy - 10);
+      ctx.textAlign = "start";
+
+      if (bestData.drone_lat !== undefined) {{
+        const [bestDrnE, bestDrnN] = gpsToMeters(bestData.drone_lat, bestData.drone_lon, originLat, originLon);
+        const bestDrnSx = cx + (bestDrnE - viewCenterE) * viewScale;
+        const bestDrnSy = cy - (bestDrnN - viewCenterN) * viewScale;
+
+        // Red X at drone position
+        ctx.strokeStyle = "#ff2020";
+        ctx.lineWidth = 2;
+        const xSz = 8;
+        ctx.beginPath(); ctx.moveTo(bestDrnSx - xSz, bestDrnSy - xSz); ctx.lineTo(bestDrnSx + xSz, bestDrnSy + xSz); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(bestDrnSx + xSz, bestDrnSy - xSz); ctx.lineTo(bestDrnSx - xSz, bestDrnSy + xSz); ctx.stroke();
+
+        // Red dashed line connecting drone and estimate
+        ctx.setLineDash([5, 4]);
+        ctx.strokeStyle = "#ff2020";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(bestDrnSx, bestDrnSy);
+        ctx.lineTo(bestEstSx, bestEstSy);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }}
+    }}
+
     // Stats — error is distance from origin (ground truth if set, else mean)
     const cep50 = dists[Math.floor(dists.length / 2)] || 0;
     const maxSpread = dists[dists.length - 1] || 0;
     const meanErr = Math.sqrt(meanME * meanME + meanMN * meanMN);
     const wErr = Math.sqrt(wE * wE + wN * wN);
     const medErr = Math.sqrt(medE * medE + medN * medN);
+
+    // Best detection error from origin
+    let bestErrStr = "";
+    if (bestData && bestData.est_lat !== undefined) {{
+      const [bestEstE2, bestEstN2] = gpsToMeters(bestData.est_lat, bestData.est_lon, originLat, originLon);
+      const bestErr = Math.sqrt(bestEstE2 * bestEstE2 + bestEstN2 * bestEstN2);
+      bestErrStr = ` &nbsp; <span class="lbl" style="color:#ff2020;">Best:</span> <span class="val">${{bestErr.toFixed(2)}}m</span>`;
+    }}
 
     const filtLabel = filtered.length < estimates.length
       ? `${{filtered.length}}/${{estimates.length}}`
@@ -708,6 +762,7 @@ def get_gps_charts_html():
       `<br><span class="lbl" style="color:#ffdc00;">Mean (simple avg):</span> <span class="val">${{meanErr.toFixed(2)}}m</span>` +
       ` &nbsp; <span class="lbl" style="color:#0ff;">Weighted (centrality):</span> <span class="val">${{wErr.toFixed(2)}}m</span>` +
       ` &nbsp; <span class="lbl" style="color:#f0f;">Median:</span> <span class="val">${{medErr.toFixed(2)}}m</span>` +
+      bestErrStr +
       `<span class="lbl">${{errRefLabel}}</span>`;
   }}
 
@@ -1403,6 +1458,7 @@ def get_gps_charts_html():
         estimates = d.estimates || [];
         smartData = d.smart || null;
         dronePos = d.drone || null;
+        bestData = d.best || null;
         // Load ground truth from server if not set locally
         if (d.ground_truth && !groundTruth) {{
           groundTruth = d.ground_truth;
