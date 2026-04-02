@@ -224,12 +224,12 @@ HTML_PAGE = """<!DOCTYPE html>
   <span class="sep">|</span>
 
   <label>Class:</label>
-  <select id="class-sel">
-    <option value="all">all</option>
-    <option value="dummy">dummy</option>
-    <option value="person">person</option>
-    <option value="bird">bird</option>
-  </select>
+  <span style="display:inline-flex;gap:6px;align-items:center">
+    <label style="color:#0f0;cursor:pointer"><input type="checkbox" id="cls-person" checked style="accent-color:#0f0"> person</label>
+    <label style="color:#0f0;cursor:pointer"><input type="checkbox" id="cls-bird" checked style="accent-color:#0f0"> bird</label>
+    <label style="color:#0f0;cursor:pointer"><input type="checkbox" id="cls-dummy" checked style="accent-color:#0f0"> dummy</label>
+    <label style="color:#888;cursor:pointer"><input type="checkbox" id="cls-other" checked style="accent-color:#888"> other</label>
+  </span>
   <span class="sep">|</span>
   <button id="clear-all-btn" onclick="clearAll()" style="padding:3px 10px;background:#600;color:#fff;border:1px solid #f44;border-radius:3px;cursor:pointer;font-family:monospace;font-size:1em">Clear All</button>
   <button id="reset-best-btn" onclick="resetBest()" style="padding:3px 10px;background:#333;color:#0ff;border:1px solid #0ff;border-radius:3px;cursor:pointer;font-family:monospace;font-size:1em">Reset Best</button>
@@ -297,7 +297,6 @@ HTML_PAGE = """<!DOCTYPE html>
 const modelSel = document.getElementById('model-sel');
 const confSlider = document.getElementById('conf-slider');
 const confVal = document.getElementById('conf-val');
-const classSel = document.getElementById('class-sel');
 const modelStatus = document.getElementById('model-status');
 
 function sendCmd(url) {
@@ -338,9 +337,17 @@ confSlider.addEventListener('change', () => {
   sendCmd('/api/set-conf?val=' + confSlider.value);
 });
 
-classSel.addEventListener('change', () => {
-  sendCmd('/api/set-class?name=' + classSel.value);
-});
+// Class filter checkboxes — send comma-separated list of checked classes
+function sendClassFilter() {
+  const checked = [];
+  if (document.getElementById('cls-person').checked) checked.push('person');
+  if (document.getElementById('cls-bird').checked) checked.push('bird');
+  if (document.getElementById('cls-dummy').checked) checked.push('dummy');
+  if (document.getElementById('cls-other').checked) checked.push('other');
+  const val = checked.length === 4 ? 'all' : checked.join(',');
+  sendCmd('/api/set-class?name=' + encodeURIComponent(val));
+}
+document.querySelectorAll('[id^="cls-"]').forEach(cb => cb.addEventListener('change', sendClassFilter));
 
 /* ── Smart cluster parameter controls ── */
 const smartSpread = document.getElementById('smart-spread');
@@ -399,8 +406,12 @@ setInterval(()=>{
       confSlider.value = d.conf_threshold;
       confVal.textContent = parseFloat(d.conf_threshold).toFixed(2);
     }
-    if (d.class_filter !== undefined && document.activeElement !== classSel) {
-      classSel.value = d.class_filter;
+    // Class filter sync from server (checkboxes)
+    if (d.class_filter !== undefined) {
+      const cf = d.class_filter;
+      if (cf === 'all') {
+        document.querySelectorAll('[id^="cls-"]').forEach(cb => cb.checked = true);
+      }
     }
     if (d.smart_spread !== undefined && document.activeElement !== smartSpread) {
       smartSpread.value = d.smart_spread;
@@ -2430,7 +2441,16 @@ def main():
             class_rejected = False
             if found and conf >= current_conf:
                 if current_class_filter and current_class_filter != "all" and hasattr(eyes, 'last_class_name'):
-                    if eyes.last_class_name.lower() != current_class_filter.lower():
+                    det_cls = eyes.last_class_name.lower()
+                    allowed = [c.strip().lower() for c in current_class_filter.split(',')]
+                    if 'other' in allowed:
+                        # "other" means accept classes not in the named list
+                        named = {'person', 'bird', 'dummy'}
+                        if det_cls not in named:
+                            pass  # accepted as "other"
+                        elif det_cls not in allowed:
+                            class_rejected = True
+                    elif det_cls not in allowed:
                         class_rejected = True
 
             if found and conf >= current_conf and not class_rejected:
