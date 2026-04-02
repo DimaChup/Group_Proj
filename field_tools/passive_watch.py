@@ -3033,7 +3033,10 @@ def main():
             smart_frame = _snap_display_for_smart
             if smart_frame is not None:
                 smart_estimator.update_last_frame(smart_frame)
+                # Render BOTH grid AND bullseye together so they're always in sync
                 render_smart_grid(smart_estimator)
+                render_bullseye(_all_gps_estimates, smart_estimator)
+                render_map(_all_gps_estimates, smart_estimator)
 
         # ── Encode JPEG for stream ──
         _, jpg = cv2.imencode('.jpg', display, [cv2.IMWRITE_JPEG_QUALITY, 70])

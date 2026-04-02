@@ -1243,16 +1243,32 @@ def get_gps_charts_html():
       smartLockedSpread = Infinity;
     }}
 
-    // Phase 2 & 3: run tightest cluster continuously (unless locked)
+    // Phase 2 & 3: use SERVER's locked cluster when available, else find locally
     let clusterIndices, clusterSpread;
-    if (smartLocked && smartLockedIndices) {{
+    if (smartData && smartData.locked && smartData.cluster && smartData.cluster.length > 0) {{
+      // Server has locked — use its cluster (authoritative, matches bullseye + SMART grid)
+      smartLocked = true;
+      smartLockedSpread = smartData.spread || 0;
+      clusterSpread = smartLockedSpread;
+      // Map server cluster to local estimate indices by matching lat/lon
+      clusterIndices = [];
+      for (const sc of smartData.cluster) {{
+        let bestIdx = -1, bestDist = Infinity;
+        for (let i = 0; i < estimates.length; i++) {{
+          const d = Math.abs(estimates[i][0] - sc[0]) + Math.abs(estimates[i][1] - sc[1]);
+          if (d < bestDist) {{ bestDist = d; bestIdx = i; }}
+        }}
+        if (bestIdx >= 0 && bestDist < 0.0001) clusterIndices.push(bestIdx);
+      }}
+      smartLockedIndices = clusterIndices.slice();
+    }} else if (smartLocked && smartLockedIndices) {{
       clusterIndices = smartLockedIndices;
       clusterSpread = smartLockedSpread;
     }} else {{
       const result = findTightestCluster(estimates, SMART_LOCK_COUNT);
       clusterIndices = result.indices;
       clusterSpread = result.spread;
-      // Check for lock
+      // Local lock check (before server confirms)
       if (clusterSpread < SMART_LOCK_SPREAD && clusterIndices.length >= SMART_LOCK_COUNT) {{
         smartLocked = true;
         smartLockedIndices = clusterIndices.slice();
