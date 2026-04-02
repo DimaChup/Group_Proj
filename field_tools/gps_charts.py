@@ -1331,6 +1331,12 @@ def get_gps_charts_html():
       ctx.fillStyle = "#0f0";
       ctx.font = "10px monospace";
       ctx.fillText("spread: " + clusterSpread.toFixed(2) + "m", 70, 18);
+      // Show SMART median GPS coordinate prominently when locked
+      if (smartData && smartData.median) {{
+        ctx.fillStyle = "#ff00ff";
+        ctx.font = "bold 13px monospace";
+        ctx.fillText(smartData.median[0].toFixed(7) + ", " + smartData.median[1].toFixed(7), 8, 36);
+      }}
     }} else {{
       ctx.fillStyle = "#ff8800";
       ctx.font = "bold 12px monospace";
