@@ -216,6 +216,7 @@ HTML_PAGE = """<!DOCTYPE html>
   </select>
   <span class="sep">|</span>
   <button id="clear-all-btn" onclick="clearAll()" style="padding:3px 10px;background:#600;color:#fff;border:1px solid #f44;border-radius:3px;cursor:pointer;font-family:monospace;font-size:1em">Clear All</button>
+  <button id="reset-best-btn" onclick="resetBest()" style="padding:3px 10px;background:#333;color:#0ff;border:1px solid #0ff;border-radius:3px;cursor:pointer;font-family:monospace;font-size:1em">Reset Best</button>
 </div>
 
 <div class="stats" id="stats">Starting...</div>
@@ -285,6 +286,12 @@ function clearAll() {
   sendCmd('/api/clear-all').then(d => {
     if(d.ok) document.getElementById('clear-all-btn').textContent = 'Cleared!';
     setTimeout(()=>document.getElementById('clear-all-btn').textContent='Clear All', 1500);
+  });
+}
+function resetBest() {
+  sendCmd('/api/reset-best').then(d => {
+    if(d.ok) document.getElementById('reset-best-btn').textContent = 'Reset!';
+    setTimeout(()=>document.getElementById('reset-best-btn').textContent='Reset Best', 1500);
   });
 }
 
@@ -595,6 +602,14 @@ class Handler(BaseHTTPRequestHandler):
         elif path == '/api/set-class':
             # GET /api/set-class?name=person|dummy|all
             self._send_json_response(self._handle_set_class())
+
+        elif path == '/api/reset-best':
+            # Reset only best detection — starts tracking new best
+            import field_tools.passive_watch as _pw2
+            _pw2._best_center_dist = 999.0
+            _pw2.latest_best_jpeg = None
+            print("[CLEAR] Best detection reset — tracking new best")
+            self._send_json_response({"ok": True})
 
         elif path == '/api/toggle-bullseye-bg':
             bullseye_map_bg = not bullseye_map_bg
