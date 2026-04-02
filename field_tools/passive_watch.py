@@ -1496,9 +1496,14 @@ def render_smart_grid(smart_est):
     if not smart_est:
         return
 
+    best_frame_idx = -1  # index of most central frame (smallest pixel_dist)
     if smart_est.locked and smart_est.locked_cluster:
         # After lock: show ONLY the tightest cluster frames
         frames = [e[3] for e in smart_est.locked_cluster if len(e) >= 4 and e[3] is not None]
+        # Find most central frame (smallest pixel_dist, index 2 in tuple)
+        valid = [(i, e[2]) for i, e in enumerate(smart_est.locked_cluster) if len(e) >= 4 and e[3] is not None]
+        if valid:
+            best_frame_idx = min(valid, key=lambda x: x[1])[0]
     else:
         # Before lock: show all collected frames chronologically
         frames = [e[3] for e in smart_est.all_estimates if len(e) >= 4 and e[3] is not None]
@@ -1512,7 +1517,11 @@ def render_smart_grid(smart_est):
     # --- Status banner at top ---
     if smart_est.locked:
         banner_color = (0, 140, 0)   # dark green
-        status_text = f"LOCKED  {n_need}/{n_need}  spread {smart_est.locked_spread:.2f}m"
+        med = smart_est.get_median()
+        if med:
+            status_text = f"LOCKED  {n_need}/{n_need}  spread {smart_est.locked_spread:.2f}m  |  {med[0]:.6f}, {med[1]:.6f}"
+        else:
+            status_text = f"LOCKED  {n_need}/{n_need}  spread {smart_est.locked_spread:.2f}m"
     elif n_have == 0:
         banner_color = (60, 60, 60)
         status_text = f"WAITING FOR DETECTIONS  0/{n_need}"
@@ -1533,16 +1542,32 @@ def render_smart_grid(smart_est):
             # Filled slot — show detection frame
             thumb = cv2.resize(frames[i], (cw, ch))
             grid[y0:y0 + ch, x0:x0 + cw] = thumb
-            # Number label
-            cv2.putText(grid, f"#{i+1}", (x0 + 5, y0 + 18),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 255, 255), 2, cv2.LINE_AA)
-            cv2.putText(grid, f"#{i+1}", (x0 + 5, y0 + 18),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 200, 255), 1, cv2.LINE_AA)
-            # Border: green if locked, yellow/amber if still collecting
-            if smart_est.locked:
-                cv2.rectangle(grid, (x0, y0), (x0 + cw - 1, y0 + ch - 1), (0, 255, 0), 2)
+
+            is_best = (smart_est.locked and i == best_frame_idx)
+            if is_best:
+                # Most central frame — green border (3px) + star label
+                cv2.rectangle(grid, (x0, y0), (x0 + cw - 1, y0 + ch - 1), (0, 255, 0), 3)
+                label = f"#{i+1} \u2605"
+                cv2.putText(grid, label, (x0 + 5, y0 + 18),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 0), 3, cv2.LINE_AA)
+                cv2.putText(grid, label, (x0 + 5, y0 + 18),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 0), 1, cv2.LINE_AA)
+                # "BEST" badge bottom-right
+                cv2.putText(grid, "BEST", (x0 + cw - 48, y0 + ch - 8),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 0), 3, cv2.LINE_AA)
+                cv2.putText(grid, "BEST", (x0 + cw - 48, y0 + ch - 8),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0), 1, cv2.LINE_AA)
             else:
-                cv2.rectangle(grid, (x0, y0), (x0 + cw - 1, y0 + ch - 1), (0, 200, 255), 1)
+                # Normal frame — white number label
+                cv2.putText(grid, f"#{i+1}", (x0 + 5, y0 + 18),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 255, 255), 2, cv2.LINE_AA)
+                cv2.putText(grid, f"#{i+1}", (x0 + 5, y0 + 18),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 200, 255), 1, cv2.LINE_AA)
+                # Border: green if locked, yellow/amber if still collecting
+                if smart_est.locked:
+                    cv2.rectangle(grid, (x0, y0), (x0 + cw - 1, y0 + ch - 1), (0, 255, 0), 2)
+                else:
+                    cv2.rectangle(grid, (x0, y0), (x0 + cw - 1, y0 + ch - 1), (0, 200, 255), 1)
         else:
             # Empty slot — dim placeholder
             cv2.rectangle(grid, (x0 + 2, y0 + 2), (x0 + cw - 3, y0 + ch - 3), (50, 50, 50), 1)
@@ -2009,6 +2034,18 @@ def render_bullseye(all_estimates, smart_est=None):
             strips.append(separator)
         strips.append(panel)
     plot = np.hstack(strips)
+
+    # ── SMART GPS banner at bottom of bullseye when locked ──
+    if smart_est is not None and smart_est.locked:
+        _smart_med = smart_est.get_median()
+        if _smart_med:
+            banner_h = 30
+            total_w = plot.shape[1]
+            gps_banner = np.full((banner_h, total_w, 3), (0, 80, 0), dtype=np.uint8)
+            gps_text = f"SMART GPS:  {_smart_med[0]:.7f}, {_smart_med[1]:.7f}   ({_smart_med[2]} samples, spread {smart_est.locked_spread:.2f}m)"
+            cv2.putText(gps_banner, gps_text, (10, banner_h - 8),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.50, (0, 255, 0), 1, cv2.LINE_AA)
+            plot = np.vstack([plot, gps_banner])
 
     _, jpg = cv2.imencode('.jpg', plot, [cv2.IMWRITE_JPEG_QUALITY, 80])
     with frame_lock:
