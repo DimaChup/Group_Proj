@@ -189,6 +189,9 @@ HTML_PAGE = """<!DOCTYPE html>
   .ctrl-bar .model-status.loading{color:#ff0}
   .ctrl-bar .model-status.ok{color:#0f0}
   .ctrl-bar .model-status.err{color:#f44}
+  /* Zoom-wrap: scroll to zoom, drag to pan on detection images */
+  .zoom-wrap{overflow:hidden;cursor:grab;position:relative}
+  .zoom-wrap img{transition:transform 0.1s ease-out;transform-origin:center center}
 </style>
 </head><body>
 <h1>SAR Passive Watch</h1>
@@ -239,11 +242,11 @@ HTML_PAGE = """<!DOCTYPE html>
     <div class="det-pair">
       <div>
         <h2>Latest Detection</h2>
-        <img id="latest" src="/latest" alt="Detection" style="min-height:120px">
+        <div class="zoom-wrap"><img id="latest" src="/latest" alt="Detection" style="min-height:120px"></div>
       </div>
       <div>
         <h2>Best Detection</h2>
-        <img id="best-det" src="/best" alt="Best" style="min-height:120px">
+        <div class="zoom-wrap"><img id="best-det" src="/best" alt="Best" style="min-height:120px"></div>
       </div>
     </div>
     <h2>SMART Frames</h2>
@@ -323,6 +326,24 @@ confSlider.addEventListener('change', () => {
 
 classSel.addEventListener('change', () => {
   sendCmd('/api/set-class?name=' + classSel.value);
+});
+
+/* ── Zoom+Pan on detection images ── */
+document.querySelectorAll('.zoom-wrap').forEach(wrap => {
+  let scale = 1, ox = 0, oy = 0, dragging = false, sx, sy;
+  const img = wrap.querySelector('img');
+  wrap.addEventListener('wheel', e => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? 0.9 : 1.1;
+    scale = Math.min(8, Math.max(1, scale * delta));
+    if (scale <= 1) { ox = 0; oy = 0; }
+    img.style.transform = `translate(${ox}px,${oy}px) scale(${scale})`;
+  });
+  wrap.addEventListener('mousedown', e => { dragging = true; sx = e.clientX - ox; sy = e.clientY - oy; wrap.style.cursor = 'grabbing'; });
+  wrap.addEventListener('mousemove', e => { if (!dragging) return; ox = e.clientX - sx; oy = e.clientY - sy; img.style.transform = `translate(${ox}px,${oy}px) scale(${scale})`; });
+  wrap.addEventListener('mouseup', () => { dragging = false; wrap.style.cursor = 'grab'; });
+  wrap.addEventListener('mouseleave', () => { dragging = false; wrap.style.cursor = 'grab'; });
+  wrap.addEventListener('dblclick', () => { scale = 1; ox = 0; oy = 0; img.style.transform = ''; });
 });
 
 /* ── Status polling (sync active model/conf from server) ── */
