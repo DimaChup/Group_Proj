@@ -128,7 +128,8 @@ def _enqueue_save(job):
         pass  # drop oldest saves rather than block inference
 
 # ── Result mode globals ──
-_smart_result_saved = False   # prevents saving SMART result multiple times
+_smart_result_saved = False   # prevents saving SMART result multiple times per lock
+_smart_image_counter = 0      # always-incrementing counter for smart_detections filenames
 _survey_result_saved = False  # prevents saving SURVEY result multiple times
 SURVEY_TARGET = 100           # how many estimates before survey completes
 _result_banner = None         # {"text": str, "color": (B,G,R), "until": timestamp} or None
@@ -145,8 +146,8 @@ parser.add_argument('--model', default='best.tflite', help='Path to .tflite mode
 parser.add_argument('--simple-names', action='store_true', help='Simple filenames (no det_ prefix, no JSON sidecars)')
 parser.add_argument('--class-filter', type=str, default=None, help='Only save detections of this class (e.g. "person")')
 parser.add_argument('--smart-estimate', action='store_true', help='Accumulate central detections, save after 10+ with median GPS')
-parser.add_argument('--smart-min', type=int, default=10, help='Min central detections before saving (default 10)')
-parser.add_argument('--smart-radius', type=float, default=0.75, help='Max spread for smart cluster (default 0.75m)')
+parser.add_argument('--smart-min', type=int, default=5, help='Min central detections before saving (default 5)')
+parser.add_argument('--smart-radius', type=float, default=1.0, help='Max spread for smart cluster (default 1.0m)')
 parser.add_argument('--fake', action='store_true', help='Replay DJI video + SRT telemetry (no camera/mavproxy)')
 parser.add_argument('--fake-video', default='RealVideo/DJI_0001_1456x1088_cropped_30fps.mp4')
 parser.add_argument('--fake-srt', default='RealVideo/DJI_20260311172332_0001_V.SRT')
@@ -286,8 +287,8 @@ HTML_PAGE = """<!DOCTYPE html>
   <span style="display:inline-flex;gap:6px;align-items:center">
     <label style="color:#0f0;cursor:pointer"><input type="checkbox" id="cls-person" checked style="accent-color:#0f0"> person</label>
     <label style="color:#0f0;cursor:pointer"><input type="checkbox" id="cls-bird" checked style="accent-color:#0f0"> bird</label>
-    <label style="color:#0f0;cursor:pointer"><input type="checkbox" id="cls-dummy" checked style="accent-color:#0f0"> dummy</label>
-    <label style="color:#888;cursor:pointer"><input type="checkbox" id="cls-other" checked style="accent-color:#888"> other</label>
+    <label style="color:#0f0;cursor:pointer"><input type="checkbox" id="cls-dummy" style="accent-color:#0f0"> dummy</label>
+    <label style="color:#888;cursor:pointer"><input type="checkbox" id="cls-other" style="accent-color:#888"> other</label>
   </span>
   <span class="sep">|</span>
   <button id="clear-all-btn" onclick="clearAll()" style="padding:3px 10px;background:#600;color:#fff;border:1px solid #f44;border-radius:3px;cursor:pointer;font-family:monospace;font-size:1em">Clear All</button>
@@ -407,6 +408,7 @@ function sendClassFilter() {
   sendCmd('/api/set-class?name=' + encodeURIComponent(val));
 }
 document.querySelectorAll('[id^="cls-"]').forEach(cb => cb.addEventListener('change', sendClassFilter));
+sendClassFilter(); // sync server with default checkbox state on page load
 
 /* ── Smart cluster parameter controls ── */
 const smartSpread = document.getElementById('smart-spread');
@@ -792,25 +794,27 @@ class Handler(BaseHTTPRequestHandler):
             dummy_estimator.reset()
             if smart_estimator:
                 smart_estimator.__init__(min_samples=smart_estimator.min_samples, max_spread=smart_estimator.max_spread)
-            # Clear detection snapshots and plots (use running module, not reimport)
-            _mod = sys.modules.get('field_tools.passive_watch') or sys.modules.get('__main__')
-            _mod._best_center_dist = 999.0
-            _mod._best_detection_gps = None
-            _mod._snap_request_best = False
-            _mod._snap_request_latest = False
-            _mod._snap_jpeg_best = None
-            _mod._snap_jpeg_latest = None
+                if hasattr(smart_estimator, '_saved'):
+                    smart_estimator._saved = False
+            # Clear detection snapshots and plots — write to module globals dict directly
+            _g = globals()
+            _g['_best_center_dist'] = 999.0
+            _g['_best_detection_gps'] = None
+            _g['_snap_request_best'] = False
+            _g['_snap_request_latest'] = False
+            _g['_snap_jpeg_best'] = None
+            _g['_snap_jpeg_latest'] = None
             draw_overlay._last_class = ''
-            _mod._last_det = None
-            _mod.latest_detection_jpeg = None
-            _mod.latest_best_jpeg = None
-            _mod.latest_bullseye = None
-            _mod.latest_smart_grid_jpeg = None
-            # Reset result mode flags
-            _mod._smart_result_saved = False
-            _mod._survey_result_saved = False
-            _mod._result_banner = None
-            print("[CLEAR] All estimates, detections, plots, and result flags reset")
+            _g['_last_det'] = None
+            _g['latest_detection_jpeg'] = None
+            _g['latest_best_jpeg'] = None
+            _g['latest_bullseye'] = None
+            _g['latest_smart_grid_jpeg'] = None
+            # Reset result mode flags — write to globals dict so inference thread sees it
+            _g['_smart_result_saved'] = False
+            _g['_survey_result_saved'] = False
+            _g['_result_banner'] = None
+            print("[CLEAR] All estimates, detections, plots, and result flags reset", flush=True)
             self._send_json_response({"ok": True})
 
         elif path == '/api/set-smart':
@@ -1084,11 +1088,12 @@ dummy_estimator = DummyEstimator()
 
 class SmartEstimator:
     """Greedy tightest cluster: find 10 estimates closest to each other."""
-    def __init__(self, min_samples=10, max_spread=0.5):
+    def __init__(self, min_samples=5, max_spread=1.0):
         self.min_samples = min_samples
         self.max_spread = max_spread  # meters — all 10 must be within this
         self.all_estimates = []  # (est_lat, est_lon, pixel_dist, frame)
         self.locked = False
+        self.lock_id = getattr(self, 'lock_id', 0)  # survives __init__ resets
         self.locked_cluster = None  # list of (lat, lon, pixel_dist, frame)
         self.locked_cluster_indices = None  # indices into all_estimates
         self.locked_frame = None    # most central frame from cluster
@@ -1115,6 +1120,7 @@ class SmartEstimator:
         if spread < self.max_spread:
             # LOCKED — save cluster
             self.locked = True
+            self.lock_id += 1
             self.locked_spread = spread
             self.locked_cluster_indices = indices
             cluster = [self.all_estimates[i] for i in indices]
@@ -2404,7 +2410,7 @@ def inference_worker(args_ref, csv_writer_ref, csv_file_ref):
     global _inference_frame, _inference_eyes, _snap_request_latest, _snap_request_best
     global _snap_gps_info, _snap_gps_info_best, _snap_jpeg_latest, _snap_jpeg_best, _snap_display_for_smart
     global _inference_det_count, _inference_saved_count
-    global _best_center_dist, _best_detection_gps, _smart_result_saved, _survey_result_saved
+    global _best_center_dist, _best_detection_gps, _smart_result_saved, _survey_result_saved, _smart_image_counter
     global _result_banner
 
     # last_det is set on the module so display thread can read it
@@ -2499,52 +2505,17 @@ def inference_worker(args_ref, csv_writer_ref, csv_file_ref):
                     pixel_dist = math.sqrt((cx - w/2)**2 + (cy - h/2)**2)
                     _all_gps_estimates.append((est_lat, est_lon, pixel_dist, d_alt, conf))
 
-                    # Smart estimator
+                    # Smart estimator — add() returns True the instant it locks
                     _smart_added = False
+                    _just_locked = False
                     if smart_estimator and not smart_estimator.locked:
-                        smart_estimator.add(est_lat, est_lon, pixel_dist, None)
+                        _just_locked = smart_estimator.add(est_lat, est_lon, pixel_dist, None)
                         _smart_added = True
                         _mod._smart_added_flag = True  # signal display thread
 
                     # Bullseye plot updated periodically by display thread (not here — saves ~50-100ms)
 
-                    # ── Mode 1: SMART Quick Lock result ──
-                    if smart_estimator and smart_estimator.locked and not _smart_result_saved:
-                        _smart_result_saved = True
-                        med = smart_estimator.get_median()
-                        if med:
-                            s_lat, s_lon = med[0], med[1]
-                            s_spread = smart_estimator.locked_spread
-                            s_cep = smart_estimator.get_cep50()
-                            s_stats = f"Spread: {s_spread:.2f}m  CEP50: {s_cep:.2f}m  Conf: {conf:.2f}  N={med[2]}"
-                            # Use the most central frame from the SMART cluster
-                            central_frame = smart_estimator.locked_frame
-                            if central_frame is not None:
-                                result_frame = central_frame.copy()
-                            else:
-                                result_frame = draw_overlay(frame, _mod._last_det)
-                            # Paint over the old estimate bar and stamp SMART coordinate
-                            rh, rw = result_frame.shape[:2]
-                            est_y = rh - 75
-                            cv2.rectangle(result_frame, (0, est_y), (rw, est_y + 25), (0, 0, 0), -1)
-                            smart_text = f"SMART: {s_lat:.7f}, {s_lon:.7f} (spread {s_spread:.2f}m)"
-                            cv2.putText(result_frame, smart_text, (5, est_y + 16),
-                                        cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 0, 255), 1)
-                            # Save with SMART star (median) coordinate in filename
-                            smart_dir = os.path.join(args_ref.save_dir, "smart_detections")
-                            os.makedirs(smart_dir, exist_ok=True)
-                            existing = [f for f in os.listdir(smart_dir) if f.endswith('.png')]
-                            seq = len(existing) + 1
-                            s_fname = os.path.join(smart_dir, f"{seq:04d}_{s_lat:.7f}_{s_lon:.7f}.png")
-                            generate_result_image(result_frame, "SMART COORDINATE",
-                                                  s_lat, s_lon, s_stats, s_fname,
-                                                  title_color=(0, 255, 0),
-                                                  drone_lat=d_lat, drone_lon=d_lon,
-                                                  gps_label="SMART")
-                            _result_banner = {"text": "TARGET FOUND", "color": (0, 255, 0),
-                                              "until": time.time() + 5}
-                            print(f"\n[RESULT] SMART LOCK: {s_lat:.7f}, {s_lon:.7f} (spread: {s_spread:.2f}m)")
-                            print(f"         Saved: {s_fname}\n")
+                    # SMART image save moved outside detection block (see below)
 
                     # ── Mode 2: Full Survey result ──
                     if len(_all_gps_estimates) >= SURVEY_TARGET and not _survey_result_saved:
@@ -2563,30 +2534,35 @@ def inference_worker(args_ref, csv_writer_ref, csv_file_ref):
                             print(f"\n[RESULT] SURVEY: {sv_lat:.7f}, {sv_lon:.7f} (N={survey['n']}, CEP50={survey['cep50']:.2f}m)")
                             print(f"         Method: {survey['method']}  Saved: {sv_fname}\n")
 
-            # Smart save
-            if args_ref.smart_estimate and smart_estimator and not args_ref.no_save:
-                if smart_estimator.ready() and not getattr(smart_estimator, '_saved', False):
-                    smart_estimator._saved = True
-                    med = smart_estimator.get_median()
-                    _inference_saved_count += 1
-                    # Save best frame
-                    fname = f"SMART_{med[0]:.7f}_{med[1]:.7f}_{med[2]}samp.png"
-                    if smart_estimator.locked_frame is not None:
-                        _enqueue_save({"kind": "image", "path": os.path.join(args_ref.save_dir, fname), "frame": smart_estimator.locked_frame})
-                    # Save all 10 cluster frames with index + GPS
-                    if smart_estimator.locked_cluster:
-                        best_pdist = min(e[2] for e in smart_estimator.locked_cluster)
-                        for idx, entry in enumerate(smart_estimator.locked_cluster):
-                            e_lat, e_lon, e_pdist, e_frame = entry[0], entry[1], entry[2], entry[3]
-                            tag = "_BEST" if e_pdist == best_pdist else ""
-                            cf = f"SMART_{idx+1:02d}_{e_lat:.7f}_{e_lon:.7f}{tag}.png"
-                            if e_frame is not None:
-                                _enqueue_save({"kind": "image", "path": os.path.join(args_ref.save_dir, cf), "frame": e_frame})
-                    print(f"\n  {'='*60}")
-                    print(f"  SMART ESTIMATE SAVED: {fname} + {len(smart_estimator.locked_cluster)} cluster frames")
-                    print(f"  Median GPS: {med[0]:.7f}, {med[1]:.7f}")
-                    print(f"  Cluster: {med[2]} samples, spread: {smart_estimator.locked_spread:.2f}m")
-                    print(f"  {'='*60}\n")
+            # ── SMART image save — runs every cycle, uses lock_id to detect new locks ──
+            if smart_estimator and smart_estimator.locked and smart_estimator.lock_id > _smart_image_counter:
+                med = smart_estimator.get_median()
+                if med:
+                    s_lat, s_lon = med[0], med[1]
+                    s_spread = smart_estimator.locked_spread
+                    s_cep = smart_estimator.get_cep50()
+                    s_stats = f"Spread: {s_spread:.2f}m  CEP50: {s_cep:.2f}m  N={med[2]}"
+                    result_frame = draw_overlay(frame, _mod._last_det)
+                    rh, rw = result_frame.shape[:2]
+                    est_y = rh - 75
+                    cv2.rectangle(result_frame, (0, est_y), (rw, est_y + 25), (0, 0, 0), -1)
+                    smart_text = f"SMART: {s_lat:.7f}, {s_lon:.7f} (spread {s_spread:.2f}m)"
+                    cv2.putText(result_frame, smart_text, (5, est_y + 16),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 0, 255), 1)
+                    smart_dir = os.path.join(args_ref.save_dir, "smart_detections")
+                    os.makedirs(smart_dir, exist_ok=True)
+                    _smart_image_counter = smart_estimator.lock_id
+                    s_fname = os.path.join(smart_dir, f"{_smart_image_counter:04d}_{s_lat:.7f}_{s_lon:.7f}.png")
+                    generate_result_image(result_frame, "SMART COORDINATE",
+                                          s_lat, s_lon, s_stats, s_fname,
+                                          title_color=(0, 255, 0),
+                                          gps_label="SMART")
+                    _result_banner = {"text": "TARGET FOUND", "color": (0, 255, 0),
+                                      "until": time.time() + 5}
+                    print(f"\n{'='*60}")
+                    print(f"  [SMART IMAGE SAVED] {s_fname}")
+                    print(f"  Coordinate: {s_lat:.7f}, {s_lon:.7f}  Spread: {s_spread:.2f}m")
+                    print(f"{'='*60}\n", flush=True)
 
             # Flag snapshot requests for display thread
             # Build GPS info dicts here so display thread has everything it needs
