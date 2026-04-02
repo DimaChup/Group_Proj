@@ -1486,13 +1486,19 @@ def get_gps_charts_html():
       const medE = sortedE[Math.floor(sortedE.length / 2)];
       const medN = sortedN[Math.floor(sortedN.length / 2)];
       const medSx = cx + medE * cScale, medSy = cy - medN * cScale;
-      // Magenta diamond
+      // Magenta star (matches SMART star style everywhere)
+      ctx.fillStyle = "#ff00ff";
       ctx.strokeStyle = "#ff00ff";
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(medSx, medSy - 7); ctx.lineTo(medSx + 5, medSy);
-      ctx.lineTo(medSx, medSy + 7); ctx.lineTo(medSx - 5, medSy);
-      ctx.closePath(); ctx.stroke();
+      for (let si = 0; si < 10; si++) {{
+        const sr = (si % 2 === 0) ? 7 : 3;
+        const sa = -Math.PI / 2 + (si * Math.PI / 5);
+        const stx = medSx + sr * Math.cos(sa);
+        const sty = medSy + sr * Math.sin(sa);
+        if (si === 0) ctx.moveTo(stx, sty); else ctx.lineTo(stx, sty);
+      }}
+      ctx.closePath(); ctx.fill(); ctx.stroke();
 
       // Weighted mean (1/pdist^2)
       let wE = 0, wN = 0, wTot = 0;
