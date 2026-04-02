@@ -83,6 +83,25 @@ def get_gps_charts_html():
 .gps-chart-toolbar button:hover {{ background: #444; }}
 .gps-chart-toolbar button.active {{ background: #555; color: #0f0; border-color: #0f0; }}
 .gps-chart-toolbar .sep {{ width: 1px; height: 16px; background: #444; margin: 0 4px; }}
+.gps-filter-row {{
+  display: flex;
+  gap: 10px;
+  padding: 3px 6px;
+  background: #222;
+  border-bottom: 1px solid #333;
+  flex-wrap: wrap;
+  align-items: center;
+  font: 10px monospace;
+  color: #888;
+}}
+.gps-filter-row label {{ color: #0f0; margin-right: 2px; }}
+.gps-filter-row input[type=range] {{
+  width: 60px;
+  height: 10px;
+  accent-color: #0f0;
+  vertical-align: middle;
+}}
+.gps-filter-row .fval {{ color: #0f0; min-width: 32px; display: inline-block; text-align: right; }}
 .gps-chart-stats {{
   padding: 4px 8px;
   background: #222;
@@ -121,6 +140,25 @@ def get_gps_charts_html():
         <button id="btn-map-bg">Map BG: off</button>
         <div class="sep"></div>
         <button id="btn-reset-view">Reset View</button>
+      </div>
+      <div class="gps-filter-row" id="scatter-filters">
+        <label>Pdist:</label>
+        <span class="fval" id="fv-pdist-min">0</span>
+        <input type="range" id="f-pdist-min" min="0" max="1000" value="0" step="1">
+        <input type="range" id="f-pdist-max" min="0" max="1000" value="1000" step="1">
+        <span class="fval" id="fv-pdist-max">1000</span>
+        <span class="sep"></span>
+        <label>Alt:</label>
+        <span class="fval" id="fv-alt-min">0</span>
+        <input type="range" id="f-alt-min" min="0" max="200" value="0" step="0.5">
+        <input type="range" id="f-alt-max" min="0" max="200" value="200" step="0.5">
+        <span class="fval" id="fv-alt-max">200</span>
+        <span class="sep"></span>
+        <label>Conf:</label>
+        <span class="fval" id="fv-conf-min">0</span>
+        <input type="range" id="f-conf-min" min="0" max="1" value="0" step="0.01">
+        <input type="range" id="f-conf-max" min="0" max="1" value="1" step="0.01">
+        <span class="fval" id="fv-conf-max">1.00</span>
       </div>
       <canvas id="scatter-canvas" width="500" height="400" style="cursor:grab;"></canvas>
       <div class="gps-chart-stats" id="scatter-stats">
@@ -234,6 +272,64 @@ def get_gps_charts_html():
     drawScatter();
   }});
 
+  // ── Filter state ──
+  let filterPdistMin = 0, filterPdistMax = 1000;
+  let filterAltMin = 0, filterAltMax = 200;
+  let filterConfMin = 0, filterConfMax = 1;
+
+  function updateFilterRanges() {{
+    // Adjust slider max values based on actual data
+    if (estimates.length > 0) {{
+      let maxPd = 0, maxA = 0;
+      for (const e of estimates) {{
+        if (e[2] > maxPd) maxPd = e[2];
+        if (e[3] > maxA) maxA = e[3];
+      }}
+      maxPd = Math.ceil(maxPd) || 1000;
+      maxA = Math.ceil(maxA) || 200;
+      const pdMinEl = document.getElementById("f-pdist-min");
+      const pdMaxEl = document.getElementById("f-pdist-max");
+      const altMinEl = document.getElementById("f-alt-min");
+      const altMaxEl = document.getElementById("f-alt-max");
+      pdMinEl.max = maxPd; pdMaxEl.max = maxPd;
+      altMinEl.max = maxA; altMaxEl.max = maxA;
+      // If max slider is at old max, snap to new max
+      if (parseFloat(pdMaxEl.value) >= parseFloat(pdMaxEl.max) - 1 || filterPdistMax >= maxPd) {{
+        pdMaxEl.value = maxPd; filterPdistMax = maxPd;
+        document.getElementById("fv-pdist-max").textContent = maxPd;
+      }}
+      if (parseFloat(altMaxEl.value) >= parseFloat(altMaxEl.max) - 0.5 || filterAltMax >= maxA) {{
+        altMaxEl.value = maxA; filterAltMax = maxA;
+        document.getElementById("fv-alt-max").textContent = maxA;
+      }}
+    }}
+  }}
+
+  function onFilterChange() {{
+    filterPdistMin = parseFloat(document.getElementById("f-pdist-min").value);
+    filterPdistMax = parseFloat(document.getElementById("f-pdist-max").value);
+    filterAltMin = parseFloat(document.getElementById("f-alt-min").value);
+    filterAltMax = parseFloat(document.getElementById("f-alt-max").value);
+    filterConfMin = parseFloat(document.getElementById("f-conf-min").value);
+    filterConfMax = parseFloat(document.getElementById("f-conf-max").value);
+    // Clamp min <= max
+    if (filterPdistMin > filterPdistMax) filterPdistMin = filterPdistMax;
+    if (filterAltMin > filterAltMax) filterAltMin = filterAltMax;
+    if (filterConfMin > filterConfMax) filterConfMin = filterConfMax;
+    // Update display values
+    document.getElementById("fv-pdist-min").textContent = filterPdistMin.toFixed(0);
+    document.getElementById("fv-pdist-max").textContent = filterPdistMax.toFixed(0);
+    document.getElementById("fv-alt-min").textContent = filterAltMin.toFixed(1);
+    document.getElementById("fv-alt-max").textContent = filterAltMax.toFixed(1);
+    document.getElementById("fv-conf-min").textContent = filterConfMin.toFixed(2);
+    document.getElementById("fv-conf-max").textContent = filterConfMax.toFixed(2);
+    drawScatter();
+  }}
+
+  document.querySelectorAll("#scatter-filters input[type=range]").forEach(el => {{
+    el.addEventListener("input", onFilterChange);
+  }});
+
   // ── GPS helpers ──
   function gpsToMeters(lat, lon, refLat, refLon) {{
     const n = (lat - refLat) * 111320;
@@ -274,14 +370,32 @@ def get_gps_charts_html():
       return;
     }}
 
+    // Apply filters
+    const filtered = estimates.filter(e => {{
+      const pdist = e[2], alt = e[3], conf = e[4];
+      return pdist >= filterPdistMin && pdist <= filterPdistMax
+          && alt >= filterAltMin && alt <= filterAltMax
+          && conf >= filterConfMin && conf <= filterConfMax;
+    }});
+
+    if (filtered.length === 0) {{
+      ctx.fillStyle = "#555";
+      ctx.font = "13px monospace";
+      ctx.textAlign = "center";
+      ctx.fillText("All " + estimates.length + " points filtered out", W / 2, H / 2);
+      ctx.textAlign = "start";
+      statsEl.innerHTML = '<span class="lbl">Filtered:</span> <span class="val">0 / ' + estimates.length + '</span>';
+      return;
+    }}
+
     // Compute mean
     let sumLat = 0, sumLon = 0;
-    for (const e of estimates) {{ sumLat += e[0]; sumLon += e[1]; }}
-    const meanLat = sumLat / estimates.length;
-    const meanLon = sumLon / estimates.length;
+    for (const e of filtered) {{ sumLat += e[0]; sumLon += e[1]; }}
+    const meanLat = sumLat / filtered.length;
+    const meanLon = sumLon / filtered.length;
 
     // Convert all to meters relative to mean
-    const pts = estimates.map((e, i) => {{
+    const pts = filtered.map((e, i) => {{
       const [em, nm] = gpsToMeters(e[0], e[1], meanLat, meanLon);
       return {{ e: em, n: nm, pdist: e[2], alt: e[3], conf: e[4], idx: i, lat: e[0], lon: e[1] }};
     }});
@@ -444,8 +558,11 @@ def get_gps_charts_html():
     const wErr = Math.sqrt(wE * wE + wN * wN);
     const medErr = Math.sqrt(medE * medE + medN * medN);
 
+    const filtLabel = filtered.length < estimates.length
+      ? `${{filtered.length}}/${{estimates.length}}`
+      : `${{estimates.length}}`;
     statsEl.innerHTML =
-      `<span class="lbl">N:</span> <span class="val">${{estimates.length}}</span>` +
+      `<span class="lbl">N:</span> <span class="val">${{filtLabel}}</span>` +
       ` &nbsp; <span class="lbl">CEP50:</span> <span class="val">${{cep50.toFixed(2)}}m</span>` +
       ` &nbsp; <span class="lbl">Max:</span> <span class="val">${{maxSpread.toFixed(2)}}m</span>` +
       `<br><span class="lbl">Mean err:</span> <span class="val">0.00m</span>` +
@@ -862,6 +979,7 @@ def get_gps_charts_html():
         const hash = dataHash();
         if (hash !== prevDataHash) {{
           prevDataHash = hash;
+          updateFilterRanges();
           needsRedraw = true;
         }}
       }});

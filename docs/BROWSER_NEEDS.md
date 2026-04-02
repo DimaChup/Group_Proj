@@ -91,3 +91,14 @@
 - Pink line + distance labels on stream
 - Crosshair on stream
 - Scale bar on stream
+- Clear All button (resets everything)
+- Reset Best button (clears best detection only)
+- Coverage trace on satellite map
+- Map background ON by default (bullseye + GPS charts)
+- Model switch with XNNPACK deadlock fix
+
+## Recently Added Features
+- GPS chart filter sliders (centrality/altitude/confidence min/max ranges)
+- SRT pitch/roll extraction for camera feed display
+- Bird class in filter dropdown (COCO classifies dummy as bird)
+- Camera coverage trace on interactive map (green trail showing scanned area)

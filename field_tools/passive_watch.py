@@ -108,7 +108,7 @@ runtime_lock = threading.Lock()
 
 # ── SRT parser for fake mode ──
 def parse_srt(srt_path):
-    """Parse DJI SRT → dict of frame_num → {lat, lon, alt, yaw}."""
+    """Parse DJI SRT → dict of frame_num → {lat, lon, alt, yaw, pitch, roll}."""
     import re
     with open(srt_path, 'r') as f:
         text = f.read()
@@ -125,7 +125,7 @@ def parse_srt(srt_path):
             continue
         frame += 1
         data = ' '.join(lines[2:])
-        lat = lon = alt = yaw = 0.0
+        lat = lon = alt = yaw = pitch = roll = 0.0
         m = re.search(r'\[latitude:\s*([-\d.]+)\]', data)
         if m: lat = float(m.group(1))
         m = re.search(r'\[longitude:\s*([-\d.]+)\]', data)
@@ -134,7 +134,11 @@ def parse_srt(srt_path):
         if m: alt = float(m.group(1))
         m = re.search(r'gb_yaw:\s*([-\d.]+)', data)
         if m: yaw = float(m.group(1))
-        entries[frame] = {'lat': lat, 'lon': lon, 'alt': alt, 'yaw': yaw}
+        m = re.search(r'gb_pitch:\s*([-\d.]+)', data)
+        if m: pitch = float(m.group(1))
+        m = re.search(r'gb_roll:\s*([-\d.]+)', data)
+        if m: roll = float(m.group(1))
+        entries[frame] = {'lat': lat, 'lon': lon, 'alt': alt, 'yaw': yaw, 'pitch': pitch, 'roll': roll}
     return entries
 
 
@@ -1907,6 +1911,8 @@ def main():
                     gps_data["lon"] = t["lon"]
                     gps_data["alt"] = t["alt"]
                     gps_data["yaw"] = t["yaw"]
+                    gps_data["pitch"] = t["pitch"]
+                    gps_data["roll"] = t["roll"]
                     gps_data["sats"] = 12
                     gps_data["mode"] = "FAKE"
             if fake_frame_idx[0] % 100 == 1:
