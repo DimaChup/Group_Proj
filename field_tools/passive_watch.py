@@ -1184,8 +1184,8 @@ def _snapshot_overlay(display, label=None, thumb_w=728, gps_info=None):
             de = (d_lon - e_lon) * 111320 * math.cos(math.radians(d_lat))
             offset_m = math.sqrt(dn ** 2 + de ** 2)
             est_txt = f"DUMMY EST: {e_lat:.6f}, {e_lon:.6f}"
-            cls_name = getattr(draw_overlay, '_last_class', '') or '?'
-            det_conf_snap = last_det[2] if last_det is not None else 0
+            cls_name = gps_info.get("cls", "?")
+            det_conf_snap = gps_info.get("conf", 0)
             off_txt = f"OFFSET: {offset_m:.1f}m  [{cls_name} {det_conf_snap:.2f}]"
             cv2.putText(thumb, est_txt, (6, y_line2), font, fs, (255, 0, 255), lw, cv2.LINE_AA)  # magenta
             # Offset + class after estimate text
@@ -2678,7 +2678,9 @@ def main():
             # Build GPS info for overlay (variables set in detection block above)
             _gps_info = None
             if d_lat != 0.0 or d_lon != 0.0:
-                _gps_info = {"drone_lat": d_lat, "drone_lon": d_lon}
+                _cls = getattr(eyes, 'last_class_name', '') or '?'
+                _det_conf = conf if 'conf' in dir() else 0
+                _gps_info = {"drone_lat": d_lat, "drone_lon": d_lon, "cls": _cls, "conf": _det_conf}
                 if est_result:
                     _gps_info["est_lat"] = est_lat
                     _gps_info["est_lon"] = est_lon
