@@ -169,6 +169,7 @@ def get_interactive_map_html(container_id="map-container", width="100%", height=
   let drone = {{ lat: 0, lon: 0, alt: 0, yaw: 0, sats: 0, mode: "---" }};
   let estimates = [];       // [[lat, lon], ...]
   let smartMedian = null;   // [lat, lon] or null
+  let groundTruth = null;   // [lat, lon] or null
   let needsRedraw = true;
 
   // ── Coverage trace ──
@@ -497,11 +498,19 @@ def get_interactive_map_html(container_id="map-container", width="100%", height=
       ctx.stroke();
     }}
 
+    // Ground truth star (yellow)
+    if (groundTruth) {{
+      const gp = gpsToScreen(groundTruth[0], groundTruth[1]);
+      drawStar(gp.x, gp.y, 5, 12, 6, "rgba(255,220,0,1)", "rgba(255,220,0,0.5)");
+      ctx.fillStyle = "#ffdc00";
+      ctx.font = "bold 10px monospace";
+      ctx.fillText("TRUE", gp.x + 14, gp.y + 4);
+    }}
+
     // Smart cluster median star
     if (smartMedian) {{
       const sp = gpsToScreen(smartMedian[0], smartMedian[1]);
       drawStar(sp.x, sp.y, 5, 10, 5, "rgba(255,0,255,0.9)", "rgba(255,0,255,0.4)");
-      // Label
       ctx.fillStyle = "#f0f";
       ctx.font = "bold 10px monospace";
       ctx.fillText("SMART", sp.x + 12, sp.y + 4);
@@ -680,10 +689,16 @@ def get_interactive_map_html(container_id="map-container", width="100%", height=
       if (d.smart && d.smart.locked && d.smart.median) {{
         newSmart = d.smart.median;  // [lat, lon]
       }}
+      // Extract ground truth
+      let newGT = null;
+      if (d.ground_truth && d.ground_truth.lat) {{
+        newGT = [d.ground_truth.lat, d.ground_truth.lon];
+      }}
       // Only redraw if data changed
-      if (newEst.length !== estimates.length || JSON.stringify(newSmart) !== JSON.stringify(smartMedian)) {{
+      if (newEst.length !== estimates.length || JSON.stringify(newSmart) !== JSON.stringify(smartMedian) || JSON.stringify(newGT) !== JSON.stringify(groundTruth)) {{
         estimates = newEst;
         smartMedian = newSmart;
+        groundTruth = newGT;
         requestRedraw();
       }}
     }}).catch(function() {{}});
