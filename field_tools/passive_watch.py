@@ -2443,7 +2443,7 @@ def main():
         # only renders accepted (class-filtered) detections.
         if eyes.using_ai and (now - last_inference) >= min_interval:
             last_inference = now
-            found, x, y, conf = eyes.detect_in_image(frame.copy())
+            found, x, y, conf = eyes.detect_in_image(frame)
             vis_fps_tracker.tick()
 
             # Class filter: reject detection if class doesn't match
