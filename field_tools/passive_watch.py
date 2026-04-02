@@ -63,6 +63,7 @@ frame_lock = threading.Lock()
 gps_lock = threading.Lock()
 _all_gps_estimates = []
 _map_base = None  # loaded map.jpg (once)
+bullseye_map_bg = False  # toggle: dark background vs satellite map crop for bullseye plots 1-2
 
 # ── Args ──
 parser = argparse.ArgumentParser(description="Passive camera watch + stream + snapshots")
@@ -149,7 +150,7 @@ HTML_PAGE = """<!DOCTYPE html>
   img{border:1px solid #333;display:block}
   .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
   .left img,.right img{width:100%;height:auto}
-  .bottom{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  .bottom{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   .bottom img{width:100%;height:auto}
   @media(max-width:1000px){.grid,.bottom{grid-template-columns:1fr}}
 
@@ -230,13 +231,17 @@ HTML_PAGE = """<!DOCTYPE html>
     <div id="imap-host"></div>
   </div>
   <div>
-    <h2>GPS Bullseye</h2>
-    <img id="bullseye" src="/bullseye" alt="Bullseye">
-  </div>
-  <div>
     <h2>SMART Frames (10)</h2>
     <img id="smart-grid2" src="/smart-grid" alt="Grid" style="min-height:100px">
   </div>
+</div>
+
+<h2 style="margin-top:15px">GPS Analysis (5 plots)
+  <button id="toggle-map-bg" onclick="toggleMapBG()" style="margin-left:12px;font-size:0.8em;padding:2px 8px;background:#222;color:#0f0;border:1px solid #444;border-radius:3px;cursor:pointer;font-family:monospace">Toggle Map BG</button>
+  <span id="map-bg-status" style="font-size:0.7em;color:#666;margin-left:6px">off</span>
+</h2>
+<div style="overflow-x:auto;margin-bottom:10px">
+  <img id="bullseye" src="/bullseye" alt="GPS Plots" style="max-width:100%;height:auto;border:1px solid #333">
 </div>
 
 <h2 style="margin-top:15px">CV Detection Pipeline</h2>
@@ -316,8 +321,17 @@ setInterval(()=>{
     if (d.class_filter !== undefined && document.activeElement !== classSel) {
       classSel.value = d.class_filter;
     }
+    if (d.bullseye_map_bg !== undefined) {
+      document.getElementById('map-bg-status').textContent = d.bullseye_map_bg ? 'MAP' : 'off';
+    }
   });
 },2000);
+
+function toggleMapBG() {
+  fetch('/api/toggle-bullseye-bg').then(r=>r.json()).then(d=>{
+    if(d.ok) document.getElementById('map-bg-status').textContent = d.map_bg ? 'MAP' : 'off';
+  });
+}
 </script>
 </body></html>"""
 
@@ -328,6 +342,7 @@ class Handler(BaseHTTPRequestHandler):
         pass  # silent
 
     def do_GET(self):
+        global bullseye_map_bg
         path = self.path.split('?')[0]  # strip query string for matching
         if path == '/':
             self.send_response(200)
@@ -365,7 +380,7 @@ class Handler(BaseHTTPRequestHandler):
                         self.wfile.write(b'Content-Type: image/jpeg\r\n\r\n')
                         self.wfile.write(jpeg)
                         self.wfile.write(b'\r\n')
-                    time.sleep(0.05)
+                    time.sleep(0.02)  # ~50fps max stream (was 0.05=20fps)
                 except BrokenPipeError:
                     break
 
@@ -493,6 +508,7 @@ class Handler(BaseHTTPRequestHandler):
                 stats["active_model_id"] = runtime_state["active_model_id"]
                 stats["conf_threshold"] = runtime_state["conf_threshold"]
                 stats["class_filter"] = runtime_state["class_filter"]
+                stats["bullseye_map_bg"] = bullseye_map_bg
             with frame_lock:
                 status_json = json.dumps(stats).encode()
             self.wfile.write(status_json)
@@ -508,6 +524,10 @@ class Handler(BaseHTTPRequestHandler):
         elif path == '/api/set-class':
             # GET /api/set-class?name=person|dummy|all
             self._send_json_response(self._handle_set_class())
+
+        elif path == '/api/toggle-bullseye-bg':
+            bullseye_map_bg = not bullseye_map_bg
+            self._send_json_response({"ok": True, "map_bg": bullseye_map_bg})
 
         else:
             self.send_response(404)
@@ -943,7 +963,8 @@ def render_map(all_estimates, smart_est=None):
         return px, py
 
     # Plot all estimates
-    for lat, lon, pdist in all_estimates:
+    for e in all_estimates:
+        lat, lon = e[0], e[1]
         px, py = gps_to_px(lat, lon)
         if 0 <= px < mw and 0 <= py < mh:
             cv2.circle(disp, (px, py), 3, (0, 255, 0), -1)
@@ -975,128 +996,402 @@ def render_map(all_estimates, smart_est=None):
 
 
 def render_bullseye(all_estimates, smart_est=None):
-    """Render bullseye plot showing all GPS estimates + smart cluster."""
+    """Render 5 GPS plot types side-by-side (or 3 when smart disabled).
+
+    all_estimates: list of (est_lat, est_lon, pixel_dist, altitude, confidence)
+    smart_est: SmartEstimator or None
+    """
     global latest_bullseye
-    size = 400
-    plot = np.zeros((size, size * 2, 3), dtype=np.uint8)  # two plots side by side
+    S = 350          # each plot is SxS
+    BG = (20, 20, 20)
+    SEP = 2          # separator width
+    RING_CLR = (40, 40, 40)
+    MARGIN = 35
+
+    def heat_color(val):
+        """val 0->1 maps green->red as BGR."""
+        v = max(0.0, min(1.0, val))
+        return (0, int(255 * (1 - v)), int(255 * v))
+
+    def make_panel():
+        return np.full((S, S, 3), BG, dtype=np.uint8)
+
+    def make_map_panel(mean_lat, mean_lon, range_m):
+        """Crop satellite map centered on mean GPS, covering range_m in each direction.
+        Returns SxS image, or dark panel if map unavailable."""
+        global _map_base
+        if _map_base is None:
+            map_path = config.MAP_FILE
+            if os.path.exists(map_path):
+                img = cv2.imread(map_path)
+                if img is not None:
+                    _map_base = cv2.resize(img, (600, int(img.shape[0] * 600 / img.shape[1])))
+        if _map_base is None:
+            return make_panel()
+
+        mh, mw = _map_base.shape[:2]
+        # GPS to pixel on the map
+        dn = (config.REF_LAT - mean_lat) * 111320
+        de = (mean_lon - config.REF_LON) * 111320 * math.cos(math.radians(config.REF_LAT))
+        center_px = int(de / config.MAP_WIDTH_METERS * mw)
+        center_py = int(dn / config.MAP_WIDTH_METERS * mw)
+        # Crop radius in pixels: range_m maps to half the panel
+        px_per_m = mw / config.MAP_WIDTH_METERS
+        half_px = int(range_m * px_per_m)
+        if half_px < 10:
+            half_px = 50  # minimum crop size
+
+        x1 = center_px - half_px
+        y1 = center_py - half_px
+        x2 = center_px + half_px
+        y2 = center_py + half_px
+
+        # Clamp to map bounds, pad with black if out of range
+        pad_l = max(0, -x1)
+        pad_t = max(0, -y1)
+        pad_r = max(0, x2 - mw)
+        pad_b = max(0, y2 - mh)
+        cx1 = max(0, x1)
+        cy1 = max(0, y1)
+        cx2 = min(mw, x2)
+        cy2 = min(mh, y2)
+
+        if cx2 <= cx1 or cy2 <= cy1:
+            return make_panel()
+
+        crop = _map_base[cy1:cy2, cx1:cx2].copy()
+        if pad_l or pad_t or pad_r or pad_b:
+            crop = cv2.copyMakeBorder(crop, pad_t, pad_b, pad_l, pad_r,
+                                       cv2.BORDER_CONSTANT, value=(0, 0, 0))
+
+        panel = cv2.resize(crop, (S, S))
+        # Semi-transparent dark overlay for readability
+        overlay = np.full((S, S, 3), (0, 0, 0), dtype=np.uint8)
+        cv2.addWeighted(panel, 0.6, overlay, 0.4, 0, panel)
+        return panel
+
+    def draw_rings(panel, cx, cy, rings_m, scale, usable):
+        for r_m in rings_m:
+            r_px = int(r_m * scale)
+            if 5 < r_px < usable // 2:
+                cv2.circle(panel, (cx, cy), r_px, RING_CLR, 1)
+                cv2.putText(panel, f"{r_m}m", (cx + r_px + 2, cy - 2),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.25, (60, 60, 60), 1)
+
+    def gps_to_meters(lat, lon, ref_lat, ref_lon):
+        n = (lat - ref_lat) * 111320
+        e = (lon - ref_lon) * 111320 * math.cos(math.radians(ref_lat))
+        return e, n
+
+    def auto_scale(pts_m, margin=MARGIN):
+        """Compute scale from point cloud, returns (scale, usable, cx, cy)."""
+        dists = [math.sqrt(p[0]**2 + p[1]**2) for p in pts_m]
+        p95 = sorted(dists)[int(len(dists) * 0.95)] if dists else 5.0
+        max_range = max(p95 * 2, 3.0)
+        usable = S - 2 * margin
+        sc = usable / max_range
+        return sc, usable, S // 2, S // 2
+
+    # ── Empty state ──
+    has_smart = smart_est is not None
+    n_plots = 5 if has_smart else 3
+    total_w = n_plots * S + (n_plots - 1) * SEP
 
     if not all_estimates:
-        cv2.putText(plot, "Waiting for detections...", (50, size // 2),
+        plot = np.full((S, total_w, 3), BG, dtype=np.uint8)
+        cv2.putText(plot, "Waiting for detections...", (50, S // 2),
                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (100, 100, 100), 1)
         _, jpg = cv2.imencode('.jpg', plot, [cv2.IMWRITE_JPEG_QUALITY, 80])
         with frame_lock:
             latest_bullseye = jpg.tobytes()
         return
 
-    # LEFT PLOT: all estimates centered on mean
+    # ── Shared data ──
     lats = [e[0] for e in all_estimates]
     lons = [e[1] for e in all_estimates]
     mean_lat = sum(lats) / len(lats)
     mean_lon = sum(lons) / len(lons)
 
-    pts_m = []
-    for lat, lon, pdist in all_estimates:
-        n = (lat - mean_lat) * 111320
-        e = (lon - mean_lon) * 111320 * math.cos(math.radians(mean_lat))
-        pts_m.append((e, n, pdist))
+    pts_m = []   # (east_m, north_m, pixel_dist, altitude, confidence)
+    for est_e in all_estimates:
+        lat, lon = est_e[0], est_e[1]
+        pdist = est_e[2]
+        alt = est_e[3] if len(est_e) > 3 else 0
+        conf = est_e[4] if len(est_e) > 4 else 0
+        em, nm = gps_to_meters(lat, lon, mean_lat, mean_lon)
+        pts_m.append((em, nm, pdist, alt, conf))
 
-    dists = [math.sqrt(p[0]**2 + p[1]**2) for p in pts_m]
-    p95 = sorted(dists)[int(len(dists) * 0.95)] if dists else 5.0
-    max_range = max(p95 * 2, 3.0)
-    margin = 40
-    usable = size - 2 * margin
-    scale = usable / max_range
-    cx, cy = size // 2, size // 2
+    dists_from_mean = [math.sqrt(p[0]**2 + p[1]**2) for p in pts_m]
+    cep50 = sorted(dists_from_mean)[len(dists_from_mean) // 2] if dists_from_mean else 0
+    max_spread = max(dists_from_mean) if dists_from_mean else 0
+    scale, usable, cx, cy = auto_scale([(p[0], p[1]) for p in pts_m])
 
-    # Title
-    cv2.putText(plot, f"ALL DETECTIONS (N={len(all_estimates)})", (10, 20),
-               cv2.FONT_HERSHEY_SIMPLEX, 0.45, (200, 200, 200), 1)
+    panels = []
 
-    # Rings
-    for r_m in [1, 2, 3, 5, 10, 20]:
-        r_px = int(r_m * scale)
-        if 5 < r_px < usable // 2:
-            cv2.circle(plot, (cx, cy), r_px, (40, 40, 40), 1)
-            cv2.putText(plot, f"{r_m}m", (cx + r_px + 2, cy - 2),
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.25, (60, 60, 60), 1)
+    # ── Compute map range for satellite background ──
+    # Range in meters from center that the plot covers (matches auto_scale)
+    _dists = [math.sqrt(p[0]**2 + p[1]**2) for p in pts_m]
+    _p95 = sorted(_dists)[int(len(_dists) * 0.95)] if _dists else 5.0
+    _map_range_m = max(_p95 * 1.1, 2.0)  # slightly beyond 95th percentile
 
-    # Cross at mean
-    cv2.drawMarker(plot, (cx, cy), (0, 255, 0), cv2.MARKER_CROSS, 15, 2)
+    # ════════════════════════════════════════════════════════════
+    # PLOT 1: GPS by Center Distance (pixel centrality)
+    # ════════════════════════════════════════════════════════════
+    p1 = make_map_panel(mean_lat, mean_lon, _map_range_m) if bullseye_map_bg else make_panel()
+    cv2.putText(p1, f"BY CENTER DIST (N={len(all_estimates)})", (5, 15),
+               cv2.FONT_HERSHEY_SIMPLEX, 0.38, (200, 200, 200), 1)
 
-    # Dots colored by pixel centrality
-    max_pd = max(e[2] for e in all_estimates) if all_estimates else 1
-    for e_m, n_m, pdist in pts_m:
-        px = cx + int(e_m * scale)
-        py = cy - int(n_m * scale)
-        if margin < px < size - margin and margin < py < size - margin:
+    draw_rings(p1, cx, cy, [1, 2, 3, 5, 10], scale, usable)
+    cv2.drawMarker(p1, (cx, cy), (0, 255, 0), cv2.MARKER_CROSS, 12, 2)
+
+    max_pd = max(p[2] for p in pts_m) if pts_m else 1
+    for em, nm, pdist, alt, conf in pts_m:
+        px = cx + int(em * scale)
+        py = cy - int(nm * scale)
+        if MARGIN < px < S - MARGIN and MARGIN < py < S - MARGIN:
             val = min(1.0, pdist / max(max_pd, 1))
-            g = int(255 * (1 - val))
-            r = int(255 * val)
-            cv2.circle(plot, (px, py), 3, (0, g, r), -1)
+            cv2.circle(p1, (px, py), 3, heat_color(val), -1)
 
-    # Weighted + median estimate
+    cv2.putText(p1, f"CEP50: {cep50:.1f}m  max: {max_spread:.1f}m", (5, S - 20),
+               cv2.FONT_HERSHEY_SIMPLEX, 0.32, (180, 180, 180), 1)
     est = dummy_estimator.get_estimate()
     if est:
-        cv2.putText(plot, f"Est: {est[0]:.6f}, {est[1]:.6f} ({est[2]}obs)",
-                   (10, size - 15), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (255, 0, 255), 1)
+        cv2.putText(p1, f"Est: {est[0]:.6f}, {est[1]:.6f}", (5, S - 5),
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.30, (255, 0, 255), 1)
+    panels.append(p1)
 
-    # RIGHT PLOT: smart cluster (if active)
-    ox = size  # offset for right plot
-    if smart_est and smart_est.locked:
-        cluster = smart_est.locked_cluster
-        cv2.putText(plot, f"SMART LOCKED (spread: {smart_est.locked_spread:.2f}m)",
-                   (ox + 10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.40, (0, 255, 0), 2)
+    # ════════════════════════════════════════════════════════════
+    # PLOT 2: GPS by Altitude
+    # ════════════════════════════════════════════════════════════
+    p2 = make_map_panel(mean_lat, mean_lon, _map_range_m) if bullseye_map_bg else make_panel()
+    alts = [p[3] for p in pts_m]
+    min_alt = min(alts) if alts else 0
+    max_alt = max(alts) if alts else 1
+    alt_range = max(max_alt - min_alt, 0.1)
 
-        c_pts = []
-        c_lats = [e[0] for e in cluster]
-        c_lons = [e[1] for e in cluster]
-        c_mean_lat = sum(c_lats) / len(c_lats)
-        c_mean_lon = sum(c_lons) / len(c_lons)
-        for lat, lon, pdist in cluster:
-            n = (lat - c_mean_lat) * 111320
-            e = (lon - c_mean_lon) * 111320 * math.cos(math.radians(c_mean_lat))
-            c_pts.append((e, n, pdist))
+    cv2.putText(p2, f"BY ALTITUDE ({min_alt:.0f}-{max_alt:.0f}m)", (5, 15),
+               cv2.FONT_HERSHEY_SIMPLEX, 0.38, (200, 200, 200), 1)
 
-        c_dists = [math.sqrt(p[0]**2 + p[1]**2) for p in c_pts]
-        c_max = max(c_dists) * 1.5 if c_dists else 1.0
-        c_max = max(c_max, 0.5)
-        c_scale = usable / (2 * c_max)
-        c_cx = ox + size // 2
-        c_cy = size // 2
+    draw_rings(p2, cx, cy, [1, 2, 3, 5, 10], scale, usable)
+    cv2.drawMarker(p2, (cx, cy), (0, 255, 0), cv2.MARKER_CROSS, 12, 2)
 
-        # Rings
-        for r_m in [0.1, 0.2, 0.5, 1.0]:
-            r_px = int(r_m * c_scale)
-            if 5 < r_px < usable // 2:
-                cv2.circle(plot, (c_cx, c_cy), r_px, (40, 40, 40), 1)
-                cv2.putText(plot, f"{r_m}m", (c_cx + r_px + 2, c_cy - 2),
-                           cv2.FONT_HERSHEY_SIMPLEX, 0.25, (60, 60, 60), 1)
+    for em, nm, pdist, alt, conf in pts_m:
+        px = cx + int(em * scale)
+        py = cy - int(nm * scale)
+        if MARGIN < px < S - MARGIN and MARGIN < py < S - MARGIN:
+            val = (alt - min_alt) / alt_range
+            cv2.circle(p2, (px, py), 3, heat_color(val), -1)
 
-        # Cross at median
-        cv2.drawMarker(plot, (c_cx, c_cy), (0, 255, 255), cv2.MARKER_CROSS, 20, 2)
+    # Color bar (vertical, right side)
+    bar_x = S - 18
+    bar_top, bar_bot = 30, S - 40
+    for y in range(bar_top, bar_bot):
+        val = (y - bar_top) / max(bar_bot - bar_top, 1)
+        cv2.line(p2, (bar_x, y), (bar_x + 8, y), heat_color(val), 1)
+    cv2.putText(p2, f"{min_alt:.0f}", (bar_x - 5, bar_top - 3),
+               cv2.FONT_HERSHEY_SIMPLEX, 0.22, (120, 120, 120), 1)
+    cv2.putText(p2, f"{max_alt:.0f}", (bar_x - 5, bar_bot + 10),
+               cv2.FONT_HERSHEY_SIMPLEX, 0.22, (120, 120, 120), 1)
 
-        # Dots
-        for i, (e_m, n_m, pdist) in enumerate(c_pts):
-            px = c_cx + int(e_m * c_scale)
-            py = c_cy - int(n_m * c_scale)
-            cv2.circle(plot, (px, py), 5, (0, 255, 255), -1)
-            cv2.circle(plot, (px, py), 5, (255, 255, 255), 1)
+    cv2.putText(p2, f"CEP50: {cep50:.1f}m", (5, S - 5),
+               cv2.FONT_HERSHEY_SIMPLEX, 0.32, (180, 180, 180), 1)
+    panels.append(p2)
 
-        med = smart_est.get_median()
-        if med:
-            cv2.putText(plot, f"Median: {med[0]:.7f}, {med[1]:.7f}",
-                       (ox + 10, size - 30), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (255, 0, 255), 1)
-            cv2.putText(plot, f"Samples: {med[2]} | Spread: {smart_est.locked_spread:.2f}m",
-                       (ox + 10, size - 12), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (200, 200, 200), 1)
-    elif smart_est:
-        n_est = len(smart_est.all_estimates)
-        cv2.putText(plot, f"SMART: searching... ({n_est} detections)",
-                   (ox + 10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.40, (255, 0, 255), 1)
-        cv2.putText(plot, f"Need tightest 10 within {smart_est.max_spread}m",
-                   (ox + 10, 45), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (150, 150, 150), 1)
+    # ════════════════════════════════════════════════════════════
+    # PLOT 3: Error Convergence (line chart)
+    # ════════════════════════════════════════════════════════════
+    p3 = make_panel()
+    cv2.putText(p3, "ERROR CONVERGENCE", (5, 15),
+               cv2.FONT_HERSHEY_SIMPLEX, 0.38, (200, 200, 200), 1)
+
+    n_pts = len(pts_m)
+    if n_pts >= 2:
+        # Compute running estimates for each detection count
+        running_mean_err = []
+        running_weighted_err = []
+        running_median_err = []
+
+        for k in range(1, n_pts + 1):
+            subset = pts_m[:k]
+            # Running mean
+            rm_e = sum(p[0] for p in subset) / k
+            rm_n = sum(p[1] for p in subset) / k
+            # Running weighted by 1/cdist^2
+            total_w_val = 0
+            w_e, w_n = 0, 0
+            for p in subset:
+                cdist = max(p[2], 1.0)
+                w = 1.0 / (cdist * cdist)
+                w_e += p[0] * w
+                w_n += p[1] * w
+                total_w_val += w
+            if total_w_val > 0:
+                w_e /= total_w_val
+                w_n /= total_w_val
+            # Running median
+            sorted_e = sorted(p[0] for p in subset)
+            sorted_n = sorted(p[1] for p in subset)
+            med_e = sorted_e[len(sorted_e) // 2]
+            med_n = sorted_n[len(sorted_n) // 2]
+
+            # Error = distance from final mean (best estimate)
+            final_mean_e = sum(p[0] for p in pts_m) / n_pts
+            final_mean_n = sum(p[1] for p in pts_m) / n_pts
+            running_mean_err.append(math.sqrt((rm_e - final_mean_e)**2 + (rm_n - final_mean_n)**2))
+            running_weighted_err.append(math.sqrt((w_e - final_mean_e)**2 + (w_n - final_mean_n)**2))
+            running_median_err.append(math.sqrt((med_e - final_mean_e)**2 + (med_n - final_mean_n)**2))
+
+        # Chart area
+        chart_l, chart_r = 45, S - 10
+        chart_t, chart_b = 30, S - 25
+        chart_w = chart_r - chart_l
+        chart_h = chart_b - chart_t
+
+        # Y axis max
+        all_errs = running_mean_err + running_weighted_err + running_median_err
+        y_max = max(all_errs) if all_errs else 1.0
+        y_max = max(y_max, 0.5)
+
+        # Grid lines
+        for ym in [0.5, 1.0, 2.0, 5.0, 10.0]:
+            if ym <= y_max:
+                gy = chart_b - int((ym / y_max) * chart_h)
+                cv2.line(p3, (chart_l, gy), (chart_r, gy), (40, 40, 40), 1)
+                cv2.putText(p3, f"{ym:.1f}m", (2, gy + 4),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.22, (80, 80, 80), 1)
+
+        # Axes
+        cv2.line(p3, (chart_l, chart_t), (chart_l, chart_b), (60, 60, 60), 1)
+        cv2.line(p3, (chart_l, chart_b), (chart_r, chart_b), (60, 60, 60), 1)
+
+        def plot_line(errs, color):
+            prev = None
+            for i, err in enumerate(errs):
+                x = chart_l + int((i / max(n_pts - 1, 1)) * chart_w)
+                y = chart_b - int((min(err, y_max) / y_max) * chart_h)
+                if prev is not None:
+                    cv2.line(p3, prev, (x, y), color, 1)
+                prev = (x, y)
+
+        plot_line(running_mean_err, (0, 255, 0))       # green = mean
+        plot_line(running_weighted_err, (255, 255, 0))  # cyan = weighted
+        plot_line(running_median_err, (255, 0, 255))    # magenta = median
+
+        # Legend
+        ly = S - 8
+        cv2.putText(p3, "mean", (chart_l, ly), cv2.FONT_HERSHEY_SIMPLEX, 0.25, (0, 255, 0), 1)
+        cv2.putText(p3, "weighted", (chart_l + 45, ly), cv2.FONT_HERSHEY_SIMPLEX, 0.25, (255, 255, 0), 1)
+        cv2.putText(p3, "median", (chart_l + 110, ly), cv2.FONT_HERSHEY_SIMPLEX, 0.25, (255, 0, 255), 1)
+
+        # X axis label
+        cv2.putText(p3, f"N={n_pts}", (chart_r - 30, chart_b + 12),
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.25, (100, 100, 100), 1)
     else:
-        cv2.putText(plot, "SMART: disabled (use --smart-estimate)",
-                   (ox + 10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (100, 100, 100), 1)
+        cv2.putText(p3, "Need 2+ detections", (30, S // 2),
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.4, (100, 100, 100), 1)
+    panels.append(p3)
+
+    # ════════════════════════════════════════════════════════════
+    # PLOT 4: Smart Bullseye (tightest 10) — only if smart enabled
+    # ════════════════════════════════════════════════════════════
+    if has_smart:
+        p4 = make_panel()
+        if smart_est.locked and smart_est.locked_cluster:
+            cluster = smart_est.locked_cluster  # list of (lat, lon, pixel_dist)
+            cv2.putText(p4, "LOCKED", (5, 15),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.42, (0, 255, 0), 2)
+            cv2.putText(p4, f"spread: {smart_est.locked_spread:.2f}m", (80, 15),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.32, (0, 255, 0), 1)
+
+            c_lats = [e[0] for e in cluster]
+            c_lons = [e[1] for e in cluster]
+            c_mean_lat = sum(c_lats) / len(c_lats)
+            c_mean_lon = sum(c_lons) / len(c_lons)
+            c_pts = []
+            for c_e in cluster:
+                em, nm = gps_to_meters(c_e[0], c_e[1], c_mean_lat, c_mean_lon)
+                c_pts.append((em, nm, c_e[2]))
+
+            c_dists = [math.sqrt(p[0]**2 + p[1]**2) for p in c_pts]
+            c_max = max(c_dists) * 1.5 if c_dists else 1.0
+            c_max = max(c_max, 0.5)
+            c_usable = S - 2 * MARGIN
+            c_scale = c_usable / (2 * c_max)
+            c_cx, c_cy = S // 2, S // 2
+
+            draw_rings(p4, c_cx, c_cy, [0.1, 0.2, 0.5, 1.0], c_scale, c_usable)
+            cv2.drawMarker(p4, (c_cx, c_cy), (0, 255, 255), cv2.MARKER_CROSS, 15, 2)
+
+            for i, (em, nm, pdist) in enumerate(c_pts):
+                px = c_cx + int(em * c_scale)
+                py = c_cy - int(nm * c_scale)
+                cv2.circle(p4, (px, py), 5, (0, 255, 255), -1)
+                cv2.circle(p4, (px, py), 5, (255, 255, 255), 1)
+                # Number label
+                cv2.putText(p4, str(i + 1), (px + 7, py + 3),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.25, (200, 200, 200), 1)
+                # Radial line from center
+                cv2.line(p4, (c_cx, c_cy), (px, py), (40, 40, 40), 1)
+
+            med = smart_est.get_median()
+            if med:
+                cv2.putText(p4, f"Med: {med[0]:.7f}, {med[1]:.7f}",
+                           (5, S - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.28, (255, 0, 255), 1)
+                cv2.putText(p4, f"N={med[2]} | CEP: {smart_est.get_cep50():.2f}m",
+                           (5, S - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.28, (200, 200, 200), 1)
+        else:
+            n_est = len(smart_est.all_estimates)
+            cv2.putText(p4, "searching...", (5, 15),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.42, (255, 0, 255), 1)
+            cv2.putText(p4, f"{n_est} detections", (5, 35),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.35, (150, 150, 150), 1)
+            cv2.putText(p4, f"Need tightest 10 <{smart_est.max_spread}m", (5, 55),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.30, (100, 100, 100), 1)
+        panels.append(p4)
+
+    # ════════════════════════════════════════════════════════════
+    # PLOT 5: 4m Bullseye — central detections (<200px from center)
+    # ════════════════════════════════════════════════════════════
+    if has_smart:
+        p5 = make_panel()
+        central = [(em, nm, pdist, alt, conf) for em, nm, pdist, alt, conf in pts_m if pdist < 200]
+        central_10 = central[:10]
+        n_central = len(central_10)
+
+        cv2.putText(p5, f"CENTRAL ({n_central}/10, <200px)", (5, 15),
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.35, (200, 200, 200), 1)
+
+        if central_10:
+            c5_scale, c5_usable, c5_cx, c5_cy = auto_scale(
+                [(p[0], p[1]) for p in central_10])
+            draw_rings(p5, c5_cx, c5_cy, [1, 2, 3, 5, 10], c5_scale, c5_usable)
+            cv2.drawMarker(p5, (c5_cx, c5_cy), (0, 255, 0), cv2.MARKER_CROSS, 12, 2)
+
+            c5_max_pd = max(p[2] for p in central_10) if central_10 else 1
+            for em, nm, pdist, alt, conf in central_10:
+                px = c5_cx + int(em * c5_scale)
+                py = c5_cy - int(nm * c5_scale)
+                if MARGIN < px < S - MARGIN and MARGIN < py < S - MARGIN:
+                    val = min(1.0, pdist / max(c5_max_pd, 1))
+                    cv2.circle(p5, (px, py), 3, heat_color(val), -1)
+
+            c5_dists = [math.sqrt(p[0]**2 + p[1]**2) for p in central_10]
+            c5_cep = sorted(c5_dists)[len(c5_dists) // 2] if c5_dists else 0
+            cv2.putText(p5, f"CEP50: {c5_cep:.1f}m", (5, S - 5),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.32, (180, 180, 180), 1)
+        else:
+            cv2.putText(p5, "No central detections yet", (20, S // 2),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.35, (100, 100, 100), 1)
+        panels.append(p5)
+
+    # ── Assemble all panels with separators ──
+    separator = np.full((S, SEP, 3), (60, 60, 60), dtype=np.uint8)
+    strips = []
+    for i, panel in enumerate(panels):
+        if i > 0:
+            strips.append(separator)
+        strips.append(panel)
+    plot = np.hstack(strips)
 
     _, jpg = cv2.imencode('.jpg', plot, [cv2.IMWRITE_JPEG_QUALITY, 80])
     with frame_lock:
@@ -1522,6 +1817,7 @@ def main():
                 print(f"[MODEL] Loaded: {m['name']} (backend={eyes.backend_name})")
                 with runtime_lock:
                     runtime_state["active_model_id"] = switch_req
+                    runtime_state["class_filter"] = "all"  # reset filter on model switch
                     runtime_state["model_switch_request"] = None
             except Exception as e:
                 print(f"[MODEL] ERROR loading {m['name']}: {e}")
@@ -1578,7 +1874,7 @@ def main():
                     if est_result:
                         est_lat, est_lon = est_result
                         pixel_dist = math.sqrt((cx - w/2)**2 + (cy - h/2)**2)
-                        _all_gps_estimates.append((est_lat, est_lon, pixel_dist))
+                        _all_gps_estimates.append((est_lat, est_lon, pixel_dist, d_alt, conf))
 
                         # Smart estimate: greedy cluster finds tightest 10
                         if smart_estimator:

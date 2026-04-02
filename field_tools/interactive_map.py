@@ -345,29 +345,29 @@ def get_interactive_map_html(container_id="map-container", width="100%", height=
     const hw = gndW / 2;
     const hh = gndH / 2;
 
-    // Four corners relative to drone (forward = -Y in map coords when yaw=0)
-    // Camera looks straight down: corners at +/-hw, +/-hh
-    // Rotate by yaw around drone position
+    // Four corners relative to drone, rotated by yaw (clockwise from North)
+    // Camera looks straight down: rectangle hw x hh on ground
+    // At yaw=0 (North): front=+North, right=+East
     const yawRad = drone.yaw * Math.PI / 180;
     const cosY = Math.cos(yawRad);
     const sinY = Math.sin(yawRad);
 
-    // Corner offsets in meters (right, forward) before rotation
-    // right = East = +lon, forward = North = +lat (when yaw=0)
+    // Corner offsets in meters (north, east) before rotation
+    // north = +lat (when yaw=0), east = +lon (when yaw=0)
     const corners = [
-      [-hw, -hh],  // front-left
-      [ hw, -hh],  // front-right
-      [ hw,  hh],  // back-right
-      [-hw,  hh],  // back-left
+      [ hh, -hw],  // front-left  (forward, left)
+      [ hh,  hw],  // front-right (forward, right)
+      [-hh,  hw],  // back-right  (behind, right)
+      [-hh, -hw],  // back-left   (behind, left)
     ];
 
     ctx.beginPath();
     for (let i = 0; i < 4; i++) {{
-      const rx = corners[i][0];
-      const fy = corners[i][1];
-      // Rotate: East_m = rx*cos - fy*sin, North_m = rx*sin + fy*cos
-      const east_m = rx * cosY - fy * sinY;
-      const north_m = rx * sinY + fy * cosY;
+      const n = corners[i][0];  // north component
+      const e = corners[i][1];  // east component
+      // Clockwise rotation by yaw (compass convention: 0=N, 90=E)
+      const north_m = n * cosY - e * sinY;
+      const east_m  = n * sinY + e * cosY;
 
       // Convert meter offset to GPS offset
       const dlat = north_m / 111320;
