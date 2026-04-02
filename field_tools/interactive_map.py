@@ -68,6 +68,10 @@ def get_interactive_map_html(container_id="map-container", width="100%", height=
   <canvas id="imap-canvas" style="position:absolute; top:0; left:0; width:100%; height:100%; cursor:grab;"></canvas>
   <div id="imap-info" style="position:absolute; top:6px; left:6px; background:rgba(0,0,0,0.7); color:#0f0; font:11px monospace; padding:4px 8px; border-radius:3px; pointer-events:none; z-index:10;"></div>
   <div id="imap-zoom-info" style="position:absolute; bottom:6px; right:6px; background:rgba(0,0,0,0.7); color:#aaa; font:10px monospace; padding:3px 6px; border-radius:3px; pointer-events:none; z-index:10;"></div>
+  <div style="position:absolute; top:6px; right:6px; display:flex; gap:4px; z-index:10;">
+    <button id="imap-btn-coverage" style="background:rgba(0,180,0,0.8); color:#fff; border:none; font:10px monospace; padding:3px 7px; border-radius:3px; cursor:pointer;">Coverage: ON</button>
+    <button id="imap-btn-clear-cov" style="background:rgba(120,120,120,0.8); color:#fff; border:none; font:10px monospace; padding:3px 7px; border-radius:3px; cursor:pointer;">Clear Coverage</button>
+  </div>
 </div>
 
 <script>
@@ -166,6 +170,55 @@ def get_interactive_map_html(container_id="map-container", width="100%", height=
   let estimates = [];       // [[lat, lon], ...]
   let smartMedian = null;   // [lat, lon] or null
   let needsRedraw = true;
+
+  // ── Coverage trace ──
+  let coverageHistory = [];   // array of [[lat,lon], [lat,lon], [lat,lon], [lat,lon]]
+  let coverageEnabled = true;
+  const COVERAGE_MAX = 2000;
+
+  function computeFootprintCorners(lat, lon, alt, yaw) {{
+    // Returns 4 GPS corners of the camera footprint, or null if invalid
+    if (lat === 0 && lon === 0) return null;
+    if (alt < 0.5) return null;
+
+    const gndW = alt * CFG.SENSOR_WIDTH_MM / CFG.FOCAL_LENGTH_MM;
+    const gndH = gndW * CFG.IMAGE_H / CFG.IMAGE_W;
+    const hw = gndW / 2;
+    const hh = gndH / 2;
+
+    const yawRad = yaw * Math.PI / 180;
+    const cosY = Math.cos(yawRad);
+    const sinY = Math.sin(yawRad);
+
+    const offsets = [
+      [ hh, -hw],  // front-left
+      [ hh,  hw],  // front-right
+      [-hh,  hw],  // back-right
+      [-hh, -hw],  // back-left
+    ];
+
+    const corners = [];
+    for (let i = 0; i < 4; i++) {{
+      const n = offsets[i][0];
+      const e = offsets[i][1];
+      const north_m = n * cosY - e * sinY;
+      const east_m  = n * sinY + e * cosY;
+      const dlat = north_m / 111320;
+      const dlon = east_m / (111320 * COS_REF);
+      corners.push([lat + dlat, lon + dlon]);
+    }}
+    return corners;
+  }}
+
+  function pushCoverage() {{
+    if (!coverageEnabled) return;
+    const corners = computeFootprintCorners(drone.lat, drone.lon, drone.alt, drone.yaw);
+    if (!corners) return;
+    coverageHistory.push(corners);
+    if (coverageHistory.length > COVERAGE_MAX) {{
+      coverageHistory = coverageHistory.slice(coverageHistory.length - COVERAGE_MAX);
+    }}
+  }}
 
   function requestRedraw() {{ needsRedraw = true; }}
 
@@ -282,6 +335,22 @@ def get_interactive_map_html(container_id="map-container", width="100%", height=
     ctx.fillStyle = "#fff";
     ctx.font = "9px monospace";
     ctx.fillText("H", tp.x - 3, tp.y + 3);
+  }}
+
+  function drawCoverage() {{
+    if (!coverageEnabled || coverageHistory.length === 0) return;
+    ctx.fillStyle = "rgba(0,200,0,0.03)";
+    for (let c = 0; c < coverageHistory.length; c++) {{
+      const corners = coverageHistory[c];
+      ctx.beginPath();
+      for (let i = 0; i < 4; i++) {{
+        const sp = gpsToScreen(corners[i][0], corners[i][1]);
+        if (i === 0) ctx.moveTo(sp.x, sp.y);
+        else ctx.lineTo(sp.x, sp.y);
+      }}
+      ctx.closePath();
+      ctx.fill();
+    }}
   }}
 
   function drawDrone() {{
@@ -501,6 +570,9 @@ def get_interactive_map_html(container_id="map-container", width="100%", height=
     // Zone overlays
     drawZones();
 
+    // Coverage trace (below everything else)
+    drawCoverage();
+
     // GPS estimate dots
     drawEstimates();
 
@@ -530,11 +602,30 @@ def get_interactive_map_html(container_id="map-container", width="100%", height=
     if (estimates.length > 0) {{
       parts.push(`${{estimates.length}} detections`);
     }}
+    if (coverageEnabled && coverageHistory.length > 0) {{
+      parts.push(`Cov:${{coverageHistory.length}}`);
+    }}
     infoEl.textContent = parts.join(" | ");
 
     const zoom = (viewScale * mapW / canvasSize.w * 100).toFixed(0);
     zoomInfoEl.textContent = `${{zoom}}% | dblclick=reset`;
   }}
+
+  // ── Coverage buttons ──
+  const btnCoverage = document.getElementById("imap-btn-coverage");
+  const btnClearCov = document.getElementById("imap-btn-clear-cov");
+
+  btnCoverage.addEventListener("click", function() {{
+    coverageEnabled = !coverageEnabled;
+    btnCoverage.textContent = "Coverage: " + (coverageEnabled ? "ON" : "OFF");
+    btnCoverage.style.background = coverageEnabled ? "rgba(0,180,0,0.8)" : "rgba(120,120,120,0.8)";
+    requestRedraw();
+  }});
+
+  btnClearCov.addEventListener("click", function() {{
+    coverageHistory = [];
+    requestRedraw();
+  }});
 
   // ── Data polling ──
   let pollDroneTimer = null;
@@ -552,7 +643,10 @@ def get_interactive_map_html(container_id="map-container", width="100%", height=
       drone.yaw = d.yaw || 0;
       drone.sats = d.sats || 0;
       drone.mode = d.mode || "---";
-      if (changed) requestRedraw();
+      if (changed) {{
+        pushCoverage();
+        requestRedraw();
+      }}
     }}).catch(function() {{}});
   }}
 
