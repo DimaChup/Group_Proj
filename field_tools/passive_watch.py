@@ -2124,7 +2124,8 @@ def draw_overlay(frame, last_det):
 
     if est is not None:
         e_lat, e_lon, n_obs = est
-        est_text = f"DUMMY EST: {e_lat:.6f}, {e_lon:.6f} ({n_obs} obs)"
+        cls = getattr(draw_overlay, '_last_class', '') or '?'
+        est_text = f"DUMMY EST: {e_lat:.6f}, {e_lon:.6f} ({n_obs} obs) [{cls}]"
         est_color = (255, 0, 255)  # pink/magenta
     elif lat == 0.0 and lon == 0.0:
         est_text = "DUMMY EST: NO GPS — cannot estimate"
