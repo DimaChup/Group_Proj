@@ -1028,21 +1028,73 @@ class SmartEstimator:
 smart_estimator = None  # initialized in main() if --smart-estimate
 
 
-def _snapshot_overlay(display, label=None):
+def _snapshot_overlay(display, label=None, thumb_w=728, gps_info=None):
     """Capture a resized snapshot of the fully-overlayed display frame as JPEG bytes.
     Used for Latest Detection and Best Detection panels so they look exactly like
-    the live camera feed, frozen at the moment of detection."""
+    the live camera feed, frozen at the moment of detection.
+
+    Args:
+        display: the overlay frame (BGR numpy array)
+        label: "LATEST" or "BEST" — drawn top-left
+        thumb_w: output width in pixels (728 for Latest, 1024 for Best)
+        gps_info: dict with drone_lat, drone_lon, est_lat, est_lon (optional)
+    """
     if display is None:
         return None
-    thumb_w = 728
     h, w = display.shape[:2]
     s = thumb_w / w
     thumb = cv2.resize(display, (thumb_w, int(h * s)))
+    th = thumb.shape[0]
+
+    # --- Label badge (top-left) ---
     if label:
-        th = thumb.shape[0]
-        cv2.rectangle(thumb, (0, th - 25), (thumb_w, th), (0, 0, 0), -1)
-        cv2.putText(thumb, label, (5, th - 7), cv2.FONT_HERSHEY_SIMPLEX, 0.32, (200, 200, 200), 1)
-    _, jpg = cv2.imencode('.jpg', thumb, [cv2.IMWRITE_JPEG_QUALITY, 85])
+        badge_color = (0, 200, 0) if label == "BEST" else (200, 160, 0)  # green / teal
+        font_scale = 0.7 if thumb_w >= 1024 else 0.5
+        thickness = 2 if thumb_w >= 1024 else 1
+        (tw_txt, th_txt), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, font_scale, thickness)
+        pad = 6
+        cv2.rectangle(thumb, (0, 0), (tw_txt + pad * 2, th_txt + pad * 2), (0, 0, 0), -1)
+        cv2.putText(thumb, label, (pad, th_txt + pad), cv2.FONT_HERSHEY_SIMPLEX,
+                    font_scale, badge_color, thickness, cv2.LINE_AA)
+
+    # --- Info bar at bottom ---
+    if gps_info:
+        bar_h = 52 if thumb_w >= 1024 else 38
+        overlay = thumb.copy()
+        cv2.rectangle(overlay, (0, th - bar_h), (thumb_w, th), (0, 0, 0), -1)
+        cv2.addWeighted(overlay, 0.7, thumb, 0.3, 0, thumb)
+
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        fs = 0.45 if thumb_w >= 1024 else 0.32
+        lw = 1
+        y_line1 = th - bar_h + 16 if thumb_w >= 1024 else th - bar_h + 13
+        y_line2 = y_line1 + 18 if thumb_w >= 1024 else y_line1 + 14
+
+        d_lat = gps_info.get("drone_lat", 0)
+        d_lon = gps_info.get("drone_lon", 0)
+        e_lat = gps_info.get("est_lat")
+        e_lon = gps_info.get("est_lon")
+
+        # Line 1: drone position
+        drone_txt = f"DRONE: {d_lat:.6f}, {d_lon:.6f}"
+        cv2.putText(thumb, drone_txt, (6, y_line1), font, fs, (255, 255, 0), lw, cv2.LINE_AA)  # cyan BGR
+
+        # Line 2: dummy estimate + offset
+        if e_lat is not None and e_lon is not None:
+            dn = (d_lat - e_lat) * 111320
+            de = (d_lon - e_lon) * 111320 * math.cos(math.radians(d_lat))
+            offset_m = math.sqrt(dn ** 2 + de ** 2)
+            est_txt = f"DUMMY EST: {e_lat:.6f}, {e_lon:.6f}"
+            off_txt = f"OFFSET: {offset_m:.1f}m"
+            cv2.putText(thumb, est_txt, (6, y_line2), font, fs, (255, 0, 255), lw, cv2.LINE_AA)  # magenta
+            # Offset after estimate text
+            est_tw, _ = cv2.getTextSize(est_txt, font, fs, lw)
+            cv2.putText(thumb, "  " + off_txt, (6 + est_tw[0], y_line2), font, fs, (0, 255, 255), lw, cv2.LINE_AA)  # yellow
+        else:
+            cv2.putText(thumb, "DUMMY EST: waiting...", (6, y_line2), font, fs, (128, 128, 128), lw, cv2.LINE_AA)
+
+    quality = 92 if thumb_w >= 1024 else 85
+    _, jpg = cv2.imencode('.jpg', thumb, [cv2.IMWRITE_JPEG_QUALITY, quality])
     return jpg.tobytes()
 
 
@@ -2251,12 +2303,36 @@ def main():
 
         # Capture detection snapshots FROM the overlayed display (identical to live stream)
         if _snap_latest and display is not None:
-            snap_bytes = _snapshot_overlay(display, label="LATEST")
+            # Build GPS info for overlay (variables set in detection block above)
+            _gps_info = None
+            if d_lat != 0.0 or d_lon != 0.0:
+                _gps_info = {"drone_lat": d_lat, "drone_lon": d_lon}
+                if est_result:
+                    _gps_info["est_lat"] = est_lat
+                    _gps_info["est_lon"] = est_lon
+                else:
+                    # Fall back to cumulative estimate
+                    _cum_est = dummy_estimator.get_estimate()
+                    if _cum_est:
+                        _gps_info["est_lat"] = _cum_est[0]
+                        _gps_info["est_lon"] = _cum_est[1]
+            snap_bytes = _snapshot_overlay(display, label="LATEST", thumb_w=728, gps_info=_gps_info)
             if snap_bytes:
                 with frame_lock:
                     latest_detection_jpeg = snap_bytes
         if _snap_best and display is not None:
-            snap_bytes = _snapshot_overlay(display, label="BEST")
+            _gps_info_best = None
+            if d_lat != 0.0 or d_lon != 0.0:
+                _gps_info_best = {"drone_lat": d_lat, "drone_lon": d_lon}
+                if est_result:
+                    _gps_info_best["est_lat"] = est_lat
+                    _gps_info_best["est_lon"] = est_lon
+                else:
+                    _cum_est = dummy_estimator.get_estimate()
+                    if _cum_est:
+                        _gps_info_best["est_lat"] = _cum_est[0]
+                        _gps_info_best["est_lon"] = _cum_est[1]
+            snap_bytes = _snapshot_overlay(display, label="BEST", thumb_w=1024, gps_info=_gps_info_best)
             if snap_bytes:
                 with frame_lock:
                     latest_best_jpeg = snap_bytes

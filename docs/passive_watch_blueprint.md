@@ -54,6 +54,7 @@ python passive_watch.py --no-save --no-mavlink
 | DummyEstimator class | 381-465 | Accumulates observations, inverse-variance weighted GPS, centrality bonus |
 | SmartEstimator class | 468-587 | Greedy tightest cluster: 10 central estimates within max_spread |
 | render_latest_detection() | 590-624 | Thumbnail with pink line center→detection, crosshair, pixel+real distance, info bar |
+| _snapshot_overlay() | ~1031-1097 | Capture resized detection snapshot as JPEG. Supports per-panel width (728 Latest, 1024 Best), GPS info bar (drone+dummy+offset), label badge |
 | render_smart_grid() | 627-646 | 5x2 grid of locked smart frame thumbnails |
 | render_map() | 649-703 | GPS estimates on satellite map.jpg with drone position + smart median |
 | render_bullseye() | 706-830 | GPS scatter plot with bullseye rings, weighted mean, median, smart cluster |
