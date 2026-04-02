@@ -101,6 +101,7 @@ runtime_state = {
     "conf_threshold": args.conf, # current confidence threshold
     "class_filter": args.class_filter or "all",  # "all", "dummy", "person"
     "model_switch_request": None,  # set to model_id to trigger reload in main loop
+    "model_switch_error": None,    # set to error string if switch fails
 }
 runtime_lock = threading.Lock()
 
@@ -155,8 +156,8 @@ HTML_PAGE = """<!DOCTYPE html>
   .row1 img{width:100%;height:auto}
   .det-pair{display:grid;grid-template-columns:1fr 1fr;gap:8px}
   .det-pair img{width:100%;height:auto}
-  /* Row 2: Map 50% | GPS Analysis 50% */
-  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+  /* Row 2: Map 25% | GPS Analysis 75% */
+  .row2{display:grid;grid-template-columns:1fr 3fr;gap:10px;margin-bottom:10px}
   .row2 img{width:100%;height:auto}
   /* Row 3: CV Pipeline | GPS Pipeline */
   .row3{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
@@ -242,7 +243,7 @@ HTML_PAGE = """<!DOCTYPE html>
   </div>
 </div>
 
-<!-- Row 2: Satellite Map (50%) | GPS Analysis (50%) -->
+<!-- Row 2: Satellite Map (25%) | GPS Analysis (75%) -->
 <div class="row2">
   <div>
     <h2>Satellite Map</h2>
@@ -617,10 +618,15 @@ class Handler(BaseHTTPRequestHandler):
             return {"ok": False, "error": f"id must be 0-{len(MODEL_TABLE)-1}"}
         with runtime_lock:
             runtime_state["model_switch_request"] = mid
+            runtime_state["model_switch_error"] = None
         # Wait for main loop to pick it up (up to 10s for large models)
         for _ in range(100):
             time.sleep(0.1)
             with runtime_lock:
+                err = runtime_state["model_switch_error"]
+                if err is not None:
+                    runtime_state["model_switch_error"] = None
+                    return {"ok": False, "error": err}
                 if runtime_state["model_switch_request"] is None:
                     return {"ok": True, "model": MODEL_TABLE[mid]["name"],
                             "id": mid, "path": MODEL_TABLE[mid]["path"]}
@@ -1844,8 +1850,6 @@ def main():
             # Skip frames to maintain real-time playback
             # Read multiple frames to keep pace (inference slows us down)
             target_frame = int((time.time() - _fake_start[0]) * fake_fps) + 1
-            if frame_count % 30 == 0:
-                print(f"  [DBG] top: fc={frame_count} fidx={fake_frame_idx[0]} tgt={target_frame}", flush=True)
             while fake_frame_idx[0] < target_frame:
                 ret, frame = fake_cap.read()
                 if not ret:
@@ -1885,35 +1889,49 @@ def main():
             switch_req = runtime_state["model_switch_request"]
         if switch_req is not None:
             m = MODEL_TABLE[switch_req]
-            print(f"[MODEL] Switching to {m['name']} ({m['path']}, backend={m['backend']})", flush=True)
+            print(f"[MODEL] Switching to {m['name']} ({m['path']}, backend={m['backend']})")
             t0_switch = time.time()
             try:
-                # Explicitly release old interpreter before loading new one
-                # to avoid TFLite resource contention / hanging invoke()
-                if hasattr(eyes, 'interpreter'):
-                    del eyes.interpreter
-                if hasattr(eyes, 'model') and eyes.model is not None:
-                    del eyes.model
-                eyes.using_ai = False
-                import gc; gc.collect()
                 new_eyes = VisionSystem(
                     camera_index=None if args.fake else 0,
                     model_path=m['path'],
                     backend=m['backend']
                 )
+                # Validate: test inference in a thread with timeout to catch
+                # models that hang on invoke() (e.g. incompatible TFLite exports)
+                if new_eyes.using_ai:
+                    test_frame = np.zeros((640, 640, 3), dtype=np.uint8)
+                    _test_ok = [False]
+                    _test_err = [None]
+                    def _test_inference():
+                        try:
+                            new_eyes.detect_in_image(test_frame)
+                            _test_ok[0] = True
+                        except Exception as ex:
+                            _test_err[0] = str(ex)
+                    t = threading.Thread(target=_test_inference, daemon=True)
+                    t.start()
+                    t.join(timeout=5.0)  # 5s max for test inference
+                    if not _test_ok[0]:
+                        if t.is_alive():
+                            raise RuntimeError(f"Model inference hangs (TFLite invoke timeout). Model may be incompatible with this platform.")
+                        elif _test_err[0]:
+                            raise RuntimeError(f"Model test inference failed: {_test_err[0]}")
+                        else:
+                            raise RuntimeError("Model test inference returned no result")
                 eyes = new_eyes
                 dt_switch = time.time() - t0_switch
-                print(f"[MODEL] Loaded: {m['name']} (backend={eyes.backend_name}) in {dt_switch:.2f}s", flush=True)
+                print(f"[MODEL] Loaded: {m['name']} (backend={eyes.backend_name}) in {dt_switch:.2f}s")
                 with runtime_lock:
                     runtime_state["active_model_id"] = switch_req
                     runtime_state["class_filter"] = "all"  # reset filter on model switch
                     runtime_state["model_switch_request"] = None
             except Exception as e:
-                print(f"[MODEL] ERROR loading {m['name']}: {e}", flush=True)
+                print(f"[MODEL] ERROR loading {m['name']}: {e}")
                 with runtime_lock:
                     runtime_state["model_switch_request"] = None  # clear request, keep old model
+                    runtime_state["model_switch_error"] = str(e)
 
-        print(f"  [DBG] post-switch fc={frame_count}", flush=True)
         # Read runtime conf + class filter
         with runtime_lock:
             current_conf = runtime_state["conf_threshold"]
@@ -1929,16 +1947,11 @@ def main():
             found, x, y, conf = eyes.detect_in_image(frame)
             vis_fps_tracker.tick()
 
-            if frame_count % 20 == 0:
-                print(f"  [DBG] detect: found={found} conf={conf:.3f} class={getattr(eyes,'last_class_name','?')} filter={current_class_filter}", flush=True)
-
             # Class filter: reject detection if class doesn't match
             class_rejected = False
             if found and conf >= current_conf:
                 if current_class_filter and current_class_filter != "all" and hasattr(eyes, 'last_class_name'):
                     if eyes.last_class_name.lower() != current_class_filter.lower():
-                        if frame_count % 20 == 0:
-                            print(f"  [DBG] class filter SKIP: {eyes.last_class_name} != {current_class_filter}", flush=True)
                         class_rejected = True
 
             if found and conf >= current_conf and not class_rejected:
@@ -2121,9 +2134,6 @@ def main():
             render_map(_all_gps_estimates, smart_estimator)
             if smart_estimator:
                 render_smart_grid(smart_estimator)
-            # Periodic refresh of latest detection panel (keeps it alive even without new detections)
-            if last_det is not None:
-                _snap_latest = True
 
         # Draw overlay (detection box + GPS) on every frame for stream
         display = draw_overlay(frame, last_det)
