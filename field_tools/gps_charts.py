@@ -159,7 +159,7 @@ def get_gps_charts_html():
   let dronePos = null;      // {{lat, lon}}
   let prevDataHash = "";
   let colorMode = "altitude";   // altitude | centrality | confidence
-  let mapBgOn = false;
+  let mapBgOn = true;  // default ON
   let mapImg = null;
   let mapLoading = false;
 
@@ -217,6 +217,15 @@ def get_gps_charts_html():
     }}
     drawScatter();
   }});
+
+  // Load map image on startup since mapBgOn defaults to true
+  if (mapBgOn && !mapImg && !mapLoading) {{
+    mapLoading = true;
+    const img = new Image();
+    img.onload = () => {{ mapImg = img; mapLoading = false; drawScatter(); }};
+    img.onerror = () => {{ mapLoading = false; }};
+    img.src = "/map";
+  }}
 
   document.getElementById("btn-reset-view").addEventListener("click", () => {{
     viewCenterE = 0;
