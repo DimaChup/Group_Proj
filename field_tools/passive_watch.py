@@ -64,6 +64,8 @@ gps_lock = threading.Lock()
 _all_gps_estimates = []
 _map_base = None  # loaded map.jpg (once)
 bullseye_map_bg = False  # toggle: dark background vs satellite map crop for bullseye plots 1-2
+latest_best_jpeg = None  # best (most central) detection JPEG
+_best_center_dist = 999.0  # track best center distance
 
 # ── Args ──
 parser = argparse.ArgumentParser(description="Passive camera watch + stream + snapshots")
@@ -148,11 +150,17 @@ HTML_PAGE = """<!DOCTYPE html>
   .est{color:#ff00ff;margin-bottom:3px;font-weight:bold;font-size:0.85em}
   .fov{color:#b90;margin-bottom:8px;font-size:0.75em}
   img{border:1px solid #333;display:block}
-  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
-  .left img,.right img{width:100%;height:auto}
-  .bottom{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .bottom img{width:100%;height:auto}
-  @media(max-width:1000px){.grid,.bottom{grid-template-columns:1fr}}
+  /* Row 1: Camera Feed 50% | Latest Det 25% + Best Det 25% */
+  .row1{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+  .row1 img{width:100%;height:auto}
+  .det-pair{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .det-pair img{width:100%;height:auto}
+  /* Row 2: Map 50% | GPS Analysis 50% */
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+  .row2 img{width:100%;height:auto}
+  /* Row 3: CV Pipeline | GPS Pipeline */
+  .row3{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+  @media(max-width:1000px){.row1,.row2,.row3{grid-template-columns:1fr} .det-pair{grid-template-columns:1fr}}
 
   /* ── Model selector control bar ── */
   .ctrl-bar{
@@ -212,38 +220,51 @@ HTML_PAGE = """<!DOCTYPE html>
 <div class="est" id="est">ESTIMATE: waiting...</div>
 <div class="fov" id="fov">FOV: ---</div>
 
-<div class="grid">
-  <div class="left">
+<!-- Row 1: Camera Feed (50%) | Latest + Best Detection side-by-side (50%) -->
+<div class="row1">
+  <div>
     <h2>Camera Feed</h2>
     <img src="/stream" alt="Stream">
   </div>
-  <div class="right">
-    <h2>Latest Detection</h2>
-    <img id="latest" src="/latest" alt="Detection" style="min-height:150px">
+  <div>
+    <div class="det-pair">
+      <div>
+        <h2>Latest Detection</h2>
+        <img id="latest" src="/latest" alt="Detection" style="min-height:120px">
+      </div>
+      <div>
+        <h2>Best Detection</h2>
+        <img id="best-det" src="/best" alt="Best" style="min-height:120px">
+      </div>
+    </div>
     <h2>SMART Frames</h2>
-    <img id="smart-grid" src="/smart-grid" alt="Grid" style="min-height:100px">
+    <img id="smart-grid" src="/smart-grid" alt="Grid" style="min-height:80px;width:100%">
   </div>
 </div>
 
-<div class="bottom">
+<!-- Row 2: Satellite Map (50%) | GPS Analysis (50%) -->
+<div class="row2">
   <div>
     <h2>Satellite Map</h2>
     <div id="imap-host"></div>
   </div>
   <div>
-    <h2>SMART Frames (10)</h2>
-    <img id="smart-grid2" src="/smart-grid" alt="Grid" style="min-height:100px">
+    <h2>GPS Analysis</h2>
+    <div id="gps-charts-host"></div>
   </div>
 </div>
 
-<h2 style="margin-top:15px">GPS Analysis</h2>
-<div id="gps-charts-host"></div>
-
-<h2 style="margin-top:15px">CV Detection Pipeline</h2>
-<div id="cv-pipeline-host"></div>
-
-<h2 style="margin-top:15px">GPS Estimation Pipeline</h2>
-<div id="gps-pipeline-host"></div>
+<!-- Row 3: CV Pipeline | GPS Pipeline -->
+<div class="row3">
+  <div>
+    <h2>CV Detection Pipeline</h2>
+    <div id="cv-pipeline-host"></div>
+  </div>
+  <div>
+    <h2>GPS Estimation Pipeline</h2>
+    <div id="gps-pipeline-host"></div>
+  </div>
+</div>
 
 <script>
 /* ── Control bar logic ── */
@@ -295,8 +316,8 @@ setInterval(()=>{
       `FOV: ${d.fov_deg}\u00b0 | @1m: ${d.cal_1m_w}\u00d7${d.cal_1m_h}cm`;
     const t=Date.now();
     document.getElementById('latest').src='/latest?'+t;
+    document.getElementById('best-det').src='/best?'+t;
     document.getElementById('smart-grid').src='/smart-grid?'+t;
-    document.getElementById('smart-grid2').src='/smart-grid?'+t;
     /* Update pipeline visuals with live data */
     if (typeof updatePipelineData === 'function') {
       updatePipelineData({alt: parseFloat(d.alt)||0, fps: parseFloat(d.vis_fps)||0});
@@ -369,7 +390,7 @@ class Handler(BaseHTTPRequestHandler):
                         self.wfile.write(b'Content-Type: image/jpeg\r\n\r\n')
                         self.wfile.write(jpeg)
                         self.wfile.write(b'\r\n')
-                    time.sleep(0.02)  # ~50fps max stream (was 0.05=20fps)
+                    time.sleep(0.033)  # ~30fps max stream (matches video fps)
                 except BrokenPipeError:
                     break
 
@@ -401,6 +422,19 @@ class Handler(BaseHTTPRequestHandler):
         elif path == '/latest':
             with frame_lock:
                 jpeg = latest_detection_jpeg
+            if jpeg:
+                self.send_response(200)
+                self.send_header('Content-Type', 'image/jpeg')
+                self.send_header('Cache-Control', 'no-cache')
+                self.end_headers()
+                self.wfile.write(jpeg)
+            else:
+                self.send_response(503)
+                self.end_headers()
+
+        elif path == '/best':
+            with frame_lock:
+                jpeg = latest_best_jpeg
             if jpeg:
                 self.send_response(200)
                 self.send_header('Content-Type', 'image/jpeg')
@@ -899,47 +933,22 @@ class SmartEstimator:
 smart_estimator = None  # initialized in main() if --smart-estimate
 
 
-def render_latest_detection(frame, last_det, gps_d):
-    """Render latest detection thumbnail with arrow from center."""
-    global latest_detection_jpeg
-    if frame is None or last_det is None:
-        return
-    h, w = frame.shape[:2]
-    thumb_w = 480
+def _snapshot_overlay(display, label=None):
+    """Capture a resized snapshot of the fully-overlayed display frame as JPEG bytes.
+    Used for Latest Detection and Best Detection panels so they look exactly like
+    the live camera feed, frozen at the moment of detection."""
+    if display is None:
+        return None
+    thumb_w = 728
+    h, w = display.shape[:2]
     s = thumb_w / w
-    thumb = cv2.resize(frame, (thumb_w, int(h * s)))
-    th = thumb.shape[0]
-    dcx, dcy = int(last_det[0] * s), int(last_det[1] * s)
-    fcx, fcy = thumb_w // 2, th // 2
-    # Crosshair at frame center
-    cv2.line(thumb, (fcx - 15, fcy), (fcx + 15, fcy), (0, 255, 255), 1)
-    cv2.line(thumb, (fcx, fcy - 15), (fcx, fcy + 15), (0, 255, 255), 1)
-    # Pink line: center → detection (matching draw_overlay style)
-    cv2.line(thumb, (fcx, fcy), (dcx, dcy), (255, 0, 255), 2)
-    # Pink dot at detection center
-    cv2.circle(thumb, (dcx, dcy), 8, (255, 0, 255), -1)
-    cv2.circle(thumb, (dcx, dcy), 8, (255, 255, 255), 1)
-    # Pixel + real distance at midpoint
-    px_dist = math.sqrt((dcx - fcx)**2 + (dcy - fcy)**2)
-    mid_x = (fcx + dcx) // 2
-    mid_y = (fcy + dcy) // 2
-    cv2.putText(thumb, f"{px_dist:.0f}px", (mid_x + 6, mid_y - 6),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.38, (255, 0, 255), 1)
-    alt_snap = gps_d.get('alt', 0)
-    if alt_snap > 0.5:
-        fov_h_rad = math.radians(FOV["hfov_deg"])
-        gw = 2 * alt_snap * math.tan(fov_h_rad / 2)
-        # px_dist is in thumbnail coords, convert back to original scale
-        dist_m = (px_dist / s) / (w / gw)
-        cv2.putText(thumb, f"{dist_m:.1f}m", (mid_x + 6, mid_y + 10),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.38, (0, 255, 255), 1)
-    # Info bar
-    cv2.rectangle(thumb, (0, th - 25), (thumb_w, th), (0, 0, 0), -1)
-    info = f"{getattr(draw_overlay, '_last_class', '?')} {last_det[2]:.2f} | {gps_d['alt']:.0f}m | {gps_d['lat']:.5f},{gps_d['lon']:.5f}"
-    cv2.putText(thumb, info, (5, th - 7), cv2.FONT_HERSHEY_SIMPLEX, 0.32, (200, 200, 200), 1)
-    _, jpg = cv2.imencode('.jpg', thumb, [cv2.IMWRITE_JPEG_QUALITY, 80])
-    with frame_lock:
-        latest_detection_jpeg = jpg.tobytes()
+    thumb = cv2.resize(display, (thumb_w, int(h * s)))
+    if label:
+        th = thumb.shape[0]
+        cv2.rectangle(thumb, (0, th - 25), (thumb_w, th), (0, 0, 0), -1)
+        cv2.putText(thumb, label, (5, th - 7), cv2.FONT_HERSHEY_SIMPLEX, 0.32, (200, 200, 200), 1)
+    _, jpg = cv2.imencode('.jpg', thumb, [cv2.IMWRITE_JPEG_QUALITY, 85])
+    return jpg.tobytes()
 
 
 def render_smart_grid(smart_est):
@@ -1497,15 +1506,21 @@ def draw_overlay(frame, last_det):
             cv2.rectangle(display, (x1, y1), (x2, y2), color, 3)
             cls_name = getattr(draw_overlay, '_last_class', '')
             label = f"AI {conf:.2f} [{cls_name}]"
+            # Outline text for readability on any background
+            cv2.putText(display, label, (x1, y1 - 8),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 4)
             cv2.putText(display, label, (x1, y1 - 8),
                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
 
     # Centre crosshair (helps pilot align directly over target)
     cx, cy = w // 2, h // 2
-    cross_color = (100, 100, 100)  # subtle grey
-    cross_len = 15
-    cv2.line(display, (cx - cross_len, cy), (cx + cross_len, cy), cross_color, 1)
-    cv2.line(display, (cx, cy - cross_len), (cx, cy + cross_len), cross_color, 1)
+    cross_len = 25
+    # Black outline for visibility on any background
+    cv2.line(display, (cx - cross_len, cy), (cx + cross_len, cy), (0, 0, 0), 4)
+    cv2.line(display, (cx, cy - cross_len), (cx, cy + cross_len), (0, 0, 0), 4)
+    # Cyan inner line
+    cv2.line(display, (cx - cross_len, cy), (cx + cross_len, cy), (0, 200, 200), 2)
+    cv2.line(display, (cx, cy - cross_len), (cx, cy + cross_len), (0, 200, 200), 2)
 
     # ── Pink line: center → detection (like video_test_compare.py) ──
     if last_det is not None:
@@ -1518,8 +1533,12 @@ def draw_overlay(frame, last_det):
             px_dist = math.sqrt((dcx_i - cx)**2 + (dcy_i - cy)**2)
             mid_x = (cx + dcx_i) // 2
             mid_y = (cy + dcy_i) // 2
-            cv2.putText(display, f"{px_dist:.0f}px", (mid_x + 8, mid_y - 8),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 0, 255), 1)
+            # Bigger, bolder pixel distance with dark background
+            px_label = f"{px_dist:.0f}px"
+            (tw, th), _ = cv2.getTextSize(px_label, cv2.FONT_HERSHEY_SIMPLEX, 0.65, 2)
+            cv2.rectangle(display, (mid_x + 5, mid_y - 12 - th), (mid_x + 12 + tw, mid_y - 6), (0, 0, 0), -1)
+            cv2.putText(display, px_label, (mid_x + 8, mid_y - 8),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.65, (255, 0, 255), 2)
             # Estimated real distance in meters (using FOV + altitude)
             alt_now = g["alt"] if g["alt"] > 0.5 else 0
             if alt_now > 0.5:
@@ -1527,8 +1546,12 @@ def draw_overlay(frame, last_det):
                 ground_w_now = 2 * alt_now * math.tan(fov_h_rad / 2)
                 px_per_m = w / ground_w_now
                 dist_m = px_dist / px_per_m
-                cv2.putText(display, f"{dist_m:.1f}m", (mid_x + 8, mid_y + 12),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 255), 1)
+                # Bigger, bolder meters distance with dark background
+                m_label = f"{dist_m:.1f}m"
+                (tw2, th2), _ = cv2.getTextSize(m_label, cv2.FONT_HERSHEY_SIMPLEX, 0.65, 2)
+                cv2.rectangle(display, (mid_x + 5, mid_y + 8 - th2), (mid_x + 12 + tw2, mid_y + 16), (0, 0, 0), -1)
+                cv2.putText(display, m_label, (mid_x + 8, mid_y + 12),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 255, 255), 2)
 
     # GPS overlay (bottom of frame)
     lat, lon = g["lat"], g["lon"]
@@ -1570,7 +1593,9 @@ def draw_overlay(frame, last_det):
     compass_r = 25
     cv2.circle(display, (compass_cx, compass_cy), compass_r, (80, 80, 80), 1)
 
-    # N/S/E/W labels
+    # N/S/E/W labels (outline for readability)
+    cv2.putText(display, "N", (compass_cx - 4, compass_cy - compass_r - 3),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 0), 3)
     cv2.putText(display, "N", (compass_cx - 4, compass_cy - compass_r - 3),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.3, (200, 200, 200), 1)
 
@@ -1581,7 +1606,9 @@ def draw_overlay(frame, last_det):
     cv2.arrowedLine(display, (compass_cx, compass_cy), (arrow_x, arrow_y),
                     (0, 255, 0), 2, tipLength=0.4)
 
-    # "FRONT" label on the frame edge matching drone forward
+    # "FRONT" label on the frame edge matching drone forward (outline for readability)
+    cv2.putText(display, "FRONT", (w // 2 - 25, 48),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 0), 3)
     cv2.putText(display, "FRONT", (w // 2 - 25, 48),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.35, (100, 100, 100), 1)
 
@@ -1599,12 +1626,16 @@ def draw_overlay(frame, last_det):
                     f"Cal@1m:{cal_w*100:.0f}x{cal_h*100:.0f}cm")
         # Draw ground coverage dimensions on frame edges (subtle, not overlapping UI)
         dim_color = (140, 110, 0)  # muted amber
-        # Width: short arrows + label at bottom-left area (above info bars)
+        # Width: short arrows + label at bottom-left area (above info bars) — outline
         w_label = f"<-- {gw:.1f}m -->"
         cv2.putText(display, w_label, (w // 2 - 50, h - 90),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 0), 3)
+        cv2.putText(display, w_label, (w // 2 - 50, h - 90),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.4, dim_color, 1)
-        # Height: label rotated on left edge
+        # Height: label on left edge — outline
         h_label = f"{gh:.1f}m"
+        cv2.putText(display, h_label, (w - 45, h // 2),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 0), 3)
         cv2.putText(display, h_label, (w - 45, h // 2),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.4, dim_color, 1)
     else:
@@ -1626,7 +1657,11 @@ def draw_overlay(frame, last_det):
             cv2.line(display, (sx1, sy1), (sx2, sy1), (255, 255, 255), 2)
             cv2.line(display, (sx1, sy1 - 5), (sx1, sy1 + 5), (255, 255, 255), 2)
             cv2.line(display, (sx2, sy1 - 5), (sx2, sy1 + 5), (255, 255, 255), 2)
-            cv2.putText(display, f"1m ({alt_scale:.0f}m alt)", (sx1, sy1 - 8),
+            # Outline for scale bar label
+            scale_label = f"1m ({alt_scale:.0f}m alt)"
+            cv2.putText(display, scale_label, (sx1, sy1 - 8),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 0), 3)
+            cv2.putText(display, scale_label, (sx1, sy1 - 8),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.35, (255, 255, 255), 1)
 
     # ── Pink dot on detection center ──
@@ -1659,7 +1694,7 @@ def draw_overlay(frame, last_det):
 
 # ── Main ──
 def main():
-    global latest_jpeg, latest_det_jpeg, smart_estimator, _all_gps_estimates
+    global latest_jpeg, latest_det_jpeg, smart_estimator, _all_gps_estimates, _best_center_dist, latest_detection_jpeg, latest_best_jpeg
 
     if args.smart_estimate:
         smart_estimator = SmartEstimator(
@@ -1745,11 +1780,26 @@ def main():
     if not eyes.using_ai:
         print("[WARN] AI model not loaded — stream only, no detection")
 
-    # Set initial model ID from args.model path
+    # Set initial model ID from --model argument (try abspath match, then normpath, then basename)
+    model_matched = False
     for m in MODEL_TABLE:
         if os.path.abspath(m["path"]) == os.path.abspath(args.model):
             runtime_state["active_model_id"] = m["id"]
+            model_matched = True
             break
+    if not model_matched:
+        # Fallback: match on normalized path or basename
+        norm_arg = os.path.normpath(args.model)
+        base_arg = os.path.basename(args.model)
+        for m in MODEL_TABLE:
+            if os.path.normpath(m["path"]) == norm_arg or os.path.basename(m["path"]) == base_arg:
+                runtime_state["active_model_id"] = m["id"]
+                model_matched = True
+                break
+    if model_matched:
+        print(f"[OK] Model matched: {MODEL_TABLE[runtime_state['active_model_id']]['name']} (id={runtime_state['active_model_id']})")
+    else:
+        print(f"[WARN] --model '{args.model}' not found in MODEL_TABLE, defaulting to id=0")
     print("[OK] Ready. Ctrl+C to stop.\n")
 
     # Start HTTP server
@@ -1794,6 +1844,8 @@ def main():
             # Skip frames to maintain real-time playback
             # Read multiple frames to keep pace (inference slows us down)
             target_frame = int((time.time() - _fake_start[0]) * fake_fps) + 1
+            if frame_count % 30 == 0:
+                print(f"  [DBG] top: fc={frame_count} fidx={fake_frame_idx[0]} tgt={target_frame}", flush=True)
             while fake_frame_idx[0] < target_frame:
                 ret, frame = fake_cap.read()
                 if not ret:
@@ -1833,28 +1885,43 @@ def main():
             switch_req = runtime_state["model_switch_request"]
         if switch_req is not None:
             m = MODEL_TABLE[switch_req]
-            print(f"[MODEL] Switching to {m['name']} ({m['path']}, backend={m['backend']})")
+            print(f"[MODEL] Switching to {m['name']} ({m['path']}, backend={m['backend']})", flush=True)
+            t0_switch = time.time()
             try:
+                # Explicitly release old interpreter before loading new one
+                # to avoid TFLite resource contention / hanging invoke()
+                if hasattr(eyes, 'interpreter'):
+                    del eyes.interpreter
+                if hasattr(eyes, 'model') and eyes.model is not None:
+                    del eyes.model
+                eyes.using_ai = False
+                import gc; gc.collect()
                 new_eyes = VisionSystem(
                     camera_index=None if args.fake else 0,
                     model_path=m['path'],
                     backend=m['backend']
                 )
                 eyes = new_eyes
-                print(f"[MODEL] Loaded: {m['name']} (backend={eyes.backend_name})")
+                dt_switch = time.time() - t0_switch
+                print(f"[MODEL] Loaded: {m['name']} (backend={eyes.backend_name}) in {dt_switch:.2f}s", flush=True)
                 with runtime_lock:
                     runtime_state["active_model_id"] = switch_req
                     runtime_state["class_filter"] = "all"  # reset filter on model switch
                     runtime_state["model_switch_request"] = None
             except Exception as e:
-                print(f"[MODEL] ERROR loading {m['name']}: {e}")
+                print(f"[MODEL] ERROR loading {m['name']}: {e}", flush=True)
                 with runtime_lock:
                     runtime_state["model_switch_request"] = None  # clear request, keep old model
 
+        print(f"  [DBG] post-switch fc={frame_count}", flush=True)
         # Read runtime conf + class filter
         with runtime_lock:
             current_conf = runtime_state["conf_threshold"]
             current_class_filter = runtime_state["class_filter"]
+
+        # Snapshot flags — set inside detection block, captured after draw_overlay
+        _snap_latest = False
+        _snap_best = False
 
         # Run detection (throttled)
         if eyes.using_ai and (now - last_inference) >= min_interval:
@@ -1862,14 +1929,19 @@ def main():
             found, x, y, conf = eyes.detect_in_image(frame)
             vis_fps_tracker.tick()
 
-            # (detection logging removed — enable for debug)
+            if frame_count % 20 == 0:
+                print(f"  [DBG] detect: found={found} conf={conf:.3f} class={getattr(eyes,'last_class_name','?')} filter={current_class_filter}", flush=True)
 
+            # Class filter: reject detection if class doesn't match
+            class_rejected = False
             if found and conf >= current_conf:
-                # Class filter: skip if detection class doesn't match
                 if current_class_filter and current_class_filter != "all" and hasattr(eyes, 'last_class_name'):
                     if eyes.last_class_name.lower() != current_class_filter.lower():
-                        continue  # skip this detection
+                        if frame_count % 20 == 0:
+                            print(f"  [DBG] class filter SKIP: {eyes.last_class_name} != {current_class_filter}", flush=True)
+                        class_rejected = True
 
+            if found and conf >= current_conf and not class_rejected:
                 det_count += 1
                 cx, cy = int(x), int(y)
                 last_det = (cx, cy, conf, 0.0)
@@ -1930,6 +2002,15 @@ def main():
                         pass  # don't save individual frames
                 elif not args.no_save:
                     pass  # fall through to normal save below
+
+                # Flag: snapshot the overlay frame for Latest Detection panel
+                _snap_latest = True
+
+                # Check if this detection is closer to center (for Best Detection panel)
+                center_dist = math.sqrt((cx - w/2)**2 + (cy - h/2)**2) / (w/2)
+                if center_dist < _best_center_dist:
+                    _best_center_dist = center_dist
+                    _snap_best = True
 
                 # Save snapshot with GPS overlay (normal mode, skipped in smart mode)
                 if not args.no_save and not args.smart_estimate:
@@ -2040,11 +2121,24 @@ def main():
             render_map(_all_gps_estimates, smart_estimator)
             if smart_estimator:
                 render_smart_grid(smart_estimator)
+            # Periodic refresh of latest detection panel (keeps it alive even without new detections)
             if last_det is not None:
-                render_latest_detection(frame, last_det, gps_data)
+                _snap_latest = True
 
         # Draw overlay (detection box + GPS) on every frame for stream
         display = draw_overlay(frame, last_det)
+
+        # Capture detection snapshots FROM the overlayed display (identical to live stream)
+        if _snap_latest and display is not None:
+            snap_bytes = _snapshot_overlay(display, label="LATEST")
+            if snap_bytes:
+                with frame_lock:
+                    latest_detection_jpeg = snap_bytes
+        if _snap_best and display is not None:
+            snap_bytes = _snapshot_overlay(display, label="BEST")
+            if snap_bytes:
+                with frame_lock:
+                    latest_best_jpeg = snap_bytes
 
         # Encode for stream
         _, jpg = cv2.imencode('.jpg', display, [cv2.IMWRITE_JPEG_QUALITY, 70])
