@@ -96,7 +96,7 @@ def get_gps_charts_html():
 }}
 .gps-filter-row label {{ color: #0f0; margin-right: 2px; }}
 .gps-filter-row input[type=range] {{
-  width: 60px;
+  width: 200px;
   height: 10px;
   accent-color: #0f0;
   vertical-align: middle;
@@ -152,31 +152,31 @@ def get_gps_charts_html():
       <div class="gps-filter-row" id="scatter-filters">
         <div id="filter-pdist" class="gps-filter-group">
           <label>Pdist (px):</label>
-          <span class="fval" id="fv-pdist-min">0</span>
+          <span style="color:#888;">Min:</span> <span class="fval" id="fv-pdist-min">0</span>
           <input type="range" id="f-pdist-min" min="0" max="1000" value="0" step="1">
+          <span style="color:#888;">Max:</span> <span class="fval" id="fv-pdist-max">1000</span>
           <input type="range" id="f-pdist-max" min="0" max="1000" value="1000" step="1">
-          <span class="fval" id="fv-pdist-max">1000</span>
         </div>
         <div id="filter-dist" class="gps-filter-group" style="display:none;">
           <label>Distance (m):</label>
-          <span class="fval" id="fv-dist-min">0</span>
+          <span style="color:#888;">Min:</span> <span class="fval" id="fv-dist-min">0</span>
           <input type="range" id="f-dist-min" min="0" max="50" value="0" step="0.1">
+          <span style="color:#888;">Max:</span> <span class="fval" id="fv-dist-max">50</span>
           <input type="range" id="f-dist-max" min="0" max="50" value="50" step="0.1">
-          <span class="fval" id="fv-dist-max">50</span>
         </div>
         <div id="filter-alt" class="gps-filter-group" style="display:none;">
           <label>Alt (m):</label>
-          <span class="fval" id="fv-alt-min">0</span>
+          <span style="color:#888;">Min:</span> <span class="fval" id="fv-alt-min">0</span>
           <input type="range" id="f-alt-min" min="0" max="100" value="0" step="0.5">
+          <span style="color:#888;">Max:</span> <span class="fval" id="fv-alt-max">100</span>
           <input type="range" id="f-alt-max" min="0" max="100" value="100" step="0.5">
-          <span class="fval" id="fv-alt-max">100</span>
         </div>
         <div id="filter-conf" class="gps-filter-group" style="display:none;">
           <label>Conf:</label>
-          <span class="fval" id="fv-conf-min">0</span>
+          <span style="color:#888;">Min:</span> <span class="fval" id="fv-conf-min">0</span>
           <input type="range" id="f-conf-min" min="0" max="1" value="0" step="0.01">
+          <span style="color:#888;">Max:</span> <span class="fval" id="fv-conf-max">1.00</span>
           <input type="range" id="f-conf-max" min="0" max="1" value="1" step="0.01">
-          <span class="fval" id="fv-conf-max">1.00</span>
         </div>
       </div>
       <canvas id="scatter-canvas" width="500" height="400" style="cursor:grab;"></canvas>
@@ -348,6 +348,28 @@ def get_gps_charts_html():
   let filterDistMin = 0, filterDistMax = 50;
   let filterAltMin = 0, filterAltMax = 100;
   let filterConfMin = 0, filterConfMax = 1;
+
+  // ── Global color range (computed from ALL estimates, not filtered subset) ──
+  let globalMaxPd = 1, globalMinAlt = 0, globalMaxAlt = 100;
+  let globalMaxDistM = 1, globalMinConf = 0, globalMaxConf = 1;
+
+  function updateGlobalColorRange() {{
+    if (estimates.length === 0) return;
+    globalMaxPd = 0; globalMinAlt = Infinity; globalMaxAlt = -Infinity;
+    globalMaxDistM = 0; globalMinConf = 1; globalMaxConf = 0;
+    for (const e of estimates) {{
+      const pdist = e[2], alt = e[3], conf = e[4];
+      if (pdist > globalMaxPd) globalMaxPd = pdist;
+      if (alt < globalMinAlt) globalMinAlt = alt;
+      if (alt > globalMaxAlt) globalMaxAlt = alt;
+      if (conf < globalMinConf) globalMinConf = conf;
+      if (conf > globalMaxConf) globalMaxConf = conf;
+      const dm = pdist * alt / F_PX;
+      if (dm > globalMaxDistM) globalMaxDistM = dm;
+    }}
+    globalMaxPd = Math.max(globalMaxPd, 1);
+    globalMaxDistM = Math.max(globalMaxDistM, 0.1);
+  }}
 
   function updateFilterRanges() {{
     // Adjust slider max values based on actual data
@@ -581,22 +603,9 @@ def get_gps_charts_html():
     ctx.fillText("E", Math.min(W - 10, originX + Math.min(W / 2 - 10, 5 * viewScale) + 12), originY + 4);
     ctx.textAlign = "start";
 
-    // Color values
-    let minAlt = Infinity, maxAlt = -Infinity, maxPd = 0, minConf = 1, maxConf = 0;
-    let maxDistM = 0;
-    for (const p of pts) {{
-      if (p.alt < minAlt) minAlt = p.alt;
-      if (p.alt > maxAlt) maxAlt = p.alt;
-      if (p.pdist > maxPd) maxPd = p.pdist;
-      if (p.conf < minConf) minConf = p.conf;
-      if (p.conf > maxConf) maxConf = p.conf;
-      const dm = p.pdist * p.alt / F_PX;
-      if (dm > maxDistM) maxDistM = dm;
-    }}
-    const altRange = Math.max(maxAlt - minAlt, 0.1);
-    maxPd = Math.max(maxPd, 1);
-    maxDistM = Math.max(maxDistM, 0.1);
-    const confRange = Math.max(maxConf - minConf, 0.01);
+    // Color values — use GLOBAL range (full dataset) so colors are absolute, not relative to filter
+    const altRange = Math.max(globalMaxAlt - globalMinAlt, 0.1);
+    const confRange = Math.max(globalMaxConf - globalMinConf, 0.01);
 
     // Draw dots (skip when toggled off)
     if (showDots) {{
@@ -606,10 +615,10 @@ def get_gps_charts_html():
         if (sx < -10 || sx > W + 10 || sy < -10 || sy > H + 10) continue;
 
         let val = 0;
-        if (colorMode === "pixel_centrality") val = Math.min(1, p.pdist / maxPd);
-        else if (colorMode === "distance_centrality") val = Math.min(1, (p.pdist * p.alt / F_PX) / maxDistM);
-        else if (colorMode === "altitude") val = (p.alt - minAlt) / altRange;
-        else if (colorMode === "confidence") val = 1 - (p.conf - minConf) / confRange;
+        if (colorMode === "pixel_centrality") val = Math.min(1, p.pdist / globalMaxPd);
+        else if (colorMode === "distance_centrality") val = Math.min(1, (p.pdist * p.alt / F_PX) / globalMaxDistM);
+        else if (colorMode === "altitude") val = (p.alt - globalMinAlt) / altRange;
+        else if (colorMode === "confidence") val = 1 - (p.conf - globalMinConf) / confRange;
 
         ctx.fillStyle = heatColor(val);
         ctx.beginPath();
@@ -1554,6 +1563,7 @@ def get_gps_charts_html():
         const hash = dataHash();
         if (hash !== prevDataHash) {{
           prevDataHash = hash;
+          updateGlobalColorRange();
           updateFilterRanges();
           needsRedraw = true;
         }}
