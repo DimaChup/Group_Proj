@@ -113,3 +113,125 @@ DJI video FOV & $73^{\circ}$ assumed & $54.4^{\circ}$ measured & Click calibrati
 \end{table}
 
 The four calibrations are complementary: the FOV calibration corrects the dominant scale factor in the pinhole model, lens undistortion corrects the nonlinear residual, the colour-space fix ensures the detection model receives data in its trained domain, and the DJI FOV calibration enables accurate offline analysis of flight footage. Together, they reduce the systematic component of the target localisation error to the level set by GPS receiver noise ($\sim$\SI{2}{\metre} CEP) and atmospheric effects, rather than being dominated by avoidable modelling errors.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{Pre-Flight Calibration Checklist}\label{sec:cal:checklist}
+
+Before every flight, the following calibration and readiness checks must be completed in order. Table~\ref{tab:preflight-cal} presents the checklist with acceptance criteria and the consequence of skipping each item.
+
+\begin{table}[ht]
+\centering
+\caption{Pre-flight calibration checklist. Each item must meet the stated acceptance criterion before proceeding to flight. Items marked $\ast$ are optional but recommended.}
+\label{tab:preflight-cal}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\linewidth}{@{}c >{\raggedright}p{3.6cm} >{\raggedright}p{3.8cm} X@{}}
+\toprule
+\textbf{\#} & \textbf{Check} & \textbf{Acceptance Criterion} & \textbf{If Failed} \\
+\midrule
+1 & FOV calibration & Visible width at \SI{1}{\metre} = \SI{92 \pm 3}{\centi\metre} & Recompute \texttt{FOCAL\_LENGTH\_MM}; GPS estimates biased by $\Delta f / f$ \\
+2 & Camera colour order & Stream shows natural colours (BGR, no \texttt{cvtColor}) & Detection confidence drops; retrained model receives wrong channel order \\
+3 & GPS fix quality & Fix type $\geq 3$, satellites $\geq 10$, HDOP $< 1.5$ & Do not arm; position estimates unreliable \\
+4 & Detection confidence & Point camera at mannequin, confidence $> 0.4$ & Check model file, lighting, focus \\
+5\textsuperscript{$\ast$} & Lens undistortion & \texttt{calibration\_data.npz} valid ($>$\SI{1}{\kilo\byte}) & Delete corrupt file; edge-pixel error $\leq$\SI{0.3}{\metre} at \SI{35}{\metre} \\
+6 & Altitude zero-check & Baro reads \SI{0}{\metre} on ground ($\pm$\SI{0.5}{\metre}) & Recalibrate barometer in Mission Planner \\
+7 & Inference speed & $<$\SI{250}{\milli\second} (TFLite) or $<$\SI{100}{\milli\second} (NCNN) & Check CPU throttling, model file size \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{GPS Error Measurement Procedure}\label{sec:cal:gps-error}
+
+The GPS receiver introduces an irreducible random error that sets the floor of target localisation accuracy. Quantifying this error before flight allows the operator to judge whether conditions are adequate and provides a baseline against which CV-derived estimates are compared.
+
+\paragraph{Equipment.} Drone with GPS antenna, known reference position (e.g.\ the designated Take-Off Location at 51.423406\textdegree\,N, $-$2.671446\textdegree\,W).
+
+\paragraph{Procedure.}
+\begin{enumerate}
+    \item Place the drone at the known reference GPS position with a clear sky view. Allow the GPS receiver to acquire a stable fix (fix type $\geq 3$, $\geq 10$ satellites).
+    \item Run the automated drift measurement script:
+    \begin{verbatim}
+    python tests/day_1_experiments/gps_drift.py
+    \end{verbatim}
+    The script records GPS latitude, longitude, altitude, satellite count, and HDOP at \SI{1}{\hertz} for \SI{60}{\second}, writing results to a timestamped CSV file.
+    \item Compute the following metrics from the recorded data:
+    \begin{itemize}
+        \item \textbf{CEP50}: the radius of a circle centred on the mean position that contains 50\% of readings. This is the standard measure of GPS accuracy.
+        \item \textbf{CEP95}: the radius containing 95\% of readings.
+        \item \textbf{Max deviation}: the largest single-sample displacement from the mean.
+    \end{itemize}
+    \item Record the satellite count and HDOP at the time of measurement for traceability.
+\end{enumerate}
+
+\paragraph{Acceptance criteria.} CEP50 $< \SI{3}{\metre}$ with $\geq 10$ satellites and HDOP $< 1.5$. With a Here~3+ GNSS receiver in open sky, typical values are CEP50 $\approx \SIrange{1.5}{2.5}{\metre}$.
+
+\paragraph{Impact.} GPS position error adds directly to target estimation error---it cannot be reduced by improving the vision pipeline. If CEP50 $= \SI{2}{\metre}$, the target estimate can never be better than \SI{2}{\metre} even with perfect FOV calibration and zero lens distortion. For a comprehensive decomposition of all error sources, see the error budget in Table~\ref{tab:error-budget} (Appendix~\ref{sec:error-budget}).
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{Altitude Error Measurement Procedure}\label{sec:cal:alt-error}
+
+ArduCopter reports altitude relative to the arming point using a barometric pressure sensor. Because barometric pressure varies with temperature, humidity, and weather, the reported altitude drifts over time. Since altitude enters directly into the ground sample distance (GSD) calculation---$\text{GSD} = w_s \cdot h / (f \cdot W_{\text{px}})$---any altitude error produces a proportional error in every pixel-to-metre conversion.
+
+\paragraph{Procedure.}
+\begin{enumerate}
+    \item Place the drone on flat, level ground.
+    \item Arm the flight controller (propellers removed for bench testing) and note the initial altitude reading. It should read \SI{0.0}{\metre} ($\pm$\SI{0.1}{\metre}).
+    \item Wait \SI{5}{\minute}, monitoring the altitude readout via:
+    \begin{verbatim}
+    python tests/hardware/gps_test.py
+    \end{verbatim}
+    \item Record the altitude at the end of the waiting period.
+    \item If the drift exceeds \SI{0.5}{\metre}, recalibrate the barometer in Mission Planner (\textit{Initial Setup} $\rightarrow$ \textit{Mandatory} $\rightarrow$ \textit{Accel Calibration}).
+\end{enumerate}
+
+\paragraph{Quantified impact.} Table~\ref{tab:alt-error-impact} shows the position error introduced by altitude measurement error at the frame edge, where the pixel-to-GPS conversion is most sensitive.
+
+\begin{table}[ht]
+\centering
+\caption{Position error at the frame edge caused by barometric altitude error, computed as $\Delta x = (\Delta h / h) \times (W_{\text{ground}} / 2)$ where $W_{\text{ground}}$ is the ground footprint width at the nominal altitude.}
+\label{tab:alt-error-impact}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{@{}S[table-format=2.0] S[table-format=1.1] S[table-format=1.1] S[table-format=1.1]@{}}
+\toprule
+{\textbf{Altitude (m)}} & {\textbf{$\Delta h = \SI{0.5}{\metre}$}} & {\textbf{$\Delta h = \SI{1.0}{\metre}$}} & {\textbf{$\Delta h = \SI{2.0}{\metre}$}} \\
+\midrule
+10 & 0.2 & 0.5 & 0.9 \\
+20 & 0.2 & 0.5 & 0.9 \\
+35 & 0.2 & 0.5 & 0.9 \\
+50 & 0.2 & 0.5 & 0.9 \\
+\bottomrule
+\end{tabular}
+
+\smallskip
+\footnotesize Note: the fractional error $\Delta h / h$ varies with altitude, but the absolute edge error converges because the frame footprint also scales with $h$. The dominant effect is on GSD accuracy and, consequently, on the strip spacing in the search pattern.
+\end{table}
+
+\paragraph{Acceptance criterion.} Altitude drift $< \SI{0.5}{\metre}$ over \SI{5}{\minute} on the ground. If conditions are marginal (hot day, rapidly changing pressure), re-arm immediately before takeoff to reset the altitude reference.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{Error Budget Cross-Reference}\label{sec:cal:error-xref}
+
+The calibrations documented in this appendix address only the \emph{systematic} (correctable) components of the target localisation error. The full error budget---including random GPS noise, GPS timing lag, attitude-induced projection shift, and motion blur---is presented in Table~\ref{tab:error-budget} (Appendix~\ref{sec:error-budget}). Table~\ref{tab:cal-vs-budget} maps each calibration in this appendix to the error source it mitigates, providing a unified view of which calibrations reduce which budget entries.
+
+\begin{table}[ht]
+\centering
+\caption{Mapping between calibration procedures (this appendix) and the error budget entries in Table~\ref{tab:error-budget}. ``Residual after cal.'' is the remaining error contribution at \SI{35}{\metre} altitude after the calibration is applied.}
+\label{tab:cal-vs-budget}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{}p{3.2cm} p{3.5cm} S[table-format=1.1] p{3.8cm}@{}}
+\toprule
+\textbf{Calibration} & \textbf{Error Budget Entry} & {\textbf{Residual (m)}} & \textbf{Section} \\
+\midrule
+FOV / focal length & GSD scale factor & 0.0 & \S\ref{sec:cal:fov} \\
+Lens undistortion & Pixel coordinate shift & 0.02 & \S\ref{sec:cal:lens} \\
+Colour-space fix & Detection confidence & {---} & \S\ref{sec:cal:colour} \\
+GPS error measurement & Receiver position noise & 2.0 & \S\ref{sec:cal:gps-error} \\
+Altitude error check & Barometric drift & 0.5 & \S\ref{sec:cal:alt-error} \\
+\midrule
+\multicolumn{2}{@{}l}{\textbf{Combined RSS (calibrated)}} & 2.1 & \\
+\multicolumn{2}{@{}l}{\textbf{Combined RSS (uncalibrated)}} & 4.8 & \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent Calibration reduces the systematic error contribution from \SI{4.8}{\metre} to \SI{2.1}{\metre} RSS, bringing the total localisation uncertainty to a level dominated by the irreducible GPS receiver noise rather than avoidable modelling errors. The \SI{2.1}{\metre} calibrated RSS is consistent with the CEP50 $\approx \SI{2.3}{\metre}$ measured from DJI flight video analysis (Section~\ref{sec:cal:dji}).
