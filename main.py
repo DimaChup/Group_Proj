@@ -841,6 +841,7 @@ class VisualFlightMission(StateHandlersMixin):
                 self._enforce_search_yaw()
 
             if self.state == State.DONE:
+                self.update_dashboard()  # Render DONE HUD with landing distances
                 (cv2.waitKey(10000) if not HEADLESS else time.sleep(10.0))
                 break
             if key == 27: break
