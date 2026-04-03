@@ -710,11 +710,15 @@ class StateHandlersMixin:
             wp = self.pre_waypoints[self.return_wp_index]
             if time.time() - self.last_req > 0.5:
                 vz = -2.5 if self.alt < return_alt - 2.0 else 0
-                # Yaw toward waypoint — don't fly sideways/backwards
-                dy = (wp[0] - self.lat) * 111320
-                dx = (wp[1] - self.lon) * 111320 * math.cos(math.radians(self.lat))
-                wp_yaw = math.atan2(dx, dy)
-                self.nav.send_global_target(wp[0], wp[1], return_alt, yaw=wp_yaw, vz=vz)
+                if config.LOCK_YAW:
+                    # Let _enforce_search_yaw handle heading
+                    self.nav.send_global_target(wp[0], wp[1], return_alt, vz=vz)
+                else:
+                    # Yaw toward waypoint — don't fly sideways/backwards
+                    dy = (wp[0] - self.lat) * 111320
+                    dx = (wp[1] - self.lon) * 111320 * math.cos(math.radians(self.lat))
+                    wp_yaw = math.atan2(dx, dy)
+                    self.nav.send_global_target(wp[0], wp[1], return_alt, yaw=wp_yaw, vz=vz)
                 self.last_req = time.time()
                 if self.alt < return_alt - 5.0:
                     print(f"  [CLIMB] {self.alt:.1f}m → {return_alt:.0f}m  vz={vz}")
@@ -736,12 +740,15 @@ class StateHandlersMixin:
         self.nav.set_speed(config.TRANSIT_SPEED_MPS)
         if time.time() - self.last_req > 0.5:
             vz = -2.5 if self.alt < config.TARGET_ALT - 2.0 else 0
-            # Yaw toward home — don't fly sideways/backwards
-            dy = (self.home_lat - self.lat) * 111320
-            dx = (self.home_lon - self.lon) * 111320 * math.cos(math.radians(self.lat))
-            home_yaw = math.atan2(dx, dy)
-            self.nav.send_global_target(self.home_lat, self.home_lon, config.TARGET_ALT,
-                                        yaw=home_yaw, vz=vz)
+            if config.LOCK_YAW:
+                self.nav.send_global_target(self.home_lat, self.home_lon, config.TARGET_ALT, vz=vz)
+            else:
+                # Yaw toward home — don't fly sideways/backwards
+                dy = (self.home_lat - self.lat) * 111320
+                dx = (self.home_lon - self.lon) * 111320 * math.cos(math.radians(self.lat))
+                home_yaw = math.atan2(dx, dy)
+                self.nav.send_global_target(self.home_lat, self.home_lon, config.TARGET_ALT,
+                                            yaw=home_yaw, vz=vz)
             self.last_req = time.time()
             if self.alt < config.TARGET_ALT - 5.0:
                 print(f"  [CLIMB] {self.alt:.1f}m → {config.TARGET_ALT:.0f}m  vz={vz}")
