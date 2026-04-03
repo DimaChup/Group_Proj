@@ -718,6 +718,13 @@ class VisualFlightMission(StateHandlersMixin):
 
     def run(self):
         self._mission_start_time = time.time()
+        # Clear previous mission detections
+        import shutil
+        det_dir = "mission_detections"
+        if os.path.exists(det_dir):
+            shutil.rmtree(det_dir)
+            print(f"[INIT] Cleared previous {det_dir}/")
+        os.makedirs(det_dir, exist_ok=True)
         print("\n" + "=" * 60)
         print("  MISSION LOOP STARTED")
         print("  Keys: M=manual  Y/N/I=verify  K=reset  B=beacon  ESC=quit")

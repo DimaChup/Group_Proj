@@ -1038,4 +1038,58 @@ of truth.
 
 **.gitignore updated** — added patterns for training outputs, dataset zips, etc.
 
-**Branches:** Working8.Robbin2 (committed at 41e713c), Working8.Robbin3 (active, same HEAD + uncommitted docs/tests)
+**Branches:** Working8.Robbin2 (committed at 41e713c), Working8.Robbin3, Working8.Session4 (active, 374a462)
+
+### Session: 2026-04-03 (part 2) — Reports, R01-R12 fixes, geofence, god view optimization, multi-class training
+
+**Reports (~55 agents):**
+- D6 Goldmine: 74→85.2 (6 scoring cycles, TOC, appendix guide, 32 appendices polished, 3 infoboxes, acronyms, labels, narrative fixed, compiles 0 errors 160pp)
+- D6 Reportflow: 81→87.2 (all 4 D6 sections added, bibliography, transitions, conclusion)
+- D7 Reflection: 68→83-84 (7 iterations, trimmed to 5pp, all rubric gaps fixed, at ceiling)
+- CV Standalone: created (998 lines, 10 sections) at `report/cv_report/main.tex`
+- Project Brief: fully extracted to `docs/PROJECT_BRIEF_COMPLETE.md` (verified 100% against PDF)
+
+**R01-R12 code fixes (all 12 requirements now MET in simulation):**
+- R01: Flight Area runtime geofence (`cv2.pointPolygonTest` → emergency RTL)
+- R03: TOL distance check at arming (warns if >5m)
+- R04: 50m altitude hard cap in `navigation.py`
+- R07: Prints distance from casualty at landing (not just from home)
+- R10: Detection photos + JSON saved to `mission_detections/` on Y/N/I/X
+- R12: MIT LICENSE file added
+- SAR_NAMES mapping in `vision.py` for 5-class model
+- All KML polygons drawn on all 3 map views (Flight Area 6px, SSSI fill, TOL star)
+
+**God view rendering optimization (IMPORTANT DESIGN CHANGE):**
+- **Before**: `get_god_view()` copied full 4319x4885 map (63MB) every frame, drew overlays, resized to ~1088px for display. ~250MB memory ops per frame at 20Hz = 3.8 GB/s bandwidth.
+- **After**: Map pre-scaled to ~1088px at init (`self._god_map`). All drawing at display resolution. Coverage overlay also pre-scaled. 63MB→4MB per frame (94% reduction).
+- **What was sacrificed**: Theoretical full-resolution map detail — but this was NEVER visible because the image was always resized down before display. Visual difference: negligible/imperceptible.
+- **Real risk**: If `_god_scale` coordinate multiplication is wrong anywhere, polygons/drone could appear offset. Watch for this.
+- **Revert**: `git checkout ce5c036` for old rendering with geofence fix but without optimization.
+- See `memory/god-view-optimization.md` for full technical details.
+
+**Geofence RTL crash fix (5 agents diagnosed):**
+- Root cause: `_emergency_rtl()` changed ArduCopter to RTL mode (6), but RC override guard only allowed modes 4 (GUIDED) and 9 (LAND). The guard did `continue` every iteration, skipping `cv2.waitKey(1)` — cv2 window froze.
+- Fix 1: Added mode 6 (RTL) to allowed modes: `(4, 6, 9)`
+- Fix 2: Added `cv2.waitKey(1)` inside override guard before `continue`
+- Fix 3: Added `self.sm._set_state(State.LANDING)` after geofence RTL trigger
+
+**Multi-class training:**
+- `training/generate_dataset_v3.py` generates 5-class dataset (dummy, pants, tshirt, backpack, cone)
+- 3500 images generated (3000 synthetic + 500 negatives) at 1088x1088, zipped for Colab
+- `training/colab_multiclass.py` with ready-to-paste Colab cells
+- `vision.py` updated with `SAR_NAMES` mapping for 5-class auto-detection
+- Training in progress on Colab (epoch 1/150)
+
+**New files:**
+- `LICENSE` (MIT)
+- `docs/PROJECT_BRIEF_COMPLETE.md` (verified brief extraction)
+- `docs/GEOFENCE_EXPLAINED.md`
+- `docs/BRIEF_VERIFICATION.md`
+- `report/cv_report/main.tex` + `CV_REPORT_WORKFLOW.md`
+- `report/sections/development_methodology.tex` (Appendix AI)
+- `report/sections/requirements_detail.tex` (Appendix AG)
+- `report/sections/evaluation_detail.tex` (Appendix AH)
+- `training/generate_dataset_multiclass.py`
+- `training/colab_multiclass.py`
+
+**Commits:** `ce5c036` (main session), `374a462` (god view optimization) on `Working8.Session4`
