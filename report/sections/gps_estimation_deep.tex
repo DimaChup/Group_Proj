@@ -4,7 +4,29 @@
 
 \section{GPS Target Estimation: A Deep Dive}\label{sec:gps-deep}
 
-Translating a bounding-box centre in a camera frame into a world-referenced GPS coordinate is arguably the most error-sensitive computation in the entire SAR pipeline.  Every downstream action---approach, descent, offset landing---depends on the fidelity of this estimate.  A single observation combines at least six independent noise sources (GPS receiver, barometer, compass, camera intrinsics, camera extrinsics, and timing lag), and the engineering challenge is to fuse many such observations into a position estimate precise enough to guide a safe offset landing.  This appendix presents the full mathematical derivation of the pixel-to-GPS projection, catalogues and quantifies the six dominant error sources, compares four fusion strategies that were implemented and benchmarked in parallel, describes the spatial clustering algorithm that handles multi-target scenarios, and reports the empirical accuracy obtained from both DJI flight-video replay and interactive simulator trials.
+Translating a bounding-box centre in a camera frame into a world-referenced GPS coordinate is arguably the most error-sensitive computation in the entire SAR pipeline.  Every downstream action---approach, descent, offset landing---depends on the fidelity of this estimate.  A single observation combines at least six independent noise sources (GPS receiver, barometer, compass, camera intrinsics, camera extrinsics, and timing lag), and the engineering challenge is to fuse many such observations into a position estimate precise enough to guide a safe offset landing.  This appendix presents the full mathematical derivation of the pixel-to-GPS projection, catalogues and quantifies the dominant error sources, compares three estimation strategies and four fusion algorithms, describes the spatial clustering algorithm that handles multi-target scenarios, and reports the empirical accuracy obtained from both DJI flight-video replay and interactive simulator trials.
+
+% =====================================================================
+\subsection{Strategy Roadmap}\label{sec:strategy-roadmap}
+
+Before diving into the mathematics, it is useful to preview the overall estimation strategy and how accuracy improves through the mission.  The system faces a fundamental challenge: the camera sees pixels, but the mission needs GPS coordinates.  A single GPS reading has \SIrange{2}{3}{\metre} uncertainty, and the pixel-to-GPS projection amplifies this through multiple error sources (roll/pitch, timing lag, calibration).  Three estimation strategies were evaluated (Section~\ref{sec:three-strategies}), and the mission architecture was designed so that accuracy improves progressively through the state machine:
+
+\begin{table}[ht]
+  \centering
+  \caption{Target position accuracy progression through mission states.  CEP$_{50}$ is the radius containing 50\% of estimates.  $N$ is the number of fused observations at each stage.}
+  \label{tab:accuracy-progression}
+  \begin{tabular}{llccl}
+    \toprule
+    \textbf{State} & \textbf{Drone Condition} & \textbf{CEP$_{50}$} & \textbf{$N_\mathrm{obs}$} & \textbf{Dominant Error} \\
+    \midrule
+    SEARCH     & Moving, $10^{\circ}$ pitch, 35\,m & $\sim$\SI{7}{\metre} & 1--5     & Roll/pitch projection \\
+    CENTERING  & Decelerating $\to$ hover, 35\,m   & $\sim$\SI{3}{\metre} & 5--20    & GPS receiver noise \\
+    VERIFY     & Stationary hover, 15\,m           & $\sim$\SI{1.5}{\metre} & 20--48 & GPS averaging limit \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\noindent The key insight is that the mission procedure itself---centering the target in the frame and hovering---eliminates the largest error sources \emph{without any software correction}.  When the target is at the optical centre, pixel offset is zero, and every multiplicative error in the projection chain (GSD, focal length, yaw, lens distortion) is multiplied by zero and vanishes (Section~\ref{sec:two-approaches}).  The only remaining error is the drone's own GPS accuracy, which is reduced by $\sqrt{N}$ through multi-frame averaging.
 
 % =====================================================================
 \subsection{Problem Statement}\label{sec:gps-problem}
@@ -387,14 +409,40 @@ The preceding error analysis reveals that several dominant error sources---roll/
 \noindent The combined effect is a reduction in single-observation RSS from $\sim$\SI{7}{\metre} (during flight) to $\sim$\SI{3}{\metre} (hover), with multi-frame averaging further reducing the fused estimate to $<$\SI{1}{\metre} precision.  This is an elegant engineering solution: rather than implementing complex roll/pitch compensation (Equation~\ref{eq:attitude-correction}), GPS lag correction ($\Delta\mathbf{p} = \mathbf{v} \cdot \Delta t$), and blur deconvolution in software, the mission procedure is designed to \emph{physically eliminate} these errors.  The software complexity remains low, the risk of introducing bugs in safety-critical code is avoided, and the resulting position estimate is more accurate than any single software correction could achieve in isolation.
 
 % =====================================================================
-\subsection{Two Approaches to Eliminating Geometric Error}\label{sec:two-approaches}
+\subsection{Three Estimation Strategies}\label{sec:three-strategies}
 
-The preceding analysis shows that hovering eliminates motion-induced errors.  However, two fundamentally different hover strategies exist, and the distinction has profound implications for the accuracy of the final GPS estimate.
+The preceding analysis identifies multiple error sources with very different magnitudes depending on whether the drone is moving or stationary, and whether the target is at the image centre or periphery.  Three fundamentally different strategies for obtaining a target GPS estimate were evaluated during development, each making different trade-offs between accuracy, flight time, and implementation complexity.
 
-\paragraph{Approach~1: Hover in Place.}
+% ------ Strategy A ------
+\subsubsection{Strategy~A: Single Flyover Estimate}
+
+The simplest approach: detect the target during the search pass, compute a GPS coordinate from the pixel offset and GSD pipeline, and proceed directly to approach without further refinement.  This strategy requires no deviation from the search pattern and yields a position estimate in a single frame.
+
+The error budget for a single in-flight observation at \SI{35}{\metre} (Table~\ref{tab:error-budget}) reveals why this strategy is inadequate:
+
+\begin{itemize}
+  \item Roll/pitch displacement: \SI{6.2}{\metre} at $10^{\circ}$ pitch (dominant term)
+  \item GPS receiver noise: \SIrange{2}{3}{\metre} CEP
+  \item GPS timing lag: $\sim$\SI{1}{\metre} at \SI{5}{\metre\per\second}
+  \item Calibration errors (focal length, compass, barometer): $\sim$\SI{1}{\metre} combined
+\end{itemize}
+
+\noindent The RSS total is $\sim$\SI{7}{\metre}---far too inaccurate for a \SI{7.5}{\metre} offset landing, where a \SI{7}{\metre} position error could place the drone directly on top of the casualty or \SI{15}{\metre} away.  Multiple flyover observations can be averaged, but the roll/pitch bias is systematic (always in the direction of travel) and only partially cancels between opposing scan lines.
+
+\textbf{Verdict:} Rejected as the primary strategy.  Used only as an initial rough estimate to guide the drone toward the target for closer investigation.
+
+% ------ Strategy B ------
+\subsubsection{Strategy~B: Hover in Place}\label{sec:hover-in-place}
+
 When the drone first detects a target during search, it could immediately halt and hover at its current position.  This eliminates roll/pitch displacement, motion blur, and GPS timing lag---exactly as described in Table~\ref{tab:centering-reduction}.  However, the target is \emph{not} at the centre of the camera frame; it sits at some pixel offset $(u, v)$ from the principal point.  Converting that pixel offset to a GPS coordinate still requires the full GSD pipeline: focal length~$f$, altitude~$h$, yaw heading~$\psi$, and the coordinate transformations of Equations~\ref{eq:unscale}--\ref{eq:body-deep}.  Every calibration error in this pipeline---focal length residual, barometric drift, compass distortion, lens distortion at the edge of the field---propagates directly into the final position estimate.
 
-\paragraph{Approach~2: Visual Centering (implemented).}
+GPS averaging over the hover period improves precision by $\sqrt{N}$, yielding $\sim$\SI{3}{\metre} after 10\,s at 4.8\,FPS.  This is a significant improvement over Strategy~A, but the accuracy is fundamentally limited by the pixel-to-GPS projection quality---any systematic calibration error (e.g.\ a 5\% focal length bias) produces a persistent offset that does not average out.
+
+\textbf{Verdict:} Viable but suboptimal.  The estimate quality depends on calibration accuracy, which is difficult to validate in the field.
+
+% ------ Strategy C ------
+\subsubsection{Strategy~C: Visual Centering (Implemented)}\label{sec:two-approaches}
+
 Instead of stopping in place, the drone flies toward the detection until the bounding-box centre coincides with the image principal point.  The CENTERING state (Section~\ref{sec:state-machine}) commands velocity toward the GPS-estimated target position and transitions to VERIFY once the drone is within \SI{1}{\metre} of the estimate.  At that moment, the target lies at (or very near) the optical centre of the frame:
 
 \begin{equation}\label{eq:zero-offset}
@@ -409,25 +457,46 @@ Instead of stopping in place, the drone flies toward the detection until the bou
 
 \noindent regardless of the GSD value.  The target GPS therefore equals the drone GPS directly, bypassing the entire pixel-to-GPS pipeline.  This is the key insight: \emph{when the pixel offset is zero, every multiplicative error source in the projection chain is multiplied by zero and vanishes.}
 
-Table~\ref{tab:hover-vs-centering} compares the two approaches across all geometric error sources.
+\paragraph{The zero-offset proof.}  The GPS projection (Equations~\ref{eq:body-deep}--\ref{eq:wgs84-deep}) can be written as a single expression:
+
+\begin{equation}\label{eq:full-projection}
+  \begin{pmatrix} \Delta\phi \\ \Delta\lambda \end{pmatrix}
+  = \frac{\mathrm{GSD}}{R_\oplus} \cdot \frac{180}{\pi} \cdot
+  \begin{pmatrix} \cos\psi & -\sin\psi \\ \frac{\sin\psi}{\cos\phi_d} & \frac{\cos\psi}{\cos\phi_d} \end{pmatrix}
+  \begin{pmatrix} -(v - C_y) \\ (u - C_x) \end{pmatrix}
+\end{equation}
+
+\noindent When $(u, v) = (C_x, C_y)$, the pixel-offset vector is exactly $\mathbf{0}$, and the entire matrix product vanishes regardless of the values of GSD (which depends on altitude and focal length calibration), heading $\psi$ (which depends on compass accuracy), or the latitude correction $\cos\phi_d$.  This means:
+
+\begin{itemize}
+  \item A 10\% focal length calibration error $\times\, 0 = 0$
+  \item A $5^{\circ}$ compass error $\times\, 0 = 0$
+  \item A \SI{1}{\metre} barometric altitude error $\times\, 0 = 0$
+  \item Maximum lens distortion at frame edges: irrelevant (target is at the optical centre, where distortion is minimal)
+\end{itemize}
+
+\noindent The only remaining error source is the drone's own GPS accuracy, which is irreducible but can be reduced by $\sqrt{N}$ through temporal averaging.
+
+Table~\ref{tab:hover-vs-centering} compares all three strategies across the error sources.
 
 \begin{table}[H]
   \centering
-  \caption{Geometric error elimination: hovering in place versus visual centering.  ``Not needed'' indicates that the error source is multiplied by the zero pixel offset and does not contribute to the final estimate.}
+  \caption{Error source comparison across the three estimation strategies.  ``Not needed'' indicates the error source is multiplied by zero pixel offset and does not contribute.}
   \label{tab:hover-vs-centering}
-  \begin{tabularx}{\linewidth}{Xcc}
+  \begin{tabularx}{\linewidth}{Xccc}
     \toprule
-    \textbf{Error Source} & \textbf{Hover in Place} & \textbf{Visual Centering} \\
+    \textbf{Error Source} & \textbf{A: Single Flyover} & \textbf{B: Hover in Place} & \textbf{C: Visual Centering} \\
     \midrule
-    Roll/pitch projection          & Eliminated       & Eliminated \\
-    Motion blur                    & Eliminated       & Eliminated \\
-    GSD / focal length calibration & Still required   & Not needed (zero offset) \\
-    Yaw rotation accuracy          & Still required   & Not needed (zero offset) \\
-    Lens distortion                & Present at edges & Minimum at optical centre \\
-    GPS timing lag                 & Eliminated       & Eliminated \\
-    GPS averaging                  & Single fix       & 10\,s averaged ($\sqrt{N}$ reduction) \\
+    Roll/pitch projection      & \SI{6.2}{\metre}   & Eliminated       & Eliminated \\
+    Motion blur                & Present             & Eliminated       & Eliminated \\
+    GSD / focal length calib.  & Full propagation    & Still required   & Not needed (zero offset) \\
+    Yaw rotation accuracy      & Full propagation    & Still required   & Not needed (zero offset) \\
+    Lens distortion            & Up to \SI{0.5}{\metre} & Present at edges & Minimal at optical centre \\
+    GPS timing lag             & $\sim$\SI{1}{\metre} & Eliminated       & Eliminated \\
+    GPS averaging              & 1 sample            & $\sqrt{N}$ reduction & $\sqrt{N}$ reduction \\
     \midrule
-    \textbf{Final estimate}        & Drone GPS $+$ pixel offset & Drone GPS directly \\
+    \textbf{Typical CEP$_{50}$} & $\sim$\SI{7}{\metre} & $\sim$\SI{3}{\metre} & $\sim$\SI{1.5}{\metre} \\
+    \textbf{Final estimate}    & Pixel offset + GSD  & Drone GPS + offset & Drone GPS directly \\
     \bottomrule
   \end{tabularx}
 \end{table}
@@ -435,6 +504,49 @@ Table~\ref{tab:hover-vs-centering} compares the two approaches across all geomet
 \noindent The visual centering approach is therefore fundamentally more robust than hovering in place: it eliminates the \emph{need} for accurate camera calibration rather than merely tolerating its imperfections.  During the subsequent VERIFY hold, the GPS estimator collects multiple stationary readings and applies inverse-variance-weighted averaging (Section~\ref{sec:fusion-strategies}), further reducing the $\sim$\SIrange{2}{3}{\metre} single-fix CEP to approximately \SI{1.5}{\metre} after 10\,s of stationary observation at 4.8\,FPS ($N_\mathrm{eff} \approx 48$, improvement factor $\sqrt{48} \approx 7\times$).
 
 The trade-off is flight time: centering adds 10--30\,s of manoeuvring above the target compared to an immediate stop.  Section~\ref{sec:centering-analysis} analyses the operational risks of this additional low-altitude flight and explains why the direct offset landing configuration bypasses the descent phase while retaining the centering hold for position refinement.
+
+% =====================================================================
+\subsection{Altitude Effect on Estimation Accuracy}\label{sec:altitude-effect}
+
+Altitude has a compound effect on position estimation quality that goes beyond the obvious change in ground sampling distance.  Lower altitude improves accuracy through three independent mechanisms that reinforce each other:
+
+\begin{enumerate}
+  \item \textbf{Smaller GSD $\to$ more pixels on target.}  At \SI{35}{\metre}, the mannequin occupies $\sim$81\,px (Table~\ref{tab:gsd-altitude}); at \SI{15}{\metre}, it occupies $\sim$190\,px.  A larger bounding box yields a more precise centre estimate: the $\pm$2--3\,px detector noise translates to \SI{0.05}{\metre} at 35\,m but only \SI{0.02}{\metre} at 15\,m.
+
+  \item \textbf{Smaller GSD $\to$ smaller ground projection of pixel errors.}  Every pixel-level error (detection noise, resize rounding, lens distortion residual) is multiplied by GSD to produce a ground-level offset.  At \SI{35}{\metre} (GSD\,=\,\SI{22.1}{\milli\metre\per\px}), a 3\,px error is \SI{0.066}{\metre}; at \SI{15}{\metre} (GSD\,=\,\SI{9.5}{\milli\metre\per\px}), the same 3\,px error is \SI{0.029}{\metre}.
+
+  \item \textbf{Reduced roll/pitch displacement.}  The tilt-induced error $\Delta_\mathrm{tilt} = h\tan\theta$ is proportional to altitude.  Even if the drone is not perfectly stationary during low-altitude investigation, a $2^{\circ}$ residual tilt produces only \SI{0.5}{\metre} error at \SI{15}{\metre} versus \SI{1.2}{\metre} at \SI{35}{\metre}.
+\end{enumerate}
+
+\noindent These three effects are encoded in the inverse-variance weighting scheme (Equation~\ref{eq:alt-weight}), where $w_\mathrm{alt} = (h_\mathrm{ref}/h)^2$.  A single observation at \SI{15}{\metre} carries $5.4\times$ the weight of one at \SI{35}{\metre}, correctly reflecting the compound improvement in geometric accuracy.  This altitude-dependent quality progression is what makes the visual centering strategy (Section~\ref{sec:two-approaches}) so effective: as the drone descends toward the target, each new frame is dramatically more informative than the last.
+
+% =====================================================================
+\subsection{Accuracy Progression Through Mission Phases}\label{sec:accuracy-progression}
+
+Table~\ref{tab:accuracy-journey} consolidates the preceding analysis into a single view of how the target position estimate improves from first detection to final landing.
+
+\begin{table}[H]
+\centering
+\caption{Target GPS estimate accuracy at each mission phase.  CEP values are root-sum-of-squares of dominant error sources; measured CEP50 from DJI video validates the theoretical model.}
+\label{tab:accuracy-journey}
+\small
+\begin{tabularx}{\linewidth}{@{}lccX@{}}
+\toprule
+\textbf{Phase} & \textbf{Alt (m)} & \textbf{Est.\ CEP (m)} & \textbf{Why it improves} \\
+\midrule
+SEARCH (single flyover) & 35 & $\sim$7.0 & Roll/pitch (6.2\,m), GPS lag (1\,m), GPS noise (2--3\,m), calibration errors \\
+SEARCH (after 5 passes) & 35 & $\sim$3.5 & Multi-pass averaging ($\sqrt{5}$), alternating headings cancel GPS lag bias \\
+CENTERING (approaching) & 35 & $\sim$2.5 & Slowing to hover eliminates roll/pitch; target drifts toward frame centre \\
+CENTERING (centred, hovering) & 35 & $\sim$1.8 & Target at centre $\Rightarrow$ offset $=0$; all geometric errors vanish; GPS averaged $\sim$5\,s \\
+VERIFY hold (10\,s) & 15 & $\sim$1.5 & Lower altitude $\Rightarrow$ 5.4$\times$ weight; 48 GPS samples at 4.8\,FPS ($\sqrt{48}\approx 7\times$) \\
+APPROACH (fly to offset) & 15 & $\sim$1.5 & Uses best VERIFY estimate; 7.5\,m offset computed from averaged GPS \\
+\midrule
+\textbf{Measured (DJI video)} & \textbf{35} & \textbf{2.3} & \textbf{CEP50 from 50+ detections across 6\,min flight video} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\noindent The progression demonstrates that the system's accuracy is not a single number but a function of mission phase: the combination of centering (zero-offset), hovering (zero roll/pitch), and temporal averaging ($\sqrt{N}$ GPS improvement) transforms a $\sim$7\,m initial estimate into a $\sim$1.5\,m final estimate---well within the R07 landing annulus of 5--10\,m from the casualty.
 
 % =====================================================================
 \subsection{Fusion Strategies}\label{sec:fusion-strategies}
@@ -589,6 +701,40 @@ Key findings:
 The interactive simulator (\texttt{simple\_simulator.py}) supports configurable GPS drift (\texttt{-{}-gps-drift}), altitude noise (\texttt{-{}-alt-noise}), yaw noise (\texttt{-{}-yaw-noise}), and FOV calibration error (\texttt{-{}-fov-error}).  All four estimators run in parallel, and the scatter plot displays each observation (colour-coded by weight) alongside the rolling, cumulative, Kalman, and inverse-variance estimates with real-time error metrics against the known dummy position.
 
 A typical keyboard-flown mission---flyover at \SI{35}{\metre}, descend to \SI{15}{\metre}, circle the target---produces 30--50 observations over 60--90\,seconds.  With \SI{3}{\metre} GPS drift enabled, the inverse-variance estimate converges to sub-metre accuracy within the first 20 observations once the drone descends below \SI{20}{\metre}, confirming the altitude-dependent weighting strategy.
+
+% =====================================================================
+\subsection{Accuracy Progression Through the Mission}\label{sec:accuracy-progression}
+
+The preceding sections have analysed individual error sources, mitigation strategies, and fusion algorithms in isolation.  This subsection draws them together to show how the system's position estimate improves concretely as the mission progresses through its state machine.
+
+\begin{table}[ht]
+  \centering
+  \caption{Detailed accuracy progression through mission states, showing how each state transition reduces the dominant error sources.  Values assume nominal conditions (single-frequency L1 GPS, IMX296 camera, YOLOv8n detector at 4.8\,FPS).}
+  \label{tab:state-accuracy}
+  \begin{tabular}{lp{3.2cm}cccp{3.8cm}}
+    \toprule
+    \textbf{State} & \textbf{Condition} & \textbf{Alt (m)} & \textbf{$N_\mathrm{obs}$} & \textbf{CEP$_{50}$} & \textbf{What improves} \\
+    \midrule
+    SEARCH & Moving at \SI{8}{\metre\per\second}, $10^{\circ}$ pitch & 35 & 1--5 & $\sim$\SI{7}{\metre} & First detection; all errors present \\
+    \addlinespace
+    CENTERING & Decelerating to hover, approaching target & 35$\to$15 & 5--20 & \SI{3}{\metre}$\to$\SI{2}{\metre} & Roll/pitch $\to$ 0; motion blur $\to$ 0; GPS lag $\to$ 0; altitude decreasing \\
+    \addlinespace
+    VERIFY & Stationary hover, target at frame centre & 15 & 20--48 & $\sim$\SI{1.5}{\metre} & Zero pixel offset eliminates all calibration errors; GPS averaged over $\sim$10\,s \\
+    \addlinespace
+    APPROACH & Flying to offset landing point & --- & 48+ & \SI{1.5}{\metre} (frozen) & Estimate frozen at VERIFY quality; no further updates \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\noindent The progression from \SI{7}{\metre} to \SI{1.5}{\metre} represents a $\sim$5$\times$ improvement achieved entirely through operational procedure (centering + hovering + averaging), without any increase in software complexity or sensor quality.  Each state transition eliminates a specific category of error:
+
+\begin{enumerate}
+  \item \textbf{SEARCH $\to$ CENTERING}: eliminates motion-induced errors (roll/pitch, blur, GPS lag).  This single transition removes the largest error source (\SI{6.2}{\metre} from pitch) and reduces the RSS from \SI{7}{\metre} to \SI{3}{\metre}.
+  \item \textbf{CENTERING $\to$ VERIFY}: the drone descends from search altitude to verify altitude, and the target reaches the frame centre.  The zero-offset condition (Equation~\ref{eq:zero-projection}) eliminates all calibration-dependent errors.  Simultaneously, the lower altitude increases the weight of each observation by $(35/15)^2 \approx 5.4\times$.
+  \item \textbf{VERIFY hold (10\,s)}: stationary observation at 4.8\,FPS yields $N \approx 48$ samples.  Random GPS noise averages as $\sigma/\sqrt{N_\mathrm{eff}}$; with $N_\mathrm{eff} \approx 20$ (accounting for temporal correlation in GPS readings at $\sim$5\,Hz update rate), this reduces the \SIrange{2}{3}{\metre} single-fix CEP to $\sim$\SI{1.5}{\metre}.
+\end{enumerate}
+
+\noindent The final \SI{1.5}{\metre} CEP$_{50}$ is dominated by the irreducible GPS receiver noise floor---the theoretical minimum achievable with a single-frequency L1 receiver without differential correction (RTK or DGPS).  Further improvement would require either RTK GPS ($\sim$\SI{0.02}{\metre}) or significantly longer averaging times.
 
 % =====================================================================
 \subsection{Why Inverse-Variance Weighting Won}\label{sec:why-ivw}
