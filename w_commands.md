@@ -1,3 +1,18 @@
+python field_tools/passive_watch.py --fake --no-mavlink --model cv_models/human.tflite --conf 0.4 --smart-estimate --smart-radius 2.0 --smart-min 7 --save-dir dima_images --class-filter "person,bird"
+
+
+
+
+
+
+
+
+
+
+
+
+========================================================
+
 python field_tools/passive_watch.py --conf 0.5 --model cv_models/human.tflite --save-dir /home/flightlab-user/detections --class-filter person --simple-names
 
 

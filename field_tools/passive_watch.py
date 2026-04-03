@@ -148,6 +148,7 @@ parser.add_argument('--class-filter', type=str, default=None, help='Only save de
 parser.add_argument('--smart-estimate', action='store_true', help='Accumulate central detections, save after 10+ with median GPS')
 parser.add_argument('--smart-min', type=int, default=5, help='Min central detections before saving (default 5)')
 parser.add_argument('--smart-radius', type=float, default=1.0, help='Max spread for smart cluster (default 1.0m)')
+parser.add_argument('--smart-dir', type=str, default=None, help='Directory for SMART result images (default: <save-dir>/smart_detections/)')
 parser.add_argument('--fake', action='store_true', help='Replay DJI video + SRT telemetry (no camera/mavproxy)')
 parser.add_argument('--fake-video', default='RealVideo/DJI_0001_1456x1088_cropped_30fps.mp4')
 parser.add_argument('--fake-srt', default='RealVideo/DJI_20260311172332_0001_V.SRT')
@@ -278,26 +279,26 @@ HTML_PAGE = """<!DOCTYPE html>
 
   <label>Conf:</label>
   <div class="slider-group">
-    <input type="range" id="conf-slider" min="0.05" max="0.95" step="0.05" value="0.20">
-    <span class="conf-val" id="conf-val">0.20</span>
+    <input type="range" id="conf-slider" min="0.05" max="0.95" step="0.05" value="__CONF_VAL__">
+    <span class="conf-val" id="conf-val">__CONF_VAL__</span>
   </div>
   <span class="sep">|</span>
 
   <label>Class:</label>
   <span style="display:inline-flex;gap:6px;align-items:center">
-    <label style="color:#0f0;cursor:pointer"><input type="checkbox" id="cls-person" checked style="accent-color:#0f0"> person</label>
-    <label style="color:#0f0;cursor:pointer"><input type="checkbox" id="cls-bird" checked style="accent-color:#0f0"> bird</label>
-    <label style="color:#0f0;cursor:pointer"><input type="checkbox" id="cls-dummy" style="accent-color:#0f0"> dummy</label>
-    <label style="color:#888;cursor:pointer"><input type="checkbox" id="cls-other" style="accent-color:#888"> other</label>
+    <label style="color:#0f0;cursor:pointer"><input type="checkbox" id="cls-person" __CLS_PERSON__ style="accent-color:#0f0"> person</label>
+    <label style="color:#0f0;cursor:pointer"><input type="checkbox" id="cls-bird" __CLS_BIRD__ style="accent-color:#0f0"> bird</label>
+    <label style="color:#0f0;cursor:pointer"><input type="checkbox" id="cls-dummy" __CLS_DUMMY__ style="accent-color:#0f0"> dummy</label>
+    <label style="color:#888;cursor:pointer"><input type="checkbox" id="cls-other" __CLS_OTHER__ style="accent-color:#888"> other</label>
   </span>
   <span class="sep">|</span>
   <button id="clear-all-btn" onclick="clearAll()" style="padding:3px 10px;background:#600;color:#fff;border:1px solid #f44;border-radius:3px;cursor:pointer;font-family:monospace;font-size:1em">Clear All</button>
   <button id="reset-best-btn" onclick="resetBest()" style="padding:3px 10px;background:#333;color:#0ff;border:1px solid #0ff;border-radius:3px;cursor:pointer;font-family:monospace;font-size:1em">Reset Best</button>
   <span class="sep">|</span>
   <label>Smart:</label>
-  <input type="number" id="smart-spread" value="0.75" min="0.1" max="5" step="0.05" style="width:50px;background:#222;color:#0f0;border:1px solid #444;border-radius:3px;padding:3px 4px;font-family:monospace;font-size:1em">
+  <input type="number" id="smart-spread" value="__SMART_SPREAD__" min="0.1" max="5" step="0.05" style="width:50px;background:#222;color:#0f0;border:1px solid #444;border-radius:3px;padding:3px 4px;font-family:monospace;font-size:1em">
   <span style="color:#888">m</span>
-  <input type="number" id="smart-count" value="10" min="3" max="50" step="1" style="width:40px;background:#222;color:#0f0;border:1px solid #444;border-radius:3px;padding:3px 4px;font-family:monospace;font-size:1em">
+  <input type="number" id="smart-count" value="__SMART_COUNT__" min="3" max="50" step="1" style="width:40px;background:#222;color:#0f0;border:1px solid #444;border-radius:3px;padding:3px 4px;font-family:monospace;font-size:1em">
   <span style="color:#888">pts</span>
 </div>
 
@@ -531,6 +532,19 @@ class Handler(BaseHTTPRequestHandler):
                 '<div id="gps-charts-host"></div>',
                 get_gps_charts_html()
             )
+            # Set UI defaults from CLI flags
+            page = page.replace("__CONF_VAL__", f"{args.conf:.2f}")
+            page = page.replace("__SMART_SPREAD__", str(args.smart_radius))
+            page = page.replace("__SMART_COUNT__", str(args.smart_min))
+            # Set class filter checkboxes from CLI flag
+            cf = runtime_state.get("class_filter", "all")
+            if cf == "all":
+                for cls in ("PERSON", "BIRD", "DUMMY", "OTHER"):
+                    page = page.replace(f"__CLS_{cls}__", "checked")
+            else:
+                allowed = [c.strip().lower() for c in cf.split(',')]
+                for cls in ("PERSON", "BIRD", "DUMMY", "OTHER"):
+                    page = page.replace(f"__CLS_{cls}__", "checked" if cls.lower() in allowed else "")
             self.wfile.write(page.encode())
 
         elif path == '/stream':
@@ -1311,6 +1325,70 @@ def _snapshot_overlay(display, label=None, thumb_w=728, gps_info=None):
     return jpg.tobytes()
 
 
+_map_full = None  # cached full-res map.jpg
+
+def _build_map_panel(gps_lat, gps_lon, target_width):
+    """Build a map crop with a magenta star at the GPS coordinate.
+
+    Returns a BGR image of width=target_width, or None if map.jpg not found.
+    """
+    global _map_full
+    if _map_full is None:
+        map_path = config.MAP_FILE
+        if os.path.exists(map_path):
+            _map_full = cv2.imread(map_path)
+        if _map_full is None:
+            return None
+
+    full_h, full_w = _map_full.shape[:2]
+
+    # GPS → pixel on full map
+    dn = (config.REF_LAT - gps_lat) * 111320
+    de = (gps_lon - config.REF_LON) * 111320 * math.cos(math.radians(config.REF_LAT))
+    cx = int(de / config.MAP_WIDTH_METERS * full_w)
+    cy = int(dn / config.MAP_WIDTH_METERS * full_w)
+
+    # Resize full map to target width, preserving aspect ratio
+    panel_h = int(full_h * target_width / full_w)
+    panel = cv2.resize(_map_full, (target_width, panel_h))
+
+    # Helper: GPS → panel pixel
+    def to_px(lat, lon):
+        _dn = (config.REF_LAT - lat) * 111320
+        _de = (lon - config.REF_LON) * 111320 * math.cos(math.radians(config.REF_LAT))
+        return (int(_de / config.MAP_WIDTH_METERS * target_width),
+                int(_dn / config.MAP_WIDTH_METERS * target_width))
+
+    # Draw SSSI no-fly zone polygon (red)
+    if hasattr(config, 'SSSI_GPS') and config.SSSI_GPS:
+        pts = np.array([to_px(lat, lon) for lat, lon in config.SSSI_GPS], dtype=np.int32)
+        cv2.polylines(panel, [pts], True, (0, 0, 255), 2, cv2.LINE_AA)
+
+    # Draw search area polygon (yellow)
+    if hasattr(config, 'SEARCH_AREA_GPS') and config.SEARCH_AREA_GPS:
+        pts = np.array([to_px(lat, lon) for lat, lon in config.SEARCH_AREA_GPS], dtype=np.int32)
+        cv2.polylines(panel, [pts], True, (0, 255, 255), 2, cv2.LINE_AA)
+
+    # Star position in panel pixels
+    star_x = int(cx * target_width / full_w)
+    star_y = int(cy * target_width / full_w)
+    star_x = max(15, min(target_width - 15, star_x))
+    star_y = max(15, min(panel_h - 15, star_y))
+
+    # Draw magenta star
+    cv2.drawMarker(panel, (star_x, star_y), (255, 0, 255), cv2.MARKER_STAR, 25, 3)
+    # White circle outline for visibility
+    cv2.circle(panel, (star_x, star_y), 18, (255, 255, 255), 1, cv2.LINE_AA)
+
+    # Label bar at top of map panel
+    cv2.rectangle(panel, (0, 0), (target_width, 22), (0, 0, 0), -1)
+    coord_text = f"MAP: {gps_lat:.7f}, {gps_lon:.7f}"
+    cv2.putText(panel, coord_text, (5, 16), cv2.FONT_HERSHEY_SIMPLEX, 0.45,
+                (255, 0, 255), 1, cv2.LINE_AA)
+
+    return panel
+
+
 def generate_result_image(frame, title, gps_lat, gps_lon, stats_text, filename,
                           title_color=(0, 255, 0), drone_lat=None, drone_lon=None,
                           gps_label="DUMMY EST"):
@@ -1371,6 +1449,13 @@ def generate_result_image(frame, title, gps_lat, gps_lon, stats_text, filename,
         offset_text = f"OFFSET: {offset_m:.1f}m"
         cv2.putText(result, offset_text, (15, 170), font, 0.7, (0, 0, 0), 4, cv2.LINE_AA)
         cv2.putText(result, offset_text, (15, 170), font, 0.7, (0, 255, 255), 2, cv2.LINE_AA)  # yellow
+
+    # ── Build map panel with star at coordinate ──
+    map_panel = _build_map_panel(gps_lat, gps_lon, w)
+
+    if map_panel is not None:
+        # Stack vertically: detection frame on top, map on bottom
+        result = np.vstack([result, map_panel])
 
     # Save (PNG for lossless, JPEG otherwise)
     os.makedirs(os.path.dirname(filename) or '.', exist_ok=True)
@@ -2549,7 +2634,7 @@ def inference_worker(args_ref, csv_writer_ref, csv_file_ref):
                     smart_text = f"SMART: {s_lat:.7f}, {s_lon:.7f} (spread {s_spread:.2f}m)"
                     cv2.putText(result_frame, smart_text, (5, est_y + 16),
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 0, 255), 1)
-                    smart_dir = os.path.join(args_ref.save_dir, "smart_detections")
+                    smart_dir = args_ref.smart_dir or os.path.join(args_ref.save_dir, "smart_detections")
                     os.makedirs(smart_dir, exist_ok=True)
                     _smart_image_counter = smart_estimator.lock_id
                     s_fname = os.path.join(smart_dir, f"{_smart_image_counter:04d}_{s_lat:.7f}_{s_lon:.7f}.png")
@@ -2724,6 +2809,20 @@ def main():
     except Exception:
         pass
 
+    # Non-blocking terminal key check
+    try:
+        import msvcrt
+        def _check_key():
+            if msvcrt.kbhit():
+                return msvcrt.getch().decode('utf-8', errors='ignore').lower()
+            return None
+    except ImportError:
+        import select as _sel
+        def _check_key():
+            if _sel.select([sys.stdin], [], [], 0)[0]:
+                return sys.stdin.read(1).lower()
+            return None
+
     print("=" * 50)
     print("  SAR PASSIVE WATCH")
     print("  Camera + Detection + Stream + Snapshots")
@@ -2736,6 +2835,7 @@ def main():
         print(f"  Saving to:  {args.save_dir}/")
     else:
         print("  Saving:     OFF")
+    print(f"  Keys:       C = Clear All (reset SMART + detections)")
     print()
     print(f"  Dashboard:  http://{pi_ip}:{args.port}/")
     print(f"  Stream:     http://{pi_ip}:{args.port}/stream")
@@ -3082,6 +3182,38 @@ def main():
         if frame_count % 50 == 0:
             gps_str = f"GPS:{lat:.7f},{lon:.7f}" if lat != 0 else "GPS:---"
             print(f"  #{frame_count} CAM:{c_fps:.1f} VIS:{v_fps:.1f} STR:{s_fps:.1f} Det:{det_count} ({det_pct:.0f}%) Saved:{saved_count} {gps_str}")
+
+        # ── Terminal key check ──
+        try:
+            key = _check_key()
+            if key == 'c':
+                # Clear All — same as browser button
+                _all_gps_estimates.clear()
+                dummy_estimator.reset()
+                if smart_estimator:
+                    smart_estimator.__init__(min_samples=smart_estimator.min_samples, max_spread=smart_estimator.max_spread)
+                    if hasattr(smart_estimator, '_saved'):
+                        smart_estimator._saved = False
+                _g = globals()
+                _g['_best_center_dist'] = 999.0
+                _g['_best_detection_gps'] = None
+                _g['_snap_request_best'] = False
+                _g['_snap_request_latest'] = False
+                _g['_snap_jpeg_best'] = None
+                _g['_snap_jpeg_latest'] = None
+                draw_overlay._last_class = ''
+                _g['_last_det'] = None
+                _g['latest_detection_jpeg'] = None
+                _g['latest_best_jpeg'] = None
+                _g['latest_bullseye'] = None
+                _g['latest_smart_grid_jpeg'] = None
+                _g['_smart_result_saved'] = False
+                _g['_survey_result_saved'] = False
+                stats["detections"] = 0
+                stats["saved"] = 0
+                print("\n  [CLEAR ALL] Reset SMART + detections. Ready for next detection.\n")
+        except Exception:
+            pass
 
         # ── Pace display loop to ~30fps ──
         elapsed = time.time() - loop_start
