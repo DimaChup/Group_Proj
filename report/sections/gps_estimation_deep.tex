@@ -387,6 +387,56 @@ The preceding error analysis reveals that several dominant error sources---roll/
 \noindent The combined effect is a reduction in single-observation RSS from $\sim$\SI{7}{\metre} (during flight) to $\sim$\SI{3}{\metre} (hover), with multi-frame averaging further reducing the fused estimate to $<$\SI{1}{\metre} precision.  This is an elegant engineering solution: rather than implementing complex roll/pitch compensation (Equation~\ref{eq:attitude-correction}), GPS lag correction ($\Delta\mathbf{p} = \mathbf{v} \cdot \Delta t$), and blur deconvolution in software, the mission procedure is designed to \emph{physically eliminate} these errors.  The software complexity remains low, the risk of introducing bugs in safety-critical code is avoided, and the resulting position estimate is more accurate than any single software correction could achieve in isolation.
 
 % =====================================================================
+\subsection{Two Approaches to Eliminating Geometric Error}\label{sec:two-approaches}
+
+The preceding analysis shows that hovering eliminates motion-induced errors.  However, two fundamentally different hover strategies exist, and the distinction has profound implications for the accuracy of the final GPS estimate.
+
+\paragraph{Approach~1: Hover in Place.}
+When the drone first detects a target during search, it could immediately halt and hover at its current position.  This eliminates roll/pitch displacement, motion blur, and GPS timing lag---exactly as described in Table~\ref{tab:centering-reduction}.  However, the target is \emph{not} at the centre of the camera frame; it sits at some pixel offset $(u, v)$ from the principal point.  Converting that pixel offset to a GPS coordinate still requires the full GSD pipeline: focal length~$f$, altitude~$h$, yaw heading~$\psi$, and the coordinate transformations of Equations~\ref{eq:unscale}--\ref{eq:body-deep}.  Every calibration error in this pipeline---focal length residual, barometric drift, compass distortion, lens distortion at the edge of the field---propagates directly into the final position estimate.
+
+\paragraph{Approach~2: Visual Centering (implemented).}
+Instead of stopping in place, the drone flies toward the detection until the bounding-box centre coincides with the image principal point.  The CENTERING state (Section~\ref{sec:state-machine}) commands velocity toward the GPS-estimated target position and transitions to VERIFY once the drone is within \SI{1}{\metre} of the estimate.  At that moment, the target lies at (or very near) the optical centre of the frame:
+
+\begin{equation}\label{eq:zero-offset}
+  \Delta u = u - \tfrac{W}{2} \approx 0, \qquad \Delta v = v - \tfrac{H}{2} \approx 0
+\end{equation}
+
+\noindent and the camera-frame offset (Equation~\ref{eq:body-deep}) reduces to
+
+\begin{equation}\label{eq:zero-projection}
+  d_\mathrm{fwd} = -\Delta v \cdot \mathrm{GSD} \approx 0, \qquad d_\mathrm{right} = \Delta u \cdot \mathrm{GSD} \approx 0
+\end{equation}
+
+\noindent regardless of the GSD value.  The target GPS therefore equals the drone GPS directly, bypassing the entire pixel-to-GPS pipeline.  This is the key insight: \emph{when the pixel offset is zero, every multiplicative error source in the projection chain is multiplied by zero and vanishes.}
+
+Table~\ref{tab:hover-vs-centering} compares the two approaches across all geometric error sources.
+
+\begin{table}[H]
+  \centering
+  \caption{Geometric error elimination: hovering in place versus visual centering.  ``Not needed'' indicates that the error source is multiplied by the zero pixel offset and does not contribute to the final estimate.}
+  \label{tab:hover-vs-centering}
+  \begin{tabularx}{\linewidth}{Xcc}
+    \toprule
+    \textbf{Error Source} & \textbf{Hover in Place} & \textbf{Visual Centering} \\
+    \midrule
+    Roll/pitch projection          & Eliminated       & Eliminated \\
+    Motion blur                    & Eliminated       & Eliminated \\
+    GSD / focal length calibration & Still required   & Not needed (zero offset) \\
+    Yaw rotation accuracy          & Still required   & Not needed (zero offset) \\
+    Lens distortion                & Present at edges & Minimum at optical centre \\
+    GPS timing lag                 & Eliminated       & Eliminated \\
+    GPS averaging                  & Single fix       & 10\,s averaged ($\sqrt{N}$ reduction) \\
+    \midrule
+    \textbf{Final estimate}        & Drone GPS $+$ pixel offset & Drone GPS directly \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\noindent The visual centering approach is therefore fundamentally more robust than hovering in place: it eliminates the \emph{need} for accurate camera calibration rather than merely tolerating its imperfections.  During the subsequent VERIFY hold, the GPS estimator collects multiple stationary readings and applies inverse-variance-weighted averaging (Section~\ref{sec:fusion-strategies}), further reducing the $\sim$\SIrange{2}{3}{\metre} single-fix CEP to approximately \SI{1.5}{\metre} after 10\,s of stationary observation at 4.8\,FPS ($N_\mathrm{eff} \approx 48$, improvement factor $\sqrt{48} \approx 7\times$).
+
+The trade-off is flight time: centering adds 10--30\,s of manoeuvring above the target compared to an immediate stop.  Section~\ref{sec:centering-analysis} analyses the operational risks of this additional low-altitude flight and explains why the direct offset landing configuration bypasses the descent phase while retaining the centering hold for position refinement.
+
+% =====================================================================
 \subsection{Fusion Strategies}\label{sec:fusion-strategies}
 
 Four estimation approaches were implemented in the simulator (\texttt{simple\_simulator.py}), each operating on the same stream of per-frame GPS estimates.  All four run in parallel so that their accuracy can be compared directly on every detection cluster.
