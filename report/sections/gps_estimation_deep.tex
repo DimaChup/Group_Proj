@@ -409,49 +409,78 @@ The preceding error analysis reveals that several dominant error sources---roll/
 \noindent The combined effect is a reduction in single-observation RSS from $\sim$\SI{7}{\metre} (during flight) to $\sim$\SI{3}{\metre} (hover), with multi-frame GPS averaging further reducing the fused estimate to $\sim$\SI{1.8}{\metre} precision at search altitude.  This is an elegant engineering solution: rather than implementing complex roll/pitch compensation (Equation~\ref{eq:attitude-correction}), GPS lag correction ($\Delta\mathbf{p} = \mathbf{v} \cdot \Delta t$), and blur deconvolution in software, the mission procedure is designed to \emph{physically eliminate} these errors.  The software complexity remains low, the risk of introducing bugs in safety-critical code is avoided, and the resulting position estimate is more accurate than any single software correction could achieve in isolation.
 
 % =====================================================================
-\subsection{Three Estimation Strategies}\label{sec:three-strategies}
+\subsection{Three-Level Estimation Architecture}\label{sec:three-strategies}
 
-The preceding analysis identifies multiple error sources with very different magnitudes depending on whether the drone is moving or stationary, and whether the target is at the image centre or periphery.  Three fundamentally different strategies for obtaining a target GPS estimate were evaluated during development, each making different trade-offs between accuracy, flight time, and implementation complexity.
+The preceding error analysis reveals that different operational modes---flying, hovering, and visually centering---expose fundamentally different subsets of the error budget.  This section presents the three estimation levels as a structured design decision, comparing accuracy, mission cost, calibration dependency, and compliance with requirement R07 (land within \SIrange{5}{10}{\metre} of the casualty).  The architecture was designed so that each level builds on the previous one, and the system can fall back to a lower level if detection is lost during centering.
 
-% ------ Strategy A ------
-\subsubsection{Strategy~A: Single Flyover Estimate}
+% ------ Level 1 ------
+\subsubsection{Level~1: Fully Passive Estimation (No Drone Response)}\label{sec:level-1-passive}
 
-The simplest approach: detect the target during the search pass, compute a GPS coordinate from the pixel offset and GSD pipeline, and proceed directly to approach without further refinement.  This strategy requires no deviation from the search pattern and yields a position estimate in a single frame.
+In Level~1, the drone flies its pre-planned lawnmower search pattern without deviating.  Detections are logged and GPS coordinates are estimated from pixel offset and GSD, but the drone does not stop, turn, or respond to any detection.  This is the mode implemented in \texttt{passive\_watch.py}---a pure observer that sends zero commands to the flight controller.
 
-The error budget for a single in-flight observation at \SI{35}{\metre} (Table~\ref{tab:error-budget}) reveals why this strategy is inadequate:
+\paragraph{How it works.}  For each detection, the pixel offset from the image centre is projected through the full GSD pipeline (Equations~\ref{eq:body-deep}--\ref{eq:wgs84-deep}): pixel offset $\to$ camera-frame displacement $\to$ yaw rotation to NED $\to$ WGS\,84 projection.  Every error source in Table~\ref{tab:error-budget} contributes at full magnitude.
 
+\paragraph{Advantages.}
 \begin{itemize}
-  \item Roll/pitch displacement: \SI{6.2}{\metre} at $10^{\circ}$ pitch (dominant term)
-  \item GPS receiver noise: \SIrange{2}{3}{\metre} CEP
-  \item GPS timing lag: $\sim$\SI{1}{\metre} at \SI{5}{\metre\per\second}
-  \item Calibration errors (focal length, compass, barometer): $\sim$\SI{1}{\metre} combined
+  \item No mission time lost to investigation---the search pattern completes without interruption.
+  \item Covers the entire search area systematically; no risk of missing a second target while investigating the first.
+  \item Can detect and log multiple targets per pass for post-flight analysis.
+  \item Simplest implementation: no state machine transitions, no closed-loop control.
 \end{itemize}
 
-\noindent The RSS total is $\sim$\SI{7}{\metre}---far too inaccurate for a \SI{7.5}{\metre} offset landing, where a \SI{7}{\metre} position error could place the drone directly on top of the casualty or \SI{15}{\metre} away.  Multiple flyover observations can be averaged, but the roll/pitch bias is systematic (always in the direction of travel) and only partially cancels between opposing scan lines.
+\paragraph{Disadvantages.}
+\begin{itemize}
+  \item Roll/pitch displacement dominates: \SI{6.2}{\metre} at $10^{\circ}$ pitch (Section~\ref{sec:roll-pitch-analysis}), always biased in the direction of travel.
+  \item GPS timing lag contributes $\sim$\SI{1}{\metre} at \SI{5}{\metre\per\second} (systematic, same direction as pitch bias).
+  \item Single observation per flyover---no temporal averaging within a pass.
+  \item No operator confirmation; false positive rate is unchecked.
+  \item Calibration errors (focal length, compass, barometer) propagate fully into every estimate.
+\end{itemize}
 
-\textbf{Verdict:} Rejected as the primary strategy.  Used only as an initial rough estimate to guide the drone toward the target for closer investigation.
+\paragraph{Accuracy.}  The RSS error budget at \SI{35}{\metre} yields CEP$_{50} \approx \SI{7}{\metre}$ for a single flyover observation.  With five passes and inverse-variance weighted averaging (alternating headings partially cancel the pitch bias), this improves to $\sim$\SI{3.5}{\metre}---but systematic calibration errors do not cancel.
 
-% ------ Strategy B ------
-\subsubsection{Strategy~B: Hover in Place}\label{sec:hover-in-place}
+\paragraph{Verdict.}  Insufficient for R07.  A \SI{7}{\metre} CEP means the \SI{7.5}{\metre} offset landing could place the drone directly on the casualty (zero clearance) or \SI{15}{\metre} away.  Used only as an initial rough estimate to trigger investigation, and as the data-collection mode for passive flight experiments.
 
-When the drone first detects a target during search, it could immediately halt and hover at its current position.  This eliminates roll/pitch displacement, motion blur, and GPS timing lag---exactly as described in Table~\ref{tab:centering-reduction}.  However, the target is \emph{not} at the centre of the camera frame; it sits at some pixel offset $(u, v)$ from the principal point.  Converting that pixel offset to a GPS coordinate still requires the full GSD pipeline: focal length~$f$, altitude~$h$, yaw heading~$\psi$, and the coordinate transformations of Equations~\ref{eq:unscale}--\ref{eq:body-deep}.  Every calibration error in this pipeline---focal length residual, barometric drift, compass distortion, lens distortion at the edge of the field---propagates directly into the final position estimate.
+% ------ Level 2 ------
+\subsubsection{Level~2: Stop-and-Look (Hover Without Centering)}\label{sec:hover-in-place}
 
-GPS averaging over the hover period improves precision by $\sqrt{N}$, yielding $\sim$\SI{3}{\metre} after 10\,s at 4.8\,FPS.  This is a significant improvement over Strategy~A, but the accuracy is fundamentally limited by the pixel-to-GPS projection quality---any systematic calibration error (e.g.\ a 5\% focal length bias) produces a persistent offset that does not average out.
+In Level~2, the drone halts immediately upon detecting a target and hovers at its current position.  The camera points straight down (nadir), and multiple frames are captured during the hover for GPS averaging.
 
-\textbf{Verdict:} Viable but suboptimal.  The estimate quality depends on calibration accuracy, which is difficult to validate in the field.
+\paragraph{How it works.}  When the detection triggers in SEARCH, the drone transitions to a hover hold.  Roll and pitch drop to $<1^{\circ}$ (GPS hold loop), eliminating the dominant in-flight error.  However, the target is \emph{not} at the frame centre---it sits at whatever pixel offset it was first detected.  Converting that offset to GPS still requires the full projection pipeline: focal length~$f$, altitude~$h$, yaw~$\psi$, and the coordinate transformations of Equations~\ref{eq:unscale}--\ref{eq:body-deep}.
 
-% ------ Strategy C ------
-\subsubsection{Strategy~C: Visual Centering (Implemented)}\label{sec:two-approaches}
+\paragraph{Advantages.}
+\begin{itemize}
+  \item Eliminates roll/pitch displacement ($<$\SI{0.6}{\metre} residual vs.\ \SI{6.2}{\metre} in flight).
+  \item Eliminates motion blur entirely (stationary camera, sharp frames, higher detection confidence).
+  \item Eliminates GPS timing lag ($v \approx 0$, so $v \cdot \Delta t \approx 0$).
+  \item GPS averaging over hover period: $\sqrt{N}$ improvement ($\sim$48 frames in 10\,s at 4.8\,FPS).
+\end{itemize}
 
-Instead of stopping in place, the drone flies toward the detection until the bounding-box centre coincides with the image principal point.  The CENTERING state (Section~\ref{sec:state-machine}) commands velocity toward the GPS-estimated target position and transitions to VERIFY once the drone is within \SI{1}{\metre} of the estimate.  At that moment, the target lies at (or very near) the optical centre of the frame:
+\paragraph{Disadvantages.}
+\begin{itemize}
+  \item Target not at frame centre---still requires the full GSD/focal-length/yaw pipeline.
+  \item Calibration errors propagate directly: a 5\% focal length bias produces a persistent \SI{0.8}{\metre} offset at \SI{16}{\metre} ground distance that does \emph{not} average out.
+  \item Yaw (compass) error still matters: $\pm5^{\circ}$ at \SI{16}{\metre} offset $\to$ \SI{1.4}{\metre} cross-track error.
+  \item Lens distortion present at frame edges (up to \SI{0.5}{\metre} without undistortion).
+  \item No operator confirmation of target identity.
+\end{itemize}
+
+\paragraph{Accuracy.}  With 10\,s of hover at 4.8\,FPS, GPS averaging yields CEP$_{50} \approx \SIrange{2.5}{3}{\metre}$.  The floor is set by systematic calibration errors rather than GPS noise---unlike Level~1, averaging \emph{cannot} improve beyond the calibration limit.
+
+\paragraph{Verdict.}  Viable but suboptimal.  Meets R07 marginally (CEP inside the \SIrange{5}{10}{\metre} annulus), but accuracy depends on calibration quality that is difficult to validate in the field.  If the compass has a $5^{\circ}$ hard-iron offset (plausible near motor currents), the estimate is biased by $>$\SI{1}{\metre} regardless of averaging duration.
+
+% ------ Level 3 ------
+\subsubsection{Level~3: Visual Centering (Implemented)}\label{sec:level-3-centering}
+
+In Level~3, the drone does not merely stop---it actively flies toward the detected target until the bounding-box centre coincides with the image principal point.  The CENTERING state commands velocity toward the GPS-estimated target position and transitions to VERIFY once the drone is within \SI{1}{\metre} of the estimate.
+
+\paragraph{How it works.}  At the moment the target reaches the optical centre:
 
 \begin{equation}\label{eq:zero-offset}
   \Delta u = u - \tfrac{W}{2} \approx 0, \qquad \Delta v = v - \tfrac{H}{2} \approx 0
 \end{equation}
 
-\noindent Note: a DESCENDING state exists in the state machine code to lower the drone to a verify altitude before the VERIFY hold, but it is currently bypassed; the drone transitions directly from CENTERING to VERIFY at search altitude.  Implementing the descent would further improve accuracy through the reduced GSD discussed in Section~\ref{sec:altitude-effect} and Table~\ref{tab:gsd-values}.
-
-\noindent The camera-frame offset (Equation~\ref{eq:body-deep}) reduces to
+\noindent The camera-frame offset (Equation~\ref{eq:body-deep}) reduces to:
 
 \begin{equation}\label{eq:zero-projection}
   d_\mathrm{fwd} = -\Delta v \cdot \mathrm{GSD} \approx 0, \qquad d_\mathrm{right} = \Delta u \cdot \mathrm{GSD} \approx 0
@@ -459,7 +488,7 @@ Instead of stopping in place, the drone flies toward the detection until the bou
 
 \noindent regardless of the GSD value.  The target GPS therefore equals the drone GPS directly, bypassing the entire pixel-to-GPS pipeline.  This is the key insight: \emph{when the pixel offset is zero, every multiplicative error source in the projection chain is multiplied by zero and vanishes.}
 
-\paragraph{The zero-offset proof.}  The GPS projection (Equations~\ref{eq:body-deep}--\ref{eq:wgs84-deep}) can be written as a single expression:
+\paragraph{The zero-offset proof.}  The full GPS projection (Equations~\ref{eq:body-deep}--\ref{eq:wgs84-deep}) can be written as:
 
 \begin{equation}\label{eq:full-projection}
   \begin{pmatrix} \Delta\phi \\ \Delta\lambda \end{pmatrix}
@@ -468,44 +497,171 @@ Instead of stopping in place, the drone flies toward the detection until the bou
   \begin{pmatrix} -(v - C_y) \\ (u - C_x) \end{pmatrix}
 \end{equation}
 
-\noindent When $(u, v) = (C_x, C_y)$, the pixel-offset vector is exactly $\mathbf{0}$, and the entire matrix product vanishes regardless of the values of GSD (which depends on altitude and focal length calibration), heading $\psi$ (which depends on compass accuracy), or the latitude correction $\cos\phi_d$.  This means:
+\noindent When $(u, v) = (C_x, C_y)$, the pixel-offset vector is exactly $\mathbf{0}$, and the entire matrix product vanishes regardless of GSD, heading~$\psi$, or latitude correction.  Concretely: a 10\% focal length error $\times\,0 = 0$; a $5^{\circ}$ compass error $\times\,0 = 0$; a \SI{1}{\metre} barometric drift $\times\,0 = 0$.
 
+\paragraph{Advantages.}
 \begin{itemize}
-  \item A 10\% focal length calibration error $\times\, 0 = 0$
-  \item A $5^{\circ}$ compass error $\times\, 0 = 0$
-  \item A \SI{1}{\metre} barometric altitude error $\times\, 0 = 0$
-  \item Maximum lens distortion at frame edges: irrelevant (target is at the optical centre, where distortion is minimal)
+  \item \emph{All} geometric/calibration errors vanish (multiplied by zero pixel offset).
+  \item No dependency on focal length, compass, or barometric calibration quality.
+  \item GPS averaging during the subsequent VERIFY hover improves precision further ($\sqrt{N}$).
+  \item Operator sees the centred target in the video stream for visual confirmation (Y/N decision).
+  \item Robust to sensor degradation: even a misaligned lens or drifting compass cannot corrupt the estimate.
 \end{itemize}
 
-\noindent The only remaining error source is the drone's own GPS accuracy, which is irreducible but can be reduced by $\sqrt{N}$ through temporal averaging.
+\paragraph{Disadvantages.}
+\begin{itemize}
+  \item Adds 15--25\,s of flight time per investigation (centering manoeuvre + verify hold).
+  \item Briefly hovers above the casualty (safety analysis: rotor downwash at \SI{35}{\metre} is $<$\SI{0.0002}{\metre\per\second}---negligible; see Section~\ref{sec:centering-analysis}).
+  \item Requires continuous detection during approach---if the target is lost, the drone returns to SEARCH.
+  \item Investigates one target at a time (sequential, not parallel).
+\end{itemize}
 
-Table~\ref{tab:hover-vs-centering} compares all three strategies across the error sources.
+\paragraph{Accuracy.}  With the target centred, the only remaining error is the drone's own GPS noise.  The \texttt{-{}-center-verify} flag averages the drone's position over $\sim$10\,s (50 samples at 5\,Hz).  With $N_\mathrm{eff} \approx 20$ independent samples (accounting for temporal correlation), this reduces the \SIrange{2}{3}{\metre} single-fix CEP to CEP$_{50} \approx \SI{1.8}{\metre}$.
+
+\paragraph{Verdict.}  Best accuracy of the three levels, chosen for the final implementation.  Comfortably satisfies R07.  The trade-off is flight time, which is acceptable given the single-target mission profile and the safety benefit of operator confirmation.
+
+\noindent Note: a DESCENDING state exists in the state machine to lower the drone to a verify altitude before the VERIFY hold, but it is currently bypassed; the drone transitions directly from CENTERING to VERIFY at search altitude.  Implementing the descent would further improve accuracy through the reduced GSD discussed in Section~\ref{sec:altitude-effect}.
+
+% ------ Comprehensive Comparison ------
+\subsubsection{Comparative Evaluation}\label{sec:two-approaches}
+
+Table~\ref{tab:hover-vs-centering} consolidates the error-source analysis across all three levels, and Table~\ref{tab:level-comparison-ops} compares operational characteristics.
 
 \begin{table}[H]
   \centering
-  \caption{Error source comparison across the three estimation strategies.  ``Not needed'' indicates the error source is multiplied by zero pixel offset and does not contribute.}
+  \caption{Error source comparison across the three estimation levels.  ``Not needed'' indicates the error source is multiplied by zero pixel offset and does not contribute.}
   \label{tab:hover-vs-centering}
   \begin{tabularx}{\linewidth}{Xccc}
     \toprule
-    \textbf{Error Source} & \textbf{A: Single Flyover} & \textbf{B: Hover in Place} & \textbf{C: Visual Centering} \\
+    \textbf{Error Source} & \textbf{Level~1: Passive} & \textbf{Level~2: Hover} & \textbf{Level~3: Centering} \\
     \midrule
-    Roll/pitch projection      & \SI{6.2}{\metre}   & Eliminated       & Eliminated \\
-    Motion blur                & Present             & Eliminated       & Eliminated \\
-    GSD / focal length calib.  & Full propagation    & Still required   & Not needed (zero offset) \\
-    Yaw rotation accuracy      & Full propagation    & Still required   & Not needed (zero offset) \\
-    Lens distortion            & Up to \SI{0.5}{\metre} & Present at edges & Minimal at optical centre \\
-    GPS timing lag             & $\sim$\SI{1}{\metre} & Eliminated       & Eliminated \\
-    GPS averaging              & 1 sample            & $\sqrt{N}$ reduction & $\sqrt{N}$ reduction \\
+    Roll/pitch projection      & \SI{6.2}{\metre}   & Eliminated ($<$\SI{0.6}{\metre})  & Eliminated \\
+    Motion blur                & Present (47\,px)   & Eliminated       & Eliminated \\
+    GSD / focal length calib.  & Full propagation    & Still required   & Not needed ($\times\,0$) \\
+    Yaw rotation accuracy      & Full propagation    & Still required   & Not needed ($\times\,0$) \\
+    Lens distortion            & Up to \SI{0.5}{\metre} & Present at edges & Minimal (optical centre) \\
+    GPS timing lag             & $\sim$\SI{1}{\metre} & Eliminated ($v\!=\!0$) & Eliminated \\
+    GPS receiver noise         & \SIrange{2}{3}{\metre} (1 sample) & $\sqrt{N}$ reduction & $\sqrt{N}$ reduction \\
     \midrule
-    \textbf{Typical CEP$_{50}$} & $\sim$\SI{7}{\metre} & $\sim$\SI{3}{\metre} & $\sim$\SI{1.5}{\metre} \\
-    \textbf{Final estimate}    & Pixel offset + GSD  & Drone GPS + offset & Drone GPS directly \\
+    \textbf{Achievable CEP$_{50}$} & $\sim$\SI{7}{\metre} & $\sim$\SI{2.5}{\metre} & $\sim$\SI{1.8}{\metre} \\
+    \textbf{Final estimate}    & Pixel offset + GSD  & Drone GPS + pixel offset & Drone GPS directly \\
     \bottomrule
   \end{tabularx}
 \end{table}
 
-\noindent The visual centering approach is therefore fundamentally more robust than hovering in place: it eliminates the \emph{need} for accurate camera calibration rather than merely tolerating its imperfections.  During the subsequent VERIFY hold, the \texttt{-{}-center-verify} mode averages the drone's own GPS position over $\sim$10\,s (50 samples at 5\,Hz).  Because the drone is centred above the target, its GPS coordinates are the target's coordinates.  With $N_\mathrm{eff} \approx 20$ independent samples (accounting for temporal correlation at 5\,Hz), this reduces the $\sim$\SIrange{2}{3}{\metre} single-fix CEP to approximately \SI{1.8}{\metre}.
+\begin{table}[H]
+  \centering
+  \caption{Operational comparison of the three estimation levels.  R07 requires landing within \SIrange{5}{10}{\metre} of the casualty.}
+  \label{tab:level-comparison-ops}
+  \begin{tabularx}{\linewidth}{Xcccc}
+    \toprule
+    \textbf{Criterion} & \textbf{Level~1} & \textbf{Level~2} & \textbf{Level~3} \\
+    \midrule
+    CEP$_{50}$ (with averaging)    & \SI{7}{\metre} (single), \SI{3.5}{\metre} (5-pass) & \SI{2.5}{\metre} & \SI{1.8}{\metre} \\
+    R07 compliant?                 & No              & Marginal         & Yes \\
+    Mission time cost per target   & \SI{0}{\second}  & $\sim$\SI{10}{\second} & $\sim$\SI{25}{\second} \\
+    Calibration dependent?         & Yes (fully)      & Yes (partially)  & No \\
+    False positive handling        & None (log only)  & None             & Operator confirms (Y/N) \\
+    Multiple targets per pass      & All detected     & One at a time    & One at a time \\
+    Implementation                 & \texttt{passive\_watch.py} & Not implemented & \texttt{main.py} (CENTERING) \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
 
-The trade-off is flight time: centering adds 10--30\,s of manoeuvring above the target compared to an immediate stop.  Section~\ref{sec:centering-analysis} analyses the operational risks of this additional low-altitude flight and explains why the direct offset landing configuration bypasses the descent phase while retaining the centering hold for position refinement.
+% ------ TikZ visual: side-by-side comparison ------
+\begin{figure}[H]
+  \centering
+  \begin{tikzpicture}[
+    drone/.style={rectangle, minimum width=1.2cm, minimum height=0.35cm, fill=gray!70, draw=black, rounded corners=2pt},
+    target/.style={regular polygon, regular polygon sides=5, minimum size=0.35cm, fill=red!70, draw=red!90!black},
+    errcirc/.style={dashed, thick},
+    camfov/.style={draw=blue!50, fill=blue!5, opacity=0.4},
+    lbl/.style={font=\small\bfseries, anchor=north},
+    annot/.style={font=\scriptsize, text=black!70},
+    >=stealth
+  ]
+    % ===== Panel 1: Passive =====
+    \begin{scope}[shift={(0,0)}]
+      % Ground
+      \draw[thick, brown!60] (-1.6,0) -- (1.6,0);
+      % Error circle (large)
+      \draw[errcirc, red!60] (0.3,0) circle (1.2cm);
+      \node[annot, red!60] at (0.3,-1.5) {CEP$_{50}$\,=\,7\,m};
+      % Target
+      \node[target] (t1) at (0.3,0.18) {};
+      % Camera FOV (tilted due to pitch)
+      \fill[camfov] (-0.3,4.2) -- (-1.0,0) -- (0.8,0) -- cycle;
+      % Drone (offset due to pitch, moving)
+      \node[drone] (d1) at (-0.3,4.2) {};
+      \draw[->, thick, gray] (0.3,4.2) -- (1.1,4.2) node[right, font=\scriptsize] {\SI{8}{\metre\per\second}};
+      % Pitch angle indicator
+      \draw[dashed, gray!50] (-0.3,4.2) -- (-0.3,0);
+      \draw[<->, thin, gray!60] (-0.1,0) -- (-0.1,4.2) node[midway, right, font=\tiny] {\SI{35}{\metre}};
+      % Pitch annotation
+      \node[annot] at (-0.3,2.0) {$10^{\circ}$ pitch};
+      % Label
+      \node[lbl] at (0,-2.0) {Level~1: Passive};
+      \node[annot, text width=2.8cm, align=center] at (0,-2.6) {Flying, no response\\target at frame edge};
+    \end{scope}
+
+    % ===== Panel 2: Hover =====
+    \begin{scope}[shift={(4.5,0)}]
+      % Ground
+      \draw[thick, brown!60] (-1.6,0) -- (1.6,0);
+      % Error circle (medium)
+      \draw[errcirc, orange!70] (0.6,0) circle (0.7cm);
+      \node[annot, orange!70] at (0.6,-1.5) {CEP$_{50}$\,=\,2.5\,m};
+      % Target
+      \node[target] (t2) at (0.6,0.18) {};
+      % Camera FOV (vertical, nadir)
+      \fill[camfov] (0,4.2) -- (-1.0,0) -- (1.0,0) -- cycle;
+      % Drone (directly above, hovering)
+      \node[drone] (d2) at (0,4.2) {};
+      % Detection marker (off-centre)
+      \draw[thin, blue!60, ->] (0,3.5) -- (0.6,0.35);
+      \node[annot, blue!60] at (-0.5,2.2) {offset};
+      % Dashed line showing nadir
+      \draw[dashed, gray!50] (0,4.2) -- (0,0);
+      \draw[<->, thin, gray!60] (-0.2,0) -- (-0.2,4.2) node[midway, left, font=\tiny] {\SI{35}{\metre}};
+      % Label
+      \node[lbl] at (0,-2.0) {Level~2: Hover};
+      \node[annot, text width=2.8cm, align=center] at (0,-2.6) {Stopped, nadir view\\target off-centre};
+    \end{scope}
+
+    % ===== Panel 3: Centering =====
+    \begin{scope}[shift={(9,0)}]
+      % Ground
+      \draw[thick, brown!60] (-1.6,0) -- (1.6,0);
+      % Error circle (small)
+      \draw[errcirc, green!60!black] (0,0) circle (0.42cm);
+      \node[annot, green!60!black] at (0,-1.5) {CEP$_{50}$\,=\,1.8\,m};
+      % Target
+      \node[target] (t3) at (0,0.18) {};
+      % Camera FOV (vertical, centred on target)
+      \fill[camfov] (0,4.2) -- (-1.0,0) -- (1.0,0) -- cycle;
+      % Drone (directly above target)
+      \node[drone] (d3) at (0,4.2) {};
+      % Centre line (aligned)
+      \draw[thick, green!60!black, ->] (0,3.8) -- (0,0.4);
+      \node[annot, green!60!black] at (0.7,2.2) {$\Delta u\!=\!0$};
+      % Dashed nadir line
+      \draw[dashed, gray!50] (0,4.2) -- (0,0);
+      \draw[<->, thin, gray!60] (-0.2,0) -- (-0.2,4.2) node[midway, left, font=\tiny] {\SI{35}{\metre}};
+      % GPS = target label
+      \node[annot, green!60!black, font=\scriptsize\bfseries] at (0,4.7) {GPS$_\mathrm{drone}$ = GPS$_\mathrm{target}$};
+      % Label
+      \node[lbl] at (0,-2.0) {Level~3: Centering};
+      \node[annot, text width=2.8cm, align=center] at (0,-2.6) {Centred above target\\$\Delta u = \Delta v = 0$};
+    \end{scope}
+
+  \end{tikzpicture}
+  \caption{Side-by-side comparison of the three estimation levels.  Dashed circles represent the CEP$_{50}$ error radius around the true target position (star).  Level~1 (passive): the drone is pitched forward and moving, placing the target at the frame edge with the largest error circle.  Level~2 (hover): the drone is stationary and nadir-pointing, but the target remains off-centre, requiring the full projection pipeline.  Level~3 (centering): the drone has manoeuvred directly above the target, driving the pixel offset to zero and collapsing the error to GPS receiver noise only.}
+  \label{fig:three-level-comparison}
+\end{figure}
+
+\paragraph{Design rationale.}  The progression from Level~1 through Level~3 reflects a fundamental engineering trade-off between estimation accuracy and mission time.  Level~1 is ``free'' in terms of flight time but inadequate for precision landing.  Level~2 eliminates motion-induced errors at a cost of $\sim$10\,s but remains limited by calibration quality.  Level~3 adds a further $\sim$15\,s but produces estimates that are \emph{independent of all calibration parameters}---a qualitatively different regime.  The implemented system uses Level~1 estimates during SEARCH as rough candidates (sufficient to trigger investigation), then refines with Level~3 during CENTERING/VERIFY for the final position used in offset landing.  This layered architecture ensures that calibration imperfections---inevitable in a field-deployed system assembled by students---cannot compromise the landing accuracy.
+
+The trade-off is flight time: centering adds 15--25\,s of manoeuvring above the target compared to an immediate stop.  Section~\ref{sec:centering-analysis} analyses the operational risks of this additional low-altitude flight and explains why the direct offset landing configuration bypasses the descent phase while retaining the centering hold for position refinement.
 
 % =====================================================================
 \subsection{Altitude Effect on Estimation Accuracy}\label{sec:altitude-effect}
