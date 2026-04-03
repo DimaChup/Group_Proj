@@ -849,7 +849,7 @@ class VisualFlightMission(StateHandlersMixin):
         """Continuously correct yaw to stay within ±15° of search heading.
         Runs every loop iteration when --lock-yaw is active.
         Only active during SEARCH state to avoid interfering with RTL/landing."""
-        if self.state != State.SEARCH:
+        if self.state not in (State.SEARCH, State.RETURN_TRANSIT, State.RETURN_HOME, State.PRE_WAYPOINTS, State.TRANSIT_TO_SEARCH):
             return
         import math
         from pymavlink import mavutil
