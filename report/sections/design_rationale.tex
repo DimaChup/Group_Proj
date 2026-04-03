@@ -3,38 +3,35 @@
 
 \section{Design Rationale}\label{sec:rationale}
 
-Every major design decision was evaluated against the seven STEEPLE dimensions (Social, Technological, Economic, Environmental, Political, Legal, Ethical) before proceeding to technical trade studies for hardware, software architecture, detection, path planning, and mission control.
+Every major design decision was evaluated against the seven STEEPLE dimensions (Social, Technological, Economic, Environmental, Political, Legal, Ethical). Technical trade studies then addressed hardware, software architecture, detection, path planning, and mission control.
 
 \subsection{STEEPLE Analysis}\label{sec:steeple}
 
-\begin{description}[style=nextline, leftmargin=0pt, labelwidth=0pt]
+\begin{table}[H]
+  \centering\compactTable
+  \caption{STEEPLE assessment of the autonomous SAR drone system.}\label{tab:steeple}
+  \begin{tabularx}{\linewidth}{@{}l X@{}}
+    \toprule
+    \textbf{Dimension} & \textbf{Key consideration and design response} \\
+    \midrule
+    Social & Serves community safety via volunteer rescue teams; operator-in-the-loop verification maintains public trust~\cite{murphy2014}. \\
+    Technological & Pi~5 with TFLite (4 packages vs 90+); dual-backend architecture enables GPU development with edge deployment~\cite{edgeai, tflite}. \\
+    Economic & \pounds565 total cost ($\sim$10\% of DJI Matrice 30T); onboard inference eliminates high-bandwidth comms and dedicated analyst. \\
+    Environmental & Three-layer geofence + firmware fence protects adjacent SSSI; 30\,m waypoint buffer; \SI{3}{\kilo\gram} AUW minimises wildlife disturbance~\cite{wca1981}. \\
+    Political & UK CAA Open Category A3 compliant~\cite{caa2024uas}; VLOS only (BVLOS requires SORA~\cite{jarus2019sora}); MIT licence (R12). \\
+    Legal & Images stored locally (no cloud); SSSI compliance auditable via logged boundary distances at every loop iteration~\cite{wca1981}. \\
+    Ethical & No autonomous landing without human confirmation; 120\,s auto-reject prioritises continued search over uncertain detections. \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
 
-\item[\textbf{Social.}]
-SAR operations directly serve community safety. The system is designed for volunteer mountain rescue teams who lack the budget for commercial platforms. An operator-in-the-loop verification stage ensures that autonomous decisions do not bypass human judgement in life-critical situations, maintaining public trust in drone-assisted SAR~\cite{murphy2014}.
-
-\item[\textbf{Technological.}]
-The Raspberry Pi~5 was selected as the onboard computer for its sub-\pounds100 cost, 4.8\,FPS inference capability with YOLOv8n/TFLite, native CSI camera interface, and extensive community support. TFLite was chosen over Ultralytics/PyTorch for deployment because it requires only 4~Python packages versus 90+, reducing attack surface and deployment complexity. The dual-backend architecture (Ultralytics on laptop, TFLite on Pi) allows development iteration with GPU acceleration while deploying the same model on edge hardware~\cite{edgeai, tflite}.
-
-\item[\textbf{Economic.}]
-The complete system costs \pounds565 (Table~\ref{tab:hw-bom}), approximately one-tenth the price of a DJI Matrice 30T (\pounds5\,800). By performing inference onboard rather than streaming video to a ground station, the system eliminates the need for high-bandwidth communication equipment and a dedicated image analyst. This cost structure makes the technology accessible to volunteer rescue organisations operating on limited budgets.
-
-\item[\textbf{Environmental.}]
-The adjacent SSSI imposes strict no-fly constraints. A three-layer geofence---speed capping, repulsive potential field, and hard-boundary cutoff---enforces the exclusion zone in software, with firmware geofencing as a fourth independent layer. At plan time, waypoints within 30\,m of the boundary are filtered to prevent the search pattern from routing the aircraft near the protected area. The lightweight airframe (\SI{3}{\kilo\gram} AUW) minimises noise disturbance to wildlife~\cite{wca1981}.
-
-\item[\textbf{Political.}]
-All flights comply with UK CAA Open Category A3 regulations~\cite{caa2024uas} and were conducted within VLOS range; BVLOS operation would require a Specific Category SORA assessment~\cite{jarus2019sora}. The open-source MIT licence (R12) ensures transparency and reproducibility.
-
-\item[\textbf{Legal.}]
-Data protection is considered: detection images are stored locally on the Pi and not transmitted to cloud services. The SSSI no-fly zone is a legal requirement under the Wildlife and Countryside Act 1981~\cite{wca1981}. The geofence implementation provides auditable evidence of compliance through logged distance-to-boundary measurements at every control loop iteration.
-
-\item[\textbf{Ethical.}]
-The operator-in-the-loop design ensures that no autonomous landing is initiated without explicit human confirmation, addressing the ethical concern of autonomous systems making high-consequence decisions. The system prioritises continued area coverage over investigating uncertain detections (auto-reject after 120\,s timeout), reflecting the ethical principle that searching for a casualty is more important than investigating a probable false positive.
-
-\end{description}
+\noindent With the STEEPLE framework confirming project viability across all seven dimensions, the following subsections detail the technical trade studies that determined the system's operating parameters, hardware platform, software architecture, and mission control strategy.
 
 \subsection{Search Parameter Optimisation}\label{sec:search-param-opt}
 
-The search pattern is governed by three coupled decision variables---altitude~$h$, scan angle~$\theta$, and speed~$v$---that jointly determine five competing objectives: coverage completeness, detection probability, mission time, energy consumption, and NFZ safety margin. These objectives cannot be optimised independently; lowering altitude improves detection confidence but narrows the camera footprint and increases the number of scan lines, while increasing speed reduces mission time but shortens target dwell time and therefore detection probability.
+The search pattern is governed by three coupled decision variables---altitude~$h$, scan angle~$\theta$, and speed~$v$---that jointly determine five competing objectives: coverage completeness, detection probability, mission time, energy consumption, and NFZ safety margin.
+
+These objectives cannot be optimised independently. Lowering altitude improves detection confidence but narrows the camera footprint and increases the number of scan lines. Increasing speed reduces mission time but shortens target dwell time and therefore detection probability.
 
 \begin{figure}[H]
   \centering
@@ -49,7 +46,7 @@ A 216-configuration parametric sweep (6~altitudes $\times$ 36~scan angles, Appen
   \item \textbf{Target $\rightarrow$ altitude}: the mannequin's \SI{0.5}{\metre} width must subtend $\geq$10~model-input pixels for reliable detection, capping altitude at \SI{35}{\metre} with a $1.4\times$ margin.
   \item \textbf{Altitude $\rightarrow$ speed}: the \SI{24}{\metre} along-track footprint at \SI{35}{\metre}, combined with \SI{4.8}{FPS} inference, requires $\geq$10~frames per target, yielding $v \leq \SI{11.5}{\metre\per\second}$; the altitude-dependent schedule assigns $v = \SI{8}{\metre\per\second}$.
   \item \textbf{Polygon geometry $\rightarrow$ scan angle}: alignment with the longest edge (\SI{70}{\degree}) minimises U-turns from 9 to 5 and reduces energy from \SI{25.4}{Wh} to \SI{12.6}{Wh}.
-  \item \textbf{Footprint width $\rightarrow$ NFZ margin}: the \SI{32}{\metre} footprint at \SI{35}{\metre} requires \SI{23}{\metre} RSS standoff; the \SI{30}{\metre} buffer provides a $2.2\times$ safety factor.
+  \item \textbf{Footprint width $\rightarrow$ NFZ margin}: the \SI{32}{\metre} footprint at \SI{35}{\metre} requires \SI{23}{\metre} Root Sum of Squares (RSS) standoff; the \SI{30}{\metre} buffer provides a $2.2\times$ safety factor.
 \end{enumerate}
 
 \begin{figure}[H]
@@ -63,31 +60,26 @@ A 216-configuration parametric sweep (6~altitudes $\times$ 36~scan angles, Appen
 
 \subsection{Parameter Derivation Chain}\label{sec:param-chain}
 
-Every operating parameter traces back to a physical measurement or regulatory constraint through an unbroken chain of reasoning. The eight steps below summarise how each parameter was derived; full equations and sensitivity analysis are provided in Appendix~\ref{sec:path-opt}.
+Every operating parameter traces back to a physical measurement or regulatory constraint through an unbroken eight-step chain (Table~\ref{tab:param-chain}). Full equations, RSS overlap analysis, and sensitivity analysis are provided in Appendices~\ref{sec:path-opt} and~\ref{app:decision-flow}.
 
-\paragraph{Step~1: Detection ceiling.}
-The rescue dummy (\SI{1.8}{\metre} tall) must remain detectable by the YOLOv8n model. At altitude~$h$, the dummy subtends $1.8 \times 1584/h$ sensor pixels, scaled to $1.8 \times 696/h$ model-input pixels by the $640/1456$ resize. Below approximately 20~model-input pixels, detection confidence drops below the operational threshold of~0.2, giving a ceiling of approximately \SI{63}{\metre}.
-
-\paragraph{Step~2: Safety margin $\rightarrow$ operating altitude.}
-A 30\% margin below this ceiling accounts for atmospheric haze, attitude-induced foreshortening, and barometric altitude uncertainty, yielding an operating altitude of \SI{35}{\metre}. At this altitude the dummy subtends 36~model-input pixels---comfortably above the 20-pixel minimum.
-
-\paragraph{Step~3: Maximum speed at operating altitude.}
-At \SI{35}{\metre} the along-track camera footprint is \SI{24.0}{\metre}. At \SI{4.8}{FPS}, reliable multi-frame detection requires at least 10~raw frames on target, giving a maximum speed of $24.0 / (10/4.8) = \SI{11.5}{\metre\per\second}$. A conservative schedule of \SI{8}{\metre\per\second} at \SI{35}{\metre} was adopted.
-
-\paragraph{Step~4: Ground footprint $\rightarrow$ lane spacing.}
-The cross-track footprint at \SI{35}{\metre} is \SI{32.2}{\metre}. With 20\% overlap---justified by an RSS analysis of GPS drift (\SI{3}{\metre}), crosswind displacement, and attitude error, totalling \SI{4.6}{\metre} against a \SI{6.4}{\metre} overlap margin---lane spacing is \SI{25.7}{\metre}.
-
-\paragraph{Step~5: Scan angle for energy efficiency.}
-A sweep across 36~scan angles selected longest-edge alignment ($\approx$\SI{70}{\degree}), which minimises U-turns (5~vs~9 for north--south), saving \SI{60}{\second} and \SI{13}{Wh} per mission.
-
-\paragraph{Step~6: NFZ margins.}
-The camera footprint extends \SI{16.1}{\metre} from nadir at \SI{35}{\metre}. Adding GPS error (\SI{3}{\metre} CEP) and reaction distance at \SI{8}{\metre\per\second}, a \SI{30}{\metre} waypoint buffer was set. A speed-ramp zone extends to \SI{20}{\metre} from the SSSI boundary, and a repulsive potential field activates \SI{3}{\metre} beyond that, giving a total clearance of \SI{50}{\metre}.
-
-\paragraph{Step~7: Coverage completeness.}
-These margins exclude approximately 4\% of the search area adjacent to the SSSI fence line---an area within a fenced wildlife reserve, inaccessible to hikers and therefore low-probability for the casualty. 96\% coverage was accepted.
-
-\paragraph{Step~8: Energy validation.}
-The selected configuration (\SI{35}{\metre}, \SI{70}{\degree}, \SI{8}{\metre\per\second}, 20\% overlap, \SI{30}{\metre} NFZ buffer) consumes approximately \SI{12.6}{Wh}---10.9\% of the \SI{115.4}{Wh} battery---leaving 14~minutes of flight time for transit, verification, landing, and return-to-launch.
+\begin{table}[H]
+  \centering\compactTable
+  \caption{Parameter derivation chain: each value is derived from the previous step.}\label{tab:param-chain}
+  \begin{tabularx}{\linewidth}{@{}c l c X@{}}
+    \toprule
+    \textbf{Step} & \textbf{Parameter} & \textbf{Value} & \textbf{Derivation} \\
+    \midrule
+    1 & Detection ceiling & \SI{63}{\metre} & Mannequin (\SI{0.5}{\metre} wide) must subtend $\geq$20 model-input pixels \\
+    2 & Operating altitude & \SI{35}{\metre} & 30\% margin below ceiling (36\,px target, $1.8\times$ above minimum) \\
+    3 & Max speed & \SI{11.5}{\metre\per\second} & \SI{24}{\metre} footprint $\div$ (10 frames / 4.8\,FPS); adopted \SI{8}{\metre\per\second} \\
+    4 & Lane spacing & \SI{25.7}{\metre} & \SI{32.2}{\metre} footprint $\times$ 0.80; 20\% overlap gives $1.4\times$ margin over \SI{4.5}{\metre} RSS error~\cite{galceran2013survey, choset2001coverage} \\
+    5 & Scan angle & \SI{70}{\degree} & Longest-edge alignment minimises U-turns (5 vs 9), saves \SI{13}{Wh} \\
+    6 & NFZ buffer & \SI{30}{\metre} & Half-footprint (16.1) + GPS CEP (3.0) + stopping dist.\ (10.7) = 29.8\,m~\cite{wca1981} \\
+    7 & Coverage & 96\% & 4\% gap in fenced wildlife reserve (negligible casualty probability) \\
+    8 & Search energy & \SI{12.6}{Wh} & 10.9\% of \SI{115.4}{Wh} battery; 14\,min remaining for transit/verify/RTL \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
 
 \subsection{Hardware Platform Selection}\label{sec:hw-rationale}
 
@@ -96,12 +88,14 @@ The hardware integrates a Hexsoon EDU-450 airframe, CubePilot Orange+ flight con
 \begin{itemize}
     \item \textbf{Global shutter camera.} The IMX296 was selected over cheaper rolling-shutter alternatives because rolling-shutter distortion during forward flight at up to \SI{10}{\metre\per\second} skews bounding boxes and degrades detection accuracy. The CSI interface leaves USB ports free for telemetry radios.
     \item \textbf{No thermal imaging.} Thermal cameras add \pounds2\,000--\pounds10\,000 to the platform cost and have lower spatial resolution than RGB at equivalent price points. This project deliberately explores RGB-only detection feasibility at the low-cost extreme~\cite{thermal_sar}.
-    \item \textbf{MAVProxy bridge.} A Python~3.13 incompatibility with pyserial (dropped bytes causing \texttt{BAD\_DATA} errors) is resolved by interposing MAVProxy as a UDP bridge, which reads the serial port reliably using its own C-level handler~\cite{ardupilot_mavproxy}.
+    \item \textbf{MAVProxy bridge.} A Python~3.13 incompatibility with pyserial (dropped bytes causing \texttt{BAD\_DATA} errors) is resolved by interposing MAVProxy as a UDP bridge, which reads the serial port reliably using its own C-level handler~\cite{mavproxy}.
 \end{itemize}
 
 \subsubsection{Companion Computer Trade Study}
 
-Three candidate companion computers were evaluated using weighted multi-criteria decision analysis (Table~\ref{tab:mcda-companion}). Criteria weights were established before candidate scoring based on mission requirements and operational constraints. Cost and Python ecosystem compatibility are paramount for a student team, while raw GPU performance is less critical given the lightweight YOLOv8n model.
+All four trade studies in this section use weighted multi-criteria decision analysis (MCDA). In each case, we established criteria weights before scoring candidates, based on mission requirements and operational constraints, to prevent post-hoc rationalisation.
+
+Three candidate companion computers were evaluated (Table~\ref{tab:mcda-companion}). Cost and Python ecosystem compatibility are paramount for a student team, while raw GPU performance is less critical given the lightweight YOLOv8n model.
 
 \begin{table}[H]
   \centering\compactTable
@@ -123,11 +117,11 @@ Three candidate companion computers were evaluated using weighted multi-criteria
   \end{tabularx}
 \end{table}
 
-\noindent The Raspberry Pi~5 achieves the highest weighted total. The Jetson Nano offers superior GPU inference but is more expensive, draws more power, and lags behind on Python version support due to NVIDIA's JetPack release cycle. The Intel Neural Compute Stick~2 was discontinued by Intel in 2023 and lacks GPIO or CSI interfaces, requiring a separate host SBC.
+\noindent The Pi~5 achieves the highest weighted total. Sensitivity analysis ($\pm$0.05 weight perturbation across all 12 scenarios) confirms the Pi~5 retains its rank in every case (minimum score 4.72 vs Jetson Nano maximum 3.68). The same perturbation was applied to all four MCDA tables; in each case the selected option retained its rank.
 
 \subsubsection{Communication Architecture Trade Study}
 
-Three architectures for companion-to-autopilot communication were compared (Table~\ref{tab:mcda-comms}). Criteria weights were established before candidate scoring based on mission requirements and operational constraints.
+Three architectures for companion-to-autopilot communication were compared (Table~\ref{tab:mcda-comms}).
 
 \begin{table}[H]
   \centering\compactTable
@@ -137,7 +131,7 @@ Three architectures for companion-to-autopilot communication were compared (Tabl
     \toprule
     \textbf{Criterion} & \textbf{Weight} & \textbf{Direct Serial} & \textbf{MAVProxy Bridge} & \textbf{ROS~2} \\
     \midrule
-    Latency                    & 0.20 & 5 (direct)    & 4 (UDP hop)       & 3 (DDS overhead) \\
+    Latency                    & 0.20 & 5 (direct)    & 4 (UDP hop)       & 3 (Data Distribution Service (DDS) overhead) \\
     Reliability                & 0.25 & 2 (py3.13 bug) & 5 (C-level read) & 4 (mature) \\
     Multi-consumer support     & 0.20 & 1 (exclusive) & 5 (N outputs)     & 5 (pub/sub) \\
     Python~3.13 compatibility  & 0.20 & 1 (broken)    & 5 (works)         & 3 (partial) \\
@@ -152,21 +146,11 @@ Three architectures for companion-to-autopilot communication were compared (Tabl
 
 \subsection{Software Architecture Rationale}\label{sec:arch-rationale}
 
-Four principles govern the architecture, enabling parallel development by a five-person team and supporting the simulation-first methodology:
-
-\begin{enumerate}
-    \item \textbf{Modular separation.} Each concern---computer vision, path planning, flight control, configuration---is isolated in a dedicated module with a narrow public interface. The vision system exposes a single function \texttt{detect\_in\_image(frame)} returning \texttt{(found, x, y, conf)}, regardless of the inference backend.
-
-    \item \textbf{Same code, simulation and real.} The mission orchestrator (\texttt{main.py}) contains no conditional branches distinguishing simulation from hardware. A \texttt{MODE} flag selects the camera source; connection auto-detection selects the flight controller endpoint.
-
-    \item \textbf{Configuration-driven tuning.} All mission parameters reside in a single configuration module (\texttt{config.py}). Transitioning from simulation to outdoor flight requires only parameter adjustment, not code modification.
-
-    \item \textbf{Dual inference backend.} The vision module auto-detects the available engine at import time: Ultralytics on the laptop, TFLite on the Pi. Both produce identical output tensors of shape $[1, 5, 8400]$.
-\end{enumerate}
+Four principles govern the architecture: (1)~\textbf{Modular separation}---each concern is isolated with a narrow interface (e.g.\ \texttt{detect\_in\_image(frame)} $\to$ \texttt{(found, x, y, conf)}); (2)~\textbf{Same code, simulation and real}---no conditional branches distinguish platforms; a \texttt{MODE} flag selects the camera, auto-detection selects the flight controller; (3)~\textbf{Configuration-driven tuning}---all parameters in \texttt{config.py}, transitioning to real hardware requires only parameter adjustment; (4)~\textbf{Dual inference backend}---auto-detects Ultralytics (laptop) or TFLite (Pi) at import, both producing identical $[1, 5, 8400]$ tensors.
 
 \subsection{Detection Model Selection}\label{sec:model-rationale}
 
-YOLOv8n (the nano variant, 3.2~million parameters, 8.7~GFLOPs) was selected after benchmarking the YOLO model family on the target hardware~\cite{yolov8}. Criteria weights were established before candidate scoring based on mission requirements and operational constraints. Table~\ref{tab:mcda-model} summarises the weighted comparison.
+YOLOv8n (the nano variant, 3.2~million parameters, 8.7~GFLOPs) was selected after benchmarking the YOLO model family on the target hardware~\cite{yolov8}. Table~\ref{tab:mcda-model} summarises the weighted comparison.
 
 \begin{table}[H]
   \centering\compactTable
@@ -193,7 +177,7 @@ The model was trained as a single-class detector on 366 mixed images (300 synthe
 
 \subsection{Coverage Path Planning}\label{sec:plan-rationale}
 
-Four candidate search patterns were evaluated (Table~\ref{tab:mcda-search}). Criteria weights were established before candidate scoring based on mission requirements and operational constraints, emphasising coverage guarantee and implementability to ensure reliable, verifiable behaviour over theoretically optimal paths.
+Four candidate search patterns were evaluated (Table~\ref{tab:mcda-search}), emphasising coverage guarantee and implementability to ensure reliable, verifiable behaviour over theoretically optimal paths.
 
 \begin{table}[H]
   \centering\compactTable
@@ -214,7 +198,7 @@ Four candidate search patterns were evaluated (Table~\ref{tab:mcda-search}). Cri
   \end{tabularx}
 \end{table}
 
-\noindent The boustrophedon (lawnmower) pattern was selected for three reasons~\cite{choset2001coverage, galceran2013survey}: (1)~it guarantees complete coverage of any simply connected region by construction; (2)~it admits closed-form path length calculation for endurance estimation; (3)~it is the standard method recommended by the IAMSAR Manual. The expanding square pattern scored second but lacks a formal completeness guarantee for arbitrary polygons. Spiral patterns leave coverage gaps at the centre and require continuous curvature that complicates waypoint-based navigation. The implementation uses a rotate--rasterise--rotate-back algorithm that handles arbitrary polygon geometries through binary mask operations rather than analytical clipping. The scan angle is optimised automatically using the minimum-area bounding rectangle, validated by a 216-configuration parametric sweep (6~altitudes $\times$ 36~angles).
+\noindent The boustrophedon (lawnmower) pattern was selected~\cite{choset2001coverage, galceran2013survey} for its formal coverage guarantee, closed-form path length, and IAMSAR compliance. The implementation uses a rotate--rasterise--rotate-back algorithm on arbitrary polygons, with scan angle auto-optimised via minimum-area bounding rectangle (validated by 216-configuration sweep).
 
 \subsection{State Machine Design}\label{sec:fsm-rationale}
 
@@ -228,50 +212,37 @@ A \emph{false positive landing} (descending on a rock, tree stump, or discarded 
 
 A \emph{false negative} (failing to investigate a real casualty) is worse in absolute terms but is mitigated by the lawnmower pattern's guarantee of revisiting every cell: a missed detection on pass~1 can be recovered on the return leg. The operator-in-the-loop gate therefore addresses the higher-consequence, lower-recoverable error (committing to a landing) while the autonomous search handles the high-bandwidth, lower-consequence task (scanning terrain at 8\,m/s).
 
-The \textsc{Verify} state implements this gate. The operator classifies each detection as confirmed~(Y), rejected~(N), or item of interest~(I) through the browser-based ground station. A 120\,s timeout auto-rejects to prevent indefinite hovering~\cite{goodrich2007human}. This supervisory control paradigm lets autonomy handle the search while human judgement is reserved for the high-consequence classification decision.
-
-Full autonomy (Level~10) was rejected because the single-class detector cannot distinguish a casualty from visually similar objects (mannequins, bags, seated hikers) and the SAR context demands zero tolerance for landing on the wrong target~\cite{murphy2014, lyu2023uav_sar_survey}. Conversely, manual-only operation (Level~1) was rejected because a human operator cannot maintain sustained visual scanning of a video feed at the frame rate and field-of-view changes produced during an \SI{8}{\metre\per\second} search---the automation advantage in coverage rate is approximately 20$\times$ compared to an operator watching a live stream~\cite{goodrich2008}.
+The \textsc{Verify} state implements this gate: the operator classifies each detection as confirmed~(Y), rejected~(N), or item of interest~(I) via the ground station. A \SI{120}{\second} timeout auto-rejects unresponded detections---derived from the energy budget (\SI{6.0}{Wh} per hover event, 5.2\% of battery, permitting two timeouts while retaining 89\% for search)~\cite{goodrich2007human}. Full autonomy (Level~10) was rejected because the single-class detector cannot distinguish casualty from visually similar objects~\cite{murphy2014, lyu2023uav_sar_survey}; manual-only operation was rejected because human operators cannot sustain visual scanning at \SI{8}{\metre\per\second} (automation provides ${\sim}20\times$ coverage rate advantage)~\cite{goodrich2008}.
 
 \subsection{Decisions That Changed: Evidence-Based Corrections}\label{sec:decisions-changed}
 
-Four design parameters were revised during development when empirical evidence contradicted initial assumptions. Each correction followed the pattern: \emph{initial assumption $\rightarrow$ measurement $\rightarrow$ correction}.
+Four design parameters were revised when empirical evidence contradicted initial assumptions:
 
 \paragraph{Focal length: \SI{7.0}{\milli\metre} $\rightarrow$ \SI{5.46}{\milli\metre}.}
-The lens datasheet specifies a \SI{6}{\milli\metre} nominal focal length. Initial FOV calculations used \SI{7.0}{\milli\metre}, which overestimated the focal length by 22\%. On field day (2026-03-11), a tape-measure calibration at \SI{1}{\metre} height measured \SI{92}{\centi\metre} of visible ground width, implying an effective focal length of \SI{5.46}{\milli\metre}---a 22\% deviation from the assumed value. This single correction shifted every downstream GPS estimation by up to \SI{3}{\metre} at \SI{30}{\metre} altitude, because target position is computed from the ratio of pixel offset to focal-length-derived ground sample distance. Had this not been corrected before flight, every reported casualty position would have carried a systematic bias exceeding the \SI{10}{\metre} landing accuracy required by R07.
+A tape-measure calibration on field day measured \SI{92}{\centi\metre} visible at \SI{1}{\metre} height, revealing a 22\% overestimate in the assumed focal length. This single correction shifted GPS estimations by up to \SI{3}{\metre} at \SI{30}{\metre} altitude---without it, landing errors would have exceeded the \SI{10}{\metre} R07 requirement.
 
 \paragraph{Camera resolution: $640 \times 480$ $\rightarrow$ $1456 \times 1088$.}
-The initial configuration used $640 \times 480$ to match typical YOLOv8 training resolution and minimise inference cost. Analysis of DJI flight video (Section~\ref{sec:results}) revealed that at \SI{30}{\metre} altitude, a prone casualty occupies only $\approx 20 \times 14$~pixels at $640 \times 480$---below the reliable detection threshold. Switching to the IMX296's native $1456 \times 1088$ increased the target to $\approx 46 \times 32$~pixels, comfortably above the minimum. The model's internal resize to $640 \times 640$ means inference time is unchanged; the cost is borne only in the CSI capture and OpenCV resize (\SI{\approx 2}{\milli\second}).
+At $640 \times 480$, a prone casualty at \SI{30}{\metre} subtends only $20 \times 14$\,px---below reliable detection. Switching to native resolution increased this to $46 \times 32$\,px with no inference time change (the model resizes internally to $640 \times 640$).
 
 \paragraph{TFLite runtime: \texttt{tflite-runtime} $\rightarrow$ \texttt{ai-edge-litert}.}
-The Pi~5 runs Python~3.13. Google's official \texttt{tflite-runtime} package has no Python~3.13 wheel and fails to install. The project initially assumed a Python~3.11 downgrade would be necessary, which would have broken \texttt{picamera2} (packaged for the system Python). The discovery that Google's successor package \texttt{ai-edge-litert} provides identical API on Python~3.13 eliminated the conflict with zero code changes---only the \texttt{pip install} line differs.
+Google's \texttt{tflite-runtime} has no Python~3.13 wheel; \texttt{ai-edge-litert} provides identical API, eliminating the conflict with \texttt{picamera2} (system Python) with zero code changes.
 
 \paragraph{Serial communication: pyserial $\rightarrow$ MAVProxy UDP bridge.}
-Direct serial communication via \texttt{pyserial} at 921\,600~baud produced intermittent \texttt{BAD\_DATA} errors on Python~3.13 due to a regression in the \texttt{pyserial} read path. Rather than downgrading Python (which would reintroduce the \texttt{picamera2} conflict) or patching \texttt{pyserial} (an upstream dependency), MAVProxy was interposed as a UDP bridge. This resolved byte-dropping and simultaneously enabled multi-consumer access: the mission script and Mission Planner can monitor the same telemetry stream concurrently (Table~\ref{tab:mcda-comms}).
+A Python~3.13 pyserial regression dropped bytes at 921\,600~baud. MAVProxy resolves this via its C-level serial handler and simultaneously enables multi-consumer telemetry access (Table~\ref{tab:mcda-comms}).
 
 \subsection{Why Not ROS}\label{sec:ros-rationale}
 
-ROS~2 is the de facto middleware for multi-sensor robotic systems~\cite{quigley2009ros}. Three factors led to its exclusion:
-
-\begin{enumerate}
-    \item \textbf{Architectural mismatch.} The system is a single-node pipeline: one camera, one detector, one flight controller, one decision loop. ROS's publish--subscribe model and DDS transport layer add value when multiple nodes on separate processes or machines must exchange data asynchronously. Here, all processing occurs in a single Python process with sequential \texttt{detect\_in\_image()} $\rightarrow$ \texttt{state\_dispatch()} $\rightarrow$ \texttt{send\_mavlink()} calls. Introducing ROS would add inter-process serialisation overhead without enabling any new capability.
-
-    \item \textbf{Deployment complexity.} A full ROS~2 Humble installation on Raspberry Pi OS requires $\approx$\SI{2}{\giga\byte} of disk and 15+ packages. The current deployment requires four \texttt{pip} packages totalling \SI{<50}{\mega\byte} (Table~\ref{tab:mcda-comms}). On flight day, the Pi must boot and be mission-ready within 60~seconds; a lighter dependency tree reduces the surface area for version conflicts and startup failures.
-
-    \item \textbf{Timeline constraint.} The five-person team had no prior ROS experience. Conservative estimation placed the ROS learning curve at 40--60~hours per developer~\cite{quigley2009ros}, consuming 25\% of the available development time for middleware proficiency rather than mission logic. The pymavlink API provided immediate access to all required ArduPilot commands with minimal learning investment.
-\end{enumerate}
-
-\noindent ROS remains the recommended path for future extensions (multi-drone coordination, SLAM, sensor fusion) where inter-process communication becomes essential.
+ROS~2 was excluded for three reasons~\cite{quigley2009ros}: (1)~architectural mismatch---the system is a single-node pipeline (one camera, one detector, one flight controller); ROS's pub/sub model adds inter-process overhead without new capability; (2)~deployment complexity---ROS~2 requires $\approx$\SI{2}{\giga\byte} vs four \texttt{pip} packages totalling $<$\SI{50}{\mega\byte}; (3)~timeline---40--60~hr learning curve per developer would have consumed 25\% of available development time for middleware rather than mission logic. ROS remains recommended for future multi-drone extensions.
 
 \subsection{Camera Selection: Global vs Rolling Shutter}\label{sec:camera-rationale}
 
-While the IMX296 was provided as part of the university equipment package, its suitability was validated against alternatives to confirm it meets mission requirements. The IMX296 global shutter camera was selected over alternative rolling-shutter modules (e.g., IMX477, IMX219) for motion-tolerance reasons specific to aerial search~\cite{imx296, sukhatme2012rolling_global}.
-
-During forward flight at \SI{5}{\metre\per\second} and \SI{30}{\metre} altitude, the ground moves across the sensor at approximately 250~pixels per second (at $1456 \times 1088$). A rolling-shutter sensor reads rows sequentially over $\approx$\SI{30}{\milli\second}; during this interval the scene shifts by $\approx 7.5$~pixels between the first and last row, producing a parallelogram distortion (``jello effect'') that skews bounding boxes and shifts detected centroids by up to \SI{0.5}{\metre} on the ground. The IMX296's global shutter captures all rows simultaneously, eliminating this geometric error entirely.
-
-The trade-off is lower light sensitivity: the IMX296's smaller pixel pitch (\SI{3.45}{\micro\metre} vs \SI{1.55}{\micro\metre} for the IMX219) yields higher noise in low light. This is acceptable because SAR flights are conducted in daylight per CAA Visual Line of Sight requirements~\cite{caa2024uas}. The global shutter also simplifies lens distortion calibration---the single-exposure model means standard Zhang calibration~\cite{lens_calibration} applies directly without rolling-shutter correction terms.
-
-An additional discovery during integration was that the IMX296 outputs BGR channel order despite \texttt{picamera2} labelling the format as RGB888. This was identified by testing all six channel permutations against a colour reference chart; the ``no conversion'' variant matched ground truth. The fix was to remove the \texttt{cv2.cvtColor()} call entirely---a one-line change, but one that would have introduced a systematic colour shift into every detection if left uncorrected.
+The IMX296 global shutter camera (provided as university equipment) was validated for aerial search~\cite{imx296, sukhatme2012rolling_global}. At \SI{5}{\metre\per\second} and \SI{30}{\metre} altitude, ground motion across the sensor reaches $\approx$250\,px/s; a rolling-shutter sensor would produce $\approx$7.5\,px parallelogram distortion per frame, shifting detected centroids by up to \SI{0.5}{\metre}. The IMX296's global shutter eliminates this error. The trade-off (lower light sensitivity from \SI{3.45}{\micro\metre} pixel pitch) is acceptable given daylight-only CAA VLOS requirements~\cite{caa2024uas}. During integration, the IMX296 was found to output BGR despite RGB888 labelling---corrected by removing the \texttt{cv2.cvtColor()} call (Section~\ref{sec:decisions-changed}).
 
 \subsection{Field Day Adaptation Under Uncertainty}\label{sec:weather-rationale}
 
-The scheduled flight test (2026-03-11) was cancelled due to sustained winds exceeding the EDU-450's \SI{10}{\metre\per\second} operational limit (measured \SI{12}{\metre\per\second}, gusts to \SI{18}{\metre\per\second}). A pre-planned bench-testing fallback was executed instead, yielding the FOV calibration correction (\SI{7.0}{\milli\metre}~$\rightarrow$~\SI{5.46}{\milli\metre}), lens distortion calibration (RMS~0.399), end-to-end connectivity verification, and the inference benchmark (\SI{207}{\milli\second}, 4.8\,FPS)---results detailed in Section~\ref{sec:decisions-changed} and the evaluation (Section~\ref{sec:evaluation}). The go/no-go decision framework and full bench protocol are documented in Appendix~\ref{app:field-day}.
+The scheduled flight test (2026-03-11) was cancelled due to sustained winds exceeding the EDU-450's \SI{10}{\metre\per\second} operational limit (measured \SI{12}{\metre\per\second}, gusts to \SI{18}{\metre\per\second}). A pre-planned bench-testing fallback was executed instead, yielding the FOV calibration correction (\SI{7.0}{\milli\metre}~$\rightarrow$~\SI{5.46}{\milli\metre}), lens distortion calibration (RMS~0.399), end-to-end connectivity verification, and the inference benchmark (\SI{207}{\milli\second}, 4.8\,FPS)---results detailed in Section~\ref{sec:decisions-changed} and the evaluation (Section~\ref{sec:evaluation}). The go/no-go decision framework and full bench protocol are documented in Appendix~\ref{sec:field-day}.
+
+\paragraph{Decision flow narrative.} The six-step reasoning chain---from detection ceiling through altitude, speed, scan angle, NFZ margin, and coverage acceptance---is presented as a self-contained executive narrative in Appendix~\ref{app:decision-flow}, including the 216-configuration sweep results, top-three configuration comparison, Pareto optimality analysis, and non-quantifiable design choices.
+
+\medskip
+\noindent\textbf{Section summary.} Every design decision in this project traces to a quantified rationale---physical measurement, parametric sweep, weighted trade study, or energy budget analysis---and four decisions were revised when empirical evidence contradicted initial assumptions, demonstrating the evidence-driven engineering process that underpins the system.

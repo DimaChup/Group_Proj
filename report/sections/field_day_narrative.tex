@@ -1,6 +1,8 @@
 \section{Field Day: Adaptation Under Uncertainty}\label{sec:field-day}
 
-On 11~March~2026 the team arrived at the designated test site with the full hardware stack assembled for the first time outside the lab: Raspberry~Pi~5, Cube~Orange autopilot, IMX296 global-shutter camera, and the airframe with propellers fitted. The objective was to progress through Tiers~3--5 of the progressive testing framework (Section~\ref{sec:five-tier})---bench verification, passive flight with manual RC, and, conditions permitting, first autonomous waypoint flight. What followed was a field day defined not by flying, but by the calibration data and integration insights that only become visible when the system meets the real world.
+This appendix presents a narrative account of the project's first field day on 11~March~2026, where weather cancellation forced the team to pivot from flight testing to intensive bench calibration.  The account is included not as an anecdote but as an empirical case study in progressive testing methodology: it demonstrates that each verification tier produces independently valuable data, that calibration errors invisible to simulation can dominate real-world accuracy, and that a well-prepared fallback programme can extract maximum information from a session that produces zero flight time.  The concrete outputs---a 22\% focal length correction, lens calibration, inference benchmarks, and a colour-channel fix---each improved the system's subsequent performance in ways that would have been difficult to achieve under the time pressure of an active flight session.
+
+On 11~March~2026 the team arrived at the designated test site with the full hardware stack assembled for the first time outside the lab: Raspberry~Pi~5, Cube~Orange autopilot, IMX296 global-shutter camera, and the airframe with propellers fitted. The objective was to progress through Tiers~2--5 of the progressive testing framework (Section~\ref{sec:testing-deep})---bench verification, passive flight with manual RC, and, conditions permitting, first autonomous waypoint flight. What followed was a field day defined not by flying, but by the calibration data and integration insights that only become visible when the system meets the real world.
 
 \subsection{Setup: Three Terminals, One Aircraft}\label{sec:field-setup}
 
@@ -73,7 +75,7 @@ At 4.8~FPS and a nominal search speed of 8~m/s (altitude-dependent schedule at 3
 
 By mid-afternoon the bench testing programme was complete, but the weather had deteriorated steadily. Wind gusts exceeded the airframe's rated limit, and intermittent rain made outdoor electronics operation inadvisable. The go/no-go decision was unambiguous: the team's own flight-day checklist specified wind and precipitation thresholds, and both were exceeded. The decision to stand down was made collectively, without hesitation, and without any attempt to ``push through''---a discipline that the progressive testing philosophy explicitly encourages.
 
-The cancellation was disappointing but not damaging. The bench tests had already validated Tier~3 of the testing framework in full. No flight-critical subsystem remained untested at the bench level, and the calibration data obtained during the day would have been impossible to collect during a time-pressured flight session.
+The cancellation was disappointing but not damaging. The bench tests had already validated Tier~2 of the testing framework in full. No flight-critical subsystem remained untested at the bench level, and the calibration data obtained during the day would have been impossible to collect during a time-pressured flight session.
 
 \subsection{The Pivot: Evidence-Based Adaptation}\label{sec:field-pivot}
 

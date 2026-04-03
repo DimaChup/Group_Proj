@@ -1,9 +1,9 @@
-\subsection{Simulation Validation and Sim-to-Real Gap}\label{sec:sim-validation}
+\section{Simulation Validation and Sim-to-Real Gap}\label{sec:sim-validation}
 
 A simulation framework is only useful if the behaviours it validates transfer reliably to hardware. This section examines what the multi-fidelity simulation (Section~\ref{sec:simulation}) proved, what it could not test, and the quantitative evidence underpinning confidence in the sim-to-real transfer.
 
 % ─────────────────────────────────────────────────────────────────────
-\subsubsection{Three Simulation Levels and What Each Validated}\label{sec:sim-levels-val}
+\subsection{Three Simulation Levels and What Each Validated}\label{sec:sim-levels-val}
 
 Each simulation level targets a different subset of the system. Table~\ref{tab:sim-val-matrix} summarises the coverage.
 
@@ -35,7 +35,7 @@ Wind disturbance on flight stability & --- & --- & --- & --- \\
 The interactive simulator (Level~1) was the primary tool for validating the GPS estimation mathematics and target approach algorithms. Over several hundred runs with configurable error injection, the three concurrent estimators---rolling average, cumulative average, and Kalman filter---were benchmarked against ground truth. The SITL level (Levels~2--3) validated the complete MAVLink command pipeline against ArduPilot's C++ firmware, confirming that arming sequences, guided waypoint navigation, mode transitions, and landing commands executed correctly with realistic vehicle dynamics. Video replay (Level~4) bridged the gap to real conditions by exercising the detection model on genuine aerial imagery from a DJI flight.
 
 % ─────────────────────────────────────────────────────────────────────
-\subsubsection{Error Injection as a Validation Tool}\label{sec:error-injection-val}
+\subsection{Error Injection as a Validation Tool}\label{sec:error-injection-val}
 
 The interactive simulator provides six configurable noise parameters that allow the estimation pipeline to be stress-tested against degraded sensor conditions:
 
@@ -52,7 +52,7 @@ The interactive simulator provides six configurable noise parameters that allow 
 Real-time sliders allow these parameters to be swept mid-flight, producing sensitivity curves without restarting the simulator. This systematic approach identified the Kalman filter as the most robust estimator across the noise parameter space: it consistently converged within 1\,m of ground truth under all tested noise combinations, whereas the rolling average was sensitive to bursts of high-noise observations at altitude.
 
 % ─────────────────────────────────────────────────────────────────────
-\subsubsection{DJI Video Replay as a Sim-to-Real Proxy}\label{sec:dji-proxy}
+\subsection{DJI Video Replay as a Sim-to-Real Proxy}\label{sec:dji-proxy}
 
 Recorded DJI flight footage provides the highest-fidelity offline validation available without flying the project drone. The 30\,fps video ($1456 \times 1088$ cropped) was paired frame-by-frame with SRT telemetry (GPS, altitude, heading) and processed through the identical detection and estimation pipeline used in all other simulation levels. This exercise validated three properties that no synthetic simulation can test:
 
@@ -65,7 +65,7 @@ Recorded DJI flight footage provides the highest-fidelity offline validation ava
 \end{itemize}
 
 % ─────────────────────────────────────────────────────────────────────
-\subsubsection{Validation Results Summary}\label{sec:val-results}
+\subsection{Validation Results Summary}\label{sec:val-results}
 
 Table~\ref{tab:sim-val-results} summarises the quantitative validation outcomes across all simulation levels.
 
@@ -90,7 +90,7 @@ Offset landing accuracy & $< 1$\,m (no wind, no GPS noise) & Not yet flight-test
 \end{table}
 
 % ─────────────────────────────────────────────────────────────────────
-\subsubsection{Known Sim-to-Real Gaps}\label{sec:known-gaps}
+\subsection{Known Sim-to-Real Gaps}\label{sec:known-gaps}
 
 Despite the multi-fidelity approach, several properties remain untestable in simulation and represent the primary sources of residual risk:
 
@@ -107,7 +107,7 @@ Despite the multi-fidelity approach, several properties remain untestable in sim
 \end{itemize}
 
 % ─────────────────────────────────────────────────────────────────────
-\subsubsection{Confidence Assessment}\label{sec:confidence}
+\subsection{Confidence Assessment}\label{sec:confidence}
 
 Based on the evidence gathered across all four simulation levels and the DJI video proxy, the system properties can be categorised into three confidence tiers:
 

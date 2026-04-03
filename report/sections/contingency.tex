@@ -1,6 +1,6 @@
 \section{Contingency Planning and Deliverable Tiers}\label{sec:contingency}
 
-Autonomous UAV missions introduce uncertainty at every layer---hardware, software, environmental, and regulatory. Rather than designing a single monolithic system that either works or does not, the project was structured around three deliverable tiers of increasing ambition, with explicit fallback paths between them. This section defines the minimum viable, target, and stretch deliverables, maps each to the brief requirements (R01--R12), and presents the contingency plans and pre-prepared test scripts that enable graceful degradation on flight day.
+This appendix defines the project's risk management strategy for flight day: a three-tier deliverable structure (minimum viable, target, and stretch) with explicit fallback paths between them, paired with pre-rehearsed contingency plans for eight identified failure scenarios.  Autonomous UAV missions introduce uncertainty at every layer---hardware, software, environmental, and regulatory---and the consequences of an unanticipated failure during a time-limited university flight slot are severe: lost data, potential hardware damage, and no opportunity to reschedule.  The tiered approach ensures that the team always has a known-good configuration ready to demonstrate, even if the most ambitious capabilities cannot be proven in the field.  Each contingency is mapped to a specific on-site test script that can verify the fallback path before committing to autonomous flight.
 
 % ─────────────────────────────────────────────────────────────────────
 \subsection{Minimum Viable Deliverable}\label{sec:mvd}
@@ -50,7 +50,7 @@ The target deliverable is the system described throughout this report: a fully a
   \end{tabularx}
 \end{table}
 
-The target deliverable achieves full compliance with R01--R05 and R08--R12. Partial compliance with R06 is achieved through the focus area support module (Section~\ref{sec:focus-area}), which re-generates the search pattern over a smaller polygon when PLB coordinates are received. R07 compliance depends on the Tarot payload release mechanism integration, which is implemented in software (\texttt{SERVO\_CHANNEL}, \texttt{SERVO\_FULL\_PWM} in \texttt{config.py}) but requires field calibration of the servo PWM values.
+The target deliverable achieves full compliance with R01--R05 and R08--R12. Partial compliance with R06 is achieved through the focus area support module (Section~\ref{sec:plb-redirect}), which re-generates the search pattern over a smaller polygon when PLB coordinates are received. R07 compliance depends on the Tarot payload release mechanism integration, which is implemented in software (\texttt{SERVO\_CHANNEL}, \texttt{SERVO\_FULL\_PWM} in \texttt{config.py}) but requires field calibration of the servo PWM values.
 
 % ─────────────────────────────────────────────────────────────────────
 \subsection{Stretch Goals}\label{sec:stretch}

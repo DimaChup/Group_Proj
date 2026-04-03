@@ -109,6 +109,9 @@
 \setlength{\bibhang}{1em}
 \renewcommand*{\bibfont}{\small}
 
+% ── Appendix counter (>26 appendices: AA, AB, ...) ─────────────────────────────
+\usepackage{alphalph}
+
 % ── Hyperlinks (must be last) ─────────────────────────────────────────────────────
 \usepackage[hidelinks,colorlinks=true,linkcolor=headblue,citecolor=headblue,urlcolor=blue!60]{hyperref}
 
@@ -140,6 +143,12 @@
   \vspace*{2cm}
 \end{center}
 
+% ══════════════════════════════════════════════════════════════════════
+% TABLE OF CONTENTS
+% ══════════════════════════════════════════════════════════════════════
+\newpage
+\tableofcontents
+
 \newpage
 
 % ══════════════════════════════════════════════════════════════════════
@@ -168,8 +177,7 @@
 % Justification of design decisions including STEEPLE considerations
 \input{sections/design_rationale}
 
-% ── Decision Flow (concise executive version of optimization story)
-\input{sections/decision_flow}
+% ── Decision Flow moved to Appendix AE (was ~2 pages) ──
 
 % ── Section 2: System Description (~5 pages) ────────────────────────
 % Architecture of final system. Flow charts, schematics, images.
@@ -191,7 +199,7 @@
 % REFERENCES (excluded from 15-page limit)
 % ══════════════════════════════════════════════════════════════════════
 \newpage
-\begin{multicols}{2}[\section*{References}]
+\begin{multicols}{2}[\section*{References}\addcontentsline{toc}{section}{References}]
 \printbibliography[heading=none]
 \end{multicols}
 
@@ -200,6 +208,60 @@
 % ══════════════════════════════════════════════════════════════════════
 \newpage
 \appendix
+
+% ── Fix for >26 appendices: AA, AB, ... after Z ──────────────────────
+\renewcommand{\thesection}{\AlphAlph{\value{section}}}
+
+% ── Appendix Guide (1-page directory of all appendices) ──────────────
+\section*{Appendix Guide}\label{app:guide}
+\addcontentsline{toc}{section}{Appendix Guide}
+
+The following appendices provide supplementary detail beyond the 15-page
+assessed body. Each appendix is self-contained and can be read independently.
+
+\begin{tabularx}{\linewidth}{@{}l X@{}}
+\toprule
+\textbf{App.} & \textbf{Contents} \\
+\midrule
+A  & Full state transition table --- 20 states, 32 transitions. \\
+B  & Configuration parameters --- all tuneable values and their rationale. \\
+C  & Model training pipeline --- dataset construction, augmentation, Colab workflow. \\
+D  & Safety and risk management --- HAZOP, regulatory compliance, mitigations. \\
+E  & Testing methodology --- five-tier framework, stress tests, pass criteria. \\
+F  & Field testing results --- calibration data, benchmark numbers, detection rates. \\
+G  & Future work --- roadmap for post-submission development. \\
+H  & Edge inference architecture --- NCNN vs TFLite, quantisation, Pi~5 constraints. \\
+I  & Computer vision extended analysis --- detection pipeline, altitude, dual backend. \\
+J  & Video streaming and ground station architecture. \\
+K  & GPS target estimation deep dive --- Kalman filter, clustering, error budget. \\
+L  & Progressive testing deep dive --- test ladder, integration strategy. \\
+M  & Field day narrative --- adaptation under weather cancellation. \\
+N  & Contingency planning and deliverable tiers. \\
+O  & Test script reference --- all 41 scripts with usage and dependencies. \\
+P  & Sensor calibration --- FOV, lens distortion, GPS ground truth. \\
+Q  & Simulation validation and sim-to-real gap analysis. \\
+R  & Mission flow --- real flight narrative, operator interaction. \\
+S  & Centering vs direct offset landing analysis. \\
+T  & MAVLink communication architecture. \\
+U  & Raw inference vs effective pipeline throughput (FPS analysis). \\
+V  & Flight path optimisation trade-offs. \\
+W  & Payload release mechanism --- servo hardware and actuation sequence. \\
+X  & Model comparison and future vision improvements. \\
+Y  & Multi-objective search optimisation --- energy, rotation, coverage. \\
+Z  & Focus area redirect and repulsive field implementation. \\
+AA & Search path optimisation --- definitive 216-configuration data. \\
+AB & Search parameter optimisation --- physics sim, Pareto, sensitivity. \\
+AC & Formal multi-objective optimisation. \\
+AD & Design strategy --- parameter derivation reasoning chain. \\
+AE & Vision performance analysis (real flight data). \\
+AF & Decision flow: executive narrative of search parameter selection. \\
+AG & Requirements verification detail --- R01--R12 evidence narratives. \\
+AH & Evaluation detail --- defect register, lessons learned, second iteration changes. \\
+\bottomrule
+\end{tabularx}
+
+\newpage
+
 % Appendix A: Full state transition table (20 states, 32 transitions)
 \input{sections/A1_state_table}
 
@@ -221,82 +283,91 @@
 % Appendix G: Future work
 \input{sections/14_future_work}
 
-% Appendix H: Inference architecture
+% Appendix H: Edge inference architecture (NCNN vs TFLite, Pi 5)
 \input{sections/inference_architecture}
 
-% Appendix H2: Computer Vision extended analysis
+% Appendix I: Computer Vision extended analysis
 \input{sections/cv_extended}
 
-% Appendix I: Streaming architecture
+% Appendix J: Streaming architecture
 \input{sections/streaming_architecture}
 
-% Appendix J: GPS estimation deep dive
+% Appendix K: GPS estimation deep dive
 \input{sections/gps_estimation_deep}
 
-% Appendix K: Testing deep dive
+% Appendix L: Testing deep dive
 \input{sections/testing_deep}
 
-% Appendix L: Field day narrative
+% Appendix M: Field day narrative
 \input{sections/field_day_narrative}
 
-% Appendix M: Contingency planning
+% Appendix N: Contingency planning
 \input{sections/contingency}
 
-% Appendix N: Test scripts guide
+% Appendix O: Test scripts guide
 \input{sections/test_scripts_guide}
 
-% Appendix O: Sensor calibration deep dive
+% Appendix P: Sensor calibration deep dive
 \input{sections/calibration_deep}
 
-% Appendix P: Simulation validation
+% Appendix Q: Simulation validation
 \input{sections/simulation_validation}
 
-% Appendix Q: Mission flow (real flight narrative)
+% Appendix R: Mission flow (real flight narrative)
 \input{sections/mission_flow}
 
-% Appendix R: Centering vs direct offset analysis
+% Appendix S: Centering vs direct offset analysis
 \input{sections/centering_analysis}
 
-% Appendix S: Communication architecture
+% Appendix T: Communication architecture
 \input{sections/comms_architecture}
 
-% Appendix T: Pipeline FPS vs raw inference
+% Appendix U: Pipeline FPS vs raw inference
 \input{sections/pipeline_fps}
 
-% Appendix U: Path planning tradeoffs
+% Appendix V: Flight path optimisation trade-offs
 \input{sections/path_tradeoffs}
 
-% Appendix V: Payload release mechanism
+% Appendix W: Payload release mechanism
 \input{sections/payload_release}
 
-% Appendix W: Model comparison and future CV
+% Appendix X: Model comparison and future CV
 \input{sections/model_comparison}
 
-% Appendix X: Search path optimization
+% Appendix Y: Multi-objective search optimisation
 \input{sections/search_optimization}
 
-% Appendix Y: Focus area + repulsive field
+% Appendix Z: Focus area + repulsive field
 \input{sections/focus_and_repulsive}
 
-% Appendix Z: Definitive path optimization (real 216-config data)
+% Appendix AA: Definitive path optimisation (real 216-config data)
 \input{sections/path_optimization_definitive}
 
-% Appendix AA: Master optimization (physics sim, top 3, sensitivity, Pareto)
+% Appendix AB: Master optimisation (physics sim, top 3, sensitivity, Pareto)
 \input{sections/optimization_master}
 
-% Appendix AB: Formal multi-objective optimization
+% Appendix AC: Formal multi-objective optimisation
 \input{sections/optimization_formal}
 
-% Appendix AB: Design strategy reasoning chain
+% Appendix AD: Design strategy reasoning chain
 \input{sections/design_strategy}
 
-% Appendix AB: Vision performance analysis (real data)
+% Appendix AE: Vision performance analysis (real data)
 \input{sections/vision_performance}
 
-% Appendix AA: Alternative text versions
-\input{sections/alternatives}
+% Appendix AF: Decision flow (executive search parameter narrative)
+\input{sections/decision_flow}
 
-% Appendix R: Figure descriptions (blackboard diagrams)
-\input{sections/figure_descriptions}
+% Appendix AG: Requirements verification detail (R01--R12 evidence)
+\input{sections/requirements_detail}
+
+% Appendix AH: Evaluation detail (defect register, lessons learned, second iteration)
+\input{sections/evaluation_detail}
+
+% (Removed) Alternative text versions — draft working material, not for submission
+% \input{sections/alternatives}
+
+% (Removed) Figure descriptions — placeholder \fbox figures, not for submission
+% \input{sections/figure_descriptions}
 
 \end{document}

@@ -1,9 +1,12 @@
 % search_optimization.tex — Search path optimisation: energy, coverage, NFZ, detection tradeoffs
-% ~3 pages. Builds on 05_path_planning.tex and path_tradeoffs.tex — goes deeper into
-% multi-objective optimisation, energy simulation, rotation analysis, NFZ margins.
 
-\subsection{Multi-Objective Search Optimisation}\label{sec:search-opt}
+\section{Multi-Objective Search Optimisation}\label{sec:search-opt}
 
+Selecting the operating point for a boustrophedon search pattern requires balancing five competing objectives---coverage, mission time, energy, detection probability, and regulatory safety margin---none of which can be optimised independently.  This section presents the quantitative analysis that informed the final parameter selection, including a 216-configuration parametric sweep across altitude and scan angle.
+
+\medskip\noindent\textit{Note: The definitive path optimisation analysis appears in Appendix~\ref{sec:path-opt}; the formal multi-objective problem statement in Appendix~\ref{sec:formal-opt}; the physics-based simulation and Pareto analysis in Appendix~\ref{sec:optimisation}; and the parameter derivation chain in Appendix~\ref{sec:design-strategy}.  This appendix provides supplementary detail and is retained for completeness.}
+
+\medskip
 The search pattern parameters described in the preceding sections---altitude, speed, scan angle, overlap margin, NFZ buffer---do not have independently optimal values. Each parameter trades off against at least two competing objectives, forming a multi-dimensional optimisation landscape. Five objectives are in tension:
 
 \begin{enumerate}
@@ -17,11 +20,11 @@ The search pattern parameters described in the preceding sections---altitude, sp
 These objectives form a Pareto frontier: no single configuration simultaneously maximises coverage, minimises time and energy, maximises detection probability, and maximises NFZ margin. The operating point must be chosen by engineering judgement informed by quantitative analysis. The following subsections present that analysis.
 
 % ─────────────────────────────────────────────────────────────────────
-\subsection{Energy Efficiency Simulation}\label{sec:energy-sim}
+\subsection{Energy Efficiency Simulation}\label{sec:energy-sim-old}
 
 To systematically explore the parameter space, a simulation swept \textbf{216 configurations} comprising 6~altitudes (20, 25, 30, 35, 40, and \SI{50}{\metre}) $\times$ 36~scan angles (\SIrange{0}{175}{\degree} in \SI{5}{\degree} steps), with speed determined by the altitude-dependent schedule. For each configuration the lawnmower pattern was generated over the AENGM0074 survey polygon using the rotated-mask algorithm, and the following energy model was applied:
 
-\begin{equation}\label{eq:energy-model}
+\begin{equation}\label{eq:energy-model-old}
   E_{\text{total}} = P_{\text{hover}} \cdot t_{\text{hover}} + P_{\text{forward}} \cdot t_{\text{forward}} + E_{\text{turn}} \cdot n_{\text{turns}}
 \end{equation}
 
@@ -32,11 +35,11 @@ To systematically explore the parameter space, a simulation swept \textbf{216 co
   \item $E_{\text{turn}} \approx \SI{0.083}{\watt\hour}$ per U-turn, corresponding to \SI{2}{\second} of hover-only power (\SI{150}{\watt} $\times$ \SI{2}{\second} / \SI{3600}{\second\per\hour}) for the deceleration--reacceleration cycle.
 \end{itemize}
 
-Table~\ref{tab:energy-top5} presents the five most and least energy-efficient configurations.
+Table~\ref{tab:energy-top5-old} presents the five most and least energy-efficient configurations.
 
 \begin{table}[ht]
   \centering\compactTable
-  \caption{Top~5 and bottom~5 configurations by total energy from the 216-configuration sweep. Coverage is measured as the fraction of the survey polygon area imaged.}\label{tab:energy-top5}
+  \caption{Top~5 and bottom~5 configurations by total energy from the 216-configuration sweep. Coverage is measured as the fraction of the survey polygon area imaged.}\label{tab:energy-top5-old}
   \begin{tabularx}{\linewidth}{@{}c c c c c c c X@{}}
     \toprule
     \textbf{Rank} & \textbf{Angle (\si{\degree})} & \textbf{Alt (m)} & \textbf{Speed (m/s)} & \textbf{Turns} & \textbf{Time (s)} & \textbf{Energy (Wh)} & \textbf{Notes} \\
@@ -60,19 +63,19 @@ Table~\ref{tab:energy-top5} presents the five most and least energy-efficient co
   \centering
   \includegraphics[width=0.85\linewidth]{energy_efficiency}
   \caption{Energy efficiency across the 216-configuration parameter sweep. Lower-energy configurations cluster at high altitude and optimal scan angle; the selected operating point (\SI{35}{\metre}, \SI{70}{\degree}, \SI{8}{\metre\per\second}) trades minimal energy for reliable detection.}
-  \label{fig:energy_efficiency}
+  \label{fig:energy-efficiency-old}
 \end{figure}
 
 The selected operating point (rank~5: \SI{70}{\degree}, \SI{35}{\metre}, \SI{8}{\metre\per\second}) is not the global energy minimum---that distinction belongs to the \SI{50}{\metre}/\SI{10}{\metre\per\second} configuration---but it is the most energy-efficient configuration that maintains reliable detection. At \SI{50}{\metre} the mannequin subtends only 25 model-input pixels (57 sensor pixels), approaching the detection confidence limit; at \SI{35}{\metre} it subtends 36 model-input pixels (81 sensor pixels) with a comfortable margin above the 20-pixel minimum. The energy penalty for this safety margin is \SI{4.4}{\watt\hour} (\SI{54}{\percent} more than the absolute minimum), which consumes only \SI{10.9}{\percent} of the battery capacity and leaves over \SI{14}{\minute} of flight endurance---well above the \SI{2}{\minute} search time.
 
 % ─────────────────────────────────────────────────────────────────────
-\subsection{Rotation Angle Analysis}\label{sec:rotation-analysis}
+\subsection{Rotation Angle Analysis}\label{sec:rotation-analysis-old}
 
 The scan angle is the single parameter with the largest impact on turn count and therefore on both energy and time. Three representative angles illustrate the sensitivity for the AENGM0074 polygon:
 
 \begin{table}[ht]
   \centering\compactTable
-  \caption{Rotation angle comparison at \SI{35}{\metre} altitude, \SI{8}{\metre\per\second} search speed.}\label{tab:rotation-compare}
+  \caption{Rotation angle comparison at \SI{35}{\metre} altitude, \SI{8}{\metre\per\second} search speed.}\label{tab:rotation-compare-old}
   \begin{tabularx}{\linewidth}{@{}l c c c c c X@{}}
     \toprule
     \textbf{Scan Angle} & \textbf{Passes} & \textbf{U-turns} & \textbf{Path (m)} & \textbf{Time (s)} & \textbf{Energy (Wh)} & \textbf{Rationale} \\
@@ -88,7 +91,7 @@ The scan angle is the single parameter with the largest impact on turn count and
   \centering
   \includegraphics[width=0.85\linewidth]{rotation_comparison}
   \caption{Scan angle comparison for the AENGM0074 survey polygon. Aligning strips with the longest edge (\SI{70}{\degree}) minimises U-turn count and path length compared to axis-aligned or diagonal orientations.}
-  \label{fig:rotation_comparison}
+  \label{fig:rotation-comparison-old}
 \end{figure}
 
 The longest-edge alignment at \SI{70}{\degree} reduces the turn count from 8 to 4 compared to north--south scanning, saving approximately \SI{60}{\second} of flight time and \SI{13.3}{\watt\hour} of energy. This is because the AENGM0074 polygon is elongated along a northeast--southwest axis: scanning perpendicular to the short axis requires far fewer strips to cover the same area. The \texttt{cv2.minAreaRect} function computes this alignment automatically, and the parametric sweep confirms that its output (\SI{68}{\degree} for this polygon) falls within the optimal \SIrange{65}{75}{\degree} band.
@@ -100,7 +103,7 @@ A diagonal scanning approach at \SI{45}{\degree} was also evaluated as a comprom
 We also investigated whether rotating the scan pattern to align with the wind direction would reduce GPS drift accumulation during U-turns, where the drone decelerates and is most susceptible to wind-induced displacement. Preliminary analysis suggested that the effect on turn-phase GPS error was within \SIrange{0.3}{0.5}{\metre}---comfortably absorbed by the \SI{6.4}{\metre} overlap band---and that the dominant source of turn-phase error was the deceleration--reacceleration cycle rather than wind alignment.
 
 % ─────────────────────────────────────────────────────────────────────
-\subsection{Coverage Completeness: Is 96\% Acceptable?}\label{sec:coverage-96}
+\subsection{Coverage Completeness: Is 96\% Acceptable?}\label{sec:coverage-96-old}
 
 The implemented system achieves approximately \SI{96}{\percent} coverage of the survey polygon, with the uncovered \SI{4}{\percent} concentrated along the western boundary adjacent to the SSSI no-fly zone. This gap arises from the \SI{30}{\metre} NFZ waypoint buffer (\texttt{NFZ\_WAYPOINT\_BUFFER\_M} in \texttt{config.py}): any waypoint that would fall within \SI{30}{\metre} of the SSSI boundary is excluded from the pattern, and the corresponding strip is truncated or omitted entirely. The question is whether this gap is operationally acceptable.
 
@@ -108,7 +111,7 @@ The implemented system achieves approximately \SI{96}{\percent} coverage of the 
 
 The uncovered strip lies within \SI{30}{\metre} of the SSSI boundary, which at the survey site is a fenced wildlife reserve. The probability of a casualty being located in this narrow band is proportional to its area fraction (\SI{4}{\percent}) multiplied by an access-probability factor. Since the area is fenced and not part of any public footpath network, the conditional probability of a casualty being present there is substantially lower than in the open survey area. A conservative estimate assigns the buffer zone one-tenth the casualty density of the open area, giving an effective coverage-weighted detection probability of:
 
-\begin{equation}\label{eq:effective-coverage}
+\begin{equation}\label{eq:effective-coverage-old}
   P_{\text{eff}} = 0.96 + 0.04 \times 0.0 \times 0.1 = 0.96
 \end{equation}
 
@@ -127,19 +130,19 @@ Reducing the NFZ buffer from \SI{30}{\metre} to \SI{10}{\metre} would recover mo
 The \SI{30}{\metre} buffer was therefore retained, accepting \SI{96}{\percent} coverage as an operationally sound compromise that prioritises regulatory compliance and flight safety over marginal coverage gains in a low-probability zone.
 
 % ─────────────────────────────────────────────────────────────────────
-\subsection{NFZ Margin vs Altitude}\label{sec:nfz-altitude}
+\subsection{NFZ Margin vs Altitude}\label{sec:nfz-altitude-old}
 
 The camera footprint radius increases linearly with altitude, meaning that at higher search altitudes the drone must maintain a correspondingly larger distance from the SSSI boundary to avoid imaging protected land. The footprint half-width in the cross-track direction is:
 
-\begin{equation}\label{eq:footprint-half}
+\begin{equation}\label{eq:footprint-half-old}
   r_{\text{fp}} = \frac{w_s \cdot h}{2 f} = \frac{5.02 \times h}{2 \times 5.46} \approx 0.460 \, h \quad [\si{\metre}]
 \end{equation}
 
-Table~\ref{tab:nfz-margin} shows the required minimum drone-to-boundary distance to ensure the camera footprint does not extend into the SSSI, and compares this with the implemented margins.
+Table~\ref{tab:nfz-margin-old} shows the required minimum drone-to-boundary distance to ensure the camera footprint does not extend into the SSSI, and compares this with the implemented margins.
 
 \begin{table}[ht]
   \centering\compactTable
-  \caption{NFZ margin analysis: minimum required distance from the SSSI boundary to prevent camera footprint intrusion, compared with the implemented total margin (waypoint buffer + speed ramp zone).}\label{tab:nfz-margin}
+  \caption{NFZ margin analysis: minimum required distance from the SSSI boundary to prevent camera footprint intrusion, compared with the implemented total margin (waypoint buffer + speed ramp zone).}\label{tab:nfz-margin-old}
   \begin{tabularx}{\linewidth}{@{}c c c c c X@{}}
     \toprule
     \textbf{Alt (m)} & \textbf{Footprint $r$ (m)} & \textbf{Min drone dist (m)} & \textbf{Waypoint buffer (m)} & \textbf{Total margin (m)} & \textbf{Surplus (m)} \\
@@ -158,31 +161,31 @@ Table~\ref{tab:nfz-margin} shows the required minimum drone-to-boundary distance
   \centering
   \includegraphics[width=0.85\linewidth]{nfz_margin_altitude}
   \caption{NFZ margin analysis as a function of altitude. The camera footprint radius grows linearly with altitude, but the implemented \SI{50}{\metre} total margin maintains a comfortable surplus at all operational altitudes.}
-  \label{fig:nfz_margin_altitude}
+  \label{fig:nfz-margin-altitude-old}
 \end{figure}
 
 The total margin of \SI{50}{\metre} (comprising the \SI{30}{\metre} waypoint buffer plus the \SI{20}{\metre} NFZ slow zone where speed ramps down to \SI{0.3}{\metre\per\second}) provides a comfortable surplus at all altitudes up to \SI{50}{\metre}. Even at the highest altitude considered, the surplus of \SI{27}{\metre} ensures that transient GPS errors, wind gusts, or turn overshoots cannot cause the camera footprint to image the SSSI. The multi-layer NFZ protection---waypoint exclusion, speed ramping, and repulsive geofence push---provides defence in depth; no single failure mode can result in SSSI intrusion.
 
 % ─────────────────────────────────────────────────────────────────────
-\subsection{Speed vs Detection Probability}\label{sec:speed-detection}
+\subsection{Speed vs Detection Probability}\label{sec:speed-detection-old}
 
 The probability of detecting a casualty depends on the number of inference frames in which the target appears. As the drone speed increases, the target traverses the camera frame faster, reducing the available detection window. At the Pi~5 TFLite inference rate of \SI{4.8}{FPS}, the number of frames containing the target is:
 
-\begin{equation}\label{eq:frames-target}
+\begin{equation}\label{eq:frames-target-old}
   n_f = \frac{W_g}{v} \times f_{\text{inf}} = \frac{W_g \cdot f_{\text{inf}}}{v}
 \end{equation}
 
 \noindent where $W_g$ is the along-track ground footprint (\SI{24}{\metre} at \SI{35}{\metre} altitude, accounting for the 4:3 aspect ratio of the IMX296) and $f_{\text{inf}} = \SI{4.8}{FPS}$. Assuming independent per-frame detection with probability $p = 0.95$ (based on bench-test results with the retrained YOLOv8n model at 36 model-input pixels), the probability of at least one detection in $n_f$ frames is:
 
-\begin{equation}\label{eq:detect-prob}
+\begin{equation}\label{eq:detect-prob-old}
   P_d = 1 - (1 - p)^{n_f}
 \end{equation}
 
-Table~\ref{tab:speed-detect} quantifies this trade-off across the speed range.
+Table~\ref{tab:speed-detect-old} quantifies this trade-off across the speed range.
 
 \begin{table}[ht]
   \centering\compactTable
-  \caption{Speed vs detection probability at \SI{35}{\metre} altitude. Search time is for the AENGM0074 polygon at the \SI{70}{\degree} scan angle.}\label{tab:speed-detect}
+  \caption{Speed vs detection probability at \SI{35}{\metre} altitude. Search time is for the AENGM0074 polygon at the \SI{70}{\degree} scan angle.}\label{tab:speed-detect-old}
   \begin{tabularx}{\linewidth}{@{}c c c c c X@{}}
     \toprule
     \textbf{Speed (m/s)} & \textbf{Dwell (s)} & \textbf{Frames} & $P_d$ & \textbf{Search time (s)} & \textbf{Regime} \\
@@ -200,7 +203,7 @@ Table~\ref{tab:speed-detect} quantifies this trade-off across the speed range.
   \centering
   \includegraphics[width=0.85\linewidth]{speed_detection_energy}
   \caption{Speed--detection--energy trade-off at \SI{35}{\metre} altitude. Detection probability remains above 99.6\% across all speeds; the binding constraint is energy consumption and NFZ margin rather than detection reliability.}
-  \label{fig:speed_detection_energy}
+  \label{fig:speed-detection-energy-old}
 \end{figure}
 
 At all speeds up to \SI{15}{\metre\per\second}, the detection probability exceeds \SI{99.6}{\percent}---a consequence of the high per-frame detection rate and the multiple-frame dwell time. The practical distinction between \SI{5}{\metre\per\second} (\SI{99.99}{\percent}) and \SI{15}{\metre\per\second} (\SI{99.66}{\percent}) is negligible in terms of detection reliability, but the search time differs by a factor of three. This analysis supports the altitude-dependent speed schedule (Section~\ref{sec:speed-schedule}): there is little detection benefit to flying slower than \SI{6}{\metre\per\second} at any altitude, and the time savings from faster flight are substantial.
@@ -208,7 +211,7 @@ At all speeds up to \SI{15}{\metre\per\second}, the detection probability exceed
 The exception is the focus area, where the search speed drops to \SI{5}{\metre\per\second}. In this scenario the prior probability of a casualty being present is high (a PLB signal has been received), and the area is small enough that the additional time cost is measured in seconds rather than minutes. The reduced speed also compensates for potential model uncertainty in the focus zone, where the target may be partially obscured, in an unusual pose, or at the edge of the detection envelope.
 
 % ─────────────────────────────────────────────────────────────────────
-\subsection{Focus Area Redirect Impact}\label{sec:focus-impact}
+\subsection{Focus Area Redirect Impact}\label{sec:focus-impact-old}
 
 When a PLB signal triggers the focus area redirect (Section~\ref{sec:plb-redirect}), the mission dynamics change in several interacting ways:
 
@@ -225,13 +228,13 @@ When a PLB signal triggers the focus area redirect (Section~\ref{sec:plb-redirec
 The net effect is a substantial acceleration of target acquisition within the focus area (\SI{30}{\second} vs \SI{112}{\second} for the full search) at the cost of abandoning partial broad-area coverage. This trade-off is justified by Bayes' theorem: the PLB signal concentrates the posterior probability of the casualty's location so heavily in the focus area that continuing the broad search has negligible expected value.
 
 % ─────────────────────────────────────────────────────────────────────
-\subsection{Summary of Optimisation Trade-Offs}\label{sec:opt-summary}
+\subsection{Summary of Optimisation Trade-Offs}\label{sec:opt-summary-old}
 
-Table~\ref{tab:pareto-summary} summarises the Pareto trade-offs and the rationale for the selected operating point.
+Table~\ref{tab:pareto-summary-old} summarises the Pareto trade-offs and the rationale for the selected operating point.
 
 \begin{table}[ht]
   \centering\compactTable
-  \caption{Multi-objective trade-off summary. The selected configuration prioritises detection reliability and regulatory safety over minimum energy or maximum coverage.}\label{tab:pareto-summary}
+  \caption{Multi-objective trade-off summary. The selected configuration prioritises detection reliability and regulatory safety over minimum energy or maximum coverage.}\label{tab:pareto-summary-old}
   \begin{tabularx}{\linewidth}{@{}l l l X@{}}
     \toprule
     \textbf{Objective} & \textbf{Ideal} & \textbf{Selected} & \textbf{Compromise rationale} \\

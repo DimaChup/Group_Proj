@@ -36,7 +36,7 @@ using these values directly.
 \subsection{Altitude vs.\ Target Pixel Size}\label{sec:vp:altitude}
 
 The ground footprint width at altitude~$h$ follows from the thin-lens model:
-\begin{equation}\label{eq:footprint}
+\begin{equation}\label{eq:footprint-vp}
   W_{\mathrm{gnd}} = \frac{w_s \cdot h}{f}\,,
   \qquad
   H_{\mathrm{gnd}} = W_{\mathrm{gnd}} \cdot \frac{N_v}{N_h}
@@ -193,7 +193,7 @@ capability.  Frame coverage is therefore never the limiting factor.
 
 Search efficiency depends on both swath width and speed.  The coverage rate
 (area surveyed per unit time) is:
-\begin{equation}\label{eq:coverage}
+\begin{equation}\label{eq:coverage-app}
   \dot{A} = H_{\mathrm{gnd}}(h) \times v(h)
 \end{equation}
 where $H_{\mathrm{gnd}}$ is the cross-track footprint and $v$ is the
@@ -290,6 +290,6 @@ input---well above the detection floor.
 
 The speed profile could be increased to 15+\,m/s without impacting detection
 performance; however, the resulting \SI{1.5}{\metre} GPS timing lag at
-\SI{10}{\metre\per\second} (Section~\ref{sec:accuracy}) makes speed
+\SI{10}{\metre\per\second} (Section~\ref{sec:validation}) makes speed
 reduction a more effective strategy for improving localisation accuracy than
 for preserving detection capability.

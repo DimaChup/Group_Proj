@@ -145,7 +145,7 @@ An optional \texttt{--smart-detect} mode requires \texttt{DETECT\_CONFIRM\_FRAME
 
 \subsection{Operator-in-the-Loop Verification}\label{subsec:operator}
 
-The \textsc{Verify} state implements a human-in-the-loop decision gate, motivated by the high cost of false positives in SAR operations~\cite{murphy2014disaster}. Autonomous descent onto an incorrectly identified target wastes battery endurance, delays area coverage, and risks damage to the aircraft or bystanders. The operator classifies each detection into one of four categories:
+The \textsc{Verify} state implements a human-in-the-loop decision gate, motivated by the high cost of false positives in SAR operations~\cite{murphy2014}. Autonomous descent onto an incorrectly identified target wastes battery endurance, delays area coverage, and risks damage to the aircraft or bystanders. The operator classifies each detection into one of four categories:
 
 \begin{itemize}
     \item \textbf{Confirm (Y)} --- The target is the casualty. When \texttt{--center-verify} mode is active, GPS averaging is performed over 10 seconds to refine the position estimate using an inverse-variance weighted mean of all samples collected while hovering. The operator then selects a landing side (N/E/S/W) to avoid overflying the casualty during approach.

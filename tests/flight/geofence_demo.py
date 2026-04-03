@@ -291,8 +291,6 @@ def filter_waypoints(waypoints, buffer_m=10):
                 break
         if not too_close:
             safe.append((lat, lon))
-            else:
-                skipped += 1
         else:
             skipped += 1
 

@@ -1,0 +1,77 @@
+% Appendix: Evaluation Detail
+% Moved from body to appendix to meet 15-page limit.
+
+\section{Evaluation Detail}\label{app:eval-detail}
+
+\subsection{Defect Discovery Register}\label{app:bug-cost}
+
+Table~\ref{tab:bug-cost} lists all defects discovered at each testing tier, with measured resolution time and assessed impact if undetected in flight.
+
+\begin{table}[ht]
+\centering
+\caption{Defects discovered at each testing tier, with measured resolution time and impact if undetected. All fix times are from git commit timestamps; ``cost if missed'' is the assessed flight-day consequence.}
+\label{tab:bug-cost}
+\small
+\begin{tabular}{@{}p{4.2cm}clp{4.5cm}@{}}
+\toprule
+\textbf{Defect} & \textbf{Tier} & \textbf{Fix Time} & \textbf{Cost if Missed} \\
+\midrule
+Geofence sign inverted (\texttt{pointPolygonTest} +ve = inside) & 1 & 15\,min & SSSI incursion; CAA regulatory violation \\
+\addlinespace
+Repulsive force reversed at NFZ boundary & 1 & 20\,min & Drone attracted \emph{into} NFZ \\
+\addlinespace
+Barometric drift $\to$ infinite landing loop & 1 & 30\,min & Battery drain; hover until failsafe \\
+\addlinespace
+Duplicate target queued (consecutive frames) & 1 & 10\,min & Repeated descent on same target \\
+\addlinespace
+CENTERING state missing timeout guard & 1 & 15\,min & State machine stuck indefinitely \\
+\addlinespace
+BGR/RGB colour inversion (IMX296 sensor) & 2 & 45\,min & Confidence drops to ${\sim}0.3$; mission failure \\
+\addlinespace
+FOV miscalibration ($f{=}7.0 \to 5.46$\,mm) & 2 & 60\,min & GPS estimates \SI{28}{\percent} off; landing outside \SI{10}{\metre} R07 radius \\
+\addlinespace
+Python 3.13 pyserial regression & 2 & 120\,min & Zero Pi--Cube communication \\
+\addlinespace
+\texttt{tflite-runtime} absent on 3.13 & 2 & 30\,min & Zero on-device inference \\
+\addlinespace
+Camera resource conflict (picamera2) & 2 & 20\,min & Stream or detection crash on startup \\
+\addlinespace
+\texttt{self.investigating} uninitialised & 2 & 5\,min & Python crash on first detection \\
+\addlinespace
+GPS timing lag (100--200\,ms) & 3$^*$ & --- & 0.8--1.6\,m systematic offset at \SI{8}{\metre\per\second} \\
+\midrule
+\multicolumn{2}{@{}l}{\textbf{Total (Tiers 1--2)}} & \textbf{6\,hr 10\,min} & \\
+\bottomrule
+\multicolumn{4}{@{}l}{\footnotesize $^*$Discovered via DJI video analysis (Tier~3 proxy); mitigated by inverse-variance averaging, not yet compensated.} \\
+\end{tabular}
+\end{table}
+
+\subsection{What Would Change in a Second Iteration}\label{app:what-would-change}
+
+Four changes would yield the largest improvement if the project were repeated:
+
+\begin{enumerate}
+    \item \textbf{Start with Pi hardware from week~1, not week~16.} Six of the twelve integration defects (Table~\ref{tab:bug-cost}) were hardware-specific (Tier~2) and consumed \SI{4.3}{\hour} of compressed bench-day time. Earlier hardware access would have distributed these faults across 16 weeks instead of one day.
+
+    \item \textbf{Automate regression tests in CI.} All 71 test scripts are run manually. A GitHub Actions pipeline running dry-run validation, TFLite model loading, geofence sign checks, and the 127 unit tests on every push would have caught at least 2 of the 5 Tier-1 defects (geofence inversion, uninitialised variable) before they reached the bench.
+
+    \item \textbf{Record flight video in week~1 for training data.} The DJI video replay pipeline---built post-cancellation in a single session---produced the 4 key quantitative figures in this evaluation. Recording real aerial footage during \emph{any} early manual flight would have provided labelled training data weeks earlier, enabling a proper held-out test set ($n \geq 50$) and eliminating the train/validation overlap concern (D5).
+
+    \item \textbf{Deploy NCNN backend and train a multi-class detector from day~1.} NCNN benchmarks show $4.5\times$ speedup (\SI{72}{\milli\second} vs \SI{327}{\milli\second} full pipeline), already available but not field-tested. A multi-class detector (person/dummy/debris) would reduce operator verification load at the VERIFY state, addressing both D2 and D6.
+\end{enumerate}
+
+\subsection{Lessons Learned}\label{app:lessons-learned}
+
+Four technical lessons emerged that would shape a second iteration of this project:
+
+\textbf{1. Invest in data collection infrastructure before model training.}
+The synthetic dataset generator produced 300 images in ${\sim}\SI{2}{\minute}$, but the resulting model's mAP$_{50}{=}0.995$ is inflated by train/validation overlap (D5). Only 16 of 366 images (\SI{4.4}{\percent}) are from real flight footage. The labelling tool (\texttt{label\_tool.py}) was built in week~16; building it in week~1 and collecting real frames during any early manual flight would have provided a proper held-out test set ($n \geq 50$) and eliminated the need to treat mAP as an upper bound.
+
+\textbf{2. Characterise the sensor pipeline end-to-end before writing application code.}
+Three of the twelve defects---BGR inversion (\SI{45}{\minute}), FOV miscalibration (\SI{60}{\minute}), and GPS timing lag (unresolved)---were sensor-pipeline issues that propagated silently into higher-level logic. A dedicated ``sensor characterisation sprint'' in week~1---measuring colour encoding, FOV at multiple distances, GPS latency under motion, and lens distortion---would have prevented these faults and saved ${\sim}\SI{2}{\hour}$ of bench-day debugging.
+
+\textbf{3. Simulation fidelity has diminishing returns; real-world data does not.}
+SITL simulation caught 5 of 12 defects (Tier~1) but models perfect GPS, zero wind, and synthetic camera views. The DJI video replay pipeline---built in one session post-cancellation---produced 4 quantitative figures (Figures~\ref{fig:conf_vs_alt}--\ref{fig:perf_analysis}) and the CEP$_{50}{=}\SI{2.3}{\metre}$ GPS characterisation that simulation could never yield. Future projects should prioritise replaying real sensor data through the pipeline over building higher-fidelity simulators.
+
+\textbf{4. Budget for weather and schedule one flight day per week, not per project.}
+A single scheduled flight day creates a binary outcome: either the weather cooperates and the project succeeds, or it does not and the project has no flight data. Scheduling weekly flight slots---even short 30-minute windows---would have provided multiple opportunities and allowed the progressive tiers to be executed over several sessions rather than compressed into a single day.

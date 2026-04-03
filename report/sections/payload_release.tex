@@ -1,14 +1,14 @@
-\subsection{Payload Release Mechanism}\label{sec:payload-release}
+\section{Payload Release Mechanism}\label{sec:payload-release}
 
-The mission's final objective is to deliver a first-aid kit to the vicinity of the casualty. This subsection describes the release hardware, the rationale for deploying from a low hover rather than landing beside the casualty, and the servo actuation sequence.
+The mission's final objective is to deliver a first-aid kit to the vicinity of the casualty.  Achieving this reliably requires careful integration of mechanical hardware, servo control logic, and a delivery strategy that balances accuracy against safety.  This section describes the release hardware, the rationale for deploying from a low hover rather than landing beside the casualty, and the servo actuation sequence.
 
 % ─────────────────────────────────────────────────────────────────────
-\subsubsection{Tarot Double-Throw Release Mechanism}
+\subsection{Tarot Double-Throw Release Mechanism}
 
 The payload is suspended beneath the airframe by a university-provided Tarot servo-actuated release mechanism, controlled via a single PWM channel on the Cube Orange (AUX output channel~9, configured as \texttt{SERVO\_CHANNEL} in \texttt{config.py}). The mechanism supports two-stage actuation: a partial opening at PWM~1300 (\texttt{SERVO\_PARTIAL\_PWM}) and a full release at PWM~1100 (\texttt{SERVO\_FULL\_PWM}). The two-stage design is deliberate---during transit the servo is held at PWM~1500 (closed), and the partial-open intermediate step prevents premature payload separation caused by airframe vibration or sudden manoeuvres that might overcome a single-latch mechanism. Only the second command fully disengages the retaining hooks.
 
 % ─────────────────────────────────────────────────────────────────────
-\subsubsection{Why Release from Altitude, Not Land}
+\subsection{Why Release from Altitude, Not Land}
 
 An alternative design would land the drone directly beside the casualty and release the payload on the ground. This was rejected for five reasons:
 
@@ -25,12 +25,12 @@ An alternative design would land the drone directly beside the casualty and rele
 \end{enumerate}
 
 % ─────────────────────────────────────────────────────────────────────
-\subsubsection{The \SI{7.5}{\metre} Offset}\label{sec:offset-rationale}
+\subsection{The \SI{7.5}{\metre} Offset}\label{sec:offset-rationale}
 
 Requirement R07 specifies that the drone must land (or, in this design, deploy the payload) within \SI{10}{\metre} of the casualty but not within \SI{5}{\metre}. The system therefore computes a delivery point offset \SI{7.5}{\metre} from the estimated casualty position in an operator-selected cardinal direction (N/E/S/W), implemented in \texttt{landing\_offset\_7\_5m()} in \texttt{gps\_utils.py}. The \SI{7.5}{\metre} value is the midpoint of the \SIrange{5}{10}{\metre} annular band, providing \SI{2.5}{\metre} of margin on both sides and maximising the probability of compliance given the Gaussian-distributed GPS estimation error. Section~\ref{sec:centering-analysis} shows that with multi-detection fusion ($N_\text{eff} = 6$, $\sigma_\text{fused} \approx \SI{0.80}{\metre}$), the probability of the delivery point falling within the required band exceeds 99\%.
 
 % ─────────────────────────────────────────────────────────────────────
-\subsubsection{Servo Actuation Sequence}
+\subsection{Servo Actuation Sequence}
 
 The payload deployment is executed during the \textsc{Hover\_Target} state, implemented in \texttt{state\_machine.py}. The full sequence proceeds as follows:
 
@@ -49,10 +49,10 @@ The payload deployment is executed during the \textsc{Hover\_Target} state, impl
 The \SI{15}{\second} total hover time balances deployment reliability against battery consumption and low-altitude exposure time. A visual animation of the sequence is rendered on the ground-station HUD during the hover to provide the operator with real-time feedback on deployment progress.
 
 % ─────────────────────────────────────────────────────────────────────
-\subsubsection{Why Visual Servo Centering Was Not Required}
+\subsection{Why Visual Servo Centering Was Not Required}
 
 The system includes \textsc{Centering} and \textsc{Descending} states capable of visually servoing the drone above the target to improve localisation accuracy (Section~\ref{sec:centering-analysis}). However, for the payload release mission this pipeline was bypassed. The CEP$_{50}$ of \SI{2.3}{\metre} from the GPS estimation pipeline is already well within the \SI{2.5}{\metre} margin provided by the \SI{7.5}{\metre} offset, making visual servo centering unnecessary for R07 compliance. As demonstrated in Section~\ref{sec:centering-analysis}, simulation comparison of twenty runs with and without centering showed that the direct offset approach achieved 95\% R07 compliance without the added risks of low-altitude manoeuvring, visual servo fragility below \SI{10}{\metre}, and extended hover time over the casualty. The centering capability is retained in the codebase as a future enhancement for precision-drop missions where tighter tolerances are required.
 
-\subsubsection{Future Work: Precision Drop}
+\subsection{Future Work: Precision Drop}
 
 With the NCNN inference backend (available in \texttt{cv\_models/sar\_v2\_1088/ncnn/}), frame rates of approximately \SI{15}{FPS} become achievable on the Raspberry Pi~5, enabling real-time visual servo control. Combined with the existing centering pipeline, this could reduce the effective CEP to below \SI{1}{\metre}, permitting precision drops from \SI{5}{\metre} altitude without the \SI{7.5}{\metre} lateral offset---useful for scenarios requiring delivery directly to the casualty's position rather than to a nearby clear area.

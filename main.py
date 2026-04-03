@@ -28,7 +28,6 @@ if config.MODE == "SIMULATION":
     from simulator.simulation import SimulationEnvironment
 
 # ── CLI flags & config ────────────────────────────────────────────────
-REAL_CANVAS_SIZE = 4800
 DRY_RUN = "--dry-run" in sys.argv
 MODEL_PATH = "best.tflite"
 TRANSIT_FILE = "flight_plans/transit.json"
@@ -38,21 +37,19 @@ STREAM_PORT = 8090
 STREAM_W, STREAM_H = 1456, 1088
 STREAM_FPS = 10
 STREAM_QUALITY = 80
-SIM_SPEED = 1
 CENTER_VERIFY = "--center-verify" in sys.argv
 SMART_DETECT = "--smart-detect" in sys.argv
 NO_NFZ = "--no-nfz" in sys.argv
 NFZ_DIRECTIONAL = "--nfz-total-speed" not in sys.argv  # directional is default
 USE_SPIRAL = "--spiral" in sys.argv  # Zian's perimeter spiral instead of lawnmower
-LOCK_YAW = "--lock-yaw" in sys.argv  # Maintain search yaw throughout sweep
-BEACON_DELAY = 0
+config.LOCK_YAW = "--lock-yaw" in sys.argv  # Maintain search yaw throughout sweep
 
 for _i, _arg in enumerate(sys.argv):
     if _arg == "--model" and _i + 1 < len(sys.argv):        MODEL_PATH = sys.argv[_i + 1]
     elif _arg == "--transit" and _i + 1 < len(sys.argv):     TRANSIT_FILE = sys.argv[_i + 1]; _TRANSIT_EXPLICIT = True
-    elif _arg == "--speed" and _i + 1 < len(sys.argv):       SIM_SPEED = float(sys.argv[_i + 1])
+    elif _arg == "--speed" and _i + 1 < len(sys.argv):       config.SIM_SPEED = float(sys.argv[_i + 1])
     elif _arg == "--alt" and _i + 1 < len(sys.argv):         config.TARGET_ALT = float(sys.argv[_i + 1])
-    elif _arg == "--beacon-delay" and _i + 1 < len(sys.argv): BEACON_DELAY = float(sys.argv[_i + 1])
+    elif _arg == "--beacon-delay" and _i + 1 < len(sys.argv): config.BEACON_DELAY = float(sys.argv[_i + 1])
     elif _arg == "--conf" and _i + 1 < len(sys.argv):         config.CONFIDENCE_THRESHOLD = float(sys.argv[_i + 1])
 
 if DRY_RUN:
@@ -383,8 +380,8 @@ class VisualFlightMission(StateHandlersMixin):
 
         # Generate search waypoints
         if self.search_poly and len(self.search_poly) >= 3:
-            cw = self.sim.map_w if config.MODE == "SIMULATION" else REAL_CANVAS_SIZE
-            ch = self.sim.map_h if config.MODE == "SIMULATION" else REAL_CANVAS_SIZE
+            cw = self.sim.map_w if config.MODE == "SIMULATION" else config.REAL_CANVAS_SIZE
+            ch = self.sim.map_h if config.MODE == "SIMULATION" else config.REAL_CANVAS_SIZE
             start_ref = self.pre_waypoints[-1] if self.pre_waypoints else None
             self.waypoints = self.planner.generate_search_pattern(cw, ch, start_ref)
             print(f"  Search: {len(self.waypoints)} waypoints")
@@ -423,7 +420,7 @@ class VisualFlightMission(StateHandlersMixin):
 
     def _setup_real_search_area(self):
         """Load search area from search_area.json, config GPS, or fallback."""
-        self.geo = GeoTransformer(map_w_px=REAL_CANVAS_SIZE)
+        self.geo = GeoTransformer(map_w_px=config.REAL_CANVAS_SIZE)
         sa_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "flight_plans", "search_area.json")
         if os.path.exists(sa_file):
             import json
@@ -805,7 +802,7 @@ class VisualFlightMission(StateHandlersMixin):
                 self._enforce_geofence(skip_speed_clamp=skip_speed)
 
             # Continuous yaw enforcement (--lock-yaw)
-            if LOCK_YAW and self.master and hasattr(self, '_search_yaw_target'):
+            if config.LOCK_YAW and self.master and hasattr(self, '_search_yaw_target'):
                 self._enforce_search_yaw()
 
             if self.state == State.DONE:
@@ -1023,7 +1020,7 @@ def _dry_run(mission):
     drone_gps = (config.REF_LAT, config.REF_LON)
     print(f"\n  Start: ({drone_gps[0]:.6f}, {drone_gps[1]:.6f})  Alt: {config.TARGET_ALT}m  Speed: {config.SEARCH_SPEED_MPS}m/s")
 
-    waypoints = mission.planner.generate_search_pattern(REAL_CANVAS_SIZE, REAL_CANVAS_SIZE, drone_gps)
+    waypoints = mission.planner.generate_search_pattern(config.REAL_CANVAS_SIZE, config.REAL_CANVAS_SIZE, drone_gps)
     print(f"  Pattern: {'Spiral' if USE_SPIRAL else 'Lawnmower'}")
     if not waypoints:
         print("  ERROR: No waypoints generated!")

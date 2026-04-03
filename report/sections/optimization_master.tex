@@ -1,6 +1,11 @@
 % optimization_master.tex — Definitive search parameter optimisation
 % THE one section a reader goes to for parameter selection rationale.
-% COUNTED in 15-page limit.
+% Appendix AB (excluded from 15-page limit).
+%
+% STATUS: DEFINITIVE for physics-based simulation, Pareto analysis, sensitivity,
+%         and coupling structure. Shares content with path_optimization_definitive.tex
+%         (216-config sweep, energy model) and optimization_formal.tex (problem statement).
+%         Some figures duplicate those in design_strategy.tex with '-app' suffix.
 
 \section{Search Parameter Optimisation}\label{sec:optimisation}
 
@@ -106,7 +111,7 @@ The weights reflect the SAR priority hierarchy: detection reliability is paramou
 % =====================================================================
 \subsection{Top Three Configurations}\label{sec:opt-top3}
 
-Figure~\ref{fig:top3-paths} shows the three highest-scoring configurations overlaid on the survey polygon.
+Figure~\ref{fig:top3-paths-app} shows the three highest-scoring configurations overlaid on the survey polygon.
 Table~\ref{tab:opt-top3} compares their performance.
 
 \begin{table}[ht]
@@ -126,7 +131,7 @@ Table~\ref{tab:opt-top3} compares their performance.
 \begin{figure}[ht]
   \centering
   \includegraphics[width=0.95\linewidth]{top3_paths}
-  \caption{Top three lawnmower configurations overlaid on the AENGM0074 polygon. Left: \#1 (35\,m, 70\textdegree, selected). Centre: \#2 (30\,m, 65\textdegree). Right: \#3 (40\,m, 75\textdegree). The SSSI no-fly zone (red) and 20\,m buffer (dashed) are shown.}\label{fig:top3-paths}
+  \caption{Top three lawnmower configurations overlaid on the AENGM0074 polygon. Left: \#1 (35\,m, 70\textdegree, selected). Centre: \#2 (30\,m, 65\textdegree). Right: \#3 (40\,m, 75\textdegree). The SSSI no-fly zone (red) and 20\,m buffer (dashed) are shown.}\label{fig:top3-paths-app}
 \end{figure}
 
 Configuration \#1 wins because it sits at the sweet spot of two competing pressures.
@@ -166,23 +171,23 @@ The selected operating point sits above the 95\% detection contour in the high-s
 \begin{figure}[ht]
   \centering
   \includegraphics[width=0.85\linewidth]{altitude_speed_tradeoff}
-  \caption{Altitude--speed trade-off space. Colour encodes the composite score (40\% detection $+$ 35\% coverage $+$ 25\% energy). Blue contours: detection probability. Orange contours: coverage time. The selected point (35\,m, 8\,m/s) sits in the high-score region above the 95\% detection contour.}\label{fig:alt-speed-body}
+  \caption{Altitude--speed trade-off space. Colour encodes the composite score (40\% detection $+$ 35\% coverage $+$ 25\% energy). Blue contours: detection probability. Orange contours: coverage time. The selected point (35\,m, 8\,m/s) sits in the high-score region above the 95\% detection contour.}\label{fig:alt-speed-body-app}
 \end{figure}
 
 The scan angle $\theta = 70$\textdegree{} was then determined by the 216-configuration sweep at fixed $h = \SI{35}{\metre}$: this angle aligns with the polygon's longest edge (northeast--southwest axis), minimising scan lines from 10 (at 0\textdegree) to 6, and reducing U-turns from 9 to 5.
-The energy saving is $2\times$ compared to the worst angle (95\textdegree), as shown in Figure~\ref{fig:energy-heatmap}.
+The energy saving is $2\times$ compared to the worst angle (95\textdegree), as shown in Figure~\ref{fig:energy-heatmap-app}.
 
 \begin{figure}[ht]
   \centering
   \includegraphics[width=0.85\linewidth]{real_energy_heatmap}
-  \caption{Energy heatmap across 216 altitude--angle configurations. A clear low-energy valley runs through 65--75\textdegree{} at all altitudes, corresponding to longest-edge alignment. The red star marks the global energy minimum (50\,m, 70\textdegree). The selected point (35\,m, 70\textdegree) trades 4.4\,Wh of energy for a 44\% increase in target pixel extent.}\label{fig:energy-heatmap}
+  \caption{Energy heatmap across 216 altitude--angle configurations. A clear low-energy valley runs through 65--75\textdegree{} at all altitudes, corresponding to longest-edge alignment. The red star marks the global energy minimum (50\,m, 70\textdegree). The selected point (35\,m, 70\textdegree) trades 4.4\,Wh of energy for a 44\% increase in target pixel extent.}\label{fig:energy-heatmap-app}
 \end{figure}
 
 % =====================================================================
 \subsection{Sensitivity Analysis}\label{sec:opt-sensitivity}
 
 How robust is the selected operating point to perturbations in each variable?
-Table~\ref{tab:opt-sensitivity} summarises the sensitivity of the composite score to one-step changes, and Figure~\ref{fig:tornado-sensitivity} presents the tornado chart.
+Table~\ref{tab:opt-sensitivity} summarises the sensitivity of the composite score to one-step changes, and Figure~\ref{fig:tornado-sensitivity-app} presents the tornado chart.
 
 \begin{table}[ht]
   \centering\compactTable
@@ -201,7 +206,7 @@ Table~\ref{tab:opt-sensitivity} summarises the sensitivity of the composite scor
 \begin{figure}[ht]
   \centering
   \includegraphics[width=0.75\linewidth]{tornado_sensitivity}
-  \caption{Tornado chart of parameter sensitivities. Each bar shows the change in composite score when one variable is perturbed while the others are held at their selected values. Altitude dominates: a $\pm$5\,m change has nearly double the effect of a $\pm$2\,m/s speed change.}\label{fig:tornado-sensitivity}
+  \caption{Tornado chart of parameter sensitivities. Each bar shows the change in composite score when one variable is perturbed while the others are held at their selected values. Altitude dominates: a $\pm$5\,m change has nearly double the effect of a $\pm$2\,m/s speed change.}\label{fig:tornado-sensitivity-app}
 \end{figure}
 
 Three observations follow:
@@ -210,7 +215,7 @@ Three observations follow:
   \item \textbf{Altitude is the most sensitive variable} because it simultaneously affects four objectives: higher altitude increases footprint (improving coverage rate and reducing scan lines) but degrades pixel extent (reducing detection confidence), while altering both mission time and energy.
   A \SI{5}{\metre} altitude error has nearly double the score impact of a \SI{2}{\metre\per\second} speed error.
 
-  \item \textbf{The scan angle has a flat optimum.} The energy valley at 65--75\textdegree{} (Figure~\ref{fig:energy-heatmap}) means that $\pm$15\textdegree{} perturbation changes the score by only 0.02.
+  \item \textbf{The scan angle has a flat optimum.} The energy valley at 65--75\textdegree{} (Figure~\ref{fig:energy-heatmap-app}) means that $\pm$15\textdegree{} perturbation changes the score by only 0.02.
   This is operationally useful: the pilot does not need to align the drone precisely with a compass heading.
 
   \item \textbf{Speed is moderately sensitive} because it trades dwell time against energy.
@@ -221,17 +226,17 @@ Three observations follow:
 \subsection{Variable Coupling Structure}\label{sec:opt-coupling}
 
 The five decision variables do not affect the objectives independently.
-Figure~\ref{fig:n2-diagram} shows the N\textsuperscript{2}~diagram revealing the coupling structure, and Figure~\ref{fig:coupling-matrix} quantifies which objectives are jointly influenced by each variable pair.
+Figure~\ref{fig:n2-diagram-app} shows the N\textsuperscript{2}~diagram revealing the coupling structure, and Figure~\ref{fig:coupling-matrix-app} quantifies which objectives are jointly influenced by each variable pair.
 
 \begin{figure}[ht]
   \centering
   \begin{subfigure}[t]{0.48\linewidth}
     \includegraphics[width=\linewidth]{n2_diagram}
-    \caption{N\textsuperscript{2} diagram showing information flow between subsystems. Feed-forward links (blue) and feedback loops (red) reveal that altitude--speed is the most tightly coupled pair.}\label{fig:n2-diagram}
+    \caption{N\textsuperscript{2} diagram showing information flow between subsystems. Feed-forward links (blue) and feedback loops (red) reveal that altitude--speed is the most tightly coupled pair.}\label{fig:n2-diagram-app}
   \end{subfigure}\hfill
   \begin{subfigure}[t]{0.48\linewidth}
     \includegraphics[width=\linewidth]{coupling_matrix}
-    \caption{Variable--objective coupling matrix. Cell labels indicate which objectives ($C$, $D$, $T$, $E$, $S$) are jointly affected. The altitude--speed pair jointly determines four of five objectives.}\label{fig:coupling-matrix}
+    \caption{Variable--objective coupling matrix. Cell labels indicate which objectives ($C$, $D$, $T$, $E$, $S$) are jointly affected. The altitude--speed pair jointly determines four of five objectives.}\label{fig:coupling-matrix-app}
   \end{subfigure}
   \caption{Coupling analysis of the decision variables. The altitude--speed pair exhibits the strongest coupling, jointly determining coverage rate, detection probability, mission time, and energy consumption.}\label{fig:coupling-pair}
 \end{figure}
@@ -250,17 +255,17 @@ The coupling structure has three practical consequences:
     Both affect only coverage ($\alpha$ determines lane spacing; $d_{\mathrm{nfz}}$ determines edge truncation) and were fixed analytically: $\alpha = 0.20$ covers the \SI{4.6}{\metre} RSS lane error with \SI{1.8}{\metre} to spare, and $d_{\mathrm{nfz}} = \SI{30}{\metre}$ provides a $2.2\times$ safety factor over the RSS margin requirement.
 \end{enumerate}
 
-The sensitivity matrix (Figure~\ref{fig:sensitivity-matrix}) and spider plot (Figure~\ref{fig:sensitivity-spider}) provide complementary views: the matrix shows how each input parameter influences every derived quantity, while the spider plot reveals the overall sensitivity footprint of the design point.
+The sensitivity matrix (Figure~\ref{fig:sensitivity-matrix-app}) and spider plot (Figure~\ref{fig:sensitivity-spider-app}) provide complementary views: the matrix shows how each input parameter influences every derived quantity, while the spider plot reveals the overall sensitivity footprint of the design point.
 
 \begin{figure}[ht]
   \centering
   \begin{subfigure}[t]{0.48\linewidth}
     \includegraphics[width=\linewidth]{sensitivity_matrix}
-    \caption{Sensitivity matrix: darker cells indicate stronger influence of each input on each derived metric.}\label{fig:sensitivity-matrix}
+    \caption{Sensitivity matrix: darker cells indicate stronger influence of each input on each derived metric.}\label{fig:sensitivity-matrix-app}
   \end{subfigure}\hfill
   \begin{subfigure}[t]{0.48\linewidth}
     \includegraphics[width=\linewidth]{sensitivity_spider}
-    \caption{Spider plot of normalised sensitivities. Polygon area indicates the overall sensitivity footprint.}\label{fig:sensitivity-spider}
+    \caption{Spider plot of normalised sensitivities. Polygon area indicates the overall sensitivity footprint.}\label{fig:sensitivity-spider-app}
   \end{subfigure}
   \caption{Complementary sensitivity visualisations at the selected operating point (\SI{35}{\metre}, 70\textdegree, \SI{8}{\metre\per\second}).}\label{fig:sensitivity-pair}
 \end{figure}
@@ -269,12 +274,12 @@ The sensitivity matrix (Figure~\ref{fig:sensitivity-matrix}) and spider plot (Fi
 \subsection{Pareto Frontier}\label{sec:opt-pareto}
 
 The 216~configurations define a five-dimensional objective space.
-Figure~\ref{fig:pareto-2d} projects this onto a two-dimensional view: mission effectiveness (coverage $\times$ detection) versus mission cost (normalised energy $+$ time).
+Figure~\ref{fig:pareto-2d-app} projects this onto a two-dimensional view: mission effectiveness (coverage $\times$ detection) versus mission cost (normalised energy $+$ time).
 
 \begin{figure}[ht]
   \centering
   \includegraphics[width=0.85\linewidth]{pareto_2d_composite}
-  \caption{Pareto frontier in the effectiveness--cost plane. Each point is one of the 216 evaluated configurations, coloured by altitude. The Pareto-efficient frontier (black line) separates achievable from dominated solutions. The selected operating point (35\,m, 70\textdegree) lies on the frontier at the ``knee''---the point of maximum curvature where marginal effectiveness gains require disproportionate cost increases.}\label{fig:pareto-2d}
+  \caption{Pareto frontier in the effectiveness--cost plane. Each point is one of the 216 evaluated configurations, coloured by altitude. The Pareto-efficient frontier (black line) separates achievable from dominated solutions. The selected operating point (35\,m, 70\textdegree) lies on the frontier at the ``knee''---the point of maximum curvature where marginal effectiveness gains require disproportionate cost increases.}\label{fig:pareto-2d-app}
 \end{figure}
 
 \paragraph{Alternative projections of the five-dimensional objective space.}
@@ -323,7 +328,7 @@ The energy efficiency curve (Figure~\ref{fig:energy-efficiency}) confirms that t
 \end{figure}
 
 % =====================================================================
-\subsection{Summary of Selected Parameters}\label{sec:opt-summary}
+\subsection{Summary of Selected Parameters}\label{sec:opt-summary-app}
 
 \begin{table}[ht]
   \centering\compactTable
@@ -334,7 +339,7 @@ The energy efficiency curve (Figure~\ref{fig:energy-efficiency}) confirms that t
     \midrule
     Search altitude $h$    & 35   & m     & 30\% margin below 50\,m detection ceiling (Eq.~\ref{eq:opt-modelpx}) \\
     Search speed $v$       & 8.0  & m/s   & $\geq$10 frames on target at 4.8\,FPS (Eq.~\ref{eq:opt-pdetect}) \\
-    Scan angle $\theta$    & 70   & \textdegree & Energy minimum from 216-config sweep (Fig.~\ref{fig:energy-heatmap}) \\
+    Scan angle $\theta$    & 70   & \textdegree & Energy minimum from 216-config sweep (Fig.~\ref{fig:energy-heatmap-app}) \\
     Swath overlap $\alpha$ & 20   & \%    & Covers \SI{4.6}{\metre} RSS lane error with \SI{1.8}{\metre} margin \\
     NFZ buffer $d_{\mathrm{nfz}}$ & 30 & m & $2.2\times$ RSS safety factor over \SI{23}{\metre} requirement \\
     \midrule

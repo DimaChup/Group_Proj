@@ -1,5 +1,7 @@
 \section{Field Testing and Results}\label{sec:results}
 
+This appendix presents the quantitative results from bench testing, sensor calibration, inference benchmarking, and post-hoc video analysis that collectively characterise the system's real-world performance and identify the remaining unknowns prior to autonomous flight.
+
 On 11~March~2026 the full hardware stack---Raspberry~Pi~5, Cube~Orange autopilot, and IMX296 global-shutter camera---was assembled and tested at the designated flight site. Although adverse weather prevented outdoor flight, bench and calibration tests validated the complete hardware chain and produced quantitative benchmarks that informed subsequent system tuning.
 
 \subsection{Bench Testing Results}\label{sec:bench-results}
@@ -7,7 +9,7 @@ On 11~March~2026 the full hardware stack---Raspberry~Pi~5, Cube~Orange autopilot
 The first objective was to verify end-to-end connectivity between the Pi, Cube, and camera in a field-representative configuration. A three-terminal workflow was established over SSH (PuTTY) and the Pi's local display:
 
 \begin{description}
-    \item[Terminal~1 (mavproxy):] Forwarded Cube telemetry from the UART link (\texttt{/dev/ttyAMA0}, 921\,600~baud) to two UDP outputs---port~14550 for flight scripts and port~14551 for the diagnostics dashboard---plus a TCP bridge on port~5762 for Mission Planner on the laptop~\cite{ardupilot_mavproxy}.
+    \item[Terminal~1 (mavproxy):] Forwarded Cube telemetry from the UART link (\texttt{/dev/ttyAMA0}, 921\,600~baud) to two UDP outputs---port~14550 for flight scripts and port~14551 for the diagnostics dashboard---plus a TCP bridge on port~5762 for Mission Planner on the laptop~\cite{mavproxy}.
     \item[Terminal~2 (diagnostics):] Ran the diagnostics script, confirming camera frame capture, AI model loading, Cube heartbeat, GPS satellite count, and battery voltage in a single multi-panel view.
     \item[Terminal~3 (scripts):] Executed calibration and benchmark scripts sequentially.
 \end{description}
@@ -62,7 +64,7 @@ To supplement the bench tests, a post-hoc analysis was performed on DJI Mavic fl
 
 \subsubsection{Detection Performance}
 
-The retrained model (mAP$_{50}$ = 0.995 on validation data) successfully detected the dummy target across the full altitude range captured in the video. The FOV for the cropped DJI video frame (distinct from the \SI{49.3}{\degree} HFOV of the onboard Pi IMX296 camera) was independently calibrated at $54.4^{\circ}$~HFOV (focal length $1416 \pm 41$~px) using nine measurements of the known 1.8~m dummy at different altitudes; the dummy consistently measured 1.7--1.9~m across all samples, validating the calibration.
+The retrained model (mAP$_{50}$ = 0.995 on validation data) successfully detected the dummy target across the full altitude range captured in the video. The FOV for the cropped DJI video frame (distinct from the \SI{49.3}{\degree} HFOV of the onboard Pi IMX296 camera) was independently calibrated at \SI{54.4}{\degree}~HFOV (focal length $1416 \pm 41$~px) using nine measurements of the known 1.8~m dummy at different altitudes; the dummy consistently measured 1.7--1.9~m across all samples, validating the calibration.
 
 A comparative analysis tool enabled live model switching on the same video frames, confirming that the retrained model offered improved detection consistency over the baseline, particularly at higher altitudes where the target occupies fewer pixels.
 

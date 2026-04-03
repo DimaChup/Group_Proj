@@ -1,13 +1,13 @@
 % testing_deep.tex — Deep-dive on progressive testing methodology
-% Include from main report: \input{sections/testing_deep}
+% Appendix L
 
 \section{Progressive Testing Methodology}\label{sec:testing-deep}
 
-Autonomous UAV software carries a unique risk profile: a logic error that manifests as a misplaced pixel in simulation can, on real hardware, command a 2\,kg aircraft into an unrecoverable trajectory. The cost of discovering a defect rises steeply with integration level---a sign-convention bug caught in simulation costs minutes; the same bug discovered during autonomous flight costs days of rework, potential hardware damage, and a lost flight slot that a five-person university team cannot easily reschedule. This asymmetry motivates a gated, progressive testing strategy in which every defect is caught at the lowest-risk tier where it is detectable.
+This appendix documents the five-tier verification framework that governed all testing throughout the project, from desktop simulation through to autonomous flight.  The framework is motivated by a fundamental asymmetry in autonomous UAV development: a logic error that manifests as a misplaced pixel in simulation can, on real hardware, command a 2\,kg aircraft into an unrecoverable trajectory.  The cost of discovering a defect rises steeply with integration level---a sign-convention bug caught in simulation costs minutes; the same bug discovered during autonomous flight costs days of rework, potential hardware damage, and a lost flight slot that a five-person university team cannot easily reschedule.  The following subsections detail the philosophy, tier definitions, test script organisation, defect discovery data, V-model mapping, and cost--risk gradient that together form the project's verification and validation strategy.
 
 \subsection{Philosophy: Never Skip a Tier}\label{sec:test-philosophy}
 
-The governing principle is borrowed from safety-critical avionics: \emph{each verification tier gates the next, and no gate may be bypassed}. A failure at Tier~2 (bench) blocks all flight testing until the root cause is resolved, regardless of schedule pressure. This discipline is counterintuitive on a time-constrained student project, where the temptation to ``just try it in the air'' is strongest precisely when time is shortest. The justification is empirical: of the 15 defects discovered during this project's verification campaign, 12 were caught at Tiers~1--3 (Table~\ref{tab:bug-cost}), where the turnaround time from discovery to fix was under one hour. Had those defects propagated to flight, each would have consumed an entire field session.
+The governing principle is borrowed from safety-critical avionics: \emph{each verification tier gates the next, and no gate may be bypassed}. A failure at Tier~2 (bench) blocks all flight testing until the root cause is resolved, regardless of schedule pressure. This discipline is counterintuitive on a time-constrained student project, where the temptation to ``just try it in the air'' is strongest precisely when time is shortest. The justification is empirical: of the 15 defects discovered during this project's verification campaign, 12 were caught at Tiers~1--3 (Table~\ref{tab:bug-cost-appendix}), where the turnaround time from discovery to fix was under one hour. Had those defects propagated to flight, each would have consumed an entire field session.
 
 The framework also enforces a separation of concerns. Each tier tests a \emph{specific integration boundary}: Tier~1 tests software logic; Tier~2 tests the software--hardware interface; Tier~3 tests the hardware--environment interface; Tier~4 tests the perception pipeline under operational conditions; Tier~5 tests closed-loop autonomy. This decomposition ensures that when a failure occurs, its root cause is immediately localisable to the boundary most recently crossed.
 
@@ -127,7 +127,7 @@ Six experiment scripts are designed for execution during Tier~3 passive flights,
 % ─────────────────────────────────────────────────────────────────────
 \subsection{Defect Discovery by Tier}\label{sec:bug-discovery}
 
-Table~\ref{tab:bug-cost} lists representative defects, the tier at which they were discovered, the resolution time, and the estimated cost had they propagated to flight.
+Table~\ref{tab:bug-cost-appendix} lists representative defects, the tier at which they were discovered, the resolution time, and the estimated cost had they propagated to flight.
 
 \begin{table}[H]
 \centering
@@ -224,4 +224,4 @@ At Tier~1, a developer working alone can execute hundreds of test iterations per
 
 \subsection{Summary}
 
-The progressive methodology treated testing not as a phase that follows development, but as a continuous, tiered process that shapes development decisions. The five-tier gating system, supported by 71 dedicated scripts across eight categories, ensured that every integration boundary was verified before the system was permitted to cross it. Of the 15 significant defects discovered, 80\% were caught at Tiers~1 and~2 where the fix cost was measured in minutes, not field sessions. The structured experiment scripts prepared for Tier~3 passive flights provide a repeatable, quantitative basis for tuning configuration parameters before autonomy is enabled---replacing the ad-hoc ``fly and see'' approach with a data-driven verification pipeline.
+The progressive methodology treated testing not as a phase that follows development, but as a continuous, tiered process that shapes development decisions. The five-tier gating system, supported by 58 dedicated scripts across eight categories (Table~\ref{tab:test-categories}), ensured that every integration boundary was verified before the system was permitted to cross it. Of the 15 significant defects discovered, 80\% were caught at Tiers~1 and~2 where the fix cost was measured in minutes, not field sessions. The structured experiment scripts prepared for Tier~3 passive flights provide a repeatable, quantitative basis for tuning configuration parameters before autonomy is enabled---replacing the ad-hoc ``fly and see'' approach with a data-driven verification pipeline.

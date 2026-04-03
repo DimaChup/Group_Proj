@@ -1,10 +1,10 @@
 % focus_and_repulsive.tex — PLB Focus Area redirect + repulsive field detail
 \section{Focus Area Redirect and Repulsive Field Implementation}\label{sec:focus-repulsive}
 
-This section expands on two mission-critical subsystems introduced in Sections~\ref{sec:focus-area} and~\ref{sec:geofencing}: the PLB-triggered focus area redirect that narrows the search polygon mid-flight, and the inverse-distance repulsive vector field that enforces the SSSI no-fly zone boundary.
+Two subsystems are central to the mission's adaptability and safety: the ability to dynamically redirect the search pattern in response to new intelligence, and the continuous enforcement of no-fly zone boundaries during autonomous flight.  This section expands on these two mission-critical subsystems introduced in Sections~\ref{sec:plb-redirect} and~\ref{sec:geofencing}: the PLB-triggered focus area redirect that narrows the search polygon mid-flight, and the inverse-distance repulsive vector field that enforces the SSSI no-fly zone boundary.
 
 % ═════════════════════════════════════════════════════════════════════
-\subsection{PLB Focus Area Logic (R06)}\label{sec:plb-redirect}
+\subsection{PLB Focus Area Logic (R06)}\label{sec:plb-redirect-app}
 
 Requirement R06 stipulates that the system shall respond to a Personal Locator Beacon (PLB) signal by redirecting the search to a smaller focus area polygon of 3--10 vertices. In the operational scenario the PLB signal is expected 5--15 minutes into the search, once the casualty's approximate position has been triangulated by ground teams.
 
@@ -23,7 +23,7 @@ The focus area polygon is defined in one of three ways, in decreasing priority:
 \noindent Each vertex is validated to lie within $\pm90^{\circ}$ latitude and $\pm180^{\circ}$ longitude, and at least three vertices must be present; otherwise the redirect is aborted with a console warning.
 
 \paragraph{Pattern regeneration.}
-Upon activation, the planner's search polygon is replaced with the focus area polygon and a fresh lawnmower pattern is generated from the drone's current GPS position (Algorithm~\ref{alg:beacon-redirect}). The new pattern uses the same rotated-mask algorithm described in Section~\ref{sec:algorithm}, but the search speed is capped at \texttt{FOCUS\_SEARCH\_SPEED\_MPS}\,=\,\SI{5}{\metre\per\second}---slower than the normal altitude-dependent schedule---to maximise detection probability in the high-priority zone. The waypoint index and rescan counter both reset to zero.
+Upon activation, the planner's search polygon is replaced with the focus area polygon and a fresh lawnmower pattern is generated from the drone's current GPS position (Algorithm~\ref{alg:beacon-redirect}). The new pattern uses the same rotated-mask algorithm described in Section~\ref{sec:search-pattern}, but the search speed is capped at \texttt{FOCUS\_SEARCH\_SPEED\_MPS}\,=\,\SI{5}{\metre\per\second}---slower than the normal altitude-dependent schedule---to maximise detection probability in the high-priority zone. The waypoint index and rescan counter both reset to zero.
 
 \begin{algorithm}[ht]
 \caption{PLB beacon redirect}\label{alg:beacon-redirect}

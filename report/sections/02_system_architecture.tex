@@ -115,7 +115,7 @@ Inbound telemetry is read by the main loop using pymavlink message hooks. The sy
 
 The drone's companion computer (Raspberry Pi~5) communicates with the CubePilot Orange+ autopilot via the MAVLink protocol~\cite{mavlink2}, a lightweight message-oriented protocol widely adopted in unmanned vehicle systems. The physical link is a UART serial connection at 921\,600\,baud.
 
-Due to a known incompatibility between Python~3.13 and the pyserial library (dropped bytes causing \texttt{BAD\_DATA} errors), the system interposes a MAVProxy bridge process~\cite{ardupilot_mavproxy}. MAVProxy reads the serial port reliably using its own C-level serial handler and republishes the MAVLink stream over UDP:
+Due to a known incompatibility between Python~3.13 and the pyserial library (dropped bytes causing \texttt{BAD\_DATA} errors), the system interposes a MAVProxy bridge process~\cite{mavproxy}. MAVProxy reads the serial port reliably using its own C-level serial handler and republishes the MAVLink stream over UDP:
 
 \begin{verbatim}
 mavproxy.py --master=/dev/ttyAMA0 --baudrate=921600 \

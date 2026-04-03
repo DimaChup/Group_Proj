@@ -1,5 +1,11 @@
 % path_optimization_definitive.tex — Definitive path optimisation section
 % Supersedes search_optimization.tex. ~4–5 pages with equations, tables, figures.
+%
+% STATUS: DEFINITIVE appendix for path optimisation analysis.
+%         Supersedes search_optimization.tex.
+%         Related: optimization_master.tex (physics sim + Pareto + sensitivity),
+%                  optimization_formal.tex (formal problem statement),
+%                  design_strategy.tex (parameter derivation chain).
 
 \section{Search Path Optimisation}\label{sec:path-opt}
 
@@ -220,7 +226,7 @@ The boustrophedon pattern was selected for five reasons:
   \item \textbf{IAMSAR compliance.} Boustrophedon coverage is the standard method recommended by the International Aeronautical and Maritime Search and Rescue Manual (IAMSAR Vol.~III) and is widely deployed on autonomous marine and aerial SAR platforms~\cite{galceran2013survey}.
 \end{enumerate}
 
-\noindent The system also implements an \emph{expanding-square-equivalent} through the Focus Area mode (Section~\ref{sec:focus-area}): when a PLB signal is received, the search redirects to a smaller polygon around the beacon location, using a boustrophedon within that focused area.
+\noindent The system also implements an \emph{expanding-square-equivalent} through the Focus Area mode (Section~\ref{sec:plb-redirect}): when a PLB signal is received, the search redirects to a smaller polygon around the beacon location, using a boustrophedon within that focused area.
 This combines the ``search likely area first'' benefit of the expanding square with the coverage guarantee of the lawnmower.
 
 % =====================================================================

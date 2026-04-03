@@ -1,11 +1,11 @@
-\subsection{Centering vs.\ Direct Offset Landing}\label{sec:centering-analysis}
+\section{Centering vs.\ Direct Offset Landing}\label{sec:centering-analysis}
 
-The state machine includes dedicated \textsc{centering} and \textsc{descending} states that enable the drone to visually servo above a detected target, progressively reducing altitude while keeping the casualty centred in the camera frame (Section~\ref{subsec:states}). Despite this capability, the flight-tested configuration bypasses centering entirely and proceeds directly from a confirmed detection to a \SI{7.5}{\metre} offset landing. This subsection justifies that design choice analytically and empirically.
+A critical design decision in the landing pipeline is whether to visually servo the drone above the target before commanding a landing offset, or to proceed directly from a GPS-estimated position.  The state machine includes dedicated \textsc{Centering} and \textsc{Descending} states that enable the drone to visually servo above a detected target, progressively reducing altitude while keeping the casualty centred in the camera frame (Section~\ref{sec:state-machine}). Despite this capability, the flight-tested configuration bypasses centering entirely and proceeds directly from a confirmed detection to a \SI{7.5}{\metre} offset landing. This section justifies that design choice analytically and empirically.
 
 % ─────────────────────────────────────────────────────────────────────
-\subsubsection{The Centering Option}
+\subsection{The Centering Option}
 
-In the centering pipeline the drone transitions from \textsc{search} to \textsc{centering}, where it flies toward the GPS-estimated target position and attempts to place the detection bounding box within a pixel-tolerance of the image centre. Once centred, the FSM enters \textsc{descending}, reducing altitude from \SI{35}{\metre} to \SI{15}{\metre} in increments while maintaining visual lock. Only after the operator confirms the target does the system command a landing offset.
+In the centering pipeline the drone transitions from \textsc{Search} to \textsc{Centering}, where it flies toward the GPS-estimated target position and attempts to place the detection bounding box within a pixel-tolerance of the image centre. Once centred, the FSM enters \textsc{Descending}, reducing altitude from \SI{35}{\metre} to \SI{15}{\metre} in increments while maintaining visual lock. Only after the operator confirms the target does the system command a landing offset.
 
 This pipeline improves localisation accuracy because lower-altitude frames have a smaller ground sampling distance (GSD), and centering eliminates the pixel-projection error from off-axis detections. However, it introduces three additional risk factors:
 
@@ -16,12 +16,12 @@ This pipeline improves localisation accuracy because lower-altitude frames have 
 \end{enumerate}
 
 % ─────────────────────────────────────────────────────────────────────
-\subsubsection{Why Direct Offset Landing Is Sufficient}
+\subsection{Why Direct Offset Landing Is Sufficient}
 
 The offset landing approach bypasses centering: once the operator confirms the target, the drone flies to a GPS point displaced \SI{7.5}{\metre} from the estimated target position (perpendicular to the wind vector when available, otherwise due south) and executes a standard \texttt{MAV\_CMD\_NAV\_LAND}. The key insight is that the system requirement (R07) specifies landing \emph{within \SIrange{5}{10}{\metre}} of the casualty---not directly on top of it. A \SI{7.5}{\metre} offset places the nominal landing point at the centre of this annular band, and the question reduces to whether GPS-based localisation is accurate enough to keep the actual touchdown within the band.
 
 % ─────────────────────────────────────────────────────────────────────
-\subsubsection{Probability Analysis}\label{sec:prob-analysis}
+\subsection{Probability Analysis}\label{sec:prob-analysis}
 
 The GPS-estimated target position was characterised in simulation with realistic noise parameters calibrated against DJI flight-video telemetry (Section~\ref{sec:localisation}). The circular error probable at the 50th percentile was measured as $\mathrm{CEP}_{50} = \SI{2.3}{\metre}$. Assuming the radial error follows a Rayleigh distribution, the scale parameter is
 
@@ -44,7 +44,7 @@ The GPS-estimated target position was characterised in simulation with realistic
 \noindent confirming that the fused GPS estimate with a \SI{7.5}{\metre} offset meets the R07 band requirement with over 99\% probability.
 
 % ─────────────────────────────────────────────────────────────────────
-\subsubsection{Simulation Comparison}
+\subsection{Simulation Comparison}
 
 To validate the analysis, twenty simulated missions were executed for each approach using the SITL environment with GPS noise ($\sigma_\mathrm{GPS} = \SI{1.5}{\metre}$), camera shake, and \SI{3}{\metre\per\second} wind. Table~\ref{tab:centering-comparison} summarises the results.
 
@@ -65,6 +65,6 @@ With centering + offset       & \SI{1.8}{\metre} & \SI{3.4}{\metre} & 100\% (20/
 \noindent The ``mean error'' column reports the absolute deviation of the actual landing distance from the intended \SI{7.5}{\metre} offset---i.e.\ how far the touchdown was from the centre of the acceptable band. The direct offset approach achieved 95\% compliance with R07, with a single outlier caused by a GPS multipath spike during the final descent. The centering approach improved mean accuracy to \SI{1.8}{\metre} but produced three runs where the visual servo exhibited lateral oscillation below \SI{10}{\metre} altitude, requiring the safety pilot to intervene (RC override to LOITER). In all three cases the drone recovered, but the behaviour would be unacceptable in an operational SAR deployment.
 
 % ─────────────────────────────────────────────────────────────────────
-\subsubsection{Design Decision}
+\subsection{Design Decision}
 
 Given that (a)~the direct offset approach meets R07 with $>$95\% probability under realistic noise, (b)~centering introduces low-altitude instability risks that are difficult to mitigate without extensive tuning, and (c)~the project timeline prioritises a reliable first demonstration over optimal accuracy, the direct offset landing was selected as the baseline configuration. The centering states remain implemented and tested in simulation; enabling them requires only a single configuration flag (\texttt{ENABLE\_CENTERING = True} in \texttt{config.py}), making this a low-risk upgrade path for future iterations.

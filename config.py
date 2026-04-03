@@ -273,3 +273,14 @@ def load_kml_zones(kml_path="flight_plans/AENGM0074.kml"):
     print(f"  Flight Area:  {len(FLIGHT_AREA_GPS)} corners")
     print(f"  SSSI:         {len(SSSI_GPS)} corners")
     return True
+
+
+# ============================================================
+#  CLI-OVERRIDABLE CONSTANTS (shared between main.py & state_machine.py)
+# ============================================================
+# These live here to avoid circular imports.  main.py CLI parsing
+# overwrites them at startup via  config.REAL_CANVAS_SIZE = ...
+REAL_CANVAS_SIZE = 4800
+SIM_SPEED = 1
+BEACON_DELAY = 0
+LOCK_YAW = False

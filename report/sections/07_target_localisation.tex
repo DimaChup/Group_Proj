@@ -65,7 +65,7 @@ Not all observations are equally reliable. Two factors modulate the weight $w_i$
 % ─────────────────────────────────────────────────────────────────────
 \subsection{Kalman Filtering}\label{sec:kalman}
 
-While the weighted average converges given enough observations, it treats all recent measurements equally (within the 50-sample window) and has no formal model of uncertainty. A two-state Kalman filter~\cite{kalman1960new} is therefore applied in parallel, operating on the latitude--longitude state vector $\mathbf{x}_k = [\phi,\;\lambda]^\top$.
+While the weighted average converges given enough observations, it treats all recent measurements equally (within the 50-sample window) and has no formal model of uncertainty. A two-state Kalman filter~\cite{kalman1960} is therefore applied in parallel, operating on the latitude--longitude state vector $\mathbf{x}_k = [\phi,\;\lambda]^\top$.
 
 The target is assumed stationary (casualty on the ground), so the state transition is the identity: $\mathbf{x}_{k|k-1} = \mathbf{x}_{k-1}$. A small process noise $\mathbf{Q} = \sigma_q^2\,\mathbf{I}$ is applied, where $\sigma_q$ corresponds to \SI{0.1}{\metre} of positional uncertainty converted to degrees via the WGS\,84 semi-major axis ($\sigma_q \approx 0.1 / R_\oplus \cdot 180/\pi$). This accounts for minor model mismatch. The measurement noise covariance is set inversely proportional to the observation weight:
 

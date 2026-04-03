@@ -1,10 +1,10 @@
 % gps_estimation_deep.tex — Deep-dive on GPS target estimation
-% This section can replace or supplement 07_target_localisation.tex
+% Appendix K
 % ─────────────────────────────────────────────────────────────────────
 
 \section{GPS Target Estimation: A Deep Dive}\label{sec:gps-deep}
 
-Translating a bounding-box centre in a camera frame into a world-referenced GPS coordinate is arguably the most error-sensitive computation in the entire SAR pipeline.  Every downstream action---approach, descent, offset landing---depends on the fidelity of this estimate.  This section presents the full mathematical derivation, catalogues the six dominant error sources with quantified budgets, compares four fusion strategies that were implemented and benchmarked, and reports the empirical accuracy obtained from DJI flight-video replay.
+Translating a bounding-box centre in a camera frame into a world-referenced GPS coordinate is arguably the most error-sensitive computation in the entire SAR pipeline.  Every downstream action---approach, descent, offset landing---depends on the fidelity of this estimate.  A single observation combines at least six independent noise sources (GPS receiver, barometer, compass, camera intrinsics, camera extrinsics, and timing lag), and the engineering challenge is to fuse many such observations into a position estimate precise enough to guide a safe offset landing.  This appendix presents the full mathematical derivation of the pixel-to-GPS projection, catalogues and quantifies the six dominant error sources, compares four fusion strategies that were implemented and benchmarked in parallel, describes the spatial clustering algorithm that handles multi-target scenarios, and reports the empirical accuracy obtained from both DJI flight-video replay and interactive simulator trials.
 
 % =====================================================================
 \subsection{Problem Statement}\label{sec:gps-problem}
@@ -164,7 +164,7 @@ Every observation ever recorded is included:
 % ------ Method 3 ------
 \subsubsection{Kalman Filter (Static Target)}\label{sec:kalman-deep}
 
-A two-state linear Kalman filter~\cite{kalman1960new} models the target as stationary ($\mathbf{F} = \mathbf{I}$) with a small process noise $\mathbf{Q} = \sigma_q^2\,\mathbf{I}$, where $\sigma_q$ corresponds to \SI{0.1}{\metre} converted to degrees.  The measurement noise covariance is set inversely proportional to the observation weight:
+A two-state linear Kalman filter~\cite{kalman1960} models the target as stationary ($\mathbf{F} = \mathbf{I}$) with a small process noise $\mathbf{Q} = \sigma_q^2\,\mathbf{I}$, where $\sigma_q$ corresponds to \SI{0.1}{\metre} converted to degrees.  The measurement noise covariance is set inversely proportional to the observation weight:
 
 \begin{equation}\label{eq:kalman-R-deep}
   \sigma_R = \frac{3.0}{\max(w_i,\; 0.1)}\;\text{m},

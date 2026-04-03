@@ -1,5 +1,10 @@
 % optimization_formal.tex — Formal multi-objective optimisation problem statement
-% COUNTED in 15-page limit
+% Appendix AC (excluded from 15-page limit)
+%
+% STATUS: DEFINITIVE for the formal mathematical problem statement (decision vector,
+%         objective functions, constraints, coupling analysis, solution approach).
+%         Shares the 5-objective framework with path_optimization_definitive.tex and
+%         optimization_master.tex, but presents the rigorous formulation.
 
 \section{Multi-Objective Search Optimisation}\label{sec:formal-opt}
 
@@ -73,7 +78,7 @@ Adjacent scan lines are spaced at
 
 A target of physical width $w_t = \SI{0.5}{\metre}$ (mannequin) subtends
 
-\begin{equation}\label{eq:target-px}
+\begin{equation}\label{eq:target-px-app}
   p_{\mathrm{px}}(h) = \frac{w_t}{\mathrm{GSD}(h)} \cdot \frac{640}{W_{\mathrm{px}}} = \frac{w_t \cdot f \cdot 640}{w_s \cdot h \cdot 1}
 \end{equation}
 

@@ -1,11 +1,9 @@
 % cv_extended.tex — Extended Computer Vision analysis
-% Covers: detection pipeline, benchmarks, mission runtime, training results,
-%         altitude analysis, dual backend, model swapping.
-% Insert via \input{sections/cv_extended} in an appendix slot.
+% Appendix I
 
 \section{Computer Vision: Extended Analysis}\label{app:cv-extended}
 
-This appendix provides a comprehensive treatment of the onboard computer vision subsystem, extending the pipeline summary in Section~\ref{sec:cv} with timing breakdowns, benchmark methodology, mission-level detection probability analysis, altitude-dependent performance modelling, and the multi-backend architecture that enables platform-transparent deployment.
+The main body of this report (Section~\ref{sec:cv}) summarises the detection pipeline at a level sufficient to understand the system architecture.  This appendix provides the full technical depth: stage-by-stage timing breakdowns measured on the Raspberry Pi~5, comprehensive benchmark results across all available models, a mission-level detection probability analysis that links frame rate to flyover reliability, altitude-dependent performance modelling validated against DJI flight-video replay, and the multi-backend abstraction that enables the same codebase to run transparently on laptop, Pi, and optimised ARM deployments.  These details are essential for reproducing the system, tuning configuration parameters for different mission profiles, and understanding the margins available for future optimisation.
 
 % ═══════════════════════════════════════════════════════════════
 \subsection{Detection Pipeline: Step-by-Step Timing}\label{app:cv:pipeline}

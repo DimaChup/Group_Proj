@@ -86,7 +86,7 @@ The Cube Orange+ flight controller \cite{cubepilot} runs ArduPilot Copter firmwa
 
 \subsection{Companion Computer}\label{sec:hw-pi}
 
-A Raspberry Pi~5 \cite{rpi5} serves as the companion computer, chosen for its low cost (\textasciitilde\pounds60), sufficient compute for real-time inference, native CSI camera interface, GPIO serial connectivity to the flight controller, and the extensive community support available for both hardware peripherals and machine learning deployment. At \SI{45}{\gram} it adds negligible mass to the airframe.
+A Raspberry Pi~5 \cite{raspberrypi5} serves as the companion computer, chosen for its low cost (\textasciitilde\pounds60), sufficient compute for real-time inference, native CSI camera interface, GPIO serial connectivity to the flight controller, and the extensive community support available for both hardware peripherals and machine learning deployment. At \SI{45}{\gram} it adds negligible mass to the airframe.
 
 The Pi runs Python~3.13 under Raspberry Pi OS. This version introduced a compatibility issue: the standard \texttt{tflite-runtime} package fails to build, as does direct serial communication via \texttt{pyserial}. Both problems were resolved without code-level workarounds. For inference, the Google-maintained \texttt{ai-edge-litert} package provides a drop-in replacement with an identical API. For serial communication, the \texttt{mavproxy} utility \cite{mavproxy} runs as a system service that reads the hardware UART and re-publishes MAVLink traffic over a local UDP socket, which \texttt{pymavlink} consumes without issue.
 

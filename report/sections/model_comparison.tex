@@ -1,6 +1,6 @@
 \section{Model Comparison and Future Vision Improvements}\label{sec:model_comparison}
 
-The vision pipeline underwent three training iterations, each informed by lessons from the previous round.  This section compares the model generations, discusses the COCO fallback strategy, examines the tiling versus full-frame trade-off, and identifies improvement directions for future deployments.
+Iterative model development---where each training round addresses shortcomings discovered in the previous one---is essential for building a detection system that generalises beyond its training data.  The vision pipeline underwent three training iterations, each informed by lessons from the previous round.  This section compares the model generations, discusses the COCO fallback strategy, examines the tiling versus full-frame trade-off, and identifies improvement directions for future deployments.
 
 \subsection{Model Generations}\label{sec:model_comparison:generations}
 
@@ -31,7 +31,7 @@ All three models produce identical inference latency on the Pi (${\sim}207$\,ms 
 
 \subsection{COCO Person Detector as Fallback}\label{sec:model_comparison:coco}
 
-A pre-trained YOLOv8n model exported from the standard COCO dataset~\cite{coco_dataset} was retained as a flight-day backup (\texttt{models/human.tflite}, 13\,MB, 80 classes).  This model detects people without any SAR-specific training, providing a zero-effort deployment option if the custom model proved unreliable in field conditions.
+A pre-trained YOLOv8n model exported from the standard COCO dataset~\cite{lin2014coco} was retained as a flight-day backup (\texttt{models/human.tflite}, 13\,MB, 80 classes).  This model detects people without any SAR-specific training, providing a zero-effort deployment option if the custom model proved unreliable in field conditions.
 
 Testing revealed two trade-offs.  On the positive side, the COCO detector reliably detected people in aerial video at altitudes up to 30\,m, confirming that transfer from ground-level training data generalises to moderate aerial perspectives.  On the negative side, the 80-class output space produced substantially more false positives: backpacks, dogs, bicycles, and even shadows were flagged as detections, requiring either aggressive confidence thresholding (which risked suppressing true positives) or downstream filtering logic.  The custom single-class model, having learned to classify ``dummy versus everything else'', achieved a far more favourable precision--recall balance.
 

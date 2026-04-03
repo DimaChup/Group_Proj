@@ -6,7 +6,7 @@ Accurate target localisation from an aerial platform depends on the fidelity of 
 \subsection{Field-of-View Calibration}\label{sec:cal:fov}
 
 The ground footprint of a pinhole camera at altitude $h$ is governed by
-\begin{equation}\label{eq:footprint}
+\begin{equation}\label{eq:footprint-calib}
     W_{\text{ground}} = \frac{w_{\text{sensor}} \cdot h}{f}
 \end{equation}
 where $w_{\text{sensor}}$ is the physical sensor width and $f$ is the effective focal length. This relationship is used twice in the system: first by \texttt{planning.py} to compute the scan-strip spacing (with a 20\% overlap margin), and second by the GPS estimation module to convert pixel offsets from the image centre into metric displacements on the ground. An error of $\Delta f / f$ in the focal length therefore produces an identical fractional error in every GPS estimate and in the strip spacing, meaning the search pattern either leaves uncovered gaps or wastes flight time on excessive overlap.
@@ -19,7 +19,7 @@ The IMX296 global-shutter sensor has a nominal pixel pitch of \SI{3.45}{\micro\m
     \item The visible extent was read directly from the tape as \SI{0.92 \pm 0.01}{\metre}.
 \end{enumerate}
 
-Substituting into Equation~\ref{eq:footprint} and solving for $f$:
+Substituting into Equation~\ref{eq:footprint-calib} and solving for $f$:
 \begin{equation}\label{eq:fov-result}
     f = \frac{w_{\text{sensor}} \cdot h}{W_{\text{ground}}} = \frac{5.02 \times 1.00}{0.92} = \SI{5.46}{\milli\metre}
 \end{equation}

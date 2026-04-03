@@ -1101,23 +1101,88 @@ dummy_estimator = DummyEstimator()
 
 
 class SmartEstimator:
-    """Greedy tightest cluster: find 10 estimates closest to each other."""
+    """GPS target lock using greedy tightest-cluster consensus.
+
+    Purpose:
+        Multiple flyover detections each produce a noisy GPS estimate of where
+        the target (dummy/casualty) is on the ground. This class collects those
+        estimates and decides when enough of them agree (cluster tightly) to
+        declare a confident "lock" on the target position.
+
+    Algorithm — Greedy Tightest Cluster:
+        1. Each detection adds an (est_lat, est_lon) to self.all_estimates.
+        2. Once we have >= min_samples estimates, we search for the tightest
+           cluster of exactly min_samples points using _find_tightest():
+           a. Compute all pairwise GPS distances (metres) between estimates.
+           b. Seed the cluster with the closest pair of points.
+           c. Greedily add the point that minimises the cluster's max spread
+              (maximum pairwise distance within the cluster).
+           d. Repeat until the cluster has min_samples points.
+        3. If the cluster's max spread < max_spread (metres), we LOCK:
+           - The locked cluster's median lat/lon becomes the target position.
+           - The frame with the smallest pixel_dist (detection closest to
+             frame centre) is saved as the "best" reference image.
+           - No further estimates are accepted after lock.
+
+    Lock Condition:
+        locked = (len(all_estimates) >= min_samples)
+                 AND (spread of tightest min_samples cluster < max_spread metres)
+
+        "Spread" = maximum pairwise distance between any two points in the
+        cluster, measured in metres on the ground.
+
+    After Lock:
+        - get_median() returns the robust target position (median lat, median lon).
+        - get_cep50() returns the circular error probable (median distance from centre).
+        - locked_frame holds the best detection frame for visual confirmation.
+        - lock_id increments each time a lock occurs (persists across resets).
+
+    Thread Safety:
+        This class is NOT thread-safe. In passive_watch.py it is only accessed
+        from the main detection loop (single thread). The HTTP server thread
+        reads locked/locked_frame for display but only after lock (effectively
+        immutable at that point). If used from multiple threads, external
+        locking (threading.Lock) would be required around add() and the
+        locked_cluster/locked_frame attributes.
+
+    Parameters:
+        min_samples (int): Number of agreeing estimates required for lock.
+            Default 5. Higher = more confidence but takes longer. Typical
+            range: 3-15. Set via --smart-samples CLI flag.
+        max_spread (float): Maximum allowed spread (metres) for the cluster
+            to qualify as a lock. Default 1.0m. Smaller = stricter agreement.
+            Typical range: 0.5-3.0m. Set via --smart-window CLI flag.
+    """
     def __init__(self, min_samples=5, max_spread=1.0):
         self.min_samples = min_samples
-        self.max_spread = max_spread  # meters — all 10 must be within this
-        self.all_estimates = []  # (est_lat, est_lon, pixel_dist, frame)
+        self.max_spread = max_spread
+        self.all_estimates = []  # list of (est_lat, est_lon, pixel_dist, frame)
         self.locked = False
         self.lock_id = getattr(self, 'lock_id', 0)  # survives __init__ resets
-        self.locked_cluster = None  # list of (lat, lon, pixel_dist, frame)
-        self.locked_cluster_indices = None  # indices into all_estimates
-        self.locked_frame = None    # most central frame from cluster
-        self.locked_spread = 0
+        self.locked_cluster = None  # list of (lat, lon, pixel_dist, frame) for the winning cluster
+        self.locked_cluster_indices = None  # indices into all_estimates (for frame updates)
+        self.locked_frame = None    # frame with smallest pixel_dist (most centred detection)
+        self.locked_spread = 0      # max pairwise distance in locked cluster (metres)
 
     def add(self, est_lat, est_lon, pixel_dist, frame):
-        """Add detection. Returns True if cluster just locked.
+        """Add a new GPS estimate from one detection and check for lock.
 
-        frame can be None — call update_last_frame() afterwards to set the
-        overlayed display frame (so thumbnails in the smart grid have full HUD).
+        Args:
+            est_lat (float): Estimated target latitude (from DummyEstimator).
+            est_lon (float): Estimated target longitude.
+            pixel_dist (float): Distance in pixels from detection centre to
+                frame centre. Used to pick the "best" reference frame — lower
+                pixel_dist means the target was more centred in the image,
+                which gives less projection error and a better photo.
+            frame (np.ndarray or None): Camera frame at time of detection.
+                Can be None if you plan to call update_last_frame() afterwards
+                to replace it with the overlayed display frame (so thumbnails
+                in the smart grid show the full HUD).
+
+        Returns:
+            bool: True if this estimate caused the cluster to lock (transition
+                from unlocked to locked). False otherwise (already locked, or
+                not enough agreement yet).
         """
         if self.locked:
             return False
@@ -1167,11 +1232,46 @@ class SmartEstimator:
             self.locked_frame = best[3]
 
     def _find_tightest(self, target_size):
-        """Greedy: find target_size points closest to each other."""
+        """Find the tightest cluster of exactly target_size points.
+
+        Uses a greedy algorithm (not globally optimal, but fast and good enough
+        for the typical 5-50 points we deal with):
+
+        Step 1 — Pairwise distances:
+            Compute the ground distance (metres) between every pair of GPS
+            estimates. Uses the equirectangular approximation:
+                north_m = delta_lat * 111320
+                east_m  = delta_lon * 111320 * cos(mean_latitude)
+            This is accurate to <0.1% at UK latitudes for distances <1km.
+
+        Step 2 — Seed with closest pair:
+            Start the cluster with the two points that are nearest to each
+            other. This gives the tightest possible 2-point seed.
+
+        Step 3 — Greedy expansion:
+            Repeatedly add the candidate point that minimises the cluster's
+            maximum pairwise distance (spread). For each candidate, we check
+            its maximum distance to any existing cluster member. The candidate
+            with the smallest such max-distance is added.
+
+        Step 4 — Compute final spread:
+            The spread of the returned cluster is the maximum pairwise distance
+            between any two points in the cluster.
+
+        Args:
+            target_size (int): Number of points to include in the cluster.
+
+        Returns:
+            (list[int], float): Sorted list of indices into self.all_estimates,
+                and the cluster spread in metres.
+
+        Complexity: O(n^2) pairwise + O(target_size * n) greedy steps.
+        Fine for n < 100; would need spatial indexing for thousands of points.
+        """
         estimates = self.all_estimates
         n = len(estimates)
 
-        # Pairwise distances
+        # Step 1: Pairwise distances (metres) using equirectangular projection
         mean_lat = sum(e[0] for e in estimates) / n
         dists = {}
         for i in range(n):
@@ -1180,21 +1280,23 @@ class SmartEstimator:
                 de = (estimates[i][1] - estimates[j][1]) * 111320 * math.cos(math.radians(mean_lat))
                 dists[(i, j)] = math.sqrt(dn**2 + de**2)
 
+        # Edge case: fewer points than target — return all of them
         if n <= target_size:
             spread = max(dists.values()) if dists else 0
             return list(range(n)), spread
 
-        # Seed from closest pair
+        # Step 2: Seed cluster with the closest pair
         min_pair = min(dists, key=dists.get)
         cluster = set(min_pair)
 
-        # Greedily add point minimizing max spread
+        # Step 3: Greedily add the point that minimises the cluster's max spread
         while len(cluster) < target_size:
             best_pt = -1
             best_spread = float('inf')
             for c in range(n):
                 if c in cluster:
                     continue
+                # What would the max distance be if we added point c?
                 max_d = max(dists.get((min(c, m), max(c, m)), 0) for m in cluster)
                 if max_d < best_spread:
                     best_spread = max_d
@@ -1204,6 +1306,7 @@ class SmartEstimator:
             else:
                 break
 
+        # Step 4: Compute the actual max pairwise distance in the final cluster
         cluster_list = sorted(cluster)
         spread = 0
         for i in cluster_list:
@@ -1213,10 +1316,20 @@ class SmartEstimator:
         return cluster_list, spread
 
     def ready(self):
+        """Return True if the estimator has achieved a GPS lock."""
         return self.locked
 
     def get_median(self):
-        """Return (median_lat, median_lon, n_samples)."""
+        """Return the locked target position as (median_lat, median_lon, n_samples).
+
+        Uses the statistical median (not mean) for robustness against outliers.
+        Lat and lon medians are computed independently (component-wise median).
+        For odd sample counts, returns the middle value; for even counts,
+        returns the average of the two middle values.
+
+        Returns:
+            tuple: (median_lat, median_lon, n_samples) or None if not locked.
+        """
         if not self.locked_cluster:
             return None
         lats = sorted(e[0] for e in self.locked_cluster)
@@ -1232,7 +1345,15 @@ class SmartEstimator:
         return m_lat, m_lon, n
 
     def get_cep50(self):
-        """Circular error probable — median distance from median center."""
+        """Circular Error Probable (CEP50) of the locked cluster.
+
+        CEP50 is the radius of a circle centred on the median position that
+        contains 50% of the cluster's estimates. Computed as the median
+        distance from each cluster point to the median centre.
+
+        Returns:
+            float: CEP50 in metres, or 0 if not locked.
+        """
         med = self.get_median()
         if not med:
             return 0

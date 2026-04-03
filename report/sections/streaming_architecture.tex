@@ -1,12 +1,9 @@
 % streaming_architecture.tex — Video Streaming and Ground Station Architecture
-% Intended as a detailed design-rationale section (cross-references sec:groundstation)
+% Appendix J
 
 \section{Video Streaming and Ground Station Architecture}\label{sec:streaming-arch}
 
-The choice of video transport, concurrency model, and ground station topology has a
-disproportionate effect on operator situational awareness in small-UAS SAR operations.
-This section analyses the trade-offs that led to the current MJPEG-over-HTTP
-architecture and documents the alternatives that were evaluated and rejected.
+An operator-in-the-loop SAR mission depends on the ground station receiving a timely, reliable video feed from the drone's companion computer.  The choice of streaming protocol, server concurrency model, headless operation strategy, and port allocation collectively determine whether the operator can make confident confirm/reject decisions during the VERIFY state.  This appendix presents a systematic evaluation of four candidate streaming protocols, documents the threading model and frame-buffering strategy adopted for the production server, and explains the design decisions behind headless operation, bandwidth management, and the custom browser-based ground station---each of which was selected over established alternatives for reasons specific to the project's operational constraints.
 
 % ═══════════════════════════════════════════════════════════════════════
 \subsection{Streaming Protocol Selection}\label{sec:stream-protocol}
@@ -60,7 +57,7 @@ WebRTC            & 30--60\,ms  & Native \texttt{RTCPeerConnection} & libnice, S
         encoding delay (the \texttt{cv2.imencode} call takes $<$\,2\,ms for a
         640$\times$480 JPEG at quality~85) plus one TCP segment of network delay.
         Measured glass-to-glass latency on local WiFi is 50--100\,ms, well within the
-        requirements for operator-in-the-loop confirmation at the \textsc{verify} state,
+        requirements for operator-in-the-loop confirmation at the \textsc{Verify} state,
         where the drone is hovering and the operator has several seconds to respond.
 \end{enumerate}
 

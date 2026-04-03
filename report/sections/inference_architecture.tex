@@ -1,17 +1,17 @@
 % inference_architecture.tex — NCNN vs TFLite decision and Pi inference architecture
-% Insert as a subsection within Section 4 (Computer Vision) or as a standalone section.
+% Appendix H
 
-\subsection{Edge Inference Architecture}\label{sec:cv:inference}
+\section{Edge Inference Architecture}\label{sec:cv:inference}
 
-Deploying real-time object detection on a companion computer imposes constraints that do not arise on workstation hardware.  This subsection documents the inference backend selection, quantisation trade-offs, pipeline architecture, and video streaming decisions that shape the onboard processing chain.
+This appendix examines the engineering decisions behind deploying a YOLOv8n object detector on a Raspberry Pi~5 companion computer.  Selecting an inference backend for an embedded ARM platform requires balancing latency, dependency footprint, deployment reliability, and quantisation trade-offs---concerns that are largely invisible during laptop-based development but become dominant constraints in a field-deployed UAV system.  The following subsections document the backend evaluation, quantisation analysis, pipeline architecture, and benchmark methodology that informed the production configuration.
 
-\subsubsection{Compute Platform Constraints}\label{sec:cv:inference:hw}
+\subsection{Compute Platform Constraints}\label{sec:cv:inference:hw}
 
 The Raspberry Pi~5 is built around the Broadcom BCM2712 system-on-chip, which integrates four ARM Cortex-A76 cores clocked at \SI{2.4}{\giga\hertz}~\cite{raspberrypi5}.  The A76 microarchitecture implements the ARMv8.2-A instruction set, which includes mandatory NEON Advanced SIMD (128-bit vector registers, fused multiply-accumulate across single- and half-precision floats) and optional half-precision (FP16) data-processing extensions.  These SIMD units are the primary compute resource for neural-network inference: the Pi~5 lacks a programmable GPU compute pipeline (the VideoCore~VII is a tile-based rasteriser without general-purpose shader support) and carries no dedicated neural-processing unit (NPU).  Consequently, all inference workloads execute on the four CPU cores, and throughput is bounded by single-threaded NEON throughput and L2 cache bandwidth rather than by massively parallel ALU arrays.
 
 This architectural reality eliminates frameworks that depend on GPU offload (e.g.\ CUDA, OpenCL) and motivates the selection of inference runtimes specifically optimised for ARM CPU execution with NEON vectorisation.
 
-\subsubsection{Backend Selection}\label{sec:cv:inference:backends}
+\subsection{Backend Selection}\label{sec:cv:inference:backends}
 
 Three inference backends were evaluated for deployment of the YOLOv8n model on the Pi~5.  Table~\ref{tab:backend_comparison} summarises their characteristics.
 
@@ -38,12 +38,12 @@ On the Pi~5, XNNPACK automatically detects the number of available cores and dis
 \paragraph{NCNN.}
 NCNN~\cite{ncnn}, developed by Tencent for mobile deployment, is an alternative backend that has demonstrated faster execution on ARM platforms in third-party benchmarks.  Ultralytics reports YOLOv8n inference at approximately \SI{68}{\milli\second} on the Pi~5 using NCNN~\cite{yolov8}, a $3\times$ improvement over TFLite.  This speedup is attributed to NCNN's hand-tuned NEON assembly kernels and its memory-efficient blob pooling strategy, which reduces allocation overhead during inference.
 
-NCNN support was implemented in \texttt{vision.py} and is available via the \texttt{-{}-backend ncnn} flag.  Model weights were exported to the NCNN format (\texttt{.param}/\texttt{.bin}) through an ONNX intermediate representation.  However, NCNN was not used during flight testing for two reasons: (1)~the \texttt{ncnn} Python package on Python~3.13/aarch64 required manual compilation at the time of deployment, introducing a fragile build dependency on the field Pi; and (2)~the 4.8\,FPS achieved by TFLite was sufficient for the detection-at-altitude use case, where the target remains in the field of view for 10--20 consecutive frames during a flyover (Section~\ref{sec:cv:benchmarks}).  NCNN remains the recommended upgrade path for missions requiring higher frame rates.
+NCNN support was implemented in \texttt{vision.py} and is available via the \texttt{-{}-backend ncnn} flag.  Model weights were exported to the NCNN format (\texttt{.param}/\texttt{.bin}) through an ONNX intermediate representation.  However, NCNN was not used during flight testing for two reasons: (1)~the \texttt{ncnn} Python package on Python~3.13/aarch64 required manual compilation at the time of deployment, introducing a fragile build dependency on the field Pi; and (2)~the 4.8\,FPS achieved by TFLite was sufficient for the detection-at-altitude use case, where the target remains in the field of view for 10--20 consecutive frames during a flyover (Section~\ref{app:cv:benchmarks}).  NCNN remains the recommended upgrade path for missions requiring higher frame rates.
 
 \paragraph{Ultralytics/PyTorch.}
 The Ultralytics framework~\cite{yolov8} serves as the development and training backend on the laptop (Ubuntu/Windows with CUDA or CPU).  It is unsuitable for Pi deployment: PyTorch's memory footprint exceeds \SI{800}{\mega\byte}, cold-start time is several seconds, and single-frame inference exceeds \SI{1.2}{\second} on the Cortex-A76 without GPU acceleration.  The framework is retained exclusively for laptop-based development, training, model export, and video analysis.
 
-\subsubsection{Quantisation Trade-offs}\label{sec:cv:inference:quant}
+\subsection{Quantisation Trade-offs}\label{sec:cv:inference:quant}
 
 The deployed model uses 32-bit floating-point (FP32) weights and activations.  Three numerical precision levels were considered:
 
@@ -55,7 +55,7 @@ The deployed model uses 32-bit floating-point (FP32) weights and activations.  T
   \item \textbf{INT8 (investigated, not viable).}  Post-training quantisation to 8-bit integers reduces model size by $4\times$ and can accelerate inference on hardware with dedicated integer SIMD units.  However, INT8 quantisation of YOLOv8n via the XNNPACK delegate yielded only a ${\sim}$30\% speedup in published benchmarks~\cite{tflite}, and INT8 inference on NCNN is unsupported on the Pi~5's ARM64 cores~\cite{ncnn}.  Additionally, INT8 export requires a representative calibration dataset of 300+ images and careful validation to ensure that quantisation-induced accuracy loss does not degrade detection of small targets at altitude.  Given the marginal benefit and validation cost, INT8 was deprioritised in favour of the more straightforward FP16 path.
 \end{itemize}
 
-\subsubsection{Pipeline Architecture}\label{sec:cv:inference:pipeline}
+\subsection{Pipeline Architecture}\label{sec:cv:inference:pipeline}
 
 The inference pipeline follows a strictly sequential architecture: frame capture, lens undistortion, preprocessing, model inference, and postprocessing execute in a single thread on a single core, while the remaining three cores handle XNNPACK's internal parallelism during the inference step.
 
@@ -69,7 +69,7 @@ A \textbf{threaded pipeline} was considered, in which camera capture (${\sim}\SI
 
 The single-threaded design guarantees that every detection result corresponds to the most recently captured frame with deterministic timing, simplifying the GPS-to-pixel timestamp alignment used by the target localisation module (Section~\ref{sec:localisation}).
 
-\subsubsection{Video Streaming Architecture}\label{sec:cv:inference:streaming}
+\subsection{Video Streaming Architecture}\label{sec:cv:inference:streaming}
 
 The ground station receives a live video feed from the Pi over Wi-Fi for operator situational awareness and verification decisions.  The streaming protocol was selected based on four requirements: browser compatibility (no native application), minimal latency ($<\SI{500}{\milli\second}$), zero additional infrastructure, and headless operation (no display attached to the Pi).
 
@@ -81,7 +81,7 @@ H.264 over HLS was prototyped (\texttt{camera\_stream\_h264.py}) but introduced 
 
 The MJPEG approach achieves sub-\SI{200}{\milli\second} glass-to-glass latency on the local Wi-Fi network, which is adequate for the operator's binary confirm/reject decision during the VERIFY state.
 
-\subsubsection{Benchmark Methodology}\label{sec:cv:inference:method}
+\subsection{Benchmark Methodology}\label{sec:cv:inference:method}
 
 Inference benchmarks were conducted using the \texttt{tests/hardware/benchmark.py} script, which follows a standardised protocol:
 
@@ -95,7 +95,7 @@ Inference benchmarks were conducted using the \texttt{tests/hardware/benchmark.p
 
 XNNPACK was configured with the default thread count of four (one per Cortex-A76 core).  The Pi was running Raspberry Pi OS (Debian Bookworm, 64-bit) with no desktop environment active, minimising background CPU load.  Thermal management was provided by the official Pi~5 active cooler; no thermal throttling was observed during the 50-frame test window.
 
-\subsubsection{Results and Projected Improvements}\label{sec:cv:inference:results}
+\subsection{Results and Projected Improvements}\label{sec:cv:inference:results}
 
 Table~\ref{tab:inference_roadmap} summarises the measured baseline and projected performance for each optimisation path.
 

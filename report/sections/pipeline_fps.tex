@@ -1,11 +1,10 @@
 % pipeline_fps.tex — Raw inference FPS vs effective pipeline FPS analysis
-% Insert as a subsection within Section 4 (Computer Vision) after inference_architecture.tex
 
-\subsection{Raw Inference vs.\ Effective Pipeline Throughput}\label{sec:cv:pipeline-fps}
+\section{Raw Inference vs.\ Effective Pipeline Throughput}\label{sec:cv:pipeline-fps}
 
-Published inference benchmarks for edge-deployment frameworks report \emph{raw inference} latency: the time elapsed between submitting a preprocessed tensor to the model and receiving the output tensor.  This metric is useful for comparing backends but overstates the frame rate achievable by an integrated detection system.  In practice, each detection cycle includes several stages beyond the forward pass, and the \emph{effective pipeline FPS}---the rate at which the system produces actionable detection results---is the operationally relevant metric.
+Deploying a detection model on an embedded platform requires understanding the difference between raw inference speed and the throughput of the complete processing pipeline.  Published inference benchmarks for edge-deployment frameworks report \emph{raw inference} latency: the time elapsed between submitting a preprocessed tensor to the model and receiving the output tensor.  This metric is useful for comparing backends but overstates the frame rate achievable by an integrated detection system.  In practice, each detection cycle includes several stages beyond the forward pass, and the \emph{effective pipeline FPS}---the rate at which the system produces actionable detection results---is the operationally relevant metric.  This section quantifies the overhead budget and its implications for each backend evaluated on the Raspberry Pi~5.
 
-\subsubsection{Pipeline Stages and Overhead Budget}\label{sec:cv:pipeline-fps:stages}
+\subsection{Pipeline Stages and Overhead Budget}\label{sec:cv:pipeline-fps:stages}
 
 The onboard detection pipeline executes the following stages sequentially within a single thread:
 
@@ -22,7 +21,7 @@ The onboard detection pipeline executes the following stages sequentially within
 
 \noindent The total pipeline overhead---stages 1--3 plus 5--8, excluding inference---sums to approximately \SI{12}{\milli\second} for the TFLite backend.  This overhead is largely constant across frame rates because it consists of fixed-cost operations (memory copies, a single \texttt{remap} call, one JPEG encode) rather than workloads that scale with inference speed.
 
-\subsubsection{Measured and Projected Results}\label{sec:cv:pipeline-fps:results}
+\subsection{Measured and Projected Results}\label{sec:cv:pipeline-fps:results}
 
 Table~\ref{tab:pipeline_fps} compares raw inference throughput with effective pipeline throughput for each backend evaluated on the Raspberry Pi~5.
 
@@ -57,7 +56,7 @@ The Cortex-A76 implements native half-precision fused multiply-accumulate (FMLA)
 \paragraph{Ultralytics/PyTorch (laptop reference).}
 On the Pi~5, PyTorch inference exceeds \SI{1.2}{\second} per frame.  The \SI{5}{\milli\second} pipeline overhead is lower than TFLite because Ultralytics performs its own preprocessing internally (resize, normalisation), eliminating the external NumPy path.  This backend is used exclusively on the development laptop (with optional CUDA acceleration) for training, export, and video analysis.
 
-\subsubsection{Bottleneck Transition}\label{sec:cv:pipeline-fps:bottleneck}
+\subsection{Bottleneck Transition}\label{sec:cv:pipeline-fps:bottleneck}
 
 Figure~\ref{fig:bottleneck_shift} illustrates how the inference-to-overhead ratio shifts across backends.
 
@@ -88,7 +87,7 @@ Figure~\ref{fig:bottleneck_shift} illustrates how the inference-to-overhead rati
 
 At 4.8\,FPS (TFLite FP32), inference consumes 94.2\% of the frame budget.  Halving inference time to ${\sim}$100\,ms (FP16) raises the overhead fraction to 10.7\%.  At 13\,FPS raw (NCNN), overhead reaches 16.3\%, and pipeline optimisation---primarily threaded camera capture overlapping with inference---becomes worthwhile.  A threaded capture design hiding the \SI{8}{\milli\second} camera read behind inference would recover ${\sim}$1 additional FPS at the NCNN operating point, bringing effective throughput to ${\sim}$11.8\,FPS.  At the TFLite FP32 operating point, the same optimisation would recover only 0.2\,FPS---confirming that threading effort is better deferred until the inference bottleneck is first addressed.
 
-\subsubsection{Operational Implications}\label{sec:cv:pipeline-fps:ops}
+\subsection{Operational Implications}\label{sec:cv:pipeline-fps:ops}
 
 The distinction between raw and effective FPS has direct consequences for mission planning.  At the deployed 4.8 effective FPS and a search speed of \SI{8}{\metre\per\second}, the ground distance between consecutive analysed frames is \SI{1.67}{\metre}---ensuring dense overlap across the \SI{32.2}{\metre} horizontal field of view.  A target at the centre of the swath is observed in at least 14 frames during a single pass, providing high detection confidence even at the modest frame rate.
 

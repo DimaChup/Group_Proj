@@ -1,5 +1,7 @@
 \section{Model Training and Dataset}\label{sec:training}
 
+This appendix details the complete training pipeline for the onboard YOLOv8n detector, from dataset construction through augmentation strategy to model export, providing the methodological detail needed to reproduce or improve upon the reported detection performance.
+
 Training a reliable aerial object detector for SAR requires data that closely represents the deployment domain---a mannequin viewed from altitude against a grassy field background. Obtaining large volumes of real labelled aerial imagery is expensive and weather-dependent, so a mixed-source strategy was adopted combining synthetic composites, real labelled frames, and hard negatives.
 
 \subsection{Training Data Strategy}\label{sec:training:strategy}
@@ -38,7 +40,7 @@ Data augmentation operates at two levels: \emph{offline} augmentations baked int
     \centering
     \caption{Augmentation pipeline for the SAR dummy detector. Offline augmentations are applied during synthetic image generation; online augmentations are applied by the YOLO trainer at each epoch.}
     \label{tab:augmentation}
-    \begin{tabular}{llll}
+    \begin{tabular}{@{}llll@{}}
         \toprule
         \textbf{Augmentation} & \textbf{Stage} & \textbf{Parameters} & \textbf{Rationale} \\
         \midrule
@@ -99,7 +101,7 @@ Table~\ref{tab:data_composition} summarises the final dataset composition. The 3
     \centering
     \caption{Dataset composition for the v2 SAR dummy detector.}
     \label{tab:data_composition}
-    \begin{tabular}{lccp{5.5cm}}
+    \begin{tabular}{@{}lccp{5.5cm}@{}}
         \toprule
         \textbf{Source} & \textbf{Count} & \textbf{Fraction} & \textbf{Role} \\
         \midrule
@@ -116,13 +118,13 @@ Despite constituting only 4.4\% of the dataset, the 16 real frames serve a dispr
 
 \subsection{Training Pipeline and Convergence}\label{sec:training:pipeline}
 
-Training was performed on Google Colab using an NVIDIA T4 GPU (16\,GB VRAM). The model was initialised from COCO-pretrained YOLOv8n weights (\texttt{yolov8n.pt}), applying transfer learning to leverage low-level feature representations---edges, textures, colour gradients---learned from the 80-class COCO dataset~\cite{coco_dataset, yolov8}. Only the detection head and final feature pyramid layers were fine-tuned during the first 10 warmup epochs; the remaining backbone layers were subsequently unfrozen for full end-to-end optimisation. Table~\ref{tab:training_config} summarises the training configuration.
+Training was performed on Google Colab using an NVIDIA T4 GPU (16\,GB VRAM). The model was initialised from COCO-pretrained YOLOv8n weights (\texttt{yolov8n.pt}), applying transfer learning to leverage low-level feature representations---edges, textures, colour gradients---learned from the 80-class COCO dataset~\cite{lin2014coco, yolov8}. Only the detection head and final feature pyramid layers were fine-tuned during the first 10 warmup epochs; the remaining backbone layers were subsequently unfrozen for full end-to-end optimisation. Table~\ref{tab:training_config} summarises the training configuration.
 
 \begin{table}[ht]
     \centering
     \caption{Training hyperparameters for the YOLOv8n SAR dummy detector (v2).}
     \label{tab:training_config}
-    \begin{tabular}{ll}
+    \begin{tabular}{@{}ll@{}}
         \toprule
         \textbf{Parameter} & \textbf{Value} \\
         \midrule
@@ -159,7 +161,7 @@ Table~\ref{tab:training_results} presents the validation metrics for the v2 mode
     \centering
     \caption{Detection performance comparison between model versions. All metrics are computed on the respective validation sets.}
     \label{tab:training_results}
-    \begin{tabular}{lcccc}
+    \begin{tabular}{@{}lcccc@{}}
         \toprule
         \textbf{Model} & \textbf{mAP\textsubscript{50}} & \textbf{mAP\textsubscript{50--95}} & \textbf{Precision} & \textbf{Recall} \\
         \midrule

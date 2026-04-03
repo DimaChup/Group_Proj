@@ -5,7 +5,7 @@
 
 \section{System Description}\label{sec:sysdesc}
 
-The final system comprises a hardware platform, five software layers, a computer vision pipeline, a target localisation subsystem, a browser-based ground station, and a multi-fidelity simulation framework. Figure~\ref{fig:mission_overview} shows the complete mission plan overlaid on the Fenswood Farm site.
+The final system integrates six subsystems into an autonomous SAR platform: a hardware airframe with companion computer (\S\ref{sec:hw}), a modular software architecture of eleven Python modules (\S\ref{sec:sw-arch}), a YOLOv8n computer vision pipeline running at 4.8\,FPS on edge hardware (\S\ref{sec:cv}), a boustrophedon search pattern with formal coverage guarantee (\S\ref{sec:search-pattern}), a 20-state mission FSM with five independent safety mechanisms (\S\ref{sec:state-machine}), a GPS target localisation subsystem achieving CEP$_{50}$ = 2.3\,m (\S\ref{sec:localisation}), and a browser-based ground station with \SI{300}{\milli\second} video latency (\S\ref{sec:groundstation}). The design philosophy throughout is \emph{independent modules composed at runtime}: vision, planning, geofencing, and navigation have zero mutual dependencies, enabling isolated testing and single-file model or algorithm swaps with no integration risk. Figure~\ref{fig:mission_overview} shows the complete mission plan overlaid on the Fenswood Farm site.
 
 \begin{figure}[ht]
 \centering
@@ -17,7 +17,7 @@ The final system comprises a hardware platform, five software layers, a computer
 % ═══════════════════════════════════════════════════════════════
 \subsection{Hardware Platform}\label{sec:hw}
 
-Table~\ref{tab:hw-bom} summarises the bill of materials for the Hexsoon EDU-450 airframe, CubePilot Orange+ flight controller (ArduPilot Copter 4.5), Raspberry Pi~5 companion computer, and IMX296 global shutter camera. All hardware was provided by the university as part of the AENGM0074 equipment package; design effort focused on system integration, software architecture, and calibration rather than component selection.
+Table~\ref{tab:hw-bom} summarises the bill of materials for the Hexsoon EDU-450 airframe, CubePilot Orange+ flight controller (ArduPilot Copter 4.5), Raspberry Pi~5 companion computer, and IMX296 global shutter camera. All hardware was provided by the university as part of the AENGM0074 equipment package; design effort focused on system integration, software architecture, and calibration rather than component selection (see Appendix~\ref{sec:cv:inference} for the edge inference architecture rationale).
 
 \begin{table}[ht]
   \centering\compactTable
@@ -38,12 +38,12 @@ Table~\ref{tab:hw-bom} summarises the bill of materials for the Hexsoon EDU-450 
   \end{tabularx}
 \end{table}
 
-The Pi communicates with the Cube via UART at 921\,600\,baud through a MAVProxy bridge, which re-publishes MAVLink traffic over UDP. A second output on TCP port~5762 allows Mission Planner on the ground station laptop to monitor telemetry via Wi-Fi. The camera captures at $1456 \times 1088$ via CSI-2; lens distortion is corrected using precomputed remap matrices (calibrated RMS = 0.399\,px, +1.5\,ms overhead). The calibrated focal length is \SI{5.46}{\milli\metre}, yielding a horizontal FOV of $\approx 49.3^{\circ}$.
+The Pi communicates with the Cube via UART at 921\,600\,baud through a MAVProxy bridge, which re-publishes MAVLink traffic over UDP. A second output on TCP port~5762 allows Mission Planner on the ground station laptop to monitor telemetry via Wi-Fi (see Appendix~\ref{sec:streaming-arch} for the full communications architecture). The camera captures at $1456 \times 1088$ via CSI-2; lens distortion is corrected using precomputed remap matrices (calibrated RMS = 0.399\,px, +1.5\,ms overhead; methodology in Appendix~\ref{sec:calibration}). The calibrated focal length is \SI{5.46}{\milli\metre}, yielding a Horizontal Field of View (HFOV) of $\approx 49.3^{\circ}$ (Pi IMX296 camera).
 
 % ═══════════════════════════════════════════════════════════════
 \subsection{Software Architecture}\label{sec:sw-arch}
 
-The system comprises eleven Python modules totalling approximately 4\,400 lines of code, organised in four layers (Figure~\ref{fig:architecture}):
+The system comprises eleven Python modules totalling approximately 4\,400 lines of production code, organised in four layers (Figure~\ref{fig:architecture}). An additional 58 test and calibration scripts (see Appendix~\ref{sec:test-scripts} for the full inventory) validate each module in isolation before integration:
 
 \begin{figure}[ht]
 \centering
@@ -87,7 +87,7 @@ The system comprises eleven Python modules totalling approximately 4\,400 lines 
 The data pipeline traverses five stages per iteration: (1)~capture frame and apply lens undistortion; (2)~resize to $640\times640$, normalise, run YOLOv8n inference; (3)~convert pixel detection to GPS estimate; (4)~dispatch current state handler; (5)~enforce geofence constraints. Geofencing always runs \emph{after} the state handler, so waypoint commands can be overridden by repulsive velocities.
 
 \paragraph{Geofence enforcement.}
-The geofence module implements three nested protection layers (Figure~\ref{fig:geofence_diagram}): the SSSI no-fly zone (hard boundary---entering triggers automatic MANUAL mode), the flight area polygon (soft boundary---repulsive velocity pushes the drone inward), and a \SI{10}{\metre} buffer zone surrounding the SSSI where repulsive forces activate proportionally to proximity. The repulsive offset is computed using \texttt{cv2.pointPolygonTest} for signed distance and applied as a velocity correction after the state handler's waypoint command, ensuring that no state can inadvertently fly into restricted airspace.
+The geofence module implements three nested protection layers (Figure~\ref{fig:geofence_diagram}): the SSSI no-fly zone (hard boundary---entering triggers automatic MANUAL mode), the flight area polygon (soft boundary---repulsive velocity pushes the drone inward), and a \SI{10}{\metre} buffer zone surrounding the SSSI where repulsive forces activate proportionally to proximity. The repulsive offset is computed using \texttt{cv2.pointPolygonTest} for signed distance and applied as a velocity correction after the state handler's waypoint command, ensuring that no state can inadvertently fly into restricted airspace (see Appendix~\ref{sec:repulsive-field} for the vector field mathematics and NFZ margin analysis in Appendix~\ref{sec:nfz-interaction}).
 
 \begin{figure}[ht]
 \centering
@@ -103,9 +103,9 @@ The vision subsystem is encapsulated in \texttt{vision.py}, exposing a single in
 
 \paragraph{Preprocessing.} Lens undistortion (if calibration data available), colour space handling (IMX296 outputs BGR despite RGB888 label---no conversion applied), resize from $1456\times1088$ to $640\times640$ via bilinear interpolation, and float32 normalisation ($[0,255] \to [0,1]$) yielding input tensor $[1, 640, 640, 3]$.
 
-\paragraph{Inference.} The TFLite model produces output tensor $[1, 5, 8400]$ (8400 anchor-free candidates across three feature pyramid scales). Postprocessing: confidence filtering (threshold 0.2), best-detection selection (greedy single-target), and coordinate rescaling to original frame dimensions. The Ultralytics backend handles NMS internally; TFLite implements equivalent filtering in \texttt{vision.py}.
+\paragraph{Inference.} The TFLite model produces output tensor $[1, 5, 8400]$ (8400 anchor-free candidates across three feature pyramid scales). Postprocessing: confidence filtering (threshold 0.2), best-detection selection (greedy single-target), and coordinate rescaling to original frame dimensions. The Ultralytics backend handles Non-Maximum Suppression (NMS) internally; TFLite implements equivalent filtering in \texttt{vision.py}.
 
-\paragraph{Three backends.} The system supports Ultralytics~\cite{yolov8} (development laptop) and TFLite~\cite{tflite} (production Pi), with an NCNN~\cite{ncnn} backend implemented but not yet benchmarked on the Pi. Backend selection is automatic at import time. Both validated backends consume the same model weights and produce identical detection semantics.
+\paragraph{Three backends.} The system supports Ultralytics~\cite{yolov8} (development laptop) and TFLite~\cite{tflite} (production Pi), with an NCNN~\cite{ncnn} backend implemented but not yet benchmarked on the Pi. Backend selection is automatic at import time. Both validated backends consume the same model weights and produce identical detection semantics (see Appendix~\ref{app:cv-extended} for full benchmark results and the dual-backend architecture).
 
 \begin{figure}[ht]
 \centering
@@ -116,31 +116,20 @@ The vision subsystem is encapsulated in \texttt{vision.py}, exposing a single in
 
 \paragraph{Smart detection mode.} An optional \texttt{-{}-smart-detect} flag requires $k$ consecutive positive frames before triggering investigation (default $k=3$), suppressing transient false positives at a 0.6\,s delay.
 
-\paragraph{Performance.} On the Pi~5 with XNNPACK CPU delegate: 206.5\,ms per frame (4.8\,FPS), 100\% detection rate, 0.966 mean confidence. At the nominal search speed of 8\,m/s (altitude-dependent schedule at 35\,m), adjacent frames overlap by approximately 95\% ($1 - 1.67/32.2$), providing 11--17 detection opportunities per target during a single flyover.
+\paragraph{Performance.} On the Pi~5 with XNNPACK CPU delegate: 206.5\,ms per frame (4.8\,FPS), 100\% detection rate (50/50 bench frames), 0.966 mean confidence (Appendix~\ref{app:cv:benchmarks}). The model was retrained three times---at $640$, $1280$, and $1088$\,px---with the final v2 model achieving mAP$_{50}$ = 0.995 on a dataset of 300 synthetic, 16 real, and 50 negative images (Appendix~\ref{app:cv:training}). At the nominal search speed of 8\,m/s at \SI{35}{\metre} altitude, adjacent frames overlap by approximately 95\% ($1 - 1.67/32.2$), providing 11--17 detection opportunities per target during a single flyover (speed--detection trade-off analysis in Appendix~\ref{app:cv:speed}).
 
 % ═══════════════════════════════════════════════════════════════
 \subsection{Search Pattern Generation}\label{sec:search-pattern}
 
-The boustrophedon (lawnmower) pattern was selected from three candidates---boustrophedon, spiral, and probabilistic---for its formal coverage guarantee~\cite{choset2001coverage}, predictable path length, and alignment with JSAR search protocols. Both lawnmower and spiral generators are implemented; all field missions use the lawnmower pattern for wide-area search.
-
-\paragraph{Rotated-mask algorithm.}
-The waypoint generator (\texttt{planning.py}) uses a rotate--rasterise--zigzag--rotate-back approach: (1)~rasterise the GPS polygon into a binary mask; (2)~rotate to align with the longest edge via the minimum-area bounding rectangle (rotating calipers), minimising U-turn count; (3)~compute strip spacing from the camera footprint; (4)~cast horizontal scan lines with $\tfrac{1}{3}$-strip inset to prevent boundary overshoot; (5)~optimise start corner for minimal transit; (6)~inverse-rotate to GPS coordinates. B\'{e}zier-smoothed U-turns maintain momentum through turns.
+The boustrophedon (lawnmower) pattern~\cite{choset2001coverage} is implemented via a rotate--rasterise--zigzag--rotate-back algorithm in \texttt{planning.py}: the GPS polygon is rasterised into a binary mask, rotated to align with the longest edge (minimising U-turns), stripped at camera-footprint spacing, and inverse-rotated to GPS coordinates. B\'{e}zier-smoothed U-turns maintain momentum.
 
 \paragraph{Coverage guarantee.}
-The strip spacing is derived from the thin-lens ground footprint:
-\begin{equation}\label{eq:footprint}
-  W_g = \frac{w_s \cdot h}{f}, \qquad
-  L = W_g\,(1 - \alpha)
-\end{equation}
-where $w_s = \SI{5.02}{\milli\metre}$ (IMX296 sensor width), $f = \SI{5.46}{\milli\metre}$ (calibrated focal length), $h$ is altitude, and $\alpha = 0.20$ is the overlap fraction. At $h = \SI{35}{\metre}$: $W_g \approx \SI{32.2}{\metre}$, $L \approx \SI{25.7}{\metre}$. Since $L < W_g$, consecutive swaths overlap by at least $\alpha \cdot W_g \approx \SI{6.4}{\metre}$, guaranteeing every ground point falls within at least one swath under \SIrange{2}{3}{\metre} GPS drift.
-
-\paragraph{Scan angle optimisation.}
-A 216-configuration parametric sweep (6~altitudes $\times$ 36~angles) confirmed the optimal scan angle at \SIrange{65}{75}{\degree}, consistent with the polygon's elongation. Deviating by \SI{30}{\degree} increases scan-line count by ${\sim}$\SI{40}{\percent}. The automatic angle from \texttt{cv2.minAreaRect} matches the optimum. Figure~\ref{fig:coverage_vs_time} shows the resulting near-linear coverage progression. A PLB-triggered focus area redirect generates a tighter pattern around the beacon signal with reduced speed (\SI{5}{\metre\per\second}).
+Strip spacing derives from the thin-lens footprint: $W_g = w_s \cdot h / f$, lane spacing $L = W_g(1 - \alpha)$. At \SI{35}{\metre}: $W_g \approx \SI{32.2}{\metre}$, $L \approx \SI{25.7}{\metre}$ (20\% overlap), guaranteeing every ground point falls within at least one swath under \SIrange{2}{3}{\metre} GPS drift. A 216-configuration sweep confirmed the optimal scan angle at \SIrange{65}{75}{\degree} (Appendix~\ref{sec:search-opt}). Figure~\ref{fig:coverage_vs_time} shows near-linear coverage progression.
 
 \begin{figure}[ht]
   \centering
   \includegraphics[width=0.8\linewidth]{coverage_vs_time}
-  \caption{Area coverage progression over time for the boustrophedon search pattern at \SI{35}{\metre} altitude. The near-linear increase confirms systematic, gap-free coverage.}
+  \caption{Area coverage progression over time for the boustrophedon search pattern at \SI{35}{\metre} altitude.}
   \label{fig:coverage_vs_time}
 \end{figure}
 
@@ -164,12 +153,18 @@ The 20-state FSM (Figure~\ref{fig:state_machine}, Appendix~\ref{app:states}) orc
     \item \textbf{Override:} MANUAL mode is reachable from any active state via the M~key, RC switch, or geofence hard-cutoff. All autonomous commands cease; the pilot assumes full control. Re-entering autonomous mode requires an explicit resume command.
 \end{itemize}
 
-A detection queue with spatial deduplication (5\,m reject radius), bounded capacity (20 entries), and lazy validation manages multiple targets. Five independent safety mechanisms provide defence-in-depth: manual override, RC kill switch, RTL on link loss, three-layer geofence, and per-state timeouts.
+A detection queue with spatial deduplication (5\,m reject radius), bounded capacity (20 entries), and lazy validation manages multiple targets. Five independent safety mechanisms provide defence-in-depth: manual override, RC kill switch, Return To Launch (RTL) on link loss (\SI{3}{\second} heartbeat timeout), three-layer geofence, and per-state timeouts (Appendix~\ref{app:states} lists all 20~states with their entry conditions, exit transitions, and timeout values).
 
 % ═══════════════════════════════════════════════════════════════
 \subsection{Target Localisation}\label{sec:localisation}
 
-Each detection is converted from pixel coordinates to GPS using the pinhole camera model. The pixel offset from the image centre is projected to a body-frame displacement via the ground sampling distance (GSD $= w_s \cdot h / (f \cdot W)$), rotated into North--East coordinates using the drone's heading, and converted to latitude/longitude on the WGS\,84 ellipsoid. Multiple observations are fused through:
+Each detection is converted from pixel coordinates to GPS using the pinhole camera model. The pixel offset $(\Delta u, \Delta v)$ from the image centre is projected to a body-frame displacement via the ground sampling distance:
+\begin{equation}\label{eq:gsd-sysdesc}
+  \mathrm{GSD} = \frac{w_s \cdot h}{f \cdot W},\qquad
+  d_x = \Delta u \cdot \mathrm{GSD},\quad
+  d_y = \Delta v \cdot \mathrm{GSD}
+\end{equation}
+where $w_s = \SI{5.02}{\milli\metre}$ is the sensor width, $f = \SI{5.46}{\milli\metre}$ the calibrated focal length, $h$ the barometric altitude, and $W = 1456$\,px the image width. The body-frame displacement $(d_x, d_y)$ is rotated into North--East coordinates using the drone's heading and converted to latitude/longitude on the WGS\,84 ellipsoid (full derivation in Appendix~\ref{sec:gps-deep}). Multiple observations are fused through:
 
 \begin{itemize}
     \item \textbf{Spatial clustering} (30\,m merge radius) for multi-target tracking;
@@ -177,29 +172,7 @@ Each detection is converted from pixel coordinates to GPS using the pinhole came
     \item \textbf{Kalman filter} on the $[\phi, \lambda]$ state vector with measurement noise scaled by inverse observation weight, converging within 5--10 observations.
 \end{itemize}
 
-Video replay analysis (DJI flight footage, $1456 \times 1088$ at 30\,fps) yielded CEP$_{50}$ = 2.3\,m, maximum error = 16.5\,m (high-speed outlier). The characteristic directional elongation is attributed to GPS receiver latency (100--200\,ms), mitigated by multi-pass averaging in the lawnmower pattern.
-
-\paragraph{Error budget.}
-Six independent sources contribute to single-observation position uncertainty (Table~\ref{tab:error-budget-summary}). GPS receiver noise dominates at all altitudes; GPS timing lag is the largest \emph{systematic} contributor, displacing each estimate by $v_\mathrm{gnd} \cdot \Delta t$ along the flight heading. The RSS total of \SI{2.9}{\metre} at \SI{35}{\metre} altitude reduces to \SI{2.5}{\metre} with first-order velocity correction and further to sub-metre levels after inverse-variance fusion of 15+ observations across descent altitudes (Appendix~\ref{sec:error-budget}).
-
-\begin{table}[ht]
-  \centering\small
-  \caption{Single-observation error budget at \SI{35}{\metre} and \SI{15}{\metre} altitude.}\label{tab:error-budget-summary}
-  \begin{tabular}{@{}lccc@{}}
-    \toprule
-    \textbf{Source} & $\boldsymbol{\sigma}$ \textbf{(35\,m)} & $\boldsymbol{\sigma}$ \textbf{(15\,m)} & \textbf{Notes} \\
-    \midrule
-    GPS receiver noise   & \SI{2.3}{\metre} & \SI{2.3}{\metre} & CEP95, altitude-independent \\
-    GPS timing lag       & \SI{1.5}{\metre} & \SI{0.75}{\metre} & \SI{150}{\milli\second} at speed \\
-    Compass heading      & \SI{0.6}{\metre} & \SI{0.3}{\metre} & $\pm$\SI{5}{\degree} yaw error \\
-    Barometric altitude  & \SI{0.5}{\metre} & \SI{0.1}{\metre} & $\pm$\SI{0.5}{\metre} baro drift \\
-    Camera mount offset  & \SI{0.5}{\metre} & \SI{0.5}{\metre} & $\pm$\SI{2}{\degree} off-nadir \\
-    Pixel quantisation   & \SI{0.01}{\metre} & \SI{0.005}{\metre} & Negligible \\
-    \midrule
-    \textbf{RSS total}   & \textbf{\SI{2.9}{\metre}} & \textbf{\SI{2.5}{\metre}} & Without lag correction \\
-    \bottomrule
-  \end{tabular}
-\end{table}
+Video replay analysis (DJI flight footage, $1456 \times 1088$ at 30\,fps) yielded CEP$_{50}$ = 2.3\,m, maximum error = 16.5\,m (high-speed outlier). The characteristic directional elongation is attributed to GPS receiver latency (100--200\,ms), mitigated by multi-pass averaging in the lawnmower pattern. Six independent error sources contribute to single-observation RSS uncertainty of \SI{2.9}{\metre} at \SI{35}{\metre} altitude, dominated by GPS receiver noise (\SI{2.3}{\metre}) and timing lag (\SI{1.5}{\metre}). After inverse-variance fusion of 15+ multi-altitude observations, the fused estimate converges to sub-metre accuracy, exceeding the 5--10\,m landing requirement (R07) with $>$99\% probability. The full error budget, GPS accuracy figures, convergence plots, and fusion strategy comparison are provided in Appendix~\ref{sec:gps-deep}.
 
 \begin{figure}[ht]
 \centering
@@ -220,40 +193,15 @@ Six independent sources contribute to single-observation position uncertainty (T
 \label{fig:gps_accuracy}
 \end{figure}
 
-\begin{figure}[ht]
-\centering
-\begin{subfigure}[t]{0.48\textwidth}
-  \centering
-  \includegraphics[width=\linewidth]{gps_convergence}
-  \caption{GPS estimate convergence over successive observations. The Kalman filter stabilises within 5--10 detections.}
-  \label{fig:gps_convergence}
-\end{subfigure}
-\hfill
-\begin{subfigure}[t]{0.48\textwidth}
-  \centering
-  \includegraphics[width=\linewidth]{estimator_comparison}
-  \caption{Comparison of estimation methods: raw average, inverse-variance weighted, and Kalman filter.}
-  \label{fig:estimator_comparison}
-\end{subfigure}
-\caption{Target position estimation: convergence behaviour and estimator comparison.}
-\label{fig:estimation}
-\end{figure}
-
 % ═══════════════════════════════════════════════════════════════
 \subsection{Ground Station}\label{sec:groundstation}
 
-The ground station is a browser-based dashboard served by a threaded HTTP server on the Pi at port~8090, accessible from any device on the local Wi-Fi network using the Pi's built-in wireless adapter. The operator needs only a standard web browser---no native application, no Mission Planner installation, and no platform dependency---yet receives live video, spatial awareness, and full command authority in a single view.
-
-The dashboard provides three primary panels: (1)~a live MJPEG video stream with detection bounding boxes, confidence scores, and target ID overlays; (2)~a 2D GPS grid centred on the search area showing numbered detection clusters, the drone's current position, and the planned search path; and (3)~a command panel with nine buttons: arm, takeoff, investigate~(N), confirm target~(Y), mark as interest~(I), reject as false positive~(X), land, RTL, and manual override~(M). The operator workflow during engagement is: observe the detection cluster on the GPS grid, press~N to investigate, watch the live video as the drone centres and descends, then confirm~(Y) or reject~(X) based on the close-up view.
-
-MJPEG was selected over H.264/WebRTC for three reasons: minimal client-side complexity (a single \texttt{<img>} tag), no transcoding load on the Pi's CPU, and graceful degradation on dropped frames (each frame is independently decodable). Measured end-to-end latency is approximately \SI{300}{\milli\second}.
-
-Headless operation is auto-detected when no \texttt{DISPLAY} environment variable is set, enabling deployment over SSH without X11 forwarding. In this mode, all \texttt{cv2.imshow} calls are skipped and operator interaction occurs exclusively through the browser interface or terminal keypresses. A passive monitoring mode (\texttt{passive\_watch.py}) provides the same video stream and detection overlays but issues zero flight commands, enabling safe observation during manual RC flights.
+The ground station is a browser-based dashboard served by a threaded HTTP server on the Pi at port~8090, accessible from any device on the local Wi-Fi network. The dashboard provides three panels: (1)~live MJPEG video stream with detection overlays; (2)~2D GPS grid showing detection clusters, drone position, and search path; and (3)~command buttons (investigate, confirm, reject, land, RTL, manual override). MJPEG was selected over H.264/WebRTC for minimal client complexity (single \texttt{<img>} tag), zero transcoding load, and per-frame decodability. Measured latency is \SI{300}{\milli\second} at \SI{0.3}{\mega\byte\per\second}. Headless operation is auto-detected on the Pi (no \texttt{DISPLAY}), enabling SSH deployment without X11 forwarding (Appendix~\ref{sec:streaming-arch}).
 
 % ═══════════════════════════════════════════════════════════════
 \subsection{Simulation Framework}\label{sec:simulation}
 
-Four simulation levels provide progressive fidelity: (1)~interactive simulator (keyboard flight over satellite map with ground-truth comparison); (2)~SITL integration (full ArduPilot autopilot with simulated camera view); (3)~SITL with real webcam; (4)~DJI video replay with synchronised SRT telemetry. The same detection model, GPS estimation mathematics, and MAVLink command interface are used at every level, so transitioning to real hardware requires only configuration changes. Bugs caught in simulation include a MAVLink race condition during takeoff, incorrect latitude scaling, auto-disarm timeout, and GPS timing lag.
+Four simulation levels provide progressive fidelity (Appendix~\ref{sec:sim-validation}): (1)~interactive simulator (keyboard flight over satellite map with ground-truth comparison); (2)~SITL integration (full ArduPilot autopilot with simulated camera view); (3)~SITL with real webcam; (4)~DJI video replay with synchronised SRT telemetry. The same detection model, GPS estimation mathematics, and MAVLink command interface are used at every level, so transitioning to real hardware requires only configuration changes. Bugs caught in simulation include a MAVLink race condition during takeoff, incorrect latitude scaling, auto-disarm timeout, and GPS timing lag---12 defects were identified and resolved through simulation alone before any hardware integration.
 
 \begin{figure}[ht]
 \centering
@@ -261,3 +209,4 @@ Four simulation levels provide progressive fidelity: (1)~interactive simulator (
 \caption{Mission timeline showing state transitions during a simulated end-to-end SAR mission. The horizontal axis represents elapsed time; coloured blocks indicate active states.}
 \label{fig:mission_timeline}
 \end{figure}
+

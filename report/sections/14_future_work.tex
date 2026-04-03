@@ -1,6 +1,8 @@
 \section{Future Work}\label{sec:future}
 
-The system presented in this report demonstrates a complete autonomous SAR pipeline from search through detection to landing, but several directions offer clear paths toward operational capability. This section organises future work by feasibility, distinguishing near-term enhancements achievable with the existing hardware from longer-term developments that would require additional equipment, regulatory approval, or multi-platform coordination.
+This appendix outlines the development roadmap beyond the current submission, organised by feasibility so that readers can distinguish between improvements achievable with existing hardware and those requiring additional investment or regulatory approval.
+
+The system presented in this report demonstrates a complete autonomous SAR pipeline from search through detection to landing, but several directions offer clear paths toward operational capability. The following subsections organise future work by feasibility, distinguishing near-term enhancements achievable with the existing hardware from longer-term developments that would require additional equipment, regulatory approval, or multi-platform coordination.
 
 \subsection{Inference Acceleration}\label{sec:future-inference}
 
@@ -9,7 +11,7 @@ The TFLite backend achieves 4.8\,FPS on the Raspberry Pi~5, which is adequate fo
 \begin{enumerate}
     \item \textbf{FP16 XNNPACK.} The Pi~5's Cortex-A76 cores support native half-precision arithmetic. Enabling FP16 execution in the XNNPACK delegate requires no model changes and is expected to approximately double throughput to ${\sim}10$~FPS, based on ARM's published benchmarks for similar workloads~\cite{david2021tensorflow}.
     \item \textbf{Threaded pipeline.} The current architecture serialises frame capture and inference. Overlapping these stages in a producer--consumer arrangement would reduce effective per-frame latency by 20--30\,\%, as the camera sensor and CPU operate on independent hardware. The Python \texttt{threading} module is sufficient because the Global Interpreter Lock (GIL) is released during both camera I/O and TFLite native inference calls.
-    \item \textbf{NCNN backend.} An NCNN export of the YOLOv8n model has already been generated and is stored in the repository (\texttt{cv\_models/sar\_v2\_1088/ncnn/}). NCNN is optimised for ARM NEON instructions and is expected to reach ${\sim}15$~FPS on the Pi~5~\cite{ncnn2017}. Integration requires replacing the TFLite inference call in \texttt{vision.py} with an NCNN loader; the detection interface (\texttt{detect\_in\_image} $\rightarrow$ found, $x$, $y$, confidence) remains unchanged.
+    \item \textbf{NCNN backend.} An NCNN export of the YOLOv8n model has already been generated and is stored in the repository (\texttt{cv\_models/sar\_v2\_1088/ncnn/}). NCNN is optimised for ARM NEON instructions and is expected to reach ${\sim}15$~FPS on the Pi~5~\cite{ncnn}. Integration requires replacing the TFLite inference call in \texttt{vision.py} with an NCNN loader; the detection interface (\texttt{detect\_in\_image} $\rightarrow$ found, $x$, $y$, confidence) remains unchanged.
     \item \textbf{Hailo-8L NPU.} The Raspberry Pi AI~HAT+ (\pounds55) provides a dedicated neural processing unit capable of 80+ FPS for YOLOv8n~\cite{hailo2023datasheet}, removing inference as a bottleneck entirely. This would enable real-time detection at full camera frame rate and free CPU cycles for concurrent tasks such as visual odometry or on-board path replanning.
 \end{enumerate}
 

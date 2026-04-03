@@ -344,6 +344,24 @@ def paste_target(bg, fg_full, img_size, alt_m, angle=None):
     px = random.randint(margin, max_x)
     py = random.randint(margin, max_y)
 
+    # Brightness matching: scale dummy brightness to match local background patch
+    patch = bg[py:py + rot_h, px:px + rot_w]
+    if patch.size > 0 and fg_rot.shape[2] == 4:
+        # Compute mean brightness of background patch and dummy (alpha-weighted)
+        bg_mean = np.mean(cv2.cvtColor(patch, cv2.COLOR_BGR2GRAY).astype(np.float32))
+        fg_gray = cv2.cvtColor(fg_rot[:, :, :3], cv2.COLOR_BGR2GRAY).astype(np.float32)
+        fg_alpha = fg_rot[:, :, 3].astype(np.float32) / 255.0
+        alpha_sum = fg_alpha.sum()
+        if alpha_sum > 0:
+            fg_mean = (fg_gray * fg_alpha).sum() / alpha_sum
+            if fg_mean > 1.0:
+                scale = bg_mean / fg_mean
+                # Clamp scale to avoid extreme shifts
+                scale = np.clip(scale, 0.5, 2.0)
+                fg_rot_f = fg_rot.astype(np.float32)
+                fg_rot_f[:, :, :3] *= scale
+                fg_rot = np.clip(fg_rot_f, 0, 255).astype(np.uint8)
+
     bg = alpha_blend(bg, fg_rot, px, py)
 
     bbox = {

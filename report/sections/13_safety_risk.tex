@@ -1,5 +1,7 @@
 \section{Safety and Risk Management}\label{sec:safety}
 
+This appendix presents the safety architecture, failure-mode analysis, and regulatory compliance measures that underpin every flight operation, demonstrating how the system mitigates risks inherent in autonomous UAV flight adjacent to an environmentally sensitive site.
+
 Autonomous flight adjacent to an environmentally protected site introduces hazards spanning airspace violation, equipment failure, and loss of control. A layered safety architecture mitigates these risks through geofencing, failure-mode handling, operator oversight, and regulatory compliance, following the Specific Operations Risk Assessment (SORA) methodology~\cite{jarus2019sora} and UK CAA guidance for unmanned aircraft operations~\cite{caa2024uas}.
 
 \subsection{Geofence Implementation}\label{sec:geofencing}
@@ -45,7 +47,7 @@ The GPS degradation handler monitors \texttt{GPS\_RAW\_INT} messages continuousl
 
 \subsection{Operator-in-the-Loop}\label{sec:operator-loop}
 
-The \textsc{Verify} state is the critical decision gate that prevents the system from acting on false-positive detections (see also Section~\ref{subsec:operator} for the full classification taxonomy). When the detection pipeline identifies a candidate target, the aircraft navigates to its estimated GPS position and holds altitude while presenting the live camera feed to the operator via the browser-based ground station. The operator classifies the detection using one of three inputs:
+The \textsc{Verify} state is the critical decision gate that prevents the system from acting on false-positive detections (see also Section~\ref{sec:operator-loop} for the full classification taxonomy). When the detection pipeline identifies a candidate target, the aircraft navigates to its estimated GPS position and holds altitude while presenting the live camera feed to the operator via the browser-based ground station. The operator classifies the detection using one of three inputs:
 
 \begin{itemize}
     \item \textbf{Y (Confirm)} --- the target is a genuine casualty. The system initiates GPS position averaging (10\,s of samples for improved accuracy), then prompts the operator to select a landing side (N/E/S/W) before proceeding to the approach and payload delivery sequence.

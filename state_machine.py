@@ -7,16 +7,6 @@ import time
 import math
 
 
-def _get_main_globals():
-    """Lazy import of main module globals to avoid circular imports."""
-    import main
-    return {
-        'REAL_CANVAS_SIZE': getattr(main, 'REAL_CANVAS_SIZE', 4800),
-        'SIM_SPEED': getattr(main, 'SIM_SPEED', 1),
-        'BEACON_DELAY': getattr(main, 'BEACON_DELAY', 0),
-    }
-
-
 class StateHandlersMixin:
     """Mixin providing all state handler methods for the mission state machine.
 
@@ -143,7 +133,6 @@ class StateHandlersMixin:
 
     def _handle_connecting(self, target_found, px_u, px_v, key):
         from pymavlink import mavutil
-        g = _get_main_globals()
         if self.connect_start_time > 0 and self.last_heartbeat == 0:
             elapsed = time.time() - self.connect_start_time
             if elapsed > 15 and int(elapsed) % 15 == 0 and time.time() - self.last_req > 5:
@@ -158,8 +147,8 @@ class StateHandlersMixin:
             if config.MODE == "SIMULATION":
                 self.master.mav.param_set_send(
                     self.master.target_system, self.master.target_component,
-                    b'SIM_SPEEDUP', g['SIM_SPEED'], mavutil.mavlink.MAV_PARAM_TYPE_REAL32)
-                print(f"  SITL speedup set to {g['SIM_SPEED']}x")
+                    b'SIM_SPEEDUP', config.SIM_SPEED, mavutil.mavlink.MAV_PARAM_TYPE_REAL32)
+                print(f"  SITL speedup set to {config.SIM_SPEED}x")
             self._set_state(State.ARMING)
 
     def _handle_arming(self, target_found, px_u, px_v, key):
@@ -219,9 +208,6 @@ class StateHandlersMixin:
             self.last_req = time.time()
 
     def _handle_takeoff(self, target_found, px_u, px_v, key):
-        g = _get_main_globals()
-        REAL_CANVAS_SIZE = g['REAL_CANVAS_SIZE']
-
         if self.master and not self.master.motors_armed():
             if config.MODE == "SIMULATION":
                 print("Drone disarmed during takeoff — retrying arm sequence...")
@@ -241,7 +227,7 @@ class StateHandlersMixin:
             if config.MODE == "SIMULATION":
                 canvas_w, canvas_h = self.sim.map_w, self.sim.map_h
             else:
-                canvas_w, canvas_h = REAL_CANVAS_SIZE, REAL_CANVAS_SIZE
+                canvas_w, canvas_h = config.REAL_CANVAS_SIZE, config.REAL_CANVAS_SIZE
             start_gps = self.pre_waypoints[-1] if self.pre_waypoints else (self.lat, self.lon)
             self.waypoints = self.planner.generate_search_pattern(canvas_w, canvas_h, start_gps)
             if self.pre_waypoints:
@@ -408,16 +394,12 @@ class StateHandlersMixin:
 
     def _advance_waypoint(self):
         """Fly toward next waypoint; start rescan or finish when exhausted."""
-        g = _get_main_globals()
-        REAL_CANVAS_SIZE = g['REAL_CANVAS_SIZE']
-
         if self.wp_index < len(self.waypoints):
             target = self.waypoints[self.wp_index]
             if time.time() - self.last_req > 2.0:
                 # Maintain search yaw if --lock-yaw flag is set
-                lock_yaw = g.get('LOCK_YAW', False)
                 search_yaw = getattr(self, '_search_yaw_target', None)
-                yaw_arg = math.radians(search_yaw) if lock_yaw and search_yaw is not None else None
+                yaw_arg = math.radians(search_yaw) if config.LOCK_YAW and search_yaw is not None else None
                 self.nav.send_global_target(target[0], target[1], self._current_search_alt(), yaw=yaw_arg)
                 self.last_req = time.time()
             if self.get_dist_to_point(target[0], target[1]) < 2.0:
@@ -436,7 +418,7 @@ class StateHandlersMixin:
             if config.MODE == "SIMULATION":
                 canvas_w, canvas_h = self.sim.map_w, self.sim.map_h
             else:
-                canvas_w, canvas_h = REAL_CANVAS_SIZE, REAL_CANVAS_SIZE
+                canvas_w, canvas_h = config.REAL_CANVAS_SIZE, config.REAL_CANVAS_SIZE
             self.waypoints = self.planner.generate_search_pattern(
                 canvas_w, canvas_h, (self.lat, self.lon), alt_override=new_alt)
             self.wp_index = 0
@@ -449,8 +431,6 @@ class StateHandlersMixin:
     # -- Search orchestrator --
 
     def _handle_search(self, target_found, px_u, px_v, key):
-        g = _get_main_globals()
-
         if self._orient_search_yaw():
             return
 
@@ -462,7 +442,7 @@ class StateHandlersMixin:
         self.nav.set_speed(search_speed)
 
         # Auto-trigger PLB beacon after delay
-        beacon_delay = g.get('BEACON_DELAY', 0)
+        beacon_delay = config.BEACON_DELAY
         if beacon_delay > 0 and not getattr(self, '_beacon_triggered', False):
             if not hasattr(self, '_search_first_start'):
                 self._search_first_start = time.time()
@@ -844,8 +824,6 @@ class StateHandlersMixin:
         self._search_yaw_sent = False
         print(f"\n[PLB] BEACON SIGNAL RECEIVED! Redirecting to Focus Area ({len(config.FOCUS_AREA_GPS)} pts)\n")
 
-        g = _get_main_globals()
-        REAL_CANVAS_SIZE = g['REAL_CANVAS_SIZE']
         focus_poly_px = [self.geo.gps_to_pixels(lat, lon) for lat, lon in config.FOCUS_AREA_GPS]
         self.planner.search_polygon = focus_poly_px
         self.planner._focus_area = True
@@ -854,7 +832,7 @@ class StateHandlersMixin:
         if config.MODE == "SIMULATION":
             canvas_w, canvas_h = self.sim.map_w, self.sim.map_h
         else:
-            canvas_w, canvas_h = REAL_CANVAS_SIZE, REAL_CANVAS_SIZE
+            canvas_w, canvas_h = config.REAL_CANVAS_SIZE, config.REAL_CANVAS_SIZE
 
         self.waypoints = self.planner.generate_search_pattern(canvas_w, canvas_h, (self.lat, self.lon))
         self.wp_index = 0
