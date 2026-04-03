@@ -43,6 +43,7 @@ NO_NFZ = "--no-nfz" in sys.argv
 NFZ_DIRECTIONAL = "--nfz-total-speed" not in sys.argv  # directional is default
 USE_SPIRAL = "--spiral" in sys.argv  # Zian's perimeter spiral instead of lawnmower
 config.LOCK_YAW = "--lock-yaw" in sys.argv  # Maintain search yaw throughout sweep
+CLEAN_DETECTIONS = "--clean" in sys.argv  # Wipe mission_detections/ at start
 
 for _i, _arg in enumerate(sys.argv):
     if _arg == "--model" and _i + 1 < len(sys.argv):        MODEL_PATH = sys.argv[_i + 1]
@@ -718,12 +719,13 @@ class VisualFlightMission(StateHandlersMixin):
 
     def run(self):
         self._mission_start_time = time.time()
-        # Clear previous mission detections
-        import shutil
+        # Clear previous mission detections (only with --clean flag)
         det_dir = "mission_detections"
-        if os.path.exists(det_dir):
-            shutil.rmtree(det_dir)
-            print(f"[INIT] Cleared previous {det_dir}/")
+        if getattr(self, '_clean_detections', False):
+            import shutil
+            if os.path.exists(det_dir):
+                shutil.rmtree(det_dir)
+                print(f"[INIT] Cleared previous {det_dir}/")
         os.makedirs(det_dir, exist_ok=True)
         print("\n" + "=" * 60)
         print("  MISSION LOOP STARTED")
@@ -1174,6 +1176,7 @@ def _dry_run(mission):
 
 if __name__ == "__main__":
     mission = VisualFlightMission()
+    mission._clean_detections = CLEAN_DETECTIONS
     if DRY_RUN:
         _dry_run(mission)
     else:
