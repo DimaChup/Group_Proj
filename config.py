@@ -107,6 +107,9 @@ MAX_DETECT_QUEUE = 20          # Max queued detections; oldest dropped when exce
 TARGET_REAL_RADIUS_M = 0.15     # Dummy radius (15 cm)
 DUMMY_HEIGHT_M = 1.8            # Dummy height for FOV calculations
 CONE_HEIGHT_M = 0.5             # Traffic cone height
+PANTS_HEIGHT_M = 0.9            # Pants on ground
+TSHIRT_HEIGHT_M = 0.8           # T-shirt on ground
+BACKPACK_HEIGHT_M = 0.7         # Backpack on ground
 
 
 # ============================================================
@@ -173,6 +176,9 @@ DIAGONAL_YAW_OFFSET_DEG = 0    # Yaw offset at turn (0 = face scan line, None = 
 MAP_FILE = "assets/map.jpg"
 DUMMY_FILE = "assets/dummy.png"
 CONE_FILE = "assets/cone.png"
+PANTS_FILE = "assets/pants.png"
+TSHIRT_FILE = "assets/tshirt.png"
+BACKPACK_FILE = "assets/backpack.png"
 MAP_WIDTH_METERS = 491.9
 REF_LAT = 51.42512107           # Map top-left corner (calibrated 2026-04-02, 2-point, 0.11m avg err)
 REF_LON = -2.67222427           # Map top-left corner (calibrated 2026-04-02, 2-point, 0.11m avg err)

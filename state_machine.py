@@ -414,7 +414,11 @@ class StateHandlersMixin:
         if self.wp_index < len(self.waypoints):
             target = self.waypoints[self.wp_index]
             if time.time() - self.last_req > 2.0:
-                self.nav.send_global_target(target[0], target[1], self._current_search_alt())
+                # Maintain search yaw if --lock-yaw flag is set
+                lock_yaw = g.get('LOCK_YAW', False)
+                search_yaw = getattr(self, '_search_yaw_target', None)
+                yaw_arg = math.radians(search_yaw) if lock_yaw and search_yaw is not None else None
+                self.nav.send_global_target(target[0], target[1], self._current_search_alt(), yaw=yaw_arg)
                 self.last_req = time.time()
             if self.get_dist_to_point(target[0], target[1]) < 2.0:
                 self.wp_index += 1

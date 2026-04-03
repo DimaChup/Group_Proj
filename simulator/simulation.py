@@ -31,6 +31,15 @@ class SimulationEnvironment:
         self.cone_img = cv2.imread(config.CONE_FILE, cv2.IMREAD_UNCHANGED)
         if self.cone_img is None:
             print(f"Warning: '{config.CONE_FILE}' not found. Cone placement disabled.")
+        self.pants_img = cv2.imread(config.PANTS_FILE, cv2.IMREAD_UNCHANGED)
+        if self.pants_img is None:
+            print(f"Warning: '{config.PANTS_FILE}' not found.")
+        self.tshirt_img = cv2.imread(config.TSHIRT_FILE, cv2.IMREAD_UNCHANGED)
+        if self.tshirt_img is None:
+            print(f"Warning: '{config.TSHIRT_FILE}' not found.")
+        self.backpack_img = cv2.imread(config.BACKPACK_FILE, cv2.IMREAD_UNCHANGED)
+        if self.backpack_img is None:
+            print(f"Warning: '{config.BACKPACK_FILE}' not found.")
 
         # Calc Sizes
         raw_radius = config.TARGET_REAL_RADIUS_M * self.geo.pix_per_m
@@ -39,8 +48,9 @@ class SimulationEnvironment:
 
         # Sim State — multi-target support
         self.sim_targets = []          # list of (x, y) pixel positions
-        self.sim_target_types = []     # list of "dummy" or "cone" per target
-        self.sim_target_type = "dummy" # all targets render as dummies
+        self.sim_target_types = []     # list of "dummy"/"cone"/"pants"/"tshirt"/"backpack"
+        self.sim_target_type = "dummy"
+        self.ALL_TARGET_TYPES = ["dummy", "cone", "pants", "tshirt", "backpack"]
         # Backwards compat aliases
         self.sim_target_px = None
 
@@ -88,27 +98,37 @@ class SimulationEnvironment:
 
         def _redraw(temp_vis):
             """Draw all elements on the display."""
-            dummy_h_px = max(20, int(config.DUMMY_HEIGHT_M * self.geo.pix_per_m * scale_factor))
-            cone_h_px = max(10, int(config.CONE_HEIGHT_M * self.geo.pix_per_m * scale_factor))
+            # Pre-compute heights for all asset types
+            asset_h = {
+                "dummy": max(20, int(config.DUMMY_HEIGHT_M * self.geo.pix_per_m * scale_factor)),
+                "cone": max(10, int(config.CONE_HEIGHT_M * self.geo.pix_per_m * scale_factor)),
+                "pants": max(10, int(config.PANTS_HEIGHT_M * self.geo.pix_per_m * scale_factor)),
+                "tshirt": max(10, int(config.TSHIRT_HEIGHT_M * self.geo.pix_per_m * scale_factor)),
+                "backpack": max(10, int(config.BACKPACK_HEIGHT_M * self.geo.pix_per_m * scale_factor)),
+            }
+            asset_img = {
+                "dummy": self.dummy_img, "cone": self.cone_img,
+                "pants": self.pants_img, "tshirt": self.tshirt_img, "backpack": self.backpack_img,
+            }
             # Targets
             for i, tgt in enumerate(targets):
                 sx, sy = int(tgt[0]*scale_factor), int(tgt[1]*scale_factor)
                 ttype = target_types[i] if i < len(target_types) else "dummy"
-                if ttype == "cone" and self.cone_img is not None:
-                    overlay_image_alpha(temp_vis, self.cone_img, sx, sy, 0, cone_h_px)
-                elif self.dummy_img is not None:
-                    overlay_image_alpha(temp_vis, self.dummy_img, sx, sy, 0, dummy_h_px)
+                img = asset_img.get(ttype)
+                if img is not None:
+                    overlay_image_alpha(temp_vis, img, sx, sy, 0, asset_h.get(ttype, 20))
                 else:
                     vis_radius = max(2, int(self.target_radius_px * scale_factor))
                     cv2.circle(temp_vis, (sx, sy), vis_radius, (0, 0, 255), -1)
                 color = (0, 128, 255) if i == 0 else (255, 255, 0)
-                label = f"{i+1}{'C' if ttype == 'cone' else 'D'}"
+                label = f"{i+1}{ttype[0].upper()}"
                 cv2.putText(temp_vis, label, (sx + 10, sy - 10),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
             # Show current placement mode
-            mode_text = f"Placing: {'CONE (C=toggle)' if place_type[0] == 'cone' else 'DUMMY (C=toggle)'}"
+            mode_text = f"Placing: {place_type[0].upper()} (C=cycle)"
+            type_colors = {"dummy": (0,200,0), "cone": (0,255,255), "pants": (255,150,0), "tshirt": (200,0,200), "backpack": (0,150,255)}
             cv2.putText(temp_vis, mode_text, (10, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.6,
-                       (0, 255, 255) if place_type[0] == "cone" else (0, 200, 0), 2)
+                       type_colors.get(place_type[0], (255,255,255)), 2)
             # Transit waypoints (cyan line + numbered circles)
             if len(transit_wps) > 0:
                 for i, wp in enumerate(transit_wps):
@@ -238,11 +258,11 @@ class SimulationEnvironment:
             print("2. Press any KEY to start.")
         elif preload_polygon_gps:
             print("  Search polygon loaded from KML.")
-            print("1. Left-click to place targets. C=toggle dummy/cone. Right-click when done.")
+            print("1. Left-click to place targets. C=cycle type (dummy/cone/pants/tshirt/backpack). Right-click when done.")
             print("2. Left-click transit waypoints (cyan path before search). Right-click when done/skip.")
             print("3. Press any KEY to start.")
         else:
-            print("1. Left-click to place targets. C=toggle dummy/cone. Right-click when done.")
+            print("1. Left-click to place targets. C=cycle type (dummy/cone/pants/tshirt/backpack). Right-click when done.")
             print("2. Left-click transit waypoints (cyan). Right-click when done/skip.")
             print("3. Left-click search polygon points, Right-click to close.")
             print("4. Press any KEY to start.")
@@ -250,7 +270,8 @@ class SimulationEnvironment:
         while True:
             key = cv2.waitKey(100) & 0xFF
             if key == ord('c') and phase == "targets":
-                place_type[0] = "cone" if place_type[0] == "dummy" else "dummy"
+                idx = self.ALL_TARGET_TYPES.index(place_type[0])
+                place_type[0] = self.ALL_TARGET_TYPES[(idx + 1) % len(self.ALL_TARGET_TYPES)]
                 print(f"  Placement mode: {place_type[0].upper()}")
                 temp_k = display_map.copy()
                 _redraw(temp_k)
@@ -317,12 +338,15 @@ class SimulationEnvironment:
             screen_x = int((config.IMAGE_W / 2) + (dx_rot * scale))
             screen_y = int((config.IMAGE_H / 2) + (dy_rot * scale))
             ttype = self.sim_target_types[ti] if ti < len(self.sim_target_types) else "dummy"
-            if ttype == "cone" and self.cone_img is not None:
-                cone_h_screen = int(config.CONE_HEIGHT_M * px_per_m_screen)
-                overlay_image_alpha(final_view, self.cone_img, screen_x, screen_y, 0, cone_h_screen, rotation_deg=math.degrees(yaw))
-            elif self.dummy_img is not None:
-                dummy_h_screen = int(config.DUMMY_HEIGHT_M * px_per_m_screen)
-                overlay_image_alpha(final_view, self.dummy_img, screen_x, screen_y, 0, dummy_h_screen, rotation_deg=math.degrees(yaw))
+            height_map = {"dummy": config.DUMMY_HEIGHT_M, "cone": config.CONE_HEIGHT_M,
+                          "pants": config.PANTS_HEIGHT_M, "tshirt": config.TSHIRT_HEIGHT_M,
+                          "backpack": config.BACKPACK_HEIGHT_M}
+            img_map = {"dummy": self.dummy_img, "cone": self.cone_img,
+                       "pants": self.pants_img, "tshirt": self.tshirt_img, "backpack": self.backpack_img}
+            t_img = img_map.get(ttype)
+            if t_img is not None:
+                t_h = int(height_map.get(ttype, 1.0) * px_per_m_screen)
+                overlay_image_alpha(final_view, t_img, screen_x, screen_y, 0, t_h, rotation_deg=math.degrees(yaw))
             else:
                 dot_rad_screen = int(config.TARGET_REAL_RADIUS_M * px_per_m_screen)
                 cv2.circle(final_view, (screen_x, screen_y), max(3, dot_rad_screen), (0, 0, 255), -1)
@@ -333,14 +357,17 @@ class SimulationEnvironment:
         display_map = self.full_map.copy()
         
         # Render ALL targets on god view
-        dummy_map_h = max(10, int(config.DUMMY_HEIGHT_M * self.geo.pix_per_m))
-        cone_map_h = max(5, int(config.CONE_HEIGHT_M * self.geo.pix_per_m))
+        god_height_map = {"dummy": config.DUMMY_HEIGHT_M, "cone": config.CONE_HEIGHT_M,
+                          "pants": config.PANTS_HEIGHT_M, "tshirt": config.TSHIRT_HEIGHT_M,
+                          "backpack": config.BACKPACK_HEIGHT_M}
+        god_img_map = {"dummy": self.dummy_img, "cone": self.cone_img,
+                       "pants": self.pants_img, "tshirt": self.tshirt_img, "backpack": self.backpack_img}
         for ti, tgt in enumerate(self.sim_targets):
             ttype = self.sim_target_types[ti] if ti < len(self.sim_target_types) else "dummy"
-            if ttype == "cone" and self.cone_img is not None:
-                overlay_image_alpha(display_map, self.cone_img, tgt[0], tgt[1], 0, cone_map_h)
-            elif self.dummy_img is not None:
-                overlay_image_alpha(display_map, self.dummy_img, tgt[0], tgt[1], 0, dummy_map_h)
+            t_img = god_img_map.get(ttype)
+            if t_img is not None:
+                t_h = max(5, int(god_height_map.get(ttype, 1.0) * self.geo.pix_per_m))
+                overlay_image_alpha(display_map, t_img, tgt[0], tgt[1], 0, t_h)
             else:
                 cv2.circle(display_map, tgt, self.target_radius_px, (0, 0, 255), -1)
 

@@ -35,15 +35,16 @@ TRANSIT_FILE = "flight_plans/transit.json"
 _TRANSIT_EXPLICIT = False
 STREAM_ENABLED = "--no-stream" not in sys.argv
 STREAM_PORT = 8090
-STREAM_W, STREAM_H = 320, 240
-STREAM_FPS = 5
-STREAM_QUALITY = 50
+STREAM_W, STREAM_H = 1456, 1088
+STREAM_FPS = 10
+STREAM_QUALITY = 80
 SIM_SPEED = 1
 CENTER_VERIFY = "--center-verify" in sys.argv
 SMART_DETECT = "--smart-detect" in sys.argv
 NO_NFZ = "--no-nfz" in sys.argv
 NFZ_DIRECTIONAL = "--nfz-total-speed" not in sys.argv  # directional is default
 USE_SPIRAL = "--spiral" in sys.argv  # Zian's perimeter spiral instead of lawnmower
+LOCK_YAW = "--lock-yaw" in sys.argv  # Maintain search yaw throughout sweep
 BEACON_DELAY = 0
 
 for _i, _arg in enumerate(sys.argv):
@@ -52,6 +53,7 @@ for _i, _arg in enumerate(sys.argv):
     elif _arg == "--speed" and _i + 1 < len(sys.argv):       SIM_SPEED = float(sys.argv[_i + 1])
     elif _arg == "--alt" and _i + 1 < len(sys.argv):         config.TARGET_ALT = float(sys.argv[_i + 1])
     elif _arg == "--beacon-delay" and _i + 1 < len(sys.argv): BEACON_DELAY = float(sys.argv[_i + 1])
+    elif _arg == "--conf" and _i + 1 < len(sys.argv):         config.CONFIDENCE_THRESHOLD = float(sys.argv[_i + 1])
 
 if DRY_RUN:
     print("=" * 60)
@@ -146,7 +148,7 @@ def _terminal_input_thread():
         while True:
             if msvcrt.kbhit():
                 stream_cmd_queue.put(msvcrt.getch()[0])
-            time.sleep(0.05)
+            time.sleep(0.01)
     else:
         import tty, termios
         try:
@@ -764,6 +766,29 @@ class VisualFlightMission(StateHandlersMixin):
                 time.sleep(0.05)
                 continue  # Skip keys + state handler + geofence — pilot is flying
 
+            # Read keys BEFORE handling (no 1-loop delay)
+            key = -1
+            if not HEADLESS:
+                key = cv2.waitKey(1) & 0xFF
+            else:
+                time.sleep(0.02)
+            # Drain ALL queued keys and process each immediately
+            _queued_keys = []
+            try:
+                while True:
+                    _queued_keys.append(stream_cmd_queue.get_nowait())
+            except _queue.Empty:
+                pass
+            for _qk in _queued_keys:
+                self._handle_keys(_qk, target_found, px_u, px_v)
+                handler = _dispatch.get(self.state)
+                if handler:
+                    handler(target_found, px_u, px_v, _qk)
+            if key == 27: break
+            # Use cv2 key if no queued key
+            if not _queued_keys and key != 255 and key != -1:
+                _queued_keys = [key]  # mark as handled below
+
             self._handle_keys(key, target_found, px_u, px_v)
 
             handler = _dispatch.get(self.state)
@@ -779,22 +804,37 @@ class VisualFlightMission(StateHandlersMixin):
                                             State.RETURN_TRANSIT, State.RETURN_HOME)
                 self._enforce_geofence(skip_speed_clamp=skip_speed)
 
+            # Continuous yaw enforcement (--lock-yaw)
+            if LOCK_YAW and self.master and hasattr(self, '_search_yaw_target'):
+                self._enforce_search_yaw()
+
             if self.state == State.DONE:
                 (cv2.waitKey(3000) if not HEADLESS else time.sleep(3.0))
                 break
-
-            key = -1
-            if not HEADLESS:
-                key = cv2.waitKey(1) & 0xFF
-                if key == 27: break
-            else:
-                time.sleep(0.02)
-            try:
-                while True:
-                    key = stream_cmd_queue.get_nowait()
-            except _queue.Empty:
-                pass
             if key == 27: break
+
+    def _enforce_search_yaw(self):
+        """Continuously correct yaw to stay within ±5° of search heading.
+        Runs every loop iteration when --lock-yaw is active."""
+        if self.state in (State.INIT, State.CONNECTING, State.ARMING,
+                          State.TAKEOFF, State.LANDING, State.DONE, State.MANUAL):
+            return
+        import math
+        from pymavlink import mavutil
+        target_deg = self._search_yaw_target
+        current_deg = math.degrees(self.yaw) % 360
+        error = (target_deg - current_deg + 180) % 360 - 180  # signed, -180 to +180
+        if abs(error) > 5.0:
+            # Only send correction every 2s to avoid spam
+            now = time.time()
+            if now - getattr(self, '_last_yaw_correction', 0) < 2.0:
+                return
+            self._last_yaw_correction = now
+            direction = 1 if error > 0 else -1
+            self.master.mav.command_long_send(
+                self.master.target_system, self.master.target_component,
+                mavutil.mavlink.MAV_CMD_CONDITION_YAW, 0,
+                target_deg, 30, direction, 0, 0, 0, 0)
 
     def _enforce_geofence(self, skip_speed_clamp=False):
         """NFZ speed cap + inner polygon repulsion.
