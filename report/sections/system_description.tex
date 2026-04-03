@@ -164,7 +164,7 @@ Each detection is converted from pixel coordinates to GPS using the pinhole came
   d_x = \Delta u \cdot \mathrm{GSD},\quad
   d_y = \Delta v \cdot \mathrm{GSD}
 \end{equation}
-where $w_s = \SI{5.02}{\milli\metre}$ is the sensor width, $f = \SI{5.46}{\milli\metre}$ the calibrated focal length, $h$ the barometric altitude, and $W = 1456$\,px the image width. The body-frame displacement $(d_x, d_y)$ is rotated into North--East coordinates using the drone's heading and converted to latitude/longitude on the WGS\,84 ellipsoid (full derivation in Appendix~\ref{sec:gps-deep}). Multiple observations are fused through:
+where $w_s = \SI{5.02}{\milli\metre}$ is the sensor width, $f = \SI{5.46}{\milli\metre}$ the calibrated focal length, $h$ the barometric altitude, and $W = 1456$\,px the image width. The body-frame displacement $(d_x, d_y)$ is rotated into North--East coordinates using the drone's heading and converted to latitude/longitude on the WGS\,84 ellipsoid.  The complete 15-stage detection-to-GPS pipeline---from raw sensor capture through coordinate transformation to validated GPS estimate---is documented with a full flowchart, error budget decomposition by flight phase, and roll/pitch geometry analysis in Appendix~\ref{sec:gps-deep} (Figure~\ref{fig:pipeline-flow}). Multiple observations are fused through:
 
 \begin{itemize}
     \item \textbf{Spatial clustering} (30\,m merge radius) for multi-target tracking;

@@ -33,6 +33,8 @@ Table~\ref{tab:plus-delta} summarises the principal strengths and areas for impr
 \color{green!50!black}\textbf{P8} & Simulation-first development & Full state machine, geofence enforcement, and detection pipeline were validated end-to-end in SITL before hardware connection; the same \texttt{main.py} runs on both platforms. Dry-run mode validates waypoints in under 1\,s without any hardware (\secref{sec:simulation}). \\
 \addlinespace
 \color{green!50!black}\textbf{P9} & Quantitative figures from mathematical models & 15 body figures generated programmatically from calibration data, inference benchmarks, and flight video analysis---not manually drawn---ensuring reproducibility and numerical traceability (Figures~\ref{fig:det_sensitivity}--\ref{fig:perf_analysis}). Generator scripts archived in \texttt{figs/gen\_*.py}. \\
+\addlinespace
+\color{green!50!black}\textbf{P10} & Centering mitigates five error sources & The CENTERING hover procedure simultaneously eliminates roll/pitch error (\SI{6.2}{\metre}$\to$$<$\SI{0.6}{\metre}), motion blur, and GPS timing lag while enabling multi-frame GPS averaging ($\sqrt{N}$ improvement) and temporal false-positive filtering---solving sensor limitations through mission design rather than software complexity (Appendix~\ref{sec:centering-mitigation}). \\
 \midrule
 \multicolumn{3}{@{}l}{\textbf{Delta --- areas for improvement}} \\
 \addlinespace

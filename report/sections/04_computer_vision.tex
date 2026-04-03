@@ -111,7 +111,7 @@ The 1.5\,ms undistortion overhead is negligible relative to the 206.5\,ms infere
     \qquad
     \theta_{\text{HFOV}} = 2\arctan\!\left(\frac{s_w}{2f}\right),
 \end{equation}
-where $s_w = 5.02$\,mm is the sensor width and $f = 5.46$\,mm is the calibrated focal length, giving $\theta_{\text{HFOV}} \approx 49.4^{\circ}$ and $W_{\text{ground}} \approx 27.6$\,m at $h=30$\,m (or ${\sim}32.2$\,m at the nominal $h=35$\,m search altitude). Adjacent frames therefore overlap by approximately 96\%, providing 11--17 detection opportunities per target during a single flyover.
+where $s_w = 5.02$\,mm is the sensor width and $f = 5.46$\,mm is the calibrated focal length, giving $\theta_{\text{HFOV}} \approx 49.3^{\circ}$ and $W_{\text{ground}} \approx 27.6$\,m at $h=30$\,m (or ${\sim}32.2$\,m at the nominal $h=35$\,m search altitude). Adjacent frames therefore overlap by approximately 96\%, providing 11--17 detection opportunities per target during a single flyover.
 
 The retrained v2 model (\texttt{sar\_v2\_1088}, 11.7\,MB float32) achieves identical inference latency to the original 3.2\,MB model because TFLite input dimensions remain $640 \times 640 \times 3$; the larger file size reflects additional feature map weights from higher-resolution training rather than architectural changes.
 

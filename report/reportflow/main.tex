@@ -790,9 +790,39 @@ The CV pipeline processes each camera frame through four stages:
 
 The retrained model~\cite{yolov8} (mAP50\,=\,0.995) was trained on 366 images: 300 synthetic composites at altitude-correct scale~\cite{synthdata}, 16 manually labelled real flight frames, and 50 hard-negative backgrounds, all at native 1456$\times$1088 resolution.
 
-\subsection{GPS Target Estimation}
+\subsection{Detection-to-GPS Pipeline}
 
-When a detection occurs, the system estimates the casualty's GPS coordinates by projecting the pixel offset from frame centre through the camera's calibrated intrinsics (focal length 5.46\,mm, sensor width 5.02\,mm) and the drone's current GPS position and altitude. Multiple estimates across frames are fused using inverse-variance weighting and spatial clustering. Field testing with DJI flight video replay yielded CEP50\,=\,2.3\,m (50\% of estimates within 2.3\,m of the true position). The primary error source is GPS receiver latency (100--200\,ms), causing 1\,m along-track offset at 5\,m/s.
+When a detection is returned by the CV pipeline, the system converts the bounding-box centre $(c_x, c_y)$ into an estimated GPS coordinate in five steps: (i)~rescale from model space ($640\!\times\!640$) back to native frame coordinates ($1456\!\times\!1088$); (ii)~compute the pixel offset from the frame centre; (iii)~multiply by the Ground Sample Distance to obtain a metric offset in the camera frame; (iv)~rotate by drone yaw into a North/East offset; and (v)~project onto WGS-84 using the drone's GPS position. Multiple estimates across frames are fused via inverse-variance weighting and spatial clustering.
+
+The GSD links pixel displacement to ground distance:
+\[
+  \mathrm{GSD} = \frac{w_{\mathrm{sensor}} \cdot h}{f \cdot W_{\mathrm{px}}}
+  = \frac{5.02\,\mathrm{mm} \times 35\,\mathrm{m}}{5.46\,\mathrm{mm} \times 1456\,\mathrm{px}}
+  = 0.0221\;\mathrm{m/px}
+\]
+
+\noindent giving a field of view of $32.2 \times 24.0$\,m at the 35\,m operating altitude.
+
+\begin{table}[H]
+\centering\small
+\caption{Error budget for detection-to-GPS estimation.}
+\label{tab:error-budget}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Source} & \textbf{Magnitude} & \textbf{When} \\
+\midrule
+Bbox regression (model) & $\pm$6.8\,px ($\pm$0.15\,m) & Always \\
+Altitude uncertainty (baro) & $\pm$1.4--2.9\,\% GSD & Always \\
+Compass / yaw & $\pm$0.35\,m & Always \\
+Drone GPS position & $\pm$2--3\,m (dominant) & Always \\
+Roll / pitch tilt & 0--6\,m & Flight only \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The pipeline assumes nadir viewing. During forward flight at 5\,m/s, drone pitch introduces up to 6.2\,m offset ($h\tan\theta = 35\tan 10°\approx 6.2$\,m). The centering procedure mitigates this by hovering before estimating, reducing pitch to ${<}1°$ and the error to ${<}0.6$\,m.
+
+Field testing with DJI flight video replay yielded \textbf{CEP50\,=\,2.3\,m} (50\% of estimates within 2.3\,m of the true position). The primary residual error source is GPS receiver latency (100--200\,ms), causing ${\sim}1$\,m along-track offset at 5\,m/s; multi-pass averaging from different headings cancels this systematic bias.
 
 \subsection{Testing Infrastructure}
 

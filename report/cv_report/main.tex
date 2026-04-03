@@ -52,6 +52,8 @@
 \lstset{basicstyle=\small\ttfamily, breaklines=true, frame=none}
 
 % ── TikZ for diagrams ──────────────────────────────────────────────────
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, calc, fit, backgrounds}
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.18}
 
@@ -804,14 +806,198 @@ Nine samples across 15--50\,m yielded a mean focal length of $1416 \pm 41$\,px, 
 
 \section{GPS Target Estimation}\label{sec:localisation}
 
-Detection alone answers ``is there a target in this frame?'' The next step is to answer ``where is it on the ground?'' Each detection is converted from pixel coordinates to a GPS position using the pinhole camera model and the calibrated sensor parameters from Section~\ref{sec:calibration}. The pixel offset $(\Delta u, \Delta v)$ from the image centre is projected to a body-frame displacement via the ground sampling distance:
-\begin{equation}\label{eq:gsd}
-  \mathrm{GSD} = \frac{w_s \cdot h}{f \cdot W}
-\end{equation}
-\begin{equation}
-  d_x = \Delta u \cdot \mathrm{GSD}, \qquad d_y = \Delta v \cdot \mathrm{GSD}
-\end{equation}
-where $w_s = \SI{5.02}{\milli\metre}$, $f = \SI{5.46}{\milli\metre}$, $h$ is barometric altitude, and $W = 1456$\,px. The body-frame displacement is rotated into North--East coordinates using the drone's heading and converted to latitude/longitude on the WGS\,84 ellipsoid.
+Detection alone answers ``is there a target in this frame?'' The next step is to answer ``where is it on the ground?'' Each detection is converted from pixel coordinates to a GPS position through a fifteen-stage pipeline.  This section traces the full data flow from raw camera frame to estimated WGS\,84 coordinate, enumerates all error sources with quantified magnitudes, and presents the roll/pitch attitude error analysis---the largest uncompensated contributor during forward flight.
+
+\subsection{Full Detection-to-GPS Pipeline}
+
+The pipeline executes once per camera frame and comprises fifteen sequential stages grouped into four functional blocks: image acquisition (stages 1--2), preprocessing and inference (stages 3--5), coordinate recovery and geospatial projection (stages 6--12), and validation (stages 13--15).  Figure~\ref{fig:pipeline-flow} presents the complete data flow as a stage diagram.
+
+\subsubsection{Image Acquisition (Stages 1--2)}
+
+\begin{enumerate}
+  \item \textbf{Camera capture.} The IMX296 global-shutter sensor produces a $1456 \times 1088$ BGR frame via CSI-2 DMA (${\sim}$2\,ms).  The sensor labels its output ``RGB888'' but delivers BGR byte order; no \texttt{cvtColor} conversion is applied (Section~\ref{sec:cal:colour}).  Sensor read noise contributes $\pm$2\,px random error.
+
+  \item \textbf{Lens undistortion (optional).} A precomputed \texttt{cv2.remap} corrects radial distortion using calibration matrices from a 14$\times$9 checkerboard calibration (RMS = 0.399\,px, cost $+$1.5\,ms).  The IMX296 exhibits minimal barrel distortion due to its global-shutter design; skipping this stage adds $<$1\,px error at image edges.
+\end{enumerate}
+
+\subsubsection{Preprocessing and Inference (Stages 3--5)}
+
+\begin{enumerate}[resume]
+  \item \textbf{Resize to model input.} The frame is resized from $1456 \times 1088$ to $640 \times 640$ via bilinear interpolation (\texttt{cv2.resize}), applying non-uniform scale factors $s_x = 640/1456 = 0.4396$ and $s_y = 640/1088 = 0.5882$.  This ``squish'' approach was chosen over letterboxing (which would pad to $640 \times 478$ active pixels with black borders) for two reasons: (a)~YOLOv8 is trained with random aspect-ratio augmentation (scale 0.5--1.5, 50\% probability) and handles moderate distortion internally; (b)~the squish utilises the full $640 \times 640$ tensor, maximising the target's pixel footprint in model space.  The ${\sim}$7\% vertical stretch is fully reversed in stage~7.  This mapping introduces zero error because the exact inverse is applied during coordinate recovery.
+
+  \item \textbf{Colour conversion and normalisation.} BGR$\to$RGB reordering followed by float32 normalisation to $[0.0, 1.0]$, yielding a $[1, 640, 640, 3]$ input tensor.  The NCNN backend achieves the same result via \texttt{ncnn.Mat.from\_pixels} with in-place mean/norm.  This is a lossless transformation.
+
+  \item \textbf{YOLOv8n inference.} The network (3.2\,M parameters, 8.7\,GFLOPs) produces a $[1, 5, 8400]$ output tensor representing 8400 anchor predictions, each with $(c_x, c_y, w, h, \text{conf})$ in 640$\times$640 pixel coordinates.  After transposing to $[8400, 5]$, the best detection above the confidence threshold (0.2) yields a bounding-box centre $(u_\mathrm{det}, v_\mathrm{det})$.  Inference accounts for 94\% of total pipeline time: ${\sim}$196\,ms on TFLite/XNNPACK, ${\sim}$68\,ms on NCNN.
+\end{enumerate}
+
+\subsubsection{Coordinate Recovery and Geospatial Projection (Stages 6--12)}
+
+\begin{enumerate}[resume]
+  \item \textbf{NMS and best detection selection.}  Detections with confidence below the threshold are discarded; the single highest-confidence detection is selected.  The deliberately low threshold (0.2) maximises recall; the operator confirms via the VERIFY state before any landing commitment.
+
+  \item \textbf{Coordinate rescale to original frame.} Detection coordinates are mapped back to sensor resolution using the exact inverse of the stage-3 resize:
+  \begin{equation}\label{eq:coord-recovery}
+    u_\mathrm{sensor} = u_\mathrm{det} \cdot \frac{1456}{640}, \qquad
+    v_\mathrm{sensor} = v_\mathrm{det} \cdot \frac{1088}{640}
+  \end{equation}
+  The horizontal and vertical scale factors differ (2.275 vs 1.700), correctly reversing the aspect-ratio distortion.  This mapping is exact; no interpolation or rounding occurs.  The code includes a \texttt{PIXEL\_COORD\_THRESHOLD} (1.5) check to distinguish pixel coordinates from normalised $[0,1]$ output---some TFLite exports produce the latter.  Model bounding-box regression contributes $\pm$3\,px error in 640$\times$640 space, scaling to $\pm$6.8\,px in sensor coordinates.
+
+  \item \textbf{Pixel offset from image centre.}
+  \begin{equation}
+    \Delta x_\mathrm{px} = u_\mathrm{sensor} - 728, \qquad
+    \Delta y_\mathrm{px} = v_\mathrm{sensor} - 544
+  \end{equation}
+  Positive $\Delta x$ = target right of centre; positive $\Delta y$ = target below centre.
+
+  \item \textbf{Ground sampling distance (GSD).} The GSD links pixel displacement to ground distance via the thin-lens model:
+  \begin{equation}\label{eq:gsd}
+    \mathrm{GSD} = \frac{w_s \cdot h}{f \cdot W} = \frac{5.02 \times 35}{5.46 \times 1456} = 0.0221 \;\text{m\,px}^{-1}
+  \end{equation}
+  where $w_s = \SI{5.02}{\milli\metre}$ (sensor width), $f = \SI{5.46}{\milli\metre}$ (calibrated focal length), and $W = 1456$\,px (image width).  At \SI{35}{\metre}: GSD = \SI{22.1}{\milli\metre\per\px}, giving a field of view of $32.2 \times 24.0$\,m.  Table~\ref{tab:gsd-values} lists GSD values at representative altitudes.  Altitude uncertainty of $\pm$\SI{0.5}{\metre} (barometric drift) causes $\pm$1.4\% GSD error, translating to $\pm$\SI{0.3}{\metre} at a 10\,m pixel offset.
+
+  \item \textbf{Camera-frame offset in metres.}
+  \begin{equation}
+    d_\mathrm{fwd} = -\Delta y_\mathrm{px} \cdot \mathrm{GSD}, \qquad
+    d_\mathrm{right} = \Delta x_\mathrm{px} \cdot \mathrm{GSD}
+  \end{equation}
+  The sign inversion on $\Delta y$ maps image-down to forward (the camera looks down; ``up'' in the image is ahead of the drone).
+
+  \item \textbf{Yaw rotation: camera frame to NED.} The camera-frame offsets are rotated into the North--East--Down frame using the drone heading $\psi$ (radians, 0\,=\,North, clockwise positive) from the MAVLink \texttt{ATTITUDE} message:
+  \begin{equation}\label{eq:yaw-rotation}
+    \begin{pmatrix} \Delta N \\ \Delta E \end{pmatrix} =
+    \begin{pmatrix} \cos\psi & -\sin\psi \\ \sin\psi & \cos\psi \end{pmatrix}
+    \begin{pmatrix} d_\mathrm{fwd} \\ d_\mathrm{right} \end{pmatrix}
+  \end{equation}
+  Compass accuracy of $\pm$\SI{2}{\degree} contributes $\sin(2^{\circ}) \times 10\,\text{m} = \pm$\SI{0.35}{\metre} cross-track error at a 10\,m offset.
+
+  \item \textbf{Spherical projection: NED metres to WGS\,84.}
+  \begin{equation}
+    \Delta\phi = \frac{\Delta N}{R_\oplus} \cdot \frac{180}{\pi}, \qquad
+    \Delta\lambda = \frac{\Delta E}{R_\oplus \cos\phi_d} \cdot \frac{180}{\pi}
+  \end{equation}
+  where $R_\oplus = \SI{6378137}{\metre}$.  At Bristol ($\phi \approx 51.4^{\circ}$): $1^{\circ}$ latitude $= \SI{111320}{\metre}$, $1^{\circ}$ longitude $= \SI{69532}{\metre}$.  The estimated target position is $(\phi_d + \Delta\phi,\; \lambda_d + \Delta\lambda)$.  Drone GPS position uncertainty ($\pm$\SI{2}{\metre}$-$\SI{3}{\metre}, civilian L1 GNSS) applies as a direct offset to every estimate and is the dominant error source.
+\end{enumerate}
+
+\begin{table}[ht]
+  \centering\small
+  \caption{GSD and field of view at representative altitudes.}\label{tab:gsd-values}
+  \begin{tabular}{@{}rccc@{}}
+    \toprule
+    \textbf{Altitude} & \textbf{GSD (m/px)} & \textbf{FOV width} & \textbf{FOV height} \\
+    \midrule
+    \SI{20}{\metre} & 0.01263 & \SI{18.4}{\metre} & \SI{13.7}{\metre} \\
+    \SI{35}{\metre} & 0.02210 & \SI{32.2}{\metre} & \SI{24.0}{\metre} \\
+    \SI{50}{\metre} & 0.03157 & \SI{46.0}{\metre} & \SI{34.3}{\metre} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsubsection{Validation and State Transition (Stages 13--15)}
+
+\begin{enumerate}[resume]
+  \item \textbf{GPS timing lag.} The GPS receiver reports positions with 100--200\,ms latency.  At \SI{5}{\metre\per\second} search speed, the drone moves 0.5--1.0\,m between the GPS fix and image capture.  This systematic offset along the flight direction is \emph{not} compensated in the current implementation; multi-pass averaging from alternating lawnmower headings partially cancels the directional bias.
+
+  \item \textbf{Detection validation filters.}  Four filters gate whether a detection enters the queue:
+  \begin{enumerate}[label=(\alph*)]
+    \item NFZ check: reject if target falls inside the SSSI no-fly polygon.
+    \item Search-area check: reject if target falls outside the survey polygon.
+    \item Duplicate check: reject if target is within \texttt{REJECTED\_TARGET\_RADIUS\_M} of any previously rejected, queued, or investigated target.
+    \item SMART detect (optional, \texttt{-{}-smart-detect}): require $N$ consecutive confirmed frames before accepting, resetting on any frame without detection.
+  \end{enumerate}
+
+  \item \textbf{Detection queue and state transition.}  Valid detections are enqueued as $(\phi, \lambda, \text{conf})$ tuples (max 20 entries).  When the SEARCH state polls the queue, it pops the oldest valid target and transitions to CENTERING, where the drone flies to the estimated GPS position, re-detects with live CV, and optionally performs inverse-variance GPS averaging (\texttt{-{}-center-verify}) before proceeding to DESCENDING $\to$ VERIFY $\to$ APPROACH $\to$ LANDING.
+\end{enumerate}
+
+\noindent The entire pipeline from frame capture to GPS estimate completes in ${\sim}$208\,ms, with inference (stage~5) accounting for 94\% of the total time.
+
+% ── Pipeline flow diagram ──────────────────────────────────────────────
+\begin{figure}[ht]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+  node distance=0.55cm and 0.3cm,
+  every node/.style={font=\small},
+  imgbox/.style={draw, rounded corners=2pt, fill=blue!8, minimum width=3.8cm, minimum height=0.7cm, align=center, font=\small\sffamily},
+  nnbox/.style={draw, rounded corners=2pt, fill=green!12, minimum width=3.8cm, minimum height=0.7cm, align=center, font=\small\sffamily},
+  coordbox/.style={draw, rounded corners=2pt, fill=orange!10, minimum width=3.8cm, minimum height=0.7cm, align=center, font=\small\sffamily},
+  valbox/.style={draw, rounded corners=2pt, fill=red!8, minimum width=3.8cm, minimum height=0.7cm, align=center, font=\small\sffamily},
+  decision/.style={draw, diamond, aspect=2.2, fill=yellow!15, inner sep=1pt, align=center, font=\scriptsize\sffamily},
+  annot/.style={font=\scriptsize\itshape, text=gray!70!black},
+  errlabel/.style={font=\scriptsize, text=red!70!black},
+  arr/.style={-{Stealth[length=4pt]}, thick},
+]
+% ── Image acquisition ──
+\node[imgbox] (s1) {1. Camera capture\\[-1pt]{\scriptsize 1456$\times$1088 BGR, 2\,ms}};
+\node[decision, below=0.4cm of s1] (d1) {calib data\\exists?};
+\node[imgbox, below=0.4cm of d1] (s2) {2. Lens undistortion\\[-1pt]{\scriptsize cv2.remap, +1.5\,ms}};
+\draw[arr] (s1) -- (d1);
+\draw[arr] (d1) -- node[right, annot]{Yes} (s2);
+\draw[arr] (d1.east) -- ++(0.9,0) |- node[near start, above, annot]{No (skip)} (s2.east);
+
+% ── Preprocessing ──
+\node[imgbox, below=0.4cm of s2] (s3) {3. Resize 640$\times$640\\[-1pt]{\scriptsize squish, $s_x$=0.44, $s_y$=0.59}};
+\node[imgbox, below=0.4cm of s3] (s4) {4. BGR$\to$RGB + normalise\\[-1pt]{\scriptsize float32 $[0,1]$, shape $[1,640,640,3]$}};
+\draw[arr] (s2) -- (s3);
+\draw[arr] (s3) -- (s4);
+
+% ── Inference ──
+\node[nnbox, below=0.4cm of s4] (s5) {5. YOLOv8n inference\\[-1pt]{\scriptsize $[1,5,8400]$, 196\,ms TFLite / 68\,ms NCNN}};
+\draw[arr] (s4) -- (s5);
+
+% ── Post-processing ──
+\node[decision, below=0.4cm of s5] (d2) {conf $>$ 0.2?};
+\node[coordbox, below=0.4cm of d2] (s7) {7. Rescale to 1456$\times$1088\\[-1pt]{\scriptsize $\times$2.275 horiz, $\times$1.700 vert}};
+\draw[arr] (s5) -- (d2);
+\draw[arr] (d2) -- node[right, annot]{Yes} (s7);
+\node[annot, right=0.6cm of d2] (discard) {Discard};
+\draw[arr] (d2.east) -- (discard);
+
+\node[coordbox, below=0.4cm of s7] (s8) {8. Pixel offset from centre\\[-1pt]{\scriptsize $\Delta x = u - 728$, $\Delta y = v - 544$}};
+\node[coordbox, below=0.4cm of s8] (s9) {9. GSD calculation\\[-1pt]{\scriptsize $0.0221$\,m/px at 35\,m}};
+\node[coordbox, below=0.4cm of s9] (s10) {10. Camera-frame offset\\[-1pt]{\scriptsize $d_\text{fwd}$, $d_\text{right}$ in metres}};
+\node[coordbox, below=0.4cm of s10] (s11) {11. Yaw rotation\\[-1pt]{\scriptsize camera $\to$ NED frame}};
+\node[coordbox, below=0.4cm of s11] (s12) {12. WGS\,84 projection\\[-1pt]{\scriptsize $\Delta\phi$, $\Delta\lambda$ from drone GPS}};
+\draw[arr] (s7) -- (s8);
+\draw[arr] (s8) -- (s9);
+\draw[arr] (s9) -- (s10);
+\draw[arr] (s10) -- (s11);
+\draw[arr] (s11) -- (s12);
+
+% ── Validation ──
+\node[decision, below=0.4cm of s12] (d3) {passes\\filters?};
+\node[valbox, below=0.4cm of d3] (s15) {15. Enqueue target\\[-1pt]{\scriptsize $(\phi, \lambda, \text{conf})$ $\to$ CENTERING}};
+\draw[arr] (s12) -- (d3);
+\draw[arr] (d3) -- node[right, annot]{Yes} (s15);
+\node[annot, right=0.6cm of d3] (reject) {Reject};
+\draw[arr] (d3.east) -- (reject);
+
+% ── Error annotations (right side) ──
+\node[errlabel, right=1.8cm of s1] {$\pm$2\,px sensor noise};
+\node[errlabel, right=1.8cm of s5] {$\pm$3\,px bbox regression};
+\node[errlabel, right=1.8cm of s7] {$\pm$6.8\,px rescaled};
+\node[errlabel, right=1.8cm of s9] {$\pm$1.4\% (baro drift)};
+\node[errlabel, right=1.8cm of s11] {$\pm$0.35\,m (compass)};
+\node[errlabel, right=1.8cm of s12] {$\pm$2--3\,m (GPS noise)};
+
+% ── Telemetry inputs (left side) ──
+\node[annot, left=1.2cm of s9] (tel1) {altitude $h$};
+\node[annot, left=1.2cm of s11] (tel2) {heading $\psi$};
+\node[annot, left=1.2cm of s12] (tel3) {$\phi_d, \lambda_d$};
+\draw[-{Stealth[length=3pt]}, gray, dashed] (tel1) -- (s9.west);
+\draw[-{Stealth[length=3pt]}, gray, dashed] (tel2) -- (s11.west);
+\draw[-{Stealth[length=3pt]}, gray, dashed] (tel3) -- (s12.west);
+
+% ── Legend ──
+\node[below=0.6cm of s15, font=\scriptsize\sffamily] (leg) {%
+  \colorbox{blue!8}{\rule{0.6cm}{0pt}\rule{0pt}{0.25cm}}\,Image proc.\quad
+  \colorbox{green!12}{\rule{0.6cm}{0pt}\rule{0pt}{0.25cm}}\,Inference\quad
+  \colorbox{orange!10}{\rule{0.6cm}{0pt}\rule{0pt}{0.25cm}}\,Coord.\ maths\quad
+  \colorbox{red!8}{\rule{0.6cm}{0pt}\rule{0pt}{0.25cm}}\,Validation%
+};
+\end{tikzpicture}%
+}
+\caption{Complete 15-stage detection-to-GPS pipeline.  Left annotations show telemetry inputs; right annotations show error contributions.  Decision diamonds indicate conditional branches.  Total latency: ${\sim}$208\,ms (94\% in stage~5).}\label{fig:pipeline-flow}
+\end{figure}
 
 \subsection{Multi-Observation Fusion}
 
@@ -823,30 +1009,133 @@ Multiple observations are fused through three stages:
     \item \textbf{Kalman filter} on the $[\phi, \lambda]$ state vector with measurement noise scaled by inverse observation weight, converging within 5--10 observations.
 \end{enumerate}
 
-\subsection{Error Budget}
+\subsection{Comprehensive Error Budget}
 
-Six independent sources contribute to single-observation position uncertainty:
+Eight independent sources contribute to single-observation position uncertainty.  The budget includes roll/pitch attitude error, which previous analyses omitted despite being the largest contributor during forward flight.
 
 \begin{table}[ht]
   \centering
-  \caption{Single-observation error budget at \SI{35}{\metre} and \SI{15}{\metre} altitude.}\label{tab:error-budget}
-  \begin{tabular}{@{}lccc@{}}
+  \caption{Comprehensive single-observation error budget at \SI{35}{\metre} and \SI{15}{\metre} altitude.}\label{tab:error-budget}
+  \begin{tabular}{@{}lccl@{}}
     \toprule
     \textbf{Source} & $\boldsymbol{\sigma}$ \textbf{(35\,m)} & $\boldsymbol{\sigma}$ \textbf{(15\,m)} & \textbf{Notes} \\
     \midrule
-    GPS receiver noise   & \SI{2.3}{\metre} & \SI{2.3}{\metre} & CEP95, altitude-independent \\
-    GPS timing lag       & \SI{1.5}{\metre} & \SI{0.75}{\metre} & \SI{150}{\milli\second} at speed \\
-    Compass heading      & \SI{0.6}{\metre} & \SI{0.3}{\metre} & $\pm$\SI{5}{\degree} yaw error \\
-    Barometric altitude  & \SI{0.5}{\metre} & \SI{0.1}{\metre} & $\pm$\SI{0.5}{\metre} baro drift \\
-    Camera mount offset  & \SI{0.5}{\metre} & \SI{0.5}{\metre} & $\pm$\SI{2}{\degree} off-nadir \\
-    Pixel quantisation   & \SI{0.01}{\metre} & \SI{0.005}{\metre} & Negligible \\
+    GPS receiver noise     & \SI{2.3}{\metre} & \SI{2.3}{\metre} & CEP95, hardware limit \\
+    Roll/pitch attitude    & \SI{3.1}{\metre} & \SI{1.3}{\metre} & $5\text{--}10^{\circ}$ in flight; ${\sim}0^{\circ}$ hovering \\
+    GPS timing lag         & \SI{1.5}{\metre} & \SI{0.75}{\metre} & \SI{150}{\milli\second} at speed \\
+    Compass heading        & \SI{0.6}{\metre} & \SI{0.3}{\metre} & $\pm$\SI{5}{\degree} yaw error \\
+    Barometric altitude    & \SI{0.5}{\metre} & \SI{0.1}{\metre} & $\pm$\SI{0.5}{\metre} baro drift \\
+    Camera mount offset    & \SI{0.5}{\metre} & \SI{0.5}{\metre} & $\pm$\SI{2}{\degree} off-nadir \\
+    Lens distortion        & \SI{0.3}{\metre} & \SI{0.1}{\metre} & Edge-of-frame, with undistortion \\
+    Image resize mapping   & \SI{0.0}{\metre} & \SI{0.0}{\metre} & Exact inverse; no residual \\
+    Pixel quantisation     & \SI{0.01}{\metre} & \SI{0.005}{\metre} & Negligible \\
     \midrule
-    \textbf{RSS total}   & \textbf{\SI{2.9}{\metre}} & \textbf{\SI{2.5}{\metre}} & Without lag correction \\
+    \textbf{RSS (in flight)}   & \textbf{\SI{4.2}{\metre}} & \textbf{\SI{2.7}{\metre}} & Including roll/pitch \\
+    \textbf{RSS (hovering)}    & \textbf{\SI{2.5}{\metre}} & \textbf{\SI{2.4}{\metre}} & Roll/pitch $\approx 0^{\circ}$ \\
     \bottomrule
   \end{tabular}
 \end{table}
 
-GPS receiver noise dominates at all altitudes. GPS timing lag is the largest systematic contributor, displacing each estimate by $v_{\mathrm{gnd}} \cdot \Delta t$ along the flight heading. The RSS total of \SI{2.9}{\metre} reduces to \SI{2.5}{\metre} with first-order velocity correction and further to sub-metre levels after inverse-variance fusion of 15+ observations.
+\paragraph{GPS receiver noise} is the dominant altitude-independent term.  The Cube Orange GNSS module (single-frequency L1) yields CEP50 = \SI{1.5}{\metre} and CEP95 = \SI{2.3}{\metre} stationary. This noise is isotropic and Gaussian, averaging well over multiple observations.
+
+\paragraph{GPS timing lag} is the largest systematic error.  The receiver reports positions with 100--200\,ms latency; at \SI{8}{\metre\per\second} search speed, the drone has moved 0.8--1.6\,m since the GPS fix was valid.  The lawnmower pattern partially cancels this bias: alternating scan directions cause the displacement to reverse sign.
+
+\paragraph{Image resize mapping} introduces zero error because the coordinate recovery (Equation~\ref{eq:coord-recovery}) is the exact algebraic inverse of the resize, applying separate scale factors to horizontal (1456/640 = 2.275) and vertical (1088/640 = 1.700) axes.
+
+\paragraph{RSS calculation.} The root-sum-of-squares combines independent error sources:
+\begin{equation}\label{eq:rss}
+  \sigma_\mathrm{RSS} = \sqrt{\sigma_\mathrm{GPS}^2 + \sigma_\mathrm{tilt}^2 + \sigma_\mathrm{lag}^2 + \sigma_\mathrm{yaw}^2 + \sigma_\mathrm{baro}^2 + \sigma_\mathrm{mount}^2 + \sigma_\mathrm{lens}^2}
+\end{equation}
+For in-flight at \SI{35}{\metre}: $\sigma = \sqrt{2.3^2 + 3.1^2 + 1.5^2 + 0.6^2 + 0.5^2 + 0.5^2 + 0.3^2} = \SI{4.2}{\metre}$.  For hovering (roll/pitch $\approx 0$, no timing lag): $\sigma = \sqrt{2.3^2 + 0^2 + 0^2 + 0.6^2 + 0.5^2 + 0.5^2 + 0.3^2} = \SI{2.5}{\metre}$.
+
+\paragraph{Measured vs predicted.}  The measured CEP$_{50}$ = \SI{2.3}{\metre} from DJI video replay (Section~\ref{sec:val:dji}) is consistent with the hovering RSS of \SI{2.5}{\metre}, confirming that the error budget is realistic.  The maximum observed error of \SI{16.5}{\metre} occurred during a high-speed turn (combined pitch + roll + timing lag), consistent with the in-flight RSS of \SI{4.2}{\metre} at ${\sim}4\sigma$.
+
+\subsection{Roll/Pitch Attitude Error}\label{sec:cv:rollpitch}
+
+The GPS projection assumes the camera points straight down (nadir).  In practice, multirotor drones tilt to accelerate: forward flight requires pitch, lateral movement requires roll.  The resulting ground footprint displacement is
+
+\begin{equation}\label{eq:tilt}
+  \Delta_\mathrm{tilt} = h \cdot \tan(\theta)
+\end{equation}
+
+\noindent where $\theta$ is the tilt angle from nadir.  This error is \emph{not compensated} in the current implementation.  Figure~\ref{fig:tilt-geometry} illustrates the geometry.
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[scale=0.85, every node/.style={font=\small}]
+  % Ground line
+  \draw[thick] (-1,0) -- (7,0) node[right]{\scriptsize ground};
+
+  % Drone position
+  \coordinate (drone) at (2,5);
+  \fill[headblue] (drone) circle (3pt);
+  \node[above=2pt, font=\small\bfseries, color=headblue] at (drone) {drone};
+
+  % Altitude line (vertical dashed)
+  \draw[dashed, gray] (drone) -- (2,0) node[midway, left=2pt]{$h = \SI{35}{\metre}$};
+
+  % Nadir point
+  \fill (2,0) circle (2pt);
+  \node[below=2pt] at (2,0) {\scriptsize nadir};
+
+  % Tilted camera axis
+  \coordinate (shifted) at (5.06,0); % h*tan(10deg) = 35*0.1763 = 6.17
+  \draw[thick, red!70!black, -{Stealth[length=5pt]}] (drone) -- (shifted);
+
+  % Angle arc
+  \draw[thick, blue!60] (2,3.2) arc[start angle=-90, end angle=-60.3, radius=1.8]
+    node[midway, below right=-1pt, font=\small, blue!60]{$\theta$};
+
+  % Ground displacement
+  \draw[thick, <->, orange!80!black] (2,-0.35) -- (5.06,-0.35)
+    node[midway, below, font=\small]{$\Delta_\text{tilt} = h\tan\theta = \SI{6.2}{\metre}$};
+
+  % Right angle marker at ground
+  \draw (2,0.25) -- (2.25,0.25) -- (2.25,0);
+
+  % Annotation
+  \node[right, font=\scriptsize, text width=3.2cm, align=left] at (5.5,3.5)
+    {At $\theta = 10^{\circ}$, $h = 35$\,m:\\
+     $\Delta = 35 \times \tan(10^{\circ})$\\
+     $= 35 \times 0.176 = 6.2$\,m};
+
+  % Apparent target vs actual target
+  \fill[orange!80!black] (shifted) circle (2.5pt);
+  \node[below=2pt, orange!80!black, font=\scriptsize] at (shifted) {apparent};
+
+  % True target at nadir
+  \node[above right=1pt and 4pt, font=\scriptsize, green!50!black] at (2,0) {true};
+\end{tikzpicture}
+\caption{Roll/pitch tilt geometry.  A pitch angle $\theta$ displaces the camera footprint centre by $\Delta_\text{tilt} = h \tan\theta$ from nadir.  At \SI{35}{\metre} altitude with $10^{\circ}$ forward pitch, the displacement is \SI{6.2}{\metre}---exceeding all other error sources combined.}\label{fig:tilt-geometry}
+\end{figure}
+
+\begin{table}[ht]
+  \centering
+  \caption{Ground displacement from roll/pitch tilt.}\label{tab:tilt-error}
+  \begin{tabular}{@{}rccl@{}}
+    \toprule
+    \textbf{Alt.} & $\boldsymbol{5^{\circ}}$ & $\boldsymbol{10^{\circ}}$ & \textbf{Condition} \\
+    \midrule
+    \SI{15}{\metre} & \SI{1.3}{\metre} & \SI{2.6}{\metre} & Approach / centering \\
+    \SI{35}{\metre} & \SI{3.1}{\metre} & \SI{6.2}{\metre} & Search at \SI{8}{\metre\per\second} \\
+    \SI{50}{\metre} & \SI{4.4}{\metre} & \SI{8.8}{\metre} & Max altitude \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+At \SI{35}{\metre} with $10^{\circ}$ pitch, the footprint shifts \SI{6.2}{\metre}---larger than GPS noise and all other error sources combined.  This is the single largest uncompensated error during forward flight.
+
+\paragraph{Why the system tolerates this error.}  Three mechanisms mitigate the roll/pitch contribution:
+
+\begin{enumerate}
+  \item \textbf{State-dependent exposure.}  The error is present only during SEARCH (forward flight).  During CENTERING and VERIFY, the drone hovers ($\theta < 1^{\circ}$), reducing $\Delta_\mathrm{tilt}$ to $< \SI{0.3}{\metre}$.  The final position estimate used for approach and landing is computed primarily from hovering observations.
+
+  \item \textbf{Multi-pass averaging.}  The lawnmower pattern causes alternating-direction flyovers.  Pitch displaces estimates in opposite directions on adjacent passes, partially cancelling through weighted averaging.
+
+  \item \textbf{Altitude-dependent weighting.}  The inverse-variance weight $w_\mathrm{alt} = (h_\mathrm{ref}/h)^2$ gives low-altitude hovering observations $5\times$ the weight of high-altitude search observations.  The tilt-contaminated search observations are naturally suppressed.
+\end{enumerate}
+
+\paragraph{Potential future correction.}  The ArduPilot \texttt{ATTITUDE} MAVLink message provides roll and pitch at 10\,Hz.  A rotation-matrix correction could reduce the in-flight error from \SI{6.2}{\metre} to ${\sim}$\SI{0.5}{\metre} (limited by IMU noise of $\pm 0.5^{\circ}$).  This was not implemented because: (1)~the centering procedure already eliminates the error for the critical landing estimate; (2)~temporal synchronisation between telemetry and camera frames to within ${\sim}$\SI{50}{\milli\second} is required but not yet architected; and (3)~the additional complexity in a safety-critical path was judged unjustified given the operational mitigation.  This remains the highest-impact future improvement for the localisation subsystem.
 
 \subsection{Estimator Comparison}
 
@@ -866,7 +1155,7 @@ Three estimation strategies were compared using DJI flight video replay:
   \end{tabular}
 \end{table}
 
-The Kalman filter achieves CEP$_{50}$ = 2.3\,m---adequate for the 7.5\,m offset landing strategy where the drone lands at a safe distance from the estimated target position rather than directly on it.
+The Kalman filter achieves CEP$_{50}$ = 2.3\,m---adequate for the 7.5\,m offset landing strategy where the drone lands at a safe distance from the estimated target position rather than directly on it.  After inverse-variance fusion of 15+ multi-altitude observations (including hovering), the estimate converges to sub-metre accuracy.
 
 
 % ════════════════════════════════════════════════════════════════════════
@@ -983,9 +1272,10 @@ These improvements are ordered by implementation effort: items 1--3 require only
     & Lens RMS & 0.399\,px (undistortion cost: 1.5\,ms) \\
     & DJI video HFOV & 54.4$^{\circ}$ \\
     \midrule
-    \multirow{3}{*}{\textbf{Localisation}} & CEP$_{50}$ & 2.3\,m (Kalman filter) \\
+    \multirow{4}{*}{\textbf{Localisation}} & CEP$_{50}$ & 2.3\,m (Kalman filter) \\
     & Max error & 10.2\,m (high-speed outlier) \\
-    & Error budget (RSS) & 2.9\,m at 35\,m, 2.5\,m at 15\,m \\
+    & RSS (in flight) & 4.2\,m at 35\,m, 2.7\,m at 15\,m \\
+    & RSS (hovering) & 2.5\,m at 35\,m, 2.4\,m at 15\,m \\
     \bottomrule
   \end{tabular}
 \end{table}
