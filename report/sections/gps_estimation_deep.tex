@@ -1302,3 +1302,93 @@ Despite the theoretical effectiveness of multi-pass averaging, the mission pipel
 \end{enumerate}
 
 \noindent Multi-pass averaging therefore serves as a \emph{theoretical safety net}: if the centering procedure were to fail (e.g.\ due to loss of visual lock during the approach), the system could fall back to the accumulated flyover estimates.  In the passive observation tools (\texttt{passive\_watch.py}, \texttt{simple\_simulator.py}), where no centering manoeuvre occurs, multi-pass averaging with heading diversity is the \emph{primary} estimation strategy and achieves the accuracies shown in Table~\ref{tab:pass-accuracy}.  The lawnmower pattern thus serves a dual purpose: maximising spatial coverage for detection probability, and providing heading diversity that improves estimation accuracy through systematic bias cancellation.
+
+% =====================================================================
+\subsection{Passive Estimation: Level~1 GPS Without Drone Response}\label{sec:passive-estimation}
+
+The preceding sections analysed estimation strategies in the context of the autonomous mission, where the drone actively centres on the target and hovers.  However, the estimation toolkit implemented in \texttt{passive\_watch.py} represents a fundamentally different operational mode: \emph{passive estimation}, in which the drone continues its pre-planned flight path and sends zero control commands, yet still produces a usable target GPS estimate purely from accumulated flyover observations.  This ``Level~1'' capability---estimation without response---is valuable both as an independent operational mode and as a fallback when active centering is unavailable.
+
+\subsubsection{Passive Estimation Toolkit}\label{sec:passive-toolkit}
+
+The \texttt{DummyEstimator} class in \texttt{passive\_watch.py} implements the inverse-variance weighting scheme described in Section~\ref{sec:ivw}, operating as a cumulative weighted average over all detections.  Each detection frame triggers the following pipeline:
+
+\begin{enumerate}
+  \item \textbf{Pixel-to-GPS projection}: the detection bounding-box centre $(u, v)$ is projected to a ground-plane GPS estimate using the same GSD-based projection described in Section~\ref{sec:gps-math}, with the drone's current GPS position, altitude, and heading as inputs.
+  \item \textbf{Composite weight calculation}: each observation receives a weight $w_i = w_\mathrm{cen} \cdot w_\mathrm{alt}$, combining a centrality factor (Equation~\ref{eq:weight-deep}, with a tighter $0.3 \cdot d_\mathrm{max}$ radius for the bonus zone) and an altitude factor $w_\mathrm{alt} = 1/h_i^2$ (equivalent to Equation~\ref{eq:alt-weight} with $h_\mathrm{ref} = 1$\,m).  At \SI{10}{\metre} altitude with a centred detection, the weight is $\sim$45$\times$ that of a \SI{35}{\metre} edge detection.
+  \item \textbf{Running weighted accumulation}: the weighted latitude and longitude sums are updated incrementally (no observation history stored), making the memory footprint $O(1)$ regardless of mission duration.
+  \item \textbf{Spatial clustering}: new estimates are compared against existing clusters using the Haversine distance (Section~\ref{sec:clustering}).  If the nearest cluster centroid is within \SI{30}{\metre}, the observation joins that cluster; otherwise a new cluster is spawned.  Each cluster maintains its own \texttt{DummyEstimator} instance, enabling simultaneous tracking of multiple targets.
+\end{enumerate}
+
+\noindent In addition to the IVW accumulator, the \texttt{SmartEstimator} class implements a consensus-based lock mechanism: once a configurable number of estimates (default 5) cluster within a maximum spread threshold (default \SI{1}{\metre}), the estimator declares a ``lock'' and reports the median latitude and longitude of the tightest cluster as the final target position.  This greedy tightest-cluster algorithm is robust to outliers because it selects the densest subset of observations rather than averaging all of them.
+
+\subsubsection{Why IVW Suits Passive Mode}\label{sec:ivw-passive}
+
+The four fusion algorithms described in Section~\ref{sec:fusion-strategies} were all evaluated in the passive context.  IVW emerged as the preferred method for passive estimation for reasons that are distinct from---and complementary to---the reasons it was preferred in the active mission (Section~\ref{sec:why-ivw}):
+
+\begin{enumerate}
+  \item \textbf{Natural downweighting of edge detections.}  In passive mode the drone does not manoeuvre to centre the target, so most detections occur at the frame periphery as the target drifts through the field of view.  Edge detections carry larger projection errors (GSD$\times$pixel offset is maximised), and the centrality weight $w_\mathrm{cen}$ correctly assigns them lower influence.  The rolling and cumulative averages treat all pixel positions equally, allowing peripheral noise to contaminate the estimate.
+
+  \item \textbf{Altitude weighting without tuning.}  The $1/h^2$ weight is derived directly from the GSD error model---it is not a tuned hyperparameter.  The Kalman filter achieves a similar effect through its measurement noise covariance $\mathbf{R}_k \propto 1/w_i$, but requires selection of the process noise $\mathbf{Q}$ and initialisation covariance $\mathbf{P}_0$, both of which affect convergence behaviour and must be tuned empirically.
+
+  \item \textbf{No convergence saturation.}  During a multi-pass search, the drone may descend for a closer look at an unrelated area before returning to search altitude.  If it passes over the target during a low-altitude transit, the Kalman filter's already-contracted covariance $\mathbf{P}$ limits the Kalman gain, preventing the high-quality low-altitude observation from having its full impact.  The IVW average gives full credit to the low-altitude observation regardless of prior history.
+\end{enumerate}
+
+\subsubsection{Convergence Behaviour in Passive Mode}
+
+In simulation with realistic noise (\SI{3}{\metre} GPS drift, \SI{1}{\metre} altitude noise, \SI{2}{\degree} yaw noise), the IVW passive estimate converges as follows:
+
+\begin{itemize}
+  \item \textbf{5 observations} ($\sim$1 pass): CEP$_{50} \approx \SI{4.5}{\metre}$.  Systematic bias from a single heading dominates.
+  \item \textbf{15--20 observations} ($\sim$2 passes with opposing headings): CEP$_{50} \approx \SI{2.0}{\metre}$.  Heading bias cancellation (Section~\ref{sec:multi-pass}) removes the dominant systematic error; IVW downweighting of edge detections reduces the random component.
+  \item \textbf{30+ observations} ($\sim$3--5 passes): CEP$_{50} \approx \SI{1.8}{\metre}$.  Diminishing returns as the estimate approaches the GPS receiver noise floor.
+\end{itemize}
+
+\noindent The convergence is slower than the active centering strategy (which reaches CEP$_{50} = \SI{1.5}{\metre}$ in $\sim$\SI{25}{\second}) because the passive mode lacks the geometric error elimination that centering provides (Section~\ref{sec:two-approaches}).  However, the passive estimate requires no interruption of the search pattern and no state machine transitions.
+
+\subsubsection{Passive vs.\ Active Estimation: When Each Mode Excels}\label{sec:passive-vs-active}
+
+Table~\ref{tab:passive-vs-active} compares the two estimation modes across operational metrics.  The comparison reveals that passive and active estimation are not competing alternatives but complementary capabilities suited to different mission phases and failure modes.
+
+\begin{table}[H]
+  \centering
+  \caption{Comparison of passive (flyover-only) and active (centering + hover) estimation modes.  Passive mode uses IVW fusion over accumulated flyover detections; active mode uses visual centering followed by drone GPS averaging.}
+  \label{tab:passive-vs-active}
+  \small
+  \begin{tabular}{@{}lcc@{}}
+    \toprule
+    \textbf{Metric} & \textbf{Passive IVW} & \textbf{Active Centering} \\
+    \midrule
+    CEP$_{50}$ (converged)             & $\sim$\SI{1.8}{\metre} & $\sim$\SI{1.5}{\metre} \\
+    Time to convergence                 & $\sim$\SI{60}{\second} (3--5 passes) & $\sim$\SI{25}{\second} \\
+    Calibration dependency              & Yes (focal length, compass) & No (zero-offset projection) \\
+    Interrupts search pattern           & No & Yes (15\,s manoeuvre) \\
+    Works without drone response        & Yes & No \\
+    Handles multiple targets            & Yes (spatial clustering) & One at a time \\
+    Fallback if centering fails         & Yes (accumulated estimate) & N/A \\
+    Memory footprint                    & $O(1)$ per cluster & $O(N)$ GPS samples \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\noindent Three operational scenarios favour passive estimation over active centering:
+
+\begin{enumerate}
+  \item \textbf{Multi-target reconnaissance.}  In a multi-casualty scenario, the drone may detect several targets during the search phase.  Active centering investigates one target at a time, each consuming $\sim$\SI{25}{\second} of mission time.  Passive estimation tracks all detected clusters simultaneously, providing GPS estimates for every target by the end of the search---even targets the drone never actively investigated.  The spatial clustering algorithm (Section~\ref{sec:clustering}) maintains independent \texttt{DummyEstimator} instances per cluster, so estimates for different targets do not interfere.
+
+  \item \textbf{Equipment degradation.}  If the centering algorithm loses visual lock during approach (e.g.\ due to sun glare, motion blur, or a false negative streak), the passive estimate accumulated during the search phase provides an immediate fallback position.  The mission state machine can use this estimate for an offset landing without repeating the search.  In the current implementation, this fallback is not yet automated---the operator would need to command a manual landing---but the passive estimate is always available through the web dashboard.
+
+  \item \textbf{Covert observation.}  In scenarios where the drone should not reveal interest in a specific target (e.g.\ security applications, wildlife monitoring), passive estimation allows the drone to maintain its pre-planned flight path while accumulating a target position estimate.  The target sees a drone flying a routine pattern; the operator sees the GPS estimate converging on their dashboard.
+\end{enumerate}
+
+\subsubsection{Implementation in \texttt{passive\_watch.py}}
+
+The passive estimation mode is implemented as a standalone tool that sends zero commands to the flight controller.  It reads GPS telemetry from mavproxy (read-only), runs the camera and AI detection pipeline, and streams results to a web dashboard at \texttt{http://PI\_IP:8090/}.  The operator sees:
+
+\begin{itemize}
+  \item A live MJPEG video stream with detection bounding boxes overlaid.
+  \item A bullseye scatter plot showing all GPS estimates colour-coded by weight, with the IVW fused estimate marked as a crosshair.
+  \item A satellite map panel showing the SSSI no-fly zone (red polygon), the search area (yellow polygon), and the estimated target position (magenta star).
+  \item Detection count, saved snapshot count, and cluster statistics.
+\end{itemize}
+
+\noindent The tool can be run during manual RC flight (pilot flies, Pi watches) or during an autonomous mission (as a parallel observer).  Because it sends zero commands, it is safe to run at any time without risk of interfering with the flight controller.  This makes it the recommended first step in the progressive flight testing sequence (Step~3 in Section~\ref{sec:flight-testing}): manual flight with passive detection establishes that the CV pipeline works in real outdoor conditions before any autonomous commands are attempted.
