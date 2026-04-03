@@ -47,6 +47,7 @@ CLEAN_DETECTIONS = "--clean" in sys.argv  # Wipe mission_detections/ at start
 SHAKE_PX = 0  # --shake <pixels>: random pixel offset per frame (simulates vibration)
 SIM_PITCH = "--sim-pitch" in sys.argv  # simulate camera pitch offset during forward flight
 SIM_ROLL_DEG = 0.0  # --sim-roll <deg>: random roll oscillation (±degrees)
+SIM_TILT = "--sim-tilt" in sys.argv  # combined: camera tilts in flight direction (replaces separate pitch/roll)
 BLUR_FACTOR = 0.0  # --blur <factor>: motion blur proportional to speed (1.0=realistic, 2.0=stress)
 
 for _i, _arg in enumerate(sys.argv):
@@ -570,21 +571,32 @@ class VisualFlightMission(StateHandlersMixin):
         # Get frame
         if config.MODE == "SIMULATION":
             px, py = self.geo.gps_to_pixels(self.lat, self.lon)
-            # Simulate pitch: forward flight shifts camera view ahead of drone
-            if SIM_PITCH and self.alt > 1.0:
+            # --sim-tilt: combined camera tilt in VELOCITY direction (not just yaw)
+            # Camera shifts in whatever direction drone is actually moving
+            # Plus slight random oscillation for turbulence
+            if (SIM_TILT or SIM_PITCH) and self.alt > 1.0:
                 spd = math.sqrt(self.vx**2 + self.vy**2)
-                pitch_deg = spd * 2.0  # ~2 degrees per m/s
-                pitch_rad = math.radians(pitch_deg)
-                offset_m = self.alt * math.tan(pitch_rad)
-                offset_px = offset_m * self.geo.pix_per_m
-                # Offset in heading direction (yaw is in radians)
-                px += offset_px * math.sin(self.yaw)
-                py += -offset_px * math.cos(self.yaw)  # pixel y is inverted
+                if spd > 0.3:  # only when actually moving
+                    tilt_deg = spd * 2.0  # ~2 degrees per m/s
+                    tilt_rad = math.radians(tilt_deg)
+                    offset_m = self.alt * math.tan(tilt_rad)
+                    offset_px = offset_m * self.geo.pix_per_m
+                    # Offset in VELOCITY direction (not yaw -- drone can fly sideways)
+                    vel_angle = math.atan2(self.vx, self.vy)  # velocity heading
+                    px += offset_px * math.sin(vel_angle)
+                    py += -offset_px * math.cos(vel_angle)
+                    # Small random turbulence (±1° oscillation)
+                    import random
+                    turb_px = random.uniform(-2, 2) * self.geo.pix_per_m
+                    turb_py = random.uniform(-2, 2) * self.geo.pix_per_m
+                    px += turb_px
+                    py += turb_py
             frame, self.view_w_px, self.view_h_px = self.sim.get_drone_view(px, py, self.alt, self.yaw)
-            # Simulate roll: tilt the camera frame sideways
-            if SIM_ROLL_DEG > 0:
+            # --sim-roll OR --sim-tilt: camera frame rotation from roll
+            if (SIM_ROLL_DEG > 0 or SIM_TILT) and spd > 0.3 if 'spd' in dir() else SIM_ROLL_DEG > 0:
                 import random
-                roll_angle = random.uniform(-SIM_ROLL_DEG, SIM_ROLL_DEG)
+                roll_max = SIM_ROLL_DEG if SIM_ROLL_DEG > 0 else min(spd * 0.5, 5.0)  # auto: 0.5 deg per m/s, max 5
+                roll_angle = random.uniform(-roll_max, roll_max)
                 h, w = frame.shape[:2]
                 M_roll = cv2.getRotationMatrix2D((w // 2, h // 2), roll_angle, 1.0)
                 frame = cv2.warpAffine(frame, M_roll, (w, h))
