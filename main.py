@@ -677,10 +677,13 @@ class VisualFlightMission(StateHandlersMixin):
             )
             # Take-Off/Landing marker (cyan star) on god view
             if hasattr(config, 'TAKEOFF_GPS') and config.TAKEOFF_GPS[0] != 0:
-                tol_pt = tuple(int(c) for c in self.geo.gps_to_pixels(*config.TAKEOFF_GPS))
-                cv2.drawMarker(god_frame, tol_pt, (255, 255, 0), cv2.MARKER_STAR, 20, 2)
-                cv2.putText(god_frame, "TOL", (tol_pt[0]+10, tol_pt[1]-10),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
+                _gs = self.sim._god_scale
+                tol_full = self.geo.gps_to_pixels(*config.TAKEOFF_GPS)
+                tol_pt = (int(tol_full[0] * _gs), int(tol_full[1] * _gs))
+                cv2.drawMarker(god_frame, tol_pt, (255, 255, 0), cv2.MARKER_STAR, max(8, int(20*_gs)), 2)
+                cv2.putText(god_frame, "TOL", (tol_pt[0]+8, tol_pt[1]-8),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 0), 1)
+            # god_frame is already at display scale; just match height to camera frame
             h_scale = frame.shape[0] / god_frame.shape[0]
             god_resized = cv2.resize(god_frame, (int(god_frame.shape[1]*h_scale), frame.shape[0]))
             final_display = np.hstack((god_resized, frame))
@@ -705,7 +708,10 @@ class VisualFlightMission(StateHandlersMixin):
                 verify_timeout=getattr(self, '_verify_remaining', None),
             )
         if not HEADLESS:
-            cv2.imshow("Mission Dashboard", final_display)
+            try:
+                cv2.imshow("Mission Dashboard", final_display)
+            except cv2.error as e:
+                print(f"[WARN] cv2.imshow failed: {e}")
         return found, u, v
 
     # ── Main loop ─────────────────────────────────────────────────────

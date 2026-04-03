@@ -22,7 +22,9 @@ class SimulationEnvironment:
             cv2.line(self.full_map, (0,0), (1000,1000), (255,255,255), 2)
         
         self.map_h, self.map_w = self.full_map.shape[:2]
-        self.coverage_overlay = np.zeros_like(self.full_map)
+        # NOTE: coverage_overlay kept for backwards compat but no longer used by get_god_view
+        # (god view uses _god_coverage at reduced resolution for speed)
+        self.coverage_overlay = None  # was np.zeros_like(self.full_map) = 63MB
 
         # Pre-scaled map for god view rendering (avoids 63MB copy every frame)
         # The god view is always resized to IMAGE_H height, so we can work at
@@ -392,8 +394,19 @@ class SimulationEnvironment:
         return final_view, view_w_px, view_h_px
 
     def get_god_view(self, cx, cy, yaw, view_w_px, view_h_px, zoom_level, virtual_poly, search_poly, target_gps, landing_gps, geo_tool, logged_items=None, detection_clusters=None, active_cluster_idx=None, search_wps=None, search_wp_index=0, transit_wps_gps=None, transit_wp_index=0, current_state=None, rescan_pass=0, items_of_interest=None, rejected_targets=None, nfz_buffer_m=0, nfz_repulsion_vec=None, nfz_arrows=False):
-        display_map = self.full_map.copy()
-        
+        # Use pre-scaled map (~4MB) instead of full_map (~63MB) for speed.
+        # All pixel coords must be scaled by _god_scale before drawing.
+        S = self._god_scale
+        display_map = self._god_map.copy()
+
+        # Scale drone position and FOV box
+        cx_s = int(cx * S); cy_s = int(cy * S)
+        vw_s = int(view_w_px * S); vh_s = int(view_h_px * S)
+
+        # Helper: scale full-map pixel coords to god-map coords
+        def _sp(x, y):
+            return (int(x * S), int(y * S))
+
         # Render ALL targets on god view
         god_height_map = {"dummy": config.DUMMY_HEIGHT_M, "cone": config.CONE_HEIGHT_M,
                           "pants": config.PANTS_HEIGHT_M, "tshirt": config.TSHIRT_HEIGHT_M,
@@ -403,89 +416,85 @@ class SimulationEnvironment:
         for ti, tgt in enumerate(self.sim_targets):
             ttype = self.sim_target_types[ti] if ti < len(self.sim_target_types) else "dummy"
             t_img = god_img_map.get(ttype)
+            tx_s, ty_s = _sp(tgt[0], tgt[1])
             if t_img is not None:
-                t_h = max(5, int(god_height_map.get(ttype, 1.0) * self.geo.pix_per_m))
-                overlay_image_alpha(display_map, t_img, tgt[0], tgt[1], 0, t_h)
+                t_h = max(3, int(god_height_map.get(ttype, 1.0) * self.geo.pix_per_m * S))
+                overlay_image_alpha(display_map, t_img, tx_s, ty_s, 0, t_h)
             else:
-                cv2.circle(display_map, tgt, self.target_radius_px, (0, 0, 255), -1)
+                cv2.circle(display_map, (tx_s, ty_s), max(2, int(self.target_radius_px * S)), (0, 0, 255), -1)
 
-        # Draw Polygons
+        # Draw Polygons (scale to god-map coords)
         if len(search_poly) > 1:
-              cv2.polylines(display_map, [np.array(search_poly, np.int32)], True, (0, 255, 0), 2)
+              sp_scaled = (np.array(search_poly, np.float64) * S).astype(np.int32)
+              cv2.polylines(display_map, [sp_scaled], True, (0, 255, 0), 2)
         if len(virtual_poly) > 0:
-              cv2.drawContours(display_map, [virtual_poly], -1, (255, 0, 255), 2)
+              vp_scaled = (virtual_poly.astype(np.float64) * S).astype(np.int32)
+              cv2.drawContours(display_map, [vp_scaled], -1, (255, 0, 255), 2)
         # Draw SSSI no-fly zone (red with faint fill)
         if config.SSSI_GPS:
-            sssi_pts = np.array([geo_tool.gps_to_pixels(lat, lon) for lat, lon in config.SSSI_GPS], np.int32)
+            sssi_pts_full = np.array([geo_tool.gps_to_pixels(lat, lon) for lat, lon in config.SSSI_GPS], np.int32)
+            sssi_pts = (sssi_pts_full.astype(np.float64) * S).astype(np.int32)
             # Faint red fill
             overlay = display_map.copy()
             cv2.fillPoly(overlay, [sssi_pts], (0, 0, 180))
             cv2.addWeighted(overlay, 0.15, display_map, 0.85, 0, display_map)
             # Red border
             cv2.polylines(display_map, [sssi_pts], True, (0, 0, 255), 2)
-            cx_s, cy_s = sssi_pts.mean(axis=0).astype(int)
-            cv2.putText(display_map, "SSSI NFZ", (cx_s - 30, cy_s), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 255), 1)
+            sssi_cx, sssi_cy = sssi_pts.mean(axis=0).astype(int)
+            cv2.putText(display_map, "SSSI NFZ", (sssi_cx - 30, sssi_cy), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 255), 1)
             # Inner NFZ polygon (20m inside boundary) — bright pink, bold
             if nfz_buffer_m > 0:
-                if not hasattr(self, '_nfz_inner_contours'):
-                    inner_px = int(config.NFZ_INNER_OFFSET_M * geo_tool.pix_per_m)
-                    h_map, w_map = self.full_map.shape[:2]
-                    # Work at 1/4 resolution for fast morphological ops
-                    S = 4
-                    sh, sw = h_map // S, w_map // S
-                    small_pts = (sssi_pts // S).astype(np.int32)
-                    mask_s = np.zeros((sh, sw), dtype=np.uint8)
-                    cv2.fillPoly(mask_s, [small_pts], 255)
-                    k = max(3, (inner_px // S) * 2 + 1)
+                if not hasattr(self, '_nfz_inner_contours_god'):
+                    inner_px = int(config.NFZ_INNER_OFFSET_M * geo_tool.pix_per_m * S)
+                    gh, gw = self._god_h, self._god_w
+                    mask_s = np.zeros((gh, gw), dtype=np.uint8)
+                    cv2.fillPoly(mask_s, [sssi_pts], 255)
+                    k = max(3, inner_px * 2 + 1)
                     eroded = cv2.erode(mask_s, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (k, k)))
                     contours_s, _ = cv2.findContours(eroded, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-                    self._nfz_inner_contours = [c * S for c in contours_s]  # scale back up
-                if self._nfz_inner_contours:
-                    cv2.drawContours(display_map, self._nfz_inner_contours, -1, (255, 0, 255), 3)
+                    self._nfz_inner_contours_god = contours_s
+                if self._nfz_inner_contours_god:
+                    cv2.drawContours(display_map, self._nfz_inner_contours_god, -1, (255, 0, 255), 2)
             # Repulsion buffer (orange outline)
             if nfz_buffer_m > 0:
-                if not hasattr(self, '_nfz_buffer_contours'):
-                    buf_px = int(nfz_buffer_m * geo_tool.pix_per_m)
-                    h_map, w_map = self.full_map.shape[:2]
-                    S = 4
-                    sh, sw = h_map // S, w_map // S
-                    small_pts = (sssi_pts // S).astype(np.int32)
-                    mask_s = np.zeros((sh, sw), dtype=np.uint8)
-                    cv2.fillPoly(mask_s, [small_pts], 255)
-                    k = max(3, (buf_px // S) * 2 + 1)
+                if not hasattr(self, '_nfz_buffer_contours_god'):
+                    buf_px = int(nfz_buffer_m * geo_tool.pix_per_m * S)
+                    gh, gw = self._god_h, self._god_w
+                    mask_s = np.zeros((gh, gw), dtype=np.uint8)
+                    cv2.fillPoly(mask_s, [sssi_pts], 255)
+                    k = max(3, buf_px * 2 + 1)
                     dilated = cv2.dilate(mask_s, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (k, k)))
                     contours_s, _ = cv2.findContours(dilated, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-                    self._nfz_buffer_contours = [c * S for c in contours_s]
-                if self._nfz_buffer_contours:
-                    cv2.drawContours(display_map, self._nfz_buffer_contours, -1, (0, 140, 255), 2)
+                    self._nfz_buffer_contours_god = contours_s
+                if self._nfz_buffer_contours_god:
+                    cv2.drawContours(display_map, self._nfz_buffer_contours_god, -1, (0, 140, 255), 2)
             # Vector field around SSSI (only with --arrows flag)
             if nfz_buffer_m > 0 and nfz_arrows:
-                if not hasattr(self, '_nfz_vector_field'):
+                if not hasattr(self, '_nfz_vector_field_god'):
                     from geofence import NFZGeofence
                     _fence = NFZGeofence(geo_tool)
-                    self._nfz_vector_field = []
-                    step = 25
-                    h_map, w_map = self.full_map.shape[:2]
-                    for gy in range(step, h_map, step):
-                        for gx in range(step, w_map, step):
-                            lat, lon = geo_tool.pixels_to_gps(gx, gy)
+                    self._nfz_vector_field_god = []
+                    step = max(6, int(25 * S))
+                    for gy in range(step, self._god_h, step):
+                        for gx in range(step, self._god_w, step):
+                            # Convert god-map pixel back to full-map pixel, then to GPS
+                            lat, lon = geo_tool.pixels_to_gps(gx / S, gy / S)
                             dist, inside = _fence.distance_to_boundary(lat, lon)
                             if dist > nfz_buffer_m or inside:
                                 continue
                             off_lat, off_lon = _fence.repulsive_offset(lat, lon)
                             if abs(off_lat) < 1e-9 and abs(off_lon) < 1e-9:
                                 continue
-                            # Negate for display (repulsive_offset returns inverted signs)
                             dy_m = -off_lat * 111320
                             dx_m = -off_lon * 111320 * math.cos(math.radians(lat))
                             mag = math.sqrt(dx_m**2 + dy_m**2)
                             if mag < 0.01:
                                 continue
-                            adx = int(dx_m / mag * 18)
-                            ady = int(-dy_m / mag * 18)  # pixel y inverted
+                            adx = int(dx_m / mag * 12)
+                            ady = int(-dy_m / mag * 12)  # pixel y inverted
                             col = (0, 0, 200) if dist < 4 else (0, 100, 200) if dist < 7 else (0, 180, 180)
-                            self._nfz_vector_field.append((gx, gy, gx+adx, gy+ady, col))
-                for vf in self._nfz_vector_field:
+                            self._nfz_vector_field_god.append((gx, gy, gx+adx, gy+ady, col))
+                for vf in self._nfz_vector_field_god:
                     cv2.arrowedLine(display_map, (vf[0], vf[1]), (vf[2], vf[3]), vf[4], 1, tipLength=0.4)
 
         # Drone repulsion arrow (bold, on drone position)
@@ -496,39 +505,39 @@ class SimulationEnvironment:
             dx_m = -off_lon * 111320 * math.cos(math.radians(51.42))
             arrow_len = math.sqrt(dx_m**2 + dy_m**2)
             if arrow_len > 0.01:
-                vis_len = 80
+                vis_len = int(80 * S)
                 dx_px = int(dx_m / arrow_len * vis_len)
                 dy_px = int(-dy_m / arrow_len * vis_len)
-                end_x, end_y = cx + dx_px, cy + dy_px
+                end_x, end_y = cx_s + dx_px, cy_s + dy_px
                 strength = min(1.0, arrow_len * 200)
                 color = (0, 0, 255) if strength > 0.6 else (0, 140, 255) if strength > 0.3 else (0, 255, 0)
-                cv2.arrowedLine(display_map, (cx, cy), (end_x, end_y), (0, 0, 0), 7, tipLength=0.35)
-                cv2.arrowedLine(display_map, (cx, cy), (end_x, end_y), color, 4, tipLength=0.35)
+                cv2.arrowedLine(display_map, (cx_s, cy_s), (end_x, end_y), (0, 0, 0), max(2, int(7*S)), tipLength=0.35)
+                cv2.arrowedLine(display_map, (cx_s, cy_s), (end_x, end_y), color, max(1, int(4*S)), tipLength=0.35)
                 cv2.putText(display_map, f"REPEL {arrow_len:.1f}m", (end_x+8, end_y-8),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 3)
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 0), 2)
                 cv2.putText(display_map, f"REPEL {arrow_len:.1f}m", (end_x+8, end_y-8),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.4, color, 1)
 
         # Draw flight boundary (yellow)
         if config.FLIGHT_AREA_GPS:
-            flight_pts = np.array([geo_tool.gps_to_pixels(lat, lon) for lat, lon in config.FLIGHT_AREA_GPS], np.int32)
-            cv2.polylines(display_map, [flight_pts], True, (0, 200, 255), 6)
-            # Label (use local vars to avoid overwriting drone cx,cy)
-            fa_cx = int(np.mean(flight_pts[:, 0]))
-            fa_cy = int(np.min(flight_pts[:, 1])) - 10
-            cv2.putText(display_map, "FLIGHT AREA", (fa_cx - 60, fa_cy), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 200, 255), 1)
+            flight_pts_full = np.array([geo_tool.gps_to_pixels(lat, lon) for lat, lon in config.FLIGHT_AREA_GPS], np.int32)
+            flight_pts = (flight_pts_full.astype(np.float64) * S).astype(np.int32)
+            cv2.polylines(display_map, [flight_pts], True, (0, 200, 255), max(2, int(6*S)))
+            fa_cx_l = int(np.mean(flight_pts[:, 0]))
+            fa_cy_l = int(np.min(flight_pts[:, 1])) - 10
+            cv2.putText(display_map, "FLIGHT AREA", (fa_cx_l - 60, fa_cy_l), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 200, 255), 1)
 
         # Draw Coverage (only during SEARCH — transit doesn't count as swept)
-        # Pass 0 = cyan/yellow, pass 1+ = orange (different color per rescan)
+        # Coverage overlay is maintained at god-map scale
         coverage_colors = [(255, 255, 0), (0, 140, 255), (0, 255, 128)]  # yellow, orange, green
         cov_color = coverage_colors[min(rescan_pass, len(coverage_colors) - 1)]
-        rect = ((cx, cy), (view_w_px, view_h_px), math.degrees(yaw))
+        rect = ((cx_s, cy_s), (vw_s, vh_s), math.degrees(yaw))
         box = np.int32(cv2.boxPoints(rect))
         if current_state == "SEARCH":
-            cv2.fillPoly(self.coverage_overlay, [box], cov_color)
-        cv2.addWeighted(self.coverage_overlay, 0.2, display_map, 1.0, 0, display_map)
-        
-        cv2.circle(display_map, (cx, cy), 8, (255, 0, 0), -1)
+            cv2.fillPoly(self._god_coverage, [box], cov_color)
+        cv2.addWeighted(self._god_coverage, 0.2, display_map, 1.0, 0, display_map)
+
+        cv2.circle(display_map, (cx_s, cy_s), max(3, int(8*S)), (255, 0, 0), -1)
         cv2.drawContours(display_map, [box], 0, (0, 255, 255), 2)
         
         # Draw numbered cluster estimates (replaces single green EST)
@@ -539,133 +548,126 @@ class SimulationEnvironment:
         if detection_clusters:
             for ci, cl in enumerate(detection_clusters):
                 if cl.get("best_gps"):
-                    clx, cly = geo_tool.gps_to_pixels(cl["best_gps"][0], cl["best_gps"][1])
+                    clx, cly = _sp(*geo_tool.gps_to_pixels(cl["best_gps"][0], cl["best_gps"][1]))
                     color = cluster_colors[ci % len(cluster_colors)]
-                    # Active cluster: filled + ring; others: ring only
+                    r1, r2 = max(3, int(10*S)), max(5, int(16*S))
                     if ci == active_cluster_idx:
-                        cv2.circle(display_map, (clx, cly), 10, color, -1)
-                        cv2.circle(display_map, (clx, cly), 16, color, 2)
+                        cv2.circle(display_map, (clx, cly), r1, color, -1)
+                        cv2.circle(display_map, (clx, cly), r2, color, 2)
                     else:
-                        cv2.circle(display_map, (clx, cly), 10, color, 2)
+                        cv2.circle(display_map, (clx, cly), r1, color, 2)
                     cid = cl.get("id", ci+1)
                     label = f"#{cid} ({cl['detection_count']})"
-                    cv2.putText(display_map, label, (clx + 18, cly + 5),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
-                    # Total average marker (small square, same color)
+                    cv2.putText(display_map, label, (clx + 12, cly + 4),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.4, color, 1)
                     if cl.get("total_gps"):
-                        tx, ty = geo_tool.gps_to_pixels(cl["total_gps"][0], cl["total_gps"][1])
-                        cv2.rectangle(display_map, (tx-5, ty-5), (tx+5, ty+5), color, 2)
-                    # Kalman filter marker (triangle, same color)
+                        tx, ty = _sp(*geo_tool.gps_to_pixels(cl["total_gps"][0], cl["total_gps"][1]))
+                        d = max(2, int(5*S))
+                        cv2.rectangle(display_map, (tx-d, ty-d), (tx+d, ty+d), color, 1)
                     if cl.get("kalman_gps"):
-                        kx, ky = geo_tool.gps_to_pixels(cl["kalman_gps"][0], cl["kalman_gps"][1])
-                        tri = np.array([(kx, ky-7), (kx+6, ky+5), (kx-6, ky+5)], np.int32)
+                        kx, ky = _sp(*geo_tool.gps_to_pixels(cl["kalman_gps"][0], cl["kalman_gps"][1]))
+                        d = max(3, int(7*S))
+                        tri = np.array([(kx, ky-d), (kx+d-1, ky+d-2), (kx-d+1, ky+d-2)], np.int32)
                         cv2.fillPoly(display_map, [tri], color)
         elif target_gps[0] != 0:
-            # Fallback: single green EST if no clusters provided
-            tx, ty = geo_tool.gps_to_pixels(target_gps[0], target_gps[1])
-            cv2.circle(display_map, (tx, ty), 8, (0, 255, 0), -1)
-            cv2.circle(display_map, (tx, ty), 14, (0, 255, 0), 2)
-            cv2.putText(display_map, "EST", (tx + 16, ty + 5),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+            tx, ty = _sp(*geo_tool.gps_to_pixels(target_gps[0], target_gps[1]))
+            cv2.circle(display_map, (tx, ty), max(3, int(8*S)), (0, 255, 0), -1)
+            cv2.circle(display_map, (tx, ty), max(5, int(14*S)), (0, 255, 0), 2)
+            cv2.putText(display_map, "EST", (tx + 12, ty + 4),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0), 1)
 
         if landing_gps[0] != 0:
-            lx, ly = geo_tool.gps_to_pixels(landing_gps[0], landing_gps[1])
-            cv2.circle(display_map, (lx, ly), 8, (255, 0, 255), -1)  # filled pink = landing
-            cv2.circle(display_map, (lx, ly), 20, (255, 255, 255), 2)
-            cv2.putText(display_map, "LAND", (lx + 22, ly + 5),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 255), 2)
+            lx, ly = _sp(*geo_tool.gps_to_pixels(landing_gps[0], landing_gps[1]))
+            cv2.circle(display_map, (lx, ly), max(3, int(8*S)), (255, 0, 255), -1)
+            cv2.circle(display_map, (lx, ly), max(6, int(20*S)), (255, 255, 255), 2)
+            cv2.putText(display_map, "LAND", (lx + 14, ly + 4),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 0, 255), 1)
 
         # Draw logged items (IOI = cyan, FP = red X)
         if logged_items:
             for item in logged_items:
                 gps = item.get("gps")
                 if gps:
-                    ix, iy = geo_tool.gps_to_pixels(gps[0], gps[1])
+                    ix, iy = _sp(*geo_tool.gps_to_pixels(gps[0], gps[1]))
                     if item["type"] == "interest":
-                        # Cyan diamond
-                        pts = np.array([(ix, iy-10), (ix+8, iy), (ix, iy+10), (ix-8, iy)], np.int32)
+                        d = max(3, int(10*S))
+                        pts = np.array([(ix, iy-d), (ix+d-2, iy), (ix, iy+d), (ix-d+2, iy)], np.int32)
                         cv2.fillPoly(display_map, [pts], (255, 255, 0))
-                        cv2.putText(display_map, "IOI", (ix + 12, iy + 5),
-                                    cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 0), 1)
+                        cv2.putText(display_map, "IOI", (ix + 8, iy + 4),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.35, (255, 255, 0), 1)
                     else:
-                        # Red X for false positive
-                        cv2.line(display_map, (ix-6, iy-6), (ix+6, iy+6), (0, 0, 255), 2)
-                        cv2.line(display_map, (ix-6, iy+6), (ix+6, iy-6), (0, 0, 255), 2)
-                        cv2.putText(display_map, "FP", (ix + 10, iy + 5),
-                                    cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 255), 1)
+                        d = max(2, int(6*S))
+                        cv2.line(display_map, (ix-d, iy-d), (ix+d, iy+d), (0, 0, 255), 1)
+                        cv2.line(display_map, (ix-d, iy+d), (ix+d, iy-d), (0, 0, 255), 1)
+                        cv2.putText(display_map, "FP", (ix + 8, iy + 4),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1)
 
         # Draw search waypoint path (zigzag inside polygon)
         if search_wps:
-            wp_pts = [geo_tool.gps_to_pixels(lat, lon) for lat, lon in search_wps]
+            wp_pts = [_sp(*geo_tool.gps_to_pixels(lat, lon)) for lat, lon in search_wps]
             for j in range(len(wp_pts)-1):
-                p1 = (int(wp_pts[j][0]), int(wp_pts[j][1]))
-                p2 = (int(wp_pts[j+1][0]), int(wp_pts[j+1][1]))
                 if j < search_wp_index:
-                    cv2.line(display_map, p1, p2, (0, 200, 0), 3)
+                    cv2.line(display_map, wp_pts[j], wp_pts[j+1], (0, 200, 0), 2)
                 else:
-                    cv2.line(display_map, p1, p2, (255, 255, 255), 2)
+                    cv2.line(display_map, wp_pts[j], wp_pts[j+1], (255, 255, 255), 1)
             if wp_pts:
-                sp = (int(wp_pts[0][0]), int(wp_pts[0][1]))
-                ep = (int(wp_pts[-1][0]), int(wp_pts[-1][1]))
-                cv2.circle(display_map, sp, 8, (0, 255, 0), -1)
-                cv2.putText(display_map, "S", (sp[0]+10, sp[1]-5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-                cv2.circle(display_map, ep, 8, (0, 0, 255), -1)
-                cv2.putText(display_map, "E", (ep[0]+10, ep[1]-5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+                cv2.circle(display_map, wp_pts[0], max(3, int(8*S)), (0, 255, 0), -1)
+                cv2.putText(display_map, "S", (wp_pts[0][0]+8, wp_pts[0][1]-4), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0), 1)
+                cv2.circle(display_map, wp_pts[-1], max(3, int(8*S)), (0, 0, 255), -1)
+                cv2.putText(display_map, "E", (wp_pts[-1][0]+8, wp_pts[-1][1]-4), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 255), 1)
             if current_state == "SEARCH" and search_wp_index < len(wp_pts):
-                cur = wp_pts[search_wp_index]
-                cv2.circle(display_map, (int(cur[0]), int(cur[1])), 10, (0, 255, 255), 3)
+                cv2.circle(display_map, wp_pts[search_wp_index], max(4, int(10*S)), (0, 255, 255), 2)
 
         # Draw transit path (cyan line + dots)
         if transit_wps_gps:
-            tw_pts = [geo_tool.gps_to_pixels(lat, lon) for lat, lon in transit_wps_gps]
+            tw_pts = [_sp(*geo_tool.gps_to_pixels(lat, lon)) for lat, lon in transit_wps_gps]
             for i, pt in enumerate(tw_pts):
-                cv2.circle(display_map, (int(pt[0]), int(pt[1])), 8, (0, 255, 255), -1)
-                cv2.putText(display_map, f"T{i+1}", (int(pt[0])+12, int(pt[1])-8),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
+                cv2.circle(display_map, pt, max(3, int(8*S)), (0, 255, 255), -1)
+                cv2.putText(display_map, f"T{i+1}", (pt[0]+8, pt[1]-6),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 255), 1)
             if len(tw_pts) > 1:
                 for j in range(len(tw_pts)-1):
-                    p1 = (int(tw_pts[j][0]), int(tw_pts[j][1]))
-                    p2 = (int(tw_pts[j+1][0]), int(tw_pts[j+1][1]))
-                    cv2.line(display_map, p1, p2, (0, 255, 255), 3)
+                    cv2.line(display_map, tw_pts[j], tw_pts[j+1], (0, 255, 255), 2)
             if current_state == "PRE_WAYPOINTS" and transit_wp_index < len(tw_pts):
-                cur = tw_pts[transit_wp_index]
-                cv2.circle(display_map, (int(cur[0]), int(cur[1])), 14, (0, 0, 255), 3)
+                cv2.circle(display_map, tw_pts[transit_wp_index], max(5, int(14*S)), (0, 0, 255), 2)
 
-        # Draw rejected targets (red X) — false positives
+        # Draw rejected targets (red X) -- false positives
         if rejected_targets:
             for idx, (rlat, rlon) in enumerate(rejected_targets):
-                rx, ry = geo_tool.gps_to_pixels(rlat, rlon)
-                cv2.circle(display_map, (rx, ry), 10, (0, 0, 255), -1)  # red dot
-                cv2.circle(display_map, (rx, ry), 10, (255, 255, 255), 2)  # white border
-                # X mark
-                cv2.line(display_map, (rx-7, ry-7), (rx+7, ry+7), (255, 255, 255), 2)
-                cv2.line(display_map, (rx+7, ry-7), (rx-7, ry+7), (255, 255, 255), 2)
-                cv2.putText(display_map, f"FP", (rx + 15, ry + 5),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
+                rx, ry = _sp(*geo_tool.gps_to_pixels(rlat, rlon))
+                r = max(3, int(10*S))
+                cv2.circle(display_map, (rx, ry), r, (0, 0, 255), -1)
+                cv2.circle(display_map, (rx, ry), r, (255, 255, 255), 1)
+                d = max(2, int(7*S))
+                cv2.line(display_map, (rx-d, ry-d), (rx+d, ry+d), (255, 255, 255), 1)
+                cv2.line(display_map, (rx+d, ry-d), (rx-d, ry+d), (255, 255, 255), 1)
+                cv2.putText(display_map, "FP", (rx + 10, ry + 4),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 255), 1)
 
         # Draw items of interest (blue markers)
         if items_of_interest:
             for idx, item in enumerate(items_of_interest):
-                ix, iy = geo_tool.gps_to_pixels(item['lat'], item['lon'])
-                radius_px = max(15, int(3.0 * geo_tool.pix_per_m))
-                cv2.circle(display_map, (ix, iy), radius_px, (255, 50, 50), 2)
-                cv2.circle(display_map, (ix, iy), 12, (255, 50, 50), -1)
-                cv2.circle(display_map, (ix, iy), 12, (255, 255, 255), 2)
-                cv2.putText(display_map, f"I{idx+1}", (ix + 18, iy + 5),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 50, 50), 2)
+                ix, iy = _sp(*geo_tool.gps_to_pixels(item['lat'], item['lon']))
+                radius_px = max(5, int(3.0 * geo_tool.pix_per_m * S))
+                cv2.circle(display_map, (ix, iy), radius_px, (255, 50, 50), 1)
+                r2 = max(4, int(12*S))
+                cv2.circle(display_map, (ix, iy), r2, (255, 50, 50), -1)
+                cv2.circle(display_map, (ix, iy), r2, (255, 255, 255), 1)
+                cv2.putText(display_map, f"I{idx+1}", (ix + 12, iy + 4),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 50, 50), 1)
 
-        # Apply Zoom
+        # Apply Zoom (coordinates are already in god-map scale)
         if zoom_level > 1.0:
             h, w = display_map.shape[:2]
             crop_h = int(h / zoom_level)
             crop_w = int(w / zoom_level)
-            x1 = max(0, min(w - crop_w, cx - crop_w // 2))
-            y1 = max(0, min(h - crop_h, cy - crop_h // 2))
+            x1 = max(0, min(w - crop_w, cx_s - crop_w // 2))
+            y1 = max(0, min(h - crop_h, cy_s - crop_h // 2))
             x2 = x1 + crop_w; y2 = y1 + crop_h
             display_map = display_map[y1:y2, x1:x2]
 
-        target_h = config.IMAGE_H
-        base_scale = target_h / self.map_h
-        target_w = int(self.map_w * base_scale)
-        if zoom_level > 1.0: return cv2.resize(display_map, (config.IMAGE_H, config.IMAGE_H))
-        return cv2.resize(display_map, (target_w, target_h))
+        # The display_map is already at god-map scale (_god_w x _god_h).
+        # With zoom: crop and resize to square; without zoom: return as-is.
+        if zoom_level > 1.0:
+            return cv2.resize(display_map, (config.IMAGE_H, config.IMAGE_H))
+        return display_map
