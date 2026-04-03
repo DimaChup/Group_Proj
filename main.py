@@ -1,6 +1,6 @@
 # main.py — Mission Orchestrator (state machine, telemetry, HUD, dry-run)
 from pymavlink import mavutil
-import time, math, cv2, csv, sys, os, threading
+import time, math, cv2, csv, sys, os, threading, random
 import numpy as np
 from datetime import datetime
 
@@ -355,6 +355,9 @@ class VisualFlightMission(StateHandlersMixin):
         self.alt = 0.0
         self.vx = 0; self.vy = 0; self.vz = 0
         self.roll = 0; self.pitch = 0; self.yaw = 0
+        self._prev_yaw = None        # for yaw-rate roll calculation (sim-tilt)
+        self._prev_tilt_time = None   # timestamp for dt calculation (sim-tilt)
+        self._last_tilt_log = 0       # throttle sim-tilt debug prints
 
         # Mission data
         if not hasattr(self, 'waypoints'): self.waypoints = []
@@ -571,37 +574,42 @@ class VisualFlightMission(StateHandlersMixin):
         # Get frame
         if config.MODE == "SIMULATION":
             px, py = self.geo.gps_to_pixels(self.lat, self.lon)
-            # --sim-tilt: combined camera tilt in VELOCITY direction (not just yaw)
-            # Camera shifts in whatever direction drone is actually moving
-            # Plus slight random oscillation for turbulence
+            # --sim-tilt: use ACTUAL roll/pitch from SITL telemetry to shift camera view
+            # ArduCopter ATTITUDE message gives real roll, pitch, yaw (radians)
+            # Camera view offset = altitude × tan(angle) for each axis
+            spd = math.sqrt(self.vx**2 + self.vy**2)
+            roll_deg = 0.0
+
             if (SIM_TILT or SIM_PITCH) and self.alt > 1.0:
-                spd = math.sqrt(self.vx**2 + self.vy**2)
-                if spd > 0.3:  # only when actually moving
-                    tilt_deg = spd * 2.0  # ~2 degrees per m/s
-                    tilt_rad = math.radians(tilt_deg)
-                    offset_m = self.alt * math.tan(tilt_rad)
-                    offset_px = offset_m * self.geo.pix_per_m
-                    # Offset in VELOCITY direction (not yaw -- drone can fly sideways)
-                    vel_angle = math.atan2(self.vx, self.vy)  # velocity heading
-                    px += offset_px * math.sin(vel_angle)
-                    py += -offset_px * math.cos(vel_angle)
-                    # Small random turbulence (±1° oscillation)
-                    import random
-                    turb_px = random.uniform(-2, 2) * self.geo.pix_per_m
-                    turb_py = random.uniform(-2, 2) * self.geo.pix_per_m
-                    px += turb_px
-                    py += turb_py
+                # Pitch shifts camera forward/backward: offset = alt × tan(pitch)
+                pitch_offset_m = self.alt * math.tan(self.pitch)
+                # Roll shifts camera left/right: offset = alt × tan(roll)
+                roll_offset_m = self.alt * math.tan(self.roll)
+                roll_deg = math.degrees(self.roll)
+
+                # Convert to map pixels
+                pitch_px = pitch_offset_m * self.geo.pix_per_m
+                roll_px = roll_offset_m * self.geo.pix_per_m
+
+                # Apply in body frame rotated by yaw
+                px += pitch_px * math.sin(self.yaw) + roll_px * math.cos(self.yaw)
+                py += -pitch_px * math.cos(self.yaw) + roll_px * math.sin(self.yaw)
+
             frame, self.view_w_px, self.view_h_px = self.sim.get_drone_view(px, py, self.alt, self.yaw)
-            # --sim-roll OR --sim-tilt: camera frame rotation from roll
-            if (SIM_ROLL_DEG > 0 or SIM_TILT) and spd > 0.3 if 'spd' in dir() else SIM_ROLL_DEG > 0:
-                import random
-                roll_max = SIM_ROLL_DEG if SIM_ROLL_DEG > 0 else min(spd * 0.5, 5.0)  # auto: 0.5 deg per m/s, max 5
-                roll_angle = random.uniform(-roll_max, roll_max)
+
+            # --sim-roll OR --sim-tilt: apply frame rotation from roll angle
+            _apply_roll = False
+            if SIM_ROLL_DEG > 0:
+                _apply_roll = True
+                roll_angle = random.uniform(-SIM_ROLL_DEG, SIM_ROLL_DEG)
+            elif SIM_TILT:
+                _apply_roll = True
+                roll_angle = math.degrees(self.roll)  # actual SITL roll
+            if _apply_roll:
                 h, w = frame.shape[:2]
                 M_roll = cv2.getRotationMatrix2D((w // 2, h // 2), roll_angle, 1.0)
                 frame = cv2.warpAffine(frame, M_roll, (w, h))
             if SHAKE_PX > 0:
-                import random
                 dx = random.randint(-SHAKE_PX, SHAKE_PX)
                 dy = random.randint(-SHAKE_PX, SHAKE_PX)
                 M = np.float32([[1, 0, dx], [0, 1, dy]])
