@@ -47,9 +47,9 @@ class NavigationController:
         if lat < -90 or lat > 90 or lon < -180 or lon > 180:
             print(f"WARNING: GPS out of bounds (lat={lat}, lon={lon}) — skipping")
             return
-        if alt < 0 or alt > 400:
-            print(f"WARNING: altitude out of range ({alt}m) — skipping")
-            return
+        if alt < 0 or alt > 50:
+            print(f"WARNING: altitude {alt}m exceeds 50m limit — capping to 50m")
+            alt = min(alt, 50)
 
         if yaw is None and self.no_turn and self._get_yaw is not None:
             yaw = self._get_yaw()

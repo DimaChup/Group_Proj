@@ -11,20 +11,20 @@ Table~\ref{tab:req-verification} maps each requirement from the AENGM0074 projec
 \toprule
 \textbf{Req} & \textbf{Requirement} & \textbf{Method} & \textbf{Evidence} & \textbf{Verification Status} \\
 \midrule
-R01 & Fly within Flight Area & KML polygon load + waypoint clipping + runtime geofence & SITL telemetry, geofence unit test, \texttt{config.py} polygon & Verified (SITL) \\
-R02 & No SSSI overfly & Three-layer NFZ + plan-time filter + firmware fence & SITL multi-angle approach, geofence diagram & Verified (SITL) \\
-R03 & Take off within 5\,m of TOL & KML point placemark, vertical takeoff & SITL telemetry ($<$1\,m error) & Verified (SITL) \\
-R04 & Max 50\,m altitude & \texttt{TARGET\_ALT}=35\,m + firmware \texttt{FENCE\_ALT\_MAX} & Config audit, no state exceeds 35\,m & Verified (SITL) \\
+R01 & Fly within Flight Area & KML polygon load + waypoint clipping + runtime \texttt{pointPolygonTest} $\to$ emergency RTL & SITL telemetry, geofence unit test, \texttt{\_enforce\_geofence()} at ${\sim}$20--50\,Hz & Verified (SITL) \\
+R02 & No SSSI overfly & Four-layer NFZ (plan-time filter, speed ramp, repulsive field, hard cutoff) + firmware fence & SITL multi-angle approach, geofence diagram & Verified (SITL) \\
+R03 & Take off within 5\,m of TOL & KML point placemark, vertical takeoff + arming-time distance check & SITL telemetry ($<$1\,m error), runtime $>$5\,m warning & Verified (SITL) \\
+R04 & Max 50\,m altitude & \texttt{TARGET\_ALT}=35\,m + \texttt{send\_global\_target()} 50\,m cap + firmware \texttt{FENCE\_ALT\_MAX} & Config validation, navigation cap, 28 unit tests & Verified (SITL) \\
 R05 & Search + identify items & Lawnmower + YOLOv8n (mAP$_{50}$=0.995, 4.8\,FPS) & End-to-end sim, bench test, DJI video proxy & Verified (simulation + video) \\
 R06 & PLB Focus Area & \texttt{B} key / \texttt{-{}-beacon-delay} mid-flight injection & SITL diversion + resume, flight log, 6 unit tests & Verified (SITL) \\
-R07 & Land 5--10\,m from casualty & 7.5\,m offset via \texttt{landing\_offset\_7\_5m()} & Probability analysis (CEP$_{50}$=2.3\,m), 5 unit tests, SITL smoke test & Verified (SITL + analysis) \\
+R07 & Land 5--10\,m from casualty & 7.5\,m offset via \texttt{landing\_offset\_7\_5m()} + post-landing distance printout & Probability analysis (CEP$_{50}$=2.3\,m), 5 unit tests, SITL smoke test, runtime R07 check & Verified (SITL + analysis) \\
 R08 & Autonomy justified & L7--8 search / L3--4 landing, operator verify gate & Design rationale, Sheridan framework & Verified (design) \\
 R09 & RTH + Motor Cutoff & RC kill, software \texttt{M}, auto RTL failsafes & SITL: 3 independent override tests & Verified (SITL) \\
-R10 & Report lat/lon + images & GPS projection, web dashboard, snapshots + JSON & Ground station logs, CSV, MJPEG stream & Verified (SITL + bench) \\
+R10 & Report lat/lon + images & GPS projection, web dashboard, \texttt{mission\_detections/} (JPEG + JSON per event) & Detection images + JSON metadata saved on every operator decision (Y/N/I/X) & Verified (SITL + bench) \\
 R11 & Company Pilot designated & 12-item checklist + RC override test & Team plan, field-day bench test, checklist & Verified (procedural + bench) \\
-R12 & Public GitHub, MIT licence & \texttt{github.com/DimaChup/Group\_Proj} & Repository live and public & Verified (inspection) \\
+R12 & Public GitHub, MIT licence & \texttt{github.com/DimaChup/Group\_Proj} + \texttt{LICENSE} file & Repository live, public, MIT \texttt{LICENSE} in root & Verified (inspection) \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Of the 12 requirements, 7 are fully verified at bench or higher fidelity (R01--R04, R09--R12), 3 are verified in simulation only (R05--R07), and 2 have partial gaps (R06 not field-tested with live PLB, R08 payload servo not integrated into the state machine). The highest-risk requirements---R01 (flight area), R02 (SSSI), and R09 (override)---are each protected by multiple independent mechanisms verified at both simulation and hardware tiers. The most significant verification gap is the absence of outdoor flight data for R05 (search and detection) and R07 (landing accuracy); both are verified quantitatively in simulation and through DJI video proxy analysis, but remain unvalidated under real flight conditions due to weather cancellation. Full evidence narratives for each requirement are provided in Appendix~\ref{app:req-detail}.
+Of the 12 requirements, 8 are fully verified at bench or higher fidelity (R01--R04, R09--R12), 3 are verified in simulation only (R05--R07), and 1 has a partial gap (R06 not field-tested with live PLB). Recent code improvements closed several evidence gaps: R01 now has a runtime Flight Area geofence with emergency RTL (not just plan-time clipping), R03 checks TOL distance at arming, R04 enforces a 50\,m hard cap in the navigation module, R07 prints the actual casualty distance at landing, R10 saves structured detection images and JSON metadata to \texttt{mission\_detections/}, and R12 has an explicit MIT \texttt{LICENSE} file. The highest-risk requirements---R01 (flight area), R02 (SSSI), and R09 (override)---are each protected by multiple independent mechanisms verified at both simulation and hardware tiers. The most significant verification gap is the absence of outdoor flight data for R05 (search and detection) and R07 (landing accuracy); both are verified quantitatively in simulation and through DJI video proxy analysis, but remain unvalidated under real flight conditions due to weather cancellation. Full evidence narratives for each requirement are provided in Appendix~\ref{app:req-detail}.

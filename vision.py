@@ -28,6 +28,9 @@ PIXEL_COORD_THRESHOLD = 1.5
 #: Number of camera warm-up frames to discard (AWB / exposure convergence)
 CAMERA_WARMUP_FRAMES = 10
 
+#: SAR class names for our custom multi-class model (5 classes).
+SAR_NAMES = {0: "dummy", 1: "pants", 2: "tshirt", 3: "backpack", 4: "cone"}
+
 #: COCO class names for TFLite multi-class models (e.g. human.tflite).
 #: Only a subset is listed; single-class custom models report "dummy".
 COCO_NAMES = {
@@ -547,33 +550,60 @@ class VisionSystem:
         self.interpreter.invoke()
         output = self.interpreter.get_tensor(self._output_details[0]['index'])
 
-        # Parse YOLOv8 output: [1, 5+nclass, num_detections]
+        # Parse YOLOv8 output — two formats:
+        #   Standard:  [1, 5+nclass, 8400]  → transpose to [8400, 5+nclass], cols = cx,cy,w,h,scores...
+        #   End2end:   [1, 300, 6]          → already [300, 6], cols = x1,y1,x2,y2,conf,class_id
         preds = output[0]
-        if preds.shape[0] < preds.shape[-1]:
+        end2end = (len(preds.shape) == 2 and preds.shape[-1] == 6)
+        if not end2end and preds.shape[0] < preds.shape[-1]:
             preds = preds.T  # -> [num_detections, 5+nclass]
 
-        best_conf, best_det = self._pick_best_detection(preds)
-        if best_det is None:
-            return False, 0, 0, 0.0
-
-        raw_cx, raw_cy = best_det[0], best_det[1]
-        raw_bw, raw_bh = best_det[2], best_det[3]
-
-        # YOLOv8 TFLite output may be in pixel coords (0-640) or normalised (0-1)
-        if raw_cx > PIXEL_COORD_THRESHOLD:
-            # Pixel coords relative to model input size — scale to frame
+        if end2end:
+            # End2end format: [x1, y1, x2, y2, confidence, class_id]
+            best_conf = 0.0
+            best_det = None
+            for det in preds:
+                conf = float(det[4])
+                if conf > self._conf_thresh and conf > best_conf:
+                    best_conf = conf
+                    best_det = det
+            if best_det is None:
+                return False, 0, 0, 0.0
+            # Convert x1,y1,x2,y2 to cx,cy,w,h (pixel coords in model input space)
+            raw_x1, raw_y1, raw_x2, raw_y2 = best_det[0], best_det[1], best_det[2], best_det[3]
+            raw_cx = (raw_x1 + raw_x2) / 2
+            raw_cy = (raw_y1 + raw_y2) / 2
+            raw_bw = raw_x2 - raw_x1
+            raw_bh = raw_y2 - raw_y1
+            # Scale to frame
             cx = int(raw_cx * w / input_w)
             cy = int(raw_cy * h / input_h)
             bw = int(raw_bw * w / input_w)
             bh = int(raw_bh * h / input_h)
+            # Class name: end2end single-class model always = "dummy"
+            self.last_class_name = "dummy"
+            self.last_bbox_w = bw
+            self.last_bbox_h = bh
         else:
-            # Normalised 0-1 — scale to frame
-            cx = int(raw_cx * w)
-            cy = int(raw_cy * h)
-            bw = int(raw_bw * w)
-            bh = int(raw_bh * h)
+            # Standard format: [cx, cy, w, h, class_scores...]
+            best_conf, best_det = self._pick_best_detection(preds)
+            if best_det is None:
+                return False, 0, 0, 0.0
+            raw_cx, raw_cy = best_det[0], best_det[1]
+            raw_bw, raw_bh = best_det[2], best_det[3]
+            # YOLOv8 TFLite output may be in pixel coords (0-640) or normalised (0-1)
+            if raw_cx > PIXEL_COORD_THRESHOLD:
+                cx = int(raw_cx * w / input_w)
+                cy = int(raw_cy * h / input_h)
+                bw = int(raw_bw * w / input_w)
+                bh = int(raw_bh * h / input_h)
+            else:
+                cx = int(raw_cx * w)
+                cy = int(raw_cy * h)
+                bw = int(raw_bw * w)
+                bh = int(raw_bh * h)
+            self._store_bbox_metadata(best_det, bw, bh)
 
-        self._store_bbox_metadata(best_det, bw, bh)
         self._draw_detection(frame, cx, cy, bw, bh, w, h, best_conf)
         return True, cx, cy, float(best_conf)
 
@@ -634,6 +664,9 @@ class VisionSystem:
         num_classes = len(det) - 4
         if num_classes == 1:
             self.last_class_name = "dummy"
+        elif num_classes == 5:
+            cls_id = int(np.argmax(det[4:]))
+            self.last_class_name = SAR_NAMES.get(cls_id, f"cls{cls_id}")
         else:
             cls_id = int(np.argmax(det[4:]))
             self.last_class_name = COCO_NAMES.get(cls_id, f"cls{cls_id}")

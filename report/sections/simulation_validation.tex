@@ -90,6 +90,29 @@ Offset landing accuracy & $< 1$\,m (no wind, no GPS noise) & Not yet flight-test
 \end{table}
 
 % ─────────────────────────────────────────────────────────────────────
+\subsection{Progressive Build-Up: From Pure Software to Real Hardware}\label{sec:sim-buildup}
+
+The simulation framework was not designed as a monolithic tool; it grew organically as each development phase revealed limitations in the previous level of testing.  This subsection traces the chronological progression and explains why each simulation level was introduced.
+
+\paragraph{Phase 1: Software-only development (weeks 1--4).}
+All initial development occurred without any hardware.  The state machine, lawnmower planner, and GPS estimation mathematics were implemented and tested entirely in the interactive simulator (\texttt{simple\_simulator.py}), which models a drone as a point mass moving over a georeferenced satellite image.  This environment was sufficient to validate the core algorithms---boustrophedon coverage, pixel-to-GPS coordinate transforms, Kalman filter convergence---but provided no confidence in the MAVLink command interface or the physical sensing pipeline.  The key metric from this phase was that the Kalman filter converged to sub-metre accuracy from ground truth after 15--20 observations, establishing a baseline that later real-world testing could compare against.
+
+\paragraph{Phase 2: SITL integration (weeks 3--6).}
+ArduPilot's Software-in-the-Loop simulator replaced the point-mass model with a full autopilot firmware running on the development laptop.  This was the first time the code issued real MAVLink commands---\texttt{MAV\_CMD\_COMPONENT\_ARM\_DISARM}, \texttt{MAV\_CMD\_NAV\_TAKEOFF}, \texttt{SET\_POSITION\_TARGET\_GLOBAL\_INT}---and received real telemetry responses.  Several integration issues surfaced immediately: the \texttt{DISARM\_DELAY} parameter (defaulting to 10~seconds) caused auto-disarm before the takeoff command was issued; \texttt{SET\_POSITION\_TARGET} messages sent during the climb phase cancelled the \texttt{NAV\_TAKEOFF} command; and the state machine's mode-change acknowledgement logic contained a race condition where a mode was requested and checked in the same heartbeat cycle.  All three issues were resolved at this stage, at zero hardware risk.  The SITL level also enabled the 22-test simulation checklist (Section~\ref{sec:stress}), which systematically exercised every state transition, CLI flag, and edge case.
+
+\paragraph{Phase 3: Docker Pi environment (week 7).}
+Before deploying code to the physical Raspberry Pi, a Docker container (\texttt{Dockerfile.pi-test}) was built to replicate the Pi's ARM64 Linux environment with the production dependency set.  This caught two critical compatibility issues.  First, \texttt{tflite-runtime} could not be installed on Python~3.13; the replacement package \texttt{ai-edge-litert} was identified and verified in the container.  Second, the \texttt{cv2.CAP\_DSHOW} flag used for webcam access on Windows caused an import crash on Linux; a platform guard was added.  The Docker test runs in under 30~seconds and was integrated into the pre-deployment checklist.
+
+\paragraph{Phase 4: Bench hardware integration (weeks 8--10).}
+With the Pi, Cube Orange, and IMX296 camera physically assembled, bench testing validated the complete sensing and command pipeline with propellers removed.  The three bench scripts (\texttt{0a\_cube\_commands.py}, \texttt{0b\_bench\_mission.py}, \texttt{0c\_feedback\_test.py}) ran through individual commands, the full mission sequence, and the vision-to-GPS pipeline respectively.  This phase discovered the FOV calibration error (22\% deviation from the datasheet value, Section~\ref{sec:field-fov}), the IMX296 BGR colour channel issue, and the TFLite bounding box coordinate format inconsistency.  Each was a defect invisible to all prior simulation levels.
+
+\paragraph{Phase 5: DJI video replay (weeks 10--12).}
+To bridge the gap between bench testing and actual flight before any flight time was available, recorded DJI footage from a reconnaissance overflight of the test site was replayed through the full detection pipeline.  This was the first time the retrained model encountered genuine aerial imagery with real lighting, shadows, and terrain texture.  The 87\% detection rate and 2.3~m CEP50 GPS estimation accuracy established the most realistic performance benchmarks available without flying the project drone, and revealed the GPS timing lag phenomenon that synthetic imagery could never have exposed.
+
+\paragraph{What this progression demonstrates.}
+Each level caught defects that were invisible to all preceding levels.  SITL caught MAVLink command sequencing issues.  Docker caught Python~3.13 dependency failures.  Bench testing caught sensor calibration errors and colour channel mismatches.  Video replay caught real-world detection degradation and GPS timing bias.  The cumulative effect is that by the time the system reaches outdoor flight, the majority of integration failures have already been found and resolved in controlled, zero-risk environments.  This approach is consistent with the V-model verification philosophy (Section~\ref{sec:vmodel}) but adapted to the practical constraints of a university project with limited flight access.
+
+% ─────────────────────────────────────────────────────────────────────
 \subsection{Known Sim-to-Real Gaps}\label{sec:known-gaps}
 
 Despite the multi-fidelity approach, several properties remain untestable in simulation and represent the primary sources of residual risk:
@@ -116,3 +139,20 @@ Based on the evidence gathered across all four simulation levels and the DJI vid
 \textbf{Moderate confidence} (validated in simulation but with known real-world degradation): detection reliability at altitude (87\% on real video vs 100\% synthetic); GPS estimation accuracy (CEP50 = 2.3\,m on video, sub-metre in simulation); inference throughput on the Pi (4.8\,FPS measured on bench, but not under thermal load during sustained flight).
 
 \textbf{Low confidence} (untested or only indirectly tested): offset landing accuracy under wind; visual servoing stability in gusty conditions; detection performance under harsh lighting; system behaviour under RF interference or GPS multipath; and thermal throttling during extended missions. These properties require validation through the progressive flight testing framework (Section~\ref{sec:five-tier}), advancing from passive observation to full autonomy only after each preceding tier passes.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{Lessons from the Sim-to-Real Transfer}\label{sec:sim-lessons}
+
+The multi-fidelity simulation campaign produced several generalisable lessons about the value and limitations of simulation in safety-critical robotics development.
+
+\paragraph{Simulation catches logic errors; hardware catches calibration errors.}
+Of the 20 failure scenarios tested in SITL (Section~\ref{sec:stress}), nine required code fixes---all were logic or sequencing errors (missing timeouts, hardcoded parameters, race conditions).  Of the six defects discovered during bench testing, all were calibration or compatibility issues (FOV error, colour channel mismatch, coordinate format inconsistency, Python~3.13 package incompatibility).  The two categories of failure are almost perfectly disjoint: simulation cannot catch calibration errors because it uses ground-truth geometry, and bench testing cannot catch logic errors in the state machine because it lacks the dynamic vehicle context needed to exercise complex state transitions.  This complementarity validates the multi-tier approach: both tiers are necessary, and neither is sufficient alone.
+
+\paragraph{Video replay is the highest-value offline test.}
+The DJI video analysis produced the most operationally relevant data of any non-flight activity.  It was the only test that exposed the GPS timing lag phenomenon, the only test that measured detection performance under real lighting and texture, and the only test that produced realistic GPS estimation statistics.  The cost was low: recording the reconnaissance video required approximately 15~minutes of manual flight time with a consumer drone, and the replay pipeline reused the identical detection and estimation code used in all other simulation levels.  For projects with limited flight access, video replay from a survey drone represents an efficient way to bridge the sim-to-real gap before committing to autonomous operations.
+
+\paragraph{Configuration defaults from datasheets are unreliable.}
+The 22\% focal length error (datasheet: 7.0\,mm; measured: 5.46\,mm) would have produced a systematic 6\,m GPS estimation bias at search altitude.  This error was undetectable in simulation and would have degraded every autonomous GPS estimate, potentially causing the drone to centre on a location 6\,m from the actual target.  The lesson is that any parameter derived from a datasheet or nominal specification should be treated as an initial guess and calibrated against physical measurement before use in a safety-critical pipeline.  The project's calibration scripts (\texttt{tests/calibration/}) are designed to make this verification rapid and reproducible at any new site.
+
+\paragraph{The sim-to-real gap is not a single gap; it is many small gaps.}
+The phrase ``sim-to-real gap'' suggests a single chasm between simulation and reality.  In practice, the gap is composed of dozens of small discrepancies---sensor quirks, driver bugs, environmental conditions, timing latencies---each of which is individually minor but collectively significant.  The progressive testing framework addresses this by providing multiple opportunities to discover and resolve these discrepancies before they compound during autonomous flight.  Each tier narrows the gap incrementally, rather than attempting to cross it in a single step.

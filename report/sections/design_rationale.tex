@@ -17,7 +17,7 @@ Every major design decision was evaluated against the seven STEEPLE dimensions (
     Social & Serves community safety via volunteer rescue teams; operator-in-the-loop verification maintains public trust~\cite{murphy2014}. \\
     Technological & Pi~5 with TFLite (4 packages vs 90+); dual-backend architecture enables GPU development with edge deployment~\cite{edgeai, tflite}. \\
     Economic & \pounds565 total cost ($\sim$10\% of DJI Matrice 30T); onboard inference eliminates high-bandwidth comms and dedicated analyst. \\
-    Environmental & Three-layer geofence + firmware fence protects adjacent SSSI; 30\,m waypoint buffer; \SI{3}{\kilo\gram} AUW minimises wildlife disturbance~\cite{wca1981}. \\
+    Environmental & Four-layer geofence + firmware fence protects adjacent SSSI; 30\,m waypoint buffer; \SI{3}{\kilo\gram} AUW minimises wildlife disturbance~\cite{wca1981}. \\
     Political & UK CAA Open Category A3 compliant~\cite{caa2024uas}; VLOS only (BVLOS requires SORA~\cite{jarus2019sora}); MIT licence (R12). \\
     Legal & Images stored locally (no cloud); SSSI compliance auditable via logged boundary distances at every loop iteration~\cite{wca1981}. \\
     Ethical & No autonomous landing without human confirmation; 120\,s auto-reject prioritises continued search over uncertain detections. \\
@@ -56,7 +56,7 @@ A 216-configuration parametric sweep (6~altitudes $\times$ 36~scan angles, Appen
   \label{fig:alt-speed-body}
 \end{figure}
 
-\noindent The selected operating point (\SI{35}{\metre}, \SI{70}{\degree}, \SI{8}{\metre\per\second}) is not the energy minimum---that belongs to \SI{50}{\metre}/\SI{70}{\degree}/\SI{10}{\metre\per\second} at \SI{8.2}{Wh}---but it is the best Pareto compromise: 96\% coverage, $P_d > 99.97\%$, \SI{12.6}{Wh} (10.9\% of battery), and a \SI{50}{\metre} NFZ margin with $2.2\times$ surplus. The 4\% coverage gap lies within a fenced wildlife reserve with negligible casualty probability. The full derivation, energy model, strategy comparison, and sensitivity analysis are provided in Appendices~\ref{sec:path-opt} and~\ref{sec:design-strategy}.
+\noindent The selected operating point (\SI{35}{\metre}, \SI{70}{\degree}, \SI{8}{\metre\per\second}) is not the energy minimum---that belongs to \SI{50}{\metre}/\SI{70}{\degree}/\SI{10}{\metre\per\second} at \SI{8.2}{Wh}---but it is the best Pareto compromise: 96\% coverage, $P_d > 99.97\%$ (assuming frame independence; 95\% per pass after correlation adjustment, see Section~\ref{sec:req-detail}), \SI{12.6}{Wh} (10.9\% of battery), and a \SI{50}{\metre} NFZ margin with $2.2\times$ surplus. The 4\% coverage gap lies within a fenced wildlife reserve with negligible casualty probability. The full derivation, energy model, strategy comparison, and sensitivity analysis are provided in Appendices~\ref{sec:path-opt} and~\ref{sec:design-strategy}.
 
 \subsection{Parameter Derivation Chain}\label{sec:param-chain}
 
@@ -202,7 +202,7 @@ Four candidate search patterns were evaluated (Table~\ref{tab:mcda-search}), emp
 
 \subsection{State Machine Design}\label{sec:fsm-rationale}
 
-A deterministic finite state machine (FSM) with 20~states and 32~transitions was chosen over behaviour trees or reactive architectures for its verifiability, traceability, and ease of runtime monitoring~\cite{wagner2006fsm}. Each state maps to a single handler function via a dictionary-based dispatch table ($O(1)$ lookup), eliminating fall-through errors. Defence-in-depth safety is enforced through five independent mechanisms: manual override (M~key), RC kill switch (hardware-level), return-to-launch on link loss, three-layer geofence, and per-state timeouts. Every blocking state carries a wall-clock timeout to prevent indefinite hangs. The complete transition table is provided in Appendix~\ref{app:states}.
+A deterministic finite state machine (FSM) with 20~states and 32~transitions was chosen over behaviour trees or reactive architectures for its verifiability, traceability, and ease of runtime monitoring~\cite{wagner2006fsm}. Each state maps to a single handler function via a dictionary-based dispatch table ($O(1)$ lookup), eliminating fall-through errors. Defence-in-depth safety is enforced through five independent mechanisms: manual override (M~key), RC kill switch (hardware-level), return-to-launch on link loss, four-layer geofence, and per-state timeouts. Every blocking state carries a wall-clock timeout to prevent indefinite hangs. The complete transition table is provided in Appendix~\ref{app:states}.
 
 \subsection{Autonomy Level Justification}\label{sec:autonomy-rationale}
 

@@ -278,8 +278,10 @@ class VisualFlightMission(StateHandlersMixin):
         if not NO_NFZ and config.SSSI_GPS and len(config.SSSI_GPS) >= 3:
             from geofence import NFZGeofence
             self.geofence = NFZGeofence(self.geo)
-            print(f"[GEOFENCE] Active — {len(config.SSSI_GPS)} corners, "
+            print(f"[GEOFENCE] SSSI NFZ active — {len(config.SSSI_GPS)} corners, "
                   f"hard={self.geofence.HARD_BOUNDARY}m, soft={self.geofence.SOFT_BOUNDARY}m")
+        if hasattr(config, 'FLIGHT_AREA_GPS') and len(config.FLIGHT_AREA_GPS) >= 3:
+            print(f"[GEOFENCE] Flight Area geofence: {len(config.FLIGHT_AREA_GPS)} vertices (R01)")
 
         # Planner
         self.planner = PathPlanner(self.geo, self.search_poly)
@@ -586,6 +588,7 @@ class VisualFlightMission(StateHandlersMixin):
 
         found, u, v, conf = self.eyes.process_frame_manually(frame)
         self.current_conf = conf
+        self.last_frame = frame.copy()
 
         # HUD overlay
         cx, cy = config.IMAGE_W // 2, config.IMAGE_H // 2
@@ -631,6 +634,9 @@ class VisualFlightMission(StateHandlersMixin):
 
         if self.state == State.DONE:
             cv2.putText(frame, f"FINAL ERROR: {self.final_dist:.2f} m", (cx-150, cy), F, 1.0, (0,0,255), 3)
+            casualty_d = getattr(self, 'casualty_dist', -1)
+            if casualty_d >= 0:
+                cv2.putText(frame, f"CASUALTY DIST: {casualty_d:.2f} m", (cx-180, cy+40), F, 0.8, (0,255,0), 2)
 
         if self.waiting_for_confirmation:
             if self.selecting_landing_side:
@@ -669,6 +675,12 @@ class VisualFlightMission(StateHandlersMixin):
                 nfz_buffer_m=config.NFZ_SLOW_ZONE_M if self.geofence else 0,
                 nfz_repulsion_vec=getattr(self, '_last_repulsion_vec', None),
             )
+            # Take-Off/Landing marker (cyan star) on god view
+            if hasattr(config, 'TAKEOFF_GPS') and config.TAKEOFF_GPS[0] != 0:
+                tol_pt = tuple(int(c) for c in self.geo.gps_to_pixels(*config.TAKEOFF_GPS))
+                cv2.drawMarker(god_frame, tol_pt, (255, 255, 0), cv2.MARKER_STAR, 20, 2)
+                cv2.putText(god_frame, "TOL", (tol_pt[0]+10, tol_pt[1]-10),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
             h_scale = frame.shape[0] / god_frame.shape[0]
             god_resized = cv2.resize(god_frame, (int(god_frame.shape[1]*h_scale), frame.shape[0]))
             final_display = np.hstack((god_resized, frame))
@@ -757,9 +769,13 @@ class VisualFlightMission(StateHandlersMixin):
             # RC OVERRIDE GUARD: if pilot switched away from GUIDED,
             # stop ALL commands. This prevents fighting the RC pilot.
             # Modes 4=GUIDED, 9=LAND are ours. Anything else = pilot has control.
-            _pilot_override = self._cube_mode not in (4, 9) and self.state not in (
+            _pilot_override = self._cube_mode not in (4, 9, 6) and self.state not in (
                 State.INIT, State.CONNECTING, State.ARMING, State.DONE)
             if _pilot_override:
+                if not HEADLESS:
+                    cv2.waitKey(1)  # Keep cv2 window responsive during override
+                else:
+                    time.sleep(0.02)
                 time.sleep(0.05)
                 continue  # Skip keys + state handler + geofence — pilot is flying
 
@@ -834,9 +850,28 @@ class VisualFlightMission(StateHandlersMixin):
                 target_deg, 30, direction, 0, 0, 0, 0)
 
     def _enforce_geofence(self, skip_speed_clamp=False):
-        """NFZ speed cap + inner polygon repulsion.
+        """NFZ speed cap + inner polygon repulsion + flight area containment.
         skip_speed_clamp: if True, only enforce hard boundary and repulsion
         (used during approach/return where speed clamping fights altitude changes)."""
+        # Check Flight Area containment (R01)
+        try:
+            if hasattr(config, 'FLIGHT_AREA_GPS') and len(config.FLIGHT_AREA_GPS) >= 3:
+                fa_poly = np.array([(lon, lat) for lat, lon in config.FLIGHT_AREA_GPS], dtype=np.float32)
+                pos = (self.sm.lon if hasattr(self, 'sm') else self.lon,
+                       self.sm.lat if hasattr(self, 'sm') else self.lat)
+                inside_fa = cv2.pointPolygonTest(fa_poly, pos, False)
+                if inside_fa < 0:  # Outside flight area
+                    if not getattr(self, '_fa_rtl_triggered', False):
+                        print("[GEOFENCE] OUTSIDE FLIGHT AREA — triggering RTL")
+                        self._emergency_rtl(reason="Outside Flight Area boundary")
+                        self._fa_rtl_triggered = True
+                        self.sm._set_state(State.LANDING)  # Transition state machine
+                    return  # Skip SSSI checks while outside
+                else:
+                    self._fa_rtl_triggered = False
+        except Exception as e:
+            print(f"[GEOFENCE] Flight Area check error: {e}")
+
         nfz_dist, nfz_inside = self.geofence.distance_to_boundary(self.lat, self.lon)
 
         # Compute NFZ approach limit + toward vector (used by manual AND navigation)
@@ -1051,7 +1086,30 @@ def _dry_run(mission):
     map_img = cv2.imread(config.MAP_FILE)
     if map_img is not None:
         vis = map_img.copy()
+
+        # Flight Area (blue outline) — outermost boundary
+        if hasattr(config, 'FLIGHT_AREA_GPS') and len(config.FLIGHT_AREA_GPS) >= 3:
+            fa_pts = [tuple(int(c) for c in mission.geo.gps_to_pixels(lat, lon))
+                      for lat, lon in config.FLIGHT_AREA_GPS]
+            cv2.polylines(vis, [np.array(fa_pts, np.int32)], True, (255, 150, 0), 2)
+
+        # SSSI No-Fly Zone (red, semi-transparent fill + outline)
+        if hasattr(config, 'SSSI_GPS') and len(config.SSSI_GPS) >= 3:
+            sssi_pts = [tuple(int(c) for c in mission.geo.gps_to_pixels(lat, lon))
+                        for lat, lon in config.SSSI_GPS]
+            sssi_arr = np.array(sssi_pts, np.int32)
+            overlay = vis.copy()
+            cv2.fillPoly(overlay, [sssi_arr], (0, 0, 200))
+            cv2.addWeighted(overlay, 0.3, vis, 0.7, 0, vis)
+            cv2.polylines(vis, [sssi_arr], True, (0, 0, 255), 2)
+            cx_s, cy_s = sssi_arr.mean(axis=0).astype(int)
+            cv2.putText(vis, "SSSI NFZ", (cx_s - 30, cy_s),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 255), 1)
+
+        # Search Area (green outline)
         cv2.polylines(vis, [np.array(mission.search_poly, np.int32)], True, (0,255,0), 2)
+
+        # Waypoints + path
         for i, wp in enumerate(waypoints):
             pt = tuple(int(c) for c in mission.geo.gps_to_pixels(wp[0], wp[1]))
             color = (0,0,255) if i==0 else ((255,0,0) if i==len(waypoints)-1 else (255,255,0))
@@ -1059,10 +1117,32 @@ def _dry_run(mission):
             if i > 0:
                 prev = tuple(int(c) for c in mission.geo.gps_to_pixels(waypoints[i-1][0], waypoints[i-1][1]))
                 cv2.line(vis, prev, pt, (255,255,0), 1)
+
+        # Take-Off/Landing marker (cyan star)
+        if hasattr(config, 'TAKEOFF_GPS') and config.TAKEOFF_GPS[0] != 0:
+            tol_pt = tuple(int(c) for c in mission.geo.gps_to_pixels(*config.TAKEOFF_GPS))
+            cv2.drawMarker(vis, tol_pt, (255, 255, 0), cv2.MARKER_STAR, 20, 2)
+            cv2.putText(vis, "TOL", (tol_pt[0]+10, tol_pt[1]-10),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
+
+        # Drone start position
         dp = tuple(int(c) for c in mission.geo.gps_to_pixels(*drone_gps))
         cv2.drawMarker(vis, dp, (0,255,255), cv2.MARKER_DIAMOND, 15, 2)
+
+        # Title
         cv2.putText(vis, f"DRY-RUN: {len(waypoints)} WPs, {total_dist:.0f}m, ~{total_time/60:.1f}min",
                     (10,30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,0), 2)
+
+        # Legend
+        legend_y = 60
+        for label, color in [("Flight Area", (255,150,0)), ("Search Area", (0,255,0)),
+                             ("SSSI (NFZ)", (0,0,255)), ("TOL", (255,255,0)),
+                             ("WP Start", (0,0,255)), ("WP End", (255,0,0))]:
+            cv2.rectangle(vis, (10, legend_y), (25, legend_y+12), color, -1)
+            cv2.putText(vis, label, (30, legend_y+10),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255,255,255), 1)
+            legend_y += 18
+
         scale = min(1.0, 900 / vis.shape[0])
         if scale < 1.0:
             vis = cv2.resize(vis, (int(vis.shape[1]*scale), int(vis.shape[0]*scale)))

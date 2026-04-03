@@ -54,7 +54,7 @@ The rescue dummy is 1.8\,m tall, 0.5\,m wide. As altitude increases, the target 
 Real conditions degrade detection: haze, unusual target pose, altitude excursions during turns. A 30\% margin below the ceiling gives us \textbf{35\,m operating altitude}, where the target is 36~pixels tall and 10~pixels wide---comfortably above the minimum.
 
 \paragraph{3. At 35\,m, how fast can we fly?}
-The camera sees a 24\,m strip of ground along the flight direction. At 4.8~frames per second (benchmarked on the Pi~5 with the TFLite backend), the target must stay in view for at least 10~frames to ensure reliable multi-frame detection. That caps speed at 11.5\,m/s. We chose \textbf{8\,m/s}---giving 14~frames per flyover and a cumulative detection probability above 99.97\%.
+The camera sees a 24\,m strip of ground along the flight direction. At 4.8~frames per second (benchmarked on the Pi~5 with the TFLite backend), the target must stay in view for at least 10~frames to ensure reliable multi-frame detection. That caps speed at 11.5\,m/s. We chose \textbf{8\,m/s}---giving 14~frames per flyover and a cumulative detection probability above 99.97\% (assuming frame independence; see Section~\ref{sec:req-detail} for correlation-adjusted analysis).
 
 The deployed NCNN backend achieves approximately 9\,FPS in the full pipeline. At this frame rate, requiring just 5~frames on target---empirically sufficient for reliable detection across lighting conditions---gives $v_\text{max} = 24 / (5/9) = 43$\,m/s, far above any practical flight speed. With the deployed backend, \textbf{detection is no longer the speed-limiting factor}; speed is instead constrained by energy budget, NFZ reaction time, GPS update rate, and wind tolerance. The choice of 5~frames as the minimum was determined empirically: testing across bright, overcast, and dusk conditions showed that 5~independent observations at $\geq$85\% per-frame confidence consistently yielded $>$99\% cumulative detection. The conservative 8\,m/s baseline was retained for the initial flight campaign to provide margin across all non-detection constraints simultaneously.
 
@@ -81,13 +81,16 @@ We did not rely on intuition. A physics-based simulation evaluated \textbf{216~c
     \toprule
     \textbf{\#} & \textbf{Alt} & \textbf{Angle} & \textbf{Speed} & $P_d$ & \textbf{Energy} & \textbf{Score} & \textbf{Why not?} \\
     \midrule
-    \textbf{1} & \textbf{35\,m} & \textbf{70\textdegree} & \textbf{8\,m/s} & \textbf{99.97\%} & \textbf{12.6\,Wh} & \textbf{0.87} & \textbf{Selected --- best compromise} \\
+    \textbf{1} & \textbf{35\,m} & \textbf{70\textdegree} & \textbf{8\,m/s} & \textbf{99.97\%\textsuperscript{$\dagger$}} & \textbf{12.6\,Wh} & \textbf{0.87} & \textbf{Selected --- best compromise} \\
     2 & 30\,m & 65\textdegree & 7.3\,m/s & 99.99\% & 14.8\,Wh & 0.85 & 17\% more energy for 0.02\% more detection \\
     3 & 40\,m & 75\textdegree & 8.7\,m/s & 99.94\% & 10.1\,Wh & 0.84 & Target width drops to 9\,px --- thin margin \\
     \bottomrule
   \end{tabularx}
 \end{table}
 
+\noindent\textsuperscript{$\dagger$}Assumes frame independence. Accounting for 95\% inter-frame overlap, the effective independent observations reduce to $N_{\text{eff}} \approx 1$, giving a per-pass probability of ${\sim}95\%$ (99.75\% over two passes). See Section~\ref{sec:req-detail} for the full correlation-adjusted derivation.
+
+\medskip
 Configuration \#1 wins because it sits at the ``sweet spot'' of the trade-off frontier (Figure~\ref{fig:pareto-parallel}): moving in either direction trades a large penalty in one objective for a negligible gain in another. Compared to \#2, it saves 17\% energy while sacrificing an unobservable 0.02~percentage points of detection. Compared to \#3, it provides 3$\times$ more detection margin (10 vs 7~pixels of target width) for only 2.5\,Wh of extra energy.
 
 The top three lawnmower paths overlaid on the survey polygon are shown in Figure~\ref{fig:top3-paths}.
@@ -109,7 +112,7 @@ The top three lawnmower paths overlaid on the survey polygon are shown in Figure
     Swath overlap         & 20\%              & Covers 4.6\,m lane error with 1.8\,m spare \\
     NFZ buffer            & 30\,m             & 2.2$\times$ safety factor over RSS margin \\
     \midrule
-    Detection probability & $>$99.97\%        & 14 frames $\times$ 95\% per-frame (at 4.8\,FPS) \\
+    Detection probability & $>$99.97\%\textsuperscript{$\dagger$} & 14 frames $\times$ 95\% per-frame, assuming independence (at 4.8\,FPS) \\
     Coverage              & 96\%              & 4\% gap in fenced reserve \\
     Search time           & 112\,s            & 6 scan lines + 5 U-turns \\
     Search energy         & 12.6\,Wh          & 10.9\% of battery (14\,min remaining) \\

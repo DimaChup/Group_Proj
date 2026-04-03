@@ -5,6 +5,9 @@ from navigation import NavigationController
 import config
 import time
 import math
+import os
+import json
+from datetime import datetime
 
 
 class StateHandlersMixin:
@@ -55,6 +58,37 @@ class StateHandlersMixin:
         s = 111132.0
         return math.sqrt(((lat1 - lat2) * s) ** 2 +
                          ((lon1 - lon2) * s * math.cos(math.radians(lat1))) ** 2)
+
+    # -- Detection image saving --
+
+    def _save_detection_image(self, decision, lat, lon, conf=0.0):
+        """Save current frame + JSON sidecar to detections/ directory."""
+        import cv2
+        frame = getattr(self, 'last_frame', None)
+        if frame is None:
+            return
+        det_dir = "mission_detections"
+        os.makedirs(det_dir, exist_ok=True)
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+        base = f"{decision}_{ts}_{lat:.6f}_{lon:.6f}"
+        img_path = os.path.join(det_dir, base + ".jpg")
+        json_path = os.path.join(det_dir, base + ".json")
+        try:
+            cv2.imwrite(img_path, frame)
+            meta = {
+                "decision": decision,
+                "target_lat": lat,
+                "target_lon": lon,
+                "confidence": round(conf, 4),
+                "altitude": round(self.alt, 1),
+                "timestamp": ts,
+                "drone_lat": round(self.lat, 7),
+                "drone_lon": round(self.lon, 7),
+            }
+            with open(json_path, 'w') as f:
+                json.dump(meta, f, indent=2)
+        except Exception as e:
+            print(f"[WARN] Failed to save detection image: {e}")
 
     # -- Detection dedup --
 
@@ -170,6 +204,15 @@ class StateHandlersMixin:
                     self.lon = gps_msg.lon / 1e7
                     self.home_lat, self.home_lon = self.lat, self.lon
                     print(f"GPS FIX OK — fix={fix_type}, sats={sats}, ({self.lat:.6f}, {self.lon:.6f})")
+                    # Check distance from TOL (R03)
+                    if hasattr(config, 'TAKEOFF_GPS') and config.TAKEOFF_GPS[0] != 0:
+                        tol_lat, tol_lon = config.TAKEOFF_GPS
+                        tol_dist = math.sqrt(((self.lat - tol_lat) * 111320) ** 2 +
+                                             ((self.lon - tol_lon) * 111320 * math.cos(math.radians(self.lat))) ** 2)
+                        if tol_dist > 5.0:
+                            print(f"WARNING: {tol_dist:.1f}m from TOL (limit 5m) — check drone position")
+                        else:
+                            print(f"  TOL check: {tol_dist:.1f}m from defined takeoff point (OK)")
                 elif time.time() - self._last_gps_status_print > 5.0:
                     print(f"Waiting for GPS fix... (fix={fix_type}, sats={sats})")
                     self._last_gps_status_print = time.time()
@@ -384,11 +427,13 @@ class StateHandlersMixin:
                 if self._consecutive_detect_count >= config.DETECT_CONFIRM_FRAMES:
                     print(f"[SMART] Confirmed ({self._consecutive_detect_count} frames) at ({self.target_lat:.6f}, {self.target_lon:.6f}) conf={conf:.2f}")
                     self._enqueue_detection(self.target_lat, self.target_lon, conf)
+                    self._save_detection_image("SEARCH", self.target_lat, self.target_lon, conf)
                     self._consecutive_detect_count = 0
             else:
                 if not self._is_near_known(self.target_lat, self.target_lon):
                     print(f"[DETECT] Target at ({self.target_lat:.6f}, {self.target_lon:.6f}) conf={conf:.2f} alt={self.alt:.0f}m")
                     self._enqueue_detection(self.target_lat, self.target_lon, conf)
+                    self._save_detection_image("SEARCH", self.target_lat, self.target_lon, conf)
         else:
             self._consecutive_detect_count = 0
 
@@ -782,6 +827,13 @@ class StateHandlersMixin:
         print(f"  MISSION COMPLETE  [T+{mins:02d}:{secs:02d}]")
         print(f"  {reason}")
         print(f"  Landing error: {self.final_dist:.2f}m from home")
+        if self.target_lat != 0 and self.target_lon != 0:
+            target_dist = math.sqrt(((self.lat - self.target_lat) * s) ** 2 +
+                                    ((self.lon - self.target_lon) * s * math.cos(math.radians(self.lat))) ** 2)
+            print(f"  Distance from casualty: {target_dist:.2f}m (R07 target: 5-10m)")
+            self.casualty_dist = target_dist
+        else:
+            self.casualty_dist = -1
         print(f"{'='*60}")
         self._set_state(State.DONE)
 
@@ -949,6 +1001,7 @@ class StateHandlersMixin:
             return
 
         if key == ord('y') or key == ord('Y'):
+            self._save_detection_image("Y", self.target_lat, self.target_lon, self.current_conf)
             if getattr(self, '_gps_avg_start', None):
                 elapsed = time.time() - self._gps_avg_start
                 remaining = max(0, 10.0 - elapsed)
@@ -959,6 +1012,7 @@ class StateHandlersMixin:
                 print("USER CONFIRMED TARGET. SELECT LANDING SIDE: N/E/S/W")
                 self.selecting_landing_side = True
         elif key == ord('i') or key == ord('I'):
+            self._save_detection_image("I", self.target_lat, self.target_lon, self.current_conf)
             if not hasattr(self, 'items_of_interest'):
                 self.items_of_interest = []
             self.items_of_interest.append({
@@ -981,6 +1035,7 @@ class StateHandlersMixin:
             else:
                 self._set_state(State.SEARCH)
         elif key == ord('n') or key == ord('N'):
+            self._save_detection_image("N", self.target_lat, self.target_lon, self.current_conf)
             self.rejected_targets.append((self.target_lat, self.target_lon))
             print(f"USER REJECTED TARGET at ({self.target_lat:.6f}, {self.target_lon:.6f}). RESUMING.")
             self.waiting_for_confirmation = False
@@ -1002,7 +1057,7 @@ class StateHandlersMixin:
             else:
                 self._set_state(State.SEARCH)
         elif key == ord('x') or key == ord('X'):
-            # FIX 2: X key — false positive rejection (same as N but labelled differently)
+            self._save_detection_image("X", self.target_lat, self.target_lon, self.current_conf)
             print(f"[VERIFY] FALSE POSITIVE — target rejected as false positive")
             self.rejected_targets.append((self.target_lat, self.target_lon))
             self.waiting_for_confirmation = False

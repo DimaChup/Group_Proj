@@ -103,7 +103,7 @@ After payload deployment, the drone climbs back to search altitude and retraces 
 Four safety mechanisms operate concurrently throughout the mission, independent of the current state.
 
 \paragraph{NFZ Geofence (R01, R02).}\label{sec:mf-nfz}
-The SSSI no-fly zone is enforced by a three-layer geofence (Section~\ref{sec:geofencing}):
+The SSSI no-fly zone is enforced by a four-layer geofence (Section~\ref{sec:geofencing}):
 
 \begin{enumerate}
   \item \textbf{Plan-time filtering} --- waypoints within \SI{30}{\metre} of the SSSI boundary are removed during pattern generation.
@@ -120,5 +120,27 @@ The RC transmitter's mode switch can be set to STABILIZE at any time, bypassing 
 
 \paragraph{Link Loss.}
 The state machine monitors MAVLink heartbeats continuously. If no heartbeat is received for five seconds, the system triggers an automatic Return-to-Launch via ArduPilot's built-in \texttt{FS\_GCS\_ENABLE} failsafe parameter, which is configured before flight. This ensures the drone returns home even if the companion computer loses communication with the autopilot.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{How the Mission Was Built Up Incrementally}\label{sec:mf-buildup}
+
+The mission flow described above represents the final integrated system, but it was not designed or implemented as a single unit.  Each subsection of the mission was developed, tested, and validated independently before being composed into the full sequence.  This incremental approach was essential for managing complexity and maintaining confidence at each integration step.
+
+\paragraph{Stage 1: Search pattern in isolation.}
+The lawnmower planner (\texttt{planning.py}) was the first module developed, because it has no hardware dependencies.  The module takes a polygon (the survey area), a strip width (derived from the camera FOV at the search altitude), and an edge margin, and generates a boustrophedon waypoint sequence.  It was tested entirely offline using \texttt{python main.py --dry-run}, which visualises the pattern on a map without requiring a Cube connection, GPS fix, or even SITL.  The output image (\texttt{dry\_run\_pattern.jpg}) provided immediate visual confirmation that the pattern covered the survey area, respected the SSSI exclusion zone, and connected waypoints in a flyable order.  Over 50 dry-run iterations refined the strip width, turn radius, and edge margin before the planner was ever connected to an autopilot.
+
+\paragraph{Stage 2: Detection pipeline in isolation.}
+The vision module (\texttt{vision.py}) was developed as a fully independent component with a single public interface: \texttt{detect\_in\_image(frame)} returns \texttt{(found, x, y, conf)}.  This interface decouples the detection algorithm from the mission logic entirely---\texttt{main.py} never imports TensorFlow, never handles model loading, and never processes raw bounding boxes.  The vision module was tested first on static images (\texttt{tests/hardware/benchmark.py}), then on live camera feeds (\texttt{tests/laptop/test\_cv.py --camera}), and finally on recorded DJI flight video (\texttt{tests/laptop/video\_test.py}).  Each testing stage expanded the conditions under which the module was validated without requiring changes to its interface.
+
+\paragraph{Stage 3: MAVLink commands in SITL.}
+The arming, takeoff, waypoint navigation, and landing commands were tested against ArduPilot SITL on the development laptop.  The state machine was connected to the simulated autopilot and the entire mission flow---from \textsc{Init} through \textsc{Search} to \textsc{Landing} and \textsc{Done}---was executed repeatedly.  This stage caught the \texttt{DISARM\_DELAY} issue, the \texttt{SET\_POSITION\_TARGET} conflict with \texttt{NAV\_TAKEOFF}, and the mode-change acknowledgement race condition, all of which would have been dangerous if encountered during a real flight.
+
+\paragraph{Stage 4: Operator interface development.}
+The browser-based ground station (\texttt{pi\_flight.py}) was developed and tested on the laptop in SIMULATION mode before being deployed to the Pi.  The MJPEG video stream, GPS grid overlay, detection markers, and command buttons (N/Y/I/X/L) were all validated against the SITL simulator, allowing the full operator workflow---observe detection, press investigate, classify target, confirm landing---to be rehearsed dozens of times without hardware risk.  The headless architecture (no \texttt{cv2.imshow} calls; all UI through the browser) was a deliberate design choice to ensure the same code would run on the Pi over SSH without a display server.
+
+\paragraph{Stage 5: Integration on hardware.}
+Only after each component had been validated independently was the full system assembled on the Pi with the Cube Orange.  The bench test scripts (\texttt{0a\_cube\_commands.py}, \texttt{0b\_bench\_mission.py}, \texttt{0c\_feedback\_test.py}) verified the integrated pipeline---camera capture through AI inference through GPS estimation through MAVLink command---in a controlled, grounded environment.  The final step before flight would be passive observation during manual RC flight (Tier~4), where the Pi runs the full pipeline but issues zero flight commands, collecting ground-truth detection data that informs the configuration parameters used when autonomy is finally enabled.
+
+This staged approach means that by the time the system reaches autonomous flight, every component has been validated at multiple integration levels, and the only remaining unknowns are the environmental factors---wind, lighting, GPS multipath, thermal effects---that no ground-based test can replicate.  The progressive testing framework (Section~\ref{sec:five-tier}) formalises this philosophy: each tier must pass before the next is attempted, and failures at any tier are resolved at that level before proceeding.
 
 % end of mission flow section

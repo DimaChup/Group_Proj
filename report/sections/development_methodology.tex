@@ -1,0 +1,390 @@
+% ══════════════════════════════════════════════════════════════════════
+% Appendix AI: Development Methodology
+% ══════════════════════════════════════════════════════════════════════
+\section{Development Methodology}\label{app:dev-methodology}
+
+This appendix documents the progressive development methodology used to
+build the SAR drone system, from initial simulation through to field
+integration.  It covers the design philosophy, a 10-phase timeline with
+outcomes, and lessons that future teams can apply.
+
+% ──────────────────────────────────────────────────────────────────────
+\subsection{Development Philosophy}\label{sec:dev-philosophy}
+
+Three principles governed development from the outset:
+
+\begin{enumerate}[leftmargin=1.5em]
+  \item \textbf{Simulation-first.}  Every algorithmic component---state
+        machine, search pattern generator, detection pipeline, GPS
+        estimation---was prototyped and end-to-end tested in SITL
+        (Software-In-The-Loop) on a laptop before any hardware was
+        touched.  SITL provides repeatable conditions, instant restart,
+        and zero crash risk.
+
+  \item \textbf{Same code everywhere.}  A single codebase runs on the
+        Windows development laptop, WSL/Linux, and the Raspberry~Pi~5.
+        Platform differences are confined to \texttt{config.py}
+        (auto-detection of serial ports, camera backends, display
+        availability) and \texttt{vision.py} (dual backend:
+        Ultralytics on laptop, TFLite/NCNN on Pi).  No
+        \texttt{if platform ==} guards appear in mission logic.
+
+  \item \textbf{Progressive trust.}  Each test step isolates exactly
+        one new variable.  Bench tests precede flight tests; passive
+        observation precedes autonomous commands; logging-only modes
+        precede action-taking modes.  A failure at step~$N$ is
+        attributable to the single change introduced at step~$N$.
+\end{enumerate}
+
+% ──────────────────────────────────────────────────────────────────────
+\subsection{Ten-Phase Development Timeline}\label{sec:dev-timeline}
+
+\tabref{tab:dev-phases} summarises the ten development phases, their
+scope, test outcomes, and calendar dates.
+
+\begin{table}[H]
+\centering
+\compactTable
+\caption{Ten-phase development history with outcomes.}
+\label{tab:dev-phases}
+\begin{tabularx}{\linewidth}{@{}c l X l@{}}
+\toprule
+\textbf{\#} & \textbf{Phase} & \textbf{Scope and Outcomes} & \textbf{Dates} \\
+\midrule
+1 & Simulation on Laptop &
+    State machine (11~states, 32~transitions), lawnmower search pattern,
+    simulated drone camera from \texttt{map.jpg}, Ultralytics YOLOv8n
+    detection, GPS estimation, operator Y/N confirmation, SITL
+    integration.  Full mission completed end-to-end in simulation. &
+    Weeks 12--13 \\
+\addlinespace
+2 & Multi-Platform CV &
+    Dual-backend \texttt{vision.py}: Ultralytics (laptop) / TFLite
+    (Pi).  Docker Pi-environment test passed.  TFLite coordinate bug
+    fixed (pixel vs.\ normalised).  \texttt{config.py} auto-detects
+    connection type. &
+    Week 13 \\
+\addlinespace
+3 & Test Infrastructure &
+    \texttt{preflight.py}, 13~test scripts covering camera, Cube
+    heartbeat, GPS, AI detection, FOV calibration, resolution trade-off.
+    Organised into \texttt{tests/hardware/}, \texttt{tests/flight/},
+    \texttt{tests/calibration/}, \texttt{tests/diagnostics/}. &
+    Week 14 \\
+\addlinespace
+4 & Pi + Camera &
+    Raspberry~Pi~5 with IMX296 global shutter.  Camera verified at
+    $1456\times1088$.  BGR colour issue discovered and fixed (LL-02).
+    TFLite inference: \SI{206.5}{\milli\second} average, 4.8~FPS,
+    0.966~confidence (50-run benchmark). &
+    Week 16 \\
+\addlinespace
+5 & Pi + Cube Wired &
+    Cube Orange connected via UART at \SI{921600}{baud}.  Mavproxy
+    UDP bridge resolves Python~3.13 serial bug (LL-07).  Mission
+    Planner connects via TCP bridge. &
+    Week 16 \\
+\addlinespace
+6 & Interactive Simulator &
+    \texttt{simple\_simulator.py}: keyboard flight, visual servo,
+    GPS estimation, spatial clustering, Kalman filter,
+    7.5\,m offset landing, multi-target support, data recording. &
+    Weeks 14--15 \\
+\addlinespace
+7 & Web Ground Station &
+    \texttt{pi\_flight.py}: MJPEG stream, 2D GPS grid, browser
+    dashboard with detection clusters and command buttons.
+    Headless over SSH (PuTTY).  Tested in SIMULATION on laptop. &
+    Week 17 \\
+\addlinespace
+8 & Field Integration &
+    FOV calibrated (\SI{5.46}{\milli\metre} focal length at bench;
+    \SI{54.4}{\degree} HFOV from DJI video at altitude).  Lens
+    calibration (RMS~0.399).  Pi bench testing with real Cube.
+    Weather cancelled outdoor flight; adapted to bench-only protocol. &
+    Weeks 19--20 \\
+\addlinespace
+9 & Model Retraining &
+    \texttt{generate\_dataset\_v2.py}: 366~images (300~synthetic +
+    16~real-labelled + 50~negatives) at $1456\times1088$.
+    Trained YOLOv8n on Colab: \texttt{imgsz=1088}, 150~epochs,
+    mAP50\,=\,0.995.  NCNN backend added (72\,ms, 4.5$\times$
+    faster than TFLite). &
+    Week 18 \\
+\addlinespace
+10 & Safety \& Polish &
+    RC override guard (LL-01).  SSSI geofence with three avoidance
+    modes.  SmartEstimator greedy-cluster GPS lock.  Threaded
+    inference (stream at 30\,fps, detect in background).
+    127~unit tests, 23~integration tests. &
+    Weeks 19--20 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+% ──────────────────────────────────────────────────────────────────────
+\subsection{Simulation Stage (Weeks 12--15)}\label{sec:sim-stage}
+
+All mission logic was developed and validated in SITL before any
+hardware was procured.  The simulation environment consisted of:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item \textbf{ArduPilot SITL} via Mission Planner, providing
+        realistic GPS, attitude, and flight dynamics.
+  \item \textbf{Simulated camera} (\texttt{simulation.py}): a
+        satellite image (\texttt{map.jpg}) with a virtual drone viewport
+        that moves according to SITL telemetry.
+  \item \textbf{State machine} (\texttt{main.py}): 11~states from
+        \texttt{INIT} through \texttt{DONE}, with 32~transitions
+        handling detection, centering, descent, verification, and
+        landing.
+  \item \textbf{Search pattern} (\texttt{planning.py}): lawnmower
+        generator for arbitrary convex polygons with configurable
+        strip spacing, edge margins, and start-corner optimisation.
+  \item \textbf{Interactive simulator}
+        (\texttt{simple\_simulator.py}, 2508~lines): keyboard-driven
+        flight with GPS estimation, inverse-variance weighting, Kalman
+        filtering, spatial clustering, and 7.5\,m offset landing.
+\end{itemize}
+
+By the end of the simulation stage the full mission---takeoff, search,
+detect, centre, descend, verify, land---ran end-to-end on the laptop
+with zero hardware dependencies.
+
+% ──────────────────────────────────────────────────────────────────────
+\subsection{Pi Deployment (Weeks 16--18)}\label{sec:pi-deploy}
+
+Hardware integration proceeded component-by-component:
+
+\begin{enumerate}[leftmargin=1.5em]
+  \item \textbf{Camera.}  IMX296 global shutter at
+        $1456\times1088$ native resolution.  A persistent blue tint
+        was traced to the sensor outputting BGR despite picamera2's
+        \texttt{RGB888} label; removing \texttt{cv2.cvtColor} fixed it
+        (LL-02).
+
+  \item \textbf{AI inference.}  TFLite on Pi~5 CPU (XNNPACK):
+        \SI{206.5}{\milli\second} per frame, 4.8~FPS, 50/50
+        detections at 0.966~confidence (\texttt{tests/hardware/%
+        benchmark.py}).  NCNN backend later added:
+        \SI{72}{\milli\second}, 9~FPS full pipeline.
+
+  \item \textbf{Cube connection.}  Python~3.13 breaks
+        \texttt{pyserial} reads; mavproxy UDP bridge
+        (\texttt{udpout:127.0.0.1:14550}) resolves this with zero
+        data loss (LL-07).  Mission Planner connects via
+        \texttt{tcpin:0.0.0.0:5762}.
+
+  \item \textbf{Model retraining.}  \texttt{generate\_dataset\_v2.py}
+        produced 366~images at native resolution.
+        \texttt{tools/label\_tool.py --full} labelled 16~real frames
+        from DJI video.  Colab training yielded mAP50\,=\,0.995;
+        the model is a drop-in replacement (same input/output shapes).
+\end{enumerate}
+
+% ──────────────────────────────────────────────────────────────────────
+\subsection{Field Integration (Weeks 19--20)}\label{sec:field-int}
+
+A field day at the designated site (2026-03-11) assembled the full
+Pi + Cube + camera stack.  Weather cancelled the planned flight;
+the team adapted by executing every possible bench and calibration
+activity:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item \textbf{FOV calibration:} \SI{92}{\centi\metre} visible at
+        \SI{1}{\metre} height $\Rightarrow$
+        $f = \SI{5.46}{\milli\metre}$ (updated from the
+        initial 7.0\,mm estimate).
+  \item \textbf{Lens calibration:} checkerboard method (14$\times$9,
+        28\,mm squares), RMS\,=\,0.399, undistortion cost
+        $\sim$\SI{1.5}{\milli\second} per frame.
+  \item \textbf{Connectivity:} three-terminal PuTTY workflow verified
+        (mavproxy, diagnostics, flight script).  Port conflicts and
+        camera-ownership issues resolved.
+  \item \textbf{Bug discovery:} corrupt
+        \texttt{calibration\_data.npz} (0~bytes) was mangling frames
+        via \texttt{cv2.remap}; deleting it restored detection
+        immediately (LL-04).
+  \item \textbf{Subsequent video analysis} of DJI flight footage
+        revealed a 100--200\,ms GPS timing lag causing
+        CEP50\,=\,\SI{2.3}{\metre} scatter in target estimates
+        (LL-05).
+\end{itemize}
+
+% ──────────────────────────────────────────────────────────────────────
+\subsection{Ambition Levels}\label{sec:ambition-levels}
+
+The project defined three deliverable tiers to manage scope risk:
+
+\begin{table}[H]
+\centering
+\compactTable
+\caption{Three product levels with autonomy and demonstration scope.}
+\label{tab:ambition-levels}
+\begin{tabularx}{\linewidth}{@{}c l l X@{}}
+\toprule
+\textbf{Level} & \textbf{Name} & \textbf{Autonomy} & \textbf{Demonstration Scope} \\
+\midrule
+L1 & Manual MVP & None &
+  Pilot flies RC manually.  Pi runs camera + AI passively
+  (zero commands).  Detection overlay on video stream, buzzer alerts,
+  geotagged images saved.  Pilot lands manually. \\
+\addlinespace
+L2 & Semi-Autonomous & Partial &
+  Drone arms, takes off, flies lawnmower search avoiding SSSI.
+  CV detects targets; pilot classifies (Y/I/X).  On confirm: centre,
+  descend, offset land at 7.5\,m, payload release.  RC override
+  always available. \\
+\addlinespace
+L3 & Full Autonomous & Full &
+  As L2 but confidence accumulation replaces pilot confirmation.
+  Multi-pass verification at decreasing altitude.  Drone auto-decides. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+This tiered approach ensured that even if weather or hardware issues
+prevented full autonomous flight, L1 would still produce a
+demonstrable, useful system and collect the data needed for L2
+development.
+
+% ──────────────────────────────────────────────────────────────────────
+\subsection{Progressive Testing Ladder}\label{sec:test-ladder}
+
+Flight testing follows a strict five-step ladder.  Each step isolates
+one new risk factor; no step may be skipped.
+
+\begin{table}[H]
+\centering
+\compactTable
+\caption{Progressive flight testing ladder with scripts and risk isolation.}
+\label{tab:test-ladder}
+\begin{tabularx}{\linewidth}{@{}c X l l@{}}
+\toprule
+\textbf{Step} & \textbf{Description} & \textbf{Script} & \textbf{New Risk} \\
+\midrule
+0 & Bench commands: arm, mode change, servo PWM.
+    No propellers. &
+  \texttt{0a--0f\_*.py} & Wiring \\
+\addlinespace
+1 & Manual RC flight.  Pi runs camera + AI, logs detections,
+    buzzer beeps.  \textbf{Zero MAVLink commands.} &
+  \texttt{1\_passive\_flight.py} & Outdoor CV \\
+\addlinespace
+2 & Code-controlled waypoint flight (3--4 GPS points).
+    No camera, no detection, no decisions. &
+  \texttt{2\_waypoint\_test.py} & MAVLink flight \\
+\addlinespace
+3 & AUTO waypoints + AI detection.  On detection, switch
+    to GUIDED hover.  No descent or landing. &
+  \texttt{3\_auto\_detect.py} & CV + flight \\
+\addlinespace
+4 & Full autonomous: search pattern, detect, centre,
+    descend, verify (Y/N), offset land. &
+  \texttt{4\_detect\_and\_center.py} & Full mission \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Six bench-level tests (step~0) additionally cover planning validation
+(\texttt{0d\_planning\_test.py}, 6~unit tests), geofence sign
+conventions (\texttt{0e\_geofence\_test.py}, 7~unit tests), and
+payload servo actuation (\texttt{0f\_servo\_test.py}).
+
+% ──────────────────────────────────────────────────────────────────────
+\subsection{Achievement Summary}\label{sec:achievement-summary}
+
+An objective scoring matrix (\tabref{tab:sim-vs-real}) was constructed
+for each requirement across both simulation and real hardware.
+
+\begin{table}[H]
+\centering
+\compactTable
+\caption{Simulation vs.\ real hardware readiness (0--10 scale).}
+\label{tab:sim-vs-real}
+\begin{tabular}{@{}l c c@{}}
+\toprule
+\textbf{Category} & \textbf{Simulation} & \textbf{Real Hardware} \\
+\midrule
+All requirements (R01--R10) & 7.7 & 2.1 \\
+Flight-critical (R01, R02, R03, R04, R09) & 8.4 & 1.8 \\
+Mission-critical (R05, R06, R07) & 7.0 & 1.0 \\
+Infrastructure (R08, R10) & 7.0 & 4.5 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Simulation (7.7/10):}  The state machine logic, search pattern
+generation, CV detection pipeline, GPS estimation mathematics, and
+safety systems (RC override, geofence, RTL) all work correctly in
+simulation.  The full mission has been completed end-to-end multiple
+times in SITL.
+
+\textbf{Real hardware (2.1/10):}  Individual components are verified
+(camera: working; TFLite: 4.8~FPS at 0.966~confidence; Cube
+connection: stable via mavproxy), but zero minutes of real flight
+time have been logged.  The 5.6-point gap between simulation and
+real hardware is the project's largest risk.
+
+\textbf{What simulation proved:}  Algorithm correctness, state
+transitions, search coverage, detection-to-decision loop, safety
+logic.
+
+\textbf{What simulation cannot prove:}  Whether the drone physically
+flies; whether CV detects from 15--30\,m altitude outdoors; whether
+GPS accuracy is sufficient for offset landing; whether the video
+stream is usable at operational WiFi range; whether the geofence
+actually prevents SSSI entry in wind.
+
+% ──────────────────────────────────────────────────────────────────────
+\subsection{Lessons for Future Teams}\label{sec:lessons-future}
+
+Eight lessons emerged from the development process, each documented
+with root cause, fix, and checklist (see Appendix~AH for the full
+defect register):
+
+\begin{enumerate}[leftmargin=1.5em]
+  \item \textbf{Start hardware testing on day one.}  The simulation
+        stage produced mature, well-tested code, but the 5.6-point
+        sim-to-real gap shows that software maturity does not transfer
+        to hardware confidence.  Even basic tasks---outdoor GPS fix,
+        one manual hover---would have closed multiple requirements.
+
+  \item \textbf{Validate the environment before the field.}  Docker
+        testing caught missing packages early, but the corrupt
+        \texttt{calibration\_data.npz} and BGR colour issue were
+        discovered only on-site.  A pre-field smoke test with the exact
+        Pi image would have saved hours.
+
+  \item \textbf{Plan for weather cancellation.}  The March~11 field
+        day was the sole outdoor window; weather cancelled it.  Having a
+        bench-only fallback protocol (FOV calibration, lens calibration,
+        connectivity verification) ensured the day was still productive.
+
+  \item \textbf{Decouple camera ownership.}  Only one process can open
+        picamera2.  This forced a clean separation: one script owns the
+        camera and streams to all consumers via MJPEG.  Design for
+        single-owner resources from the start.
+
+  \item \textbf{Never trust format labels.}  The IMX296 sensor
+        outputs BGR despite \texttt{RGB888} labelling.  YOLOv8 TFLite
+        outputs pixel coordinates despite documentation suggesting
+        normalised values.  Test empirically; label after measurement.
+
+  \item \textbf{Build zero-command observation scripts.}  The passive
+        watch approach (\texttt{passive\_watch.py}, zero MAVLink
+        commands) was the safest way to validate CV in the field.  It
+        could run during any flight without risk, collecting training
+        data and detection statistics simultaneously.
+
+  \item \textbf{Use progressive trust, never skip steps.}  The
+        numbered test ladder (0a--4) isolates exactly one new variable
+        per step.  When Step~$N$ fails, the cause is the single change
+        introduced at Step~$N$, not accumulated uncertainty from
+        earlier steps.
+
+  \item \textbf{Maintain tiered deliverables.}  L1~(Manual MVP),
+        L2~(Semi-Autonomous), L3~(Full Autonomous) ensured that even
+        if only L1 was achievable, it would be a complete, demonstrable
+        product rather than a half-finished L2.
+\end{enumerate}

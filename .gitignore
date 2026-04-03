@@ -18,6 +18,7 @@ passive_flight_log.csv
 detection_log.csv
 snapshot_*.jpg
 detections/
+mission_detections/
 flight_frames/
 *.tlog
 *.tlog.raw
@@ -72,4 +73,6 @@ dima_images/
 dry_run_pattern.jpg
 _test_gps_visual.html
 training/dataset_v3/
-training/dataset_v3.zip
+training/dataset_v3.ziptraining/dataset_v3_multiclass/
+training/dataset_v3_multiclass.zip
+training/dataset_multiclass/

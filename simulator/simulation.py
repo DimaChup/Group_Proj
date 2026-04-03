@@ -23,6 +23,18 @@ class SimulationEnvironment:
         
         self.map_h, self.map_w = self.full_map.shape[:2]
         self.coverage_overlay = np.zeros_like(self.full_map)
+
+        # Pre-scaled map for god view rendering (avoids 63MB copy every frame)
+        # The god view is always resized to IMAGE_H height, so we can work at
+        # a reduced resolution and save ~90% of memory ops per frame.
+        _god_target_h = config.IMAGE_H
+        self._god_scale = _god_target_h / self.map_h
+        self._god_w = int(self.map_w * self._god_scale)
+        self._god_h = _god_target_h
+        self._god_map = cv2.resize(self.full_map, (self._god_w, self._god_h))
+        self._god_coverage = np.zeros_like(self._god_map)
+        print(f"God view: {self.map_w}x{self.map_h} -> {self._god_w}x{self._god_h} "
+              f"({self._god_map.nbytes/1e6:.1f}MB vs {self.full_map.nbytes/1e6:.1f}MB)")
         
         # Load Dummy + Cone Assets
         self.dummy_img = cv2.imread(config.DUMMY_FILE, cv2.IMREAD_UNCHANGED)
@@ -140,6 +152,32 @@ class SimulationEnvironment:
                     line_pts = [(int(w[0]*scale_factor), int(w[1]*scale_factor)) for w in transit_wps]
                     for j in range(len(line_pts)-1):
                         cv2.line(temp_vis, line_pts[j], line_pts[j+1], (255, 255, 0), 2)
+            # Flight Area boundary (yellow, 6px)
+            if hasattr(config, 'FLIGHT_AREA_GPS') and len(config.FLIGHT_AREA_GPS) >= 3:
+                fa_pts = np.array([[int(self.geo.gps_to_pixels(lat, lon)[0]*scale_factor),
+                                    int(self.geo.gps_to_pixels(lat, lon)[1]*scale_factor)]
+                                   for lat, lon in config.FLIGHT_AREA_GPS], dtype=np.int32)
+                cv2.polylines(temp_vis, [fa_pts], True, (0, 200, 255), 6)
+            # SSSI no-fly zone (red fill 30% + red outline)
+            if hasattr(config, 'SSSI_GPS') and len(config.SSSI_GPS) >= 3:
+                sssi_pts = np.array([[int(self.geo.gps_to_pixels(lat, lon)[0]*scale_factor),
+                                      int(self.geo.gps_to_pixels(lat, lon)[1]*scale_factor)]
+                                     for lat, lon in config.SSSI_GPS], dtype=np.int32)
+                overlay = temp_vis.copy()
+                cv2.fillPoly(overlay, [sssi_pts], (0, 0, 180))
+                cv2.addWeighted(overlay, 0.3, temp_vis, 0.7, 0, temp_vis)
+                cv2.polylines(temp_vis, [sssi_pts], True, (0, 0, 255), 3)
+                cx_s = int(np.mean(sssi_pts[:, 0]))
+                cy_s = int(np.mean(sssi_pts[:, 1]))
+                cv2.putText(temp_vis, "SSSI NFZ", (cx_s - 30, cy_s),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+            # TOL marker (cyan star)
+            if hasattr(config, 'TAKEOFF_GPS') and config.TAKEOFF_GPS[0] != 0:
+                tol_px = self.geo.gps_to_pixels(*config.TAKEOFF_GPS)
+                tol_pt = (int(tol_px[0]*scale_factor), int(tol_px[1]*scale_factor))
+                cv2.drawMarker(temp_vis, tol_pt, (255, 255, 0), cv2.MARKER_STAR, 20, 2)
+                cv2.putText(temp_vis, "TOL", (tol_pt[0]+12, tol_pt[1]-8),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
             # Search polygon (green)
             if len(search_polygon) > 0:
                 pts = [np.array([[int(p[0]*scale_factor), int(p[1]*scale_factor)] for p in search_polygon], dtype=np.int32)]
@@ -474,7 +512,11 @@ class SimulationEnvironment:
         # Draw flight boundary (yellow)
         if config.FLIGHT_AREA_GPS:
             flight_pts = np.array([geo_tool.gps_to_pixels(lat, lon) for lat, lon in config.FLIGHT_AREA_GPS], np.int32)
-            cv2.polylines(display_map, [flight_pts], True, (0, 200, 255), 1)
+            cv2.polylines(display_map, [flight_pts], True, (0, 200, 255), 6)
+            # Label (use local vars to avoid overwriting drone cx,cy)
+            fa_cx = int(np.mean(flight_pts[:, 0]))
+            fa_cy = int(np.min(flight_pts[:, 1])) - 10
+            cv2.putText(display_map, "FLIGHT AREA", (fa_cx - 60, fa_cy), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 200, 255), 1)
 
         # Draw Coverage (only during SEARCH — transit doesn't count as swept)
         # Pass 0 = cyan/yellow, pass 1+ = orange (different color per rescan)

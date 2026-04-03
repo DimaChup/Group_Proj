@@ -39,7 +39,7 @@ The target deliverable is the system described throughout this report: a fully a
     \textbf{Capability} & \textbf{Description} & \textbf{Req.} \\
     \midrule
     Autonomous search pattern & Boustrophedon waypoints generated at runtime and executed in \texttt{GUIDED} mode with B\'{e}zier-smoothed turns. & R01, R03, R04, R05 \\
-    Three-layer geofence & Speed scalar field, repulsive vector field, and hard boundary cutoff enforce SSSI exclusion in software, backed by firmware geofence. & R01, R02 \\
+    Four-layer geofence & Plan-time waypoint filter, speed scalar field, repulsive vector field, and hard boundary cutoff enforce SSSI exclusion in software, backed by firmware geofence. & R01, R02 \\
     Onboard AI detection & YOLOv8n TFLite inference at ${\sim}$5\,FPS triggers automatic transition to \textsc{Centering} state. Detection queue with spatial clustering filters duplicates. & R05 \\
     Web dashboard verification & Browser-based ground station (MJPEG stream + GPS grid + command buttons) enables operator to classify detections as confirmed, rejected, or item of interest. & R08, R10 \\
     \SI{7.5}{\metre} offset landing & After operator confirmation, the system averages GPS for 10\,s, selects an operator-chosen cardinal offset, approaches at low altitude, and lands. & R07 \\
@@ -64,6 +64,43 @@ If the target deliverable is achieved with margin, several enhancements would ex
   \item \textbf{NCNN inference backend.} The NCNN export of the retrained YOLOv8n model is available in \texttt{cv\_models/sar\_v2\_1088/ncnn/} and is expected to achieve ${\sim}$15\,FPS on the Pi~5 CPU, tripling the current TFLite throughput of ${\sim}$5\,FPS and enabling detection during faster transit legs.
   \item \textbf{Real-time GPS estimation on dashboard.} Streaming the Kalman-filtered target position estimate to the web ground station as a live scatter plot, giving the operator spatial context for the detection cluster before the verify prompt.
 \end{itemize}
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{How the Tier Structure Evolved}\label{sec:tier-evolution}
+
+The three-tier deliverable structure was not defined at project inception; it emerged through iterative refinement as the team gained experience with the gap between simulation readiness and flight readiness.  Understanding this evolution is important because it illustrates a general principle in safety-critical robotics: the deliverable scope must be calibrated to the verification evidence available, not to the ambition of the design.
+
+\paragraph{Initial ambition (weeks 1--4).}
+The project began with a single target: a fully autonomous SAR mission including search, detection, autonomous confirmation, landing, and payload delivery.  At this stage, the team had not yet assembled the hardware or conducted any simulation beyond basic MAVLink tutorials.  The assumption was that if the software worked in simulation, it would work on the aircraft with minor configuration changes.
+
+\paragraph{Realism check after simulation (weeks 5--8).}
+Once the SITL simulation was running end-to-end, two observations forced a reassessment.  First, the number of parameters that required real-world calibration---FOV, GPS noise floor, detection altitude ceiling, inference latency, wind tolerance---was far larger than anticipated.  Each unknown parameter represented a potential failure mode that could not be resolved without flight data.  Second, the team's access to flight time was limited to scheduled university slots, weather-permitting, with shared airspace and strict safety oversight.  A single ambitious flight that failed at the first obstacle would waste the entire slot.
+
+These observations motivated the introduction of the MVD tier: a configuration that requires \emph{no custom flight code} in the autopilot loop, relying entirely on Mission Planner AUTO mode for waypoint execution and limiting the Pi's role to passive observation.  The MVD could be demonstrated even if every autonomous software feature failed, because it depended only on commercial autopilot firmware that the team did not write and could not break.
+
+\paragraph{Hardware integration reality (weeks 9--12).}
+Bench testing on the assembled Pi--Cube--camera stack revealed further integration challenges: Python~3.13 compatibility issues with \texttt{tflite-runtime} and \texttt{pyserial} (requiring the \texttt{ai-edge-litert} package and a mavproxy UDP bridge, respectively), a 22\% focal length calibration error invisible to simulation, and the IMX296 camera's BGR colour channel ordering mislabelled as RGB by the picamera2 driver.  Each of these issues was resolved within hours of discovery, but their existence confirmed that the gap between ``works in simulation'' and ``works on hardware'' contained numerous small failures that could only be found through physical testing.
+
+This experience formalised the target deliverable as a distinct tier above the MVD: the full autonomous mission, but gated behind a progressive testing framework (Section~\ref{sec:five-tier}) that required each integration level to pass before the next was attempted.  The stretch goals were then defined as capabilities that could be layered on top of the target if flight time permitted, without requiring changes to the core state machine.
+
+\paragraph{The resulting structure.}
+Table~\ref{tab:tier-evolution-summary} summarises the relationship between the tiers, the verification evidence required for each, and the fallback path if that evidence is not available.
+
+\begin{table}[ht]
+  \centering\small
+  \caption{Tier structure and verification gates.}\label{tab:tier-evolution-summary}
+  \begin{tabularx}{\linewidth}{@{}p{2.0cm}p{4.5cm}X@{}}
+    \toprule
+    \textbf{Tier} & \textbf{Verification Gate} & \textbf{Fallback If Gate Fails} \\
+    \midrule
+    Stretch & Target deliverable demonstrated successfully with margin remaining & Remain at target tier; log stretch features as future work \\
+    Target & All five testing tiers passed; autonomous search, detection, and landing verified in the field & Fall back to MVD; present passive detection data as primary evidence \\
+    MVD & Bench test passed (Tier~3); GPS fix confirmed outdoors; Mission Planner AUTO waypoints fly successfully & Present simulation results and bench calibration data; no flight demonstration \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+The key insight is that each tier is independently valuable.  The MVD produces detection logs, GPS-tagged imagery, and a verification report that satisfy the brief's core competency requirements.  The target adds autonomous decision-making and payload delivery.  The stretch adds operational efficiency and reduced operator workload.  At no point does a failure at a higher tier invalidate the evidence collected at lower tiers---the progressive structure ensures that the team always has demonstrable results, regardless of how far up the ladder conditions allow them to climb.
 
 % ─────────────────────────────────────────────────────────────────────
 \subsection{Contingency Plans}\label{sec:contingencies}

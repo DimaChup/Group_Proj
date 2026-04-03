@@ -102,6 +102,19 @@ This analysis yielded two key results. First, the retrained model (mAP$_{50}$ = 
 
 The DJI analysis also revealed a methodological trap. SRT telemetry files contain one entry per native-rate frame (6\,854 entries for the 30~fps recording). Downsampled video variants (e.g.\ 6~fps) contain fewer frames but index into the same SRT file, producing a frame-to-telemetry mismatch that silently corrupts altitude and GPS readings. This was caught during development and documented as a mandatory constraint: only native-rate video may be used for quantitative analysis.
 
+\subsection{Team Coordination Under Field Conditions}\label{sec:field-team}
+
+The field day was the first occasion on which the entire team worked simultaneously on the integrated system outside the lab.  Several coordination patterns emerged that informed the workflow for subsequent sessions.
+
+\paragraph{Role distribution.}
+Three roles crystallised naturally within the first hour.  The \emph{software operator} (PuTTY Terminal~3) executed test scripts, interpreted output, and decided the test sequence.  The \emph{systems monitor} (Pi screen, Terminal~2) watched the diagnostics dashboard for anomalies---camera dropouts, Cube heartbeat loss, GPS satellite count fluctuations---and called ``stop'' if any indicator fell below threshold.  The \emph{hardware handler} repositioned the drone for camera calibration shots, swapped test targets, and managed power cycling.  This division of labour allowed tests to proceed with minimal idle time: while the software operator analysed benchmark results, the hardware handler was already positioning the checkerboard for lens calibration.
+
+\paragraph{Communication protocol.}
+In the field, verbal communication replaced the asynchronous messaging used during remote development.  The team adopted a simple protocol: the software operator announced each test before execution (``Running benchmark, 50 passes, do not touch the drone''), the systems monitor confirmed readiness (``Diagnostics green, go ahead''), and the hardware handler confirmed the physical setup (``Checkerboard at 0.5 metres, holding steady'').  This call-and-response pattern, borrowed from flight crew resource management, prevented the camera-in-use conflict from recurring after the initial discovery and ensured that no test ran with the system in an unexpected state.
+
+\paragraph{Decision-making under uncertainty.}
+The weather cancellation decision was the most significant collective choice of the day.  The flight-day checklist specified objective thresholds for wind and precipitation, which removed ambiguity from the decision.  The pilot, who held formal authority for the go/no-go call, confirmed that conditions exceeded the checklist limits.  The team agreed without debate and pivoted immediately to the bench-only programme.  In retrospect, the speed of this pivot---from ``we are not flying'' to ``here is the alternative test programme''---was enabled by having the calibration and benchmark scripts already written, tested in simulation, and loaded on the Pi.  Had the team needed to improvise the bench programme on the spot, the afternoon would have been substantially less productive.
+
 \subsection{Lessons for the Next Field Day}\label{sec:field-lessons}
 
 The 11~March experience produced a concrete list of procedural and technical improvements for subsequent sessions:

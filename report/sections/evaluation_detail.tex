@@ -53,7 +53,7 @@ Four changes would yield the largest improvement if the project were repeated:
 \begin{enumerate}
     \item \textbf{Start with Pi hardware from week~1, not week~16.} Six of the twelve integration defects (Table~\ref{tab:bug-cost}) were hardware-specific (Tier~2) and consumed \SI{4.3}{\hour} of compressed bench-day time. Earlier hardware access would have distributed these faults across 16 weeks instead of one day.
 
-    \item \textbf{Automate regression tests in CI.} All 71 test scripts are run manually. A GitHub Actions pipeline running dry-run validation, TFLite model loading, geofence sign checks, and the 127 unit tests on every push would have caught at least 2 of the 5 Tier-1 defects (geofence inversion, uninitialised variable) before they reached the bench.
+    \item \textbf{Automate regression tests in CI.} All 58 test scripts are run manually. A GitHub Actions pipeline running dry-run validation, TFLite model loading, geofence sign checks, and the 127 unit tests on every push would have caught at least 2 of the 5 Tier-1 defects (geofence inversion, uninitialised variable) before they reached the bench.
 
     \item \textbf{Record flight video in week~1 for training data.} The DJI video replay pipeline---built post-cancellation in a single session---produced the 4 key quantitative figures in this evaluation. Recording real aerial footage during \emph{any} early manual flight would have provided labelled training data weeks earlier, enabling a proper held-out test set ($n \geq 50$) and eliminating the train/validation overlap concern (D5).
 

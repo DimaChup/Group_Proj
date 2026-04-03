@@ -55,6 +55,10 @@ BAUD_RATE = int(os.environ.get("DRONE_BAUD", 921600))
 TARGET_ALT = 35.0               # Search altitude (m)
 VERIFY_ALT = 15.0               # Descent altitude for close-up verification (m)
 
+if TARGET_ALT > 50:
+    print(f"WARNING: TARGET_ALT={TARGET_ALT}m exceeds R04 limit of 50m, capping")
+    TARGET_ALT = 50
+
 TRANSIT_SPEED_MPS = 15.0        # Speed to/from search area
 SEARCH_SPEED_MPS = 10.0         # Default search pass speed
 FOCUS_SEARCH_SPEED_MPS = 5.0    # Slower in Focus Area (PLB zone)

@@ -1,5 +1,12 @@
 """
-Enhanced dataset generator v3 for SAR dummy detection.
+Enhanced dataset generator v3 for SAR dummy detection — multi-class.
+
+5 classes:
+  0: dummy   (1.8m)
+  1: pants   (0.9m)
+  2: tshirt  (0.8m)
+  3: backpack(0.7m)
+  4: cone    (0.5m)
 
 Improvements over v2:
   1. Gaussian noise (sensor noise simulation)
@@ -9,7 +16,7 @@ Improvements over v2:
   5. Haze/fog (additive white alpha blend)
   6. Perspective transform (viewing angle variation)
   7. Multiple targets per image (2-3 dummies with separate labels)
-  8. Varied target appearance (pants, tshirt, backpack near dummy)
+  8. Multi-class labelling: dummy, pants, tshirt, backpack, cone
   9. Aggressive color jitter (HSV shifts, gamma correction)
   10. Higher negative ratio (20% default)
   11. DJI video frame backgrounds (in addition to map.jpg crops)
@@ -19,7 +26,7 @@ Output format: YOLO (images/ + labels/ + dataset.yaml), same as v2.
 
 Usage:
     python generate_dataset_v3.py
-    python generate_dataset_v3.py --count 500 --negatives 100 --output dataset_v3
+    python generate_dataset_v3.py --count 800 --negatives 150 --output training/dataset_v3_multiclass --seed 42
     python generate_dataset_v3.py --count 500 --negatives 100 --size 1088
 """
 import cv2
@@ -62,11 +69,34 @@ SENSOR_W_MM = 5.02
 FOCAL_MM = 5.46
 DUMMY_REAL_H_M = 1.8
 
+# Multi-class definitions
+CLASSES = {
+    'dummy': 0,
+    'pants': 1,
+    'tshirt': 2,
+    'backpack': 3,
+    'cone': 4,
+}
+
+# Physical heights in metres (used for altitude-based scaling)
+OBJECT_REAL_H_M = {
+    'dummy': 1.8,
+    'pants': 0.9,
+    'tshirt': 0.8,
+    'backpack': 0.7,
+    'cone': 0.5,
+}
+
+
+def object_pixel_height(alt_m, img_w, real_h_m=DUMMY_REAL_H_M):
+    """Pixel height of an object at a given altitude for a given image width."""
+    gsd = (SENSOR_W_MM * alt_m) / (FOCAL_MM * img_w)
+    return real_h_m / gsd
+
 
 def dummy_pixel_height(alt_m, img_w):
     """Pixel height of the dummy at a given altitude for a given image width."""
-    gsd = (SENSOR_W_MM * alt_m) / (FOCAL_MM * img_w)
-    return DUMMY_REAL_H_M / gsd
+    return object_pixel_height(alt_m, img_w, DUMMY_REAL_H_M)
 
 
 # ---------------------------------------------------------------------------
@@ -365,6 +395,7 @@ def paste_target(bg, fg_full, img_size, alt_m, angle=None):
     bg = alpha_blend(bg, fg_rot, px, py)
 
     bbox = {
+        "class_id": CLASSES['dummy'],
         "x_center": (px + rot_w / 2) / img_size,
         "y_center": (py + rot_h / 2) / img_size,
         "w": rot_w / img_size,
@@ -373,33 +404,83 @@ def paste_target(bg, fg_full, img_size, alt_m, angle=None):
     return bg, bbox
 
 
-def paste_accessory_near(bg, accessory_img, bbox, img_size, alt_m):
-    """Paste an accessory image near the dummy (within ~2m real-world radius).
+def paste_accessory(bg, accessory_img, acc_name, img_size, alt_m,
+                    near_bbox=None):
+    """Paste an accessory image and return its labelled bounding box.
 
-    Does not create a new label -- accessories are clutter, not targets.
+    Args:
+        bg: background image
+        accessory_img: BGRA accessory image
+        acc_name: one of 'pants', 'tshirt', 'backpack', 'cone'
+        img_size: square image dimension
+        alt_m: simulated altitude
+        near_bbox: if provided, place near this bbox (50% chance);
+                   otherwise (or if None) place randomly.
+
+    Returns:
+        (bg, bbox_dict_with_class) or (bg, None) if placement failed.
+        bbox_dict has keys: class_id, x_center, y_center, w, h (normalised).
     """
-    pix_h = dummy_pixel_height(alt_m, img_size)
-    # Accessories are roughly 40-60% the dummy height
-    acc_h = pix_h * random.uniform(0.3, 0.6)
-    acc_resized = resize_foreground(accessory_img, acc_h)
+    real_h = OBJECT_REAL_H_M.get(acc_name, 0.7)
+    pix_h = object_pixel_height(alt_m, img_size, real_h)
+    acc_resized = resize_foreground(accessory_img, pix_h)
 
     angle = random.randint(0, 360)
     acc_rot, rw, rh = rotate_foreground(acc_resized, angle)
 
-    # Place within ~1-3 dummy-heights of the dummy center
-    cx = int(bbox["x_center"] * img_size)
-    cy = int(bbox["y_center"] * img_size)
-    offset_range = int(pix_h * random.uniform(1.0, 3.0))
-    ox = random.randint(-offset_range, offset_range)
-    oy = random.randint(-offset_range, offset_range)
-    px = cx + ox - rw // 2
-    py = cy + oy - rh // 2
+    if rw >= img_size or rh >= img_size:
+        return bg, None
 
-    # Clamp
-    px = max(0, min(img_size - rw, px))
-    py = max(0, min(img_size - rh, py))
+    margin = 2
+    place_near = near_bbox is not None and random.random() < 0.5
 
-    return alpha_blend(bg, acc_rot, px, py)
+    if place_near:
+        # Place within ~1-3 dummy-heights of the dummy center
+        dummy_pix_h = dummy_pixel_height(alt_m, img_size)
+        cx = int(near_bbox["x_center"] * img_size)
+        cy = int(near_bbox["y_center"] * img_size)
+        offset_range = max(1, int(dummy_pix_h * random.uniform(1.0, 3.0)))
+        ox = random.randint(-offset_range, offset_range)
+        oy = random.randint(-offset_range, offset_range)
+        px = cx + ox - rw // 2
+        py = cy + oy - rh // 2
+        px = max(0, min(img_size - rw, px))
+        py = max(0, min(img_size - rh, py))
+    else:
+        # Random position anywhere
+        max_x = img_size - rw - margin
+        max_y = img_size - rh - margin
+        if max_x < margin or max_y < margin:
+            return bg, None
+        px = random.randint(margin, max_x)
+        py = random.randint(margin, max_y)
+
+    # Brightness matching (same as paste_target)
+    patch = bg[py:py + rh, px:px + rw]
+    if patch.size > 0 and acc_rot.shape[2] == 4:
+        bg_mean = np.mean(cv2.cvtColor(patch, cv2.COLOR_BGR2GRAY).astype(np.float32))
+        fg_gray = cv2.cvtColor(acc_rot[:, :, :3], cv2.COLOR_BGR2GRAY).astype(np.float32)
+        fg_alpha = acc_rot[:, :, 3].astype(np.float32) / 255.0
+        alpha_sum = fg_alpha.sum()
+        if alpha_sum > 0:
+            fg_mean = (fg_gray * fg_alpha).sum() / alpha_sum
+            if fg_mean > 1.0:
+                scale = np.clip(bg_mean / fg_mean, 0.5, 2.0)
+                acc_rot_f = acc_rot.astype(np.float32)
+                acc_rot_f[:, :, :3] *= scale
+                acc_rot = np.clip(acc_rot_f, 0, 255).astype(np.uint8)
+
+    bg = alpha_blend(bg, acc_rot, px, py)
+
+    class_id = CLASSES.get(acc_name, 0)
+    bbox = {
+        "class_id": class_id,
+        "x_center": (px + rw / 2) / img_size,
+        "y_center": (py + rh / 2) / img_size,
+        "w": rw / img_size,
+        "h": rh / img_size,
+    }
+    return bg, bbox
 
 
 # ---------------------------------------------------------------------------
@@ -461,20 +542,28 @@ def apply_augmentation_pipeline(img):
 
 def generate_synthetic(backgrounds, fg_full, accessories, output_dir, img_size,
                        num_images=500, multi_target_ratio=0.15):
-    """Generate synthetic composites with augmentation pipeline.
+    """Generate multi-class synthetic composites with augmentation pipeline.
+
+    Image composition distribution:
+      ~40% : dummy + 1-2 accessories (all labelled)
+      ~30% : dummy alone (class 0 only)
+      ~15% : accessories only (no dummy)
+      ~15% : negatives (no objects — empty labels)
 
     Args:
         backgrounds: list of background images (map crops + video crops)
         fg_full: dummy foreground image (BGRA)
-        accessories: dict of accessory images
+        accessories: dict name->img of accessory images
         output_dir: output directory path
         img_size: square image dimension
         num_images: how many to generate
-        multi_target_ratio: fraction of images with 2-3 targets
+        multi_target_ratio: (unused, kept for CLI compat)
     """
-    print(f"\n--- Generating {num_images} synthetic images ---")
+    print(f"\n--- Generating {num_images} synthetic images (multi-class) ---")
     count = 0
-    acc_list = list(accessories.values()) if accessories else []
+    acc_names = list(accessories.keys()) if accessories else []
+    acc_imgs = accessories if accessories else {}
+    stats = {"dummy_acc": 0, "dummy_only": 0, "acc_only": 0, "neg": 0}
 
     for i in range(num_images):
         # Pick a random background
@@ -484,64 +573,104 @@ def generate_synthetic(backgrounds, fg_full, accessories, output_dir, img_size,
 
         # Decide altitude for this image
         # Distribution: 25% low (15-20m), 40% mid (20-35m), 35% high (35-50m)
-        r = random.random()
-        if r < 0.25:
+        r_alt = random.random()
+        if r_alt < 0.25:
             alt = random.uniform(15, 20)
             tag = "close"
-        elif r < 0.65:
+        elif r_alt < 0.65:
             alt = random.uniform(20, 35)
             tag = "mid"
         else:
             alt = random.uniform(35, 50)
             tag = "far"
 
-        # How many targets?
-        if random.random() < multi_target_ratio:
-            num_targets = random.choice([2, 3])
-        else:
-            num_targets = 1
-
+        # Decide composition type
+        r_type = random.random()
         labels = []
-        placed = 0
-        for t in range(num_targets):
-            # Vary altitude slightly for multi-target (different positions)
-            t_alt = alt + random.uniform(-3, 3) if t > 0 else alt
-            t_alt = max(10, t_alt)
 
-            bg, bbox = paste_target(bg, fg_full, img_size, t_alt)
-            if bbox is None:
-                continue
+        if r_type < 0.40 and acc_names:
+            # --- 40%: dummy + 1-2 accessories ---
+            bg, dummy_bbox = paste_target(bg, fg_full, img_size, alt)
+            if dummy_bbox is not None:
+                labels.append(dummy_bbox)
+                num_acc = random.choice([1, 2])
+                for _ in range(num_acc):
+                    acc_name = random.choice(acc_names)
+                    a_alt = alt + random.uniform(-3, 3)
+                    a_alt = max(10, a_alt)
+                    bg, acc_bbox = paste_accessory(
+                        bg, acc_imgs[acc_name], acc_name, img_size, a_alt,
+                        near_bbox=dummy_bbox)
+                    if acc_bbox is not None:
+                        labels.append(acc_bbox)
+                tag = "dummyacc"
+                stats["dummy_acc"] += 1
+            else:
+                tag = "neg"
+                stats["neg"] += 1
 
-            labels.append(bbox)
-            placed += 1
+        elif r_type < 0.70 or not acc_names:
+            # --- 30%: dummy alone (or fallback if no accessories) ---
+            num_targets = 1
+            # 15% chance of multi-dummy
+            if random.random() < 0.15:
+                num_targets = random.choice([2, 3])
+            for t in range(num_targets):
+                t_alt = alt + random.uniform(-3, 3) if t > 0 else alt
+                t_alt = max(10, t_alt)
+                bg, bbox = paste_target(bg, fg_full, img_size, t_alt)
+                if bbox is not None:
+                    labels.append(bbox)
+            tag = "dummy" if labels else "neg"
+            if labels:
+                stats["dummy_only"] += 1
+            else:
+                stats["neg"] += 1
 
-            # Sometimes add accessories near the dummy (40% chance per target)
-            if acc_list and random.random() < 0.4:
-                acc = random.choice(acc_list)
-                bg = paste_accessory_near(bg, acc, bbox, img_size, t_alt)
+        elif r_type < 0.85:
+            # --- 15%: accessories only (no dummy) ---
+            num_acc = random.randint(1, 3)
+            for _ in range(num_acc):
+                acc_name = random.choice(acc_names)
+                a_alt = alt + random.uniform(-3, 3)
+                a_alt = max(10, a_alt)
+                bg, acc_bbox = paste_accessory(
+                    bg, acc_imgs[acc_name], acc_name, img_size, a_alt,
+                    near_bbox=None)
+                if acc_bbox is not None:
+                    labels.append(acc_bbox)
+            tag = "acconly" if labels else "neg"
+            if labels:
+                stats["acc_only"] += 1
+            else:
+                stats["neg"] += 1
 
-        if placed == 0:
-            continue
+        else:
+            # --- 15%: negatives (no objects) ---
+            tag = "neg"
+            stats["neg"] += 1
 
         # Apply augmentation pipeline
         bg = apply_augmentation_pipeline(bg)
 
         # Write
-        n_str = "multi" if placed > 1 else tag
-        fname = f"syn_{n_str}_{count:05d}"
+        fname = f"syn_{tag}_{count:05d}"
         cv2.imwrite(f"{output_dir}/images/{fname}.jpg", bg,
                     [cv2.IMWRITE_JPEG_QUALITY, 92])
 
         with open(f"{output_dir}/labels/{fname}.txt", "w") as f:
             for bbox in labels:
-                f.write(f"0 {bbox['x_center']:.6f} {bbox['y_center']:.6f} "
+                cid = bbox.get("class_id", 0)
+                f.write(f"{cid} {bbox['x_center']:.6f} {bbox['y_center']:.6f} "
                         f"{bbox['w']:.6f} {bbox['h']:.6f}\n")
         count += 1
 
         if (count % 100) == 0:
             print(f"  ... {count}/{num_images}")
 
-    print(f"  Generated {count} synthetic images ({sum(1 for _ in os.listdir(f'{output_dir}/labels') if 'multi' in _)} multi-target)")
+    print(f"  Generated {count} synthetic images")
+    print(f"    dummy+acc: {stats['dummy_acc']}, dummy-only: {stats['dummy_only']}, "
+          f"acc-only: {stats['acc_only']}, inline-neg: {stats['neg']}")
     return count
 
 
@@ -639,7 +768,7 @@ def generate_negatives(backgrounds, output_dir, img_size, num_images=100):
 
 
 def create_yaml(output_dir):
-    """Create dataset.yaml for YOLO training."""
+    """Create dataset.yaml for YOLO training (multi-class)."""
     abs_path = os.path.abspath(output_dir).replace("\\", "/")
     yaml_content = f"""path: {abs_path}
 train: images
@@ -647,6 +776,10 @@ val: images
 
 names:
   0: dummy
+  1: pants
+  2: tshirt
+  3: backpack
+  4: cone
 """
     yaml_path = f"{output_dir}/dataset.yaml"
     with open(yaml_path, "w") as f:
@@ -766,7 +899,7 @@ Examples:
     print(f"  Negatives:       {args.negatives} ({neg_pct:.0f}%)")
     print(f"  Image size:      {args.size}x{args.size}")
     print(f"  Output:          {out}/")
-    print(f"  Multi-target:    {args.multi_target * 100:.0f}% of synthetic")
+    print(f"  Classes:         5 (dummy, pants, tshirt, backpack, cone)")
     print(f"\n  Assets used:")
     print(f"    Map background:   {MAP_PATH}")
     print(f"    Dummy foreground: {DUMMY_PATH}")
