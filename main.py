@@ -634,10 +634,14 @@ class VisualFlightMission(StateHandlersMixin):
             cv2.putText(frame, "WASD=fly R/F=alt Q/E=yaw M=resume", (cx-220, cy+20), F, 0.6, (0,165,255), 2)
 
         if self.state == State.DONE:
-            cv2.putText(frame, f"FINAL ERROR: {self.final_dist:.2f} m", (cx-150, cy), F, 1.0, (0,0,255), 3)
+            cv2.putText(frame, "MISSION COMPLETE", (cx-180, cy-40), F, 1.2, (0,255,0), 3)
+            cv2.putText(frame, f"LANDING ERROR FROM HOME: {self.final_dist:.2f} m", (cx-250, cy+10), F, 0.8, (0,0,255), 2)
             casualty_d = getattr(self, 'casualty_dist', -1)
             if casualty_d >= 0:
-                cv2.putText(frame, f"CASUALTY DIST: {casualty_d:.2f} m", (cx-180, cy+40), F, 0.8, (0,255,0), 2)
+                color = (0,255,0) if 5 <= casualty_d <= 10 else (0,165,255)
+                cv2.putText(frame, f"DISTANCE FROM CASUALTY: {casualty_d:.2f} m (R07: 5-10m)", (cx-300, cy+50), F, 0.8, color, 2)
+            elapsed = time.time() - self._mission_start_time
+            cv2.putText(frame, f"MISSION TIME: {elapsed/60:.1f} min", (cx-150, cy+90), F, 0.7, (255,255,255), 2)
 
         if self.waiting_for_confirmation:
             if self.selecting_landing_side:
@@ -837,32 +841,32 @@ class VisualFlightMission(StateHandlersMixin):
                 self._enforce_search_yaw()
 
             if self.state == State.DONE:
-                (cv2.waitKey(3000) if not HEADLESS else time.sleep(3.0))
+                (cv2.waitKey(10000) if not HEADLESS else time.sleep(10.0))
                 break
             if key == 27: break
 
     def _enforce_search_yaw(self):
-        """Continuously correct yaw to stay within ±5° of search heading.
-        Runs every loop iteration when --lock-yaw is active."""
-        if self.state in (State.INIT, State.CONNECTING, State.ARMING,
-                          State.TAKEOFF, State.LANDING, State.DONE, State.MANUAL):
+        """Continuously correct yaw to stay within ±15° of search heading.
+        Runs every loop iteration when --lock-yaw is active.
+        Only active during SEARCH state to avoid interfering with RTL/landing."""
+        if self.state != State.SEARCH:
             return
         import math
         from pymavlink import mavutil
         target_deg = self._search_yaw_target
         current_deg = math.degrees(self.yaw) % 360
         error = (target_deg - current_deg + 180) % 360 - 180  # signed, -180 to +180
-        if abs(error) > 5.0:
-            # Only send correction every 2s to avoid spam
+        if abs(error) > 15.0:
+            # Only send correction every 5s to avoid overshooting
             now = time.time()
-            if now - getattr(self, '_last_yaw_correction', 0) < 2.0:
+            if now - getattr(self, '_last_yaw_correction', 0) < 5.0:
                 return
             self._last_yaw_correction = now
             direction = 1 if error > 0 else -1
             self.master.mav.command_long_send(
                 self.master.target_system, self.master.target_component,
                 mavutil.mavlink.MAV_CMD_CONDITION_YAW, 0,
-                target_deg, 30, direction, 0, 0, 0, 0)
+                target_deg, 15, direction, 0, 0, 0, 0)  # 15 deg/s (was 30)
 
     def _enforce_geofence(self, skip_speed_clamp=False):
         """NFZ speed cap + inner polygon repulsion + flight area containment.
