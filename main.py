@@ -44,6 +44,10 @@ NFZ_DIRECTIONAL = "--nfz-total-speed" not in sys.argv  # directional is default
 USE_SPIRAL = "--spiral" in sys.argv  # Zian's perimeter spiral instead of lawnmower
 config.LOCK_YAW = "--lock-yaw" in sys.argv  # Maintain search yaw throughout sweep
 CLEAN_DETECTIONS = "--clean" in sys.argv  # Wipe mission_detections/ at start
+SHAKE_PX = 0  # --shake <pixels>: random pixel offset per frame (simulates vibration)
+SIM_PITCH = "--sim-pitch" in sys.argv  # simulate camera pitch offset during forward flight
+SIM_ROLL_DEG = 0.0  # --sim-roll <deg>: random roll oscillation (±degrees)
+BLUR_FACTOR = 0.0  # --blur <factor>: motion blur proportional to speed (1.0=realistic, 2.0=stress)
 
 for _i, _arg in enumerate(sys.argv):
     if _arg == "--model" and _i + 1 < len(sys.argv):        MODEL_PATH = sys.argv[_i + 1]
@@ -52,6 +56,9 @@ for _i, _arg in enumerate(sys.argv):
     elif _arg == "--alt" and _i + 1 < len(sys.argv):         config.TARGET_ALT = float(sys.argv[_i + 1])
     elif _arg == "--beacon-delay" and _i + 1 < len(sys.argv): config.BEACON_DELAY = float(sys.argv[_i + 1])
     elif _arg == "--conf" and _i + 1 < len(sys.argv):         config.CONFIDENCE_THRESHOLD = float(sys.argv[_i + 1])
+    elif _arg == "--shake" and _i + 1 < len(sys.argv):        SHAKE_PX = int(sys.argv[_i + 1])
+    elif _arg == "--sim-roll" and _i + 1 < len(sys.argv):    SIM_ROLL_DEG = float(sys.argv[_i + 1])
+    elif _arg == "--blur" and _i + 1 < len(sys.argv):         BLUR_FACTOR = float(sys.argv[_i + 1])
 
 if DRY_RUN:
     print("=" * 60)
@@ -563,7 +570,47 @@ class VisualFlightMission(StateHandlersMixin):
         # Get frame
         if config.MODE == "SIMULATION":
             px, py = self.geo.gps_to_pixels(self.lat, self.lon)
+            # Simulate pitch: forward flight shifts camera view ahead of drone
+            if SIM_PITCH and self.alt > 1.0:
+                spd = math.sqrt(self.vx**2 + self.vy**2)
+                pitch_deg = spd * 2.0  # ~2 degrees per m/s
+                pitch_rad = math.radians(pitch_deg)
+                offset_m = self.alt * math.tan(pitch_rad)
+                offset_px = offset_m * self.geo.pix_per_m
+                # Offset in heading direction (yaw is in radians)
+                px += offset_px * math.sin(self.yaw)
+                py += -offset_px * math.cos(self.yaw)  # pixel y is inverted
             frame, self.view_w_px, self.view_h_px = self.sim.get_drone_view(px, py, self.alt, self.yaw)
+            # Simulate roll: tilt the camera frame sideways
+            if SIM_ROLL_DEG > 0:
+                import random
+                roll_angle = random.uniform(-SIM_ROLL_DEG, SIM_ROLL_DEG)
+                h, w = frame.shape[:2]
+                M_roll = cv2.getRotationMatrix2D((w // 2, h // 2), roll_angle, 1.0)
+                frame = cv2.warpAffine(frame, M_roll, (w, h))
+            if SHAKE_PX > 0:
+                import random
+                dx = random.randint(-SHAKE_PX, SHAKE_PX)
+                dy = random.randint(-SHAKE_PX, SHAKE_PX)
+                M = np.float32([[1, 0, dx], [0, 1, dy]])
+                frame = cv2.warpAffine(frame, M, (frame.shape[1], frame.shape[0]))
+            # Simulate motion blur proportional to drone speed
+            if BLUR_FACTOR > 0:
+                speed = math.sqrt(self.vx**2 + self.vy**2)
+                gsd = (config.SENSOR_WIDTH_MM * max(self.alt, 1.0)) / (config.FOCAL_LENGTH_MM * config.IMAGE_W)
+                pixel_motion = (speed * 0.005 * BLUR_FACTOR) / max(gsd, 0.001)  # 5ms exposure
+                if pixel_motion > 1.0:
+                    kernel_size = int(pixel_motion) | 1  # must be odd
+                    kernel = np.zeros((kernel_size, kernel_size))
+                    angle = math.degrees(self.yaw)
+                    mid = kernel_size // 2
+                    for i in range(kernel_size):
+                        x = int(mid + (i - mid) * math.cos(math.radians(angle)))
+                        y = int(mid + (i - mid) * math.sin(math.radians(angle)))
+                        if 0 <= x < kernel_size and 0 <= y < kernel_size:
+                            kernel[y, x] = 1.0
+                    kernel /= kernel.sum()
+                    frame = cv2.filter2D(frame, -1, kernel)
         else:
             frame = self.eyes.get_frame()
             if frame is None:
