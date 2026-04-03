@@ -88,7 +88,7 @@ For the designated survey area, the dry-run produced the following outputs:
 \begin{itemize}
     \item \textbf{18~waypoints} covering the survey polygon in a lawnmower pattern at 35~m altitude with lane spacing derived from the camera footprint and a 20\% overlap margin;
     \item \textbf{Estimated search time} of approximately 1.1~min at the nominal search speed of 8~m/s (altitude-dependent schedule at 35~m), plus transit to and from the survey area at 15~m/s;
-    \item A \textbf{state-machine walkthrough}: INIT $\rightarrow$ CONNECTING $\rightarrow$ ARMING (GPS fix $\geq$ 3, satellites $\geq$ 6) $\rightarrow$ TAKEOFF (35~m) $\rightarrow$ SEARCH (18~waypoints) $\rightarrow$ CENTERING $\rightarrow$ DESCENDING (15~m) $\rightarrow$ VERIFY $\rightarrow$ LANDING;
+    \item A \textbf{state-machine walkthrough}: INIT $\rightarrow$ CONNECTING $\rightarrow$ ARMING (GPS fix $\geq$ 3, satellites $\geq$ 6) $\rightarrow$ TAKEOFF (35~m) $\rightarrow$ SEARCH (18~waypoints) $\rightarrow$ CENTERING $\rightarrow$ VERIFY (35~m) $\rightarrow$ LANDING;
     \item A \textbf{map visualisation} overlaying the generated waypoints and connecting legs on the satellite image.
 \end{itemize}
 

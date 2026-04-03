@@ -78,7 +78,7 @@ Post-flight review of the detection log answers the operational question: \emph{
 
 \subsubsection{Tier 5: Full Autonomous Mission}
 
-All systems are enabled. The drone executes the complete state machine: INIT, CONNECTING, ARMING, TAKEOFF, SEARCH (lawnmower pattern), CENTERING (visual servo onto target), DESCENDING (altitude reduction for closer inspection), VERIFY (operator confirms or rejects via ground station), APPROACH (offset landing approach), LANDING, and DONE. The operator retains veto authority at the VERIFY gate and the RC kill switch provides a hardware-level override independent of all software.
+All systems are enabled. The drone executes the complete state machine: INIT, CONNECTING, ARMING, TAKEOFF, SEARCH (lawnmower pattern), CENTERING (visual servo onto target), VERIFY (operator confirms or rejects via ground station), APPROACH (offset landing approach), LANDING, and DONE. A DESCENDING state for altitude reduction before VERIFY exists in the code but is currently bypassed; the drone transitions directly from CENTERING to VERIFY at search altitude. The operator retains veto authority at the VERIFY gate and the RC kill switch provides a hardware-level override independent of all software.
 
 % ─────────────────────────────────────────────────────────────────────
 \subsection{Test Script Organisation}\label{sec:test-org-detail}

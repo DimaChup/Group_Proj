@@ -130,6 +130,6 @@ The localisation pipeline was validated by replaying recorded DJI flight video (
   \label{fig:gps-scatter}
 \end{figure}
 
-The scatter plot (Figure~\ref{fig:gps-scatter}) shows the characteristic elongation along the flight direction caused by GPS receiver latency. The Kalman filter and weighted average both converge to within approximately \SI{2}{\metre} of the true position after 10--15 observations. This accuracy is sufficient for the approach phase, where the drone descends and switches to visual servoing (pixel-based centring) for the final \SI{15}{\metre} of altitude.
+The scatter plot (Figure~\ref{fig:gps-scatter}) shows the characteristic elongation along the flight direction caused by GPS receiver latency. The Kalman filter and weighted average both converge to within approximately \SI{2}{\metre} of the true position after 10--15 observations. This accuracy is sufficient for the approach phase, where the drone centres above the target at search altitude and the \texttt{-{}-center-verify} flag averages the drone's GPS position over 10\,s to refine the estimate (Appendix~\ref{sec:gps-deep}).
 
 Two strategies could further reduce localisation error in future work: (i)~compensating for GPS latency by subtracting $v_{\mathrm{ground}} \cdot \Delta t$ along the heading vector, where $\Delta t \approx \SI{150}{\milli\second}$ is the estimated receiver delay; and (ii)~fusing RTK-corrected GPS, which would reduce the base position noise from approximately \SI{2.5}{\metre} CEP to below \SI{0.02}{\metre}~\cite{takasu2009development}.
