@@ -1,11 +1,11 @@
 \section{Centering vs.\ Direct Offset Landing}\label{sec:centering-analysis}
 
-A critical design decision in the landing pipeline is whether to visually servo the drone above the target before commanding a landing offset, or to proceed directly from a GPS-estimated position.  The state machine includes dedicated \textsc{Centering} and \textsc{Descending} states that enable the drone to visually servo above a detected target, progressively reducing altitude while keeping the casualty centred in the camera frame (Section~\ref{sec:state-machine}). Despite this capability, the flight-tested configuration bypasses centering entirely and proceeds directly from a confirmed detection to a \SI{7.5}{\metre} offset landing. This section justifies that design choice analytically and empirically.
+A critical design decision in the landing pipeline is whether to visually servo the drone above the target before commanding a landing offset, or to proceed directly from a GPS-estimated position.  The state machine includes a dedicated \textsc{Centering} state that flies the drone above the detected target, as well as a \textsc{Descending} state (currently bypassed) that would reduce altitude while maintaining visual lock (Section~\ref{sec:state-machine}). In the current implementation, the drone centres above the target at search altitude (\SI{35}{\metre}), enters VERIFY for operator confirmation and GPS averaging, then proceeds to an offset landing. This section analyses the centering-vs-direct-offset trade-off and justifies the current design choice.
 
 % ─────────────────────────────────────────────────────────────────────
 \subsection{The Centering Option}
 
-In the centering pipeline the drone transitions from \textsc{Search} to \textsc{Centering}, where it flies toward the GPS-estimated target position and attempts to place the detection bounding box within a pixel-tolerance of the image centre. Once centred, the FSM enters \textsc{Descending}, reducing altitude from \SI{35}{\metre} to \SI{15}{\metre} in increments while maintaining visual lock. Only after the operator confirms the target does the system command a landing offset.
+In the full centering pipeline as originally designed, the drone transitions from \textsc{Search} to \textsc{Centering}, where it flies toward the GPS-estimated target position and attempts to place the detection bounding box within a pixel-tolerance of the image centre. The code includes a \textsc{Descending} state that would then reduce altitude from \SI{35}{\metre} to \SI{15}{\metre} in increments while maintaining visual lock. In the current implementation, the \textsc{Descending} state is bypassed: the drone transitions directly from \textsc{Centering} to \textsc{Verify} at search altitude (\SI{35}{\metre}). Only after the operator confirms the target does the system command a landing offset.
 
 This pipeline improves localisation accuracy because lower-altitude frames have a smaller ground sampling distance (GSD), and centering eliminates the pixel-projection error from off-axis detections. However, it introduces three additional risk factors:
 
@@ -68,3 +68,100 @@ With centering + offset       & \SI{1.8}{\metre} & \SI{3.4}{\metre} & 100\% (20/
 \subsection{Design Decision}
 
 Given that (a)~the direct offset approach meets R07 with $>$95\% probability under realistic noise, (b)~centering introduces low-altitude instability risks that are difficult to mitigate without extensive tuning, and (c)~the project timeline prioritises a reliable first demonstration over optimal accuracy, the direct offset landing was selected as the baseline configuration. The centering states remain implemented and tested in simulation; enabling them requires only a single configuration flag (\texttt{ENABLE\_CENTERING = True} in \texttt{config.py}), making this a low-risk upgrade path for future iterations.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{Safety Considerations of Hovering Above the Casualty}\label{sec:hover-safety}
+
+Visual centering requires the drone to hover directly above the detected casualty for 10--25\,s while the bounding box is driven toward the image centre. This raises a legitimate safety question: is it acceptable to position a UAV directly overhead an injured person? This subsection analyses the physical risks, quantifies them, compares mitigation strategies, and justifies the accepted tradeoff.
+
+\subsubsection{Risk Identification}
+
+Four hazards are associated with overhead hover:
+
+\begin{enumerate}
+    \item \textbf{Rotor downwash on the casualty.} Propeller wash could disturb an injured person, aggravate wounds, or displace lightweight medical dressings.
+    \item \textbf{Mechanical failure leading to vertical descent onto the casualty.} A motor, ESC, or flight-controller failure at hover could cause the drone to fall directly onto the person below.
+    \item \textbf{Psychological distress.} A conscious casualty may experience anxiety from a hovering, audible UAV directly overhead.
+    \item \textbf{Debris entrainment.} Downwash may lift dust, leaves, or loose debris into the casualty's airway or wounds.
+\end{enumerate}
+
+\subsubsection{Quantitative Analysis}
+
+\paragraph{Rotor downwash at ground level.}
+The EDU-450 airframe has a rotor radius $R \approx \SI{0.225}{\metre}$ and an all-up mass of ${\sim}\SI{2}{\kilogram}$. In hover the induced velocity at the rotor disc is given by momentum theory:
+
+\begin{equation}\label{eq:v-hover}
+    v_h = \sqrt{\frac{T}{2\rho A}} = \sqrt{\frac{mg}{2\rho\pi R^2}} = \sqrt{\frac{2 \times 9.81}{2 \times 1.225 \times \pi \times 0.225^2}} \approx \SI{5.7}{\metre\per\second}
+\end{equation}
+
+\noindent where $T = mg$ is the hover thrust, $\rho = \SI{1.225}{\kilogram\per\metre\cubed}$ is air density, and $A$ is the total disc area of four rotors. The wake contracts and then expands as it descends; at a distance $h$ below the rotor plane the centreline velocity decays approximately as~\cite{johnson2013helicopter}:
+
+\begin{equation}\label{eq:v-ground}
+    v(h) \approx v_h \left(\frac{R}{h}\right)^2
+\end{equation}
+
+\noindent At the centering altitude of $h = \SI{35}{\metre}$:
+
+\begin{equation}
+    v_{\text{ground}} \approx 5.7 \times \left(\frac{0.225}{35}\right)^2 \approx 5.7 \times 4.1 \times 10^{-5} \approx \SI{0.0002}{\metre\per\second}
+\end{equation}
+
+\noindent This is four orders of magnitude below perceptible airflow (${\sim}\SI{0.5}{\metre\per\second}$) and six orders below the threshold for displacing lightweight objects (${\sim}\SI{3}{\metre\per\second}$). Even at the lower verification altitude of \SI{15}{\metre}:
+
+\begin{equation}
+    v_{15} \approx 5.7 \times \left(\frac{0.225}{15}\right)^2 \approx \SI{0.0013}{\metre\per\second}
+\end{equation}
+
+\noindent which remains entirely negligible. Rotor downwash is therefore a non-issue at any altitude above \SI{10}{\metre} for a \SI{2}{\kilogram} quadrotor.
+
+\paragraph{Crash probability.}
+Consider a total motor/ESC failure causing uncontrolled descent from \SI{35}{\metre}. Under free-fall with aerodynamic drag, the drone drifts laterally with the ambient wind during the ${\sim}\SI{2.7}{\second}$ fall time ($t = \sqrt{2h/g}$). In a \SI{5}{\metre\per\second} crosswind the lateral displacement is ${\sim}\SI{13}{\metre}$, giving a roughly circular impact zone of radius \SI{15}{\metre}. The probability that the drone strikes a casualty of cross-section ${\sim}\SI{1}{\metre\squared}$ within this $\pi \times 15^2 \approx \SI{707}{\metre\squared}$ area is:
+
+\begin{equation}
+    P_{\text{hit}} = \frac{A_{\text{casualty}}}{A_{\text{impact}}} \approx \frac{1}{707} \approx 0.14\%
+\end{equation}
+
+\noindent This is an upper bound (assumes the failure occurs at the worst moment and the casualty is at the centre). The base rate for catastrophic motor failure in a well-maintained quadrotor is ${\sim}10^{-4}$ per flight hour. For a 20\,s hover the conditional probability is $P_{\text{fail}} \approx 10^{-4} \times (20/3600) \approx 5.6 \times 10^{-7}$. The joint probability of failure \emph{and} casualty strike is therefore:
+
+\begin{equation}
+    P_{\text{fail \& hit}} \approx 5.6 \times 10^{-7} \times 1.4 \times 10^{-3} \approx 8 \times 10^{-10}
+\end{equation}
+
+\noindent which is negligibly small---comparable to the probability of being struck by lightning during the same interval.
+
+\paragraph{Noise exposure.}
+The EDU-450 produces approximately \SI{65}{\decibel} at \SI{1}{\metre}. At \SI{35}{\metre} the inverse-square law gives $65 - 20\log_{10}(35) \approx \SI{34}{\decibel}$, which is quieter than a whispered conversation (\SI{40}{\decibel}). Even at \SI{15}{\metre} the level is ${\sim}\SI{41}{\decibel}$---comparable to a quiet library.
+
+\subsubsection{Comparison of Centering Strategies}
+
+Table~\ref{tab:hover-safety} compares three centering strategies on safety, accuracy, and complexity.
+
+\begin{table}[ht]
+\centering
+\caption{Comparison of centering strategies: safety risk, localisation accuracy, and implementation complexity.}
+\label{tab:hover-safety}
+\begin{tabular}{p{3.2cm}ccccp{3.8cm}}
+\toprule
+\textbf{Strategy} & \textbf{Downwash} & \textbf{Crash Risk} & \textbf{CEP$_{50}$} & \textbf{R07 Compliance} & \textbf{Notes} \\
+\midrule
+Direct overhead centering (\SI{35}{\metre})
+    & Negligible & $8\times10^{-10}$ & \SI{1.5}{\metre} & $>$99\% & Best accuracy; standard SAR practice \\
+\addlinespace
+Lateral offset centering (\SI{10}{\metre} offset, \SI{35}{\metre} alt)
+    & None & None & \SI{3.0}{\metre} & ${\sim}$95\% & Re-introduces GSD, focal-length, and yaw projection errors \\
+\addlinespace
+No centering (direct offset landing)
+    & None & None & \SI{3.1}{\metre} & 95\% & Simplest; selected baseline (Section~\ref{sec:prob-analysis}) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent The lateral-offset strategy positions the drone \SI{10}{\metre} to the side of the target at the same altitude and infers the target's ground position from the off-axis pixel location using the GSD projection pipeline. While this eliminates overhead exposure entirely, it reintroduces all geometric error sources that centering is designed to eliminate: ground sampling distance uncertainty, focal length calibration error, and yaw-dependent east--north projection. The resulting CEP$_{50}$ of ${\sim}\SI{3}{\metre}$ is essentially identical to the no-centering baseline, negating the purpose of the manoeuvre while adding implementation complexity.
+
+\subsubsection{Industry Practice}
+
+Commercial SAR platforms routinely hover above search targets for visual assessment. The DJI Matrice 300 RTK, used by UK mountain rescue teams, hovers at 30--50\,m for thermal and optical inspection before directing ground teams~\cite{murphy2016disaster}. The CAA's CAP~722 guidance for small UAS operations does not prohibit overhead flight in emergency response contexts, and the JARUS SORA methodology classifies ground risk based on kinetic energy at impact rather than hover position. For a \SI{2}{\kilogram} drone the kinetic energy class is well within the ``low'' category regardless of position relative to persons on the ground.
+
+\subsubsection{Accepted Tradeoff}
+
+The analysis demonstrates that at \SI{35}{\metre} altitude the physical risks of overhead hover are negligible: downwash is unmeasurable, crash-and-hit probability is ${\sim}10^{-9}$, and noise is below conversational level. The accuracy benefit is substantial---CEP improves from \SI{3.1}{\metre} (no centering) to \SI{1.5}{\metre} (with centering)---which directly reduces the probability of violating R07 by landing too close to or too far from the casualty. In the SAR context, an inaccurate position estimate that causes the drone to land on top of the casualty is a \emph{more} dangerous outcome than a brief overhead hover at altitude. The centering approach is therefore retained as an available upgrade, and the safety case supports its deployment without additional mitigations beyond the existing \SI{35}{\metre} minimum centering altitude.

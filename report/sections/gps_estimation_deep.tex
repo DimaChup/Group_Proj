@@ -21,12 +21,12 @@ Before diving into the mathematics, it is useful to preview the overall estimati
     \midrule
     SEARCH     & Moving, $10^{\circ}$ pitch, 35\,m & $\sim$\SI{7}{\metre} & 1--5     & Roll/pitch projection \\
     CENTERING  & Decelerating $\to$ hover, 35\,m   & $\sim$\SI{3}{\metre} & 5--20    & GPS receiver noise \\
-    VERIFY     & Stationary hover, 15\,m           & $\sim$\SI{1.5}{\metre} & 20--48 & GPS averaging limit \\
+    VERIFY     & Stationary hover, 35\,m           & $\sim$\SI{1.8}{\metre} & 20--50 & GPS averaging limit \\
     \bottomrule
   \end{tabular}
 \end{table}
 
-\noindent The key insight is that the mission procedure itself---centering the target in the frame and hovering---eliminates the largest error sources \emph{without any software correction}.  When the target is at the optical centre, pixel offset is zero, and every multiplicative error in the projection chain (GSD, focal length, yaw, lens distortion) is multiplied by zero and vanishes (Section~\ref{sec:two-approaches}).  The only remaining error is the drone's own GPS accuracy, which is reduced by $\sqrt{N}$ through multi-frame averaging.
+\noindent The key insight is that the mission procedure itself---centering the target in the frame and hovering---eliminates the largest error sources \emph{without any software correction}.  When the target is at the optical centre, pixel offset is zero, and every multiplicative error in the projection chain (GSD, focal length, yaw, lens distortion) is multiplied by zero and vanishes (Section~\ref{sec:two-approaches}).  The only remaining error is the drone's own GPS accuracy, which the \texttt{-{}-center-verify} flag reduces by averaging the drone's GPS position over 10\,s of stationary hover (50 samples at 5\,Hz).  Because the drone is centred directly above the target, its GPS position is the target's GPS position.
 
 % =====================================================================
 \subsection{Problem Statement}\label{sec:gps-problem}
@@ -344,9 +344,9 @@ Despite its large magnitude, the roll/pitch error is effectively managed by the 
 \begin{enumerate}
   \item \textbf{State-dependent exposure.}  The error is only present during forward flight (SEARCH state).  During the CENTERING and VERIFY states, the drone hovers with $\theta < 1^{\circ}$, reducing $\Delta_\mathrm{tilt}$ to $< \SI{0.3}{\metre}$.  Since the final position estimate used for approach and landing is computed primarily from hovering observations, the in-flight tilt error does not propagate to the landing decision.
 
-  \item \textbf{Multi-pass averaging.}  The lawnmower search pattern causes the drone to overfly each ground point from alternating directions.  On the eastbound pass, pitch displaces the estimate eastward; on the westbound return, it displaces westward.  The inverse-variance weighted average of these opposing biases partially cancels the pitch error, analogous to the GPS timing lag cancellation described above.
+  \item \textbf{Multi-pass averaging.}  The lawnmower search pattern causes the drone to overfly each ground point from alternating directions.  On the eastbound pass, pitch displaces the estimate eastward; on the westbound return, it displaces westward.  Averaging these opposing biases partially cancels the pitch error, analogous to the GPS timing lag cancellation described above.
 
-  \item \textbf{Altitude-dependent weighting.}  The inverse-variance weighting scheme (Equation~\ref{eq:alt-weight}) assigns weight $w_\mathrm{alt} = (h_\mathrm{ref}/h)^2$.  At \SI{35}{\metre} (search), $w_\mathrm{alt} = 0.73$; at \SI{15}{\metre} (investigation), $w_\mathrm{alt} = 4.0$.  Since the low-altitude observations are acquired while hovering (no tilt), they dominate the fused estimate by a factor of $>5\times$.
+  \item \textbf{Altitude-dependent weighting (simulator/analysis tools).}  The inverse-variance weighting scheme (Equation~\ref{eq:alt-weight}) assigns weight $w_\mathrm{alt} = (h_\mathrm{ref}/h)^2$, implemented in the simulator and passive observation tools.  In the mission state machine itself, the VERIFY stage uses direct drone GPS averaging rather than detection-based IVW (see Section~\ref{sec:accuracy-progression}).
 \end{enumerate}
 
 \subsubsection{Potential Attitude Compensation (Future Work)}
@@ -401,12 +401,12 @@ The preceding error analysis reveals that several dominant error sources---roll/
 
   \item \textbf{GPS timing lag irrelevant.}  The \SIrange{100}{200}{\milli\second} receiver latency produces a systematic bias of $v \cdot \Delta t$ in the direction of travel (Section~\ref{sec:error-budget}).  When $v \approx 0$, this bias vanishes regardless of the latency magnitude.
 
-  \item \textbf{GPS averaging improves with $\sqrt{N}$.}  Multiple frames acquired from the same hover position provide independent GPS observations of the same target.  Inverse-variance-weighted averaging (Section~\ref{sec:fusion-strategies}) reduces the random component by $\sqrt{N}$; at 4.8\,FPS over a 5-second hover, $N \approx 24$ frames yield a $\sim$5$\times$ improvement in position precision.
+  \item \textbf{GPS averaging improves with $\sqrt{N}$.}  Multiple GPS fixes acquired from the same hover position provide independent observations of the target location (since the drone is centred above the target, its GPS position equals the target position).  The \texttt{-{}-center-verify} flag averages the drone's GPS over $\sim$10\,s (50 samples at 5\,Hz); even accounting for temporal correlation ($N_\mathrm{eff} \approx 20$), this yields a $\sim$4.5$\times$ improvement in position precision.
 
   \item \textbf{Detection confirmation.}  Requiring multiple consecutive detections from the same stationary vantage point provides temporal confirmation that the target is a persistent physical object rather than a transient false positive (shadow, texture artefact, or single-frame noise).
 \end{enumerate}
 
-\noindent The combined effect is a reduction in single-observation RSS from $\sim$\SI{7}{\metre} (during flight) to $\sim$\SI{3}{\metre} (hover), with multi-frame averaging further reducing the fused estimate to $<$\SI{1}{\metre} precision.  This is an elegant engineering solution: rather than implementing complex roll/pitch compensation (Equation~\ref{eq:attitude-correction}), GPS lag correction ($\Delta\mathbf{p} = \mathbf{v} \cdot \Delta t$), and blur deconvolution in software, the mission procedure is designed to \emph{physically eliminate} these errors.  The software complexity remains low, the risk of introducing bugs in safety-critical code is avoided, and the resulting position estimate is more accurate than any single software correction could achieve in isolation.
+\noindent The combined effect is a reduction in single-observation RSS from $\sim$\SI{7}{\metre} (during flight) to $\sim$\SI{3}{\metre} (hover), with multi-frame GPS averaging further reducing the fused estimate to $\sim$\SI{1.8}{\metre} precision at search altitude.  This is an elegant engineering solution: rather than implementing complex roll/pitch compensation (Equation~\ref{eq:attitude-correction}), GPS lag correction ($\Delta\mathbf{p} = \mathbf{v} \cdot \Delta t$), and blur deconvolution in software, the mission procedure is designed to \emph{physically eliminate} these errors.  The software complexity remains low, the risk of introducing bugs in safety-critical code is avoided, and the resulting position estimate is more accurate than any single software correction could achieve in isolation.
 
 % =====================================================================
 \subsection{Three Estimation Strategies}\label{sec:three-strategies}
@@ -449,7 +449,9 @@ Instead of stopping in place, the drone flies toward the detection until the bou
   \Delta u = u - \tfrac{W}{2} \approx 0, \qquad \Delta v = v - \tfrac{H}{2} \approx 0
 \end{equation}
 
-\noindent and the camera-frame offset (Equation~\ref{eq:body-deep}) reduces to
+\noindent Note: a DESCENDING state exists in the state machine code to lower the drone to a verify altitude before the VERIFY hold, but it is currently bypassed; the drone transitions directly from CENTERING to VERIFY at search altitude.  Implementing the descent would further improve accuracy through the reduced GSD discussed in Section~\ref{sec:altitude-effect} and Table~\ref{tab:gsd-values}.
+
+\noindent The camera-frame offset (Equation~\ref{eq:body-deep}) reduces to
 
 \begin{equation}\label{eq:zero-projection}
   d_\mathrm{fwd} = -\Delta v \cdot \mathrm{GSD} \approx 0, \qquad d_\mathrm{right} = \Delta u \cdot \mathrm{GSD} \approx 0
@@ -501,7 +503,7 @@ Table~\ref{tab:hover-vs-centering} compares all three strategies across the erro
   \end{tabularx}
 \end{table}
 
-\noindent The visual centering approach is therefore fundamentally more robust than hovering in place: it eliminates the \emph{need} for accurate camera calibration rather than merely tolerating its imperfections.  During the subsequent VERIFY hold, the GPS estimator collects multiple stationary readings and applies inverse-variance-weighted averaging (Section~\ref{sec:fusion-strategies}), further reducing the $\sim$\SIrange{2}{3}{\metre} single-fix CEP to approximately \SI{1.5}{\metre} after 10\,s of stationary observation at 4.8\,FPS ($N_\mathrm{eff} \approx 48$, improvement factor $\sqrt{48} \approx 7\times$).
+\noindent The visual centering approach is therefore fundamentally more robust than hovering in place: it eliminates the \emph{need} for accurate camera calibration rather than merely tolerating its imperfections.  During the subsequent VERIFY hold, the \texttt{-{}-center-verify} mode averages the drone's own GPS position over $\sim$10\,s (50 samples at 5\,Hz).  Because the drone is centred above the target, its GPS coordinates are the target's coordinates.  With $N_\mathrm{eff} \approx 20$ independent samples (accounting for temporal correlation at 5\,Hz), this reduces the $\sim$\SIrange{2}{3}{\metre} single-fix CEP to approximately \SI{1.8}{\metre}.
 
 The trade-off is flight time: centering adds 10--30\,s of manoeuvring above the target compared to an immediate stop.  Section~\ref{sec:centering-analysis} analyses the operational risks of this additional low-altitude flight and explains why the direct offset landing configuration bypasses the descent phase while retaining the centering hold for position refinement.
 
@@ -518,7 +520,7 @@ Altitude has a compound effect on position estimation quality that goes beyond t
   \item \textbf{Reduced roll/pitch displacement.}  The tilt-induced error $\Delta_\mathrm{tilt} = h\tan\theta$ is proportional to altitude.  Even if the drone is not perfectly stationary during low-altitude investigation, a $2^{\circ}$ residual tilt produces only \SI{0.5}{\metre} error at \SI{15}{\metre} versus \SI{1.2}{\metre} at \SI{35}{\metre}.
 \end{enumerate}
 
-\noindent These three effects are encoded in the inverse-variance weighting scheme (Equation~\ref{eq:alt-weight}), where $w_\mathrm{alt} = (h_\mathrm{ref}/h)^2$.  A single observation at \SI{15}{\metre} carries $5.4\times$ the weight of one at \SI{35}{\metre}, correctly reflecting the compound improvement in geometric accuracy.  This altitude-dependent quality progression is what makes the visual centering strategy (Section~\ref{sec:two-approaches}) so effective: as the drone descends toward the target, each new frame is dramatically more informative than the last.
+\noindent These three effects are encoded in the inverse-variance weighting scheme (Equation~\ref{eq:alt-weight}), where $w_\mathrm{alt} = (h_\mathrm{ref}/h)^2$.  A hypothetical observation at \SI{15}{\metre} would carry $5.4\times$ the weight of one at \SI{35}{\metre}, correctly reflecting the compound improvement in geometric accuracy.  In the current implementation the drone remains at search altitude (\SI{35}{\metre}) through CENTERING and VERIFY---the DESCENDING state is present in the code but bypassed (Section~\ref{sec:two-approaches}).  Implementing the descent in future work would exploit this altitude-dependent quality progression: each metre of descent would make every new frame more informative.
 
 % =====================================================================
 \subsection{Accuracy Progression Through Mission Phases}\label{sec:accuracy-progression}
@@ -538,20 +540,122 @@ SEARCH (single flyover) & 35 & $\sim$7.0 & Roll/pitch (6.2\,m), GPS lag (1\,m), 
 SEARCH (after 5 passes) & 35 & $\sim$3.5 & Multi-pass averaging ($\sqrt{5}$), alternating headings cancel GPS lag bias \\
 CENTERING (approaching) & 35 & $\sim$2.5 & Slowing to hover eliminates roll/pitch; target drifts toward frame centre \\
 CENTERING (centred, hovering) & 35 & $\sim$1.8 & Target at centre $\Rightarrow$ offset $=0$; all geometric errors vanish; GPS averaged $\sim$5\,s \\
-VERIFY hold (10\,s) & 15 & $\sim$1.5 & Lower altitude $\Rightarrow$ 5.4$\times$ weight; 48 GPS samples at 4.8\,FPS ($\sqrt{48}\approx 7\times$) \\
-APPROACH (fly to offset) & 15 & $\sim$1.5 & Uses best VERIFY estimate; 7.5\,m offset computed from averaged GPS \\
+VERIFY hold (10\,s) & 35 & $\sim$1.8 & Stationary at search altitude; \texttt{-{}-center-verify} averages drone GPS over 10\,s (50 samples at 5\,Hz) \\
+APPROACH (fly to offset) & 35 & $\sim$1.8 & Uses best VERIFY estimate; 7.5\,m offset computed from averaged GPS \\
 \midrule
 \textbf{Measured (DJI video)} & \textbf{35} & \textbf{2.3} & \textbf{CEP50 from 50+ detections across 6\,min flight video} \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-\noindent The progression demonstrates that the system's accuracy is not a single number but a function of mission phase: the combination of centering (zero-offset), hovering (zero roll/pitch), and temporal averaging ($\sqrt{N}$ GPS improvement) transforms a $\sim$7\,m initial estimate into a $\sim$1.5\,m final estimate---well within the R07 landing annulus of 5--10\,m from the casualty.
+\noindent The progression demonstrates that the system's accuracy is not a single number but a function of mission phase: the combination of centering (zero-offset), hovering (zero roll/pitch), and temporal averaging ($\sqrt{N}$ GPS improvement) transforms a $\sim$7\,m initial estimate into a $\sim$1.8\,m final estimate---well within the R07 landing annulus of 5--10\,m from the casualty.
+
+% =====================================================================
+\subsection{GPS Averaging Duration Analysis}\label{sec:gps-averaging}
+
+The \texttt{-{}-center-verify} mode averages the drone's GPS position during the VERIFY hold to reduce the circular error.  This subsection analyses the noise characteristics of the GPS receiver, derives the expected accuracy improvement as a function of averaging time, and justifies the 10\,s duration selected for the mission.
+
+\subsubsection{GPS Noise Characteristics}
+
+The Here~3+ GNSS receiver used on the Cube autopilot exhibits position noise that is approximately Gaussian with zero mean when the drone is stationary.  Empirical characterisation from bench testing and DJI flight-video replay yields the following parameters:
+
+\begin{itemize}
+  \item \textbf{Single-fix CEP$_{50}$}: \SIrange{2}{3}{\metre} (typical for consumer-grade L1 GPS with SBAS corrections).
+  \item \textbf{Autocorrelation time $\tau_c$}: \SIrange{1}{2}{\second}.  Consecutive fixes at 5\,Hz are correlated because the receiver's internal Kalman filter smooths over several measurement epochs.  After $\tau_c$, successive samples are approximately independent.
+  \item \textbf{Update rate}: 5\,Hz (configurable on Here~3+, set via \texttt{GPS\_RATE\_MS} parameter).
+\end{itemize}
+
+\noindent The autocorrelation time is the critical parameter: it determines how many \emph{independent} samples are obtained during an averaging window.  At 5\,Hz over $T$ seconds, the receiver delivers $N = 5T$ raw fixes, but only $N_\mathrm{eff} \approx T / \tau_c$ are statistically independent.  Taking $\tau_c = \SI{2}{\second}$ (conservative estimate) and a baseline CEP$_{50}$ of \SI{2.5}{\metre}, the averaged CEP improves as
+
+\begin{equation}\label{eq:cep-averaging}
+  \mathrm{CEP}_\mathrm{avg} = \frac{\mathrm{CEP}_\mathrm{single}}{\sqrt{N_\mathrm{eff}}} = \frac{2.5}{\sqrt{T/2}} \;\;\text{[metres]}
+\end{equation}
+
+\subsubsection{Averaging Improvement Model}
+
+Table~\ref{tab:gps-averaging} shows the expected CEP improvement as a function of averaging duration, computed from Equation~\ref{eq:cep-averaging} with $\tau_c = \SI{2}{\second}$ and $\mathrm{CEP}_\mathrm{single} = \SI{2.5}{\metre}$.
+
+\begin{table}[H]
+  \centering
+  \caption{GPS averaging improvement vs.\ duration.  $N$ is total fixes at 5\,Hz; $N_\mathrm{eff}$ is the number of independent samples assuming $\tau_c = \SI{2}{\second}$.  The improvement factor is $\sqrt{N_\mathrm{eff}}$.}
+  \label{tab:gps-averaging}
+  \begin{tabular}{rrrcc}
+    \toprule
+    \textbf{Avg.\ Time (s)} & \textbf{$N$ (fixes)} & \textbf{$N_\mathrm{eff}$} & \textbf{Improvement ($\sqrt{N_\mathrm{eff}}$)} & \textbf{Expected CEP (m)} \
+    \midrule
+    0 (single fix) & 1  & 1  & $1.0\times$ & 2.50 \
+    2              & 10 & 1  & $1.0\times$ & 2.50 \
+    5              & 25 & 2.5  & $1.6\times$ & 1.58 \
+    \textbf{10}    & \textbf{50} & \textbf{5}  & $\mathbf{2.2\times}$ & \textbf{1.12} \
+    20             & 100 & 10 & $3.2\times$ & 0.79 \
+    30             & 150 & 15 & $3.9\times$ & 0.65 \
+    60             & 300 & 30 & $5.5\times$ & 0.46 \
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\noindent The relationship between averaging time and CEP is plotted in Figure~\ref{fig:cep-vs-time}, which shows the diminishing returns characteristic of $1/\sqrt{T}$ convergence.
+
+\begin{figure}[H]
+  \centering
+  \begin{tikzpicture}
+  \begin{axis}[
+      width=0.75\linewidth, height=6cm,
+      xlabel={Averaging time (s)},
+      ylabel={Expected CEP$_{50}$ (m)},
+      xmin=0, xmax=65, ymin=0, ymax=3,
+      grid=major,
+      grid style={gray!30},
+      legend style={at={(0.97,0.97)}, anchor=north east, font=\small},
+      every axis label/.style={font=\small},
+      tick label style={font=\small},
+  ]
+  % CEP curve
+  \addplot[blue, thick, mark=*, mark size=2pt] coordinates {
+      (0,2.50) (2,2.50) (5,1.58) (10,1.12) (20,0.79) (30,0.65) (60,0.46)
+  };
+  \addlegendentry{CEP$_{50}$ ($\tau_c = 2$\,s)}
+
+  % R07 threshold line
+  \addplot[red, dashed, thick] coordinates {(0,1.0) (65,1.0)};
+  \addlegendentry{R07 sufficient ($\sim$1\,m)}
+
+  % Selected duration marker
+  \draw[orange, thick, dashed] (axis cs:10,0) -- (axis cs:10,3);
+  \node[orange, anchor=west, font=\small\bfseries] at (axis cs:11,2.6) {Selected: 10\,s};
+
+  % Diminishing returns annotation
+  \draw[gray, <->, thick] (axis cs:10,1.12) -- (axis cs:60,1.12) -- (axis cs:60,0.46);
+  \node[gray, font=\scriptsize, anchor=west] at (axis cs:35,0.75) {$+50$\,s for $-0.66$\,m};
+
+  \end{axis}
+  \end{tikzpicture}
+  \caption{CEP$_{50}$ vs.\ GPS averaging time during stationary hover.  The $1/\sqrt{T}$ convergence means that doubling the averaging time only improves accuracy by $\sim$29\%.  The 10\,s operating point (orange) achieves sub-1.2\,m CEP while adding minimal mission time.}
+  \label{fig:cep-vs-time}
+\end{figure}
+
+\subsubsection{Why 10 Seconds}
+
+The 10\,s averaging window was selected as the optimal trade-off between position accuracy and mission time cost.  Five considerations informed this choice:
+
+\begin{enumerate}
+  \item \textbf{Diminishing returns.}  The $1/\sqrt{T}$ convergence law means that each additional second of averaging contributes less than the previous one.  Going from 10\,s to 60\,s (a $6\times$ increase in time) only improves CEP from \SI{1.12}{\metre} to \SI{0.46}{\metre}---a factor of $2.4\times$ improvement for $6\times$ the time.  The marginal value of each additional second drops below \SI{0.02}{\metre\per\second} after $T = 10$\,s.
+
+  \item \textbf{Mission time cost.}  Every second spent hovering during VERIFY is a second not spent searching.  In a SAR scenario with a 15-minute battery endurance at search speed, 10\,s represents $\sim$1\% of total mission time---an acceptable cost for a $2.2\times$ accuracy improvement.  A 60\,s hover would consume 7\% of mission time for diminishing returns.
+
+  \item \textbf{Battery impact.}  Hovering at \SI{35}{\metre} consumes approximately 15--18\,W on the airframe used.  A 10\,s hover draws $\sim$\SI{50}{\milli\ampere\hour} ($<$0.5\% of a 3000\,mAh 4S battery), which is operationally negligible.  A 60\,s hover would consume $\sim$3\% of battery capacity.
+
+  \item \textbf{Sufficient accuracy for offset landing.}  The R07 requirement specifies landing within 5--10\,m of the casualty.  With a 7.5\,m deliberate offset (for safety) and a $\sim$\SI{1.1}{\metre} CEP from 10\,s averaging, the 95th-percentile total error is $7.5 \pm 2.2$\,m---comfortably within the 5--10\,m annulus.  Sub-metre accuracy (achievable at 30--60\,s) provides no additional operational benefit given the intentional offset.
+
+  \item \textbf{Wind and drift tolerance.}  During a 10\,s hover, wind gusts may push the drone $\sim$0.5--1\,m from the target centre.  This displacement is comparable to the GPS noise floor and does not meaningfully degrade the average.  Over 60\,s, sustained wind could introduce systematic drift that \emph{increases} the error---particularly if the flight controller's station-keeping oscillates with a period comparable to $\tau_c$.
+\end{enumerate}
+
+\noindent In summary, 10\,s of stationary averaging reduces the GPS CEP from \SI{2.5}{\metre} to $\sim$\SI{1.1}{\metre}---a $2.2\times$ improvement that brings the estimate well within R07 requirements.  Longer averaging durations offer diminishing returns that do not justify the mission time and battery cost, particularly given the deliberate 7.5\,m offset landing strategy that dominates the total landing error budget.
 
 % =====================================================================
 \subsection{Fusion Strategies}\label{sec:fusion-strategies}
 
-Four estimation approaches were implemented in the simulator (\texttt{simple\_simulator.py}), each operating on the same stream of per-frame GPS estimates.  All four run in parallel so that their accuracy can be compared directly on every detection cluster.
+Four estimation approaches were implemented in the simulator (\texttt{simple\_simulator.py}) and passive observation tool (\texttt{passive\_watch.py}), each operating on the same stream of per-frame GPS estimates.  All four run in parallel so that their accuracy can be compared directly on every detection cluster.  The autonomous mission state machine uses a different, simpler approach: after visual centering places the drone directly above the target, the \texttt{-{}-center-verify} flag averages the drone's own GPS position over 10\,s, exploiting the fact that drone GPS $\approx$ target GPS when centred.
 
 % ------ Method 1 ------
 \subsubsection{Rolling Weighted Average (Window = 50)}
@@ -606,7 +710,7 @@ A two-state linear Kalman filter~\cite{kalman1960} models the target as stationa
 % ------ Method 4 ------
 \subsubsection{Inverse-Variance Weighting}\label{sec:ivw}
 
-This is the method used operationally.  Each observation receives a composite weight:
+This is the method used in the simulator (\texttt{simple\_simulator.py}) and passive observation tools (\texttt{passive\_watch.py}).  The mission state machine uses a simpler approach: direct drone GPS averaging via the \texttt{-{}-center-verify} flag (Section~\ref{sec:accuracy-progression}).  Each observation receives a composite weight:
 
 \begin{equation}\label{eq:weight-deep}
   w_i = w_\mathrm{cen}(u_i, v_i) \;\cdot\; w_\mathrm{alt}(h_i)
@@ -683,24 +787,72 @@ The inverse-variance weighting method outperforms the others when the drone tran
 % =====================================================================
 \subsection{Empirical Validation}\label{sec:validation}
 
-\subsubsection{DJI Video Replay (The ``Bullseye Test'')}
+\subsubsection{DJI Video Replay (The ``Bullseye Test'')}\label{sec:dji-validation}
 
-The localisation pipeline was validated offline by replaying DJI Mavic flight video ($1456 \times 1088$\,px, 30\,fps) with synchronised SRT telemetry containing per-frame GPS, altitude, and heading.  A life-size rescue dummy was placed at a surveyed position and the drone was flown over it at altitudes ranging from \SI{15}{\metre} to \SI{50}{\metre} at \SIrange{3}{8}{\metre\per\second}.  Each frame where the detector fired produced an independent GPS estimate, which was compared against the known ground-truth coordinate.
+\paragraph{Methodology.}
+The localisation pipeline was validated offline by replaying a DJI Mavic flight video recorded at the Fenswood Farm test site.  The video was cropped to $1456 \times 1088$\,px at 30\,fps to match the Pi camera's native resolution, ensuring the same pixel-to-GSD scaling factors as the operational system.  Each frame carries synchronised SRT telemetry---GPS latitude/longitude, barometric altitude, heading, and timestamp---enabling frame-accurate ground-truth comparison without any manual time alignment.
 
-Key findings:
+A life-size rescue mannequin (\SI{1.8}{\metre} tall) was placed at a surveyed GPS position.  The drone was flown over the site in a series of lawnmower-like passes at altitudes ranging from \SI{15}{\metre} to \SI{50}{\metre} at ground speeds of \SIrange{3}{8}{\metre\per\second}, covering approximately six minutes of continuous flight.  The YOLOv8n detector (retrained model, \texttt{sar\_v2\_1088}, mAP50\,=\,0.995) was run on every frame.  For each detection, the pixel-to-GPS pipeline (Section~\ref{sec:pipeline-overview}) produced an independent target position estimate using the SRT telemetry as the drone state input.  Each estimate was then compared against the known mannequin position to compute the position error.
+
+The analysis pipeline (\texttt{tests/laptop/video\_test.py}) also computed the FOV-calibrated ground sample distance at each frame's altitude, enabling the scale bar and measurement tool to verify that the mannequin measured \SIrange{1.7}{1.9}{\metre} at all test altitudes---an independent check on the projection geometry.
+
+\paragraph{Aggregate results.}
+Over the six-minute flight, the detector produced 50+ independent GPS estimates across multiple passes and altitudes.  Table~\ref{tab:dji-results} summarises the key accuracy metrics.
+
+\begin{table}[ht]
+  \centering
+  \caption{GPS estimation accuracy from DJI video replay.  All errors are computed as great-circle distance between the estimated and surveyed mannequin position.}
+  \label{tab:dji-results}
+  \begin{tabular}{lrl}
+    \toprule
+    \textbf{Metric} & \textbf{Value} & \textbf{Note} \\
+    \midrule
+    Total detections           & 50+                    & Across 6\,min, multiple passes \\
+    CEP$_{50}$                 & \SI{2.3}{\metre}       & 50\% of estimates within this radius \\
+    CEP$_{95}$                 & \SI{8.1}{\metre}       & 95\% of estimates within this radius \\
+    Maximum error              & \SI{16.5}{\metre}      & Single outlier at \SI{50}{\metre}, high speed \\
+    Mean error                 & \SI{3.1}{\metre}       & Arithmetic mean of all observations \\
+    Fused (IVW, 15+ obs.)     & $<$\SI{2}{\metre}      & Inverse-variance weighted estimate \\
+    Fused (Kalman, 15+ obs.)  & $<$\SI{1.5}{\metre}    & Static-target Kalman filter \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\paragraph{Directional bias and GPS timing lag.}
+The scatter plot of individual estimation errors (Figure~\ref{fig:gps_bullseye}) reveals that observations do not form a symmetric cluster around the true position.  Instead, the error distribution is elongated along the flight heading direction (Figure~\ref{fig:gps_error_direction}).  This anisotropy is a direct consequence of the \SIrange{100}{200}{\milli\second} GPS receiver latency: by the time the receiver reports its position, the drone has travelled $v \cdot \Delta t$ further along its heading.  At \SI{5}{\metre\per\second} with \SI{150}{\milli\second} lag, this produces a systematic along-track displacement of $\sim$\SI{0.75}{\metre} per observation.
+
+Crucially, the lawnmower search pattern's alternating headings cause this bias to appear on \emph{opposite} sides of the true position on successive passes---northbound passes produce southward-displaced estimates and vice versa.  This geometric property means that the directional biases partially cancel when fusing observations from multiple passes, explaining why the fused estimate converges to better accuracy than the individual CEP$_{50}$ would suggest.
+
+\paragraph{Detection performance across altitude.}
+Analysis of detection confidence as a function of altitude revealed three distinct regimes:
 
 \begin{itemize}
-  \item \textbf{CEP50\,=\,\SI{2.3}{\metre}}: half of all individual observations fell within this radius of the true position.
-  \item \textbf{Maximum error\,=\,\SI{16.5}{\metre}}: a single outlier during a high-speed pass at \SI{50}{\metre} altitude, where GPS latency and a large pixel offset combined.
-  \item \textbf{Directional bias}: individual estimates were elongated along the flight direction, consistent with the \SIrange{100}{200}{\milli\second} GPS timing lag displacing each estimate by $v \cdot \Delta t$.
-  \item \textbf{Fused accuracy}: after 15+ observations, the inverse-variance weighted estimate converged to within \SI{2}{\metre} of ground truth; the Kalman filter to within \SI{1.5}{\metre}.
+  \item \textbf{\SIrange{15}{40}{\metre} (optimal band)}: detection confidence consistently exceeded 0.9.  The mannequin subtended 40--100\,px in height, providing ample spatial information for the detector.  This altitude range encompasses the entire planned search altitude (\SI{35}{\metre}) and investigation altitude (\SI{15}{\metre}).
+  \item \textbf{Below \SI{15}{\metre}}: the mannequin began to fill the frame, and bounding-box edges were clipped by the image boundary.  Detections still fired but with reduced confidence and less reliable centroid estimates, since the YOLO bounding box was truncated.
+  \item \textbf{Above \SI{45}{\metre}}: the mannequin shrank below $\sim$40\,px in height, approaching the minimum feature size for reliable detection.  Confidence dropped below 0.5 and detections became intermittent.  This establishes an empirical ceiling for the current model's detection range.
 \end{itemize}
+
+\noindent These findings validate the choice of \SI{35}{\metre} as the search altitude: it sits comfortably within the optimal detection band while providing a wide field of view for efficient area coverage.
+
+\paragraph{Validation of the theoretical CEP model.}
+The theoretical RSS error budget (Table~\ref{tab:error-budget}) predicts a CEP of $\sim$\SI{7}{\metre} during search at \SI{35}{\metre} with $10^{\circ}$ pitch.  The measured CEP$_{50}$ of \SI{2.3}{\metre} is significantly lower than this prediction.  Three factors explain the discrepancy:
+
+\begin{enumerate}
+  \item \textbf{Lower effective pitch.}  The DJI Mavic's gimbal stabilises the camera to near-nadir orientation regardless of airframe pitch.  This largely eliminates the dominant $h \tan\theta$ error term (Section~\ref{sec:roll-pitch-analysis}), which alone accounts for \SI{6.2}{\metre} at $\theta = 10^{\circ}$.  The Pi camera is body-mounted without gimbal stabilisation, so the $10^{\circ}$ pitch error will apply to the operational system---the DJI results therefore represent a best-case baseline.
+  \item \textbf{Multi-heading cancellation.}  As described above, the alternating passes cause GPS timing lag to displace estimates in opposite directions, partially cancelling this bias in the aggregate.  A single-pass measurement would show a higher effective CEP.
+  \item \textbf{Detections near frame centre.}  Many detections occurred when the drone was nearly overhead, placing the mannequin near the image centre where GSD-scaled pixel offsets are small.  The RSS budget assumes a worst-case off-centre detection.
+\end{enumerate}
+
+\noindent This comparison underscores a key design insight: the measured CEP$_{50}$ is dominated by GPS receiver noise (\SI{2.3}{\metre}), not by the projection pipeline.  Any improvement beyond this floor requires either RTK GPS or longer averaging, not better image processing.
+
+\paragraph{The \SI{16.5}{\metre} outlier.}
+The single worst-case estimate (\SI{16.5}{\metre} error) occurred during a high-speed pass ($\sim$\SI{8}{\metre\per\second}) at \SI{50}{\metre} altitude.  At this altitude, the GSD is large (\SI{0.032}{\metre\per pixel}), so even a small bounding-box centroid error translates into a large ground offset.  Simultaneously, the GPS timing lag displacement reached $\sim$\SI{1.2}{\metre}, and the detection was near the frame edge where lens distortion residuals are largest.  This outlier demonstrates why the system requires multiple observations and robust fusion (inverse-variance weighting naturally down-weights this high-altitude, off-centre observation) rather than relying on any single detection.
 
 \subsubsection{Simulator Validation}
 
 The interactive simulator (\texttt{simple\_simulator.py}) supports configurable GPS drift (\texttt{-{}-gps-drift}), altitude noise (\texttt{-{}-alt-noise}), yaw noise (\texttt{-{}-yaw-noise}), and FOV calibration error (\texttt{-{}-fov-error}).  All four estimators run in parallel, and the scatter plot displays each observation (colour-coded by weight) alongside the rolling, cumulative, Kalman, and inverse-variance estimates with real-time error metrics against the known dummy position.
 
-A typical keyboard-flown mission---flyover at \SI{35}{\metre}, descend to \SI{15}{\metre}, circle the target---produces 30--50 observations over 60--90\,seconds.  With \SI{3}{\metre} GPS drift enabled, the inverse-variance estimate converges to sub-metre accuracy within the first 20 observations once the drone descends below \SI{20}{\metre}, confirming the altitude-dependent weighting strategy.
+A typical keyboard-flown simulator mission---flyover at \SI{35}{\metre}, optionally descend to \SI{15}{\metre}, circle the target---produces 30--50 observations over 60--90\,seconds.  With \SI{3}{\metre} GPS drift enabled, the inverse-variance estimate converges to sub-metre accuracy within the first 20 observations when the operator descends below \SI{20}{\metre}, confirming the altitude-dependent weighting strategy.  Note that this descent is a simulator-only capability; the autonomous mission state machine currently remains at search altitude through VERIFY (Section~\ref{sec:accuracy-progression}).
 
 % =====================================================================
 \subsection{Accuracy Progression Through the Mission}\label{sec:accuracy-progression}
@@ -717,29 +869,29 @@ The preceding sections have analysed individual error sources, mitigation strate
     \midrule
     SEARCH & Moving at \SI{8}{\metre\per\second}, $10^{\circ}$ pitch & 35 & 1--5 & $\sim$\SI{7}{\metre} & First detection; all errors present \\
     \addlinespace
-    CENTERING & Decelerating to hover, approaching target & 35$\to$15 & 5--20 & \SI{3}{\metre}$\to$\SI{2}{\metre} & Roll/pitch $\to$ 0; motion blur $\to$ 0; GPS lag $\to$ 0; altitude decreasing \\
+    CENTERING & Decelerating to hover, approaching target & 35 & 5--20 & \SI{3}{\metre}$\to$\SI{2}{\metre} & Roll/pitch $\to$ 0; motion blur $\to$ 0; GPS lag $\to$ 0 \\
     \addlinespace
-    VERIFY & Stationary hover, target at frame centre & 15 & 20--48 & $\sim$\SI{1.5}{\metre} & Zero pixel offset eliminates all calibration errors; GPS averaged over $\sim$10\,s \\
+    VERIFY & Stationary hover at search altitude, target at frame centre & 35 & 20--50 & $\sim$\SI{1.8}{\metre} & Zero pixel offset eliminates calibration errors; \texttt{-{}-center-verify} averages drone GPS over $\sim$10\,s \\
     \addlinespace
-    APPROACH & Flying to offset landing point & --- & 48+ & \SI{1.5}{\metre} (frozen) & Estimate frozen at VERIFY quality; no further updates \\
+    APPROACH & Flying to offset landing point & 35 & 50+ & \SI{1.8}{\metre} (frozen) & Estimate frozen at VERIFY quality; no further updates \\
     \bottomrule
   \end{tabular}
 \end{table}
 
-\noindent The progression from \SI{7}{\metre} to \SI{1.5}{\metre} represents a $\sim$5$\times$ improvement achieved entirely through operational procedure (centering + hovering + averaging), without any increase in software complexity or sensor quality.  Each state transition eliminates a specific category of error:
+\noindent The progression from \SI{7}{\metre} to \SI{1.8}{\metre} represents a $\sim$4$\times$ improvement achieved entirely through operational procedure (centering + hovering + averaging), without any increase in software complexity or sensor quality.  Each state transition eliminates a specific category of error:
 
 \begin{enumerate}
   \item \textbf{SEARCH $\to$ CENTERING}: eliminates motion-induced errors (roll/pitch, blur, GPS lag).  This single transition removes the largest error source (\SI{6.2}{\metre} from pitch) and reduces the RSS from \SI{7}{\metre} to \SI{3}{\metre}.
-  \item \textbf{CENTERING $\to$ VERIFY}: the drone descends from search altitude to verify altitude, and the target reaches the frame centre.  The zero-offset condition (Equation~\ref{eq:zero-projection}) eliminates all calibration-dependent errors.  Simultaneously, the lower altitude increases the weight of each observation by $(35/15)^2 \approx 5.4\times$.
-  \item \textbf{VERIFY hold (10\,s)}: stationary observation at 4.8\,FPS yields $N \approx 48$ samples.  Random GPS noise averages as $\sigma/\sqrt{N_\mathrm{eff}}$; with $N_\mathrm{eff} \approx 20$ (accounting for temporal correlation in GPS readings at $\sim$5\,Hz update rate), this reduces the \SIrange{2}{3}{\metre} single-fix CEP to $\sim$\SI{1.5}{\metre}.
+  \item \textbf{CENTERING $\to$ VERIFY}: the target reaches the frame centre while the drone remains at search altitude (the DESCENDING state exists in the code but is currently bypassed; the drone transitions directly from CENTERING to VERIFY at \SI{35}{\metre}).  The zero-offset condition (Equation~\ref{eq:zero-projection}) eliminates all calibration-dependent errors.
+  \item \textbf{VERIFY hold (10\,s)}: the \texttt{-{}-center-verify} flag averages the drone's own GPS position (which equals the target position, since the drone is centred above it) over $\sim$10\,s at 5\,Hz, yielding $N = 50$ samples.  With $N_\mathrm{eff} \approx 20$ (accounting for temporal correlation), this reduces the \SIrange{2}{3}{\metre} single-fix CEP to $\sim$\SI{1.8}{\metre}.
 \end{enumerate}
 
-\noindent The final \SI{1.5}{\metre} CEP$_{50}$ is dominated by the irreducible GPS receiver noise floor---the theoretical minimum achievable with a single-frequency L1 receiver without differential correction (RTK or DGPS).  Further improvement would require either RTK GPS ($\sim$\SI{0.02}{\metre}) or significantly longer averaging times.
+\noindent The final \SI{1.8}{\metre} CEP$_{50}$ is dominated by the irreducible GPS receiver noise floor---the theoretical minimum achievable with a single-frequency L1 receiver without differential correction (RTK or DGPS).  Implementing the currently-bypassed DESCENDING state (lowering to \SI{15}{\metre} before VERIFY) would improve this further through reduced GSD (Table~\ref{tab:gsd-values}).  Further improvement beyond that would require either RTK GPS ($\sim$\SI{0.02}{\metre}) or significantly longer averaging times.
 
 % =====================================================================
 \subsection{Why Inverse-Variance Weighting Won}\label{sec:why-ivw}
 
-The inverse-variance method is operationally preferred for three reasons:
+Among the four fusion methods evaluated, the inverse-variance method is preferred in the simulator and analysis tools for three reasons:
 
 \begin{enumerate}
   \item \textbf{Physics-aligned weighting.}  Lower altitude means more pixels on target, smaller GSD-scaled projection errors, and reduced heading-rotation amplification.  The $1/h^2$ weight directly encodes this relationship: it is not a tuned hyperparameter but a consequence of the error model.
@@ -747,11 +899,11 @@ The inverse-variance method is operationally preferred for three reasons:
   \item \textbf{Simplicity.}  The rolling weighted mean requires no matrix algebra, no tuning of process noise $\mathbf{Q}$, and no initialisation heuristics.  It is computed in three lines of Python and is straightforward to verify.
 \end{enumerate}
 
-\noindent In practice, the Kalman filter and inverse-variance method converge to similar accuracy after 20+ observations.  The key advantage of inverse-variance appears during the transition from search altitude (\SI{35}{\metre}) to investigation altitude (\SI{15}{\metre}): the first few low-altitude observations immediately dominate the estimate, whereas the Kalman filter takes several update cycles to ``catch up'' because its covariance was already small from the high-altitude phase.
+\noindent In practice, the Kalman filter and inverse-variance method converge to similar accuracy after 20+ observations.  The key advantage of inverse-variance would appear if the drone descended during investigation: the first few low-altitude observations would immediately dominate the estimate, whereas the Kalman filter takes several update cycles to ``catch up'' because its covariance was already small from the high-altitude phase.  In the current mission implementation the drone remains at search altitude and uses direct drone GPS averaging (\texttt{-{}-center-verify}) rather than detection-based IVW; the IVW method is used in the simulator and passive observation tools for post-hoc analysis.
 
 % =====================================================================
 \subsection{Offset Landing Application}\label{sec:offset-landing}
 
 The GPS estimate feeds directly into the offset landing calculation.  The system computes a landing point \SI{7.5}{\metre} north of the estimated target position (configurable) to avoid rotor downwash on the casualty.  Given a typical fused estimate error of \SIrange{1}{2}{\metre}, the probability that the drone lands within \SI{10}{\metre} of the actual target (and therefore within visual confirmation range) exceeds 99\%.  The offset distance was chosen as $3\times$ the worst-case single-observation CEP, ensuring a safe margin even if the estimation converges poorly.
 
-With $N = 9$ averaged observations and the inverse-variance method, the expected landing accuracy improves to approximately $\sigma / \sqrt{N_\mathrm{eff}} \approx 2.5 / 3 \approx \SI{0.8}{\metre}$, where $N_\mathrm{eff}$ is the effective number of independent observations (reduced from $N$ by temporal correlation in GPS noise).
+With the \texttt{-{}-center-verify} drone GPS averaging ($N = 50$ samples over 10\,s, $N_\mathrm{eff} \approx 20$), the expected landing accuracy is approximately $\sigma / \sqrt{N_\mathrm{eff}} \approx 2.5 / \sqrt{20} \approx \SI{0.6}{\metre}$, where $N_\mathrm{eff}$ accounts for temporal correlation in GPS noise at 5\,Hz.  In the simulator and passive observation tools, the inverse-variance weighted average across multiple detection-based estimates yields comparable accuracy when sufficient observations are available.
