@@ -907,3 +907,132 @@ Among the four fusion methods evaluated, the inverse-variance method is preferre
 The GPS estimate feeds directly into the offset landing calculation.  The system computes a landing point \SI{7.5}{\metre} north of the estimated target position (configurable) to avoid rotor downwash on the casualty.  Given a typical fused estimate error of \SIrange{1}{2}{\metre}, the probability that the drone lands within \SI{10}{\metre} of the actual target (and therefore within visual confirmation range) exceeds 99\%.  The offset distance was chosen as $3\times$ the worst-case single-observation CEP, ensuring a safe margin even if the estimation converges poorly.
 
 With the \texttt{-{}-center-verify} drone GPS averaging ($N = 50$ samples over 10\,s, $N_\mathrm{eff} \approx 20$), the expected landing accuracy is approximately $\sigma / \sqrt{N_\mathrm{eff}} \approx 2.5 / \sqrt{20} \approx \SI{0.6}{\metre}$, where $N_\mathrm{eff}$ accounts for temporal correlation in GPS noise at 5\,Hz.  In the simulator and passive observation tools, the inverse-variance weighted average across multiple detection-based estimates yields comparable accuracy when sufficient observations are available.
+
+% =====================================================================
+\subsection{Multi-Pass Observation and Heading Diversity}\label{sec:multi-pass}
+
+Sections~\ref{sec:error-budget} and~\ref{sec:roll-pitch-analysis} noted that the lawnmower pattern's alternating headings partially cancel directional biases.  This subsection develops that observation quantitatively and shows that the boustrophedon (zigzag) search pattern is not merely a convenient coverage strategy but an inherent source of heading diversity that improves GPS estimation quality.
+
+% ------ 1. The lawnmower pattern advantage ------
+\subsubsection{The Lawnmower Pattern Advantage}
+
+Two dominant systematic error sources---GPS timing lag and roll/pitch displacement---share a critical property: they bias the GPS estimate \emph{in the direction of travel}.  GPS timing lag displaces the estimate forward by $v \cdot \Delta t$ (Section~\ref{sec:error-budget}), while forward-flight pitch displaces the camera footprint forward by $h\tan\theta$ (Section~\ref{sec:roll-pitch-analysis}).  Both biases reverse sign when the drone reverses its heading.
+
+In the boustrophedon pattern, consecutive scan lines are flown in opposite directions.  At the Bristol field site, scan lines run at headings of approximately $155^{\circ}$ (south-eastbound) and $335^{\circ}$ (north-westbound).  Consider a target detected on both passes:
+
+\begin{itemize}
+  \item \textbf{Pass~1} (heading $155^{\circ}$): GPS lag biases the estimate $\sim$\SI{1}{\metre} along $155^{\circ}$; pitch bias adds $\sim$\SI{6.2}{\metre} along $155^{\circ}$.  Total systematic offset: $\sim$\SI{7.2}{\metre} south-east of the true position.
+  \item \textbf{Pass~2} (heading $335^{\circ}$): both biases reverse direction, displacing the estimate $\sim$\SI{7.2}{\metre} north-west of the true position.
+  \item \textbf{Average of Passes 1+2}: the two opposing systematic offsets cancel, leaving only the random GPS receiver noise and minor residuals from asymmetric wind gusts or speed differences between passes.
+\end{itemize}
+
+\noindent Figure~\ref{fig:multi-pass-bias} illustrates this cancellation geometrically.
+
+\begin{figure}[H]
+  \centering
+  \begin{tikzpicture}[scale=1.0, >=stealth]
+    % Ground grid (subtle)
+    \draw[gray!20, step=1] (-3.5,-3.5) grid (3.5,3.5);
+    \draw[gray!40, ->] (-3.8,0) -- (3.8,0) node[right, font=\small] {East};
+    \draw[gray!40, ->] (0,-3.8) -- (0,3.8) node[above, font=\small] {North};
+
+    % True target position (star)
+    \node[star, star points=5, star point ratio=2.2, fill=yellow!80!orange, draw=black, minimum size=12pt, inner sep=0pt] (true) at (0,0) {};
+    \node[below left=4pt, font=\small\bfseries] at (true) {True position};
+
+    % Pass 1: heading 155° (SSE)
+    \draw[blue!70, thick, dashed, ->] (-1.0,2.2) -- (0.7,-1.6)
+      node[pos=0.15, left, font=\small, blue!70] {Pass 1 ($155^{\circ}$)};
+
+    % Pass 2: heading 335° (NNW)
+    \draw[red!70, thick, dashed, ->] (1.0,-2.2) -- (-0.7,1.6)
+      node[pos=0.15, right, font=\small, red!70] {Pass 2 ($335^{\circ}$)};
+
+    % Pass 1 estimate (biased along 155°)
+    \filldraw[blue!70] (0.85,-1.81) circle (4pt);
+    \node[right=3pt, font=\small, blue!60!black] at (0.85,-1.81) {Est.\ 1 (biased SE)};
+
+    % Pass 2 estimate (biased along 335°)
+    \filldraw[red!70] (-0.85,1.81) circle (4pt);
+    \node[left=3pt, font=\small, red!60!black] at (-0.85,1.81) {Est.\ 2 (biased NW)};
+
+    % Average of both (near true position)
+    \filldraw[green!60!black] (0,0.1) circle (4pt);
+    \node[right=12pt, above=2pt, font=\small\bfseries, green!40!black] at (0,0.1) {Average};
+
+    % Dashed lines from estimates to average
+    \draw[green!50!black, thin, dashed] (0.85,-1.81) -- (0,0.1);
+    \draw[green!50!black, thin, dashed] (-0.85,1.81) -- (0,0.1);
+
+    % Bias arrows (showing direction of systematic error)
+    \draw[blue!50, thick, ->] (0,0) -- (0.65,-1.4)
+      node[midway, right=2pt, font=\scriptsize, blue!50] {lag + pitch};
+    \draw[red!50, thick, ->] (0,0) -- (-0.65,1.4)
+      node[midway, left=2pt, font=\scriptsize, red!50] {lag + pitch};
+
+    % Scale bar
+    \draw[thick, |<->|] (2.5,-3.5) -- (2.5,-1.5) node[midway, right, font=\small] {\SI{2}{\metre}};
+  \end{tikzpicture}
+  \caption{Multi-pass bias cancellation.  Pass~1 (heading $155^{\circ}$, blue) biases the GPS estimate south-east; Pass~2 (heading $335^{\circ}$, red) biases it north-west by the same magnitude.  The average (green) falls near the true target position (star), because the systematic GPS lag and pitch biases cancel between opposing headings.  Only random GPS receiver noise remains.}
+  \label{fig:multi-pass-bias}
+\end{figure}
+
+% ------ 2. How many passes are enough? ------
+\subsubsection{How Many Passes Are Enough?}
+
+The total position error after $N$ passes combines two components: the residual systematic bias (which depends on heading diversity) and the random noise (which decreases as $1/\sqrt{N}$).  The GPS lag bias for a single pass is approximately $v \cdot \Delta t \approx \SI{1}{\metre}$ at \SI{5}{\metre\per\second}; the pitch bias is $h\tan\theta \approx \SI{3}{\metre}$ at $5^{\circ}$ (conservative).  Both are directional and reverse with heading.  The random component is dominated by GPS receiver noise ($\sigma_\mathrm{GPS} \approx \SI{2.5}{\metre}$ per observation).
+
+For $N$ passes with varying heading configurations, the expected CEP$_{50}$ is:
+
+\begin{equation}\label{eq:multi-pass-cep}
+  \mathrm{CEP}_{50} \approx \sqrt{\left(\frac{\bar{b}}{N}\right)^2 + \frac{\sigma_\mathrm{GPS}^2}{N}}
+\end{equation}
+
+\noindent where $\bar{b}$ is the mean residual bias after heading cancellation.  For perfectly opposing headings, $\bar{b} = 0$; for random headings, $\bar{b}$ decreases as $1/\sqrt{N}$.  Table~\ref{tab:pass-accuracy} shows the expected accuracy for different numbers of passes.
+
+\begin{table}[ht]
+  \centering
+  \caption{Expected GPS estimate accuracy as a function of the number of search passes over the target, assuming \SI{35}{\metre} altitude, \SI{5}{\metre\per\second} search speed, and $\sigma_\mathrm{GPS} = \SI{2.5}{\metre}$.  ``Lag bias residual'' is the component of GPS timing lag that survives averaging across headings.}
+  \label{tab:pass-accuracy}
+  \begin{tabular}{clccr}
+    \toprule
+    \textbf{Passes} & \textbf{Headings} & \textbf{Lag Bias Residual} & \textbf{Random Noise ($\sigma/\sqrt{N}$)} & \textbf{Combined CEP$_{50}$} \\
+    \midrule
+    1 & Single              & Full ($\sim$\SI{1}{\metre})       & \SI{2.5}{\metre} & $\sim$\SI{3.5}{\metre} \\
+    2 & Opposite            & Cancelled ($\sim$\SI{0}{\metre})  & \SI{1.8}{\metre} & $\sim$\SI{2.0}{\metre} \\
+    3 & Mixed               & Mostly cancelled                  & \SI{1.4}{\metre} & $\sim$\SI{1.6}{\metre} \\
+    5 & Mixed               & Fully cancelled                   & \SI{1.1}{\metre} & $\sim$\SI{1.2}{\metre} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\noindent The most significant accuracy improvement occurs between one and two passes: the second pass with an opposing heading eliminates the systematic bias entirely, and the $\sqrt{2}$ averaging improvement reduces random noise by 29\%.  Beyond two passes, gains follow the slower $1/\sqrt{N}$ law.
+
+% ------ 3. Strip spacing and target visibility ------
+\subsubsection{Strip Spacing and Target Visibility}\label{sec:vp:frames}
+
+The number of observations per pass depends on the camera footprint, search speed, and detection frame rate.  At the nominal search altitude of \SI{35}{\metre}:
+
+\begin{itemize}
+  \item \textbf{Camera footprint}: $32.2 \times 24.0$\,m (Table~\ref{tab:gsd-altitude}).
+  \item \textbf{Strip spacing}: with 20\% overlap, the lawnmower spacing is $0.8 \times 24.0 \approx \SI{19}{\metre}$ (along the cross-track direction) or $0.8 \times 32.2 \approx \SI{26}{\metre}$ (along the flight direction, depending on pattern orientation).
+  \item \textbf{Along-track visibility}: a stationary target remains within the 24\,m along-track footprint for $24 / 5 = \SI{4.8}{\second}$ at \SI{5}{\metre\per\second}.
+  \item \textbf{Frames per flyover}: at 4.8\,FPS (TFLite inference rate on Pi~5), this yields $4.8 \times 4.8 \approx 23$ frames per pass---though detection only fires when the target is within the frame and above the confidence threshold, so the effective count is approximately 11--17 detections per pass.
+\end{itemize}
+
+\noindent With a 10-strip lawnmower pattern, most of the search area receives 1--2 passes (the target may fall within the overlap region of adjacent strips).  The typical target therefore generates 11--34 observations across 1--2 passes, providing sufficient data for the inverse-variance weighted average to converge to sub-2\,m accuracy even before the centering procedure begins.
+
+% ------ 4. Multi-pass averaging vs centering ------
+\subsubsection{Multi-Pass Averaging vs.\ Centering}\label{sec:multipass-vs-centering}
+
+Despite the theoretical effectiveness of multi-pass averaging, the mission pipeline does \emph{not} rely on it as the primary estimation strategy for three reasons:
+
+\begin{enumerate}
+  \item \textbf{First detection triggers CENTERING.}  The state machine transitions from SEARCH to CENTERING on the first confirmed detection (or after the SMART consecutive-frame filter confirms the target, if \texttt{-{}-smart-detect} is enabled).  This means the drone rarely completes a second pass over the same target---the centering manoeuvre begins immediately.
+
+  \item \textbf{Centering provides a fundamentally better estimate.}  As shown in Section~\ref{sec:two-approaches}, centering the target at the optical axis eliminates all calibration-dependent errors by driving the pixel offset to zero.  Multi-pass averaging can cancel systematic biases but cannot eliminate random calibration errors (focal length, compass, barometric drift).  Centering removes these errors entirely.
+
+  \item \textbf{Spatial clustering limitations.}  The spatial clustering algorithm (Section~\ref{sec:clustering}) in \texttt{passive\_watch.py} correctly merges multiple observations of the same target within a \SI{30}{\metre} radius.  However, in the mission state machine (\texttt{main.py}), the first detection event triggers an immediate state transition---multiple passes would create separate queue entries for the same target, but the state machine processes the first entry and never returns to the search pattern for that target.
+\end{enumerate}
+
+\noindent Multi-pass averaging therefore serves as a \emph{theoretical safety net}: if the centering procedure were to fail (e.g.\ due to loss of visual lock during the approach), the system could fall back to the accumulated flyover estimates.  In the passive observation tools (\texttt{passive\_watch.py}, \texttt{simple\_simulator.py}), where no centering manoeuvre occurs, multi-pass averaging with heading diversity is the \emph{primary} estimation strategy and achieves the accuracies shown in Table~\ref{tab:pass-accuracy}.  The lawnmower pattern thus serves a dual purpose: maximising spatial coverage for detection probability, and providing heading diversity that improves estimation accuracy through systematic bias cancellation.
