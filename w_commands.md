@@ -1,5 +1,6 @@
 python field_tools/passive_watch.py --fake --no-mavlink --model cv_models/human.tflite --conf 0.4 --smart-estimate --smart-radius 2.0 --smart-min 7 --save-dir dima_images --class-filter "person,bird"
 
+python field_tools/passive_watch.py --fake --no-mavlink --model cv_models/human.tflite --conf 0.4 --smart-estimate --smart-radius 2.0 --smart-min 7 --smart-dir alex_22 --class-filter "person,bird"
 
 
 

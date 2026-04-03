@@ -982,3 +982,60 @@ of truth.
 - 7acc965: GPS estimate calibration script
 - ea13d56: GPS calibrate GUI (OpenCV)
 - 71602b8: Fix GUI implicit window
+
+### Session: 2026-04-03 — Project review, documentation blitz, dataset v3, unit tests, scoring
+
+**passive_watch.py enhancements:**
+- SMART result image now includes a map panel showing SSSI (red polygon) and search area (yellow polygon) with magenta star at estimated target GPS
+- CLI flags (--conf, --smart-samples, --smart-window, --class-filter) now reflect as browser UI defaults
+- Added `--smart-dir` flag for custom SMART output directory (default: smart_detections/)
+- Terminal 'C' key for Clear All — resets SMART detection state mid-flight
+
+**New documentation created (16 new docs):**
+- `docs/VISION_PIPELINE_FOR_COLLEAGUE.md` — step-by-step vision pipeline guide for teammate handoff
+- `docs/LESSONS_LEARNED.md` — key lessons from project development
+- `docs/COLLEAGUE_CHECKLIST.md` — onboarding checklist for new team members
+- `docs/TOOLS_INVENTORY.md` — complete inventory of all tools and scripts
+- `docs/PROJECT_STATUS.md` — current project status snapshot
+- `docs/CALIBRATION_GUIDE.md` — camera and FOV calibration procedures
+- `docs/MODULARITY_AUDIT.md` — code modularity assessment (score: 3.8/5.0)
+- `docs/NEEDS_VS_CAPABILITIES.md` — objective scoring matrix (Sim 7.7/10, Real 2.1/10)
+- `docs/TRAINING_WORKFLOW_V3.md` — dataset v3 training workflow with Colab cells
+- `docs/DATASET_V3_REPORT.md` — dataset v3 design rationale and augmentation details
+- `docs/CV_BEST_PRACTICES.md` — CV best practices for SAR drone
+- `docs/PROCESS_MAP.md` — development process map
+- `docs/REPORT_CHAT_PROMPT.md` — general report writing chat prompt
+- `docs/REPORT_CHAT_PROMPT_D6.md` — deliverable D6 chat prompt
+- `docs/REPORT_CHAT_PROMPT_D7.md` — deliverable D7 chat prompt
+- Updated `docs/DESIGN_DECISIONS.md` with new entries
+
+**Dataset v3 (training improvements):**
+- `training/generate_dataset_v3.py` — improved generator: 700 images, 10 augmentations
+  (brightness, contrast, blur, noise, rotation, scale, flip, crop, shadow, haze)
+- `training/colab_cells.py` — ready-to-paste Colab training cells with train/val split
+- Train/val split built into generator (80/20)
+
+**Unit test suites (tests/unit/ — 6 files, 127 test functions):**
+- `tests/unit/test_config.py` (28 tests) — config values, ranges, types
+- `tests/unit/test_states.py` (5 tests) — state enum completeness
+- `tests/unit/test_utils.py` (36 tests) — GeoTransformer, GPS math
+- `tests/unit/test_planning.py` (26 tests) — lawnmower pattern generation
+- `tests/unit/test_vision.py` (13 tests) — vision system init, detection
+- `tests/unit/test_gps_utils.py` (19 tests) — GPS utility functions
+
+**Additional automated tests (tests/automated/ — 3 new files, 23 test functions):**
+- `tests/automated/test_planning.py` — extended planning tests
+- `tests/automated/test_utils.py` (11 tests) — extended utils tests
+- `tests/automated/test_vision.py` (12 tests) — extended vision tests
+
+**Test runner:**
+- `tests/run_all_tests.py` — runs all unit + automated tests with summary report
+
+**Project analysis:**
+- Modularity audit: 3.8/5.0 overall (vision.py highest at 4.5, main.py lowest at 3.0)
+- Needs vs capabilities scoring: Simulation 7.7/10, Real hardware 2.1/10
+- 3 report chat prompts created for general, D6, and D7 deliverables
+
+**.gitignore updated** — added patterns for training outputs, dataset zips, etc.
+
+**Branches:** Working8.Robbin2 (committed at 41e713c), Working8.Robbin3 (active, same HEAD + uncommitted docs/tests)

@@ -64,3 +64,12 @@ pi_data/captured_video/*.avi
 pi_data/captured_video/*.mp4
 pi_data/captured_video/*.h264
 pi_data/captured_photos/*.jpg
+
+# Root directory audit (2026-04-03)
+alex_22/
+dima_images/
+0d_pattern.jpg
+dry_run_pattern.jpg
+_test_gps_visual.html
+training/dataset_v3/
+training/dataset_v3.zip
