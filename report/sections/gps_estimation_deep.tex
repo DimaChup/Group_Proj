@@ -878,6 +878,114 @@ The preceding sections have analysed individual error sources, mitigation strate
   \end{tabular}
 \end{table}
 
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    state/.style={rectangle, draw, rounded corners=3pt, fill=blue!12,
+                  minimum width=2.4cm, minimum height=0.7cm,
+                  font=\small\bfseries},
+    ceplabel/.style={font=\small\bfseries, text=red!70!black},
+    annot/.style={font=\scriptsize, text width=2.6cm, align=center,
+                  text=black!70},
+    arrlab/.style={font=\scriptsize, text=blue!60!black, text width=2.0cm,
+                   align=center},
+    >={Stealth[length=3pt]}
+]
+
+% Column x-positions
+\def\colA{0}
+\def\colB{4.2}
+\def\colC{8.4}
+\def\colD{12.6}
+
+% --- State boxes (top row) ---
+\node[state] (sSearch)   at (\colA, 0) {SEARCH};
+\node[state] (sCenter)   at (\colB, 0) {CENTERING};
+\node[state] (sVerify)   at (\colC, 0) {VERIFY};
+\node[state] (sApproach) at (\colD, 0) {APPROACH};
+
+% --- CEP circles (below states) ---
+% Scale: 1m real = 0.22cm drawing  =>  7m=1.54, 2.5m=0.55, 1.8m=0.40
+\def\cepY{-2.6}
+
+% Target stars
+\foreach \x in {\colA, \colB, \colC, \colD}{
+  \node[star, star points=5, star point ratio=2.3, fill=orange!80!red,
+        draw=orange!60!black, inner sep=1.2pt] at (\x, \cepY) {};
+}
+
+% Drone triangles (above target, offset up by ~CEP/2 for SEARCH, centred for later)
+\node[isosceles triangle, isosceles triangle apex angle=50,
+      fill=blue!50, draw=blue!70!black, minimum size=0.35cm,
+      rotate=180, inner sep=0pt] (drA) at (\colA+0.7, \cepY+0.9) {};
+\node[isosceles triangle, isosceles triangle apex angle=50,
+      fill=blue!50, draw=blue!70!black, minimum size=0.35cm,
+      rotate=180, inner sep=0pt] (drB) at (\colB+0.15, \cepY+0.4) {};
+\node[isosceles triangle, isosceles triangle apex angle=50,
+      fill=blue!50, draw=blue!70!black, minimum size=0.35cm,
+      rotate=180, inner sep=0pt] (drC) at (\colC, \cepY+0.25) {};
+\node[isosceles triangle, isosceles triangle apex angle=50,
+      fill=blue!50, draw=blue!70!black, minimum size=0.35cm,
+      rotate=180, inner sep=0pt] (drD) at (\colD, \cepY+0.25) {};
+
+% CEP dashed circles  (radii proportional: 7->1.54, 2.5->0.55, 1.8->0.40)
+\draw[dashed, red!60!black, thick]
+  (\colA, \cepY) circle [radius=1.54cm];
+\draw[dashed, red!60!black, thick]
+  (\colB, \cepY) circle [radius=0.55cm];
+\draw[dashed, red!60!black, thick]
+  (\colC, \cepY) circle [radius=0.40cm];
+\draw[dashed, red!60!black, thick]
+  (\colD, \cepY) circle [radius=0.40cm];
+
+% CEP labels (below circles)
+\node[ceplabel] at (\colA, \cepY-1.85) {CEP\textsubscript{50} $\approx$ 7\,m};
+\node[ceplabel] at (\colB, \cepY-0.85) {CEP\textsubscript{50} $\approx$ 2.5\,m};
+\node[ceplabel] at (\colC, \cepY-0.72) {CEP\textsubscript{50} $\approx$ 1.8\,m};
+\node[ceplabel] at (\colD, \cepY-0.72) {CEP\textsubscript{50} = 1.8\,m};
+
+% Condition annotations (below CEP labels)
+\node[annot] at (\colA, \cepY-2.5) {Moving at 8\,m/s\\10\textdegree{} pitch\\1--5 obs};
+\node[annot] at (\colB, \cepY-1.55) {Decelerating\\hover achieved\\5--20 obs};
+\node[annot] at (\colC, \cepY-1.45) {Stationary hover\\target centred\\20--50 obs};
+\node[annot] at (\colD, \cepY-1.45) {Estimate frozen\\flying to offset\\landing point};
+
+% --- Arrows between states with improvement labels ---
+\draw[->, thick, blue!50!black]
+  (sSearch.east) -- (sCenter.west)
+  node[arrlab, above, midway, yshift=1pt]
+    {hover $\to$\\pitch/roll = 0\\blur = 0};
+
+\draw[->, thick, blue!50!black]
+  (sCenter.east) -- (sVerify.west)
+  node[arrlab, above, midway, yshift=1pt]
+    {centre target\\$\to$ offset = 0\\calibration err = 0};
+
+\draw[->, thick, blue!50!black]
+  (sVerify.east) -- (sApproach.west)
+  node[arrlab, above, midway, yshift=1pt]
+    {10\,s GPS avg\\$\to$ freeze\\estimate};
+
+% --- Improvement arrow spanning full width ---
+\draw[<->, thick, green!50!black]
+  (\colA-1.0, \cepY-3.3) -- (\colD+1.0, \cepY-3.3)
+  node[midway, below, font=\small\bfseries, text=green!40!black]
+    {$\sim$4$\times$ accuracy improvement through operational procedure alone};
+
+% Legend
+\node[font=\scriptsize, text=black!60, anchor=north west] at (\colA-1.0, -0.6)
+  {\raisebox{0pt}{\tikz\node[star, star points=5, star point ratio=2.3,
+   fill=orange!80!red, draw=orange!60!black, inner sep=0.8pt] {};}\;= target\quad
+   \raisebox{0pt}{\tikz\node[isosceles triangle, isosceles triangle apex angle=50,
+   fill=blue!50, draw=blue!70!black, minimum size=0.25cm, rotate=180,
+   inner sep=0pt] {};}\;= drone\quad
+   \raisebox{0pt}{\tikz\draw[dashed, red!60!black, thick] (0,0) circle [radius=0.2cm];}\;= CEP\textsubscript{50} radius (proportional)};
+
+\end{tikzpicture}
+\caption{Target GPS estimate accuracy progression through mission phases.  Circle radii are proportional to CEP\textsubscript{50} at each state.  The combination of centering (zero pixel offset), hovering (zero roll/pitch), and GPS averaging transforms a $\sim$7\,m initial estimate into a 1.8\,m final estimate---a $\sim$4$\times$ improvement achieved entirely through operational procedure without additional hardware or software complexity.}
+\label{fig:accuracy-progression}
+\end{figure}
+
 \noindent The progression from \SI{7}{\metre} to \SI{1.8}{\metre} represents a $\sim$4$\times$ improvement achieved entirely through operational procedure (centering + hovering + averaging), without any increase in software complexity or sensor quality.  Each state transition eliminates a specific category of error:
 
 \begin{enumerate}
