@@ -2381,17 +2381,17 @@
     <bcf:citekey order="6" intorder="1">koopman2019safe</bcf:citekey>
     <bcf:citekey order="7" intorder="1">sar_drones_review</bcf:citekey>
     <bcf:citekey order="7" intorder="2">goodrich2008sar</bcf:citekey>
-    <bcf:citekey order="8" intorder="1">belbin2010</bcf:citekey>
-    <bcf:citekey order="9" intorder="1">kolb1984</bcf:citekey>
-    <bcf:citekey order="10" intorder="1">tuckman1965</bcf:citekey>
-    <bcf:citekey order="11" intorder="1">gibbs1988</bcf:citekey>
-    <bcf:citekey order="12" intorder="1">ardupilot</bcf:citekey>
-    <bcf:citekey order="12" intorder="2">mavlink</bcf:citekey>
-    <bcf:citekey order="13" intorder="1">tflite</bcf:citekey>
-    <bcf:citekey order="14" intorder="1">koopman2019safe</bcf:citekey>
-    <bcf:citekey order="15" intorder="1">gibbs1988</bcf:citekey>
-    <bcf:citekey order="16" intorder="1">kolb1984</bcf:citekey>
-    <bcf:citekey order="17" intorder="1">yolov8</bcf:citekey>
+    <bcf:citekey order="8" intorder="1">leveson2011</bcf:citekey>
+    <bcf:citekey order="9" intorder="1">belbin2010</bcf:citekey>
+    <bcf:citekey order="10" intorder="1">kolb1984</bcf:citekey>
+    <bcf:citekey order="11" intorder="1">tuckman1965</bcf:citekey>
+    <bcf:citekey order="12" intorder="1">gibbs1988</bcf:citekey>
+    <bcf:citekey order="13" intorder="1">ardupilot</bcf:citekey>
+    <bcf:citekey order="13" intorder="2">mavlink</bcf:citekey>
+    <bcf:citekey order="14" intorder="1">tflite</bcf:citekey>
+    <bcf:citekey order="15" intorder="1">koopman2019safe</bcf:citekey>
+    <bcf:citekey order="16" intorder="1">gibbs1988</bcf:citekey>
+    <bcf:citekey order="17" intorder="1">kolb1984</bcf:citekey>
     <bcf:citekey order="18" intorder="1">leveson2011</bcf:citekey>
   </bcf:section>
   <!-- SORTING TEMPLATES -->

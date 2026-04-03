@@ -293,8 +293,8 @@
       \strng{authornamehash}{0abdd74b0ee96aa91eb16f23f93dd53a}
       \strng{authorfullhash}{0abdd74b0ee96aa91eb16f23f93dd53a}
       \strng{authorfullhashraw}{0abdd74b0ee96aa91eb16f23f93dd53a}
-      \field{sortinit}{8}
-      \field{sortinithash}{a231b008ebf0ecbe0b4d96dcc159445f}
+      \field{sortinit}{9}
+      \field{sortinithash}{0a5ebc79d83c96b6579069544c73c7d4}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{edition}{2nd}
@@ -320,8 +320,8 @@
       \strng{authornamehash}{5089e249846f7339ecad82d42e130d74}
       \strng{authorfullhash}{5089e249846f7339ecad82d42e130d74}
       \strng{authorfullhashraw}{5089e249846f7339ecad82d42e130d74}
-      \field{sortinit}{9}
-      \field{sortinithash}{0a5ebc79d83c96b6579069544c73c7d4}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{title}{Experiential Learning: Experience as the Source of Learning and Development}
@@ -441,41 +441,6 @@
       \field{note}{Accessed: 2026}
       \field{title}{{MAVLink}: Micro Air Vehicle Communication Protocol}
       \field{year}{2013}
-    \endentry
-    \entry{yolov8}{misc}{}{}
-      \name{author}{3}{}{%
-        {{hash=c5c5e5cd7f4f477f617289b32613deb0}{%
-           family={Jocher},
-           familyi={J\bibinitperiod},
-           given={Glenn},
-           giveni={G\bibinitperiod}}}%
-        {{hash=ec281637802454e8df4de72f3b1ee401}{%
-           family={Chaurasia},
-           familyi={C\bibinitperiod},
-           given={Ayush},
-           giveni={A\bibinitperiod}}}%
-        {{hash=b8739ebbf3f871d471b6720a02ed541f}{%
-           family={Qiu},
-           familyi={Q\bibinitperiod},
-           given={Jing},
-           giveni={J\bibinitperiod}}}%
-      }
-      \strng{namehash}{dde928f96d7839eed6effd0fbfbe5acc}
-      \strng{fullhash}{dde928f96d7839eed6effd0fbfbe5acc}
-      \strng{fullhashraw}{dde928f96d7839eed6effd0fbfbe5acc}
-      \strng{bibnamehash}{dde928f96d7839eed6effd0fbfbe5acc}
-      \strng{authorbibnamehash}{dde928f96d7839eed6effd0fbfbe5acc}
-      \strng{authornamehash}{dde928f96d7839eed6effd0fbfbe5acc}
-      \strng{authorfullhash}{dde928f96d7839eed6effd0fbfbe5acc}
-      \strng{authorfullhashraw}{dde928f96d7839eed6effd0fbfbe5acc}
-      \field{sortinit}{1}
-      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
-      \field{labelnamesource}{author}
-      \field{labeltitlesource}{title}
-      \field{howpublished}{\url{https://github.com/ultralytics/ultralytics}}
-      \field{note}{Accessed: 2026}
-      \field{title}{{Ultralytics YOLOv8}}
-      \field{year}{2023}
     \endentry
   \enddatalist
 \endrefsection
