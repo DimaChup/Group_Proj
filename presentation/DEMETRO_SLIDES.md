@@ -1,48 +1,58 @@
-# Demetro's FDR Slides (2 slides, ~1.5 min total)
+# Demetro's FDR Slides — Speaking Script
 
-**Follows after Edward (data collection and vision training)**
+**2 slides, ~1.5 min each = 3 min total**
+**Comes after Edward (data collection + training)**
 
----
-
-## SLIDE 1: Simulation (~45 sec)
-
-### Visual: Screenshot of Mission Dashboard (god view + camera)
-
-### On slide (3 bullets max):
-- Same code runs on laptop and Pi — no separate sim
-- All 12 requirements verified end-to-end
-- Drone hardware wasn't available → simulation let us test everything
-
-### Say:
-
-"I built a full simulation environment so we could develop without waiting for the drone. The key thing is — it's the same code. What runs in simulation is exactly what runs on the Pi. So when we say all 12 requirements are met, they're met with the actual code that flies the drone.
-
-[Point to screenshot] Here you can see the search pattern, the geofence zones, and the detection happening in real time."
+Open slides: `presentation/demetro_slides.html`
 
 ---
 
-## SLIDE 2: How Vision Works (~45 sec)
+## SLIDE 1: Vision Pipeline (1.5 min)
 
-### Visual: Detection screenshot (green box + confidence) OR pipeline diagram
+**Transition from Edward:** "Edward just showed you how we collected data and trained the model. Now I'll show you what happens when that model runs on the Pi during a mission."
 
-### On slide (3 bullets max):
-- YOLOv8n: 99.5% accuracy, 5 FPS on Pi
-- Detects → estimates GPS position → drone responds
-- Attitude compensation: 2.3m accuracy even during flight
+**[Point to pipeline flow at top]**
+"The camera captures frames at 1456 by 1088 pixels. YOLOv8 runs inference at about 5 frames per second on the Pi. When it detects something, we convert that pixel position into a GPS coordinate using the camera geometry and the drone's altitude."
 
-### Say:
+**[Point to tilt comparison boxes]**
+"Here's the clever bit. When the drone is flying, it's not looking straight down — it tilts forward. Without correcting for that, our position estimate is off by over 6 metres. We read the actual pitch and roll from the flight controller and ray-trace through the tilt. That brings the error down to 0.3 metres."
 
-"Following on from Edward's data work — once the model is trained, here's how it runs on the Pi. The camera captures frames, the AI detects the target, and we estimate its GPS position using the camera geometry and the drone's altitude.
-
-The clever bit is we compensate for the drone's tilt during flight — it's not looking straight down when it's moving. We use the flight controller's attitude data to correct for that, which gives us about 2.3 metre accuracy.
-
-When it finds something, the drone stops, hovers to get a better lock, and asks the operator to confirm."
+**[Point to four-phase progression on right]**
+"The system doesn't just detect once and hope for the best. It progressively refines. First detection gives a rough position — about 3.5 metres. The drone flies toward it and slows down — the estimate improves. Then it hovers directly above — now the camera IS looking straight down, and the drone's GPS IS the target's GPS. Finally the operator confirms: is this the casualty? That process takes us from 3.5 metres down to 1.8."
 
 ---
 
-## Screenshots to Prepare
-1. Mission Dashboard with detection (green box visible)
-2. Detection close-up OR the pipeline flow diagram from the report
-3. Dry-run pattern as backup
+## SLIDE 2: Simulation (1.5 min)
 
-Run: `python main.py --speed 5 --lock-yaw` → screenshot during detection
+**[Open with why]**
+"Because our drone hardware wasn't available for most of the term, I built a full simulation environment. The important thing is — it's the same code. What runs in this simulation is exactly what runs on the Raspberry Pi. No separate version."
+
+**[Point to feature grid]**
+"The simulation includes everything: the lawnmower search pattern, AI detection, a five-layer geofence that keeps the drone inside the flight area and away from the SSSI, PLB redirect, payload deployment, and return to home."
+
+"We even simulate camera effects — tilt, motion blur, vibration, GPS noise — so we can stress-test the vision system under realistic conditions."
+
+**[Point to metrics]**
+"All 12 requirements from the brief are verified end-to-end. 58 test scripts, 127 unit tests, over 4,400 lines of mission code."
+
+**[Point to why box]**
+"We built this because we had to. But it turned out to be one of our biggest strengths — we could iterate rapidly, test edge cases, and verify the complete mission without risking hardware. When the drone finally worked at Easter, we already knew the software was solid."
+
+**[Hand over to next speaker — Herish for PLB]**
+
+---
+
+## Screenshots Needed
+
+1. **Mission Dashboard** — run `python main.py --speed 5 --lock-yaw`, screenshot during detection
+2. Put screenshot in place of the placeholder box on slide 2
+
+## Key Numbers to Remember
+
+- 99.5% detection accuracy
+- 4.8 FPS on Pi 5
+- 2.3m GPS accuracy
+- 6.2m → 0.3m with tilt compensation
+- 12/12 requirements met
+- 58 test scripts
+- 4,400+ lines of code
