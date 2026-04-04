@@ -96,7 +96,7 @@
 \vspace{6pt}
 
 \begin{abstract}
-This report presents a comprehensive analysis of the computer vision subsystem developed for an autonomous SAR (Search and Rescue) drone platform at the University of Bristol. The system deploys a YOLOv8n object detector on a Raspberry Pi~5 companion computer to detect a casualty mannequin from aerial search altitudes of 20--50\,m. The vision pipeline---encompassing sensor calibration, model training, edge inference, detection performance characterisation, and GPS target estimation---is encapsulated in a single Python module (\texttt{vision.py}) with a four-value interface consumed by all other subsystems. Key results include: mAP$_{50}$ = 0.995 on a mixed synthetic/real dataset, 100\% bench detection rate at 0.966 mean confidence, 4.8\,FPS effective throughput on TFLite with XNNPACK (206.5\,ms per frame), CEP$_{50}$ = 2.3\,m target localisation accuracy, and a detection probability exceeding 99.97\% per flyover at the nominal 35\,m search altitude. The modular architecture supports drop-in model replacement and three inference backends (TFLite, NCNN, Ultralytics) with zero code changes to calling modules.
+This report presents the computer vision subsystem developed for an autonomous SAR (Search and Rescue) drone platform at the University of Bristol. The system deploys a YOLOv8n object detector on a Raspberry Pi~5 companion computer to detect a casualty mannequin from aerial search altitudes of 20--50\,m. The vision pipeline---encompassing sensor calibration, model training, edge inference, detection performance characterisation, and GPS target estimation---is encapsulated in a single Python module (\texttt{vision.py}) exposing a four-value interface consumed by all other subsystems. Key results include: mAP$_{50}=0.995$ on a mixed synthetic/real dataset, 100\% bench detection rate at 0.966 mean confidence, 4.8\,FPS effective throughput on TFLite with XNNPACK (206.5\,ms per frame), CEP$_{50}=2.3$\,m target localisation accuracy, and a calculated detection probability exceeding 99.97\% per flyover at the nominal 35\,m search altitude. The modular architecture supports drop-in model replacement and three inference backends (TFLite, NCNN, Ultralytics) with zero code changes to calling modules.
 \end{abstract}
 
 \tableofcontents
@@ -110,7 +110,7 @@ Search and rescue operations in wilderness environments face a fundamental chall
 
 This report documents the computer vision subsystem of an autonomous SAR drone developed as part of the AENGM0074 MSc Group Design Project at the University of Bristol. The complete system comprises a Hexsoon EDU-450 hexacopter airframe, a CubePilot Orange+ flight controller running ArduPilot, and a Raspberry Pi~5 companion computer with a Sony IMX296 global shutter camera. The CV subsystem is responsible for detecting a mannequin casualty from search altitudes of 20--50\,m and estimating the target's GPS coordinates for subsequent investigation and landing.
 
-The vision pipeline evolved through three model generations, four sensor calibration campaigns (including the discovery that the IMX296 outputs BGR data despite its RGB888 configuration label), and three inference backend implementations---all encapsulated behind a single four-value interface that remained unchanged throughout. This iterative development story, and the engineering decisions that shaped it, form the core narrative of this report.
+The vision pipeline evolved through three model generations, four sensor calibration campaigns (including the discovery that the IMX296 outputs BGR data despite its RGB888 configuration label), and three inference backend implementations---all encapsulated behind a single four-value interface that remained stable throughout development. This iterative progression, and the engineering decisions that shaped it, form the core narrative of this report.
 
 \subsection{Constraints and Design Drivers}
 
@@ -392,7 +392,7 @@ Three inference backends were evaluated:
 \end{table}
 
 \paragraph{TFLite with XNNPACK delegate (deployed).}
-TFLite~\cite{tflite} was selected as the primary deployment backend. The XNNPACK delegate~\cite{xnnpack} maps convolution and fully-connected operations directly onto ARM NEON intrinsics, achieving near-peak SIMD utilisation. The Python runtime (\texttt{ai-edge-litert}) adds approximately \SI{5}{\mega\byte} to the deployment footprint, compared with $>$\SI{800}{\mega\byte} for PyTorch. XNNPACK automatically distributes work across all four cores; reducing to two threads increased latency by 38\%, confirming compute-bound rather than memory-bound operation.
+TFLite~\cite{tflite} was selected as the primary deployment backend. The XNNPACK delegate~\cite{xnnpack} maps convolution and fully-connected operations directly onto ARM NEON intrinsics, achieving high SIMD utilisation. The Python runtime (\texttt{ai-edge-litert}) adds approximately \SI{5}{\mega\byte} to the deployment footprint, compared with $>$\SI{800}{\mega\byte} for PyTorch. XNNPACK automatically distributes work across all four cores; reducing to two threads increased latency by 38\%, confirming compute-bound rather than memory-bound operation.
 
 \paragraph{NCNN (benchmarked, not deployed).}
 NCNN~\cite{ncnn} achieves approximately $3\times$ speedup over TFLite through hand-tuned NEON assembly kernels and memory-efficient blob pooling. Support was implemented in \texttt{vision.py} via the \texttt{-{}-backend ncnn} flag. NCNN was not deployed for flight testing because: (1) the \texttt{ncnn} Python package on Python~3.13/aarch64 required manual compilation, introducing a fragile build dependency; and (2) 4.8\,FPS was sufficient for the detection-at-altitude use case.
@@ -458,7 +458,7 @@ Published inference benchmarks report raw inference latency, but the operational
   \end{tabular}
 \end{table}
 
-At the deployed 4.8 effective FPS, inference consumes 94.2\% of the frame budget. The \SI{12}{\milli\second} pipeline overhead is negligible---pipeline optimisation (threaded capture, asynchronous GPS estimation) would yield only marginal improvement. The system is unambiguously \emph{inference-bound}.
+At the deployed 4.8 effective FPS, inference consumes 94.2\% of the frame budget. The \SI{12}{\milli\second} pipeline overhead is small relative to inference time; pipeline optimisation (threaded capture, asynchronous GPS estimation) would yield only marginal improvement. The system is therefore \emph{inference-bound}.
 
 This overhead fraction shifts qualitatively as inference speed improves: at TFLite FP16 (${\sim}$100\,ms), overhead rises to 10.7\% of total frame time; at NCNN (${\sim}$77\,ms), it reaches 16.3\%. This \emph{bottleneck transition} means that pipeline optimisation---primarily threaded camera capture overlapping with inference---becomes worthwhile only after the inference bottleneck is first addressed. At the current TFLite FP32 operating point, threading would recover only 0.2\,FPS; at the NCNN operating point, it would recover ${\sim}$1 additional FPS.
 
@@ -1290,7 +1290,7 @@ Eight directions are identified for improving detection reliability and operatio
     \item \textbf{Next-generation architectures.} YOLO11~\cite{yolov8} and future iterations introduce architectural refinements (attention mechanisms, improved feature pyramid designs) that may improve small-object detection without increasing parameter count. The modular export-and-deploy pipeline means any YOLO-family model producing $[1, 5, N]$ output tensors can be integrated without code changes.
 \end{enumerate}
 
-These improvements are ordered by implementation effort: items 1--3 require only additional data, a flag change, or packaging; items 4--5 require dataset restructuring or architecture evaluation; and items 6--8 require new hardware or workflow infrastructure. The modular vision architecture ensures any improvement can be integrated without modifying the state machine, ground station, or flight control code.
+These improvements are ordered by implementation effort: items 1--3 require only additional data, a flag change, or packaging; items 4--5 require dataset restructuring or architecture evaluation; and items 6--8 require new hardware, additional sensors, or workflow infrastructure. The modular vision architecture ensures that any of these improvements can be integrated without modifying the state machine, ground station, or flight control code.
 
 
 % ════════════════════════════════════════════════════════════════════════

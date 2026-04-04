@@ -3,7 +3,7 @@
 
 \subsection{Skills Developed}
 
-This project pushed me into unfamiliar domains. I learned MAVLink and ArduPilot~\cite{ardupilot,mavlink} from scratch---heartbeat negotiation, command acknowledgement, and autopilot configuration. Edge AI deployment (model export, TFLite~\cite{tflite} post-processing, Pi benchmarking) taught me that infrastructure around a model is where real complexity lies. Threading camera capture, inference, telemetry, and web streaming on a single-core Python process gave practical concurrency experience under GIL constraints. Field debugging on a Pi over SSH with no internet and a PuTTY terminal was perhaps the most underrated skill developed.
+This project pushed me into unfamiliar domains. I learned MAVLink and ArduPilot~\cite{ardupilot,mavlink} from scratch, and edge AI deployment taught me that infrastructure around a model---export pipelines, post-processing, benchmarking---is where real complexity lies. But the most valuable skill was field debugging on a Pi over SSH with no internet: when the IMX296 camera output BGR despite the API labelling it RGB888, I diagnosed the issue by testing all six channel permutations on a PuTTY terminal. That methodical elimination process---no Stack Overflow, no documentation, just systematic hypothesis testing---was more formative than any course module.
 
 \subsection{Time Management and Self-Management Failures}
 

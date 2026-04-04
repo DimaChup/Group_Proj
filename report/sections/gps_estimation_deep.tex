@@ -271,7 +271,7 @@ A critical step in the detection-to-GPS chain is the mapping between the sensor'
 % =====================================================================
 \subsection{Error Budget}\label{sec:error-budget}
 
-Nine independent error sources contribute to the total position uncertainty.  Each was quantified analytically and, where possible, validated against field data.  The budget now includes two sources---roll/pitch attitude and image resize---that were omitted from earlier analyses.
+Nine independent error sources contribute to the total position uncertainty.  Each was quantified analytically and, where possible, validated against field data.  The budget now includes two sources---roll/pitch attitude and image resize---that were omitted from earlier analyses.  Figure~\ref{fig:error-waterfall} visualises the cumulative contribution of each source as a waterfall chart.
 
 \begin{table}[ht]
   \centering
@@ -626,7 +626,7 @@ The ray-tracing mathematics are exact; the only residual error comes from noise 
   \end{tabular}
 \end{table}
 
-\noindent The compensation reduces the dominant in-flight error source by over 95\%, from \SI{6.2}{\metre} to approximately \SI{0.9}{\metre} RSS (dominated by telemetry noise).  This residual is well below the GPS receiver noise floor of $\sim$\SI{2.5}{\metre}.
+\noindent The compensation reduces the dominant in-flight error source by over 95\%, from \SI{6.2}{\metre} to approximately \SI{0.9}{\metre} RSS (dominated by telemetry noise).  This residual is well below the GPS receiver noise floor of $\sim$\SI{2.5}{\metre}.  Figure~\ref{fig:attitude-compensation-scatter} visualises the before/after scatter.
 
 \begin{figure}[H]
   \centering
@@ -1480,7 +1480,7 @@ The preceding sections have analysed individual error sources, mitigation strate
   \item \textbf{Phase~4 (VERIFY):} the \texttt{-{}-center-verify} flag averages the drone's own GPS position (which equals the target position, since the drone is centred above it) over $\sim$10\,s at 5\,Hz, yielding $N = 50$ samples.  With $N_\mathrm{eff} \approx 20$ (accounting for temporal correlation), this reduces the \SIrange{2}{3}{\metre} single-fix CEP to $\sim$\SI{1.8}{\metre}.  The operator confirms or rejects, with a \SI{120}{\second} auto-reject timeout.
 \end{enumerate}
 
-\noindent The final \SI{1.8}{\metre} CEP$_{50}$ is dominated by the irreducible GPS receiver noise floor---the theoretical minimum achievable with a single-frequency L1 receiver without differential correction (RTK or DGPS).  Implementing the currently-bypassed DESCENDING state (lowering to \SI{15}{\metre} before VERIFY) would improve this further through reduced GSD (Table~\ref{tab:gsd-altitude}).  Further improvement beyond that would require either RTK GPS ($\sim$\SI{0.02}{\metre}) or significantly longer averaging times.
+\noindent The final \SI{1.8}{\metre} CEP$_{50}$ is dominated by the irreducible GPS receiver noise floor---the theoretical minimum achievable with a single-frequency L1 receiver without differential correction (RTK or DGPS).  Implementing the currently-bypassed DESCENDING state (lowering to \SI{15}{\metre} before VERIFY) would improve this further through reduced GSD (Table~\ref{tab:gsd-altitude}).  Further improvement beyond that would require either RTK GPS ($\sim$\SI{0.02}{\metre}) or significantly longer averaging times.  Figure~\ref{fig:progressive-accuracy-bars} summarises the CEP improvement across all four phases.
 
 \begin{figure}[H]
   \centering
