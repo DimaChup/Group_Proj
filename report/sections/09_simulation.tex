@@ -97,6 +97,24 @@ The \texttt{SimulationEnvironment} class in \texttt{simulation.py} generates a s
 
 This approach ensures that the detection model is exercised against realistic background textures (grass, paths, shadows) at altitude-correct scales, rather than against synthetic uniform backgrounds that would inflate detection performance.
 
+\subsubsection{Perspective Camera Rendering}
+
+When the \texttt{-{}-sim-tilt} flag is active, the simulated camera accounts for the drone's pitch and roll as reported by SITL telemetry.  For each output pixel corner, a ray is cast from the camera through the image plane onto the ground plane ($z = 0$) using the full rotation matrix $\mathbf{R} = \mathbf{R}_z(\psi)\,\mathbf{R}_y(-\theta)\,\mathbf{R}_x(-\phi)$, where $\psi$, $\theta$, and $\phi$ are the yaw, pitch, and roll angles respectively.  The four ground-plane intersections define a trapezoid on the satellite map; an \texttt{OpenCV} perspective warp maps this trapezoid into the rectangular output frame.  Target assets are composited onto the map region \emph{before} the warp, so they receive the same perspective distortion as the terrain.  If any corner ray points upward (camera tilted past the horizon), the renderer falls back to the nadir view.
+
+This perspective rendering allows the simulation to \emph{generate} the attitude-dependent camera tilt problem and simultaneously \emph{verify} the ray-tracing GPS compensation (Section~\ref{sec:tilt-compensation}), since both use identical rotation mathematics---providing a closed-loop validation of the tilt correction that would otherwise require flight data.
+
+\subsubsection{Configurable Sensor Degradation at Level~2}
+
+Beyond the interactive simulator's error injection (Section~\ref{sec:sim-interactive}), the SITL level supports three CLI flags that degrade the synthetic camera view to approximate real-world conditions:
+
+\begin{itemize}
+    \item \texttt{-{}-blur $F$}: applies physics-based directional motion blur.  A one-dimensional kernel is oriented along the yaw angle, sized by the root-sum-square of translational blur (ground speed $\times$ exposure time / GSD) and rotational blur (yaw rate $\times$ focal length in pixels $\times$ exposure time), scaled by factor $F$.  The kernel is capped at 51\,px.
+    \item \texttt{-{}-shake $N$}: adds a random per-frame pixel translation of $\pm N$\,px in both axes, simulating motor vibration.
+    \item \texttt{-{}-noise $L$}: injects Gaussian noise into the GPS position ($\sigma \approx 2.8L$\,m), altitude ($\sigma = 0.5L$\,m), and attitude angles ($\sigma \approx 0.5L^{\circ}$), modelling degraded sensor conditions.
+\end{itemize}
+
+\noindent These flags allow the SITL simulation to stress-test detection reliability and GPS estimation accuracy under conditions closer to real flight, complementing the interactive simulator's error injection with the full autopilot dynamics provided by ArduPilot SITL.
+
 \subsection{Video Replay Tool}\label{sec:sim-video}
 
 The video replay tool (\texttt{video\_test.py}) provides the highest-fidelity offline validation by running the detection model on recorded DJI flight footage. Each video frame is paired with its corresponding SRT telemetry entry, providing GPS coordinates, barometric altitude, and heading at 30\,fps resolution. The tool runs the full pixel-to-GPS estimation pipeline on each detection, accumulating observations, updating the Kalman filter, and building the same scatter plots used in the interactive simulator.

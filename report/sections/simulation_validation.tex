@@ -25,8 +25,8 @@ Multi-target clustering and classification & \checkmark & --- & --- & $\sim$ \\
 Visual servoing convergence & \checkmark & \checkmark & $\sim$ & --- \\
 Operator verification workflow & \checkmark & \checkmark & \checkmark & --- \\
 Detection under real lighting/texture & --- & --- & $\sim$ & \checkmark \\
-Motion blur and vibration effects & --- & --- & --- & $\sim$ \\
-Real GPS noise (${\sim}2$--3\,m) & --- & $\sim$ & $\sim$ & \checkmark \\
+Motion blur and vibration effects & $\sim$ & $\sim$ & --- & $\sim$ \\
+Real GPS noise (${\sim}2$--3\,m) & $\sim$ & $\sim$ & $\sim$ & \checkmark \\
 Wind disturbance on flight stability & --- & --- & --- & --- \\
 \bottomrule
 \end{tabular}
@@ -120,7 +120,7 @@ Despite the multi-fidelity approach, several properties remain untestable in sim
 \begin{itemize}
     \item \textbf{Wind and turbulence.} No simulation level models wind effects on the airframe. Wind-induced position drift during visual servoing and GPS lock phases will degrade estimation accuracy and may trigger geofence warnings near boundary edges. SITL offers a wind parameter, but the interaction with camera stabilisation and detection reliability is unvalidated.
 
-    \item \textbf{Motion blur at speed.} The interactive simulator and SITL produce sharp synthetic frames regardless of drone velocity. Real flight at 8\,m/s with a 200\,ms exposure could produce motion blur of ${\sim}1.6$\,m ground equivalent, potentially reducing detection confidence. The DJI video provides partial evidence (recorded at a different airspeed and camera system), but the IMX296 global shutter should mitigate this for the project hardware.
+    \item \textbf{Motion blur at speed.} By default, the interactive simulator and SITL produce sharp synthetic frames. The \texttt{-{}-blur} and \texttt{-{}-shake} CLI flags inject physics-based motion blur and vibration jitter into the SITL camera view, but these are approximations---the blur kernel is one-dimensional along the yaw axis and does not model sensor-specific point spread functions. Real flight at 8\,m/s with a 200\,ms exposure could produce motion blur of ${\sim}1.6$\,m ground equivalent, potentially reducing detection confidence. The DJI video provides partial evidence (recorded at a different airspeed and camera system), but the IMX296 global shutter should mitigate this for the project hardware.
 
     \item \textbf{Real GPS accuracy.} SITL GPS noise (${\sim}0.5$\,m) is optimistic. Real open-sky receivers typically exhibit 2--3\,m CEP, with occasional multipath excursions to 5--10\,m near buildings or terrain. The DJI video analysis (CEP50 = 2.3\,m) provides the best available estimate, but was recorded with a different GPS receiver.
 

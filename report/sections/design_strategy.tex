@@ -126,8 +126,8 @@ Four specific sim-to-real gaps were identified and addressed:
     \emph{Mitigation:} the model was retrained on a mixed dataset (300~synthetic + 16~real aerial photos + 50~negatives) and validated via DJI video replay, which confirmed 87\% detection rate on frames where the target exceeded $20 \times 20$\,px.
 
   \item \textbf{Motion blur and vibration.}
-    SITL camera views are static screenshots; real aerial imagery exhibits motion blur proportional to speed and altitude.
-    \emph{Mitigation:} the interactive simulator includes configurable camera shake (0--15\,px), and the IMX296 global shutter eliminates rolling-shutter distortion. The speed schedule (\SI{8}{\metre\per\second} at \SI{35}{\metre}) limits inter-frame ground displacement to \SI{1.67}{\metre}, well within the \SI{32}{\metre} footprint width.
+    By default, SITL camera views are sharp synthetic crops; real aerial imagery exhibits motion blur proportional to speed and altitude.
+    \emph{Mitigation:} three CLI flags inject degradation into the SITL camera view: \texttt{-{}-blur} applies physics-based directional motion blur (kernel oriented along the yaw angle, sized by translational ground speed and rotational yaw rate at a simulated 5\,ms exposure); \texttt{-{}-shake} adds per-frame random pixel translation modelling vibration; and \texttt{-{}-noise} injects Gaussian noise into GPS (${\sim}2.8$\,m std), altitude (${\sim}0.5$\,m std), and attitude (${\sim}0.5^{\circ}$ std). The interactive simulator provides equivalent camera shake and GPS drift controls. Additionally, the IMX296 global shutter eliminates rolling-shutter distortion, and the speed schedule (\SI{8}{\metre\per\second} at \SI{35}{\metre}) limits inter-frame ground displacement to \SI{1.67}{\metre}, well within the \SI{32}{\metre} footprint width.
 
   \item \textbf{Wind disturbance.}
     No simulation level models wind effects on flight stability or lane tracking accuracy.
