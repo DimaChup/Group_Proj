@@ -4,16 +4,16 @@ python field_tools/passive_watch.py --fake --no-mavlink --model cv_models/human.
 
 
 python main.py --speed 5 --lock-yaw --clean
+python main.py --speed 5 --lock-yaw --clean --sim-tilt
+
+
+http://localhost:8090/
 
 
 
+--home=51.42340640,-2.67144603,50,155        
 
-
-
-
-
-
-========================================================
+=================================================================================
 
 python field_tools/passive_watch.py --conf 0.5 --model cv_models/human.tflite --save-dir /home/flightlab-user/detections --class-filter person --simple-names
 

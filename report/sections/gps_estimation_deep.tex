@@ -1370,6 +1370,97 @@ The transition from rough lock to precise lock is not instantaneous---it is a co
 
 The tilt compensation algorithm (Section~\ref{sec:tilt-compensation}) enables the drone to respond to initial detections while acknowledging that the first estimate is inherently approximate.  The system architecture treats detection as a progressive refinement process, not a single-shot measurement.  This philosophy---detect approximately, then refine precisely---is what allows a \SI{2}{\metre}-accuracy consumer GPS receiver to support offset landings within a 5--10\,m annulus.  The two-step approach also provides graceful degradation: even if the tilt compensation is miscalibrated or disabled entirely, the $\sim$\SI{7}{\metre} rough estimate is still sufficient to initiate the approach, because the hover lock in Step~2 eliminates all the errors that the compensation was attempting to correct.
 
+\subsubsection{False Positive Handling: What Happens When Step~2 Fails}\label{sec:false-positive-handling}
+
+The tilt-compensated rough estimate from Step~1 may be incorrect for several reasons: the detection was a false positive (a rock, shadow, or clothing on the ground that resembles the mannequin), the tilt compensation was inaccurate due to an extreme pitch angle, or accumulated GPS drift moved the drone to a position that does not correspond to the detection.  The system is designed to recover gracefully from all of these cases.
+
+When the drone arrives at the rough estimate and hovers but \emph{cannot re-detect} the target, the following sequence occurs:
+
+\begin{enumerate}
+  \item \textbf{CENTERING timeout.}  The drone holds position at the rough estimate GPS coordinates for up to \SI{60}{\second}, continuously running the detector on each camera frame.  Without continuous detections, the position cannot be refined.
+
+  \item \textbf{Automatic resumption.}  After the \SI{60}{\second} timeout, the state machine logs \texttt{"CENTERING TIMEOUT --- resuming search"} and transitions back to the SEARCH state.
+
+  \item \textbf{Spatial deduplication.}  The false-positive location is appended to a \texttt{rejected\_targets} list.  Any future detection whose estimated GPS position falls within \SI{5}{\metre} of a rejected location is silently ignored, preventing the drone from investigating the same false alarm twice.
+
+  \item \textbf{Pattern resumption.}  The drone resumes the lawnmower search pattern from the waypoint where the investigation was triggered, ensuring full area coverage despite the interruption.
+\end{enumerate}
+
+\paragraph{Cost of a false positive.}
+Each false positive incurs approximately \SI{60}{\second} of mission time (the timeout duration) and the associated battery expenditure---roughly 3\% of a typical \SI{20}{\minute} endurance budget at \SI{35}{\metre} hover.  One rejected-target exclusion zone (\SI{5}{\metre} radius) is created.  No operator intervention is required; the system self-recovers.
+
+\paragraph{False positive mitigation.}
+Four mechanisms reduce the frequency and impact of false positives:
+\begin{itemize}
+  \item \textbf{SMART detection} (\texttt{-{}-smart-detect}): requires three consecutive confirmed frames before triggering CENTERING, filtering out transient single-frame false alarms.
+  \item \textbf{Confidence threshold} (\texttt{-{}-conf}): raising the threshold (e.g.\ to 0.5) reduces detections but suppresses low-confidence false positives.
+  \item \textbf{Spatial deduplication}: the \texttt{rejected\_targets} list prevents repeated investigation of the same location, capping the cost of any persistent false-positive source at one timeout event.
+  \item \textbf{Bounded timeout}: the \SI{60}{\second} ceiling limits the worst-case impact of any single false positive to a known, budgeted quantity.
+\end{itemize}
+
+\begin{figure}[H]
+  \centering
+  \begin{tikzpicture}[
+      >=Stealth,
+      state/.style={rectangle, rounded corners=4pt, draw=blue!60!black, fill=blue!8,
+                    minimum width=2.4cm, minimum height=0.7cm, font=\small\bfseries,
+                    text=blue!70!black, align=center},
+      decision/.style={diamond, draw=orange!70!black, fill=orange!8, aspect=2.2,
+                       font=\small, inner sep=2pt, text=orange!70!black, align=center},
+      action/.style={rectangle, rounded corners=2pt, draw=black!40, fill=gray!6,
+                     font=\scriptsize, inner sep=4pt, text width=2.6cm, align=center},
+      arrow/.style={->, thick, blue!50!black},
+      yes/.style={font=\scriptsize\bfseries, text=green!50!black},
+      no/.style={font=\scriptsize\bfseries, text=red!60!black},
+  ]
+    % Top row: SEARCH -> Detection -> Tilt compensation -> Rough GPS
+    \node[state] (search) at (0, 0) {SEARCH};
+    \node[decision] (detect) at (3.2, 0) {Detection?};
+    \node[action] (tilt) at (6.4, 0) {Tilt compensation\\$\to$ rough GPS};
+    \node[action] (flyto) at (9.6, 0) {Fly to estimate};
+
+    \draw[arrow] (search) -- (detect);
+    \draw[arrow] (detect) -- node[above, yes] {Yes} (tilt);
+    \draw[arrow] (tilt) -- (flyto);
+    \draw[arrow, dashed, red!40!black] (detect) -- ++(0,-1.0) node[below, font=\scriptsize, text=red!50!black] {No $\to$ continue pattern} -| (search);
+
+    % Middle row: CENTERING
+    \node[state] (center) at (9.6, -2.2) {CENTERING\\(hover)};
+    \node[decision] (redetect) at (6.0, -2.2) {Re-detect\\target?};
+
+    \draw[arrow] (flyto) -- (center);
+    \draw[arrow] (center) -- (redetect);
+
+    % Left branch: re-detected -> refine -> within 1m? -> VERIFY
+    \node[action] (refine) at (3.2, -2.2) {Refine GPS\\(multi-frame)};
+    \node[decision] (converge) at (0, -2.2) {Within\\$\leq$\SI{1}{\metre}?};
+    \node[state] (verify) at (0, -4.4) {VERIFY};
+
+    \draw[arrow] (redetect) -- node[above, yes] {Yes} (refine);
+    \draw[arrow] (refine) -- (converge);
+    \draw[arrow] (converge) -- node[left, yes] {Yes} (verify);
+    \draw[arrow, dashed] (converge.north) -- ++(0,0.6) -| node[near start, above, font=\scriptsize] {No $\to$ keep refining} (refine.north);
+
+    % Right branch: no re-detection -> timeout -> resume SEARCH
+    \node[action] (timeout) at (9.6, -4.4) {\SI{60}{\second} timeout\\no detections};
+    \node[action] (reject) at (6.4, -4.4) {Add to\\rejected targets};
+
+    \draw[arrow] (redetect.south) -- ++(0,-0.5) -| node[near start, right, no] {No} (timeout.north);
+    \draw[arrow] (timeout) -- (reject);
+    \draw[arrow] (reject.south) -- ++(0,-0.5) -| node[below, font=\scriptsize, text=black!60] {Resume pattern} (search.south);
+
+    % VERIFY outcomes
+    \node[state, fill=green!10, draw=green!50!black, text=green!50!black] (approach) at (-2.4, -6.0) {APPROACH};
+    \node[state, fill=red!8, draw=red!50!black, text=red!50!black] (resume) at (2.4, -6.0) {SEARCH};
+
+    \draw[arrow, green!50!black] (verify) -| node[above left, font=\scriptsize, text=green!50!black] {Y = confirm} (approach);
+    \draw[arrow, red!50!black] (verify) -| node[above right, font=\scriptsize, text=red!50!black] {N = reject} (resume);
+
+  \end{tikzpicture}
+  \caption{Decision flow for the two-step detection process including false positive recovery.  The left branch shows successful refinement leading to VERIFY and operator confirmation.  The right branch shows the false positive path: no re-detection during hover triggers a \SI{60}{\second} timeout, the location is added to the rejected-targets list, and the drone resumes the search pattern.  Rejected locations are spatially deduplicated so the same false alarm is never investigated twice.}
+  \label{fig:two-step-decision-flow}
+\end{figure}
+
 % =====================================================================
 \subsection{Why Inverse-Variance Weighting Won}\label{sec:why-ivw}
 
