@@ -255,7 +255,11 @@ class VisionSystem:
     # ------------------------------------------------------------------
 
     def _init_undistortion(self, cam_w, cam_h):
-        """Load lens calibration and precompute remap matrices (~1-2 ms/frame)."""
+        """Load lens calibration and precompute remap matrices (~1-2 ms/frame).
+
+        Automatically scales calibration matrix if the .npz was captured at a
+        different resolution than the current camera resolution.
+        """
         self._undistort_map1 = None
         self._undistort_map2 = None
 
@@ -267,8 +271,20 @@ class VisionSystem:
 
         try:
             calib = np.load(calib_path)
-            mtx = calib["camera_matrix"]
+            mtx = calib["camera_matrix"].copy()
             dist = calib["dist_coeffs"]
+
+            # Scale camera matrix if calibrated at different resolution
+            if "image_size" in calib:
+                cal_w, cal_h = int(calib["image_size"][0]), int(calib["image_size"][1])
+                if cal_w != cam_w or cal_h != cam_h:
+                    sx, sy = cam_w / cal_w, cam_h / cal_h
+                    mtx[0, 0] *= sx  # fx
+                    mtx[1, 1] *= sy  # fy
+                    mtx[0, 2] *= sx  # cx
+                    mtx[1, 2] *= sy  # cy
+                    print(f"[VISION] Calibration scaled {cal_w}x{cal_h} -> {cam_w}x{cam_h}")
+
             new_mtx, _ = cv2.getOptimalNewCameraMatrix(
                 mtx, dist, (cam_w, cam_h), 0, (cam_w, cam_h)
             )
@@ -466,6 +482,9 @@ class VisionSystem:
         """
         if frame is None or not self.using_ai:
             return False, 0, 0, 0.0
+
+        # Apply lens undistortion before inference
+        frame = self.undistort(frame)
 
         # Safety: if using_ai was force-set but no backend actually loaded,
         # return gracefully instead of crashing.

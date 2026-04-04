@@ -3070,14 +3070,19 @@ def main():
             print("[MAV] Skipped (--no-mavlink)")
 
     # Start camera + AI
-    # camera_source owns the camera handle and is used ONLY for get_frame().
+    # camera_source owns the camera handle, applies lens undistortion in get_frame(),
+    # and provides undistort() for fake-mode frames.  Used ONLY for frame capture.
     # _inference_eyes is used for detect_in_image() and is swapped on model switch.
-    # They start as the same object, but diverge after the first model switch.
+    # It is created with undistort=False because the display loop already undistorts
+    # every frame before handing it to the inference thread (avoiding double-undistortion).
     if args.fake:
-        eyes = VisionSystem(camera_index=None, model_path=args.model)
+        camera_source = VisionSystem(camera_index=None, model_path=args.model, undistort=True)
+        # Separate inference eyes — no undistortion (frames arrive pre-undistorted)
+        eyes = VisionSystem(camera_index=None, model_path=args.model, undistort=False)
     else:
-        eyes = VisionSystem(camera_index=0, model_path=args.model)
-    camera_source = eyes  # never reassigned — owns the camera for the entire session
+        camera_source = VisionSystem(camera_index=0, model_path=args.model, undistort=True)
+        # Separate inference eyes — no undistortion (get_frame() already undistorts)
+        eyes = VisionSystem(camera_index=None, model_path=args.model, undistort=False)
     if not eyes.using_ai:
         print("[WARN] AI model not loaded — stream only, no detection")
 
@@ -3201,6 +3206,13 @@ def main():
         if frame is None:
             continue
 
+        # ── Apply lens undistortion to display frame ──
+        # In non-fake mode, get_frame() already undistorts.
+        # In fake mode, we read raw video frames — must undistort here
+        # so the browser stream shows the corrected image.
+        if args.fake:
+            frame = camera_source.undistort(frame)
+
         frame_count += 1
         _mod._frame_count = frame_count
         now = time.time()
@@ -3229,7 +3241,8 @@ def main():
                     new_eyes = VisionSystem(
                         camera_index=None,
                         model_path=m['path'],
-                        backend=m['backend']
+                        backend=m['backend'],
+                        undistort=False,  # frames are already undistorted by display loop
                     )
                     if new_eyes.using_ai:
                         test_frame = np.zeros((640, 640, 3), dtype=np.uint8)
