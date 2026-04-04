@@ -140,47 +140,49 @@
 <!-- ==================== TELEPROMPTER SIDEBAR ==================== -->
 <div class="teleprompter" id="teleprompter">
 
-  <div class="slide-label">SLIDE 1 — VISION</div>
+  <div class="slide-label">SLIDE 1 — VISION (1.6 min, 246 words)</div>
 
   <span class="cue">[After Edward finishes]</span>
-  <strong>"Edward just showed you how we collected data and trained the model. Now I'll show you what happens when that model actually runs on the Pi during a mission."</strong>
+  <strong>So Edward showed you how we trained the model — now let me walk you through what actually happens when it runs on the drone.</strong>
 
-  <span class="cue">[Point to pipeline flow at top]</span>
-  "The camera on the Pi captures frames. YOLOv8 runs detection in real time — about 5 frames per second. When it spots something, we need to turn that pixel position into actual GPS coordinates. We do that using the camera's field of view, the drone's altitude, and its heading."
+  <span class="cue">[Point to pipeline]</span>
+  The Pi camera captures frames at about 5 FPS. Each frame goes through our YOLOv8 model running on TFLite, and when we get a detection, we convert that pixel position into a real-world GPS estimate using the drone's altitude and field of view.
 
   <span class="cue">[Point to tilt boxes]</span>
-  "Now here's a problem most people don't think about. When the drone is flying forward, it's tilted. The camera isn't looking straight down — it's angled. If we ignore that, our position estimate is off by over 6 metres. So we read the actual pitch and roll from the flight controller and ray-trace through the tilt. That's the same maths used in military drone targeting systems. It brings the error down to about 30 centimetres."
+  Now, one problem we hit early was attitude error. If the drone is tilted even a few degrees during flight, your GPS estimate drifts significantly — we measured up to <strong>6.2 metres</strong> off. So we added attitude compensation using the IMU pitch and roll data, which brought that error down to about <strong>0.3 metres</strong>.
 
-  <span class="cue">[Point to four phases on right]</span>
-  "And we don't just detect once and hope for the best. The system refines progressively. First detection while flying gives a rough position — about 3 and a half metres. The drone flies toward it and slows down. As it decelerates, the tilt decreases and the estimate gets better. Then it hovers directly above — and here's the key insight — when the target is dead centre in the camera, the drone's own GPS IS the target's GPS. No calibration needed. All the geometric errors multiply by zero. The operator then confirms: is this the casualty, yes or no."
+  <span class="cue">[Point to four phases]</span>
+  But a single estimate is still noisy, so we use a four-phase approach. Multiple detections get clustered and averaged, bringing our estimate from about 3.5 metres down to 1.8. And then — <strong>this is the key insight</strong> — once we centre the drone directly above the target, the drone's own GPS becomes our target GPS. No more pixel maths needed.
 
-  <span class="cue">[Video playing in corner — don't narrate, let it run]</span>
-  "You can see in the video a sped-up version of this whole process running in our simulation."
+  <span class="cue">[Point to video / dashboard]</span>
+  As you can see in the simulation video, the operator gets a live browser dashboard showing detections, the GPS estimate, and simple Y, N, or I buttons to confirm or reject each target.
+
+  Worth noting — the same codebase runs on both the Pi with TFLite and our laptops with Ultralytics, so we can test everything in simulation before it ever touches real hardware.
 
   <div class="divider"></div>
 
-  <div class="slide-label">SLIDE 2 — SIMULATION LADDER</div>
+  <div class="slide-label">SLIDE 2 — LADDER (1.5 min, 219 words)</div>
 
-  <span class="cue">[Point to ladder]</span>
-  <strong>"Here's our path from simulation to real flight."</strong>
+  <span class="cue">[Slide appears]</span>
+  <strong>Our testing philosophy was simple: never skip a rung.</strong> We built a four-level progressive testing ladder, where each level had to pass before we moved to the next.
 
-  <span class="cue">[Point bottom to top]</span>
-  "At the bottom — full simulation. This runs the exact same Python code that goes on the Pi. Not a separate version. Same state machine, same detection, same geofence. All 12 requirements from the brief work end-to-end here.
+  <span class="cue">[Point to bottom rung]</span>
+  At the base, full software-in-the-loop simulation. The same Python code that runs on the Raspberry Pi runs identically on a laptop with a simulated drone. No separate sim version — one codebase throughout. In simulation, we verified all twelve mission requirements, backed by fifty-eight test scripts and a hundred and twenty-seven unit tests.
 
-  Above that — bench testing on the actual Pi. Camera working, AI running in real time, Cube flight controller responding to our commands.
+  <span class="cue">[Move up]</span>
+  Level two: Pi bench testing. Camera capturing frames, AI model running inference, flight controller connected and responding to commands — all verified on the hardware, on the bench, before anything left the ground.
 
-  Above that — Easter field testing. This is when we finally got outdoor data. FOV calibrated, GPS accuracy measured, real detection benchmarks.
+  <span class="cue">[Next rung]</span>
+  Level three: Easter field testing. We took the system outdoors, calibrated the camera's field of view with a real dummy at measured distances, verified GPS accuracy, and confirmed detection performance under natural lighting conditions.
 
-  And at the top — real autonomous flight. That's what we're aiming for on demo day."
+  <span class="cue">[Top rung]</span>
+  Level four is today — real autonomous flight.
 
-  <span class="cue">[Point to why box]</span>
-  "We could jump straight to the top. But jumping to autonomous flight without testing each level would be irresponsible — especially with a safety-critical system. Each rung builds confidence in the one above it."
+  <span class="cue">[Pause]</span>
+  What made this work is that we started building simulation early, before we had hardware access. <strong>That constraint became our greatest strength.</strong> By the time the drone was physically assembled at Easter, the software was already solid. Over four thousand lines of flight code, tested at every level.
 
-  <span class="cue">[Closing — confident]</span>
-  <strong>"We built this simulation because our hardware wasn't available for most of the term. But honestly, it turned out to be one of our biggest strengths. When the drone finally worked at Easter, we already knew the software was solid."</strong>
-
-  <span class="cue">[Pause, then hand to Herish]</span>
-  "Herish will now talk about the PLB redirect system."
+  <span class="cue">[Hand off]</span>
+  Now I'll hand over to Herish, who'll walk you through the personal locator beacon integration.
 
 </div>
 
