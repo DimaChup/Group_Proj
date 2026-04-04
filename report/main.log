@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.3.27)  4 APR 2026 05:41
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.3.27)  4 APR 2026 05:43
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -2980,10 +2980,6 @@ LaTeX Warning: Command \textdegree invalid in math mode on input line 14.
 
 LaTeX Warning: Command \textdegree invalid in math mode on input line 14.
 
-
-LaTeX Warning: Reference `eq:footprint' on page 129 undefined on input line 19.
-
-
 [129]
 
 LaTeX Warning: Command \textdegree invalid in math mode on input line 70.
@@ -2996,24 +2992,24 @@ LaTeX Font Info:    External font `lmex10' loaded for size
 (Font)              <12> on input line 28.
  [131]) (sections/model_comparison.tex
 [132] [133]) (sections/search_optimization.tex [134]
-<figs/energy_efficiency.pdf, id=6070, 546.09808pt x 390.17519pt>
+<figs/energy_efficiency.pdf, id=6071, 546.09808pt x 390.17519pt>
 File: figs/energy_efficiency.pdf Graphic file (type pdf)
 <use figs/energy_efficiency.pdf>
 Package pdftex.def Info: figs/energy_efficiency.pdf  used on input line 67.
 (pdftex.def)             Requested size: 435.3303pt x 311.0332pt.
-<figs/rotation_comparison.pdf, id=6071, 1004.2368pt x 382.12764pt>
+<figs/rotation_comparison.pdf, id=6072, 1004.2368pt x 382.12764pt>
 File: figs/rotation_comparison.pdf Graphic file (type pdf)
 <use figs/rotation_comparison.pdf>
 Package pdftex.def Info: figs/rotation_comparison.pdf  used on input line 95.
 (pdftex.def)             Requested size: 435.3303pt x 165.64693pt.
  [135 <./figs/energy_efficiency.pdf>] [136 <./figs/rotation_comparison.pdf>]
-<figs/nfz_margin_altitude.pdf, id=6261, 571.4587pt x 354.04019pt>
+<figs/nfz_margin_altitude.pdf, id=6262, 571.4587pt x 354.04019pt>
 File: figs/nfz_margin_altitude.pdf Graphic file (type pdf)
 <use figs/nfz_margin_altitude.pdf>
 Package pdftex.def Info: figs/nfz_margin_altitude.pdf  used on input line 165.
 (pdftex.def)             Requested size: 435.3303pt x 269.7108pt.
  [137 <./figs/nfz_margin_altitude.pdf>]
-<figs/speed_detection_energy.pdf, id=6380, 571.83449pt x 389.89288pt>
+<figs/speed_detection_energy.pdf, id=6381, 571.83449pt x 389.89288pt>
 File: figs/speed_detection_energy.pdf Graphic file (type pdf)
 <use figs/speed_detection_energy.pdf>
 Package pdftex.def Info: figs/speed_detection_energy.pdf  used on input line 20
@@ -3044,24 +3040,24 @@ ed via the \OT1/lmtt/m/n/10 --nfz-directional
  []
 
 ) (sections/path_optimization_definitive.tex [141]
-<figs/real_energy_heatmap.png, id=6550, 867.24pt x 578.16pt>
+<figs/real_energy_heatmap.png, id=6551, 867.24pt x 578.16pt>
 File: figs/real_energy_heatmap.png Graphic file (type png)
 <use figs/real_energy_heatmap.png>
 Package pdftex.def Info: figs/real_energy_heatmap.png  used on input line 96.
 (pdftex.def)             Requested size: 450.69417pt x 300.46849pt.
-<figs/real_energy_vs_altitude.png, id=6554, 722.7pt x 505.89pt>
+<figs/real_energy_vs_altitude.png, id=6555, 722.7pt x 505.89pt>
 File: figs/real_energy_vs_altitude.png Graphic file (type png)
 <use figs/real_energy_vs_altitude.png>
 Package pdftex.def Info: figs/real_energy_vs_altitude.png  used on input line 1
 42.
 (pdftex.def)             Requested size: 450.69417pt x 315.48573pt.
  [142]
-<figs/real_path_patterns.png, id=6574, 1582.713pt x 738.1176pt>
+<figs/real_path_patterns.png, id=6575, 1582.713pt x 738.1176pt>
 File: figs/real_path_patterns.png Graphic file (type png)
 <use figs/real_path_patterns.png>
 Package pdftex.def Info: figs/real_path_patterns.png  used on input line 198.
 (pdftex.def)             Requested size: 486.54057pt x 226.89941pt.
-<figs/top3_paths.pdf, id=6575, 1111.90283pt x 425.66428pt>
+<figs/top3_paths.pdf, id=6576, 1111.90283pt x 425.66428pt>
 File: figs/top3_paths.pdf Graphic file (type pdf)
 <use figs/top3_paths.pdf>
 Package pdftex.def Info: figs/top3_paths.pdf  used on input line 205.
@@ -3072,18 +3068,18 @@ Overfull \vbox (350.38388pt too high) has occurred while \output is active []
 
 [143 <./figs/real_energy_heatmap.png>] [144 <./figs/real_energy_vs_altitude.png
 >]
-<figs/real_optimal_pattern.png, id=6609, 1156.32pt x 578.16pt>
+<figs/real_optimal_pattern.png, id=6610, 1156.32pt x 578.16pt>
 File: figs/real_optimal_pattern.png Graphic file (type png)
 <use figs/real_optimal_pattern.png>
 Package pdftex.def Info: figs/real_optimal_pattern.png  used on input line 325.
 
 (pdftex.def)             Requested size: 450.69417pt x 225.34033pt.
-<figs/pareto_2d_composite.pdf, id=6610, 568.41425pt x 437.38728pt>
+<figs/pareto_2d_composite.pdf, id=6611, 568.41425pt x 437.38728pt>
 File: figs/pareto_2d_composite.pdf Graphic file (type pdf)
 <use figs/pareto_2d_composite.pdf>
 Package pdftex.def Info: figs/pareto_2d_composite.pdf  used on input line 348.
 (pdftex.def)             Requested size: 450.69417pt x 346.8069pt.
-<figs/altitude_tradeoff_dual.pdf, id=6611, 837.92926pt x 361.55928pt>
+<figs/altitude_tradeoff_dual.pdf, id=6612, 837.92926pt x 361.55928pt>
 File: figs/altitude_tradeoff_dual.pdf Graphic file (type pdf)
 <use figs/altitude_tradeoff_dual.pdf>
 Package pdftex.def Info: figs/altitude_tradeoff_dual.pdf  used on input line 35
@@ -3111,13 +3107,13 @@ File: figs/real_energy_heatmap.png Graphic file (type png)
 Package pdftex.def Info: figs/real_energy_heatmap.png  used on input line 183.
 (pdftex.def)             Requested size: 435.3303pt x 290.22615pt.
  [149]
-<figs/tornado_sensitivity.pdf, id=7025, 571.04657pt x 285.1285pt>
+<figs/tornado_sensitivity.pdf, id=7026, 571.04657pt x 285.1285pt>
 File: figs/tornado_sensitivity.pdf Graphic file (type pdf)
 <use figs/tornado_sensitivity.pdf>
 Package pdftex.def Info: figs/tornado_sensitivity.pdf  used on input line 209.
 (pdftex.def)             Requested size: 384.11221pt x 191.79211pt.
  [150 <./figs/tornado_sensitivity.pdf>]
-<figs/n2_diagram.pdf, id=7151, 629.07869pt x 979.9812pt>
+<figs/n2_diagram.pdf, id=7152, 629.07869pt x 979.9812pt>
 File: figs/n2_diagram.pdf Graphic file (type pdf)
 <use figs/n2_diagram.pdf>
 Package pdftex.def Info: figs/n2_diagram.pdf  used on input line 235.
@@ -3126,12 +3122,12 @@ File: figs/coupling_matrix.pdf Graphic file (type pdf)
 <use figs/coupling_matrix.pdf>
 Package pdftex.def Info: figs/coupling_matrix.pdf  used on input line 239.
 (pdftex.def)             Requested size: 245.82962pt x 246.70604pt.
-<figs/sensitivity_matrix.pdf, id=7154, 680.28354pt x 390.66585pt>
+<figs/sensitivity_matrix.pdf, id=7155, 680.28354pt x 390.66585pt>
 File: figs/sensitivity_matrix.pdf Graphic file (type pdf)
 <use figs/sensitivity_matrix.pdf>
 Package pdftex.def Info: figs/sensitivity_matrix.pdf  used on input line 264.
 (pdftex.def)             Requested size: 245.82962pt x 141.17012pt.
-<figs/sensitivity_spider.pdf, id=7155, 462.53987pt x 427.51283pt>
+<figs/sensitivity_spider.pdf, id=7156, 462.53987pt x 427.51283pt>
 File: figs/sensitivity_spider.pdf Graphic file (type pdf)
 <use figs/sensitivity_spider.pdf>
 Package pdftex.def Info: figs/sensitivity_spider.pdf  used on input line 268.
@@ -3141,22 +3137,22 @@ File: figs/pareto_2d_composite.pdf Graphic file (type pdf)
 Package pdftex.def Info: figs/pareto_2d_composite.pdf  used on input line 282.
 (pdftex.def)             Requested size: 435.3303pt x 334.98059pt.
  [151 <./figs/n2_diagram.pdf>]
-<figs/pareto_curve.pdf, id=7318, 488.32996pt x 367.88191pt>
+<figs/pareto_curve.pdf, id=7319, 488.32996pt x 367.88191pt>
 File: figs/pareto_curve.pdf Graphic file (type pdf)
 <use figs/pareto_curve.pdf>
 Package pdftex.def Info: figs/pareto_curve.pdf  used on input line 291.
 (pdftex.def)             Requested size: 435.3303pt x 327.96397pt.
-<figs/pareto_3d.pdf, id=7319, 536.01518pt x 451.00998pt>
+<figs/pareto_3d.pdf, id=7320, 536.01518pt x 451.00998pt>
 File: figs/pareto_3d.pdf Graphic file (type pdf)
 <use figs/pareto_3d.pdf>
 Package pdftex.def Info: figs/pareto_3d.pdf  used on input line 298.
 (pdftex.def)             Requested size: 435.3303pt x 366.30017pt.
-<figs/pareto_parallel.pdf, id=7320, 611.26181pt x 379.18648pt>
+<figs/pareto_parallel.pdf, id=7321, 611.26181pt x 379.18648pt>
 File: figs/pareto_parallel.pdf Graphic file (type pdf)
 <use figs/pareto_parallel.pdf>
 Package pdftex.def Info: figs/pareto_parallel.pdf  used on input line 305.
 (pdftex.def)             Requested size: 486.54057pt x 301.82211pt.
-<figs/pareto_tradeoff_simple.pdf, id=7321, 500.21567pt x 369.24638pt>
+<figs/pareto_tradeoff_simple.pdf, id=7322, 500.21567pt x 369.24638pt>
 File: figs/pareto_tradeoff_simple.pdf Graphic file (type pdf)
 <use figs/pareto_tradeoff_simple.pdf>
 Package pdftex.def Info: figs/pareto_tradeoff_simple.pdf  used on input line 31
@@ -3178,7 +3174,7 @@ File: figs/n2_diagram.pdf Graphic file (type pdf)
 <use figs/n2_diagram.pdf>
 Package pdftex.def Info: figs/n2_diagram.pdf  used on input line 196.
 (pdftex.def)             Requested size: 450.69417pt x 702.1018pt.
-<figs/objective_conflict.pdf, id=7963, 736.75905pt x 587.34618pt>
+<figs/objective_conflict.pdf, id=7964, 736.75905pt x 587.34618pt>
 File: figs/objective_conflict.pdf Graphic file (type pdf)
 <use figs/objective_conflict.pdf>
 Package pdftex.def Info: figs/objective_conflict.pdf  used on input line 203.
@@ -3188,7 +3184,7 @@ Overfull \vbox (305.82314pt too high) has occurred while \output is active []
 
 
 [158]) (sections/design_strategy.tex [159] [160] [161]
-<figs/optimization_network.pdf, id=8023, 1149.09305pt x 758.835pt>
+<figs/optimization_network.pdf, id=8024, 1149.09305pt x 758.835pt>
 File: figs/optimization_network.pdf Graphic file (type pdf)
 <use figs/optimization_network.pdf>
 Package pdftex.def Info: figs/optimization_network.pdf  used on input line 243.
@@ -3215,7 +3211,7 @@ File: figs/altitude_speed_tradeoff.pdf Graphic file (type pdf)
 Package pdftex.def Info: figs/altitude_speed_tradeoff.pdf  used on input line 2
 73.
 (pdftex.def)             Requested size: 435.3303pt x 354.73053pt.
-<figs/function_chain.pdf, id=8367, 798.58348pt x 537.06151pt>
+<figs/function_chain.pdf, id=8368, 798.58348pt x 537.06151pt>
 File: figs/function_chain.pdf Graphic file (type pdf)
 <use figs/function_chain.pdf>
 Package pdftex.def Info: figs/function_chain.pdf  used on input line 280.
@@ -3231,18 +3227,18 @@ Package pdftex.def Info: figs/tornado_sensitivity.pdf  used on input line 289.
 (sections/vision_performance.tex [184
 
 ]
-<figs/real_altitude_vs_px.png, id=8495, 505.89pt x 325.215pt>
+<figs/real_altitude_vs_px.png, id=8496, 505.89pt x 325.215pt>
 File: figs/real_altitude_vs_px.png Graphic file (type png)
 <use figs/real_altitude_vs_px.png>
 Package pdftex.def Info: figs/real_altitude_vs_px.png  used on input line 88.
 (pdftex.def)             Requested size: 435.3303pt x 279.8581pt.
-<figs/real_speed_vs_blur.png, id=8498, 505.89pt x 325.215pt>
+<figs/real_speed_vs_blur.png, id=8499, 505.89pt x 325.215pt>
 File: figs/real_speed_vs_blur.png Graphic file (type png)
 <use figs/real_speed_vs_blur.png>
 Package pdftex.def Info: figs/real_speed_vs_blur.png  used on input line 136.
 (pdftex.def)             Requested size: 435.3303pt x 279.8581pt.
  [185 <./figs/real_altitude_vs_px.png>]
-<figs/real_speed_vs_frames.png, id=8511, 505.89pt x 325.215pt>
+<figs/real_speed_vs_frames.png, id=8512, 505.89pt x 325.215pt>
 File: figs/real_speed_vs_frames.png Graphic file (type png)
 <use figs/real_speed_vs_frames.png>
 Package pdftex.def Info: figs/real_speed_vs_frames.png  used on input line 187.
@@ -3250,13 +3246,13 @@ Package pdftex.def Info: figs/real_speed_vs_frames.png  used on input line 187.
 (pdftex.def)             Requested size: 435.3303pt x 279.8581pt.
 
 [186 <./figs/real_speed_vs_blur.png>]
-<figs/real_coverage.png, id=8520, 505.89pt x 325.215pt>
+<figs/real_coverage.png, id=8521, 505.89pt x 325.215pt>
 File: figs/real_coverage.png Graphic file (type png)
 <use figs/real_coverage.png>
 Package pdftex.def Info: figs/real_coverage.png  used on input line 221.
 (pdftex.def)             Requested size: 435.3303pt x 279.8581pt.
  [187 <./figs/real_speed_vs_frames.png>]
-<figs/real_detection_envelope.png, id=8531, 542.025pt x 361.35pt>
+<figs/real_detection_envelope.png, id=8532, 542.025pt x 361.35pt>
 File: figs/real_detection_envelope.png Graphic file (type png)
 <use figs/real_detection_envelope.png>
 Package pdftex.def Info: figs/real_detection_envelope.png  used on input line 2
@@ -3376,9 +3372,6 @@ L3 programming layer <2026-01-19>
 
 LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 
-
-LaTeX Warning: There were undefined references.
-
 Package rerunfilecheck Info: File `main.out' has not changed.
 (rerunfilecheck)             Checksum: 95157DA0D3810F7B7201656E2DBABAD8;84812.
 Package logreq Info: Writing requests to 'main.run.xml'.
@@ -3386,10 +3379,10 @@ Package logreq Info: Writing requests to 'main.run.xml'.
 
  ) 
 Here is how much of TeX's memory you used:
- 57913 strings out of 467866
- 1301500 string characters out of 5417351
- 2407644 words of memory out of 5000000
- 83722 multiletter control sequences out of 15000+600000
+ 57912 strings out of 467866
+ 1301486 string characters out of 5417351
+ 2408644 words of memory out of 5000000
+ 83721 multiletter control sequences out of 15000+600000
  755825 words of font info for 426 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  99i,20n,118p,1544b,2541s stack positions out of 10000i,1000n,20000p,200000b,200000s
@@ -3440,9 +3433,9 @@ ristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtti10.pfb><C:/User
 s/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/symbols/msa
 m10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsf
 onts/symbols/msbm10.pfb>
-Output written on main.pdf (203 pages, 5419009 bytes).
+Output written on main.pdf (203 pages, 5419171 bytes).
 PDF statistics:
- 9232 PDF objects out of 10688 (max. 8388607)
+ 9233 PDF objects out of 10688 (max. 8388607)
  1550 named destinations out of 1728 (max. 500000)
  75239 words of extra memory for PDF output out of 89155 (max. 10000000)
 
