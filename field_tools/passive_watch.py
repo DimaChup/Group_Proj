@@ -2684,11 +2684,10 @@ def inference_worker(args_ref, csv_writer_ref, csv_file_ref):
 
     _auto_clear_at = None    # timestamp when auto-clear should fire
     _auto_clear_done = False  # True after first auto-clear (only fires once)
-    # Store on module so display thread can reset via P key
-    _mod._auto_clear_reset_requested = False
 
     # last_det is set on the module so display thread can read it
     _mod = sys.modules.get('field_tools.passive_watch') or sys.modules.get('__main__')
+    _mod._auto_clear_reset_requested = False  # P key sets this to restart cycle
 
     while True:
         # Grab latest frame
