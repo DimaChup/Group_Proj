@@ -4,6 +4,52 @@
 
 ---
 
+## QUICK START (copy-paste in order)
+
+### Step 0: Calibrate (bench or field, before flying)
+```bash
+# FOV: camera at 1m height, measure visible width (~92cm expected)
+python tests/calibration/fov_test_simple.py
+
+# Lens undistort (optional, 5min with checkerboard):
+python tests/calibration/lens_calibrate.py
+
+# Verify detection works:
+python tests/laptop/test_cv.py --camera
+```
+
+### Step 1: mavproxy (Terminal 1 on Pi)
+```bash
+sudo /opt/mavlink/mavlink-venv/bin/mavproxy.py \
+  --master=/dev/ttyAMA0 --baudrate=921600 --streamrate=10 \
+  --out=udpout:127.0.0.1:14550 \
+  --out=udpout:127.0.0.1:14551 \
+  --out=tcpin:0.0.0.0:5762
+```
+
+### Step 2: Robin's passive_watch (Terminal 2 on Pi)
+```bash
+cd ~/dima/Group_Proj && source pienv/bin/activate
+python passive_watch.py --port 8091 --conf 0.3 \
+  --smart-estimate --smart-min 5 --smart-radius 2.0 \
+  --smart-dir robin_detections --model best.tflite
+# Browser: http://PI_IP:8091
+```
+
+### Step 3: Our mission (Terminal 3 on Pi) -- AFTER Ctrl+C passive_watch
+```bash
+python main.py --headless --clean
+# Browser: http://PI_IP:8090
+```
+
+**Camera conflict: passive_watch and main.py CANNOT run simultaneously. Stop one before starting the other.**
+
+---
+
+## DETAILED SECTIONS BELOW
+
+---
+
 ## 1. CRITICAL: FOV / Focal Length Calibration
 
 **This is the ONE thing that must be right. Everything else works automatically.**
