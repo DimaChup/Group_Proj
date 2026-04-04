@@ -53,7 +53,7 @@
     {1}{23.86168pt}\LT@entry 
     {1}{81.31226pt}\LT@entry 
     {1}{46.86783pt}\LT@entry 
-    {1}{360.10786pt}}
+    {1}{338.21347pt}}
 \@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Altitude--speed trade-off space. Colour encodes composite mission score (40\% detection $+$ 35\% coverage $+$ 25\% energy). The selected operating point (\SI {35}{\metre }, \SI {8}{\metre \per \second }) sits above the 95\% detection contour in the high-score region, trading \SI {4.4}{Wh} of energy (10.9\% of battery) for a comfortable detection margin.}}{16}{figure.caption.9}\protected@file@percent }
 \newlabel{fig:alt-speed-body}{{2}{16}{Altitude--speed trade-off space. Colour encodes composite mission score (40\% detection $+$ 35\% coverage $+$ 25\% energy). The selected operating point (\SI {35}{\metre }, \SI {8}{\metre \per \second }) sits above the 95\% detection contour in the high-score region, trading \SI {4.4}{Wh} of energy (10.9\% of battery) for a comfortable detection margin}{figure.caption.9}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {1.3}Parameter Derivation Chain}{16}{subsection.1.3}\protected@file@percent }
@@ -150,6 +150,8 @@
 \@writefile{toc}{\contentsline {paragraph}{Camera resolution: $640 \times 480$ $\rightarrow $ $1456 \times 1088$.}{19}{paragraph*.16}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{TFLite runtime: \texttt  {tflite-runtime} $\rightarrow $ \texttt  {ai-edge-litert}.}{19}{paragraph*.17}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Serial communication: pyserial $\rightarrow $ MAVProxy UDP bridge.}{19}{paragraph*.18}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.11}Why Not ROS}{19}{subsection.1.11}\protected@file@percent }
+\newlabel{sec:ros-rationale}{{1.11}{19}{Why Not ROS}{subsection.1.11}{}}
 \abx@aux@cite{0}{imx296}
 \abx@aux@segm{0}{0}{imx296}
 \abx@aux@cite{0}{sukhatme2012rolling_global}
@@ -160,8 +162,6 @@
     {1}{104.6386pt}\LT@entry 
     {1}{210.97406pt}\LT@entry 
     {1}{44.22806pt}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {1.11}Why Not ROS}{20}{subsection.1.11}\protected@file@percent }
-\newlabel{sec:ros-rationale}{{1.11}{20}{Why Not ROS}{subsection.1.11}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {1.12}Camera Selection: Global vs Rolling Shutter}{20}{subsection.1.12}\protected@file@percent }
 \newlabel{sec:camera-rationale}{{1.12}{20}{Camera Selection: Global vs Rolling Shutter}{subsection.1.12}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {1.13}Field Day Adaptation Under Uncertainty}{20}{subsection.1.13}\protected@file@percent }
@@ -171,14 +171,16 @@
 \newlabel{sec:sysdesc}{{2}{20}{System Description}{section.2}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Hardware Platform}{20}{subsection.2.1}\protected@file@percent }
 \newlabel{sec:hw}{{2.1}{20}{Hardware Platform}{subsection.2.1}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {14}{\ignorespaces System bill of materials and approximate costs.}}{20}{table.caption.21}\protected@file@percent }
+\newlabel{tab:hw-bom}{{14}{20}{System bill of materials and approximate costs}{table.caption.21}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Mission overview on the Fenswood Farm site. The lawnmower search pattern covers the designated survey polygon at \SI {35}{\metre } altitude, with the take-off point, return-to-launch path, and SSSI no-fly zone boundary shown. The flight area boundary constrains all autonomous waypoints.}}{21}{figure.caption.20}\protected@file@percent }
 \newlabel{fig:mission_overview}{{3}{21}{Mission overview on the Fenswood Farm site. The lawnmower search pattern covers the designated survey polygon at \SI {35}{\metre } altitude, with the take-off point, return-to-launch path, and SSSI no-fly zone boundary shown. The flight area boundary constrains all autonomous waypoints}{figure.caption.20}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Software Architecture}{21}{subsection.2.2}\protected@file@percent }
 \newlabel{sec:sw-arch}{{2.2}{21}{Software Architecture}{subsection.2.2}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {14}{\ignorespaces System bill of materials and approximate costs.}}{22}{table.caption.21}\protected@file@percent }
-\newlabel{tab:hw-bom}{{14}{22}{System bill of materials and approximate costs}{table.caption.21}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Module dependency graph. Independent modules have no cross-dependencies; the orchestrator composes them at runtime.}}{22}{figure.caption.22}\protected@file@percent }
 \newlabel{fig:architecture}{{4}{22}{Module dependency graph. Independent modules have no cross-dependencies; the orchestrator composes them at runtime}{figure.caption.22}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {16}{\ignorespaces MAVLink commands used by the navigation module.}}{22}{table.caption.24}\protected@file@percent }
+\newlabel{tab:mavlink-commands}{{16}{22}{MAVLink commands used by the navigation module}{table.caption.24}{}}
 \@writefile{toc}{\contentsline {paragraph}{Geofence enforcement.}{22}{paragraph*.25}\protected@file@percent }
 \abx@aux@cite{0}{yolov8}
 \abx@aux@segm{0}{0}{yolov8}
@@ -186,30 +188,28 @@
 \abx@aux@segm{0}{0}{tflite}
 \abx@aux@cite{0}{ncnn}
 \abx@aux@segm{0}{0}{ncnn}
+\abx@aux@cite{0}{choset2001coverage}
+\abx@aux@segm{0}{0}{choset2001coverage}
 \@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Raspberry Pi~5 companion computer system: hardware interfaces and data flow between the CSI camera, TFLite inference engine, MAVProxy bridge, and ground station.}}{23}{figure.caption.23}\protected@file@percent }
 \newlabel{fig:pi_system}{{5}{23}{Raspberry Pi~5 companion computer system: hardware interfaces and data flow between the CSI camera, TFLite inference engine, MAVProxy bridge, and ground station}{figure.caption.23}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {16}{\ignorespaces MAVLink commands used by the navigation module.}}{23}{table.caption.24}\protected@file@percent }
-\newlabel{tab:mavlink-commands}{{16}{23}{MAVLink commands used by the navigation module}{table.caption.24}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Computer Vision Pipeline}{23}{subsection.2.3}\protected@file@percent }
 \newlabel{sec:cv}{{2.3}{23}{Computer Vision Pipeline}{subsection.2.3}{}}
 \@writefile{toc}{\contentsline {paragraph}{Preprocessing.}{23}{paragraph*.27}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Inference.}{23}{paragraph*.28}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Three backends.}{23}{paragraph*.29}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Smart detection mode.}{23}{paragraph*.31}\protected@file@percent }
-\abx@aux@cite{0}{choset2001coverage}
-\abx@aux@segm{0}{0}{choset2001coverage}
+\@writefile{toc}{\contentsline {paragraph}{Performance.}{23}{paragraph*.32}\protected@file@percent }
 \@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Geofence protection visualisation. (a)~Five protection layers: Flight Area hard boundary (emergency RTL), SSSI no-fly zone with 30\,m waypoint buffer, 20\,m speed ramp, 3\,m repulsive field, and hard cutoff. (b)~Repulsive force field that deflects the drone away from the SSSI boundary. (c)~Waypoint correction: the commanded waypoint (red) is shifted to a safe position (green) by the repulsive offset. (d)~Emergency mode switch when the drone enters the SSSI zone.}}{24}{figure.caption.26}\protected@file@percent }
 \newlabel{fig:geofence_diagram}{{6}{24}{Geofence protection visualisation. (a)~Five protection layers: Flight Area hard boundary (emergency RTL), SSSI no-fly zone with 30\,m waypoint buffer, 20\,m speed ramp, 3\,m repulsive field, and hard cutoff. (b)~Repulsive force field that deflects the drone away from the SSSI boundary. (c)~Waypoint correction: the commanded waypoint (red) is shifted to a safe position (green) by the repulsive offset. (d)~Emergency mode switch when the drone enters the SSSI zone}{figure.caption.26}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Computer vision pipeline: frame capture, lens undistortion, resize to $640\times 640$, TFLite inference, confidence filtering, and coordinate rescaling. The entire pipeline executes in 208\,ms on the Pi~5.}}{24}{figure.caption.30}\protected@file@percent }
 \newlabel{fig:cv_pipeline}{{7}{24}{Computer vision pipeline: frame capture, lens undistortion, resize to $640\times 640$, TFLite inference, confidence filtering, and coordinate rescaling. The entire pipeline executes in 208\,ms on the Pi~5}{figure.caption.30}{}}
-\@writefile{toc}{\contentsline {paragraph}{Performance.}{24}{paragraph*.32}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.4}Search Pattern Generation}{24}{subsection.2.4}\protected@file@percent }
 \newlabel{sec:search-pattern}{{2.4}{24}{Search Pattern Generation}{subsection.2.4}{}}
-\@writefile{toc}{\contentsline {paragraph}{Coverage guarantee.}{25}{paragraph*.33}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Coverage guarantee.}{24}{paragraph*.33}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.5}Mission State Machine}{24}{subsection.2.5}\protected@file@percent }
+\newlabel{sec:state-machine}{{2.5}{24}{Mission State Machine}{subsection.2.5}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Area coverage progression over time for the boustrophedon search pattern at \SI {35}{\metre } altitude.}}{25}{figure.caption.34}\protected@file@percent }
 \newlabel{fig:coverage_vs_time}{{8}{25}{Area coverage progression over time for the boustrophedon search pattern at \SI {35}{\metre } altitude}{figure.caption.34}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.5}Mission State Machine}{25}{subsection.2.5}\protected@file@percent }
-\newlabel{sec:state-machine}{{2.5}{25}{Mission State Machine}{subsection.2.5}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.6}Target Localisation}{25}{subsection.2.6}\protected@file@percent }
 \newlabel{sec:localisation}{{2.6}{25}{Target Localisation}{subsection.2.6}{}}
 \newlabel{eq:gsd-sysdesc}{{1}{25}{Target Localisation}{equation.1}{}}
@@ -217,14 +217,14 @@
 \newlabel{fig:state_machine}{{9}{26}{State transition diagram. Primary mission path flows left to right; engagement branches downward from SEARCH. Manual override (dashed) is accessible from any active state}{figure.caption.35}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.7}Ground Station}{26}{subsection.2.7}\protected@file@percent }
 \newlabel{sec:groundstation}{{2.7}{26}{Ground Station}{subsection.2.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.8}Simulation Framework}{26}{subsection.2.8}\protected@file@percent }
+\newlabel{sec:simulation}{{2.8}{26}{Simulation Framework}{subsection.2.8}{}}
 \newlabel{fig:gps_bullseye}{{10a}{27}{GPS estimation error scatter (bullseye). CEP$_{50}$ = 2.3\,m shown as dashed circle}{figure.caption.36}{}}
 \newlabel{sub@fig:gps_bullseye}{{a}{27}{GPS estimation error scatter (bullseye). CEP$_{50}$ = 2.3\,m shown as dashed circle}{figure.caption.36}{}}
 \newlabel{fig:gps_error_direction}{{10b}{27}{Directional error distribution showing heading-aligned elongation from GPS timing lag}{figure.caption.36}{}}
 \newlabel{sub@fig:gps_error_direction}{{b}{27}{Directional error distribution showing heading-aligned elongation from GPS timing lag}{figure.caption.36}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces Target localisation accuracy from DJI flight video replay analysis.}}{27}{figure.caption.36}\protected@file@percent }
 \newlabel{fig:gps_accuracy}{{10}{27}{Target localisation accuracy from DJI flight video replay analysis}{figure.caption.36}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.8}Simulation Framework}{27}{subsection.2.8}\protected@file@percent }
-\newlabel{sec:simulation}{{2.8}{27}{Simulation Framework}{subsection.2.8}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces Mission timeline showing state transitions during a simulated end-to-end SAR mission. The horizontal axis represents elapsed time; coloured blocks indicate active states.}}{27}{figure.caption.37}\protected@file@percent }
 \newlabel{fig:mission_timeline}{{11}{27}{Mission timeline showing state transitions during a simulated end-to-end SAR mission. The horizontal axis represents elapsed time; coloured blocks indicate active states}{figure.caption.37}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {3}Requirements Verification}{27}{section.3}\protected@file@percent }
@@ -237,26 +237,26 @@
 \newlabel{tab:req-verification}{{17}{28}{Requirements verification summary. Status indicates the highest fidelity at which each requirement has been tested}{table.caption.38}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {4}Evaluation}{28}{section.4}\protected@file@percent }
 \newlabel{sec:evaluation}{{4}{28}{Evaluation}{section.4}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Plus/Delta Summary}{29}{subsection.4.1}\protected@file@percent }
-\newlabel{sec:plus-delta}{{4.1}{29}{Plus/Delta Summary}{subsection.4.1}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Discussion of Key Findings}{29}{subsection.4.2}\protected@file@percent }
-\newlabel{sec:eval-discussion}{{4.2}{29}{Discussion of Key Findings}{subsection.4.2}{}}
-\newlabel{fig:conf_vs_alt}{{12a}{29}{Detection confidence vs.\ altitude. Confidence remains above 0.9 up to \SI {40}{\metre }, dropping at higher altitudes as the target subtends fewer pixels}{figure.caption.40}{}}
-\newlabel{sub@fig:conf_vs_alt}{{a}{29}{Detection confidence vs.\ altitude. Confidence remains above 0.9 up to \SI {40}{\metre }, dropping at higher altitudes as the target subtends fewer pixels}{figure.caption.40}{}}
-\newlabel{fig:det_vs_speed}{{12b}{29}{Detection rate vs.\ flight speed. At the nominal search speed of \SI {8}{\metre \per \second }, detection rate exceeds 95\%}{figure.caption.40}{}}
-\newlabel{sub@fig:det_vs_speed}{{b}{29}{Detection rate vs.\ flight speed. At the nominal search speed of \SI {8}{\metre \per \second }, detection rate exceeds 95\%}{figure.caption.40}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {12}{\ignorespaces Detection performance sensitivity analysis from DJI flight video replay.}}{29}{figure.caption.40}\protected@file@percent }
-\newlabel{fig:det_sensitivity}{{12}{29}{Detection performance sensitivity analysis from DJI flight video replay}{figure.caption.40}{}}
-\newlabel{fig:latency_breakdown}{{13a}{29}{Per-frame latency breakdown: capture, undistortion, resize, inference, and postprocessing}{figure.caption.41}{}}
-\newlabel{sub@fig:latency_breakdown}{{a}{29}{Per-frame latency breakdown: capture, undistortion, resize, inference, and postprocessing}{figure.caption.41}{}}
-\newlabel{fig:detection_heatmap}{{13b}{29}{Spatial detection heatmap showing detection density across the survey area during simulated search}{figure.caption.41}{}}
-\newlabel{sub@fig:detection_heatmap}{{b}{29}{Spatial detection heatmap showing detection density across the survey area during simulated search}{figure.caption.41}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {13}{\ignorespaces System performance: inference latency budget and spatial detection distribution.}}{29}{figure.caption.41}\protected@file@percent }
-\newlabel{fig:perf_analysis}{{13}{29}{System performance: inference latency budget and spatial detection distribution}{figure.caption.41}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Testing Framework Summary}{30}{subsection.4.3}\protected@file@percent }
-\newlabel{sec:test-framework-summary}{{4.3}{30}{Testing Framework Summary}{subsection.4.3}{}}
-\@writefile{toc}{\contentsline {paragraph}{Summary.}{30}{paragraph*.43}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{References}{31}{paragraph*.43}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Plus/Delta Summary}{28}{subsection.4.1}\protected@file@percent }
+\newlabel{sec:plus-delta}{{4.1}{28}{Plus/Delta Summary}{subsection.4.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Discussion of Key Findings}{28}{subsection.4.2}\protected@file@percent }
+\newlabel{sec:eval-discussion}{{4.2}{28}{Discussion of Key Findings}{subsection.4.2}{}}
+\newlabel{fig:conf_vs_alt}{{12a}{28}{Detection confidence vs.\ altitude. Confidence remains above 0.9 up to \SI {40}{\metre }, dropping at higher altitudes as the target subtends fewer pixels}{figure.caption.40}{}}
+\newlabel{sub@fig:conf_vs_alt}{{a}{28}{Detection confidence vs.\ altitude. Confidence remains above 0.9 up to \SI {40}{\metre }, dropping at higher altitudes as the target subtends fewer pixels}{figure.caption.40}{}}
+\newlabel{fig:det_vs_speed}{{12b}{28}{Detection rate vs.\ flight speed. At the nominal search speed of \SI {8}{\metre \per \second }, detection rate exceeds 95\%}{figure.caption.40}{}}
+\newlabel{sub@fig:det_vs_speed}{{b}{28}{Detection rate vs.\ flight speed. At the nominal search speed of \SI {8}{\metre \per \second }, detection rate exceeds 95\%}{figure.caption.40}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {12}{\ignorespaces Detection performance sensitivity analysis from DJI flight video replay.}}{28}{figure.caption.40}\protected@file@percent }
+\newlabel{fig:det_sensitivity}{{12}{28}{Detection performance sensitivity analysis from DJI flight video replay}{figure.caption.40}{}}
+\newlabel{fig:latency_breakdown}{{13a}{28}{Per-frame latency breakdown: capture, undistortion, resize, inference, and postprocessing}{figure.caption.41}{}}
+\newlabel{sub@fig:latency_breakdown}{{a}{28}{Per-frame latency breakdown: capture, undistortion, resize, inference, and postprocessing}{figure.caption.41}{}}
+\newlabel{fig:detection_heatmap}{{13b}{28}{Spatial detection heatmap showing detection density across the survey area during simulated search}{figure.caption.41}{}}
+\newlabel{sub@fig:detection_heatmap}{{b}{28}{Spatial detection heatmap showing detection density across the survey area during simulated search}{figure.caption.41}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {13}{\ignorespaces System performance: inference latency budget and spatial detection distribution.}}{28}{figure.caption.41}\protected@file@percent }
+\newlabel{fig:perf_analysis}{{13}{28}{System performance: inference latency budget and spatial detection distribution}{figure.caption.41}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Testing Framework Summary}{29}{subsection.4.3}\protected@file@percent }
+\newlabel{sec:test-framework-summary}{{4.3}{29}{Testing Framework Summary}{subsection.4.3}{}}
+\@writefile{toc}{\contentsline {paragraph}{Summary.}{29}{paragraph*.43}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{References}{30}{paragraph*.43}\protected@file@percent }
 \gdef \LT@ix {\LT@entry 
     {1}{30.66653pt}\LT@entry 
     {1}{481.4831pt}}
@@ -294,6 +294,8 @@
 \abx@aux@segm{0}{0}{bochkovskiy2020yolov4}
 \abx@aux@cite{0}{synthdata}
 \abx@aux@segm{0}{0}{synthdata}
+\abx@aux@cite{0}{shrivastava2016training}
+\abx@aux@segm{0}{0}{shrivastava2016training}
 \abx@aux@cite{0}{shrivastava2016training}
 \abx@aux@segm{0}{0}{shrivastava2016training}
 \abx@aux@cite{0}{shrivastava2016training}
@@ -734,8 +736,8 @@
 \@writefile{toc}{\contentsline {paragraph}{Disadvantages.}{75}{paragraph*.152}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Accuracy.}{75}{paragraph*.153}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Verdict.}{75}{paragraph*.154}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {K.9.2}Level~2: Stop-and-Look (Hover Without Centering)}{76}{subsubsection.K.9.2}\protected@file@percent }
-\newlabel{sec:hover-in-place}{{K.9.2}{76}{Level~2: Stop-and-Look (Hover Without Centering)}{subsubsection.K.9.2}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {K.9.2}Level~2: Stop-and-Look (Hover Without Centering)}{75}{subsubsection.K.9.2}\protected@file@percent }
+\newlabel{sec:hover-in-place}{{K.9.2}{75}{Level~2: Stop-and-Look (Hover Without Centering)}{subsubsection.K.9.2}{}}
 \@writefile{toc}{\contentsline {paragraph}{How it works.}{76}{paragraph*.155}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Advantages.}{76}{paragraph*.156}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Disadvantages.}{76}{paragraph*.157}\protected@file@percent }
@@ -748,6 +750,7 @@
 \newlabel{eq:zero-projection}{{22}{76}{How it works}{equation.22}{}}
 \@writefile{toc}{\contentsline {paragraph}{The zero-offset proof.}{76}{paragraph*.161}\protected@file@percent }
 \newlabel{eq:full-projection}{{23}{76}{The zero-offset proof}{equation.23}{}}
+\@writefile{toc}{\contentsline {paragraph}{Advantages.}{76}{paragraph*.162}\protected@file@percent }
 \gdef \LT@xi {\LT@entry 
     {1}{129.72691pt}\LT@entry 
     {1}{107.20448pt}\LT@entry 
@@ -759,7 +762,6 @@
     {1}{87.55507pt}\LT@entry 
     {1}{122.97246pt}\LT@entry 
     {1}{0.0pt}}
-\@writefile{toc}{\contentsline {paragraph}{Advantages.}{77}{paragraph*.162}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Disadvantages.}{77}{paragraph*.163}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Accuracy.}{77}{paragraph*.164}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Verdict.}{77}{paragraph*.165}\protected@file@percent }
@@ -767,27 +769,27 @@
 \newlabel{sec:two-approaches}{{K.9.4}{77}{Comparative Evaluation}{subsubsection.K.9.4}{}}
 \@writefile{lot}{\contentsline {table}{\numberline {50}{\ignorespaces Error source comparison across the three estimation levels. ``Not needed'' indicates the error source is multiplied by zero pixel offset and does not contribute.}}{77}{table.caption.166}\protected@file@percent }
 \newlabel{tab:hover-vs-centering}{{50}{77}{Error source comparison across the three estimation levels. ``Not needed'' indicates the error source is multiplied by zero pixel offset and does not contribute}{table.caption.166}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {52}{\ignorespaces Operational comparison of the three estimation levels. R07 requires landing within \SIrange {5}{10}{\metre } of the casualty.}}{78}{table.caption.167}\protected@file@percent }
-\newlabel{tab:level-comparison-ops}{{52}{78}{Operational comparison of the three estimation levels. R07 requires landing within \SIrange {5}{10}{\metre } of the casualty}{table.caption.167}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {27}{\ignorespaces Side-by-side comparison of the three estimation levels. Dashed circles represent the CEP$_{50}$ error radius around the true target position (star). Level~1 (passive): the drone is pitched forward and moving, placing the target at the frame edge with the largest error circle. Level~2 (hover): the drone is stationary and nadir-pointing, but the target remains off-centre, requiring the full projection pipeline. Level~3 (centering): the drone has manoeuvred directly above the target, driving the pixel offset to zero and collapsing the error to GPS receiver noise only.}}{78}{figure.caption.168}\protected@file@percent }
-\newlabel{fig:three-level-comparison}{{27}{78}{Side-by-side comparison of the three estimation levels. Dashed circles represent the CEP$_{50}$ error radius around the true target position (star). Level~1 (passive): the drone is pitched forward and moving, placing the target at the frame edge with the largest error circle. Level~2 (hover): the drone is stationary and nadir-pointing, but the target remains off-centre, requiring the full projection pipeline. Level~3 (centering): the drone has manoeuvred directly above the target, driving the pixel offset to zero and collapsing the error to GPS receiver noise only}{figure.caption.168}{}}
-\@writefile{toc}{\contentsline {paragraph}{Design rationale.}{78}{paragraph*.169}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {K.10}Altitude Effect on Estimation Accuracy}{78}{subsection.K.10}\protected@file@percent }
-\newlabel{sec:altitude-effect}{{K.10}{78}{Altitude Effect on Estimation Accuracy}{subsection.K.10}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {52}{\ignorespaces Operational comparison of the three estimation levels. R07 requires landing within \SIrange {5}{10}{\metre } of the casualty.}}{77}{table.caption.167}\protected@file@percent }
+\newlabel{tab:level-comparison-ops}{{52}{77}{Operational comparison of the three estimation levels. R07 requires landing within \SIrange {5}{10}{\metre } of the casualty}{table.caption.167}{}}
 \gdef \LT@xiii {\LT@entry 
     {1}{162.12912pt}\LT@entry 
     {1}{47.84424pt}\LT@entry 
     {1}{76.50032pt}\LT@entry 
     {1}{225.67595pt}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {K.11}Accuracy Progression Through Mission Phases}{79}{subsection.K.11}\protected@file@percent }
-\newlabel{sec:accuracy-progression}{{K.11}{79}{Accuracy Progression Through Mission Phases}{subsection.K.11}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {27}{\ignorespaces Side-by-side comparison of the three estimation levels. Dashed circles represent the CEP$_{50}$ error radius around the true target position (star). Level~1 (passive): the drone is pitched forward and moving, placing the target at the frame edge with the largest error circle. Level~2 (hover): the drone is stationary and nadir-pointing, but the target remains off-centre, requiring the full projection pipeline. Level~3 (centering): the drone has manoeuvred directly above the target, driving the pixel offset to zero and collapsing the error to GPS receiver noise only.}}{78}{figure.caption.168}\protected@file@percent }
+\newlabel{fig:three-level-comparison}{{27}{78}{Side-by-side comparison of the three estimation levels. Dashed circles represent the CEP$_{50}$ error radius around the true target position (star). Level~1 (passive): the drone is pitched forward and moving, placing the target at the frame edge with the largest error circle. Level~2 (hover): the drone is stationary and nadir-pointing, but the target remains off-centre, requiring the full projection pipeline. Level~3 (centering): the drone has manoeuvred directly above the target, driving the pixel offset to zero and collapsing the error to GPS receiver noise only}{figure.caption.168}{}}
+\@writefile{toc}{\contentsline {paragraph}{Design rationale.}{78}{paragraph*.169}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {K.10}Altitude Effect on Estimation Accuracy}{78}{subsection.K.10}\protected@file@percent }
+\newlabel{sec:altitude-effect}{{K.10}{78}{Altitude Effect on Estimation Accuracy}{subsection.K.10}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {K.11}Accuracy Progression Through Mission Phases}{78}{subsection.K.11}\protected@file@percent }
+\newlabel{sec:accuracy-progression}{{K.11}{78}{Accuracy Progression Through Mission Phases}{subsection.K.11}{}}
 \@writefile{lot}{\contentsline {table}{\numberline {54}{\ignorespaces Target GPS estimate accuracy at each phase of the four-phase detection-to-landing flow. CEP values are root-sum-of-squares of dominant error sources; measured CEP50 from DJI video validates the theoretical model. Tilt compensation is active throughout.}}{79}{table.caption.170}\protected@file@percent }
 \newlabel{tab:accuracy-journey}{{54}{79}{Target GPS estimate accuracy at each phase of the four-phase detection-to-landing flow. CEP values are root-sum-of-squares of dominant error sources; measured CEP50 from DJI video validates the theoretical model. Tilt compensation is active throughout}{table.caption.170}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {K.12}GPS Averaging Duration Analysis}{79}{subsection.K.12}\protected@file@percent }
 \newlabel{sec:gps-averaging}{{K.12}{79}{GPS Averaging Duration Analysis}{subsection.K.12}{}}
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {K.12.1}GPS Noise Characteristics}{79}{subsubsection.K.12.1}\protected@file@percent }
-\newlabel{eq:cep-averaging}{{24}{80}{GPS Noise Characteristics}{equation.24}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {K.12.2}Averaging Improvement Model}{80}{subsubsection.K.12.2}\protected@file@percent }
+\newlabel{eq:cep-averaging}{{24}{79}{GPS Noise Characteristics}{equation.24}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {K.12.2}Averaging Improvement Model}{79}{subsubsection.K.12.2}\protected@file@percent }
 \@writefile{lot}{\contentsline {table}{\numberline {56}{\ignorespaces GPS averaging improvement vs.\ duration. $N$ is total fixes at 5\,Hz; $N_\mathrm  {eff}$ is the number of independent samples assuming $\tau _c = \SI {2}{\second }$. The improvement factor is $\sqrt  {N_\mathrm  {eff}}$.}}{80}{table.caption.171}\protected@file@percent }
 \newlabel{tab:gps-averaging}{{56}{80}{GPS averaging improvement vs.\ duration. $N$ is total fixes at 5\,Hz; $N_\mathrm {eff}$ is the number of independent samples assuming $\tau _c = \SI {2}{\second }$. The improvement factor is $\sqrt {N_\mathrm {eff}}$}{table.caption.171}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {28}{\ignorespaces CEP$_{50}$ vs.\ GPS averaging time during stationary hover. The $1/\sqrt  {T}$ convergence means that doubling the averaging time only improves accuracy by $\sim $29\%. The 10\,s operating point (orange) achieves sub-1.2\,m CEP while adding minimal mission time.}}{80}{figure.caption.172}\protected@file@percent }
@@ -804,25 +806,25 @@
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {K.13.3}Kalman Filter (Static Target)}{81}{subsubsection.K.13.3}\protected@file@percent }
 \newlabel{sec:kalman-deep}{{K.13.3}{81}{Kalman Filter (Static Target)}{subsubsection.K.13.3}{}}
 \newlabel{eq:kalman-R-deep}{{27}{81}{Kalman Filter (Static Target)}{equation.27}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {K.13.4}Inverse-Variance Weighting}{82}{subsubsection.K.13.4}\protected@file@percent }
-\newlabel{sec:ivw}{{K.13.4}{82}{Inverse-Variance Weighting}{subsubsection.K.13.4}{}}
-\newlabel{eq:weight-deep}{{32}{82}{Inverse-Variance Weighting}{equation.32}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {K.13.4}Inverse-Variance Weighting}{81}{subsubsection.K.13.4}\protected@file@percent }
+\newlabel{sec:ivw}{{K.13.4}{81}{Inverse-Variance Weighting}{subsubsection.K.13.4}{}}
+\newlabel{eq:weight-deep}{{32}{81}{Inverse-Variance Weighting}{equation.32}{}}
 \newlabel{eq:alt-weight}{{34}{82}{Inverse-Variance Weighting}{equation.34}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {K.14}Spatial Clustering}{82}{subsection.K.14}\protected@file@percent }
 \newlabel{sec:clustering}{{K.14}{82}{Spatial Clustering}{subsection.K.14}{}}
 \newlabel{eq:haversine}{{35}{82}{Spatial Clustering}{equation.35}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {K.15}Comparison of Methods}{82}{subsection.K.15}\protected@file@percent }
 \newlabel{sec:method-comparison}{{K.15}{82}{Comparison of Methods}{subsection.K.15}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {K.16}Empirical Validation}{83}{subsection.K.16}\protected@file@percent }
-\newlabel{sec:validation}{{K.16}{83}{Empirical Validation}{subsection.K.16}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {K.16.1}DJI Video Replay (The ``Bullseye Test'')}{83}{subsubsection.K.16.1}\protected@file@percent }
-\newlabel{sec:dji-validation}{{K.16.1}{83}{DJI Video Replay (The ``Bullseye Test'')}{subsubsection.K.16.1}{}}
-\@writefile{toc}{\contentsline {paragraph}{Methodology.}{83}{paragraph*.174}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {K.16}Empirical Validation}{82}{subsection.K.16}\protected@file@percent }
+\newlabel{sec:validation}{{K.16}{82}{Empirical Validation}{subsection.K.16}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {K.16.1}DJI Video Replay (The ``Bullseye Test'')}{82}{subsubsection.K.16.1}\protected@file@percent }
+\newlabel{sec:dji-validation}{{K.16.1}{82}{DJI Video Replay (The ``Bullseye Test'')}{subsubsection.K.16.1}{}}
+\@writefile{toc}{\contentsline {paragraph}{Methodology.}{82}{paragraph*.174}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Aggregate results.}{83}{paragraph*.175}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Directional bias and GPS timing lag.}{83}{paragraph*.177}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Detection performance across altitude.}{83}{paragraph*.178}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Validation of the theoretical CEP model.}{83}{paragraph*.179}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{The \SI {16.5}{\metre } outlier.}{84}{paragraph*.180}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{The \SI {16.5}{\metre } outlier.}{83}{paragraph*.180}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {K.16.2}Simulator Validation}{84}{subsubsection.K.16.2}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {K.17}Detailed Per-State Accuracy Analysis}{84}{subsection.K.17}\protected@file@percent }
 \newlabel{sec:detailed-accuracy}{{K.17}{84}{Detailed Per-State Accuracy Analysis}{subsection.K.17}{}}
@@ -837,94 +839,94 @@
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {K.18.5}Why Four Phases Are Necessary}{86}{subsubsection.K.18.5}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {K.18.6}The Progressive Refinement Trajectory}{86}{subsubsection.K.18.6}\protected@file@percent }
 \newlabel{sec:creep-up}{{K.18.6}{86}{The Progressive Refinement Trajectory}{subsubsection.K.18.6}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {30}{\ignorespaces The four-phase progressive refinement trajectory. Phase~1: initial detection at full search speed with tilted camera and tilt-compensated GPS estimate (CEP $\approx $ 3.5\,m). Phase~2: continuous approach and deceleration, pitch decreases, estimate improves (CEP $\approx $ 2.5\,m). Phase~3: stationary hover with nadir camera, all geometric errors eliminated (CEP $\approx $ 1.8\,m); if no target is visible, a 15\,s timeout triggers resumption (red dashed branch). Phase~4: operator confirms via ground station; Y triggers offset landing, N resumes search. Error circles are drawn proportional to CEP at each phase.}}{87}{figure.caption.184}\protected@file@percent }
-\newlabel{fig:creep-up}{{30}{87}{The four-phase progressive refinement trajectory. Phase~1: initial detection at full search speed with tilted camera and tilt-compensated GPS estimate (CEP $\approx $ 3.5\,m). Phase~2: continuous approach and deceleration, pitch decreases, estimate improves (CEP $\approx $ 2.5\,m). Phase~3: stationary hover with nadir camera, all geometric errors eliminated (CEP $\approx $ 1.8\,m); if no target is visible, a 15\,s timeout triggers resumption (red dashed branch). Phase~4: operator confirms via ground station; Y triggers offset landing, N resumes search. Error circles are drawn proportional to CEP at each phase}{figure.caption.184}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {30}{\ignorespaces The four-phase progressive refinement trajectory. Phase~1: initial detection at full search speed with tilted camera and tilt-compensated GPS estimate (CEP $\approx $ 3.5\,m). Phase~2: continuous approach and deceleration, pitch decreases, estimate improves (CEP $\approx $ 2.5\,m). Phase~3: stationary hover with nadir camera, all geometric errors eliminated (CEP $\approx $ 1.8\,m); if no target is visible, a 15\,s timeout triggers resumption (red dashed branch). Phase~4: operator confirms via ground station; Y triggers offset landing, N resumes search. Error circles are drawn proportional to CEP at each phase.}}{86}{figure.caption.184}\protected@file@percent }
+\newlabel{fig:creep-up}{{30}{86}{The four-phase progressive refinement trajectory. Phase~1: initial detection at full search speed with tilted camera and tilt-compensated GPS estimate (CEP $\approx $ 3.5\,m). Phase~2: continuous approach and deceleration, pitch decreases, estimate improves (CEP $\approx $ 2.5\,m). Phase~3: stationary hover with nadir camera, all geometric errors eliminated (CEP $\approx $ 1.8\,m); if no target is visible, a 15\,s timeout triggers resumption (red dashed branch). Phase~4: operator confirms via ground station; Y triggers offset landing, N resumes search. Error circles are drawn proportional to CEP at each phase}{figure.caption.184}{}}
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {K.18.7}Design Insight}{87}{subsubsection.K.18.7}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {K.18.8}False Positive Handling}{87}{subsubsection.K.18.8}\protected@file@percent }
 \newlabel{sec:false-positive-handling}{{K.18.8}{87}{False Positive Handling}{subsubsection.K.18.8}{}}
-\@writefile{toc}{\contentsline {paragraph}{Cost of a false positive.}{88}{paragraph*.185}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{False positive mitigation.}{88}{paragraph*.186}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Cost of a false positive.}{87}{paragraph*.185}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{False positive mitigation.}{87}{paragraph*.186}\protected@file@percent }
 \@writefile{lof}{\contentsline {figure}{\numberline {31}{\ignorespaces Complete four-phase decision flow including false positive recovery. The left branch shows successful progression: Phase~1 detection $\to $ Phase~2 approach $\to $ Phase~3 hover lock $\to $ Phase~4 operator verification $\to $ offset landing. The right branch shows the false positive path: no re-detection during Phase~3 hover triggers a \SI {15}{\second } timeout, the location is added to the rejected-targets list (spatial deduplication prevents reinvestigation), and the drone resumes the search pattern at a cost of $<$1\% of mission time.}}{88}{figure.caption.187}\protected@file@percent }
 \newlabel{fig:two-step-decision-flow}{{31}{88}{Complete four-phase decision flow including false positive recovery. The left branch shows successful progression: Phase~1 detection $\to $ Phase~2 approach $\to $ Phase~3 hover lock $\to $ Phase~4 operator verification $\to $ offset landing. The right branch shows the false positive path: no re-detection during Phase~3 hover triggers a \SI {15}{\second } timeout, the location is added to the rejected-targets list (spatial deduplication prevents reinvestigation), and the drone resumes the search pattern at a cost of $<$1\% of mission time}{figure.caption.187}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {K.19}Cooperative Vision-Flight Architecture}{88}{subsection.K.19}\protected@file@percent }
 \newlabel{sec:cooperative-arch}{{K.19}{88}{Cooperative Vision-Flight Architecture}{subsection.K.19}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {32}{\ignorespaces Cooperative vision-flight feedback loop. Detection produces a pixel coordinate, GPS estimation projects it to the ground, and flight control steers the drone toward the target. Crucially, flying closer improves the next detection: lower altitude yields finer GSD, deceleration reduces pitch-induced tilt error, and hovering at nadir drives the pixel offset---and therefore all multiplicative projection errors---toward zero. The cycle repeats until convergence, typically within 15--20\,s.}}{89}{figure.caption.188}\protected@file@percent }
-\newlabel{fig:cooperative-loop}{{32}{89}{Cooperative vision-flight feedback loop. Detection produces a pixel coordinate, GPS estimation projects it to the ground, and flight control steers the drone toward the target. Crucially, flying closer improves the next detection: lower altitude yields finer GSD, deceleration reduces pitch-induced tilt error, and hovering at nadir drives the pixel offset---and therefore all multiplicative projection errors---toward zero. The cycle repeats until convergence, typically within 15--20\,s}{figure.caption.188}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {K.19.1}Three Mechanisms of Flight-Aided Improvement}{89}{subsubsection.K.19.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {32}{\ignorespaces Cooperative vision-flight feedback loop. Detection produces a pixel coordinate, GPS estimation projects it to the ground, and flight control steers the drone toward the target. Crucially, flying closer improves the next detection: lower altitude yields finer GSD, deceleration reduces pitch-induced tilt error, and hovering at nadir drives the pixel offset---and therefore all multiplicative projection errors---toward zero. The cycle repeats until convergence, typically within 15--20\,s.}}{88}{figure.caption.188}\protected@file@percent }
+\newlabel{fig:cooperative-loop}{{32}{88}{Cooperative vision-flight feedback loop. Detection produces a pixel coordinate, GPS estimation projects it to the ground, and flight control steers the drone toward the target. Crucially, flying closer improves the next detection: lower altitude yields finer GSD, deceleration reduces pitch-induced tilt error, and hovering at nadir drives the pixel offset---and therefore all multiplicative projection errors---toward zero. The cycle repeats until convergence, typically within 15--20\,s}{figure.caption.188}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {K.19.1}Three Mechanisms of Flight-Aided Improvement}{88}{subsubsection.K.19.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {K.19.2}Static Camera vs.\ Cooperative System}{89}{subsubsection.K.19.2}\protected@file@percent }
 \@writefile{lot}{\contentsline {table}{\numberline {61}{\ignorespaces Comparison of static camera estimation vs.\ cooperative vision-flight estimation. The cooperative system exploits the drone's ability to reposition, producing accuracy that improves over time rather than remaining fixed.}}{89}{table.caption.189}\protected@file@percent }
 \newlabel{tab:static-vs-cooperative}{{61}{89}{Comparison of static camera estimation vs.\ cooperative vision-flight estimation. The cooperative system exploits the drone's ability to reposition, producing accuracy that improves over time rather than remaining fixed}{table.caption.189}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {K.20}Why Inverse-Variance Weighting Won}{90}{subsection.K.20}\protected@file@percent }
-\newlabel{sec:why-ivw}{{K.20}{90}{Why Inverse-Variance Weighting Won}{subsection.K.20}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {K.21}Empirical Method Comparison Against Ground Truth}{90}{subsection.K.21}\protected@file@percent }
-\newlabel{sec:empirical-comparison}{{K.21}{90}{Empirical Method Comparison Against Ground Truth}{subsection.K.21}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {K.20}Why Inverse-Variance Weighting Won}{89}{subsection.K.20}\protected@file@percent }
+\newlabel{sec:why-ivw}{{K.20}{89}{Why Inverse-Variance Weighting Won}{subsection.K.20}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {K.21}Empirical Method Comparison Against Ground Truth}{89}{subsection.K.21}\protected@file@percent }
+\newlabel{sec:empirical-comparison}{{K.21}{89}{Empirical Method Comparison Against Ground Truth}{subsection.K.21}{}}
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {K.21.1}Ground Truth Setup}{90}{subsubsection.K.21.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {K.21.2}Methods Tested}{90}{subsubsection.K.21.2}\protected@file@percent }
 \@writefile{lot}{\contentsline {table}{\numberline {62}{\ignorespaces Empirical comparison of GPS estimation strategies against SITL ground truth. Each row represents the median result across 20 simulated missions with \SI {3}{\metre } GPS drift, \SI {1}{\metre } altitude noise, and 3\% FOV calibration error. Convergence time is measured from first detection.}}{90}{table.caption.190}\protected@file@percent }
 \newlabel{tab:empirical-methods}{{62}{90}{Empirical comparison of GPS estimation strategies against SITL ground truth. Each row represents the median result across 20 simulated missions with \SI {3}{\metre } GPS drift, \SI {1}{\metre } altitude noise, and 3\% FOV calibration error. Convergence time is measured from first detection}{table.caption.190}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {K.21.3}Why Centering + GPS Averaging Won}{91}{subsubsection.K.21.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {K.21.3}Why Centering + GPS Averaging Won}{90}{subsubsection.K.21.3}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {K.21.4}CEP$_{50}$ Comparison}{91}{subsubsection.K.21.4}\protected@file@percent }
 \@writefile{lof}{\contentsline {figure}{\numberline {33}{\ignorespaces CEP$_{50}$ comparison across seven GPS estimation strategies (lower is better). The centering + GPS averaging approach achieves \SI {1.5}{\metre }---a $4.8\times $ improvement over a single flyover estimate. Error bars omitted for clarity; inter-trial variation was $<$\SI {0.3}{\metre } for all strategies except ``single flyover'' ($\pm $\SI {1.1}{\metre }).}}{91}{figure.caption.191}\protected@file@percent }
 \newlabel{fig:cep-comparison}{{33}{91}{CEP$_{50}$ comparison across seven GPS estimation strategies (lower is better). The centering + GPS averaging approach achieves \SI {1.5}{\metre }---a $4.8\times $ improvement over a single flyover estimate. Error bars omitted for clarity; inter-trial variation was $<$\SI {0.3}{\metre } for all strategies except ``single flyover'' ($\pm $\SI {1.1}{\metre })}{figure.caption.191}{}}
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {K.21.5}Convergence Behaviour}{91}{subsubsection.K.21.5}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {34}{\ignorespaces Convergence of position error over time for the three best estimation strategies. All three begin with the same initial flyover estimate ($\sim $\SI {7}{\metre }). Visual centering converges rapidly to \SI {2.1}{\metre } (GPS noise floor for single fixes) by $t = 15$\,s. GPS averaging during the subsequent 10\,s hold reduces the error further to \SI {1.5}{\metre }. IVW converges more slowly because it relies on accumulating many flyover observations rather than actively centering.}}{92}{figure.caption.192}\protected@file@percent }
-\newlabel{fig:convergence-plot}{{34}{92}{Convergence of position error over time for the three best estimation strategies. All three begin with the same initial flyover estimate ($\sim $\SI {7}{\metre }). Visual centering converges rapidly to \SI {2.1}{\metre } (GPS noise floor for single fixes) by $t = 15$\,s. GPS averaging during the subsequent 10\,s hold reduces the error further to \SI {1.5}{\metre }. IVW converges more slowly because it relies on accumulating many flyover observations rather than actively centering}{figure.caption.192}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {K.22}Offset Landing Application}{92}{subsection.K.22}\protected@file@percent }
-\newlabel{sec:offset-landing}{{K.22}{92}{Offset Landing Application}{subsection.K.22}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {34}{\ignorespaces Convergence of position error over time for the three best estimation strategies. All three begin with the same initial flyover estimate ($\sim $\SI {7}{\metre }). Visual centering converges rapidly to \SI {2.1}{\metre } (GPS noise floor for single fixes) by $t = 15$\,s. GPS averaging during the subsequent 10\,s hold reduces the error further to \SI {1.5}{\metre }. IVW converges more slowly because it relies on accumulating many flyover observations rather than actively centering.}}{91}{figure.caption.192}\protected@file@percent }
+\newlabel{fig:convergence-plot}{{34}{91}{Convergence of position error over time for the three best estimation strategies. All three begin with the same initial flyover estimate ($\sim $\SI {7}{\metre }). Visual centering converges rapidly to \SI {2.1}{\metre } (GPS noise floor for single fixes) by $t = 15$\,s. GPS averaging during the subsequent 10\,s hold reduces the error further to \SI {1.5}{\metre }. IVW converges more slowly because it relies on accumulating many flyover observations rather than actively centering}{figure.caption.192}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {K.22}Offset Landing Application}{91}{subsection.K.22}\protected@file@percent }
+\newlabel{sec:offset-landing}{{K.22}{91}{Offset Landing Application}{subsection.K.22}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {K.23}Multi-Pass Observation and Heading Diversity}{92}{subsection.K.23}\protected@file@percent }
 \newlabel{sec:multi-pass}{{K.23}{92}{Multi-Pass Observation and Heading Diversity}{subsection.K.23}{}}
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {K.23.1}The Lawnmower Pattern Advantage}{92}{subsubsection.K.23.1}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {35}{\ignorespaces Multi-pass bias cancellation. Pass~1 (heading $155^{\circ }$, blue) biases the GPS estimate south-east; Pass~2 (heading $335^{\circ }$, red) biases it north-west by the same magnitude. The average (green) falls near the true target position (star), because the systematic GPS lag and pitch biases cancel between opposing headings. Only random GPS receiver noise remains.}}{93}{figure.caption.193}\protected@file@percent }
-\newlabel{fig:multi-pass-bias}{{35}{93}{Multi-pass bias cancellation. Pass~1 (heading $155^{\circ }$, blue) biases the GPS estimate south-east; Pass~2 (heading $335^{\circ }$, red) biases it north-west by the same magnitude. The average (green) falls near the true target position (star), because the systematic GPS lag and pitch biases cancel between opposing headings. Only random GPS receiver noise remains}{figure.caption.193}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {K.23.2}How Many Passes Are Enough?}{93}{subsubsection.K.23.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {35}{\ignorespaces Multi-pass bias cancellation. Pass~1 (heading $155^{\circ }$, blue) biases the GPS estimate south-east; Pass~2 (heading $335^{\circ }$, red) biases it north-west by the same magnitude. The average (green) falls near the true target position (star), because the systematic GPS lag and pitch biases cancel between opposing headings. Only random GPS receiver noise remains.}}{92}{figure.caption.193}\protected@file@percent }
+\newlabel{fig:multi-pass-bias}{{35}{92}{Multi-pass bias cancellation. Pass~1 (heading $155^{\circ }$, blue) biases the GPS estimate south-east; Pass~2 (heading $335^{\circ }$, red) biases it north-west by the same magnitude. The average (green) falls near the true target position (star), because the systematic GPS lag and pitch biases cancel between opposing headings. Only random GPS receiver noise remains}{figure.caption.193}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {K.23.2}How Many Passes Are Enough?}{92}{subsubsection.K.23.2}\protected@file@percent }
 \newlabel{eq:multi-pass-cep}{{36}{93}{How Many Passes Are Enough?}{equation.36}{}}
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {K.23.3}Strip Spacing and Target Visibility}{93}{subsubsection.K.23.3}\protected@file@percent }
 \newlabel{sec:gps:strip-visibility}{{K.23.3}{93}{Strip Spacing and Target Visibility}{subsubsection.K.23.3}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {K.23.4}Multi-Pass Averaging vs.\ Centering}{94}{subsubsection.K.23.4}\protected@file@percent }
-\newlabel{sec:multipass-vs-centering}{{K.23.4}{94}{Multi-Pass Averaging vs.\ Centering}{subsubsection.K.23.4}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {K.24}Passive Estimation: Level~1 GPS Without Drone Response}{94}{subsection.K.24}\protected@file@percent }
-\newlabel{sec:passive-estimation}{{K.24}{94}{Passive Estimation: Level~1 GPS Without Drone Response}{subsection.K.24}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {K.23.4}Multi-Pass Averaging vs.\ Centering}{93}{subsubsection.K.23.4}\protected@file@percent }
+\newlabel{sec:multipass-vs-centering}{{K.23.4}{93}{Multi-Pass Averaging vs.\ Centering}{subsubsection.K.23.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {K.24}Passive Estimation: Level~1 GPS Without Drone Response}{93}{subsection.K.24}\protected@file@percent }
+\newlabel{sec:passive-estimation}{{K.24}{93}{Passive Estimation: Level~1 GPS Without Drone Response}{subsection.K.24}{}}
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {K.24.1}Passive Estimation Toolkit}{94}{subsubsection.K.24.1}\protected@file@percent }
 \newlabel{sec:passive-toolkit}{{K.24.1}{94}{Passive Estimation Toolkit}{subsubsection.K.24.1}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {K.24.2}Why IVW Suits Passive Mode}{95}{subsubsection.K.24.2}\protected@file@percent }
-\newlabel{sec:ivw-passive}{{K.24.2}{95}{Why IVW Suits Passive Mode}{subsubsection.K.24.2}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {K.24.3}Convergence Behaviour in Passive Mode}{95}{subsubsection.K.24.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {K.24.2}Why IVW Suits Passive Mode}{94}{subsubsection.K.24.2}\protected@file@percent }
+\newlabel{sec:ivw-passive}{{K.24.2}{94}{Why IVW Suits Passive Mode}{subsubsection.K.24.2}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {K.24.3}Convergence Behaviour in Passive Mode}{94}{subsubsection.K.24.3}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {K.24.4}Passive vs.\ Active Estimation: When Each Mode Excels}{95}{subsubsection.K.24.4}\protected@file@percent }
 \newlabel{sec:passive-vs-active}{{K.24.4}{95}{Passive vs.\ Active Estimation: When Each Mode Excels}{subsubsection.K.24.4}{}}
 \@writefile{lot}{\contentsline {table}{\numberline {64}{\ignorespaces Comparison of passive (flyover-only) and active (centering + hover) estimation modes. Passive mode uses IVW fusion over accumulated flyover detections; active mode uses visual centering followed by drone GPS averaging.}}{95}{table.caption.195}\protected@file@percent }
 \newlabel{tab:passive-vs-active}{{64}{95}{Comparison of passive (flyover-only) and active (centering + hover) estimation modes. Passive mode uses IVW fusion over accumulated flyover detections; active mode uses visual centering followed by drone GPS averaging}{table.caption.195}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {K.24.5}Implementation in \texttt  {passive\_watch.py}}{96}{subsubsection.K.24.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {L}Progressive Testing Methodology}{96}{appendix.L}\protected@file@percent }
-\newlabel{sec:testing-deep}{{L}{96}{Progressive Testing Methodology}{appendix.L}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {K.24.5}Implementation in \texttt  {passive\_watch.py}}{95}{subsubsection.K.24.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {L}Progressive Testing Methodology}{95}{appendix.L}\protected@file@percent }
+\newlabel{sec:testing-deep}{{L}{95}{Progressive Testing Methodology}{appendix.L}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {L.1}Philosophy: Never Skip a Tier}{96}{subsection.L.1}\protected@file@percent }
 \newlabel{sec:test-philosophy}{{L.1}{96}{Philosophy: Never Skip a Tier}{subsection.L.1}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {L.2}The Five Tiers in Detail}{97}{subsection.L.2}\protected@file@percent }
-\newlabel{sec:tiers-detail}{{L.2}{97}{The Five Tiers in Detail}{subsection.L.2}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {36}{\ignorespaces Tier progression. Each arrow represents a gate: the downstream tier is blocked until all upstream tests pass.}}{97}{figure.caption.196}\protected@file@percent }
-\newlabel{fig:tier-flow}{{36}{97}{Tier progression. Each arrow represents a gate: the downstream tier is blocked until all upstream tests pass}{figure.caption.196}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {L.2.1}Tier 1: SITL Simulation (Zero Hardware Risk)}{97}{subsubsection.L.2.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Defects caught.}{97}{paragraph*.197}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {L.2.2}Tier 2: Bench Test (Pi + Cube + Camera, No Props)}{97}{subsubsection.L.2.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {L.2}The Five Tiers in Detail}{96}{subsection.L.2}\protected@file@percent }
+\newlabel{sec:tiers-detail}{{L.2}{96}{The Five Tiers in Detail}{subsection.L.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {36}{\ignorespaces Tier progression. Each arrow represents a gate: the downstream tier is blocked until all upstream tests pass.}}{96}{figure.caption.196}\protected@file@percent }
+\newlabel{fig:tier-flow}{{36}{96}{Tier progression. Each arrow represents a gate: the downstream tier is blocked until all upstream tests pass}{figure.caption.196}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {L.2.1}Tier 1: SITL Simulation (Zero Hardware Risk)}{96}{subsubsection.L.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Defects caught.}{96}{paragraph*.197}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {L.2.2}Tier 2: Bench Test (Pi + Cube + Camera, No Props)}{96}{subsubsection.L.2.2}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Defects caught.}{97}{paragraph*.198}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {L.2.3}Tier 3: Passive Flight (Pilot Flies, Pi Watches, Zero Commands)}{98}{subsubsection.L.2.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {L.2.4}Tier 4: Autonomous Search with Log-Only Detection}{98}{subsubsection.L.2.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {L.2.5}Tier 5: Full Autonomous Mission}{98}{subsubsection.L.2.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {L.3}Test Script Organisation}{98}{subsection.L.3}\protected@file@percent }
-\newlabel{sec:test-org-detail}{{L.3}{98}{Test Script Organisation}{subsection.L.3}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {L.2.3}Tier 3: Passive Flight (Pilot Flies, Pi Watches, Zero Commands)}{97}{subsubsection.L.2.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {L.2.4}Tier 4: Autonomous Search with Log-Only Detection}{97}{subsubsection.L.2.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {L.2.5}Tier 5: Full Autonomous Mission}{97}{subsubsection.L.2.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {L.3}Test Script Organisation}{97}{subsection.L.3}\protected@file@percent }
+\newlabel{sec:test-org-detail}{{L.3}{97}{Test Script Organisation}{subsection.L.3}{}}
 \@writefile{lot}{\contentsline {table}{\numberline {65}{\ignorespaces Test script categories and their tier coverage.}}{98}{table.caption.199}\protected@file@percent }
 \newlabel{tab:test-categories}{{65}{98}{Test script categories and their tier coverage}{table.caption.199}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {L.4}Experiment Scripts for Quantitative Validation}{99}{subsection.L.4}\protected@file@percent }
-\newlabel{sec:experiment-scripts}{{L.4}{99}{Experiment Scripts for Quantitative Validation}{subsection.L.4}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {L.5}Defect Discovery by Tier}{99}{subsection.L.5}\protected@file@percent }
-\newlabel{sec:bug-discovery}{{L.5}{99}{Defect Discovery by Tier}{subsection.L.5}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {66}{\ignorespaces Defects discovered at each testing tier, with resolution time and estimated cost if undetected.}}{99}{table.caption.200}\protected@file@percent }
-\newlabel{tab:bug-cost-appendix}{{66}{99}{Defects discovered at each testing tier, with resolution time and estimated cost if undetected}{table.caption.200}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {L.4}Experiment Scripts for Quantitative Validation}{98}{subsection.L.4}\protected@file@percent }
+\newlabel{sec:experiment-scripts}{{L.4}{98}{Experiment Scripts for Quantitative Validation}{subsection.L.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {L.5}Defect Discovery by Tier}{98}{subsection.L.5}\protected@file@percent }
+\newlabel{sec:bug-discovery}{{L.5}{98}{Defect Discovery by Tier}{subsection.L.5}{}}
 \abx@aux@cite{0}{forsberg1991relationship}
 \abx@aux@segm{0}{0}{forsberg1991relationship}
-\@writefile{toc}{\contentsline {subsection}{\numberline {L.6}V-Model Mapping}{100}{subsection.L.6}\protected@file@percent }
-\newlabel{sec:vmodel-mapping}{{L.6}{100}{V-Model Mapping}{subsection.L.6}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {67}{\ignorespaces Mapping between V-model verification levels and the progressive testing tiers.}}{100}{table.caption.201}\protected@file@percent }
-\newlabel{tab:vmodel-map}{{67}{100}{Mapping between V-model verification levels and the progressive testing tiers}{table.caption.201}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {66}{\ignorespaces Defects discovered at each testing tier, with resolution time and estimated cost if undetected.}}{99}{table.caption.200}\protected@file@percent }
+\newlabel{tab:bug-cost-appendix}{{66}{99}{Defects discovered at each testing tier, with resolution time and estimated cost if undetected}{table.caption.200}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {L.6}V-Model Mapping}{99}{subsection.L.6}\protected@file@percent }
+\newlabel{sec:vmodel-mapping}{{L.6}{99}{V-Model Mapping}{subsection.L.6}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {67}{\ignorespaces Mapping between V-model verification levels and the progressive testing tiers.}}{99}{table.caption.201}\protected@file@percent }
+\newlabel{tab:vmodel-map}{{67}{99}{Mapping between V-model verification levels and the progressive testing tiers}{table.caption.201}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {L.7}Cost--Risk Gradient}{100}{subsection.L.7}\protected@file@percent }
 \newlabel{sec:cost-risk}{{L.7}{100}{Cost--Risk Gradient}{subsection.L.7}{}}
 \@writefile{lot}{\contentsline {table}{\numberline {68}{\ignorespaces Cost and risk gradient across testing tiers.}}{100}{table.caption.202}\protected@file@percent }
@@ -932,29 +934,32 @@
 \@writefile{toc}{\contentsline {subsection}{\numberline {L.8}Summary}{100}{subsection.L.8}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {M}Field Day: Adaptation Under Uncertainty}{100}{appendix.M}\protected@file@percent }
 \newlabel{sec:field-day}{{M}{100}{Field Day: Adaptation Under Uncertainty}{appendix.M}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {M.1}Setup: Three Terminals, One Aircraft}{101}{subsection.M.1}\protected@file@percent }
-\newlabel{sec:field-setup}{{M.1}{101}{Setup: Three Terminals, One Aircraft}{subsection.M.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {M.1}Setup: Three Terminals, One Aircraft}{100}{subsection.M.1}\protected@file@percent }
+\newlabel{sec:field-setup}{{M.1}{100}{Setup: Three Terminals, One Aircraft}{subsection.M.1}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {M.2}What We Tested}{101}{subsection.M.2}\protected@file@percent }
 \newlabel{sec:field-tests}{{M.2}{101}{What We Tested}{subsection.M.2}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {M.3}FOV Calibration: Catching a 22\% Error}{101}{subsection.M.3}\protected@file@percent }
 \newlabel{sec:field-fov}{{M.3}{101}{FOV Calibration: Catching a 22\% Error}{subsection.M.3}{}}
-\newlabel{eq:fov-field}{{37}{102}{FOV Calibration: Catching a 22\% Error}{equation.37}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {M.4}Camera Colour Discovery}{102}{subsection.M.4}\protected@file@percent }
-\newlabel{sec:field-colour}{{M.4}{102}{Camera Colour Discovery}{subsection.M.4}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {M.5}Lens Calibration}{102}{subsection.M.5}\protected@file@percent }
-\newlabel{sec:field-lens}{{M.5}{102}{Lens Calibration}{subsection.M.5}{}}
+\newlabel{eq:fov-field}{{37}{101}{FOV Calibration: Catching a 22\% Error}{equation.37}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {M.4}Camera Colour Discovery}{101}{subsection.M.4}\protected@file@percent }
+\newlabel{sec:field-colour}{{M.4}{101}{Camera Colour Discovery}{subsection.M.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {M.5}Lens Calibration}{101}{subsection.M.5}\protected@file@percent }
+\newlabel{sec:field-lens}{{M.5}{101}{Lens Calibration}{subsection.M.5}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {M.6}Benchmark Results}{102}{subsection.M.6}\protected@file@percent }
 \newlabel{sec:field-benchmark}{{M.6}{102}{Benchmark Results}{subsection.M.6}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {M.7}Weather Cancellation and the Go/No-Go Decision}{102}{subsection.M.7}\protected@file@percent }
 \newlabel{sec:field-weather}{{M.7}{102}{Weather Cancellation and the Go/No-Go Decision}{subsection.M.7}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {M.8}The Pivot: Evidence-Based Adaptation}{103}{subsection.M.8}\protected@file@percent }
-\newlabel{sec:field-pivot}{{M.8}{103}{The Pivot: Evidence-Based Adaptation}{subsection.M.8}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {M.9}DJI Video Analysis: A Flight-Data Proxy}{103}{subsection.M.9}\protected@file@percent }
-\newlabel{sec:field-dji}{{M.9}{103}{DJI Video Analysis: A Flight-Data Proxy}{subsection.M.9}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {M.8}The Pivot: Evidence-Based Adaptation}{102}{subsection.M.8}\protected@file@percent }
+\newlabel{sec:field-pivot}{{M.8}{102}{The Pivot: Evidence-Based Adaptation}{subsection.M.8}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {M.9}DJI Video Analysis: A Flight-Data Proxy}{102}{subsection.M.9}\protected@file@percent }
+\newlabel{sec:field-dji}{{M.9}{102}{DJI Video Analysis: A Flight-Data Proxy}{subsection.M.9}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {M.10}Team Coordination Under Field Conditions}{103}{subsection.M.10}\protected@file@percent }
 \newlabel{sec:field-team}{{M.10}{103}{Team Coordination Under Field Conditions}{subsection.M.10}{}}
 \@writefile{toc}{\contentsline {paragraph}{Role distribution.}{103}{paragraph*.203}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Communication protocol.}{103}{paragraph*.204}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Decision-making under uncertainty.}{103}{paragraph*.205}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {M.11}Lessons for the Next Field Day}{103}{subsection.M.11}\protected@file@percent }
+\newlabel{sec:field-lessons}{{M.11}{103}{Lessons for the Next Field Day}{subsection.M.11}{}}
 \gdef \LT@xiv {\LT@entry 
     {1}{125.50148pt}\LT@entry 
     {1}{321.16855pt}\LT@entry 
@@ -963,26 +968,20 @@
     {1}{125.50148pt}\LT@entry 
     {1}{299.45775pt}\LT@entry 
     {1}{87.1904pt}}
-\@writefile{toc}{\contentsline {paragraph}{Decision-making under uncertainty.}{104}{paragraph*.205}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {M.11}Lessons for the Next Field Day}{104}{subsection.M.11}\protected@file@percent }
-\newlabel{sec:field-lessons}{{M.11}{104}{Lessons for the Next Field Day}{subsection.M.11}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {N}Contingency Planning and Deliverable Tiers}{104}{appendix.N}\protected@file@percent }
 \newlabel{sec:contingency}{{N}{104}{Contingency Planning and Deliverable Tiers}{appendix.N}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {N.1}Minimum Viable Deliverable}{104}{subsection.N.1}\protected@file@percent }
 \newlabel{sec:mvd}{{N.1}{104}{Minimum Viable Deliverable}{subsection.N.1}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {N.2}Target Deliverable}{104}{subsection.N.2}\protected@file@percent }
 \newlabel{sec:target}{{N.2}{104}{Target Deliverable}{subsection.N.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {N.3}Stretch Goals}{104}{subsection.N.3}\protected@file@percent }
+\newlabel{sec:stretch}{{N.3}{104}{Stretch Goals}{subsection.N.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {N.4}How the Tier Structure Evolved}{104}{subsection.N.4}\protected@file@percent }
+\newlabel{sec:tier-evolution}{{N.4}{104}{How the Tier Structure Evolved}{subsection.N.4}{}}
 \gdef \LT@xvi {\LT@entry 
     {1}{62.9055pt}\LT@entry 
     {1}{140.0374pt}\LT@entry 
     {1}{309.20673pt}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {N.3}Stretch Goals}{105}{subsection.N.3}\protected@file@percent }
-\newlabel{sec:stretch}{{N.3}{105}{Stretch Goals}{subsection.N.3}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {N.4}How the Tier Structure Evolved}{105}{subsection.N.4}\protected@file@percent }
-\newlabel{sec:tier-evolution}{{N.4}{105}{How the Tier Structure Evolved}{subsection.N.4}{}}
-\@writefile{toc}{\contentsline {paragraph}{Initial ambition (weeks 1--4).}{105}{paragraph*.208}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Realism check after simulation (weeks 5--8).}{105}{paragraph*.209}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Hardware integration reality (weeks 9--12).}{105}{paragraph*.210}\protected@file@percent }
 \gdef \LT@xvii {\LT@entry 
     {1}{79.97733pt}\LT@entry 
     {1}{97.35826pt}\LT@entry 
@@ -993,17 +992,20 @@
     {1}{317.74265pt}}
 \abx@aux@cite{0}{rtca_do178c}
 \abx@aux@segm{0}{0}{rtca_do178c}
-\@writefile{toc}{\contentsline {paragraph}{The resulting structure.}{106}{paragraph*.211}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {N.5}Contingency Plans}{106}{subsection.N.5}\protected@file@percent }
-\newlabel{sec:contingencies}{{N.5}{106}{Contingency Plans}{subsection.N.5}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {N.6}Test Script Mapping}{106}{subsection.N.6}\protected@file@percent }
-\newlabel{sec:test-mapping}{{N.6}{106}{Test Script Mapping}{subsection.N.6}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {O}Test Script Reference}{106}{appendix.O}\protected@file@percent }
-\newlabel{sec:test-scripts}{{O}{106}{Test Script Reference}{appendix.O}{}}
+\@writefile{toc}{\contentsline {paragraph}{Initial ambition (weeks 1--4).}{105}{paragraph*.208}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Realism check after simulation (weeks 5--8).}{105}{paragraph*.209}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Hardware integration reality (weeks 9--12).}{105}{paragraph*.210}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{The resulting structure.}{105}{paragraph*.211}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {N.5}Contingency Plans}{105}{subsection.N.5}\protected@file@percent }
+\newlabel{sec:contingencies}{{N.5}{105}{Contingency Plans}{subsection.N.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {N.6}Test Script Mapping}{105}{subsection.N.6}\protected@file@percent }
+\newlabel{sec:test-mapping}{{N.6}{105}{Test Script Mapping}{subsection.N.6}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {O}Test Script Reference}{105}{appendix.O}\protected@file@percent }
+\newlabel{sec:test-scripts}{{O}{105}{Test Script Reference}{appendix.O}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {O.1}Organisation by Category}{106}{subsection.O.1}\protected@file@percent }
 \newlabel{sec:script-categories}{{O.1}{106}{Organisation by Category}{subsection.O.1}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {O.2}Flight Test Progression}{107}{subsection.O.2}\protected@file@percent }
-\newlabel{sec:flight-progression}{{O.2}{107}{Flight Test Progression}{subsection.O.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {O.2}Flight Test Progression}{106}{subsection.O.2}\protected@file@percent }
+\newlabel{sec:flight-progression}{{O.2}{106}{Flight Test Progression}{subsection.O.2}{}}
 \@writefile{lot}{\contentsline {table}{\numberline {79}{\ignorespaces Flight test progression. Each script must pass before the next is attempted. ``Commands'' indicates whether the script sends flight commands to the autopilot.}}{107}{table.caption.215}\protected@file@percent }
 \newlabel{tab:flight-scripts}{{79}{107}{Flight test progression. Each script must pass before the next is attempted. ``Commands'' indicates whether the script sends flight commands to the autopilot}{table.caption.215}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {O.3}Hardware Tests}{108}{subsection.O.3}\protected@file@percent }
@@ -1941,6 +1943,67 @@
 \newlabel{tab:sim-vs-real}{{154}{203}{Simulation vs.\ real hardware readiness (0--10 scale)}{table.caption.375}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {AI.9}Lessons for Future Teams}{203}{subsection.Alph35.9}\protected@file@percent }
 \newlabel{sec:lessons-future}{{AI.9}{203}{Lessons for Future Teams}{subsection.Alph35.9}{}}
-\abx@aux@read@bbl@mdfivesum{nobblfile}
-\abx@aux@read@bblrerun
+\abx@aux@read@bbl@mdfivesum{33D3336230BEB7D4B085810AF54876FD}
+\abx@aux@defaultrefcontext{0}{murphy2014}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{edgeai}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{tflite}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{wca1981}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{caa2024uas}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{jarus2019sora}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{galceran2013survey}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{choset2001coverage}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{thermal_sar}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{mavproxy}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{yolov8}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{lin2014coco}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{domainrand}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{wagner2006fsm}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{sheridan2002humans}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{endsley1999loa}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{cummings2014man_uav}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{goodrich2007human}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{lyu2023uav_sar_survey}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{goodrich2008}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{quigley2009ros}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{imx296}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{sukhatme2012rolling_global}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{ncnn}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{synthdata}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{bochkovskiy2020yolov4}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{shrivastava2016training}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{ardupilot_failsafe}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{forsberg1991relationship}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{koopman2016challenges}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{ardupilot2024}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{nasa2015vv}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{lens_calibration}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{opencv}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{xnnpack}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{misra2006global}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{kalman1960}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{david2021tensorflow}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{hailo2023datasheet}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{tremblay2018training}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{rudol2008human}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{cap722}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{waharte2010supporting}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{multiuav}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{raspberrypi5}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{arm_a76}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{munoz2016mjpeg}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{apple_hls}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{gamma1994design}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{wiegand2003h264}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{qgroundcontrol2020}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{kaplan2017understanding}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{beard2012small}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{barber2006vision}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{rtca_do178c}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{brown1966decentering}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{johnson2013helicopter}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{murphy2016disaster}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{mavlink2}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{settles2009active}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{golden2006hypothermia}{none/global//global/global/global}
+\abx@aux@defaultrefcontext{0}{stolaroff2018energy}{none/global//global/global/global}
 \gdef \@abspage@last{203}
