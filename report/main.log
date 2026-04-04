@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.3.27)  4 APR 2026 02:45
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.3.27)  4 APR 2026 03:18
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1542,7 +1542,32 @@ LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 1
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/lm\ot1lmr.fd
 File: ot1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
-(main.aux)
+(main.aux
+
+LaTeX Warning: Label `sec:vp:frames' multiply defined.
+
+
+! LaTeX Error: Missing \begin{document}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.1977 l
+        /global}
+You're in trouble here.  Try typing  <return>  to proceed.
+If that doesn't work, type  X <return>  to quit.
+
+! Extra }, or forgotten \endgroup.
+l.1977 l/global}
+                
+I've deleted a group-closing symbol because it seems to be
+spurious, as in `$x}$'. But perhaps the } is legitimate and
+you forgot something else, as in `\hbox{$x}'. In such cases
+the way to recover is to insert both the forgotten and the
+deleted material, e.g., by typing `I$}'.
+
+)
 \openout1 = `main.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 132.
@@ -1703,37 +1728,32 @@ Package hyperref Info: Link coloring ON on input line 132.
  [1
 
 {C:/Users/Bristol/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map}{C:/Users/Br
-istol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-rm.enc}] (main.toc)
-\tf@toc=\write6
-\openout6 = `main.toc'.
-
- [2] (sections/exec_summary.tex
-LaTeX Font Info:    Trying to load font information for OML+lmm on input line 1
-5.
+istol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-rm.enc}] (main.toc
+LaTeX Font Info:    Trying to load font information for OML+lmm on input line 9
+.
 
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/lm\omllmm.fd
 File: omllmm.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    Trying to load font information for OMS+lmsy on input line 
-15.
+9.
 
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/lm\omslmsy.fd
 File: omslmsy.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    Trying to load font information for OMX+lmex on input line 
-15.
+9.
 
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/lm\omxlmex.fd
 File: omxlmex.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <10> on input line 15.
+(Font)              <10> on input line 9.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <7> on input line 15.
+(Font)              <7> on input line 9.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <5> on input line 15.
-LaTeX Font Info:    Trying to load font information for U+msa on input line 15.
-
+(Font)              <5> on input line 9.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 9.
 
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
@@ -1741,16 +1761,92 @@ File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/microtype\mt-msa.cfg
 File: mt-msa.cfg 2006/02/04 v1.1 microtype config. file: AMS symbols (a) (RS)
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 15.
-
+LaTeX Font Info:    Trying to load font information for U+msb on input line 9.
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/microtype\mt-msb.cfg
 File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
-)) [3{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-math
-sy.enc}{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-ma
-thit.enc}] (sections/intro_d6.tex
+) [2] [3] [4]
+LaTeX Font Info:    Trying to load font information for OT1+lmtt on input line 
+296.
+
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/lm\ot1lmtt.fd
+File: ot1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
+)
+Package microtype Info: Loading generic protrusion settings for font family
+(microtype)             `lmtt' (encoding: OT1).
+(microtype)             For optimal results, create family-specific settings.
+(microtype)             See the microtype manual for details.
+
+[5{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-rmtt.en
+c}] [6] [7]
+Overfull \hbox (2.388pt too wide) detected at line 488
+\OT1/lmr/bx/n/10 AA 
+ []
+
+[8{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathit.
+enc}]
+Overfull \hbox (1.87448pt too wide) detected at line 496
+\OT1/lmr/bx/n/10 AB 
+ []
+
+
+Overfull \hbox (1.68054pt too wide) detected at line 513
+\OT1/lmr/bx/n/10 AC 
+ []
+
+
+Overfull \hbox (2.51299pt too wide) detected at line 524
+\OT1/lmr/bx/n/10 AD 
+ []
+
+
+Overfull \hbox (1.24948pt too wide) detected at line 532
+\OT1/lmr/bx/n/10 AE 
+ []
+
+
+Overfull \hbox (0.93pt too wide) detected at line 539
+\OT1/lmr/bx/n/10 AF 
+ []
+
+[9]
+Overfull \hbox (3.80571pt too wide) detected at line 559
+\OT1/lmr/m/n/10 AF.10 
+ []
+
+
+Overfull \hbox (2.41655pt too wide) detected at line 560
+\OT1/lmr/bx/n/10 AG 
+ []
+
+
+Overfull \hbox (4.84694pt too wide) detected at line 578
+\OT1/lmr/m/n/10 AG.10 
+ []
+
+
+Overfull \hbox (4.84694pt too wide) detected at line 582
+\OT1/lmr/m/n/10 AG.11 
+ []
+
+
+Overfull \hbox (4.84694pt too wide) detected at line 583
+\OT1/lmr/m/n/10 AG.12 
+ []
+
+
+Overfull \hbox (2.69398pt too wide) detected at line 584
+\OT1/lmr/bx/n/10 AH 
+ []
+
+)
+\tf@toc=\write6
+\openout6 = `main.toc'.
+
+ [10] (sections/exec_summary.tex) [11{C:/Users/Bristol/AppData/Local/Programs/M
+iKTeX/fonts/enc/dvips/lm/lm-mathsy.enc}] (sections/intro_d6.tex
 LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 1
 4.
 
@@ -1761,58 +1857,30 @@ LaTeX Font Info:    External font `lmex10' loaded for size
 (Font)              <8> on input line 25.
 LaTeX Font Info:    External font `lmex10' loaded for size
 (Font)              <6> on input line 25.
-LaTeX Font Info:    Trying to load font information for OT1+lmtt on input line 
-25.
 
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/lm\ot1lmtt.fd
-File: ot1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
-)
-Package microtype Info: Loading generic protrusion settings for font family
-(microtype)             `lmtt' (encoding: OT1).
-(microtype)             For optimal results, create family-specific settings.
-(microtype)             See the microtype manual for details.
-
-[4{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-ts1.enc
-}{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-rmtt.enc
-}]
+[12{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-ts1.en
+c}]
 LaTeX Font Info:    External font `lmex10' loaded for size
 (Font)              <9> on input line 55.
-) [5] (sections/design_rationale.tex
-<figs/coupling_matrix.pdf, id=675, 515.08058pt x 516.9182pt>
+) [13] (sections/design_rationale.tex
+<figs/coupling_matrix.pdf, id=2158, 515.08058pt x 516.9182pt>
 File: figs/coupling_matrix.pdf Graphic file (type pdf)
 <use figs/coupling_matrix.pdf>
 Package pdftex.def Info: figs/coupling_matrix.pdf  used on input line 38.
 (pdftex.def)             Requested size: 399.47607pt x 400.90718pt.
- [6]
-
-LaTeX Warning: Reference `sec:path-opt' on page 7 undefined on input line 43.
-
-<figs/altitude_speed_tradeoff.pdf, id=690, 491.61806pt x 400.5803pt>
+ [14]
+<figs/altitude_speed_tradeoff.pdf, id=2174, 491.61806pt x 400.5803pt>
 File: figs/altitude_speed_tradeoff.pdf Graphic file (type pdf)
 <use figs/altitude_speed_tradeoff.pdf>
 Package pdftex.def Info: figs/altitude_speed_tradeoff.pdf  used on input line 5
 4.
 (pdftex.def)             Requested size: 399.47607pt x 325.51347pt.
-[7 <./figs/coupling_matrix.pdf>]
+ [15 <./figs/coupling_matrix.pdf>]
 
-LaTeX Warning: Reference `sec:req-detail' on page 8 undefined on input line 59.
+LaTeX Warning: Reference `sec:req-detail' on page 16 undefined on input line 59
+.
 
-
-
-LaTeX Warning: Reference `sec:path-opt' on page 8 undefined on input line 59.
-
-
-LaTeX Warning: Reference `sec:design-strategy' on page 8 undefined on input lin
-e 59.
-
-
-LaTeX Warning: Reference `sec:path-opt' on page 8 undefined on input line 63.
-
-
-LaTeX Warning: Reference `app:decision-flow' on page 8 undefined on input line 
-63.
-
-[8 <./figs/altitude_speed_tradeoff.pdf>] [9] [10]
+[16 <./figs/altitude_speed_tradeoff.pdf>] [17] [18]
 Overfull \hbox (0.58871pt too wide) in paragraph at lines 207--208
 []\OT1/lmr/m/n/10 (-20) The CEN-TER-ING state---hovering sta-tion-ary above a d
 e-tected tar-get be-fore es-ti-mat-ing its GPS position---simultaneously
@@ -1820,96 +1888,63 @@ e-tected tar-get be-fore es-ti-mat-ing its GPS position---simultaneously
 
 LaTeX Font Info:    Font shape `OT1/lmtt/bx/n' in size <10> not available
 (Font)              Font shape `OT1/lmtt/b/n' tried instead on input line 229.
-[11{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-rmsc.e
-nc}]
-
-LaTeX Warning: Reference `sec:field-day' on page 12 undefined on input line 245
-.
-
-
-LaTeX Warning: Reference `app:decision-flow' on page 12 undefined on input line
- 247.
-
-) (sections/system_description.tex
-<figs/mission_overview.pdf, id=1010, 488.03644pt x 464.76385pt>
+[19{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-rmsc.e
+nc}]) (sections/system_description.tex
+<figs/mission_overview.pdf, id=2499, 488.03644pt x 464.76385pt>
 File: figs/mission_overview.pdf Graphic file (type pdf)
 <use figs/mission_overview.pdf>
 Package pdftex.def Info: figs/mission_overview.pdf  used on input line 12.
 (pdftex.def)             Requested size: 512.14963pt x 487.76114pt.
-
-
-LaTeX Warning: Reference `sec:calibration' on page 12 undefined on input line 4
-1.
-
-[12]
-
-LaTeX Warning: Reference `sec:test-scripts' on page 13 undefined on input line 
-46.
-
-<figs/architecture.pdf, id=1026, 654.40488pt x 570.93298pt>
+ [20]
+<figs/architecture.pdf, id=2517, 654.40488pt x 570.93298pt>
 File: figs/architecture.pdf Graphic file (type pdf)
 <use figs/architecture.pdf>
 Package pdftex.def Info: figs/architecture.pdf  used on input line 50.
 (pdftex.def)             Requested size: 435.3303pt x 379.81377pt.
-<figs/pi_system.pdf, id=1027, 873.46724pt x 681.93645pt>
+<figs/pi_system.pdf, id=2518, 873.46724pt x 681.93645pt>
 File: figs/pi_system.pdf Graphic file (type pdf)
 <use figs/pi_system.pdf>
 Package pdftex.def Info: figs/pi_system.pdf  used on input line 57.
 (pdftex.def)             Requested size: 384.11221pt x 299.88647pt.
-[13 <./figs/mission_overview.pdf>]
-
-LaTeX Warning: Reference `sec:repulsive-field' on page 14 undefined on input li
-ne 90.
-
-
-LaTeX Warning: Reference `sec:nfz-interaction' on page 14 undefined on input li
-ne 90.
-
-<figs/geofence_diagram.pdf, id=1126, 974.55922pt x 699.68274pt>
+ [21 <./figs/mission_overview.pdf>]
+<figs/geofence_diagram.pdf, id=2618, 974.55922pt x 699.68274pt>
 File: figs/geofence_diagram.pdf Graphic file (type pdf)
 <use figs/geofence_diagram.pdf>
 Package pdftex.def Info: figs/geofence_diagram.pdf  used on input line 94.
 (pdftex.def)             Requested size: 512.14963pt x 367.71262pt.
-[14 <./figs/architecture.pdf>]
-<figs/cv_pipeline.pdf, id=1291, 797.37903pt x 195.129pt>
+
+[22 <./figs/architecture.pdf>]
+<figs/cv_pipeline.pdf, id=2783, 797.37903pt x 195.129pt>
 File: figs/cv_pipeline.pdf Graphic file (type pdf)
 <use figs/cv_pipeline.pdf>
 Package pdftex.def Info: figs/cv_pipeline.pdf  used on input line 112.
 (pdftex.def)             Requested size: 435.3303pt x 106.52927pt.
- [15 <./figs/pi_system.pdf>]
-
-LaTeX Warning: Reference `sec:search-opt' on page 16 undefined on input line 12
-7.
-
-<figs/coverage_vs_time.pdf, id=1468, 425.99664pt x 256.37357pt>
+ [23 <./figs/pi_system.pdf>]
+<figs/coverage_vs_time.pdf, id=2961, 425.99664pt x 256.37357pt>
 File: figs/coverage_vs_time.pdf Graphic file (type pdf)
 <use figs/coverage_vs_time.pdf>
 Package pdftex.def Info: figs/coverage_vs_time.pdf  used on input line 131.
 (pdftex.def)             Requested size: 409.72125pt x 246.59306pt.
-<figs/state_machine.pdf, id=1471, 547.08388pt x 498.663pt>
+<figs/state_machine.pdf, id=2964, 547.08388pt x 498.663pt>
 File: figs/state_machine.pdf Graphic file (type pdf)
 <use figs/state_machine.pdf>
 Package pdftex.def Info: figs/state_machine.pdf  used on input line 143.
 (pdftex.def)             Requested size: 486.54057pt x 443.48909pt.
-[16 <./figs/geofence_diagram.pdf> <./figs/cv_pipeline.pdf>] [17 <./figs/coverag
-e_vs_time.pdf>]
-<figs/gps_bullseye.pdf, id=1765, 415.84798pt x 426.3403pt>
+ [24 <./figs/geofence_diagram.pdf> <./figs/cv_pipeline.pdf>] [25 <./figs/covera
+ge_vs_time.pdf>]
+<figs/gps_bullseye.pdf, id=3259, 415.84798pt x 426.3403pt>
 File: figs/gps_bullseye.pdf Graphic file (type pdf)
 <use figs/gps_bullseye.pdf>
 Package pdftex.def Info: figs/gps_bullseye.pdf  used on input line 181.
 (pdftex.def)             Requested size: 245.82962pt x 252.033pt.
-<figs/gps_error_direction.pdf, id=1766, 743.24844pt x 354.82443pt>
+<figs/gps_error_direction.pdf, id=3260, 743.24844pt x 354.82443pt>
 File: figs/gps_error_direction.pdf Graphic file (type pdf)
 <use figs/gps_error_direction.pdf>
 Package pdftex.def Info: figs/gps_error_direction.pdf  used on input line 188.
 (pdftex.def)             Requested size: 245.82962pt x 117.35771pt.
 
-
-LaTeX Warning: Reference `sec:sim-validation' on page 18 undefined on input lin
-e 204.
-
-[18 <./figs/state_machine.pdf>]
-<figs/mission_timeline.pdf, id=1860, 723.18619pt x 291.45325pt>
+[26 <./figs/state_machine.pdf>]
+<figs/mission_timeline.pdf, id=3355, 723.18619pt x 291.45325pt>
 File: figs/mission_timeline.pdf Graphic file (type pdf)
 <use figs/mission_timeline.pdf>
 Package pdftex.def Info: figs/mission_timeline.pdf  used on input line 208.
@@ -2105,32 +2140,12 @@ Underfull \hbox (badness 10000) in paragraph at lines 25--26
 []|\OT1/lmr/m/n/9 (+20) Verified (in-spec-
  []
 
-
-LaTeX Warning: Reference `app:req-detail' on page 19 undefined on input line 30
-.
-
-) [19 <./figs/gps_bullseye.pdf> <./figs/gps_error_direction.pdf> <./figs/missio
+) [27 <./figs/gps_bullseye.pdf> <./figs/gps_error_direction.pdf> <./figs/missio
 n_timeline.pdf>] (sections/evaluation.tex
-
-LaTeX Warning: Reference `tab:plus-delta' on page 20 undefined on input line 8.
-
-
-
-LaTeX Warning: Reference `tab:bug-cost' on page 20 undefined on input line 59.
-
-
-LaTeX Warning: Reference `sec:bug-discovery' on page 20 undefined on input line
- 59.
-
-
 Underfull \hbox (badness 2856) in paragraph at lines 59--59
 []|\OT1/lmtt/m/n/9 vision.py \OT1/lmr/m/n/9 (+20) is the sole file that touches
  CV/AI; all other mod-ules call
  []
-
-
-LaTeX Warning: Reference `sec:test-org-detail' on page 20 undefined on input li
-ne 59.
 
 
 Underfull \hbox (badness 6125) in paragraph at lines 59--59
@@ -2150,22 +2165,22 @@ Underfull \hbox (badness 10000) in paragraph at lines 59--59
 
 LaTeX Warning: Float too large for page by 398.26276pt on input line 60.
 
-<figs/conf_vs_alt.pdf, id=2165, 359.22015pt x 256.37357pt>
+<figs/conf_vs_alt.pdf, id=3673, 359.22015pt x 256.37357pt>
 File: figs/conf_vs_alt.pdf Graphic file (type pdf)
 <use figs/conf_vs_alt.pdf>
 Package pdftex.def Info: figs/conf_vs_alt.pdf  used on input line 69.
 (pdftex.def)             Requested size: 245.82962pt x 175.44661pt.
-<figs/det_vs_speed.pdf, id=2166, 362.40393pt x 256.37357pt>
+<figs/det_vs_speed.pdf, id=3674, 362.40393pt x 256.37357pt>
 File: figs/det_vs_speed.pdf Graphic file (type pdf)
 <use figs/det_vs_speed.pdf>
 Package pdftex.def Info: figs/det_vs_speed.pdf  used on input line 76.
 (pdftex.def)             Requested size: 245.82962pt x 173.90921pt.
-<figs/latency_breakdown.pdf, id=2167, 362.54507pt x 254.02415pt>
+<figs/latency_breakdown.pdf, id=3675, 362.54507pt x 254.02415pt>
 File: figs/latency_breakdown.pdf Graphic file (type pdf)
 <use figs/latency_breakdown.pdf>
 Package pdftex.def Info: figs/latency_breakdown.pdf  used on input line 88.
 (pdftex.def)             Requested size: 245.82962pt x 172.24962pt.
-<figs/detection_heatmap.pdf, id=2168, 550.9432pt x 380.144pt>
+<figs/detection_heatmap.pdf, id=3676, 550.9432pt x 380.144pt>
 File: figs/detection_heatmap.pdf Graphic file (type pdf)
 <use figs/detection_heatmap.pdf>
 Package pdftex.def Info: figs/detection_heatmap.pdf  used on input line 95.
@@ -2174,34 +2189,10 @@ Package pdftex.def Info: figs/detection_heatmap.pdf  used on input line 95.
 Overfull \vbox (541.0084pt too high) has occurred while \output is active []
 
 
-[20 <./figs/conf_vs_alt.pdf> <./figs/det_vs_speed.pdf> <./figs/latency_breakdow
-n.pdf> <./figs/detection_heatmap.pdf>]
-
-LaTeX Warning: Reference `app:bug-cost' on page 21 undefined on input line 113.
-
-
-
-LaTeX Warning: Reference `sec:field-day' on page 21 undefined on input line 125
-.
-
-
-LaTeX Warning: Reference `tab:five-tier-summary' on page 21 undefined on input 
-line 133.
-
-
-LaTeX Warning: Reference `app:bug-cost' on page 21 undefined on input line 133.
-
-
-
-LaTeX Warning: Reference `app:bug-cost' on page 21 undefined on input line 151.
-
-
-
-LaTeX Warning: Reference `app:lessons-learned' on page 21 undefined on input li
-ne 154.
-
-) [21] [22] [23] [24] (sections/A1_state_table.tex
-<figs/state_machine_full.pdf, id=2527, 973.76273pt x 863.3819pt>
+[28 <./figs/conf_vs_alt.pdf> <./figs/det_vs_speed.pdf> <./figs/latency_breakdow
+n.pdf> <./figs/detection_heatmap.pdf>]) [29] [30] [31] [32]
+(sections/A1_state_table.tex
+<figs/state_machine_full.pdf, id=4044, 973.76273pt x 863.3819pt>
 File: figs/state_machine_full.pdf Graphic file (type pdf)
 <use figs/state_machine_full.pdf>
 Package pdftex.def Info: figs/state_machine_full.pdf  used on input line 14.
@@ -2515,63 +2506,32 @@ Underfull \hbox (badness 10000) in paragraph at lines 228--228
 []|\OT1/lmr/m/n/9 (+20) Mission com-plete,
  []
 
-ignored error: Infinite glue shrinkage found in box being split [25 <./figs/sta
+ignored error: Infinite glue shrinkage found in box being split [33 <./figs/sta
 te_machine_full.pdf>]
-ignored error: Infinite glue shrinkage found in box being split [26])
-(sections/A2_config_params.tex [27]
-
-LaTeX Warning: Reference `tab:config-params' on page 28 undefined on input line
- 6.
-
-
+ignored error: Infinite glue shrinkage found in box being split [34])
+(sections/A2_config_params.tex [35]
 Overfull \hbox (66.20601pt too wide) in paragraph at lines 14--79
  [][] 
  []
 
-) (sections/12_model_training.tex
-
-LaTeX Warning: Reference `tab:augmentation' on page 28 undefined on input line 
-37.
-
-[28]
-
-LaTeX Warning: Reference `tab:augmentation' on page 29 undefined on input line 
-76.
-
-
-LaTeX Warning: Reference `tab:data_composition' on page 29 undefined on input l
-ine 98.
-
-[29]
-
-LaTeX Warning: Reference `tab:training_config' on page 30 undefined on input li
-ne 121.
-
-<figs/training_curves.pdf, id=2704, 569.997pt x 316.75526pt>
+) (sections/12_model_training.tex [36] [37]
+<figs/training_curves.pdf, id=4228, 569.997pt x 316.75526pt>
 File: figs/training_curves.pdf Graphic file (type pdf)
 <use figs/training_curves.pdf>
 Package pdftex.def Info: figs/training_curves.pdf  used on input line 151.
 (pdftex.def)             Requested size: 435.3303pt x 241.93031pt.
-
-LaTeX Warning: Reference `tab:training_results' on page 30 undefined on input l
-ine 158.
-
-<figs/confusion_matrix.pdf, id=2705, 471.25906pt x 351.91475pt>
+<figs/confusion_matrix.pdf, id=4230, 471.25906pt x 351.91475pt>
 File: figs/confusion_matrix.pdf Graphic file (type pdf)
 <use figs/confusion_matrix.pdf>
 Package pdftex.def Info: figs/confusion_matrix.pdf  used on input line 176.
 (pdftex.def)             Requested size: 435.3303pt x 325.08646pt.
-[30 <./figs/training_curves.pdf>] [31 <./figs/confusion_matrix.pdf>])
-(sections/13_safety_risk.tex [32]
+ [38 <./figs/training_curves.pdf>]
+[39 <./figs/confusion_matrix.pdf>]) (sections/13_safety_risk.tex [40]
 Overfull \hbox (33.8198pt too wide) in paragraph at lines 16--17
 []\OT1/lmr/bx/n/10 (-20) Hard bound-ary cut-off. \OT1/lmr/m/n/10 (-20) If the a
 ir-craft's GPS po-si-tion falls in-side the SSSI poly-gon (or within \OT1/lmtt/
 m/n/10 NFZ[]HARD[]BOUNDARY[]M\OT1/lmr/m/n/10 (-20) =3m
  []
-
-
-LaTeX Warning: Reference `tab:failure-modes' on page 33 undefined on input line
- 23.
 
 
 Underfull \hbox (badness 7012) in paragraph at lines 36--37
@@ -2595,12 +2555,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 41--41
 []|\OT1/lmtt/m/n/9 cv2.pointPolygonTest
  []
 
-[33]
-
-LaTeX Warning: Reference `tab:risk-register' on page 34 undefined on input line
- 74.
-
-
+[41]
 Underfull \hbox (badness 3219) in paragraph at lines 85--85
 []|\OT1/lmr/m/n/9 (+20) Autopilot hard-ware
  []
@@ -2630,102 +2585,53 @@ Underfull \hbox (badness 10000) in paragraph at lines 94--94
 []|\OT1/lmr/m/n/9 (+20) Regulatory non-
  []
 
-) (sections/10_testing.tex [34] [35] [36] [37] [38] [39])
-(sections/11_field_results.tex [40] [41]) (sections/14_future_work.tex [42]
-[43]) (sections/inference_architecture.tex
-
-LaTeX Warning: Reference `tab:backend_comparison' on page 44 undefined on input
- line 16.
-
-[44]
-
-LaTeX Warning: Reference `tab:cv_benchmarks' on page 45 undefined on input line
- 51.
-
-
+) (sections/10_testing.tex [42] [43] [44] [45] [46] [47])
+(sections/11_field_results.tex [48] [49]) (sections/14_future_work.tex [50]
+[51]) (sections/inference_architecture.tex [52]
 Overfull \hbox (41.09068pt too wide) in paragraph at lines 53--54
 \OT1/lmr/m/n/10 (-20) NPACK del-e-gate sup-ports trans-par-ent FP16 ex-e-cu-tio
 n of FP32 mod-els via the \OT1/lmtt/m/n/10 TFLITE[]XNNPACK[]DELEGATE[]FLAG[]FOR
 CE[]FP16
  []
 
-[45] [46]
-
-LaTeX Warning: Reference `tab:inference_roadmap' on page 47 undefined on input 
-line 100.
-
-<figs/benchmark_comparison.pdf, id=3065, 715.4611pt x 388.22917pt>
+[53] [54]
+<figs/benchmark_comparison.pdf, id=4601, 715.4611pt x 388.22917pt>
 File: figs/benchmark_comparison.pdf Graphic file (type pdf)
 <use figs/benchmark_comparison.pdf>
 Package pdftex.def Info: figs/benchmark_comparison.pdf  used on input line 122.
 
 (pdftex.def)             Requested size: 435.3303pt x 236.22705pt.
-) (sections/cv_extended.tex
-
-LaTeX Warning: Reference `tab:pipeline_timing' on page 47 undefined on input li
-ne 11.
-
-[47 <./figs/benchmark_comparison.pdf>]
-
-LaTeX Warning: Reference `tab:cv_benchmarks' on page 48 undefined on input line
- 76.
-
-[48]
-
-LaTeX Warning: Reference `tab:footprint' on page 49 undefined on input line 121
-.
-
-
-LaTeX Warning: Reference `tab:frames_flyover' on page 49 undefined on input lin
-e 152.
-
-[49{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathex
-.enc}]
-
-LaTeX Warning: Reference `tab:altitude_performance' on page 50 undefined on inp
-ut line 203.
-
-
+) (sections/cv_extended.tex [55 <./figs/benchmark_comparison.pdf>]
+[56] [57{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-m
+athex.enc}]
 Overfull \hbox (36.0382pt too wide) in paragraph at lines 208--225
  [][] 
  []
 
-<figs/altitude_detection_table.pdf, id=3186, 783.79636pt x 334.37234pt>
+<figs/altitude_detection_table.pdf, id=4731, 783.79636pt x 334.37234pt>
 File: figs/altitude_detection_table.pdf Graphic file (type pdf)
 <use figs/altitude_detection_table.pdf>
 Package pdftex.def Info: figs/altitude_detection_table.pdf  used on input line 
 229.
 (pdftex.def)             Requested size: 435.3303pt x 185.7166pt.
-[50 <./figs/altitude_detection_table.pdf>]
+[58 <./figs/altitude_detection_table.pdf>]
 File: figs/conf_vs_alt.pdf Graphic file (type pdf)
 <use figs/conf_vs_alt.pdf>
 Package pdftex.def Info: figs/conf_vs_alt.pdf  used on input line 242.
 (pdftex.def)             Requested size: 384.11221pt x 274.13704pt.
-<figs/detection_envelope.pdf, id=3282, 571.09987pt x 354.0703pt>
+<figs/detection_envelope.pdf, id=4828, 571.09987pt x 354.0703pt>
 File: figs/detection_envelope.pdf Graphic file (type pdf)
 <use figs/detection_envelope.pdf>
 Package pdftex.def Info: figs/detection_envelope.pdf  used on input line 252.
 (pdftex.def)             Requested size: 435.3303pt x 269.89581pt.
-
-
-LaTeX Warning: Reference `tab:training_results_extended' on page 51 undefined o
-n input line 260.
-
-
-LaTeX Warning: Reference `sec:vp:blur' on page 51 undefined on input line 286.
-
-[51] [52 <./figs/detection_envelope.pdf>]
+ [59] [60 <./figs/detection_envelope.pdf>]
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/listings\lstlang1.sty
 File: lstlang1.sty 2025/11/14 1.11b listings language file
 )
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/listings\lstlang1.sty
 File: lstlang1.sty 2025/11/14 1.11b listings language file
 )
-
-LaTeX Warning: Reference `tab:frames_flyover' on page 53 undefined on input lin
-e 363.
-
-<figs/blur_vs_altitude.pdf, id=3412, 788.11186pt x 357.6005pt>
+<figs/blur_vs_altitude.pdf, id=4962, 788.11186pt x 357.6005pt>
 File: figs/blur_vs_altitude.pdf Graphic file (type pdf)
 <use figs/blur_vs_altitude.pdf>
 Package pdftex.def Info: figs/blur_vs_altitude.pdf  used on input line 372.
@@ -2738,15 +2644,11 @@ File: figs/latency_breakdown.pdf Graphic file (type pdf)
 <use figs/latency_breakdown.pdf>
 Package pdftex.def Info: figs/latency_breakdown.pdf  used on input line 394.
 (pdftex.def)             Requested size: 332.89412pt x 233.25542pt.
-[53]) (sections/streaming_architecture.tex [54 <./figs/blur_vs_altitude.pdf>]
-[55] [56]) (sections/gps_estimation_deep.tex [57]
+ [61]) (sections/streaming_architecture.tex [62 <./figs/blur_vs_altitude.pdf>] 
+[63] [64]) (sections/gps_estimation_deep.tex [65]
 Overfull \hbox (20.75267pt too wide) in paragraph at lines 18--28
  [][] 
  []
-
-
-LaTeX Warning: Reference `sec:false-positive-handling' on page 58 undefined on 
-input line 30.
 
 
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendlayer/t
@@ -2776,11 +2678,7 @@ File: tikzlibrarycalc.code.tex 2025-08-29 v3.1.11a (3.1.11a)
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendlayer/t
 ikz/libraries\tikzlibraryfit.code.tex
 File: tikzlibraryfit.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-) [58] [59]
-
-LaTeX Warning: Reference `tab:gsd-altitude' on page 60 undefined on input line 
-154.
-
+) [66] [67]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
 (hyperref)                removing `\leavevmode@ifvmode' on input line 196.
@@ -2790,247 +2688,133 @@ Package hyperref Warning: Token not allowed in a PDF string (Unicode):
 (hyperref)                \kern 1.66702pt
 (hyperref)                removed on input line 196.
 
+[68] [69] [70] [71] [72]
 
-LaTeX Warning: Reference `sec:cal:lens' on page 60 undefined on input line 210.
+LaTeX Warning: Reference `eq:attitude-correction' on page 73 undefined on input
+ line 559.
 
-
-[60]
-
-LaTeX Warning: Reference `sec:cal:fov' on page 61 undefined on input line 273.
-
-
-LaTeX Warning: Reference `sec:vp:frames' on page 61 undefined on input line 277
-.
-
-
-LaTeX Warning: Reference `tab:error-budget' on page 61 undefined on input line 
-277.
-
-[61]
-
-LaTeX Warning: Reference `tab:tilt-error' on page 62 undefined on input line 32
-1.
-
-
-LaTeX Warning: Reference `eq:alt-weight' on page 62 undefined on input line 351
-.
-
-[62]
-
-LaTeX Warning: Reference `eq:heading-deep' on page 63 undefined on input line 3
-94.
-
-[63]
-
-LaTeX Warning: Reference `tab:tilt-compensation-effect' on page 64 undefined on
- input line 418.
-
-
-LaTeX Warning: Reference `tab:centering-reduction' on page 64 undefined on inpu
-t line 463.
-
-[64]
-
-LaTeX Warning: Reference `eq:attitude-correction' on page 65 undefined on input
- line 496.
-
-
-LaTeX Warning: Reference `tab:error-budget' on page 65 undefined on input line 
-508.
-
-[65] [66]
-
-LaTeX Warning: Reference `sec:centering-analysis' on page 67 undefined on input
- line 601.
-
-[67]
-
-LaTeX Warning: Reference `sec:centering-analysis' on page 68 undefined on input
- line 754.
-
-
-LaTeX Warning: Reference `tab:gsd-altitude' on page 68 undefined on input line 
-762.
-
-[68]
-
-LaTeX Warning: Reference `eq:alt-weight' on page 69 undefined on input line 769
-.
-
-[69]
-
-LaTeX Warning: Reference `tab:gps-averaging' on page 70 undefined on input line
- 824.
-
-
-LaTeX Warning: Reference `eq:cep-averaging' on page 70 undefined on input line 
-824.
-
-
-LaTeX Warning: Reference `fig:cep-vs-time' on page 70 undefined on input line 8
-45.
-
-[70] [71]
-
-LaTeX Warning: Reference `tab:method-compare' on page 72 undefined on input lin
-e 1015.
-
-[72]
-
-LaTeX Warning: Reference `tab:dji-results' on page 73 undefined on input line 1
-048.
-
-
-LaTeX Warning: Reference `tab:error-budget' on page 73 undefined on input line 
-1086.
-
-[73]
-Underfull \hbox (badness 1931) in paragraph at lines 1118--1118
-[]|\OT1/lmr/m/n/10 (+20) Moving at $8$$m s[]$,
+[73] [74] [75] [76] [77] [78] [79] [80] [81]
+Underfull \hbox (badness 1931) in paragraph at lines 1180--1180
+[]|\OT1/lmr/m/n/10 (+20) Moving at $5$$m s[]$,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1122--1123
-\OT1/lmtt/m/n/10 --center-verify \OT1/lmr/m/n/10 (+20) av-er-
+Underfull \hbox (badness 10000) in paragraph at lines 1180--1180
+\OT1/lmr/m/n/10 (+20) 5$--$10[]$ pitch, tilt-
  []
 
 
-Underfull \hbox (badness 3000) in paragraph at lines 1122--1123
-\OT1/lmr/m/n/10 (+20) ages drone GPS over
+Underfull \hbox (badness 1163) in paragraph at lines 1180--1181
+[]|\OT1/lmr/m/n/10 (+20) Tilt com-pen-sa-tion ray-
  []
 
-[74]
 
-LaTeX Warning: Reference `tab:gsd-values' on page 75 undefined on input line 12
-45.
-
-
-LaTeX Warning: Reference `tab:two-step-comparison' on page 75 undefined on inpu
-t line 1273.
+Underfull \hbox (badness 3826) in paragraph at lines 1180--1181
+\OT1/lmr/m/n/10 (+20) traces through known
+ []
 
 
-LaTeX Warning: Reference `tab:gsd-altitude' on page 75 undefined on input line 
-1290.
+Underfull \hbox (badness 10000) in paragraph at lines 1182--1182
+[]|\OT1/lmr/m/n/10 (+20) Decelerating to
+ []
 
 
-LaTeX Warning: Reference `fig:creep-up' on page 75 undefined on input line 1294
-.
-
-[75] [76] [77]
-
-LaTeX Warning: Reference `tab:empirical-methods' on page 78 undefined on input 
-line 1492.
+Underfull \hbox (badness 10000) in paragraph at lines 1182--1182
+\OT1/lmr/m/n/10 (+20) hover, con-tin-u-ous
+ []
 
 
-LaTeX Warning: Reference `tab:error-budget' on page 78 undefined on input line 
-1515.
-
-[78]
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 1538.
+Underfull \hbox (badness 10000) in paragraph at lines 1184--1184
+[]|\OT1/lmr/m/n/10 (+20) Stationary hover,
+ []
 
 
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `subscript' on input line 1538.
+Underfull \hbox (badness 10000) in paragraph at lines 1186--1186
+[]|\OT1/lmr/m/n/10 (+20) Operator con-firms
+ []
 
 
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 1538.
+Underfull \hbox (badness 2293) in paragraph at lines 1186--1186
+\OT1/lmr/m/n/10 (+20) via ground sta-tion
+ []
 
 
-LaTeX Warning: Reference `fig:cep-comparison' on page 79 undefined on input lin
-e 1540.
-
-Package pgfplots info on input line 1566: Using 'lua backend=false' for axis: x
- coord trafo unsupported.
-
-LaTeX Warning: Reference `fig:convergence-plot' on page 79 undefined on input l
-ine 1584.
-
-[79]
-
-LaTeX Warning: Reference `fig:multi-pass-bias' on page 80 undefined on input li
-ne 1661.
-
-[80]
-
-LaTeX Warning: Reference `tab:pass-accuracy' on page 81 undefined on input line
- 1723.
+Underfull \hbox (badness 10000) in paragraph at lines 1186--1187
+[]|\OT1/lmr/m/n/10 (+20) Estimate frozen at
+ []
 
 
-LaTeX Warning: Reference `tab:gsd-altitude' on page 81 undefined on input line 
-1749.
-
-
-LaTeX Warning: Reference `sec:clustering' on page 81 undefined on input line 17
-67.
-
-
-LaTeX Warning: Reference `tab:pass-accuracy' on page 81 undefined on input line
- 1770.
-
-[81]
-
-LaTeX Warning: Reference `sec:ivw' on page 82 undefined on input line 1779.
-
-
-LaTeX Warning: Reference `eq:weight-deep' on page 82 undefined on input line 17
-83.
-
-
-LaTeX Warning: Reference `eq:alt-weight' on page 82 undefined on input line 178
-3.
-
-
-LaTeX Warning: Reference `sec:clustering' on page 82 undefined on input line 17
-85.
-
-
-LaTeX Warning: Reference `sec:fusion-strategies' on page 82 undefined on input 
-line 1792.
-
-
-LaTeX Warning: Reference `sec:why-ivw' on page 82 undefined on input line 1792.
-
-
-
-LaTeX Warning: Reference `sec:multi-pass' on page 82 undefined on input line 18
-08.
-
-
-LaTeX Warning: Reference `tab:passive-vs-active' on page 82 undefined on input 
-line 1816.
+Overfull \hbox (12.8009pt too wide) in paragraph at lines 1176--1191
+ [][] 
+ []
 
 [82]
 
-LaTeX Warning: Reference `sec:clustering' on page 83 undefined on input line 18
-42.
+! LaTeX Error: Not allowed in LR mode.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.1214 ...e] (sSearch)   at (\colA, 0) {Phase 1\\S
+                                                  EARCH};
+You've lost some text.  Try typing  <return>  to proceed.
+If that doesn't work, type  X <return>  to quit.
 
 
-LaTeX Warning: Reference `sec:flight-testing' on page 83 undefined on input lin
-e 1860.
+! LaTeX Error: Not allowed in LR mode.
 
-) (sections/testing_deep.tex [83]
-
-LaTeX Warning: Reference `tab:bug-cost-appendix' on page 84 undefined on input 
-line 10.
-
-[84]
-
-LaTeX Warning: Reference `sec:experiment-scripts' on page 85 undefined on input
- line 71.
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.1215 ...(sCenter)   at (\colB, 0) {Phase 2--3\\C
+                                                  ENTERING};
+You've lost some text.  Try typing  <return>  to proceed.
+If that doesn't work, type  X <return>  to quit.
 
 
-LaTeX Warning: Reference `tab:test-categories' on page 85 undefined on input li
-ne 86.
+! LaTeX Error: Not allowed in LR mode.
 
-[85]
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.1216 ...e] (sVerify)   at (\colC, 0) {Phase 4\\V
+                                                  ERIFY};
+You've lost some text.  Try typing  <return>  to proceed.
+If that doesn't work, type  X <return>  to quit.
 
-LaTeX Warning: Reference `tab:bug-cost-appendix' on page 86 undefined on input 
-line 130.
+
+LaTeX Warning: Reference `tab:gsd-values' on page 83 undefined on input line 13
+10.
+
+[83]
+
+LaTeX Warning: Reference `eq:virtual-pixel' on page 84 undefined on input line 
+1321.
+
+[84] [85] [86] [87]
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 1649.
 
 
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `subscript' on input line 1649.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 1649.
+
+Package pgfplots info on input line 1677: Using 'lua backend=false' for axis: x
+ coord trafo unsupported.
+[88] [89] [90] [91] [92]
+
+LaTeX Warning: Reference `sec:flight-testing' on page 93 undefined on input lin
+e 1971.
+
+) (sections/testing_deep.tex [93] [94] [95]
 Underfull \hbox (badness 1721) in paragraph at lines 141--141
 []|\OT1/lmr/m/n/9 (+20) Geofence sign con-ven-tion in-
  []
@@ -3060,62 +2844,15 @@ Underfull \hbox (badness 3219) in paragraph at lines 163--164
 []|\OT1/lmr/m/n/9 (+20) Crash on first de-tec-tion in
  []
 
-[86]
-
-LaTeX Warning: Reference `tab:cost-gradient' on page 87 undefined on input line
- 203.
-
-[87]
-
-LaTeX Warning: Reference `tab:test-categories' on page 88 undefined on input li
-ne 227.
-
-) (sections/field_day_narrative.tex
-
-LaTeX Warning: Reference `sec:testing-deep' on page 88 undefined on input line 
-5.
-
-[88]
-
-LaTeX Warning: Reference `sec:field-fov' on page 89 undefined on input line 29.
-
-
-
-LaTeX Warning: Reference `sec:field-lens' on page 89 undefined on input line 30
-.
-
-
-LaTeX Warning: Reference `sec:field-benchmark' on page 89 undefined on input li
-ne 31.
-
-[89] [90]) [91] (sections/contingency.tex
-
-LaTeX Warning: Reference `tab:mvd' on page 92 undefined on input line 8.
-
-
-LaTeX Warning: Reference `tab:target' on page 92 undefined on input line 32.
-
-
-LaTeX Warning: Reference `sec:plb-redirect' on page 92 undefined on input line 
-53.
-
-
+[96]) (sections/field_day_narrative.tex [97] [98] [99] [100])
+(sections/contingency.tex [101]
 Overfull \hbox (60.4425pt too wide) in paragraph at lines 64--65
 []\OT1/lmr/bx/n/10 (-20) NCNN in-fer-ence back-end. \OT1/lmr/m/n/10 (-20) The N
 CNN ex-port of the re-trained YOLOv8n model is avail-able in \OT1/lmtt/m/n/10 c
 v[]models/sar[]v2[]1088/ncnn/
  []
 
-[92]
-
-LaTeX Warning: Reference `tab:tier-evolution-summary' on page 93 undefined on i
-nput line 87.
-
-
-LaTeX Warning: Reference `tab:contingency' on page 93 undefined on input line 1
-08.
-
-
+[102]
 Underfull \hbox (badness 5832) in paragraph at lines 126--126
 []|\OT1/lmr/m/n/9 (+20) Pi crashes mid-
  []
@@ -3147,10 +2884,6 @@ Underfull \hbox (badness 1622) in paragraph at lines 126--126
  []
 
 
-LaTeX Warning: Reference `tab:test-scripts' on page 93 undefined on input line 
-132.
-
-
 Overfull \hbox (22.8562pt too wide) in paragraph at lines 149--149
 []|\OT1/lmtt/m/n/9 tests/hardware/gps[]health.py| 
  []
@@ -3175,12 +2908,7 @@ Overfull \hbox (82.95808pt too wide) in paragraph at lines 149--149
 []|\OT1/lmtt/m/n/9 tests/hardware/detection[]snapshot[]test.py| 
  []
 
-) (sections/test_scripts_guide.tex [93]
-
-LaTeX Warning: Reference `tab:flight-scripts' on page 94 undefined on input lin
-e 25.
-
-[94]
+) (sections/test_scripts_guide.tex [103]
 Underfull \hbox (badness 10000) in paragraph at lines 71--71
 []|\OT1/lmr/m/n/9 (+20) GPS di-ag-nos-tics: satel-lite count, fix type
  []
@@ -3190,7 +2918,7 @@ Underfull \hbox (badness 3118) in paragraph at lines 71--71
 \OT1/lmr/m/n/9 (+20) (2D/3D/DGPS), HDOP, po-si-tion, and time-to-
  []
 
-[95]
+[104]
 Underfull \hbox (badness 10000) in paragraph at lines 102--103
 []|\OT1/lmtt/m/n/9 calibration[]data.npz
  []
@@ -3215,12 +2943,7 @@ Underfull \hbox (badness 1226) in paragraph at lines 133--133
 []|\OT1/lmr/m/n/9 (+20) General-purpose flight log-ger:
  []
 
-[96]
-
-LaTeX Warning: Reference `tab:script-req-map' on page 97 undefined on input lin
-e 154.
-
-
+[105]
 Underfull \hbox (badness 10000) in paragraph at lines 167--168
 []|\OT1/lmr/m/n/9 (+20) fov[]calibrate,
  []
@@ -3265,22 +2988,12 @@ Underfull \hbox (badness 10000) in paragraph at lines 181--182
 []|\OT1/lmr/m/n/9 (+20) video[]test,
  []
 
-[97]
-
-LaTeX Warning: Reference `tab:test-gaps' on page 98 undefined on input line 200
-.
-
-
+[106]
 Underfull \hbox (badness 10000) in paragraph at lines 215--215
 []|\OT1/lmr/m/n/9 (+20) AUTO pat-tern + AI-triggered
  []
 
-) [98] (sections/calibration_deep.tex
-
-LaTeX Warning: Reference `eq:footprint-calib' on page 99 undefined on input lin
-e 22.
-
-
+) [107] (sections/calibration_deep.tex
 Overfull \hbox (53.51639pt too wide) in paragraph at lines 43--44
 \OT1/lmr/m/n/10 (-20) 13 \OMS/lmsy/m/n/10 ^^B \OT1/lmr/m/n/10 (-20) 8$ in-ner c
 or-ners). Ap-prox-i-mately 20 im-ages were cap-tured at vary-ing ori-en-ta-tion
@@ -3288,12 +3001,7 @@ s us-ing \OT1/lmtt/m/n/10 tests/calibration/lens[]calibrate.py\OT1/lmr/m/n/10 (
 -20) ,
  []
 
-[99] [100]
-
-LaTeX Warning: Reference `tab:calibration' on page 101 undefined on input line 
-96.
-
-
+[108] [109]
 Underfull \hbox (badness 10000) in paragraph at lines 107--107
 []|\OT1/lmr/m/n/10 (+20) Focal length
  []
@@ -3310,111 +3018,27 @@ Underfull \hbox (badness 2245) in paragraph at lines 109--110
  []
 
 
-LaTeX Warning: Reference `tab:preflight-cal' on page 101 undefined on input lin
-e 120.
-
-
 Overfull \hbox (1.80772pt too wide) in paragraph at lines 147--148
 [] []\OT1/lmr/bx/n/10 (-20) Equip-ment.[] \OT1/lmr/m/n/10 (-20) Drone with GPS 
 an-tenna, known ref-er-ence po-si-tion (e.g. the des-ig-nated Take-Off Lo-ca-ti
 on at 51.423406\TS1/lmr/m/n/10 (-20) °\OT1/lmr/m/n/10 (-20) N,
  []
 
-
-LaTeX Warning: Reference `tab:error-budget' on page 101 undefined on input line
- 168.
-
-[101]
-
-LaTeX Warning: Reference `tab:alt-error-impact' on page 102 undefined on input 
-line 187.
-
-
-LaTeX Warning: Reference `tab:error-budget' on page 102 undefined on input line
- 214.
-
-
-LaTeX Warning: Reference `tab:cal-vs-budget' on page 102 undefined on input lin
-e 214.
-
-
-LaTeX Warning: Reference `tab:error-budget' on page 102 undefined on input line
- 218.
-
-
-LaTeX Warning: Reference `tab:error-budget' on page 102 undefined on input line
- 218.
-
-
-LaTeX Warning: Reference `sec:cal:fov' on page 102 undefined on input line 225.
-
-
-
-LaTeX Warning: Reference `sec:cal:lens' on page 102 undefined on input line 226
-.
-
-
-LaTeX Warning: Reference `sec:cal:colour' on page 102 undefined on input line 2
-27.
-
-
-LaTeX Warning: Reference `sec:cal:gps-error' on page 102 undefined on input lin
-e 228.
-
-
-LaTeX Warning: Reference `sec:cal:alt-error' on page 102 undefined on input lin
-e 229.
-
-
-LaTeX Warning: Reference `sec:cal:dji' on page 102 undefined on input line 237.
-
-
-) (sections/simulation_validation.tex
-
-LaTeX Warning: Reference `tab:sim-val-matrix' on page 102 undefined on input li
-ne 8.
-
-
+[110]) (sections/simulation_validation.tex
 Overfull \hbox (44.07799pt too wide) in paragraph at lines 15--33
  [][] 
  []
 
-[102]
-
-LaTeX Warning: Reference `tab:sim-val-results' on page 103 undefined on input l
-ine 70.
-
-[103]
-
-LaTeX Warning: Reference `sec:field-fov' on page 104 undefined on input line 10
-7.
-
-[104]) [105] (sections/mission_flow.tex
-
-LaTeX Warning: Reference `tab:opt-final' on page 106 undefined on input line 3.
-
-
-
-LaTeX Warning: Reference `sec:mf-nfz' on page 106 undefined on input line 26.
-
-[106] [107] [108]) (sections/centering_analysis.tex [109]
-
-LaTeX Warning: Reference `tab:centering-comparison' on page 110 undefined on in
-put line 49.
-
-
+[111] [112] [113]) [114] (sections/mission_flow.tex [115] [116] [117])
+(sections/centering_analysis.tex [118]
 Overfull \hbox (1.19736pt too wide) in paragraph at lines 55--63
  [][] 
  []
 
-[110]
+[119]
 
-LaTeX Warning: Citation 'johnson2013helicopter' on page 111 undefined on input 
+LaTeX Warning: Citation 'johnson2013helicopter' on page 120 undefined on input 
 line 97.
-
-
-LaTeX Warning: Reference `tab:hover-safety' on page 111 undefined on input line
- 137.
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 151--152
@@ -3426,353 +3050,160 @@ Underfull \hbox (badness 4279) in paragraph at lines 151--152
 \OT1/lmr/m/n/10 (+20) focal-length, and yaw
  []
 
+[120]
 
-LaTeX Warning: Reference `sec:prob-analysis' on page 111 undefined on input lin
-e 154.
-
-[111]
-
-LaTeX Warning: Citation 'murphy2016disaster' on page 112 undefined on input lin
+LaTeX Warning: Citation 'murphy2016disaster' on page 121 undefined on input lin
 e 163.
 
-) (sections/comms_architecture.tex
-
-LaTeX Warning: Reference `fig:comms-topology' on page 112 undefined on input li
-ne 23.
-
-[112]
-
-LaTeX Warning: Reference `tab:mavlink-messages' on page 113 undefined on input 
-line 64.
-
-) (sections/pipeline_fps.tex
+) (sections/comms_architecture.tex [121]) (sections/pipeline_fps.tex
 Overfull \vbox (147.20563pt too high) has occurred while \output is active []
 
 
-[113]
-
-LaTeX Warning: Reference `tab:pipeline_fps' on page 114 undefined on input line
- 26.
-
-
-LaTeX Warning: Reference `fig:bottleneck_shift' on page 114 undefined on input 
-line 61.
-
+[122]
 Package pgfplots info on input line 79: Using 'lua backend=false' for axis: sta
 cked plots unsupported (yet).
 Package pgfplots info on input line 79: Using 'lua backend=false' for axis: x c
 oord trafo unsupported.
-[114]) (sections/path_tradeoffs.tex
-
-LaTeX Warning: Reference `tab:opt-final' on page 115 undefined on input line 5.
-
-
+ [123]) (sections/path_tradeoffs.tex
 
 LaTeX Warning: Command \textdegree invalid in math mode on input line 14.
 
 
 LaTeX Warning: Command \textdegree invalid in math mode on input line 14.
 
+[124]
 
-LaTeX Warning: Reference `sec:overlap-margin' on page 115 undefined on input li
-ne 14.
-
-[115]
-
-LaTeX Warning: Reference `eq:footprint' on page 116 undefined on input line 19.
+LaTeX Warning: Reference `eq:footprint' on page 125 undefined on input line 19.
 
 
-
-LaTeX Warning: Reference `tab:alt-tradeoff' on page 116 undefined on input line
- 19.
-
-[116]
+[125]
 
 LaTeX Warning: Command \textdegree invalid in math mode on input line 70.
 
 
 LaTeX Warning: Command \textdegree invalid in math mode on input line 70.
 
-) (sections/payload_release.tex [117]
+) (sections/payload_release.tex [126]
 LaTeX Font Info:    External font `lmex10' loaded for size
 (Font)              <12> on input line 28.
-
-
-LaTeX Warning: Reference `sec:centering-analysis' on page 118 undefined on inpu
-t line 30.
-
-
-LaTeX Warning: Reference `sec:centering-analysis' on page 118 undefined on inpu
-t line 54.
-
-
-LaTeX Warning: Reference `sec:centering-analysis' on page 118 undefined on inpu
-t line 54.
-
-) (sections/model_comparison.tex [118]
-
-LaTeX Warning: Reference `tab:model_generations' on page 119 undefined on input
- line 7.
-
-[119]) (sections/search_optimization.tex [120]
-
-LaTeX Warning: Reference `sec:path-opt' on page 121 undefined on input line 7.
-
-
-LaTeX Warning: Reference `sec:formal-opt' on page 121 undefined on input line 7
-.
-
-
-LaTeX Warning: Reference `sec:optimisation' on page 121 undefined on input line
- 7.
-
-
-LaTeX Warning: Reference `sec:design-strategy' on page 121 undefined on input l
-ine 7.
-
-
-LaTeX Warning: Reference `sec:energy-model' on page 121 undefined on input line
- 33.
-
-
-LaTeX Warning: Reference `tab:energy-top5-old' on page 121 undefined on input l
-ine 38.
-
-<figs/energy_efficiency.pdf, id=4418, 546.09808pt x 390.17519pt>
+) (sections/model_comparison.tex [127]
+[128]) (sections/search_optimization.tex [129]
+<figs/energy_efficiency.pdf, id=5949, 546.09808pt x 390.17519pt>
 File: figs/energy_efficiency.pdf Graphic file (type pdf)
 <use figs/energy_efficiency.pdf>
 Package pdftex.def Info: figs/energy_efficiency.pdf  used on input line 64.
 (pdftex.def)             Requested size: 435.3303pt x 311.0332pt.
-<figs/rotation_comparison.pdf, id=4419, 1004.2368pt x 382.12764pt>
+<figs/rotation_comparison.pdf, id=5950, 1004.2368pt x 382.12764pt>
 File: figs/rotation_comparison.pdf Graphic file (type pdf)
 <use figs/rotation_comparison.pdf>
 Package pdftex.def Info: figs/rotation_comparison.pdf  used on input line 92.
 (pdftex.def)             Requested size: 435.3303pt x 165.64693pt.
-[121]
-
-LaTeX Warning: Reference `sec:overlap-margin' on page 122 undefined on input li
-ne 99.
-
-[122 <./figs/energy_efficiency.pdf> <./figs/rotation_comparison.pdf>]
-
-LaTeX Warning: Reference `tab:nfz-margin-old' on page 123 undefined on input li
-ne 141.
-
-<figs/nfz_margin_altitude.pdf, id=4613, 571.4587pt x 354.04019pt>
+ [130] [131 <./figs/energy_efficiency.pdf> <./figs/rotation_comparison.pdf>]
+<figs/nfz_margin_altitude.pdf, id=6143, 571.4587pt x 354.04019pt>
 File: figs/nfz_margin_altitude.pdf Graphic file (type pdf)
 <use figs/nfz_margin_altitude.pdf>
 Package pdftex.def Info: figs/nfz_margin_altitude.pdf  used on input line 162.
 (pdftex.def)             Requested size: 435.3303pt x 269.7108pt.
-[123]
-
-LaTeX Warning: Reference `tab:speed-detect-old' on page 124 undefined on input 
-line 184.
-
-<figs/speed_detection_energy.pdf, id=4627, 571.83449pt x 389.89288pt>
+ [132]
+<figs/speed_detection_energy.pdf, id=6155, 571.83449pt x 389.89288pt>
 File: figs/speed_detection_energy.pdf Graphic file (type pdf)
 <use figs/speed_detection_energy.pdf>
 Package pdftex.def Info: figs/speed_detection_energy.pdf  used on input line 20
 4.
 (pdftex.def)             Requested size: 435.3303pt x 296.82735pt.
 
-LaTeX Warning: Reference `sec:speed-schedule' on page 124 undefined on input li
-ne 209.
-
-
-LaTeX Warning: Reference `sec:plb-redirect' on page 124 undefined on input line
- 216.
-
-
 Overfull \vbox (302.59811pt too high) has occurred while \output is active []
 
 
-[124 <./figs/nfz_margin_altitude.pdf> <./figs/speed_detection_energy.pdf>]
-
-LaTeX Warning: Reference `tab:pareto-summary-old' on page 125 undefined on inpu
-t line 233.
-
-) (sections/focus_and_repulsive.tex
-
-LaTeX Warning: Reference `sec:plb-redirect' on page 125 undefined on input line
- 4.
-
+[133 <./figs/nfz_margin_altitude.pdf> <./figs/speed_detection_energy.pdf>])
+(sections/focus_and_repulsive.tex
 LaTeX Font Info:    Trying to load font information for OMS+lmtt on input line 
 18.
 LaTeX Font Info:    No file OMSlmtt.fd. on input line 18.
+
 
 LaTeX Font Warning: Font shape `OMS/lmtt/m/n' undefined
 (Font)              using `OMS/cmsy/m/n' instead
 (Font)              for symbol `textbraceleft' on input line 18.
 
-
-LaTeX Warning: Reference `alg:beacon-redirect' on page 125 undefined on input l
-ine 26.
-
 Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on in
 put line 29.
-
-LaTeX Warning: Reference `sec:nfz-layers' on page 125 undefined on input line 4
-6.
-
-[125]
-
-LaTeX Warning: Reference `sec:nfz-layers' on page 126 undefined on input line 5
-1.
-
-
-LaTeX Warning: Reference `sec:sign-convention' on page 126 undefined on input l
-ine 78.
-
-[126]
-
-LaTeX Warning: Reference `tab:nfz-layers' on page 127 undefined on input line 9
-3.
-
-
+[134] [135]
 Overfull \hbox (28.2121pt too wide) in paragraph at lines 127--128
 [] []\OT1/lmr/bx/n/10 (-20) Di-rec-tional scalar field.[] \OT1/lmr/m/n/10 (-20)
  An al-ter-na-tive scalar field im-ple-men-ta-tion was also de-vel-oped (en-abl
 ed via the \OT1/lmtt/m/n/10 --nfz-directional
  []
 
-) (sections/path_optimization_definitive.tex [127] [128]
-
-LaTeX Warning: Reference `eq:total-energy' on page 129 undefined on input line 
-91.
-
-<figs/real_energy_heatmap.png, id=4913, 867.24pt x 578.16pt>
+) (sections/path_optimization_definitive.tex [136] [137]
+<figs/real_energy_heatmap.png, id=6444, 867.24pt x 578.16pt>
 File: figs/real_energy_heatmap.png Graphic file (type png)
 <use figs/real_energy_heatmap.png>
 Package pdftex.def Info: figs/real_energy_heatmap.png  used on input line 96.
 (pdftex.def)             Requested size: 450.69417pt x 300.46849pt.
-
-LaTeX Warning: Reference `fig:energy-heatmap' on page 129 undefined on input li
-ne 101.
-
-
-LaTeX Warning: Reference `tab:energy-top-bottom' on page 129 undefined on input
- line 112.
-
-<figs/real_energy_vs_altitude.png, id=4915, 722.7pt x 505.89pt>
+<figs/real_energy_vs_altitude.png, id=6448, 722.7pt x 505.89pt>
 File: figs/real_energy_vs_altitude.png Graphic file (type png)
 <use figs/real_energy_vs_altitude.png>
 Package pdftex.def Info: figs/real_energy_vs_altitude.png  used on input line 1
 42.
 (pdftex.def)             Requested size: 450.69417pt x 315.48573pt.
-
-LaTeX Warning: Reference `fig:energy-vs-altitude' on page 129 undefined on inpu
-t line 147.
-
-[129 <./figs/real_energy_heatmap.png>]
-<figs/real_path_patterns.png, id=4930, 1582.713pt x 738.1176pt>
+ [138 <./figs/real_energy_heatmap.png>]
+<figs/real_path_patterns.png, id=6464, 1582.713pt x 738.1176pt>
 File: figs/real_path_patterns.png Graphic file (type png)
 <use figs/real_path_patterns.png>
 Package pdftex.def Info: figs/real_path_patterns.png  used on input line 198.
 (pdftex.def)             Requested size: 486.54057pt x 226.89941pt.
-<figs/top3_paths.pdf, id=4931, 1111.90283pt x 425.66428pt>
+<figs/top3_paths.pdf, id=6465, 1111.90283pt x 425.66428pt>
 File: figs/top3_paths.pdf Graphic file (type pdf)
 <use figs/top3_paths.pdf>
 Package pdftex.def Info: figs/top3_paths.pdf  used on input line 205.
 (pdftex.def)             Requested size: 486.54057pt x 186.26013pt.
 
-
-LaTeX Warning: Reference `sec:plb-redirect' on page 130 undefined on input line
- 229.
-
-
 Overfull \vbox (367.98647pt too high) has occurred while \output is active []
 
 
-[130 <./figs/real_energy_vs_altitude.png> <./figs/real_path_patterns.png>]
-
-LaTeX Warning: Reference `sec:nfz-layers' on page 131 undefined on input line 2
-36.
-
-[131 <./figs/top3_paths.pdf>]
-
-LaTeX Warning: Reference `tab:detect-chain' on page 132 undefined on input line
- 277.
-
-<figs/real_optimal_pattern.png, id=5081, 1156.32pt x 578.16pt>
+[139 <./figs/real_energy_vs_altitude.png> <./figs/real_path_patterns.png>]
+[140 <./figs/top3_paths.pdf>]
+<figs/real_optimal_pattern.png, id=6616, 1156.32pt x 578.16pt>
 File: figs/real_optimal_pattern.png Graphic file (type png)
 <use figs/real_optimal_pattern.png>
 Package pdftex.def Info: figs/real_optimal_pattern.png  used on input line 325.
 
 (pdftex.def)             Requested size: 450.69417pt x 225.34033pt.
-<figs/pareto_2d_composite.pdf, id=5082, 568.41425pt x 437.38728pt>
+<figs/pareto_2d_composite.pdf, id=6617, 568.41425pt x 437.38728pt>
 File: figs/pareto_2d_composite.pdf Graphic file (type pdf)
 <use figs/pareto_2d_composite.pdf>
 Package pdftex.def Info: figs/pareto_2d_composite.pdf  used on input line 348.
 (pdftex.def)             Requested size: 450.69417pt x 346.8069pt.
-<figs/altitude_tradeoff_dual.pdf, id=5083, 837.92926pt x 361.55928pt>
+<figs/altitude_tradeoff_dual.pdf, id=6618, 837.92926pt x 361.55928pt>
 File: figs/altitude_tradeoff_dual.pdf Graphic file (type pdf)
 <use figs/altitude_tradeoff_dual.pdf>
 Package pdftex.def Info: figs/altitude_tradeoff_dual.pdf  used on input line 35
 5.
 (pdftex.def)             Requested size: 450.69417pt x 194.47223pt.
-[132 <./figs/real_optimal_pattern.png>]
-
-LaTeX Warning: Reference `sec:detect-prob' on page 133 undefined on input line 
-368.
-
-) (sections/optimization_master.tex [133 <./figs/pareto_2d_composite.pdf>]
-[134 <./figs/altitude_tradeoff_dual.pdf>]
-
-LaTeX Warning: Reference `fig:top3-paths-app' on page 135 undefined on input li
-ne 114.
-
-
-LaTeX Warning: Reference `tab:opt-top3' on page 135 undefined on input line 115
-.
-
+ [141 <./figs/real_optimal_pattern.png>])
+(sections/optimization_master.tex [142 <./figs/pareto_2d_composite.pdf>]
+[143 <./figs/altitude_tradeoff_dual.pdf>]
 File: figs/top3_paths.pdf Graphic file (type pdf)
 <use figs/top3_paths.pdf>
 Package pdftex.def Info: figs/top3_paths.pdf  used on input line 133.
 (pdftex.def)             Requested size: 486.54057pt x 186.26013pt.
-[135]
-
-LaTeX Warning: Reference `fig:alt-speed-tradeoff' on page 136 undefined on inpu
-t line 168.
-
+ [144]
 File: figs/altitude_speed_tradeoff.pdf Graphic file (type pdf)
 <use figs/altitude_speed_tradeoff.pdf>
 Package pdftex.def Info: figs/altitude_speed_tradeoff.pdf  used on input line 1
 73.
 (pdftex.def)             Requested size: 435.3303pt x 354.73053pt.
-
-LaTeX Warning: Reference `fig:energy-heatmap-app' on page 136 undefined on inpu
-t line 178.
-
 File: figs/real_energy_heatmap.png Graphic file (type png)
 <use figs/real_energy_heatmap.png>
 Package pdftex.def Info: figs/real_energy_heatmap.png  used on input line 182.
 (pdftex.def)             Requested size: 435.3303pt x 290.22615pt.
-
-LaTeX Warning: Reference `tab:opt-sensitivity' on page 136 undefined on input l
-ine 190.
-
-
-LaTeX Warning: Reference `fig:tornado-sensitivity-app' on page 136 undefined on
- input line 190.
-
-<figs/tornado_sensitivity.pdf, id=5370, 571.04657pt x 285.1285pt>
+<figs/tornado_sensitivity.pdf, id=6905, 571.04657pt x 285.1285pt>
 File: figs/tornado_sensitivity.pdf Graphic file (type pdf)
 <use figs/tornado_sensitivity.pdf>
 Package pdftex.def Info: figs/tornado_sensitivity.pdf  used on input line 208.
 (pdftex.def)             Requested size: 384.11221pt x 191.79211pt.
-
-LaTeX Warning: Reference `fig:energy-heatmap-app' on page 136 undefined on inpu
-t line 218.
-
-
-LaTeX Warning: Reference `fig:n2-diagram-app' on page 136 undefined on input li
-ne 229.
-
-
-LaTeX Warning: Reference `fig:coupling-matrix-app' on page 136 undefined on inp
-ut line 229.
-
-<figs/n2_diagram.pdf, id=5371, 629.07869pt x 979.9812pt>
+<figs/n2_diagram.pdf, id=6909, 629.07869pt x 979.9812pt>
 File: figs/n2_diagram.pdf Graphic file (type pdf)
 <use figs/n2_diagram.pdf>
 Package pdftex.def Info: figs/n2_diagram.pdf  used on input line 234.
@@ -3781,157 +3212,73 @@ File: figs/coupling_matrix.pdf Graphic file (type pdf)
 <use figs/coupling_matrix.pdf>
 Package pdftex.def Info: figs/coupling_matrix.pdf  used on input line 238.
 (pdftex.def)             Requested size: 245.82962pt x 246.70604pt.
-
-LaTeX Warning: Reference `fig:sensitivity-matrix-app' on page 136 undefined on 
-input line 258.
-
-
-LaTeX Warning: Reference `fig:sensitivity-spider-app' on page 136 undefined on 
-input line 258.
-
-<figs/sensitivity_matrix.pdf, id=5372, 680.28354pt x 390.66585pt>
+<figs/sensitivity_matrix.pdf, id=6912, 680.28354pt x 390.66585pt>
 File: figs/sensitivity_matrix.pdf Graphic file (type pdf)
 <use figs/sensitivity_matrix.pdf>
 Package pdftex.def Info: figs/sensitivity_matrix.pdf  used on input line 263.
 (pdftex.def)             Requested size: 245.82962pt x 141.17012pt.
-<figs/sensitivity_spider.pdf, id=5373, 462.53987pt x 427.51283pt>
+<figs/sensitivity_spider.pdf, id=6913, 462.53987pt x 427.51283pt>
 File: figs/sensitivity_spider.pdf Graphic file (type pdf)
 <use figs/sensitivity_spider.pdf>
 Package pdftex.def Info: figs/sensitivity_spider.pdf  used on input line 267.
 (pdftex.def)             Requested size: 245.82962pt x 227.21347pt.
-
-LaTeX Warning: Reference `fig:pareto-2d-app' on page 136 undefined on input lin
-e 277.
-
 File: figs/pareto_2d_composite.pdf Graphic file (type pdf)
 <use figs/pareto_2d_composite.pdf>
 Package pdftex.def Info: figs/pareto_2d_composite.pdf  used on input line 281.
 (pdftex.def)             Requested size: 435.3303pt x 334.98059pt.
-<figs/pareto_curve.pdf, id=5374, 488.32996pt x 367.88191pt>
+<figs/pareto_curve.pdf, id=6915, 488.32996pt x 367.88191pt>
 File: figs/pareto_curve.pdf Graphic file (type pdf)
 <use figs/pareto_curve.pdf>
 Package pdftex.def Info: figs/pareto_curve.pdf  used on input line 290.
 (pdftex.def)             Requested size: 435.3303pt x 327.96397pt.
-<figs/pareto_3d.pdf, id=5375, 536.01518pt x 451.00998pt>
+<figs/pareto_3d.pdf, id=6916, 536.01518pt x 451.00998pt>
 File: figs/pareto_3d.pdf Graphic file (type pdf)
 <use figs/pareto_3d.pdf>
 Package pdftex.def Info: figs/pareto_3d.pdf  used on input line 297.
 (pdftex.def)             Requested size: 435.3303pt x 366.30017pt.
-<figs/pareto_parallel.pdf, id=5376, 611.26181pt x 379.18648pt>
+<figs/pareto_parallel.pdf, id=6917, 611.26181pt x 379.18648pt>
 File: figs/pareto_parallel.pdf Graphic file (type pdf)
 <use figs/pareto_parallel.pdf>
 Package pdftex.def Info: figs/pareto_parallel.pdf  used on input line 304.
 (pdftex.def)             Requested size: 486.54057pt x 301.82211pt.
-<figs/pareto_tradeoff_simple.pdf, id=5377, 500.21567pt x 369.24638pt>
+<figs/pareto_tradeoff_simple.pdf, id=6918, 500.21567pt x 369.24638pt>
 File: figs/pareto_tradeoff_simple.pdf Graphic file (type pdf)
 <use figs/pareto_tradeoff_simple.pdf>
 Package pdftex.def Info: figs/pareto_tradeoff_simple.pdf  used on input line 31
 1.
 (pdftex.def)             Requested size: 435.3303pt x 321.3657pt.
 
-LaTeX Warning: Reference `fig:pareto-curve' on page 136 undefined on input line
- 316.
-
-
-LaTeX Warning: Reference `fig:pareto-3d' on page 136 undefined on input line 31
-6.
-
-
-LaTeX Warning: Reference `fig:pareto-parallel' on page 136 undefined on input l
-ine 316.
-
-
-LaTeX Warning: Reference `fig:pareto-simple' on page 136 undefined on input lin
-e 316.
-
-
 Overfull \vbox (221.89398pt too high) has occurred while \output is active []
 
 
-[136]
-
-LaTeX Warning: Reference `fig:energy-efficiency' on page 137 undefined on input
- line 322.
-
+[145]
 File: figs/energy_efficiency.pdf Graphic file (type pdf)
 <use figs/energy_efficiency.pdf>
 Package pdftex.def Info: figs/energy_efficiency.pdf  used on input line 326.
 (pdftex.def)             Requested size: 384.11221pt x 274.43651pt.
-
-LaTeX Warning: Reference `eq:opt-modelpx' on page 137 undefined on input line 3
-54.
-
-
-LaTeX Warning: Reference `eq:opt-pdetect' on page 137 undefined on input line 3
-54.
-
-
-LaTeX Warning: Reference `fig:energy-heatmap-app' on page 137 undefined on inpu
-t line 354.
-
-
-LaTeX Warning: Reference `sec:overlap-margin' on page 137 undefined on input li
-ne 366.
-
 ) (sections/optimization_formal.tex
 Overfull \vbox (368.32803pt too high) has occurred while \output is active []
 
 
-[137] [138 <./figs/tornado_sensitivity.pdf>] [139 <./figs/n2_diagram.pdf>]
-[140 <./figs/sensitivity_matrix.pdf> <./figs/sensitivity_spider.pdf>]
-
-LaTeX Warning: Reference `eq:speed-ramp-obj' on page 141 undefined on input lin
-e 115.
-
-[141] [142 <./figs/pareto_curve.pdf>] [143 <./figs/pareto_3d.pdf>]
-
-LaTeX Warning: Reference `tab:coupling-matrix' on page 144 undefined on input l
-ine 176.
-
+[146] [147 <./figs/tornado_sensitivity.pdf>] [148 <./figs/n2_diagram.pdf>]
+[149 <./figs/sensitivity_matrix.pdf> <./figs/sensitivity_spider.pdf>] [150]
+[151 <./figs/pareto_curve.pdf>] [152 <./figs/pareto_3d.pdf>]
 File: figs/n2_diagram.pdf Graphic file (type pdf)
 <use figs/n2_diagram.pdf>
 Package pdftex.def Info: figs/n2_diagram.pdf  used on input line 196.
 (pdftex.def)             Requested size: 450.69417pt x 702.1018pt.
-<figs/objective_conflict.pdf, id=6118, 736.75905pt x 587.34618pt>
+<figs/objective_conflict.pdf, id=7664, 736.75905pt x 587.34618pt>
 File: figs/objective_conflict.pdf Graphic file (type pdf)
 <use figs/objective_conflict.pdf>
 Package pdftex.def Info: figs/objective_conflict.pdf  used on input line 203.
 (pdftex.def)             Requested size: 450.69417pt x 359.29337pt.
 
-LaTeX Warning: Reference `eq:p-single' on page 144 undefined on input line 234.
-
-
-
-LaTeX Warning: Reference `fig:energy-heatmap' on page 144 undefined on input li
-ne 238.
-
-
 Overfull \vbox (347.77484pt too high) has occurred while \output is active []
 
 
-[144 <./figs/pareto_parallel.pdf>]) (sections/design_strategy.tex
-
-LaTeX Warning: Reference `tab:pareto-final' on page 145 undefined on input line
- 11.
-
-
-LaTeX Warning: Reference `tab:px-vs-alt' on page 145 undefined on input line 33
-.
-
-[145 <./figs/pareto_tradeoff_simple.pdf>]
-
-LaTeX Warning: Reference `sec:moo' on page 146 undefined on input line 90.
-
-[146]
-
-LaTeX Warning: Reference `sec:sweep' on page 147 undefined on input line 107.
-
-
-LaTeX Warning: Reference `fig:energy-heatmap' on page 147 undefined on input li
-ne 113.
-
-[147]
-<figs/optimization_network.pdf, id=6359, 1149.09305pt x 758.835pt>
+[153 <./figs/pareto_parallel.pdf>]) (sections/design_strategy.tex [154 <./figs/
+pareto_tradeoff_simple.pdf>] [155] [156]
+<figs/optimization_network.pdf, id=7902, 1149.09305pt x 758.835pt>
 File: figs/optimization_network.pdf Graphic file (type pdf)
 <use figs/optimization_network.pdf>
 Package pdftex.def Info: figs/optimization_network.pdf  used on input line 241.
@@ -3945,1897 +3292,78 @@ File: figs/sensitivity_spider.pdf Graphic file (type pdf)
 <use figs/sensitivity_spider.pdf>
 Package pdftex.def Info: figs/sensitivity_spider.pdf  used on input line 255.
 (pdftex.def)             Requested size: 435.3303pt x 402.36441pt.
+ [157] [158] [159] [160] [161] [162]
+[163] [164] [165] [166] [167] [168] [169] [170] [171] [172] [173] [174 <./figs/
+objective_conflict.pdf>] [175 <./figs/optimization_network.pdf>] [176]
 File: figs/coupling_matrix.pdf Graphic file (type pdf)
 <use figs/coupling_matrix.pdf>
-Package pdftex.def Info: figs/coupling_matrix.pdf  used on input line 262.
+Package pdftex.def Info: figs/coupling_matrix.pdf  used on input line 264.
 (pdftex.def)             Requested size: 435.3303pt x 436.89008pt.
 File: figs/altitude_speed_tradeoff.pdf Graphic file (type pdf)
 <use figs/altitude_speed_tradeoff.pdf>
 Package pdftex.def Info: figs/altitude_speed_tradeoff.pdf  used on input line 2
-69.
+71.
 (pdftex.def)             Requested size: 435.3303pt x 354.73053pt.
-<figs/function_chain.pdf, id=6360, 798.58348pt x 537.06151pt>
+<figs/function_chain.pdf, id=8252, 798.58348pt x 537.06151pt>
 File: figs/function_chain.pdf Graphic file (type pdf)
 <use figs/function_chain.pdf>
-Package pdftex.def Info: figs/function_chain.pdf  used on input line 276.
+Package pdftex.def Info: figs/function_chain.pdf  used on input line 278.
 (pdftex.def)             Requested size: 450.69417pt x 303.10431pt.
+ [177
+
+]
+[178 <./figs/function_chain.pdf>]
 File: figs/tornado_sensitivity.pdf Graphic file (type pdf)
 <use figs/tornado_sensitivity.pdf>
-Package pdftex.def Info: figs/tornado_sensitivity.pdf  used on input line 283.
+Package pdftex.def Info: figs/tornado_sensitivity.pdf  used on input line 287.
 (pdftex.def)             Requested size: 450.69417pt x 225.0402pt.
+) (sections/vision_performance.tex [179
 
-
-LaTeX Warning: Reference `fig:sensitivity-matrix' on page 148 undefined on inpu
-t line 288.
-
-
-LaTeX Warning: Reference `fig:sensitivity-spider' on page 148 undefined on inpu
-t line 288.
-
-
-LaTeX Warning: Reference `fig:coupling-matrix' on page 148 undefined on input l
-ine 288.
-
-
-LaTeX Warning: Reference `fig:alt-speed-tradeoff' on page 148 undefined on inpu
-t line 288.
-
-
-LaTeX Warning: Reference `fig:optimization-network' on page 148 undefined on in
-put line 288.
-
-) (sections/vision_performance.tex
-
-LaTeX Warning: Reference `tab:vision-params' on page 148 undefined on input lin
-e 11.
-
-[148]
-
-LaTeX Warning: Reference `tab:px-by-alt' on page 149 undefined on input line 56
-.
-
-
-LaTeX Warning: Reference `fig:alt-vs-px' on page 149 undefined on input line 78
-.
-
-
-LaTeX Warning: Reference `sec:detect-prob' on page 149 undefined on input line 
-84.
-
-
-! LaTeX Error: Too many unprocessed floats.
-
-See the LaTeX manual or LaTeX Companion for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.86 \begin{figure}[ht]
-                       
-You've lost some text.  Try typing  <return>  to proceed.
-If that doesn't work, type  X <return>  to quit.
-
-! Undefined control sequence.
-\latex@xfloat ...vf \fi \global \setbox \@currbox 
-                                                  \color@vbox \normalcolor \...
-l.86 \begin{figure}[ht]
-                       
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \vbox 
-l.86 \begin{figure}[ht]
-                       
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-<figs/real_altitude_vs_px.png, id=6379, 505.89pt x 325.215pt>
+]
+<figs/real_altitude_vs_px.png, id=8379, 505.89pt x 325.215pt>
 File: figs/real_altitude_vs_px.png Graphic file (type png)
 <use figs/real_altitude_vs_px.png>
 Package pdftex.def Info: figs/real_altitude_vs_px.png  used on input line 88.
 (pdftex.def)             Requested size: 435.3303pt x 279.8581pt.
-! Undefined control sequence.
-\@largefloatcheck ->\ifdim \ht \@currbox 
-                                         >\textheight \@tempdima -\textheigh...
-l.92 \end{figure}
-                 
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   >
-l.92 \end{figure}
-                 
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-! Undefined control sequence.
-<argument> \@currbox 
-                     
-l.92 \end{figure}
-                 
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Argument of \@xnext has an extra }.
-<inserted text> 
-                \par 
-l.92 \end{figure}
-                 
-I've run across a `}' that doesn't seem to match anything.
-For example, `\def\a#1{...}' and `\a}' would produce
-this error. If you simply proceed now, the `\par' that
-I've just inserted will cause me to report a runaway
-argument that might be the root of the problem. But if
-your `}' was spurious, just type `2' and it will go away.
-
-Runaway argument?
-\@currbox \@currlist \ifnum \count \@currbox >\z@ \advance \@pageht \@pagedp \E
-TC.
-! Paragraph ended before \@xnext was complete.
-<to be read again> 
-                   \par 
-l.92 \end{figure}
-                 
-I suspect you've forgotten a `}', causing me to apply this
-control sequence to too much text. How can we recover?
-My plan is to forget the whole thing and hope for the best.
-
-! Extra \else.
-\end@float ...pdima \penalty \@floatpenalty \else 
-                                                  \vadjust {\penalty -\@Miv ...
-l.92 \end{figure}
-                 
-I'm ignoring this; it doesn't match any \if.
-
-! You can't use `\vadjust' in vertical mode.
-\end@float ...nalty \@floatpenalty \else \vadjust 
-                                                  {\penalty -\@Miv \vbox {}\...
-l.92 \end{figure}
-                 
-Sorry, but I'm not programmed to handle this case;
-I'll just pretend that you didn't ask for it.
-If you're in the wrong mode, you might be able to
-return to the right one by typing `I}' or `I$' or `I\par'.
-
-! Argument of \@xnext has an extra }.
-<inserted text> 
-                \par 
-l.92 \end{figure}
-                 
-I've run across a `}' that doesn't seem to match anything.
-For example, `\def\a#1{...}' and `\a}' would produce
-this error. If you simply proceed now, the `\par' that
-I've just inserted will cause me to report a runaway
-argument that might be the root of the problem. But if
-your `}' was spurious, just type `2' and it will go away.
-
-Runaway argument?
-\@currbox \@currlist \ifnum \count \@currbox >\z@ \advance \@pageht \@pagedp \E
-TC.
-! Paragraph ended before \@xnext was complete.
-<to be read again> 
-                   \par 
-l.92 \end{figure}
-                 
-I suspect you've forgotten a `}', causing me to apply this
-control sequence to too much text. How can we recover?
-My plan is to forget the whole thing and hope for the best.
-
-
-LaTeX Warning: Reference `tab:blur' on page 149 undefined on input line 104.
-
-
-! LaTeX Error: Too many unprocessed floats.
-
-See the LaTeX manual or LaTeX Companion for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.106 \begin{table}[ht]
-                       
-You've lost some text.  Try typing  <return>  to proceed.
-If that doesn't work, type  X <return>  to quit.
-
-! Undefined control sequence.
-\latex@xfloat ...vf \fi \global \setbox \@currbox 
-                                                  \color@vbox \normalcolor \...
-l.106 \begin{table}[ht]
-                       
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \vbox 
-l.106 \begin{table}[ht]
-                       
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-! Undefined control sequence.
-\@largefloatcheck ->\ifdim \ht \@currbox 
-                                         >\textheight \@tempdima -\textheigh...
-l.120 \end{table}
-                 
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   >
-l.120 \end{table}
-                 
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-! Undefined control sequence.
-<argument> \@currbox 
-                     
-l.120 \end{table}
-                 
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \@elt 
-l.120 \end{table}
-                 
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-! Missing = inserted for \ifnum.
-<to be read again> 
-                   \@elt 
-l.120 \end{table}
-                 
-I was expecting to see `<', `=', or `>'. Didn't.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \@elt 
-l.120 \end{table}
-                 
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-
-! LaTeX Error: This may be a LaTeX bug.
-
-See the LaTeX manual or LaTeX Companion for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.120 \end{table}
-                 
-Call for help
-
-! Undefined control sequence.
-\@addmarginpar ...advance \@tempdima \ht \@marbox 
-                                                  \ifdim \@tempdima >\z@ \@l...
-l.120 \end{table}
-                 
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Bad register code (-23070752).
-\@addmarginpar ...e \space moved}\else \@tempdima 
-                                                  \z@ \fi \global \@mparbott...
-l.120 \end{table}
-                 
-A register number must be between 0 and 32767.
-I changed this one to zero.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \global 
-l.120 \end{table}
-                 
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-! Illegal unit of measure (pt inserted).
-<to be read again> 
-                   \global 
-l.120 \end{table}
-                 
-Dimensions can be in units of em, ex, in, pt, pc,
-cm, mm, dd, cc, nd, nc, bp, or sp; but yours is a new one!
-I'll assume that you meant to say pt, for printer's points.
-To recover gracefully from this error, it's best to
-delete the erroneous units; e.g., type `2' to delete
-two letters. (See Chapter 27 of The TeXbook.)
-
-! Undefined control sequence.
-\@addmarginpar ...vance \@mparbottom \dp \@marbox 
-                                                  \global \advance \@mparbot...
-l.120 \end{table}
-                 
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \global 
-l.120 \end{table}
-                 
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-! Undefined control sequence.
-\@addmarginpar ...dvance \@tempdima -\ht \@marbox 
-                                                  \global \setbox \@marbox \...
-l.120 \end{table}
-                 
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \global 
-l.120 \end{table}
-                 
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-! Undefined control sequence.
-\@addmarginpar ...marbox \global \setbox \@marbox 
-                                                  \vbox {\vskip \@tempdima \...
-l.120 \end{table}
-                 
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \vbox 
-l.120 \end{table}
-                 
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-! Undefined control sequence.
-\@addmarginpar ...\vskip \@tempdima \box \@marbox 
-                                                  }\global \ht \@marbox \z@ ...
-l.120 \end{table}
-                 
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   }
-l.120 \end{table}
-                 
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-! Undefined control sequence.
-\@addmarginpar ... \@marbox }\global \ht \@marbox 
-                                                  \z@ \global \dp \@marbox \...
-l.120 \end{table}
-                 
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \global 
-l.120 \end{table}
-                 
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-! Illegal unit of measure (pt inserted).
-<to be read again> 
-                   \global 
-l.120 \end{table}
-                 
-Dimensions can be in units of em, ex, in, pt, pc,
-cm, mm, dd, cc, nd, nc, bp, or sp; but yours is a new one!
-I'll assume that you meant to say pt, for printer's points.
-To recover gracefully from this error, it's best to
-delete the erroneous units; e.g., type `2' to delete
-two letters. (See Chapter 27 of The TeXbook.)
-
-! Undefined control sequence.
-\@addmarginpar ...marbox \z@ \global \dp \@marbox 
-                                                  \z@ \kern -\@pagedp \noint...
-l.120 \end{table}
-                 
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \kern 
-l.120 \end{table}
-                 
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-! Illegal unit of measure (pt inserted).
-<to be read again> 
-                   \kern 
-l.120 \end{table}
-                 
-Dimensions can be in units of em, ex, in, pt, pc,
-cm, mm, dd, cc, nd, nc, bp, or sp; but yours is a new one!
-I'll assume that you meant to say pt, for printer's points.
-To recover gracefully from this error, it's best to
-delete the erroneous units; e.g., type `2' to delete
-two letters. (See Chapter 27 of The TeXbook.)
-
-! Undefined control sequence.
-\@addmarginpar ...arginparwidth \fi \box \@marbox 
-                                                  \hss }\nointerlineskip \hb...
-l.120 \end{table}
-                 
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \hss 
-l.120 \end{table}
-                 
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-
-LaTeX Warning: Reference `fig:speed-blur' on page 149 undefined on input line 1
-26.
-
-
-! LaTeX Error: Too many unprocessed floats.
-
-See the LaTeX manual or LaTeX Companion for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.133 \begin{figure}[ht]
-                        
-You've lost some text.  Try typing  <return>  to proceed.
-If that doesn't work, type  X <return>  to quit.
-
-! Undefined control sequence.
-\latex@xfloat ...vf \fi \global \setbox \@currbox 
-                                                  \color@vbox \normalcolor \...
-l.133 \begin{figure}[ht]
-                        
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \vbox 
-l.133 \begin{figure}[ht]
-                        
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-<figs/real_speed_vs_blur.png, id=6380, 505.89pt x 325.215pt>
+<figs/real_speed_vs_blur.png, id=8382, 505.89pt x 325.215pt>
 File: figs/real_speed_vs_blur.png Graphic file (type png)
 <use figs/real_speed_vs_blur.png>
-Package pdftex.def Info: figs/real_speed_vs_blur.png  used on input line 135.
+Package pdftex.def Info: figs/real_speed_vs_blur.png  used on input line 136.
 (pdftex.def)             Requested size: 435.3303pt x 279.8581pt.
-! Undefined control sequence.
-\@largefloatcheck ->\ifdim \ht \@currbox 
-                                         >\textheight \@tempdima -\textheigh...
-l.139 \end{figure}
-                  
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
 
-! Missing number, treated as zero.
-<to be read again> 
-                   >
-l.139 \end{figure}
-                  
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-! Undefined control sequence.
-<argument> \@currbox 
-                     
-l.139 \end{figure}
-                  
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Argument of \@xnext has an extra }.
-<inserted text> 
-                \par 
-l.139 \end{figure}
-                  
-I've run across a `}' that doesn't seem to match anything.
-For example, `\def\a#1{...}' and `\a}' would produce
-this error. If you simply proceed now, the `\par' that
-I've just inserted will cause me to report a runaway
-argument that might be the root of the problem. But if
-your `}' was spurious, just type `2' and it will go away.
-
-Runaway argument?
-\@currbox \@currlist \ifnum \count \@currbox >\z@ \advance \@pageht \@pagedp \E
-TC.
-! Paragraph ended before \@xnext was complete.
-<to be read again> 
-                   \par 
-l.139 \end{figure}
-                  
-I suspect you've forgotten a `}', causing me to apply this
-control sequence to too much text. How can we recover?
-My plan is to forget the whole thing and hope for the best.
-
-! Extra \else.
-\end@float ...pdima \penalty \@floatpenalty \else 
-                                                  \vadjust {\penalty -\@Miv ...
-l.139 \end{figure}
-                  
-I'm ignoring this; it doesn't match any \if.
-
-! You can't use `\vadjust' in vertical mode.
-\end@float ...nalty \@floatpenalty \else \vadjust 
-                                                  {\penalty -\@Miv \vbox {}\...
-l.139 \end{figure}
-                  
-Sorry, but I'm not programmed to handle this case;
-I'll just pretend that you didn't ask for it.
-If you're in the wrong mode, you might be able to
-return to the right one by typing `I}' or `I$' or `I\par'.
-
-! Argument of \@xnext has an extra }.
-<inserted text> 
-                \par 
-l.139 \end{figure}
-                  
-I've run across a `}' that doesn't seem to match anything.
-For example, `\def\a#1{...}' and `\a}' would produce
-this error. If you simply proceed now, the `\par' that
-I've just inserted will cause me to report a runaway
-argument that might be the root of the problem. But if
-your `}' was spurious, just type `2' and it will go away.
-
-Runaway argument?
-\@currbox \@currlist \ifnum \count \@currbox >\z@ \advance \@pageht \@pagedp \E
-TC.
-! Paragraph ended before \@xnext was complete.
-<to be read again> 
-                   \par 
-l.139 \end{figure}
-                  
-I suspect you've forgotten a `}', causing me to apply this
-control sequence to too much text. How can we recover?
-My plan is to forget the whole thing and hope for the best.
-
-
-LaTeX Warning: Reference `tab:frames' on page 149 undefined on input line 155.
-
-
-! LaTeX Error: Too many unprocessed floats.
-
-See the LaTeX manual or LaTeX Companion for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.166 \begin{table}[ht]
-                       
-You've lost some text.  Try typing  <return>  to proceed.
-If that doesn't work, type  X <return>  to quit.
-
-! Undefined control sequence.
-\latex@xfloat ...vf \fi \global \setbox \@currbox 
-                                                  \color@vbox \normalcolor \...
-l.166 \begin{table}[ht]
-                       
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \vbox 
-l.166 \begin{table}[ht]
-                       
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-! Undefined control sequence.
-\@largefloatcheck ->\ifdim \ht \@currbox 
-                                         >\textheight \@tempdima -\textheigh...
-l.181 \end{table}
-                 
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   >
-l.181 \end{table}
-                 
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-! Undefined control sequence.
-<argument> \@currbox 
-                     
-l.181 \end{table}
-                 
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \@elt 
-l.181 \end{table}
-                 
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-! Missing = inserted for \ifnum.
-<to be read again> 
-                   \@elt 
-l.181 \end{table}
-                 
-I was expecting to see `<', `=', or `>'. Didn't.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \@elt 
-l.181 \end{table}
-                 
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-
-! LaTeX Error: This may be a LaTeX bug.
-
-See the LaTeX manual or LaTeX Companion for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.181 \end{table}
-                 
-Call for help
-
-! Undefined control sequence.
-\@addmarginpar ...advance \@tempdima \ht \@marbox 
-                                                  \ifdim \@tempdima >\z@ \@l...
-l.181 \end{table}
-                 
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Bad register code (-35702537).
-\@addmarginpar ...e \space moved}\else \@tempdima 
-                                                  \z@ \fi \global \@mparbott...
-l.181 \end{table}
-                 
-A register number must be between 0 and 32767.
-I changed this one to zero.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \global 
-l.181 \end{table}
-                 
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-! Illegal unit of measure (pt inserted).
-<to be read again> 
-                   \global 
-l.181 \end{table}
-                 
-Dimensions can be in units of em, ex, in, pt, pc,
-cm, mm, dd, cc, nd, nc, bp, or sp; but yours is a new one!
-I'll assume that you meant to say pt, for printer's points.
-To recover gracefully from this error, it's best to
-delete the erroneous units; e.g., type `2' to delete
-two letters. (See Chapter 27 of The TeXbook.)
-
-! Undefined control sequence.
-\@addmarginpar ...vance \@mparbottom \dp \@marbox 
-                                                  \global \advance \@mparbot...
-l.181 \end{table}
-                 
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \global 
-l.181 \end{table}
-                 
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-! Undefined control sequence.
-\@addmarginpar ...dvance \@tempdima -\ht \@marbox 
-                                                  \global \setbox \@marbox \...
-l.181 \end{table}
-                 
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \global 
-l.181 \end{table}
-                 
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-! Undefined control sequence.
-\@addmarginpar ...marbox \global \setbox \@marbox 
-                                                  \vbox {\vskip \@tempdima \...
-l.181 \end{table}
-                 
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \vbox 
-l.181 \end{table}
-                 
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-! Undefined control sequence.
-\@addmarginpar ...\vskip \@tempdima \box \@marbox 
-                                                  }\global \ht \@marbox \z@ ...
-l.181 \end{table}
-                 
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   }
-l.181 \end{table}
-                 
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-! Undefined control sequence.
-\@addmarginpar ... \@marbox }\global \ht \@marbox 
-                                                  \z@ \global \dp \@marbox \...
-l.181 \end{table}
-                 
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \global 
-l.181 \end{table}
-                 
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-! Illegal unit of measure (pt inserted).
-<to be read again> 
-                   \global 
-l.181 \end{table}
-                 
-Dimensions can be in units of em, ex, in, pt, pc,
-cm, mm, dd, cc, nd, nc, bp, or sp; but yours is a new one!
-I'll assume that you meant to say pt, for printer's points.
-To recover gracefully from this error, it's best to
-delete the erroneous units; e.g., type `2' to delete
-two letters. (See Chapter 27 of The TeXbook.)
-
-! Undefined control sequence.
-\@addmarginpar ...marbox \z@ \global \dp \@marbox 
-                                                  \z@ \kern -\@pagedp \noint...
-l.181 \end{table}
-                 
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \kern 
-l.181 \end{table}
-                 
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-! Illegal unit of measure (pt inserted).
-<to be read again> 
-                   \kern 
-l.181 \end{table}
-                 
-Dimensions can be in units of em, ex, in, pt, pc,
-cm, mm, dd, cc, nd, nc, bp, or sp; but yours is a new one!
-I'll assume that you meant to say pt, for printer's points.
-To recover gracefully from this error, it's best to
-delete the erroneous units; e.g., type `2' to delete
-two letters. (See Chapter 27 of The TeXbook.)
-
-! Undefined control sequence.
-\@addmarginpar ...arginparwidth \fi \box \@marbox 
-                                                  \hss }\nointerlineskip \hb...
-l.181 \end{table}
-                 
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \hss 
-l.181 \end{table}
-                 
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-
-! LaTeX Error: Too many unprocessed floats.
-
-See the LaTeX manual or LaTeX Companion for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.183 \begin{figure}[ht]
-                        
-You've lost some text.  Try typing  <return>  to proceed.
-If that doesn't work, type  X <return>  to quit.
-
-! Undefined control sequence.
-\latex@xfloat ...vf \fi \global \setbox \@currbox 
-                                                  \color@vbox \normalcolor \...
-l.183 \begin{figure}[ht]
-                        
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \vbox 
-l.183 \begin{figure}[ht]
-                        
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-<figs/real_speed_vs_frames.png, id=6381, 505.89pt x 325.215pt>
+[180 <./figs/real_altitude_vs_px.png>]
+<figs/real_speed_vs_frames.png, id=8395, 505.89pt x 325.215pt>
 File: figs/real_speed_vs_frames.png Graphic file (type png)
 <use figs/real_speed_vs_frames.png>
-Package pdftex.def Info: figs/real_speed_vs_frames.png  used on input line 185.
+Package pdftex.def Info: figs/real_speed_vs_frames.png  used on input line 187.
 
 (pdftex.def)             Requested size: 435.3303pt x 279.8581pt.
-! Undefined control sequence.
-\@largefloatcheck ->\ifdim \ht \@currbox 
-                                         >\textheight \@tempdima -\textheigh...
-l.189 \end{figure}
-                  
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   >
-l.189 \end{figure}
-                  
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-! Undefined control sequence.
-<argument> \@currbox 
-                     
-l.189 \end{figure}
-                  
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Argument of \@xnext has an extra }.
-<inserted text> 
-                \par 
-l.189 \end{figure}
-                  
-I've run across a `}' that doesn't seem to match anything.
-For example, `\def\a#1{...}' and `\a}' would produce
-this error. If you simply proceed now, the `\par' that
-I've just inserted will cause me to report a runaway
-argument that might be the root of the problem. But if
-your `}' was spurious, just type `2' and it will go away.
-
-Runaway argument?
-\@currbox \@currlist \ifnum \count \@currbox >\z@ \advance \@pageht \@pagedp \E
-TC.
-! Paragraph ended before \@xnext was complete.
-<to be read again> 
-                   \par 
-l.189 \end{figure}
-                  
-I suspect you've forgotten a `}', causing me to apply this
-control sequence to too much text. How can we recover?
-My plan is to forget the whole thing and hope for the best.
-
-! Extra \else.
-\end@float ...pdima \penalty \@floatpenalty \else 
-                                                  \vadjust {\penalty -\@Miv ...
-l.189 \end{figure}
-                  
-I'm ignoring this; it doesn't match any \if.
-
-! You can't use `\vadjust' in vertical mode.
-\end@float ...nalty \@floatpenalty \else \vadjust 
-                                                  {\penalty -\@Miv \vbox {}\...
-l.189 \end{figure}
-                  
-Sorry, but I'm not programmed to handle this case;
-I'll just pretend that you didn't ask for it.
-If you're in the wrong mode, you might be able to
-return to the right one by typing `I}' or `I$' or `I\par'.
-
-! Argument of \@xnext has an extra }.
-<inserted text> 
-                \par 
-l.189 \end{figure}
-                  
-I've run across a `}' that doesn't seem to match anything.
-For example, `\def\a#1{...}' and `\a}' would produce
-this error. If you simply proceed now, the `\par' that
-I've just inserted will cause me to report a runaway
-argument that might be the root of the problem. But if
-your `}' was spurious, just type `2' and it will go away.
-
-Runaway argument?
-\@currbox \@currlist \ifnum \count \@currbox >\z@ \advance \@pageht \@pagedp \E
-TC.
-! Paragraph ended before \@xnext was complete.
-<to be read again> 
-                   \par 
-l.189 \end{figure}
-                  
-I suspect you've forgotten a `}', causing me to apply this
-control sequence to too much text. How can we recover?
-My plan is to forget the whole thing and hope for the best.
-
-
-! LaTeX Error: Too many unprocessed floats.
-
-See the LaTeX manual or LaTeX Companion for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.216 \begin{figure}[ht]
-                        
-You've lost some text.  Try typing  <return>  to proceed.
-If that doesn't work, type  X <return>  to quit.
-
-! Undefined control sequence.
-\latex@xfloat ...vf \fi \global \setbox \@currbox 
-                                                  \color@vbox \normalcolor \...
-l.216 \begin{figure}[ht]
-                        
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \vbox 
-l.216 \begin{figure}[ht]
-                        
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-<figs/real_coverage.png, id=6382, 505.89pt x 325.215pt>
+ [181 <./figs/real_speed_vs_blur.png>]
+<figs/real_coverage.png, id=8405, 505.89pt x 325.215pt>
 File: figs/real_coverage.png Graphic file (type png)
 <use figs/real_coverage.png>
-Package pdftex.def Info: figs/real_coverage.png  used on input line 218.
+Package pdftex.def Info: figs/real_coverage.png  used on input line 221.
 (pdftex.def)             Requested size: 435.3303pt x 279.8581pt.
-! Undefined control sequence.
-\@largefloatcheck ->\ifdim \ht \@currbox 
-                                         >\textheight \@tempdima -\textheigh...
-l.223 \end{figure}
-                  
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
 
-! Missing number, treated as zero.
-<to be read again> 
-                   >
-l.223 \end{figure}
-                  
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-! Undefined control sequence.
-<argument> \@currbox 
-                     
-l.223 \end{figure}
-                  
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \@elt 
-l.223 \end{figure}
-                  
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-! Missing = inserted for \ifnum.
-<to be read again> 
-                   \@elt 
-l.223 \end{figure}
-                  
-I was expecting to see `<', `=', or `>'. Didn't.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \@elt 
-l.223 \end{figure}
-                  
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-
-! LaTeX Error: This may be a LaTeX bug.
-
-See the LaTeX manual or LaTeX Companion for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.223 \end{figure}
-                  
-Call for help
-
-! Undefined control sequence.
-\@addmarginpar ...advance \@tempdima \ht \@marbox 
-                                                  \ifdim \@tempdima >\z@ \@l...
-l.223 \end{figure}
-                  
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Bad register code (-43656860).
-\@addmarginpar ...e \space moved}\else \@tempdima 
-                                                  \z@ \fi \global \@mparbott...
-l.223 \end{figure}
-                  
-A register number must be between 0 and 32767.
-I changed this one to zero.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \global 
-l.223 \end{figure}
-                  
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-! Illegal unit of measure (pt inserted).
-<to be read again> 
-                   \global 
-l.223 \end{figure}
-                  
-Dimensions can be in units of em, ex, in, pt, pc,
-cm, mm, dd, cc, nd, nc, bp, or sp; but yours is a new one!
-I'll assume that you meant to say pt, for printer's points.
-To recover gracefully from this error, it's best to
-delete the erroneous units; e.g., type `2' to delete
-two letters. (See Chapter 27 of The TeXbook.)
-
-! Undefined control sequence.
-\@addmarginpar ...vance \@mparbottom \dp \@marbox 
-                                                  \global \advance \@mparbot...
-l.223 \end{figure}
-                  
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \global 
-l.223 \end{figure}
-                  
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-! Undefined control sequence.
-\@addmarginpar ...dvance \@tempdima -\ht \@marbox 
-                                                  \global \setbox \@marbox \...
-l.223 \end{figure}
-                  
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \global 
-l.223 \end{figure}
-                  
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-! Undefined control sequence.
-\@addmarginpar ...marbox \global \setbox \@marbox 
-                                                  \vbox {\vskip \@tempdima \...
-l.223 \end{figure}
-                  
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \vbox 
-l.223 \end{figure}
-                  
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-! Undefined control sequence.
-\@addmarginpar ...\vskip \@tempdima \box \@marbox 
-                                                  }\global \ht \@marbox \z@ ...
-l.223 \end{figure}
-                  
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   }
-l.223 \end{figure}
-                  
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-! Undefined control sequence.
-\@addmarginpar ... \@marbox }\global \ht \@marbox 
-                                                  \z@ \global \dp \@marbox \...
-l.223 \end{figure}
-                  
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \global 
-l.223 \end{figure}
-                  
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-! Illegal unit of measure (pt inserted).
-<to be read again> 
-                   \global 
-l.223 \end{figure}
-                  
-Dimensions can be in units of em, ex, in, pt, pc,
-cm, mm, dd, cc, nd, nc, bp, or sp; but yours is a new one!
-I'll assume that you meant to say pt, for printer's points.
-To recover gracefully from this error, it's best to
-delete the erroneous units; e.g., type `2' to delete
-two letters. (See Chapter 27 of The TeXbook.)
-
-! Undefined control sequence.
-\@addmarginpar ...marbox \z@ \global \dp \@marbox 
-                                                  \z@ \kern -\@pagedp \noint...
-l.223 \end{figure}
-                  
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \kern 
-l.223 \end{figure}
-                  
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-! Illegal unit of measure (pt inserted).
-<to be read again> 
-                   \kern 
-l.223 \end{figure}
-                  
-Dimensions can be in units of em, ex, in, pt, pc,
-cm, mm, dd, cc, nd, nc, bp, or sp; but yours is a new one!
-I'll assume that you meant to say pt, for printer's points.
-To recover gracefully from this error, it's best to
-delete the erroneous units; e.g., type `2' to delete
-two letters. (See Chapter 27 of The TeXbook.)
-
-! Undefined control sequence.
-\@addmarginpar ...arginparwidth \fi \box \@marbox 
-                                                  \hss }\nointerlineskip \hb...
-l.223 \end{figure}
-                  
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \hss 
-l.223 \end{figure}
-                  
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-[149]
-
-LaTeX Warning: Reference `fig:envelope' on page 150 undefined on input line 247
-.
-
-
-! LaTeX Error: Too many unprocessed floats.
-
-See the LaTeX manual or LaTeX Companion for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.255 \begin{figure}[ht]
-                        
-You've lost some text.  Try typing  <return>  to proceed.
-If that doesn't work, type  X <return>  to quit.
-
-! Undefined control sequence.
-\latex@xfloat ...vf \fi \global \setbox \@currbox 
-                                                  \color@vbox \normalcolor \...
-l.255 \begin{figure}[ht]
-                        
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \vbox 
-l.255 \begin{figure}[ht]
-                        
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-<figs/real_detection_envelope.png, id=6398, 542.025pt x 361.35pt>
+[182 <./figs/real_speed_vs_frames.png>]
+<figs/real_detection_envelope.png, id=8415, 542.025pt x 361.35pt>
 File: figs/real_detection_envelope.png Graphic file (type png)
 <use figs/real_detection_envelope.png>
 Package pdftex.def Info: figs/real_detection_envelope.png  used on input line 2
-57.
+61.
 (pdftex.def)             Requested size: 450.69417pt x 300.4718pt.
-! Undefined control sequence.
-\@largefloatcheck ->\ifdim \ht \@currbox 
-                                         >\textheight \@tempdima -\textheigh...
-l.262 \end{figure}
-                  
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
+ [183 <./figs/real_coverage.png>])
+(sections/decision_flow.tex [184 <./figs/real_detection_envelope.png>]
 
-! Missing number, treated as zero.
-<to be read again> 
-                   >
-l.262 \end{figure}
-                  
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-! Undefined control sequence.
-<argument> \@currbox 
-                     
-l.262 \end{figure}
-                  
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Argument of \@xnext has an extra }.
-<inserted text> 
-                \par 
-l.262 \end{figure}
-                  
-I've run across a `}' that doesn't seem to match anything.
-For example, `\def\a#1{...}' and `\a}' would produce
-this error. If you simply proceed now, the `\par' that
-I've just inserted will cause me to report a runaway
-argument that might be the root of the problem. But if
-your `}' was spurious, just type `2' and it will go away.
-
-Runaway argument?
-\@currbox \@currlist \ifnum \count \@currbox >\z@ \advance \@pageht \@pagedp \E
-TC.
-! Paragraph ended before \@xnext was complete.
-<to be read again> 
-                   \par 
-l.262 \end{figure}
-                  
-I suspect you've forgotten a `}', causing me to apply this
-control sequence to too much text. How can we recover?
-My plan is to forget the whole thing and hope for the best.
-
-! Extra \else.
-\end@float ...pdima \penalty \@floatpenalty \else 
-                                                  \vadjust {\penalty -\@Miv ...
-l.262 \end{figure}
-                  
-I'm ignoring this; it doesn't match any \if.
-
-! You can't use `\vadjust' in vertical mode.
-\end@float ...nalty \@floatpenalty \else \vadjust 
-                                                  {\penalty -\@Miv \vbox {}\...
-l.262 \end{figure}
-                  
-Sorry, but I'm not programmed to handle this case;
-I'll just pretend that you didn't ask for it.
-If you're in the wrong mode, you might be able to
-return to the right one by typing `I}' or `I$' or `I\par'.
-
-! Argument of \@xnext has an extra }.
-<inserted text> 
-                \par 
-l.262 \end{figure}
-                  
-I've run across a `}' that doesn't seem to match anything.
-For example, `\def\a#1{...}' and `\a}' would produce
-this error. If you simply proceed now, the `\par' that
-I've just inserted will cause me to report a runaway
-argument that might be the root of the problem. But if
-your `}' was spurious, just type `2' and it will go away.
-
-Runaway argument?
-\@currbox \@currlist \ifnum \count \@currbox >\z@ \advance \@pageht \@pagedp \E
-TC.
-! Paragraph ended before \@xnext was complete.
-<to be read again> 
-                   \par 
-l.262 \end{figure}
-                  
-I suspect you've forgotten a `}', causing me to apply this
-control sequence to too much text. How can we recover?
-My plan is to forget the whole thing and hope for the best.
-
-
-LaTeX Warning: Reference `tab:limits' on page 150 undefined on input line 267.
-
-
-! LaTeX Error: Too many unprocessed floats.
-
-See the LaTeX manual or LaTeX Companion for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.273 \begin{table}[ht]
-                       
-You've lost some text.  Try typing  <return>  to proceed.
-If that doesn't work, type  X <return>  to quit.
-
-! Undefined control sequence.
-\latex@xfloat ...vf \fi \global \setbox \@currbox 
-                                                  \color@vbox \normalcolor \...
-l.273 \begin{table}[ht]
-                       
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \vbox 
-l.273 \begin{table}[ht]
-                       
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-! Undefined control sequence.
-\@largefloatcheck ->\ifdim \ht \@currbox 
-                                         >\textheight \@tempdima -\textheigh...
-l.289 \end{table}
-                 
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   >
-l.289 \end{table}
-                 
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-! Undefined control sequence.
-<argument> \@currbox 
-                     
-l.289 \end{table}
-                 
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \@elt 
-l.289 \end{table}
-                 
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-! Missing = inserted for \ifnum.
-<to be read again> 
-                   \@elt 
-l.289 \end{table}
-                 
-I was expecting to see `<', `=', or `>'. Didn't.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \@elt 
-l.289 \end{table}
-                 
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-
-! LaTeX Error: This may be a LaTeX bug.
-
-See the LaTeX manual or LaTeX Companion for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.289 \end{table}
-                 
-Call for help
-
-! Undefined control sequence.
-\@addmarginpar ...advance \@tempdima \ht \@marbox 
-                                                  \ifdim \@tempdima >\z@ \@l...
-l.289 \end{table}
-                 
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Bad register code (-24767057).
-\@addmarginpar ...e \space moved}\else \@tempdima 
-                                                  \z@ \fi \global \@mparbott...
-l.289 \end{table}
-                 
-A register number must be between 0 and 32767.
-I changed this one to zero.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \global 
-l.289 \end{table}
-                 
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-! Illegal unit of measure (pt inserted).
-<to be read again> 
-                   \global 
-l.289 \end{table}
-                 
-Dimensions can be in units of em, ex, in, pt, pc,
-cm, mm, dd, cc, nd, nc, bp, or sp; but yours is a new one!
-I'll assume that you meant to say pt, for printer's points.
-To recover gracefully from this error, it's best to
-delete the erroneous units; e.g., type `2' to delete
-two letters. (See Chapter 27 of The TeXbook.)
-
-! Undefined control sequence.
-\@addmarginpar ...vance \@mparbottom \dp \@marbox 
-                                                  \global \advance \@mparbot...
-l.289 \end{table}
-                 
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \global 
-l.289 \end{table}
-                 
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-! Undefined control sequence.
-\@addmarginpar ...dvance \@tempdima -\ht \@marbox 
-                                                  \global \setbox \@marbox \...
-l.289 \end{table}
-                 
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \global 
-l.289 \end{table}
-                 
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-! Undefined control sequence.
-\@addmarginpar ...marbox \global \setbox \@marbox 
-                                                  \vbox {\vskip \@tempdima \...
-l.289 \end{table}
-                 
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \vbox 
-l.289 \end{table}
-                 
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-! Undefined control sequence.
-\@addmarginpar ...\vskip \@tempdima \box \@marbox 
-                                                  }\global \ht \@marbox \z@ ...
-l.289 \end{table}
-                 
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   }
-l.289 \end{table}
-                 
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-! Undefined control sequence.
-\@addmarginpar ... \@marbox }\global \ht \@marbox 
-                                                  \z@ \global \dp \@marbox \...
-l.289 \end{table}
-                 
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \global 
-l.289 \end{table}
-                 
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-! Illegal unit of measure (pt inserted).
-<to be read again> 
-                   \global 
-l.289 \end{table}
-                 
-Dimensions can be in units of em, ex, in, pt, pc,
-cm, mm, dd, cc, nd, nc, bp, or sp; but yours is a new one!
-I'll assume that you meant to say pt, for printer's points.
-To recover gracefully from this error, it's best to
-delete the erroneous units; e.g., type `2' to delete
-two letters. (See Chapter 27 of The TeXbook.)
-
-! Undefined control sequence.
-\@addmarginpar ...marbox \z@ \global \dp \@marbox 
-                                                  \z@ \kern -\@pagedp \noint...
-l.289 \end{table}
-                 
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \kern 
-l.289 \end{table}
-                 
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-! Illegal unit of measure (pt inserted).
-<to be read again> 
-                   \kern 
-l.289 \end{table}
-                 
-Dimensions can be in units of em, ex, in, pt, pc,
-cm, mm, dd, cc, nd, nc, bp, or sp; but yours is a new one!
-I'll assume that you meant to say pt, for printer's points.
-To recover gracefully from this error, it's best to
-delete the erroneous units; e.g., type `2' to delete
-two letters. (See Chapter 27 of The TeXbook.)
-
-! Undefined control sequence.
-\@addmarginpar ...arginparwidth \fi \box \@marbox 
-                                                  \hss }\nointerlineskip \hb...
-l.289 \end{table}
-                 
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \hss 
-l.289 \end{table}
-                 
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-
-LaTeX Warning: Reference `sec:validation' on page 150 undefined on input line 2
-93.
-
-) (sections/decision_flow.tex [150 <./figs/real_coverage.png>]
-
-LaTeX Warning: Reference `fig:sensitivity-matrix' on page 151 undefined on inpu
-t line 43.
-
-
-LaTeX Warning: Reference `sec:req-detail' on page 151 undefined on input line 5
+LaTeX Warning: Reference `sec:req-detail' on page 185 undefined on input line 5
 7.
 
+[185]
 
-LaTeX Warning: Reference `fig:energy-heatmap' on page 151 undefined on input li
-ne 62.
-
-[151]
-
-LaTeX Warning: Reference `sec:req-detail' on page 152 undefined on input line 9
+LaTeX Warning: Reference `sec:req-detail' on page 186 undefined on input line 9
 1.
 
-
-LaTeX Warning: Reference `fig:pareto-parallel' on page 152 undefined on input l
-ine 94.
-
-
-LaTeX Warning: Reference `fig:top3-paths' on page 152 undefined on input line 9
-6.
-
-
-LaTeX Warning: Reference `fig:tornado-sensitivity' on page 152 undefined on inp
-ut line 123.
-
-
-LaTeX Warning: Reference `fig:sensitivity-spider' on page 152 undefined on inpu
-t line 125.
-
-[152]
-
-LaTeX Warning: Reference `tab:df-detection-envelope' on page 153 undefined on i
-nput line 136.
-
-
-LaTeX Warning: Reference `tab:df-speed-envelope' on page 153 undefined on input
- line 155.
-
-
-LaTeX Warning: Reference `sec:df-evaluation' on page 153 undefined on input lin
-e 174.
-
-
-LaTeX Warning: Reference `sec:df-evaluation' on page 153 undefined on input lin
-e 184.
-
-
-LaTeX Warning: Reference `sec:df-pattern-type' on page 153 undefined on input l
-ine 186.
-
-[153]
-
-LaTeX Warning: Reference `fig:pareto-parallel' on page 154 undefined on input l
-ine 201.
-
-) (sections/requirements_detail.tex
+[186] [187]) (sections/requirements_detail.tex
 Overfull \hbox (7.87587pt too wide) in paragraph at lines 11--12
 \OT1/lmr/m/n/10 (-20) The four-vertex Flight Area poly-gon is loaded at startup
  by \OT1/lmtt/m/n/10 load[]kml[]zones() \OT1/lmr/m/n/10 (-20) in \OT1/lmtt/m/n/
@@ -5850,7 +3378,7 @@ SI bound-ary, which lies in-side the flight area. At run-time, []\OT1/lmtt/m/n/
 10 enforce[]geofence()
  []
 
-[154]
+[188]
 Overfull \hbox (5.38629pt too wide) in paragraph at lines 22--23
 \OT1/lmtt/m/n/10 NFZ[]WAYPOINT[]BUFFER[]M \OT1/lmr/m/n/10 (-20) = 30m of the SS
 SI poly-gon us-ing signed-distance com-pu-ta-tion via \OT1/lmtt/m/n/10 cv2.poin
@@ -5882,12 +3410,7 @@ Package hyperref Warning: Token not allowed in a PDF string (Unicode):
 (hyperref)                \kern 1.66702pt
 (hyperref)                removed on input line 41.
 
-[155]
-
-LaTeX Warning: Reference `app:decision-flow' on page 156 undefined on input lin
-e 57.
-
-[156]
+[189] [190]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
 (hyperref)                removing `\leavevmode@ifvmode' on input line 78.
@@ -5905,58 +3428,18 @@ Overfull \hbox (0.58803pt too wide) in paragraph at lines 80--81
 offset[]7[]5m()
  []
 
-
-LaTeX Warning: Reference `sec:centering-analysis' on page 157 undefined on inpu
-t line 86.
-
-[157]
+[191]
 Overfull \hbox (9.97177pt too wide) in paragraph at lines 108--109
 []\OT1/lmr/bx/n/10 (-20) Automated fail-safes: \OT1/lmr/m/n/10 (-20) GPS fix de
 gra-da-tion be-yond 5s trig-gers emer-gency RTL. GCS heart-beat loss (\OT1/lmtt
 /m/n/10 FS[]GCS[]ENABLE\OT1/lmr/m/n/10 (-20) )
  []
 
-[158]
+[192]
 
 Package hyperref Warning: Suppressing empty link on input line 137.
 
 ) (sections/evaluation_detail.tex
-
-LaTeX Warning: Reference `tab:bug-cost' on page 159 undefined on input line 8.
-
-
-! LaTeX Error: Too many unprocessed floats.
-
-See the LaTeX manual or LaTeX Companion for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.10 \begin{table}[ht]
-                      
-You've lost some text.  Try typing  <return>  to proceed.
-If that doesn't work, type  X <return>  to quit.
-
-! Undefined control sequence.
-\latex@xfloat ...vf \fi \global \setbox \@currbox 
-                                                  \color@vbox \normalcolor \...
-l.10 \begin{table}[ht]
-                      
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \vbox 
-l.10 \begin{table}[ht]
-                      
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-
 Underfull \hbox (badness 10000) in paragraph at lines 19--19
 []|\OT1/lmr/m/n/9 (+20) Geofence sign in-verted
  []
@@ -5977,135 +3460,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 39--39
 []|\OT1/lmtt/m/n/9 self.investigating \OT1/lmr/m/n/9 (+20) unini-
  []
 
-! Undefined control sequence.
-\@largefloatcheck ->\ifdim \ht \@currbox 
-                                         >\textheight \@tempdima -\textheigh...
-l.47 \end{table}
-                
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   >
-l.47 \end{table}
-                
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-! Undefined control sequence.
-<argument> \@currbox 
-                     
-l.47 \end{table}
-                
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Argument of \@xnext has an extra }.
-<inserted text> 
-                \par 
-l.47 \end{table}
-                
-I've run across a `}' that doesn't seem to match anything.
-For example, `\def\a#1{...}' and `\a}' would produce
-this error. If you simply proceed now, the `\par' that
-I've just inserted will cause me to report a runaway
-argument that might be the root of the problem. But if
-your `}' was spurious, just type `2' and it will go away.
-
-Runaway argument?
-\@currbox \@currlist \ifnum \count \@currbox >\z@ \advance \@pageht \@pagedp \E
-TC.
-! Paragraph ended before \@xnext was complete.
-<to be read again> 
-                   \par 
-l.47 \end{table}
-                
-I suspect you've forgotten a `}', causing me to apply this
-control sequence to too much text. How can we recover?
-My plan is to forget the whole thing and hope for the best.
-
-! Extra \else.
-\end@float ...pdima \penalty \@floatpenalty \else 
-                                                  \vadjust {\penalty -\@Miv ...
-l.47 \end{table}
-                
-I'm ignoring this; it doesn't match any \if.
-
-! You can't use `\vadjust' in vertical mode.
-\end@float ...nalty \@floatpenalty \else \vadjust 
-                                                  {\penalty -\@Miv \vbox {}\...
-l.47 \end{table}
-                
-Sorry, but I'm not programmed to handle this case;
-I'll just pretend that you didn't ask for it.
-If you're in the wrong mode, you might be able to
-return to the right one by typing `I}' or `I$' or `I\par'.
-
-! Argument of \@xnext has an extra }.
-<inserted text> 
-                \par 
-l.47 \end{table}
-                
-I've run across a `}' that doesn't seem to match anything.
-For example, `\def\a#1{...}' and `\a}' would produce
-this error. If you simply proceed now, the `\par' that
-I've just inserted will cause me to report a runaway
-argument that might be the root of the problem. But if
-your `}' was spurious, just type `2' and it will go away.
-
-Runaway argument?
-\@currbox \@currlist \ifnum \count \@currbox >\z@ \advance \@pageht \@pagedp \E
-TC.
-! Paragraph ended before \@xnext was complete.
-<to be read again> 
-                   \par 
-l.47 \end{table}
-                
-I suspect you've forgotten a `}', causing me to apply this
-control sequence to too much text. How can we recover?
-My plan is to forget the whole thing and hope for the best.
-
-
-LaTeX Warning: Reference `tab:bug-cost' on page 159 undefined on input line 54.
-
-
-) (sections/development_methodology.tex
-
-LaTeX Warning: Reference `tab:dev-phases' on page 159 undefined on input line 4
-2.
-
-
-LaTeX Warning: Reference `tab:sim-vs-real' on page 159 undefined on input line 
-297.
-
-)
-Overfull \vbox (2555.7712pt too high) has occurred while \output is active []
-
-
-[159]
-
-! LaTeX Error: Float(s) lost.
-
-See the LaTeX manual or LaTeX Companion for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.377 \end{document}
-                    
-You've lost some text.  Try typing  <return>  to proceed.
-If that doesn't work, type  X <return>  to quit.
-
-[160] [161] [162] [163] [164] [165] [166] [167] [168] [169] [170] [171]
-[172] [173] [174] [175] [176 <./figs/objective_conflict.pdf>] [177 <./figs/opti
-mization_network.pdf>] [178] [179] [180 <./figs/function_chain.pdf>] [181]
+[193]) (sections/development_methodology.tex [194] [195] [196] [197]) [198]
 (main.aux)
  ***********
 LaTeX2e <2025-11-01>
@@ -6119,16 +3474,10 @@ LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 LaTeX Warning: There were undefined references.
 
 
-LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
+LaTeX Warning: There were multiply-defined labels.
 
-
-Package rerunfilecheck Warning: File `main.out' has changed.
-(rerunfilecheck)                Rerun to get outlines right
-(rerunfilecheck)                or use package `bookmark'.
-
-Package rerunfilecheck Info: Checksums for `main.out':
-(rerunfilecheck)             Before: 1D5B66DFC8AE6EA4F585A9680811D357;28198
-(rerunfilecheck)             After:  988C3F0CB3CCAC692594507D16BBF091;83170.
+Package rerunfilecheck Info: File `main.out' has not changed.
+(rerunfilecheck)             Checksum: DE3D2F0CEE2C0A6F69E81B5E850A451A;83731.
 
 Package biblatex Warning: Please (re)run Biber on the file:
 (biblatex)                main
@@ -6137,105 +3486,65 @@ Package biblatex Warning: Please (re)run Biber on the file:
 Package logreq Info: Writing requests to 'main.run.xml'.
 \openout1 = `main.run.xml'.
 
- )
-(\end occurred when \ifnum on line 47 was incomplete)
-(\end occurred when \ifnum on line 47 was incomplete)
-(\end occurred when \ifx on line 47 was incomplete)
-(\end occurred when \ifnum on line 47 was incomplete)
-(\end occurred when \ifnum on line 47 was incomplete)
-(\end occurred when \ifnum on line 47 was incomplete)
-(\end occurred when \ifnum on line 47 was incomplete)
-(\end occurred when \ifnum on line 47 was incomplete)
-(\end occurred when \ifnum on line 262 was incomplete)
-(\end occurred when \ifnum on line 262 was incomplete)
-(\end occurred when \ifx on line 262 was incomplete)
-(\end occurred when \ifnum on line 262 was incomplete)
-(\end occurred when \ifnum on line 262 was incomplete)
-(\end occurred when \ifnum on line 262 was incomplete)
-(\end occurred when \ifnum on line 262 was incomplete)
-(\end occurred when \ifnum on line 262 was incomplete)
-(\end occurred when \ifnum on line 189 was incomplete)
-(\end occurred when \ifnum on line 189 was incomplete)
-(\end occurred when \ifx on line 189 was incomplete)
-(\end occurred when \ifnum on line 189 was incomplete)
-(\end occurred when \ifnum on line 189 was incomplete)
-(\end occurred when \ifnum on line 189 was incomplete)
-(\end occurred when \ifnum on line 189 was incomplete)
-(\end occurred when \ifnum on line 189 was incomplete)
-(\end occurred when \ifnum on line 139 was incomplete)
-(\end occurred when \ifnum on line 139 was incomplete)
-(\end occurred when \ifx on line 139 was incomplete)
-(\end occurred when \ifnum on line 139 was incomplete)
-(\end occurred when \ifnum on line 139 was incomplete)
-(\end occurred when \ifnum on line 139 was incomplete)
-(\end occurred when \ifnum on line 139 was incomplete)
-(\end occurred when \ifnum on line 139 was incomplete)
-(\end occurred when \ifnum on line 92 was incomplete)
-(\end occurred when \ifnum on line 92 was incomplete)
-(\end occurred when \ifx on line 92 was incomplete)
-(\end occurred when \ifnum on line 92 was incomplete)
-(\end occurred when \ifnum on line 92 was incomplete)
-(\end occurred when \ifnum on line 92 was incomplete)
-(\end occurred when \ifnum on line 92 was incomplete)
-(\end occurred when \ifnum on line 92 was incomplete) 
+ ) 
 Here is how much of TeX's memory you used:
- 57289 strings out of 467866
- 1287870 string characters out of 5417351
- 2408790 words of memory out of 5000000
- 83172 multiletter control sequences out of 15000+600000
- 755551 words of font info for 423 fonts, out of 8000000 for 9000
+ 57600 strings out of 467866
+ 1293305 string characters out of 5417351
+ 2398049 words of memory out of 5000000
+ 83448 multiletter control sequences out of 15000+600000
+ 755861 words of font info for 426 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  99i,20n,118p,1544b,2541s stack positions out of 10000i,1000n,20000p,200000b,200000s
-<C:/Users/Bristol/AppData/
-Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/Brist
-ol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbsy10.pfb><C:/Users/Br
-istol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbsy7.pfb><C:/Users/
-Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx10.pfb><C:/User
-s/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx12.pfb><C:/Us
-ers/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx6.pfb><C:/U
-sers/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx7.pfb><C:/
-Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx8.pfb><C:
-/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx9.pfb><C
-:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbxi10.pfb
-><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmcsc10.
-pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmex1
-0.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmm
-i10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/l
-mmi12.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm
-/lmmi5.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/l
-m/lmmi6.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/
-lm/lmmi7.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public
-/lm/lmmi8.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/publi
-c/lm/lmmi9.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/publ
-ic/lm/lmmib10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/p
-ublic/lm/lmr10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/
-public/lm/lmr12.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1
-/public/lm/lmr5.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1
-/public/lm/lmr6.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1
-/public/lm/lmr7.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1
-/public/lm/lmr8.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1
-/public/lm/lmr9.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1
-/public/lm/lmri10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/typ
-e1/public/lm/lmri12.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/t
-ype1/public/lm/lmri7.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/
-type1/public/lm/lmri8.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts
-/type1/public/lm/lmri9.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/font
-s/type1/public/lm/lmsy10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fo
-nts/type1/public/lm/lmsy5.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/f
-onts/type1/public/lm/lmsy6.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/
-fonts/type1/public/lm/lmsy7.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX
-/fonts/type1/public/lm/lmsy8.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTe
-X/fonts/type1/public/lm/lmsy9.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKT
-eX/fonts/type1/public/lm/lmtk10.pfb><C:/Users/Bristol/AppData/Local/Programs/Mi
-KTeX/fonts/type1/public/lm/lmtt10.pfb><C:/Users/Bristol/AppData/Local/Programs/
-MiKTeX/fonts/type1/public/lm/lmtt8.pfb><C:/Users/Bristol/AppData/Local/Programs
-/MiKTeX/fonts/type1/public/lm/lmtt9.pfb><C:/Users/Bristol/AppData/Local/Program
-s/MiKTeX/fonts/type1/public/lm/lmtti10.pfb><C:/Users/Bristol/AppData/Local/Prog
-rams/MiKTeX/fonts/type1/public/amsfonts/symbols/msam10.pfb><C:/Users/Bristol/Ap
-pData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/symbols/msbm10.pfb>
-Output written on main.pdf (181 pages, 4597847 bytes).
+<C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/c
+m/cmsy10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public
+/lm/lmbsy10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/pub
+lic/lm/lmbsy7.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/p
+ublic/lm/lmbx10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1
+/public/lm/lmbx12.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/typ
+e1/public/lm/lmbx6.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/ty
+pe1/public/lm/lmbx7.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/t
+ype1/public/lm/lmbx8.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/
+type1/public/lm/lmbx9.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts
+/type1/public/lm/lmbxi10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fo
+nts/type1/public/lm/lmcsc10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX
+/fonts/type1/public/lm/lmex10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKT
+eX/fonts/type1/public/lm/lmmi10.pfb><C:/Users/Bristol/AppData/Local/Programs/Mi
+KTeX/fonts/type1/public/lm/lmmi12.pfb><C:/Users/Bristol/AppData/Local/Programs/
+MiKTeX/fonts/type1/public/lm/lmmi5.pfb><C:/Users/Bristol/AppData/Local/Programs
+/MiKTeX/fonts/type1/public/lm/lmmi6.pfb><C:/Users/Bristol/AppData/Local/Program
+s/MiKTeX/fonts/type1/public/lm/lmmi7.pfb><C:/Users/Bristol/AppData/Local/Progra
+ms/MiKTeX/fonts/type1/public/lm/lmmi8.pfb><C:/Users/Bristol/AppData/Local/Progr
+ams/MiKTeX/fonts/type1/public/lm/lmmi9.pfb><C:/Users/Bristol/AppData/Local/Prog
+rams/MiKTeX/fonts/type1/public/lm/lmmib10.pfb><C:/Users/Bristol/AppData/Local/P
+rograms/MiKTeX/fonts/type1/public/lm/lmr10.pfb><C:/Users/Bristol/AppData/Local/
+Programs/MiKTeX/fonts/type1/public/lm/lmr12.pfb><C:/Users/Bristol/AppData/Local
+/Programs/MiKTeX/fonts/type1/public/lm/lmr5.pfb><C:/Users/Bristol/AppData/Local
+/Programs/MiKTeX/fonts/type1/public/lm/lmr6.pfb><C:/Users/Bristol/AppData/Local
+/Programs/MiKTeX/fonts/type1/public/lm/lmr7.pfb><C:/Users/Bristol/AppData/Local
+/Programs/MiKTeX/fonts/type1/public/lm/lmr8.pfb><C:/Users/Bristol/AppData/Local
+/Programs/MiKTeX/fonts/type1/public/lm/lmr9.pfb><C:/Users/Bristol/AppData/Local
+/Programs/MiKTeX/fonts/type1/public/lm/lmri10.pfb><C:/Users/Bristol/AppData/Loc
+al/Programs/MiKTeX/fonts/type1/public/lm/lmri12.pfb><C:/Users/Bristol/AppData/L
+ocal/Programs/MiKTeX/fonts/type1/public/lm/lmri7.pfb><C:/Users/Bristol/AppData/
+Local/Programs/MiKTeX/fonts/type1/public/lm/lmri8.pfb><C:/Users/Bristol/AppData
+/Local/Programs/MiKTeX/fonts/type1/public/lm/lmri9.pfb><C:/Users/Bristol/AppDat
+a/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy10.pfb><C:/Users/Bristol/AppD
+ata/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy5.pfb><C:/Users/Bristol/App
+Data/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy6.pfb><C:/Users/Bristol/Ap
+pData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy7.pfb><C:/Users/Bristol/A
+ppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy8.pfb><C:/Users/Bristol/
+AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy9.pfb><C:/Users/Bristol
+/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtk10.pfb><C:/Users/Brist
+ol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtt10.pfb><C:/Users/Bri
+stol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtt8.pfb><C:/Users/Br
+istol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtt9.pfb><C:/Users/B
+ristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtti10.pfb><C:/User
+s/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/symbols/msa
+m10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsf
+onts/symbols/msbm10.pfb>
+Output written on main.pdf (198 pages, 5370487 bytes).
 PDF statistics:
- 7581 PDF objects out of 8907 (max. 8388607)
- 1488 named destinations out of 1728 (max. 500000)
- 73127 words of extra memory for PDF output out of 74296 (max. 10000000)
+ 9103 PDF objects out of 10688 (max. 8388607)
+ 1517 named destinations out of 1728 (max. 500000)
+ 75207 words of extra memory for PDF output out of 89155 (max. 10000000)
 
