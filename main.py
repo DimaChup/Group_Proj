@@ -52,6 +52,7 @@ SIM_ROLL_DEG = 0.0  # --sim-roll <deg>: random roll oscillation (±degrees)
 SIM_TILT = "--sim-tilt" in sys.argv  # combined: camera tilts in flight direction (replaces separate pitch/roll)
 COMPENSATE_TILT = "--compensate-tilt" in sys.argv  # correct GPS estimation for camera tilt (use in REAL mode)
 BLUR_FACTOR = 0.0  # --blur <factor>: motion blur proportional to speed (1.0=realistic, 2.0=stress)
+NOISE_LEVEL = 0.0  # --noise <level>: GPS/attitude noise (1.0=realistic ~2-3m CEP, 2.0=stress test)
 
 for _i, _arg in enumerate(sys.argv):
     if _arg == "--model" and _i + 1 < len(sys.argv):        MODEL_PATH = sys.argv[_i + 1]
@@ -63,6 +64,7 @@ for _i, _arg in enumerate(sys.argv):
     elif _arg == "--shake" and _i + 1 < len(sys.argv):        SHAKE_PX = int(sys.argv[_i + 1])
     elif _arg == "--sim-roll" and _i + 1 < len(sys.argv):    SIM_ROLL_DEG = float(sys.argv[_i + 1])
     elif _arg == "--blur" and _i + 1 < len(sys.argv):         BLUR_FACTOR = float(sys.argv[_i + 1])
+    elif _arg == "--noise" and _i + 1 < len(sys.argv):        NOISE_LEVEL = float(sys.argv[_i + 1])
     elif _arg == "--stream-scale" and _i + 1 < len(sys.argv):
         _sc = float(sys.argv[_i + 1])
         STREAM_W = int(config.IMAGE_W * _sc)
@@ -502,6 +504,18 @@ class VisualFlightMission(StateHandlersMixin):
                 self.gps_fix_type = msg.fix_type
                 self.gps_satellites = msg.satellites_visible
                 self._check_gps_degradation()
+
+        # ── Inject realistic noise in simulation ─────────────────────
+        if NOISE_LEVEL > 0 and config.MODE == "SIMULATION":
+            # GPS noise: ~2-3m CEP at level 1.0
+            self.lat += random.gauss(0, 0.000025 * NOISE_LEVEL)        # ~2.8m std
+            self.lon += random.gauss(0, 0.000025 * NOISE_LEVEL / max(math.cos(math.radians(self.lat)), 0.01))
+            # Altitude noise: ~0.5m std at level 1.0
+            self.alt += random.gauss(0, 0.5 * NOISE_LEVEL)
+            # Attitude noise: ~0.5° std at level 1.0
+            self.pitch += random.gauss(0, math.radians(0.5 * NOISE_LEVEL))
+            self.roll  += random.gauss(0, math.radians(0.5 * NOISE_LEVEL))
+            self.yaw   += random.gauss(0, math.radians(1.0 * NOISE_LEVEL))
 
     GPS_DEGRADE_RTL_SECONDS = 5  # RTL after this many seconds of degraded GPS
 

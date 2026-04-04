@@ -1165,7 +1165,7 @@ The interactive simulator (\texttt{simple\_simulator.py}) supports configurable 
 A typical keyboard-flown simulator mission---flyover at \SI{35}{\metre}, optionally descend to \SI{15}{\metre}, circle the target---produces 30--50 observations over 60--90\,seconds.  With \SI{3}{\metre} GPS drift enabled, the inverse-variance estimate converges to sub-metre accuracy within the first 20 observations when the operator descends below \SI{20}{\metre}, confirming the altitude-dependent weighting strategy.  Note that this descent is a simulator-only capability; the autonomous mission state machine currently remains at search altitude through VERIFY (Section~\ref{sec:accuracy-progression}).
 
 % =====================================================================
-\subsection{Accuracy Progression Through the Mission}\label{sec:accuracy-progression}
+\subsection{Detailed Per-State Accuracy Analysis}\label{sec:detailed-accuracy}
 
 The preceding sections have analysed individual error sources, mitigation strategies, and fusion algorithms in isolation.  This subsection draws them together to show how the system's position estimate improves concretely as the mission progresses through its state machine.
 
