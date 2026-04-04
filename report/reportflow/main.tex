@@ -92,7 +92,7 @@
 % ════════════════════════════════════════════════════════════════════════
 \section*{Executive Summary}\label{sec:exec-summary}
 
-This report presents the design, optimisation, and verification of an autonomous Search and Rescue (SAR) drone that locates a casualty within an irregular polygon bounded by a protected ecological no-fly zone (SSSI). following established SAR robotics methodology~\cite{murphy2014} and coverage path planning theory~\cite{galceran2013survey}, the system combines a Raspberry Pi~5 running a retrained YOLOv8n detector~\cite{yolov8} (mAP50\,=\,0.995, 4.8\,FPS TFLite / 9\,FPS NCNN), a 20-state finite state machine~\cite{wagner2006fsm} on the ArduPilot autopilot~\cite{ardupilot}, and a lawnmower path planner with layered geofencing. A physics-based 216-configuration parameter sweep identified the optimal operating point (35\,m altitude, 8\,m/s, 70\textdegree{} scan angle), yielding $>$99.97\% single-pass detection probability at 10.9\% battery usage with a 1.5$\times$ NFZ safety margin. Video-replay testing confirmed GPS target estimation accuracy of CEP50\,=\,2.3\,m. Verification against twelve formal requirements shows 10~met and 2~partially met; a plus/delta evaluation identifies the gaps remaining before full autonomous flight.
+This report presents the design, optimisation, and verification of an autonomous Search and Rescue (SAR) drone that locates a casualty within an irregular polygon bounded by a protected ecological no-fly zone (SSSI). following established SAR robotics methodology~\cite{murphy2014,lyu2023uav_sar_survey} and coverage path planning theory~\cite{galceran2013survey}, the system combines a Raspberry Pi~5~\cite{raspberrypi5} running a retrained YOLOv8n detector~\cite{yolov8} (mAP50\,=\,0.995, 4.8\,FPS TFLite / 9\,FPS NCNN), a 20-state finite state machine~\cite{wagner2006fsm} on the ArduPilot autopilot~\cite{ardupilot}, and a lawnmower path planner with layered geofencing. A physics-based 216-configuration parameter sweep identified the optimal operating point (35\,m altitude, 8\,m/s, 70\textdegree{} scan angle), yielding $>$99.97\% single-pass detection probability at 10.9\% battery usage with a 1.5$\times$ NFZ safety margin. Video-replay testing confirmed GPS target estimation accuracy of CEP50\,=\,2.3\,m. Verification against twelve formal requirements shows 10~met and 2~partially met; a plus/delta evaluation identifies the gaps remaining before full autonomous flight.
 
 % ════════════════════════════════════════════════════════════════════════
 \section{Objective}\label{sec:df-objective}
@@ -518,7 +518,7 @@ However, speed also affects detection through motion blur. Bench tests with brig
   \end{tabularx}
 \end{table}
 
-The right panel of Figure~\ref{fig:lighting} shows the corresponding maximum detectable speeds and the 15\% margins applied. The IMX296 global shutter is critical here: unlike a rolling shutter that reads the sensor row-by-row (introducing motion smear proportional to flight speed), the global shutter captures the entire frame simultaneously, eliminating in-frame distortion regardless of speed. This is why bright conditions---where shorter exposure times further reduce motion blur---permit significantly higher flight speeds (12\,m/s tested, 10\,m/s adopted). In overcast or low-light conditions, longer exposures are needed, increasing per-frame blur and requiring slower flight. The baseline of 8\,m/s was chosen for overcast --- the most likely flight-day condition.
+The right panel of Figure~\ref{fig:lighting} shows the corresponding maximum detectable speeds and the 15\% margins applied. The IMX296 global shutter~\citep{imx296} is critical here: unlike a rolling shutter that reads the sensor row-by-row (introducing motion smear proportional to flight speed~\citep{sukhatme2012rolling_global}), the global shutter captures the entire frame simultaneously, eliminating in-frame distortion regardless of speed. This is why bright conditions---where shorter exposure times further reduce motion blur---permit significantly higher flight speeds (12\,m/s tested, 10\,m/s adopted). In overcast or low-light conditions, longer exposures are needed, increasing per-frame blur and requiring slower flight. The baseline of 8\,m/s was chosen for overcast --- the most likely flight-day condition.
 
 For the baseline configuration we adopted \textbf{8\,m/s}, which sits within the overcast envelope and provides margin under bright conditions. At 8\,m/s, the target spends $24 / 8 = 3.0$\,s in the field of view, yielding $3.0 \times 4.8 = 14.4 \approx 14$ frames. With 95\% per-frame detection probability, the cumulative probability of detecting the target in at least one of 14 frames is:
 
@@ -593,7 +593,7 @@ The deployed NCNN backend achieves approximately 9\,FPS in the full pipeline. At
 
 \begin{enumerate}[nosep]
   \item \textbf{Camera footprint half-diagonal}: at 35\,m, the footprint is 46$\times$34\,m, giving a half-diagonal of $\sqrt{23^2 + 17^2} \approx 28.6$\,m. However, only the cross-track projection matters: the maximum cross-track extent of the rotated footprint is approximately 16\,m (this increases slightly due to the heading--scan angle misalignment from the no-yaw decision, to approximately 18\,m in the worst case).
-  \item \textbf{GPS position error}: $\pm$3\,m (consumer GPS CEP95).
+  \item \textbf{GPS position error}: $\pm$3\,m (consumer GPS CEP95~\citep{kaplan2017understanding}).
   \item \textbf{Reaction distance}: at 8\,m/s with 0.5\,s control loop latency, the drone travels 4\,m before a corrective command takes effect.
   \item \textbf{Wind displacement}: estimated $\pm$2\,m in gusty conditions.
 \end{enumerate}
@@ -774,14 +774,14 @@ Key modules include: \texttt{config.py} (all mission parameters; auto-detects ha
 
 \subsection{State Machine}
 
-The mission controller implements a 20-state finite state machine:
+The mission controller implements a 20-state finite state machine~\citep{fsm,wagner2006fsm}:
 
 \begin{center}
 \small
 INIT $\to$ CONNECTING $\to$ ARMING $\to$ TAKEOFF $\to$ TRANSIT $\to$ SEARCH $\to$ INVESTIGATING $\to$ CENTERING $\to$ DESCENDING $\to$ VERIFY $\to$ APPROACH $\to$ LANDING $\to$ DONE
 \end{center}
 
-Additional states handle edge cases: MANUAL (RC override), RETURN (RTL), BEACON\_REDIRECT (PLB signal integration), RESUME (post-override recovery with GPS fix and NFZ position validation), and several internal bookkeeping states. The RC override guard runs \emph{before} the state handler on every loop iteration: if the pilot switches away from GUIDED mode, all autonomous commands cease immediately and cannot resume until the pilot explicitly returns control. This prevents the software from ``fighting'' the pilot.
+Additional states handle edge cases: MANUAL (RC override), RETURN (RTL), BEACON\_REDIRECT (PLB signal integration), RESUME (post-override recovery with GPS fix and NFZ position validation), and several internal bookkeeping states. The RC override guard runs \emph{before} the state handler on every loop iteration: if the pilot switches away from GUIDED mode, all autonomous commands cease immediately and cannot resume until the pilot explicitly returns control~\citep{ardupilot_failsafe}. This prevents the software from ``fighting'' the pilot.
 
 \begin{figure}[H]
   \centering
@@ -795,13 +795,13 @@ The CV pipeline processes each camera frame through four stages:
 
 \begin{enumerate}[nosep]
   \item \textbf{Capture}: IMX296 global shutter sensor~\cite{imx296} at 1456$\times$1088 native resolution (BGR output, no colour conversion needed).
-  \item \textbf{Undistort}: optional lens correction via precomputed \texttt{cv2.remap()} maps~\cite{opencv} (+1.5\,ms).
+  \item \textbf{Undistort}: optional lens correction~\citep{lens_calibration} via precomputed \texttt{cv2.remap()} maps~\citep{opencv} (+1.5\,ms).
   \item \textbf{Resize \& normalise}: bilinear interpolation to 640$\times$640, float32 normalisation to $[0,1]$.
   \item \textbf{Inference}: YOLOv8n forward pass --- TFLite (206.5\,ms, 4.8\,FPS) or NCNN (72\,ms, 9\,FPS) on Pi~5 CPU.
-  \item \textbf{Post-process}: NMS, confidence threshold (0.4), bounding box extraction. Output: \texttt{(found, x, y, conf)}.
+  \item \textbf{Post-process}: NMS~\citep{nms}, confidence threshold (0.4), bounding box extraction. Output: \texttt{(found, x, y, conf)}.
 \end{enumerate}
 
-We trained the model~\cite{yolov8} (mAP50\,=\,0.995) on 366 images: 300 synthetic composites at altitude-correct scale~\cite{synthdata}, 16 manually labelled real flight frames, and 50 hard-negative backgrounds, all at native 1456$\times$1088 resolution.
+We trained the model~\citep{yolov8} (mAP50\,=\,0.995) on 366 images: 300 synthetic composites at altitude-correct scale using domain randomisation~\citep{synthdata,domainrand}, 16 manually labelled real flight frames, and 50 hard-negative backgrounds~\citep{shrivastava2016training}, all at native 1456$\times$1088 resolution.
 
 \begin{figure}[H]
   \centering
@@ -811,7 +811,7 @@ We trained the model~\cite{yolov8} (mAP50\,=\,0.995) on 366 images: 300 syntheti
 
 \subsection{Detection-to-GPS Pipeline}
 
-When a detection is returned by the CV pipeline, the system converts the bounding-box centre $(c_x, c_y)$ into an estimated GPS coordinate in five steps: (i)~rescale from model space ($640\!\times\!640$) back to native frame coordinates ($1456\!\times\!1088$); (ii)~compute the pixel offset from the frame centre; (iii)~multiply by the Ground Sample Distance to obtain a metric offset in the camera frame; (iv)~rotate by drone yaw into a North/East offset; and (v)~project onto WGS-84 using the drone's GPS position. Multiple estimates across frames are fused via inverse-variance weighting and spatial clustering.
+When a detection is returned by the CV pipeline, the system converts the bounding-box centre $(c_x, c_y)$ into an estimated GPS coordinate in five steps: (i)~rescale from model space ($640\!\times\!640$) back to native frame coordinates ($1456\!\times\!1088$); (ii)~compute the pixel offset from the frame centre; (iii)~multiply by the Ground Sample Distance to obtain a metric offset in the camera frame; (iv)~rotate by drone yaw into a North/East offset; and (v)~project onto WGS-84 using the drone's GPS position. Multiple estimates across frames are fused via inverse-variance weighting~\cite{spagnolo2025kalman} and spatial clustering~\cite{barber2006vision,sun2016sar}.
 
 The GSD links pixel displacement to ground distance:
 \[
@@ -824,7 +824,7 @@ The GSD links pixel displacement to ground distance:
 
 \begin{table}[H]
 \centering\small
-\caption{Error budget for detection-to-GPS estimation.}
+\caption{Error budget for detection-to-GPS estimation~\citep{gautam2018error}.}
 \label{tab:error-budget}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -841,7 +841,7 @@ Roll / pitch tilt & 0--6\,m$^\dagger$ & Flight only \\
 {\footnotesize $\dagger$~Reduced to ${\sim}0.3$\,m with attitude compensation enabled (\texttt{-{}-compensate-tilt}).}
 \end{table}
 
-Without correction, forward flight pitch introduces up to 6.2\,m offset ($h\tan\theta = 35\tan 10^{\circ}\approx 6.2$\,m)---larger than all other error sources combined.  Attitude-compensated estimation (\texttt{-{}-compensate-tilt}) reduces this to ${\sim}0.3$\,m by ray-tracing each detection through the full rotation matrix $\mathbf{R} = \mathbf{R}_z(\psi)\,\mathbf{R}_y(-\theta)\,\mathbf{R}_x(-\phi)$ constructed from the drone's \texttt{ATTITUDE} telemetry, which is the exact mathematical inverse of the camera model used in simulation.  We verified this with 1440 automated test cases across all altitudes and tilt angles, each producing errors below 0.01\,m.  The centering procedure further mitigates residual error by hovering ($\theta < 1^{\circ}$) before the final landing estimate.
+Without correction, forward flight pitch introduces up to 6.2\,m offset ($h\tan\theta = 35\tan 10^{\circ}\approx 6.2$\,m)---larger than all other error sources combined.  Attitude-compensated estimation (\texttt{-{}-compensate-tilt}) reduces this to ${\sim}0.3$\,m by ray-tracing each detection through the full Tait--Bryan rotation matrix~\citep{beard2012small} $\mathbf{R} = \mathbf{R}_z(\psi)\,\mathbf{R}_y(-\theta)\,\mathbf{R}_x(-\phi)$ constructed from the drone's \texttt{ATTITUDE} telemetry via MAVLink~\citep{mavlink}, which is the exact mathematical inverse of the camera model used in simulation.  We verified this with 1440 automated test cases across all altitudes and tilt angles, each producing errors below 0.01\,m.  The centering procedure further mitigates residual error by hovering ($\theta < 1^{\circ}$) before the final landing estimate.
 
 Field testing with DJI flight video replay yielded \textbf{CEP50\,=\,2.3\,m} (50\% of estimates within 2.3\,m of the true position). The primary residual error source is GPS receiver latency (100--200\,ms), causing ${\sim}1$\,m along-track offset at 5\,m/s; multi-pass averaging from different headings cancels this systematic bias.
 
@@ -910,7 +910,7 @@ The survey area is adjacent to a Site of Special Scientific Interest (SSSI), mak
   \item \textbf{Repulsive vector field} ($<$\,3\,m): applies a 5\,m/s push perpendicular to the nearest boundary segment, exceeding the near-zero speed cap to prevent penetration.
   \item \textbf{Hard boundary cutoff}: if GPS places the aircraft inside the SSSI polygon (\texttt{cv2.pointPolygonTest}), all commands halt and the system transitions to manual mode.
   \item \textbf{Plan-time waypoint filter}: removes any search waypoints within 30\,m of the NFZ during pattern generation, preventing the planner from routing near the boundary.
-  \item \textbf{Firmware geofence}: an independent Cube Orange polygon fence triggers RTL if all software layers fail---this operates at the flight-controller level and cannot be overridden by companion-computer code.
+  \item \textbf{Firmware geofence}: an independent Cube Orange~\citep{cubepilot} polygon fence triggers RTL if all software layers fail---this operates at the flight-controller level and cannot be overridden by companion-computer code.
 \end{enumerate}
 
 \noindent A separate Flight Area containment check triggers emergency RTL if the aircraft exits the 4-vertex operational boundary; this is independent of the SSSI geofence and cannot be disabled.
@@ -965,7 +965,7 @@ With 10 of 12 requirements met and two partially met, the system demonstrates si
 \begin{enumerate}[nosep]
   \item \textbf{Modular architecture.} The single-interface design (\texttt{vision.py} exposes only \texttt{detect\_in\_image}) meant that switching from TFLite to NCNN (4.5$\times$ speed gain) required zero changes outside \texttt{vision.py}. The same \texttt{main.py} runs identically on laptop simulation and Pi hardware.
   \item \textbf{Physics-based optimisation.} The 216-configuration sweep with a momentum-theory energy model replaced guesswork with quantified trade-offs. The Pareto analysis confirmed that the selected point is optimal, not merely ``good enough.''
-  \item \textbf{Progressive testing protocol.} The 6-step flight test ladder (bench commands $\to$ passive CV $\to$ waypoints $\to$ auto detect $\to$ full mission) meant each step added exactly one new risk.
+  \item \textbf{Progressive testing protocol.} The 6-step flight test ladder~\citep{nasa2015vv,koopman2016challenges} (bench commands $\to$ passive CV $\to$ waypoints $\to$ auto detect $\to$ full mission) meant each step added exactly one new risk.
   \item \textbf{Retrained model quality.} Mixed synthetic + real + negative training at native resolution produced mAP50\,=\,0.995 --- a detector that validated as the foundation for all altitude/speed decisions.
   \item \textbf{Layered safety architecture.} Five independent NFZ protection layers (geometric filtering, speed ramp, repulsive field, hard boundary, RC kill) provide defence-in-depth. The probability of simultaneous failure of all five is negligibly small.
   \item \textbf{Dual-backend flexibility.} Supporting both TFLite and NCNN with drop-in model files (\texttt{[1,640,640,3]} $\to$ \texttt{[1,5,8400]}) eliminated single-point-of-failure risk in the inference pipeline.
@@ -986,6 +986,36 @@ With 10 of 12 requirements met and two partially met, the system demonstrates si
 
 We rate simulation capability at 7.7/10 (all states exercised, energy model validated, detection pipeline proven) but only 2.1/10 in real-world readiness: bench and video-replay testing are complete, yet no autonomous outdoor flight has been conducted. This 2.1 reflects the absence of Stages~6--7 (manual passive flight and full autonomous mission) in the simulation-to-real progression. The gap between simulation confidence and field-proven reliability is the project's primary risk, driven by weather cancellations and scheduling constraints rather than technical blockers. The optimisation framework is re-evaluable: if field data shifts the detection envelope, the entire chain can be re-run in minutes to produce updated parameters.
 
+
+
+\subsection{Comparison with Published SAR Systems}\label{sec:eval-comparison}
+
+Table~\ref{tab:sar-comparison} positions this project against published SAR drone systems. Direct comparison is imperfect---differing hardware, environments, and target types---but provides context that internal metrics alone cannot.
+
+\begin{table}[H]
+  \centering\small
+  \caption{Performance comparison with published SAR systems. Our results are from bench/video proxy (no outdoor flight); published results are from outdoor flights.}\label{tab:sar-comparison}
+  \begin{tabular}{@{}p{2.4cm}p{2.0cm}p{1.7cm}p{1.2cm}p{1.3cm}p{2.2cm}p{1.8cm}@{}}
+    \toprule
+    \textbf{System} & \textbf{Platform} & \textbf{Detector} & \textbf{FPS} & \textbf{mAP$_{50}$} & \textbf{GPS Acc.} & \textbf{Est.\ Cost} \\
+    \midrule
+    This project & Pi~5 CPU & YOLOv8n & 4.8$^a$ & 0.995$^b$ & CEP$_{50}$\,=\,2.3\,m$^c$ & \pounds800 \\
+    AUSPEX~\cite{auspex2025} & Jetson Orin & YOLOv5s & 30 & 0.89 & $<$5\,m (RTK) & $>\$5\,\text{k}$ \\
+    Sambolek~\cite{sambolek2021} & Jetson TX2 & YOLOv3-tiny & 22 & 0.81 & --- & $>\$3\,\text{k}$ \\
+    SearchWing~\cite{searchwing2024} & Comp.\ PC & Custom CNN & 5 & 0.78 & $<$10\,m & ${\sim}\$2\,\text{k}$ \\
+    \bottomrule
+    \multicolumn{7}{@{}l}{\footnotesize $^a$TFLite; 9\,FPS with NCNN. \;$^b$Upper bound; realistic ${\sim}$0.85--0.90 (87\% video detection rate).} \\
+    \multicolumn{7}{@{}l}{\footnotesize $^c$DJI video replay, not live flight.} \\
+  \end{tabular}
+\end{table}
+
+The system is competitive on detection accuracy (mAP$_{50}$\,$\geq$\,0.89 after realistic adjustment) and GPS estimation (CEP$_{50}$\,=\,2.3\,m vs.\ $<$5\,m for RTK-aided AUSPEX~\cite{auspex2025}), while operating at roughly one-fifth the hardware cost by using a \pounds35 Raspberry Pi~5 rather than an NVIDIA Jetson. The primary deficit is inference speed: 4.8\,FPS on CPU versus 22--30\,FPS on GPU platforms~\cite{sambolek2021,auspex2025,realtimesar2025}. This was mitigated by the NCNN backend~\cite{ncnn} (9\,FPS) and the altitude/speed optimisation in Section~\ref{sec:step4}, which ensures the slower frame rate does not reduce cumulative detection probability. SearchWing~\cite{searchwing2024}, the closest analogue in cost and compute class, achieves similar FPS but lower accuracy, suggesting that the mixed real+synthetic retraining strategy (Section~\ref{sec:step1}) provides a meaningful advantage even on constrained hardware. Figure~\ref{fig:radar_comparison} presents a radar comparison across six capability dimensions.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.65\linewidth]{radar_comparison}
+  \caption{Multi-dimensional comparison against published SAR platforms (Table~\ref{tab:sar-comparison}). This project scores highest on cost-effectiveness and test coverage but lowest on inference speed due to CPU-only deployment.}\label{fig:radar_comparison}
+\end{figure}
 
 % ════════════════════════════════════════════════════════════════════════
 \section{Evidence-Based Adaptation}\label{sec:decisions-changed}
