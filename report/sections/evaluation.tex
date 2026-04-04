@@ -100,11 +100,18 @@ Table~\ref{tab:plus-delta} summarises the principal strengths and areas for impr
 \label{fig:perf_analysis}
 \end{figure}
 
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{detection_montage}
+\caption{Detection montage from DJI flight video replay at varying altitudes and viewing angles. Green bounding boxes show YOLOv8n detections with confidence scores. The target (rescue mannequin) is reliably detected from \SI{15}{\metre} to \SI{40}{\metre} altitude under real outdoor lighting conditions.}
+\label{fig:detection_montage}
+\end{figure}
+
 \textbf{Architecture resilience (P1, P2, P5, P8).}
 The single-interface vision module (\texttt{detect\_in\_image}) enabled three model retrains (640, 1280, 1088\,px datasets) with zero changes to the orchestrator or ground station. Adding lens undistortion---not anticipated during initial design---required modifying one file and added only \SI{1.5}{\milli\second} per frame.
 
 \textbf{Detection performance (P4, D2, D4, D5, D9).}
-The retrained YOLOv8n achieved mAP$_{50}$ = 0.995 (validation set) and 50/50 bench detection at 0.966 mean confidence (Figure~\ref{fig:conf_vs_alt}). At \SI{35}{\metre}, the target subtends 36 model-input pixels---a comfortable margin above the 20\,px floor. However, the 0.995 mAP$_{50}$ likely overestimates real-world accuracy due to train/validation overlap (only 16 of 366 images are from real footage). The confidence threshold (0.2) was set by visual inspection rather than a precision--recall curve sweep; characterising this trade-off is a priority for future work. FP16 deployment could double throughput to ${\sim}$\SI{10}{FPS} (Figure~\ref{fig:latency_breakdown}).
+The retrained YOLOv8n achieved mAP$_{50}$ = 0.995 (validation set) and 50/50 bench detection at 0.966 mean confidence (Figures~\ref{fig:conf_vs_alt} and~\ref{fig:detection_montage}). At \SI{35}{\metre}, the target subtends 36 model-input pixels---a comfortable margin above the 20\,px floor. However, the 0.995 mAP$_{50}$ likely overestimates real-world accuracy due to train/validation overlap (only 16 of 366 images are from real footage). The confidence threshold (0.2) was set by visual inspection rather than a precision--recall curve sweep; characterising this trade-off is a priority for future work. FP16 deployment could double throughput to ${\sim}$\SI{10}{FPS} (Figure~\ref{fig:latency_breakdown}).
 
 \textbf{GPS estimation accuracy (D3).}
 The pipeline projects each detection's pixel offset through the calibrated camera model and drone position to produce a GPS estimate. DJI flight video analysis with known ground-truth positions yielded CEP$_{50}$ = \SI{2.3}{\metre} and a worst-case error of \SI{16.5}{\metre} (Figures~\ref{fig:gps_bullseye} and~\ref{fig:gps_error_direction}). The worst case stems from GPS timing lag compounding with heading-aligned motion. Inverse-variance averaging and Kalman filtering partially mitigate this bias, but first-order lag compensation ($\Delta\mathbf{p} = \mathbf{v} \cdot \Delta t_{\text{lag}}$) remains unimplemented.
@@ -149,6 +156,15 @@ SearchWing~\cite{searchwing2024} & Companion PC & Custom CNN & 5 & 0.78 & $<$10\
 \multicolumn{6}{@{}l}{\footnotesize $^\dagger$From DJI video replay, not live flight.} \\
 \end{tabular}
 \end{table}
+
+Figure~\ref{fig:radar_comparison} presents a radar chart comparing the system's capabilities against published SAR platforms across six key dimensions.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\linewidth]{radar_comparison}
+\caption{Multi-dimensional comparison of this project against published SAR drone systems (Table~\ref{tab:sar-comparison}). Axes: inference speed, detection accuracy, GPS estimation accuracy, cost-effectiveness, autonomy level, and test coverage. This project excels in cost-effectiveness and test coverage but lags in inference speed due to CPU-only deployment.}
+\label{fig:radar_comparison}
+\end{figure}
 
 Three observations emerge. First, the mAP$_{50}$=0.995 is almost certainly inflated; the 87\% detection rate on DJI video suggests a realistic mAP$_{50}$ of 0.85--0.90, competitive with published systems trained on larger, more diverse datasets. Second, the 4.8\,FPS inference rate sits at the lower end, since most published systems use GPU-equipped Jetson boards costing 3--5$\times$ more. The available NCNN backend (\SI{72}{\milli\second}, 9\,FPS) would close this gap without hardware changes. Third, no published system in Table~\ref{tab:sar-comparison} reports a formal GPS estimation accuracy metric from vision-based localisation; the CEP$_{50}$=\SI{2.3}{\metre} figure, while from proxy data, is a quantitative contribution most comparable projects lack.
 

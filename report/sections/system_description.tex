@@ -124,7 +124,7 @@ The vision subsystem resides in \texttt{vision.py}, exposing a single interface:
 The boustrophedon (lawnmower) pattern~\cite{choset2001coverage} is implemented via a rotate--rasterise--zigzag--rotate-back algorithm in \texttt{planning.py}: the GPS polygon is rasterised into a binary mask, rotated to align with the longest edge (minimising U-turns), stripped at camera-footprint spacing, and inverse-rotated back to GPS coordinates. B\'{e}zier-smoothed U-turns maintain momentum.
 
 \paragraph{Coverage guarantee.}
-Strip spacing derives from the thin-lens footprint: $W_g = w_s \cdot h / f$, lane spacing $L = W_g(1 - \alpha)$. At \SI{35}{\metre}: $W_g \approx \SI{32.2}{\metre}$, $L \approx \SI{25.7}{\metre}$ (20\% overlap), guaranteeing every ground point falls within at least one swath under \SIrange{2}{3}{\metre} GPS drift. A 216-configuration sweep confirmed the optimal scan angle at \SIrange{65}{75}{\degree} (Appendix~\ref{sec:path-opt}). Figure~\ref{fig:coverage_vs_time} shows near-linear coverage progression.
+Strip spacing derives from the thin-lens footprint: $W_g = w_s \cdot h / f$, lane spacing $L = W_g(1 - \alpha)$. At \SI{35}{\metre}: $W_g \approx \SI{32.2}{\metre}$, $L \approx \SI{25.7}{\metre}$ (20\% overlap), guaranteeing every ground point falls within at least one swath under \SIrange{2}{3}{\metre} GPS drift. A 216-configuration sweep confirmed the optimal scan angle at \SIrange{65}{75}{\degree} (Appendix~\ref{sec:path-opt}). Figure~\ref{fig:search_pattern} shows the generated pattern overlaid on the survey polygon, and Figure~\ref{fig:coverage_vs_time} shows near-linear coverage progression.
 
 \begin{figure}[ht]
   \centering
@@ -133,16 +133,30 @@ Strip spacing derives from the thin-lens footprint: $W_g = w_s \cdot h / f$, lan
   \label{fig:coverage_vs_time}
 \end{figure}
 
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\linewidth]{search_pattern}
+\caption{Generated boustrophedon search pattern overlaid on the survey polygon at \SI{35}{\metre} altitude (\SI{70}{\degree} scan angle). Strip spacing of \SI{25.7}{\metre} provides 20\% overlap between adjacent swaths. The \SI{30}{\metre} NFZ buffer excludes waypoints near the SSSI boundary.}
+\label{fig:search_pattern}
+\end{figure}
+
 % ═══════════════════════════════════════════════════════════════
 \subsection{Mission State Machine}\label{sec:state-machine}
 
-The 20-state FSM (Figure~\ref{fig:state_machine}, Appendix~\ref{app:states}) orchestrates the mission through four phases:
+The 20-state FSM (Figures~\ref{fig:state_machine} and~\ref{fig:state_machine_generated}, Appendix~\ref{app:states}) orchestrates the mission through four phases:
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.95\textwidth]{state_machine}
 \caption{State transition diagram. Primary mission path flows left to right; engagement branches downward from SEARCH. Manual override (dashed) is accessible from any active state.}
 \label{fig:state_machine}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{state_machine_generated}
+\caption{Auto-generated state machine diagram showing all 20~states, transition triggers, and guard conditions. Colour encodes functional phase: blue (startup), green (search), orange (engagement), red (recovery), and grey (override). Compare with the hand-drawn overview in Figure~\ref{fig:state_machine}.}
+\label{fig:state_machine_generated}
 \end{figure}
 
 \begin{itemize}

@@ -118,7 +118,14 @@ Three candidate companion computers were evaluated (Table~\ref{tab:mcda-companio
   \end{tabularx}
 \end{table}
 
-\noindent The Pi~5 achieves the highest weighted total. Sensitivity analysis ($\pm$0.05 weight perturbation across all 12 scenarios) confirms the Pi~5 retains its rank in every case (minimum score 4.72 vs Jetson Nano maximum 3.68). The same perturbation was applied to all four MCDA tables; in each case the selected option retained its rank.
+\noindent The Pi~5 achieves the highest weighted total. Sensitivity analysis ($\pm$0.05 weight perturbation across all 12 scenarios) confirms the Pi~5 retains its rank in every case (minimum score 4.72 vs Jetson Nano maximum 3.68). The same perturbation was applied to all four MCDA tables; in each case the selected option retained its rank. Figure~\ref{fig:mcda_heatmap} presents a composite heatmap of all four MCDA trade studies, visualising the normalised scores across all criteria and candidates.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\linewidth]{mcda_heatmap}
+\caption{MCDA heatmap across all four trade studies (companion computer, communication architecture, detector model, and search strategy). Each cell shows the normalised weighted score (1--5 scale); darker shading indicates a higher score. The selected option (highlighted) achieves the highest weighted total in every trade study.}
+\label{fig:mcda_heatmap}
+\end{figure}
 
 \subsubsection{Communication Architecture Trade Study}
 

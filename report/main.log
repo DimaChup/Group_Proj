@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.3.27)  4 APR 2026 06:00
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.3.27)  4 APR 2026 13:00
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -893,14 +893,20 @@ File: pgflibraryplotmarks.code.tex 2025-08-29 v3.1.11a (3.1.11a)
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/graphics\dvipsnam.def
 File: dvipsnam.def 2016/06/17 v3.0m Driver-dependent file (DPC,SPQR)
 )
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/colortbl\colortbl.sty
+Package: colortbl 2024/10/29 v1.0k Color table columns (DPC)
+\everycr=\toks52
+\minrowclearance=\skip66
+\rownum=\count368
+)
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/titlesec\titlesec.sty
 Package: titlesec 2025/01/04 v2.17 Sectioning titles
 \ttl@box=\box86
-\beforetitleunit=\skip66
-\aftertitleunit=\skip67
+\beforetitleunit=\skip67
+\aftertitleunit=\skip68
 \ttl@plus=\dimen326
 \ttl@minus=\dimen327
-\ttl@toksa=\toks52
+\ttl@toksa=\toks53
 \titlewidth=\dimen328
 \titlewidthlast=\dimen329
 \titlewidthfirst=\dimen330
@@ -908,30 +914,30 @@ Package: titlesec 2025/01/04 v2.17 Sectioning titles
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/fancyhdr\fancyhdr.sty
 Package: fancyhdr 2025/02/07 v5.2 Extensive control of page headers and footers
 
-\f@nch@headwidth=\skip68
-\f@nch@offset@elh=\skip69
-\f@nch@offset@erh=\skip70
-\f@nch@offset@olh=\skip71
-\f@nch@offset@orh=\skip72
-\f@nch@offset@elf=\skip73
-\f@nch@offset@erf=\skip74
-\f@nch@offset@olf=\skip75
-\f@nch@offset@orf=\skip76
-\f@nch@height=\skip77
-\f@nch@footalignment=\skip78
-\f@nch@widthL=\skip79
-\f@nch@widthC=\skip80
-\f@nch@widthR=\skip81
-\@temptokenb=\toks53
+\f@nch@headwidth=\skip69
+\f@nch@offset@elh=\skip70
+\f@nch@offset@erh=\skip71
+\f@nch@offset@olh=\skip72
+\f@nch@offset@orh=\skip73
+\f@nch@offset@elf=\skip74
+\f@nch@offset@erf=\skip75
+\f@nch@offset@olf=\skip76
+\f@nch@offset@orf=\skip77
+\f@nch@height=\skip78
+\f@nch@footalignment=\skip79
+\f@nch@widthL=\skip80
+\f@nch@widthC=\skip81
+\f@nch@widthR=\skip82
+\@temptokenb=\toks54
 )
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/enumitem\enumitem.sty
 Package: enumitem 2025/02/06 v3.11 Customized lists
-\labelindent=\skip82
+\labelindent=\skip83
 \enit@outerparindent=\dimen331
-\enit@toks=\toks54
+\enit@toks=\toks55
 \enit@inbox=\box87
-\enit@count@id=\count368
-\enitdp@description=\count369
+\enit@count@id=\count369
+\enitdp@description=\count370
 )
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/mdframed\mdframed.sty
 Package: mdframed 2013/07/01 1.9b: mdframed
@@ -944,7 +950,7 @@ Package: expl3 2026-01-19 L3 programming layer (loader)
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/l3backend\l3backend-p
 dftex.def
 File: l3backend-pdftex.def 2025-10-09 L3 backend support: PDF output (pdfTeX)
-\l__color_backend_stack_int=\count370
+\l__color_backend_stack_int=\count371
 ))
 Package: xparse 2025-10-09 L3 Experimental document command parser
 )
@@ -968,54 +974,54 @@ Package zref Info: New property list: main on input line 767.
 Package zref Info: New property: default on input line 768.
 Package zref Info: New property: page on input line 769.
 )
-\c@abspage=\count371
+\c@abspage=\count372
 Package zref Info: New property: abspage on input line 67.
 )
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/needspace\needspace.s
 ty
 Package: needspace 2025/03/13 v1.3e reserve vertical space
 )
-\mdf@templength=\skip83
-\c@mdf@globalstyle@cnt=\count372
-\mdf@skipabove@length=\skip84
-\mdf@skipbelow@length=\skip85
-\mdf@leftmargin@length=\skip86
-\mdf@rightmargin@length=\skip87
-\mdf@innerleftmargin@length=\skip88
-\mdf@innerrightmargin@length=\skip89
-\mdf@innertopmargin@length=\skip90
-\mdf@innerbottommargin@length=\skip91
-\mdf@splittopskip@length=\skip92
-\mdf@splitbottomskip@length=\skip93
-\mdf@outermargin@length=\skip94
-\mdf@innermargin@length=\skip95
-\mdf@linewidth@length=\skip96
-\mdf@innerlinewidth@length=\skip97
-\mdf@middlelinewidth@length=\skip98
-\mdf@outerlinewidth@length=\skip99
-\mdf@roundcorner@length=\skip100
-\mdf@footenotedistance@length=\skip101
-\mdf@userdefinedwidth@length=\skip102
-\mdf@needspace@length=\skip103
-\mdf@frametitleaboveskip@length=\skip104
-\mdf@frametitlebelowskip@length=\skip105
-\mdf@frametitlerulewidth@length=\skip106
-\mdf@frametitleleftmargin@length=\skip107
-\mdf@frametitlerightmargin@length=\skip108
-\mdf@shadowsize@length=\skip109
-\mdf@extratopheight@length=\skip110
-\mdf@subtitleabovelinewidth@length=\skip111
-\mdf@subtitlebelowlinewidth@length=\skip112
-\mdf@subtitleaboveskip@length=\skip113
-\mdf@subtitlebelowskip@length=\skip114
-\mdf@subtitleinneraboveskip@length=\skip115
-\mdf@subtitleinnerbelowskip@length=\skip116
-\mdf@subsubtitleabovelinewidth@length=\skip117
-\mdf@subsubtitlebelowlinewidth@length=\skip118
-\mdf@subsubtitleaboveskip@length=\skip119
-\mdf@subsubtitlebelowskip@length=\skip120
-\mdf@subsubtitleinneraboveskip@length=\skip121
-\mdf@subsubtitleinnerbelowskip@length=\skip122
+\mdf@templength=\skip84
+\c@mdf@globalstyle@cnt=\count373
+\mdf@skipabove@length=\skip85
+\mdf@skipbelow@length=\skip86
+\mdf@leftmargin@length=\skip87
+\mdf@rightmargin@length=\skip88
+\mdf@innerleftmargin@length=\skip89
+\mdf@innerrightmargin@length=\skip90
+\mdf@innertopmargin@length=\skip91
+\mdf@innerbottommargin@length=\skip92
+\mdf@splittopskip@length=\skip93
+\mdf@splitbottomskip@length=\skip94
+\mdf@outermargin@length=\skip95
+\mdf@innermargin@length=\skip96
+\mdf@linewidth@length=\skip97
+\mdf@innerlinewidth@length=\skip98
+\mdf@middlelinewidth@length=\skip99
+\mdf@outerlinewidth@length=\skip100
+\mdf@roundcorner@length=\skip101
+\mdf@footenotedistance@length=\skip102
+\mdf@userdefinedwidth@length=\skip103
+\mdf@needspace@length=\skip104
+\mdf@frametitleaboveskip@length=\skip105
+\mdf@frametitlebelowskip@length=\skip106
+\mdf@frametitlerulewidth@length=\skip107
+\mdf@frametitleleftmargin@length=\skip108
+\mdf@frametitlerightmargin@length=\skip109
+\mdf@shadowsize@length=\skip110
+\mdf@extratopheight@length=\skip111
+\mdf@subtitleabovelinewidth@length=\skip112
+\mdf@subtitlebelowlinewidth@length=\skip113
+\mdf@subtitleaboveskip@length=\skip114
+\mdf@subtitlebelowskip@length=\skip115
+\mdf@subtitleinneraboveskip@length=\skip116
+\mdf@subtitleinnerbelowskip@length=\skip117
+\mdf@subsubtitleabovelinewidth@length=\skip118
+\mdf@subsubtitlebelowlinewidth@length=\skip119
+\mdf@subsubtitleaboveskip@length=\skip120
+\mdf@subsubtitlebelowskip@length=\skip121
+\mdf@subsubtitleinneraboveskip@length=\skip122
+\mdf@subsubtitleinnerbelowskip@length=\skip123
 
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/mdframed\md-frame-1.m
 df
@@ -1026,57 +1032,57 @@ File: md-frame-1.mdf 2013/07/01\ 1.9b: md-frame-1
 \mdf@splitbox@one=\box90
 \mdf@splitbox@two=\box91
 \mdf@splitbox@save=\box92
-\mdfsplitboxwidth=\skip123
-\mdfsplitboxtotalwidth=\skip124
-\mdfsplitboxheight=\skip125
-\mdfsplitboxdepth=\skip126
-\mdfsplitboxtotalheight=\skip127
-\mdfframetitleboxwidth=\skip128
-\mdfframetitleboxtotalwidth=\skip129
-\mdfframetitleboxheight=\skip130
-\mdfframetitleboxdepth=\skip131
-\mdfframetitleboxtotalheight=\skip132
-\mdffootnoteboxwidth=\skip133
-\mdffootnoteboxtotalwidth=\skip134
-\mdffootnoteboxheight=\skip135
-\mdffootnoteboxdepth=\skip136
-\mdffootnoteboxtotalheight=\skip137
-\mdftotallinewidth=\skip138
-\mdfboundingboxwidth=\skip139
-\mdfboundingboxtotalwidth=\skip140
-\mdfboundingboxheight=\skip141
-\mdfboundingboxdepth=\skip142
-\mdfboundingboxtotalheight=\skip143
-\mdf@freevspace@length=\skip144
-\mdf@horizontalwidthofbox@length=\skip145
-\mdf@verticalmarginwhole@length=\skip146
-\mdf@horizontalspaceofbox=\skip147
-\mdfsubtitleheight=\skip148
-\mdfsubsubtitleheight=\skip149
-\c@mdfcountframes=\count373
+\mdfsplitboxwidth=\skip124
+\mdfsplitboxtotalwidth=\skip125
+\mdfsplitboxheight=\skip126
+\mdfsplitboxdepth=\skip127
+\mdfsplitboxtotalheight=\skip128
+\mdfframetitleboxwidth=\skip129
+\mdfframetitleboxtotalwidth=\skip130
+\mdfframetitleboxheight=\skip131
+\mdfframetitleboxdepth=\skip132
+\mdfframetitleboxtotalheight=\skip133
+\mdffootnoteboxwidth=\skip134
+\mdffootnoteboxtotalwidth=\skip135
+\mdffootnoteboxheight=\skip136
+\mdffootnoteboxdepth=\skip137
+\mdffootnoteboxtotalheight=\skip138
+\mdftotallinewidth=\skip139
+\mdfboundingboxwidth=\skip140
+\mdfboundingboxtotalwidth=\skip141
+\mdfboundingboxheight=\skip142
+\mdfboundingboxdepth=\skip143
+\mdfboundingboxtotalheight=\skip144
+\mdf@freevspace@length=\skip145
+\mdf@horizontalwidthofbox@length=\skip146
+\mdf@verticalmarginwhole@length=\skip147
+\mdf@horizontalspaceofbox=\skip148
+\mdfsubtitleheight=\skip149
+\mdfsubsubtitleheight=\skip150
+\c@mdfcountframes=\count374
 
 ****** mdframed patching \endmdf@trivlist
 
 ****** -- success******
 
-\mdf@envdepth=\count374
-\c@mdf@env@i=\count375
-\c@mdf@env@ii=\count376
-\c@mdf@zref@counter=\count377
+\mdf@envdepth=\count375
+\c@mdf@env@i=\count376
+\c@mdf@env@ii=\count377
+\c@mdf@zref@counter=\count378
 Package zref Info: New property: mdf@pagevalue on input line 895.
 )
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/listings\listings.sty
-\lst@mode=\count378
+\lst@mode=\count379
 \lst@gtempboxa=\box93
-\lst@token=\toks55
-\lst@length=\count379
+\lst@token=\toks56
+\lst@length=\count380
 \lst@currlwidth=\dimen332
-\lst@column=\count380
-\lst@pos=\count381
+\lst@column=\count381
+\lst@pos=\count382
 \lst@lostspace=\dimen333
 \lst@width=\dimen334
-\lst@newlines=\count382
-\lst@lineno=\count383
+\lst@newlines=\count383
+\lst@lineno=\count384
 \lst@maxwidth=\dimen335
 
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/listings\lstpatch.sty
@@ -1084,8 +1090,8 @@ File: lstpatch.sty 2025/11/14 1.11b (Carsten Heinz)
 )
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/listings\lstmisc.sty
 File: lstmisc.sty 2025/11/14 1.11b (Carsten Heinz)
-\c@lstnumber=\count384
-\lst@skipnumbers=\count385
+\c@lstnumber=\count385
+\lst@skipnumbers=\count386
 \lst@framebox=\box94
 )
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/listings\listings.cfg
@@ -1102,13 +1108,13 @@ Package: listings 2025/11/14 1.11b (Carsten Heinz)
 
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/csquotes\csquotes.sty
 Package: csquotes 2024-04-04 v5.2o context-sensitive quotations (JAW)
-\csq@reset=\count386
-\csq@gtype=\count387
-\csq@glevel=\count388
-\csq@qlevel=\count389
-\csq@maxlvl=\count390
-\csq@tshold=\count391
-\csq@ltx@everypar=\toks56
+\csq@reset=\count387
+\csq@gtype=\count388
+\csq@glevel=\count389
+\csq@qlevel=\count390
+\csq@maxlvl=\count391
+\csq@tshold=\count392
+\csq@ltx@everypar=\toks57
 
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/csquotes\csquotes.def
 File: csquotes.def 2024-04-04 v5.2o csquotes generic definitions (JAW)
@@ -1120,20 +1126,20 @@ Package csquotes Info: ... configuration file loaded successfully.
 File: csquotes.cfg 
 )) (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/tools\multicol.sty
 Package: multicol 2025/10/21 v2.0b multicolumn formatting (FMi)
-\c@tracingmulticols=\count392
+\c@tracingmulticols=\count393
 \mult@box=\box95
 \multicol@leftmargin=\dimen336
-\c@unbalance=\count393
-\c@collectmore=\count394
-\doublecol@number=\count395
-\multicoltolerance=\count396
-\multicolpretolerance=\count397
+\c@unbalance=\count394
+\c@collectmore=\count395
+\doublecol@number=\count396
+\multicoltolerance=\count397
+\multicolpretolerance=\count398
 \full@width=\dimen337
 \page@free=\dimen338
 \premulticols=\dimen339
 \postmulticols=\dimen340
-\multicolsep=\skip150
-\multicolbaselineskip=\skip151
+\multicolsep=\skip151
+\multicolbaselineskip=\skip152
 \partial@page=\box96
 \last@line=\box97
 \mc@boxedresult=\box98
@@ -1178,22 +1184,22 @@ Package: multicol 2025/10/21 v2.0b multicolumn formatting (FMi)
 \@tempa=\box136
 \@tempa=\box137
 \@tempa=\box138
-\c@minrows=\count398
-\c@columnbadness=\count399
-\c@finalcolumnbadness=\count400
+\c@minrows=\count399
+\c@columnbadness=\count400
+\c@finalcolumnbadness=\count401
 \last@try=\dimen342
 \multicolovershoot=\dimen343
 \multicolundershoot=\dimen344
 \mult@nat@firstbox=\box139
 \colbreak@box=\box140
-\mc@col@check@num=\count401
-\g__mc_curr_col_int=\count402
+\mc@col@check@num=\count402
+\g__mc_curr_col_int=\count403
 )
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/biblatex\biblatex.sty
 Package: biblatex 2025/07/10 v3.21 programmable bibliographies (PK/MW)
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/logreq\logreq.sty
 Package: logreq 2010/08/04 v1.0 xml request logger
-\lrq@indent=\count403
+\lrq@indent=\count404
 
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/logreq\logreq.def
 File: logreq.def 2010/08/04 v1.0 logreq spec v1.0
@@ -1202,63 +1208,63 @@ File: logreq.def 2010/08/04 v1.0 logreq spec v1.0
 \Urlmuskip=\muskip18
 Package: url 2013/09/16  ver 3.4  Verb mode for urls, etc.
 )
-\c@tabx@nest=\count404
-\c@listtotal=\count405
-\c@listcount=\count406
-\c@liststart=\count407
-\c@liststop=\count408
-\c@citecount=\count409
-\c@citetotal=\count410
-\c@multicitecount=\count411
-\c@multicitetotal=\count412
-\c@instcount=\count413
-\c@maxnames=\count414
-\c@minnames=\count415
-\c@maxitems=\count416
-\c@minitems=\count417
-\c@citecounter=\count418
-\c@maxcitecounter=\count419
-\c@savedcitecounter=\count420
-\c@uniquelist=\count421
-\c@uniquename=\count422
-\c@refsection=\count423
-\c@refsegment=\count424
-\c@maxextratitle=\count425
-\c@maxextratitleyear=\count426
-\c@maxextraname=\count427
-\c@maxextradate=\count428
-\c@maxextraalpha=\count429
-\c@abbrvpenalty=\count430
-\c@highnamepenalty=\count431
-\c@lownamepenalty=\count432
-\c@maxparens=\count433
-\c@parenlevel=\count434
-\blx@tempcnta=\count435
-\blx@tempcntb=\count436
-\blx@tempcntc=\count437
-\c@blx@maxsection=\count438
-\blx@maxsegment@0=\count439
-\blx@notetype=\count440
-\blx@parenlevel@text=\count441
-\blx@parenlevel@foot=\count442
-\blx@sectionciteorder@0=\count443
-\blx@sectionciteorderinternal@0=\count444
-\blx@entrysetcounter=\count445
-\blx@biblioinstance=\count446
-\labelnumberwidth=\skip152
-\labelalphawidth=\skip153
-\biblabelsep=\skip154
-\bibitemsep=\skip155
-\bibnamesep=\skip156
-\bibinitsep=\skip157
-\bibparsep=\skip158
-\bibhang=\skip159
+\c@tabx@nest=\count405
+\c@listtotal=\count406
+\c@listcount=\count407
+\c@liststart=\count408
+\c@liststop=\count409
+\c@citecount=\count410
+\c@citetotal=\count411
+\c@multicitecount=\count412
+\c@multicitetotal=\count413
+\c@instcount=\count414
+\c@maxnames=\count415
+\c@minnames=\count416
+\c@maxitems=\count417
+\c@minitems=\count418
+\c@citecounter=\count419
+\c@maxcitecounter=\count420
+\c@savedcitecounter=\count421
+\c@uniquelist=\count422
+\c@uniquename=\count423
+\c@refsection=\count424
+\c@refsegment=\count425
+\c@maxextratitle=\count426
+\c@maxextratitleyear=\count427
+\c@maxextraname=\count428
+\c@maxextradate=\count429
+\c@maxextraalpha=\count430
+\c@abbrvpenalty=\count431
+\c@highnamepenalty=\count432
+\c@lownamepenalty=\count433
+\c@maxparens=\count434
+\c@parenlevel=\count435
+\blx@tempcnta=\count436
+\blx@tempcntb=\count437
+\blx@tempcntc=\count438
+\c@blx@maxsection=\count439
+\blx@maxsegment@0=\count440
+\blx@notetype=\count441
+\blx@parenlevel@text=\count442
+\blx@parenlevel@foot=\count443
+\blx@sectionciteorder@0=\count444
+\blx@sectionciteorderinternal@0=\count445
+\blx@entrysetcounter=\count446
+\blx@biblioinstance=\count447
+\labelnumberwidth=\skip153
+\labelalphawidth=\skip154
+\biblabelsep=\skip155
+\bibitemsep=\skip156
+\bibnamesep=\skip157
+\bibinitsep=\skip158
+\bibparsep=\skip159
+\bibhang=\skip160
 \blx@bcfin=\read3
 \blx@bcfout=\write4
 \blx@langwohyphens=\language79
-\c@mincomprange=\count447
-\c@maxcomprange=\count448
-\c@mincompwidth=\count449
+\c@mincomprange=\count448
+\c@maxcomprange=\count449
+\c@mincompwidth=\count450
 Package biblatex Info: Trying to load biblatex default data model...
 Package biblatex Info: ... file 'blx-dm.def' found.
 
@@ -1269,88 +1275,88 @@ Package biblatex Info: Trying to load biblatex style data model...
 Package biblatex Info: ... file 'numeric.dbx' not found.
 Package biblatex Info: Trying to load biblatex custom data model...
 Package biblatex Info: ... file 'biblatex-dm.cfg' not found.
-\c@afterword=\count450
-\c@savedafterword=\count451
-\c@annotator=\count452
-\c@savedannotator=\count453
-\c@author=\count454
-\c@savedauthor=\count455
-\c@bookauthor=\count456
-\c@savedbookauthor=\count457
-\c@commentator=\count458
-\c@savedcommentator=\count459
-\c@editor=\count460
-\c@savededitor=\count461
-\c@editora=\count462
-\c@savededitora=\count463
-\c@editorb=\count464
-\c@savededitorb=\count465
-\c@editorc=\count466
-\c@savededitorc=\count467
-\c@foreword=\count468
-\c@savedforeword=\count469
-\c@holder=\count470
-\c@savedholder=\count471
-\c@introduction=\count472
-\c@savedintroduction=\count473
-\c@namea=\count474
-\c@savednamea=\count475
-\c@nameb=\count476
-\c@savednameb=\count477
-\c@namec=\count478
-\c@savednamec=\count479
-\c@translator=\count480
-\c@savedtranslator=\count481
-\c@shortauthor=\count482
-\c@savedshortauthor=\count483
-\c@shorteditor=\count484
-\c@savedshorteditor=\count485
-\c@labelname=\count486
-\c@savedlabelname=\count487
-\c@institution=\count488
-\c@savedinstitution=\count489
-\c@lista=\count490
-\c@savedlista=\count491
-\c@listb=\count492
-\c@savedlistb=\count493
-\c@listc=\count494
-\c@savedlistc=\count495
-\c@listd=\count496
-\c@savedlistd=\count497
-\c@liste=\count498
-\c@savedliste=\count499
-\c@listf=\count500
-\c@savedlistf=\count501
-\c@location=\count502
-\c@savedlocation=\count503
-\c@organization=\count504
-\c@savedorganization=\count505
-\c@origlocation=\count506
-\c@savedoriglocation=\count507
-\c@origpublisher=\count508
-\c@savedorigpublisher=\count509
-\c@publisher=\count510
-\c@savedpublisher=\count511
-\c@language=\count512
-\c@savedlanguage=\count513
-\c@origlanguage=\count514
-\c@savedoriglanguage=\count515
-\c@pageref=\count516
-\c@savedpageref=\count517
-\shorthandwidth=\skip160
-\shortjournalwidth=\skip161
-\shortserieswidth=\skip162
-\shorttitlewidth=\skip163
-\shortauthorwidth=\skip164
-\shorteditorwidth=\skip165
-\locallabelnumberwidth=\skip166
-\locallabelalphawidth=\skip167
-\localshorthandwidth=\skip168
-\localshortjournalwidth=\skip169
-\localshortserieswidth=\skip170
-\localshorttitlewidth=\skip171
-\localshortauthorwidth=\skip172
-\localshorteditorwidth=\skip173
+\c@afterword=\count451
+\c@savedafterword=\count452
+\c@annotator=\count453
+\c@savedannotator=\count454
+\c@author=\count455
+\c@savedauthor=\count456
+\c@bookauthor=\count457
+\c@savedbookauthor=\count458
+\c@commentator=\count459
+\c@savedcommentator=\count460
+\c@editor=\count461
+\c@savededitor=\count462
+\c@editora=\count463
+\c@savededitora=\count464
+\c@editorb=\count465
+\c@savededitorb=\count466
+\c@editorc=\count467
+\c@savededitorc=\count468
+\c@foreword=\count469
+\c@savedforeword=\count470
+\c@holder=\count471
+\c@savedholder=\count472
+\c@introduction=\count473
+\c@savedintroduction=\count474
+\c@namea=\count475
+\c@savednamea=\count476
+\c@nameb=\count477
+\c@savednameb=\count478
+\c@namec=\count479
+\c@savednamec=\count480
+\c@translator=\count481
+\c@savedtranslator=\count482
+\c@shortauthor=\count483
+\c@savedshortauthor=\count484
+\c@shorteditor=\count485
+\c@savedshorteditor=\count486
+\c@labelname=\count487
+\c@savedlabelname=\count488
+\c@institution=\count489
+\c@savedinstitution=\count490
+\c@lista=\count491
+\c@savedlista=\count492
+\c@listb=\count493
+\c@savedlistb=\count494
+\c@listc=\count495
+\c@savedlistc=\count496
+\c@listd=\count497
+\c@savedlistd=\count498
+\c@liste=\count499
+\c@savedliste=\count500
+\c@listf=\count501
+\c@savedlistf=\count502
+\c@location=\count503
+\c@savedlocation=\count504
+\c@organization=\count505
+\c@savedorganization=\count506
+\c@origlocation=\count507
+\c@savedoriglocation=\count508
+\c@origpublisher=\count509
+\c@savedorigpublisher=\count510
+\c@publisher=\count511
+\c@savedpublisher=\count512
+\c@language=\count513
+\c@savedlanguage=\count514
+\c@origlanguage=\count515
+\c@savedoriglanguage=\count516
+\c@pageref=\count517
+\c@savedpageref=\count518
+\shorthandwidth=\skip161
+\shortjournalwidth=\skip162
+\shortserieswidth=\skip163
+\shorttitlewidth=\skip164
+\shortauthorwidth=\skip165
+\shorteditorwidth=\skip166
+\locallabelnumberwidth=\skip167
+\locallabelalphawidth=\skip168
+\localshorthandwidth=\skip169
+\localshortjournalwidth=\skip170
+\localshortserieswidth=\skip171
+\localshorttitlewidth=\skip172
+\localshortauthorwidth=\skip173
+\localshorteditorwidth=\skip174
 Package biblatex Info: Trying to load compatibility code...
 Package biblatex Info: ... file 'blx-compat.def' found.
 
@@ -1363,19 +1369,19 @@ Package biblatex Info: ... file 'biblatex.def' found.
 
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/biblatex\biblatex.def
 File: biblatex.def 2025/07/10 v3.21 biblatex compatibility (PK/MW)
-\c@textcitecount=\count518
-\c@textcitetotal=\count519
-\c@textcitemaxnames=\count520
-\c@biburlbigbreakpenalty=\count521
-\c@biburlbreakpenalty=\count522
-\c@biburlnumpenalty=\count523
-\c@biburlucpenalty=\count524
-\c@biburllcpenalty=\count525
+\c@textcitecount=\count519
+\c@textcitetotal=\count520
+\c@textcitemaxnames=\count521
+\c@biburlbigbreakpenalty=\count522
+\c@biburlbreakpenalty=\count523
+\c@biburlnumpenalty=\count524
+\c@biburlucpenalty=\count525
+\c@biburllcpenalty=\count526
 \biburlbigskip=\muskip19
 \biburlnumskip=\muskip20
 \biburlucskip=\muskip21
 \biburllcskip=\muskip22
-\c@smartand=\count526
+\c@smartand=\count527
 )
 Package biblatex Info: Trying to load bibliography style 'numeric'...
 Package biblatex Info: ... file 'numeric.bbx' found.
@@ -1389,8 +1395,8 @@ Package biblatex Info: ... file 'standard.bbx' found.
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/biblatex/bbx\standard
 .bbx
 File: standard.bbx 2025/07/10 v3.21 biblatex bibliography style (PK/MW)
-\c@bbx:relatedcount=\count527
-\c@bbx:relatedtotal=\count528
+\c@bbx:relatedcount=\count528
+\c@bbx:relatedtotal=\count529
 ))
 Package biblatex Info: Trying to load citation style 'numeric'...
 Package biblatex Info: ... file 'numeric.cbx' found.
@@ -1454,7 +1460,7 @@ Package: refcount 2019/12/15 v3.6 Data extraction from label references (HO)
 itlestring.sty
 Package: gettitlestring 2019/12/15 v1.6 Cleanup title references (HO)
 )
-\c@section@level=\count529
+\c@section@level=\count530
 )
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/stringenc\stringenc
 .sty
@@ -1462,15 +1468,15 @@ Package: stringenc 2019/11/29 v1.12 Convert strings between diff. encodings (HO
 )
 )
 \@linkdim=\dimen345
-\Hy@linkcounter=\count530
-\Hy@pagecounter=\count531
+\Hy@linkcounter=\count531
+\Hy@pagecounter=\count532
 
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\pd1enc.def
 File: pd1enc.def 2026-01-29 v7.01p Hyperref: PDFDocEncoding definition (HO)
 Now handling font encoding PD1 ...
 ... no UTF-8 mapping file for font encoding PD1
 )
-\Hy@SavedSpaceFactor=\count532
+\Hy@SavedSpaceFactor=\count533
 
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\puenc.def
 File: puenc.def 2026-01-29 v7.01p Hyperref: PDF Unicode definition (HO)
@@ -1485,7 +1491,7 @@ Package hyperref Info: Plain pages OFF on input line 4216.
 Package hyperref Info: Backreferencing OFF on input line 4221.
 Package hyperref Info: Implicit mode ON; LaTeX internals redefined.
 Package hyperref Info: Bookmarks ON on input line 4468.
-\c@Hy@tempcnt=\count533
+\c@Hy@tempcnt=\count534
 LaTeX Info: Redefining \url on input line 4807.
 \XeTeXLinkMargin=\dimen346
 
@@ -1497,7 +1503,7 @@ lc.sty
 Package: bigintcalc 2019/12/15 v1.5 Expandable calculations on big integers (HO
 )
 ))
-\Fld@menulength=\count534
+\Fld@menulength=\count535
 \Field@Width=\dimen347
 \Fld@charsize=\dimen348
 Package hyperref Info: Hyper figures OFF on input line 6084.
@@ -1507,17 +1513,17 @@ Package hyperref Info: backreferencing OFF on input line 6099.
 Package hyperref Info: Link coloring ON on input line 6102.
 Package hyperref Info: Link coloring with OCG OFF on input line 6109.
 Package hyperref Info: PDF/A mode OFF on input line 6114.
-\Hy@abspage=\count535
-\c@Item=\count536
-\c@Hfootnote=\count537
+\Hy@abspage=\count536
+\c@Item=\count537
+\c@Hfootnote=\count538
 )
 Package hyperref Info: Driver (autodetected): hpdftex.
 
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\hpdftex.def
 File: hpdftex.def 2026-01-29 v7.01p Hyperref driver for pdfTeX
-\HyAnn@Count=\count538
-\Fld@listcount=\count539
-\c@bookmark@seq@number=\count540
+\HyAnn@Count=\count539
+\Fld@listcount=\count540
+\c@bookmark@seq@number=\count541
 
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/rerunfilecheck\rerunf
 ilecheck.sty
@@ -1530,7 +1536,7 @@ Package: uniquecounter 2019/12/15 v1.4 Provide unlimited unique counter (HO)
 Package uniquecounter Info: New unique counter `rerunfilecheck' on input line 2
 84.
 )
-\Hy@SectionHShift=\skip174
+\Hy@SectionHShift=\skip175
 )
 Package translations Info: No language package found. I am going to use `englis
 h' as default language. on input line 132.
@@ -1622,17 +1628,17 @@ File: mt-cmr.cfg 2013/05/19 v2.2 microtype config. file: Computer Modern Roman
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/context/base/mkii\supp-pdf.
 mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count541
+\scratchcounter=\count542
 \scratchdimen=\dimen349
 \scratchbox=\box141
-\nofMPsegments=\count542
-\nofMParguments=\count543
-\everyMPshowfont=\toks57
-\MPscratchCnt=\count544
+\nofMPsegments=\count543
+\nofMParguments=\count544
+\everyMPshowfont=\toks58
+\MPscratchCnt=\count545
 \MPscratchDim=\dimen350
-\MPnumerator=\count545
-\makeMPintoPDFobject=\count546
-\everyMPtoPDFconversion=\toks58
+\MPnumerator=\count546
+\makeMPintoPDFobject=\count547
+\everyMPtoPDFconversion=\toks59
 )
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/epstopdf-pkg\epstopdf
 -base.sty
@@ -1677,7 +1683,7 @@ Package gensymb Warning: Not defining \micro.
 Package pgfplots notification 'compat/show suggested version=true': document ha
 s been generated with the most recent feature set (\pgfplotsset{compat=1.18}).
 
-\c@lstlisting=\count547
+\c@lstlisting=\count548
 Package biblatex Info: Trying to load language 'english'...
 Package biblatex Info: ... file 'english.lbx' found.
 
@@ -1744,7 +1750,7 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
 ) [2] [3] [4] [5]
 LaTeX Font Info:    Trying to load font information for OT1+lmtt on input line 
-308.
+321.
 
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/lm\ot1lmtt.fd
 File: ot1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
@@ -1755,64 +1761,119 @@ Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             See the microtype manual for details.
 
 [6{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-rmtt.en
-c}] [7]
-Overfull \hbox (2.388pt too wide) detected at line 500
+c}] [7] [8]
+Overfull \hbox (2.388pt too wide) detected at line 561
 \OT1/lmr/bx/n/10 AA 
  []
 
-[8{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathit.
-enc}]
-Overfull \hbox (1.87448pt too wide) detected at line 508
+
+Overfull \hbox (1.87448pt too wide) detected at line 578
 \OT1/lmr/bx/n/10 AB 
  []
 
-
-Overfull \hbox (1.68054pt too wide) detected at line 525
+[9{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathit.
+enc}]
+Overfull \hbox (1.68054pt too wide) detected at line 589
 \OT1/lmr/bx/n/10 AC 
  []
 
 
-Overfull \hbox (2.51299pt too wide) detected at line 536
+Overfull \hbox (4.22194pt too wide) detected at line 602
+\OT1/lmr/m/n/10 AC.10 
+ []
+
+
+Overfull \hbox (4.22194pt too wide) detected at line 603
+\OT1/lmr/m/n/10 AC.11 
+ []
+
+
+Overfull \hbox (4.22194pt too wide) detected at line 604
+\OT1/lmr/m/n/10 AC.12 
+ []
+
+
+Overfull \hbox (4.22194pt too wide) detected at line 605
+\OT1/lmr/m/n/10 AC.13 
+ []
+
+
+Overfull \hbox (4.22194pt too wide) detected at line 606
+\OT1/lmr/m/n/10 AC.14 
+ []
+
+
+Overfull \hbox (2.51299pt too wide) detected at line 607
 \OT1/lmr/bx/n/10 AD 
  []
 
 
-Overfull \hbox (1.24948pt too wide) detected at line 544
+Overfull \hbox (1.24948pt too wide) detected at line 614
 \OT1/lmr/bx/n/10 AE 
  []
 
 
-Overfull \hbox (0.93pt too wide) detected at line 551
+Overfull \hbox (4.08322pt too wide) detected at line 636
+\OT1/lmr/m/n/10 AE.10 
+ []
+
+
+Overfull \hbox (4.08322pt too wide) detected at line 637
+\OT1/lmr/m/n/10 AE.11 
+ []
+
+
+Overfull \hbox (4.08322pt too wide) detected at line 638
+\OT1/lmr/m/n/10 AE.12 
+ []
+
+
+Overfull \hbox (0.93pt too wide) detected at line 639
 \OT1/lmr/bx/n/10 AF 
  []
 
-[9]
-Overfull \hbox (3.80571pt too wide) detected at line 571
+
+Overfull \hbox (3.80571pt too wide) detected at line 712
 \OT1/lmr/m/n/10 AF.10 
  []
 
 
-Overfull \hbox (2.41655pt too wide) detected at line 572
+Overfull \hbox (3.80571pt too wide) detected at line 720
+\OT1/lmr/m/n/10 AF.11 
+ []
+
+
+Overfull \hbox (3.80571pt too wide) detected at line 721
+\OT1/lmr/m/n/10 AF.12 
+ []
+
+
+Overfull \hbox (3.80571pt too wide) detected at line 728
+\OT1/lmr/m/n/10 AF.13 
+ []
+
+[10]
+Overfull \hbox (2.41655pt too wide) detected at line 735
 \OT1/lmr/bx/n/10 AG 
  []
 
 
-Overfull \hbox (4.84694pt too wide) detected at line 590
+Overfull \hbox (4.84694pt too wide) detected at line 753
 \OT1/lmr/m/n/10 AG.10 
  []
 
 
-Overfull \hbox (4.84694pt too wide) detected at line 594
+Overfull \hbox (4.84694pt too wide) detected at line 757
 \OT1/lmr/m/n/10 AG.11 
  []
 
 
-Overfull \hbox (4.84694pt too wide) detected at line 595
+Overfull \hbox (4.84694pt too wide) detected at line 758
 \OT1/lmr/m/n/10 AG.12 
  []
 
 
-Overfull \hbox (2.69398pt too wide) detected at line 596
+Overfull \hbox (2.69398pt too wide) detected at line 759
 \OT1/lmr/bx/n/10 AH 
  []
 
@@ -1820,105 +1881,129 @@ Overfull \hbox (2.69398pt too wide) detected at line 596
 \tf@toc=\write6
 \openout6 = `main.toc'.
 
- [10] (sections/exec_summary.tex) [11{C:/Users/Bristol/AppData/Local/Programs/M
-iKTeX/fonts/enc/dvips/lm/lm-mathsy.enc}] (sections/intro_d6.tex
+ [11] (sections/exec_summary.tex
 LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 1
-4.
+5.
 
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/lm\ts1lmr.fd
 File: ts1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
-)
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <8> on input line 25.
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <6> on input line 25.
-
+))
 [12{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-ts1.en
-c}]
+c}{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathsy.
+enc}] (sections/intro_d6.tex
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <9> on input line 55.
-) [13] (sections/design_rationale.tex
-<figs/coupling_matrix.pdf, id=2178, 515.08058pt x 516.9182pt>
+(Font)              <8> on input line 27.
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <6> on input line 27.
+ [13]
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <9> on input line 57.
+) [14] [15] (sections/design_rationale.tex
+
+Package hyperref Warning: Suppressing empty link on input line 6.
+
+<figs/coupling_matrix.pdf, id=2414, 515.08058pt x 516.9182pt>
 File: figs/coupling_matrix.pdf Graphic file (type pdf)
 <use figs/coupling_matrix.pdf>
 Package pdftex.def Info: figs/coupling_matrix.pdf  used on input line 38.
 (pdftex.def)             Requested size: 399.47607pt x 400.90718pt.
- [14{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-rmsc.
-enc}]
-<figs/altitude_speed_tradeoff.pdf, id=2196, 491.61806pt x 400.5803pt>
+[16{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-rmsc.e
+nc}]
+<figs/altitude_speed_tradeoff.pdf, id=2431, 491.61806pt x 400.5803pt>
 File: figs/altitude_speed_tradeoff.pdf Graphic file (type pdf)
 <use figs/altitude_speed_tradeoff.pdf>
 Package pdftex.def Info: figs/altitude_speed_tradeoff.pdf  used on input line 5
 4.
 (pdftex.def)             Requested size: 399.47607pt x 325.51347pt.
- [15 <./figs/coupling_matrix.pdf>] [16 <./figs/altitude_speed_tradeoff.pdf>] [1
-7] [18]
-Overfull \hbox (0.58871pt too wide) in paragraph at lines 222--223
+ [17 <./figs/coupling_matrix.pdf>] [18 <./figs/altitude_speed_tradeoff.pdf>]
+<figs/mcda_heatmap.pdf, id=2680, 740.55418pt x 684.92888pt>
+File: figs/mcda_heatmap.pdf Graphic file (type pdf)
+<use figs/mcda_heatmap.pdf>
+Package pdftex.def Info: figs/mcda_heatmap.pdf  used on input line 125.
+(pdftex.def)             Requested size: 435.3303pt x 402.64137pt.
+ [19] [20 <./figs/mcda_heatmap.pdf>] [21]
+Overfull \hbox (0.58871pt too wide) in paragraph at lines 233--234
 []\OT1/lmr/m/n/10 (-20) The CEN-TER-ING state---hovering sta-tion-ary above a d
 e-tected tar-get be-fore es-ti-mat-ing its GPS position---simultaneously
  []
 
-[19]
+[22]
 LaTeX Font Info:    Font shape `OT1/lmtt/bx/n' in size <10> not available
-(Font)              Font shape `OT1/lmtt/b/n' tried instead on input line 268.
- [20]) (sections/system_description.tex
-<figs/mission_overview.pdf, id=2533, 488.03644pt x 464.76385pt>
+(Font)              Font shape `OT1/lmtt/b/n' tried instead on input line 279.
+ [23]) (sections/system_description.tex [24]
+<figs/mission_overview.pdf, id=2935, 488.03644pt x 464.76385pt>
 File: figs/mission_overview.pdf Graphic file (type pdf)
 <use figs/mission_overview.pdf>
 Package pdftex.def Info: figs/mission_overview.pdf  used on input line 12.
 (pdftex.def)             Requested size: 512.14963pt x 487.76114pt.
- [21]
-<figs/architecture.pdf, id=2551, 654.40488pt x 570.93298pt>
+ [25 <./figs/mission_overview.pdf>]
+<figs/architecture.pdf, id=3037, 654.40488pt x 570.93298pt>
 File: figs/architecture.pdf Graphic file (type pdf)
 <use figs/architecture.pdf>
 Package pdftex.def Info: figs/architecture.pdf  used on input line 50.
 (pdftex.def)             Requested size: 435.3303pt x 379.81377pt.
-<figs/pi_system.pdf, id=2552, 873.46724pt x 681.93645pt>
+<figs/pi_system.pdf, id=3038, 873.46724pt x 681.93645pt>
 File: figs/pi_system.pdf Graphic file (type pdf)
 <use figs/pi_system.pdf>
 Package pdftex.def Info: figs/pi_system.pdf  used on input line 57.
 (pdftex.def)             Requested size: 384.11221pt x 299.88647pt.
- [22 <./figs/mission_overview.pdf>] [23 <./figs/architecture.pdf>]
-<figs/geofence_diagram.pdf, id=2813, 974.55922pt x 699.68274pt>
+ [26 <./figs/architecture.pdf>] [27 <./figs/pi_system.pdf>]
+<figs/geofence_diagram.pdf, id=3375, 974.55922pt x 699.68274pt>
 File: figs/geofence_diagram.pdf Graphic file (type pdf)
 <use figs/geofence_diagram.pdf>
 Package pdftex.def Info: figs/geofence_diagram.pdf  used on input line 94.
 (pdftex.def)             Requested size: 512.14963pt x 367.71262pt.
- [24 <./figs/pi_system.pdf>]
-<figs/cv_pipeline.pdf, id=2988, 797.37903pt x 195.129pt>
+<figs/cv_pipeline.pdf, id=3380, 797.37903pt x 195.129pt>
 File: figs/cv_pipeline.pdf Graphic file (type pdf)
 <use figs/cv_pipeline.pdf>
 Package pdftex.def Info: figs/cv_pipeline.pdf  used on input line 112.
 (pdftex.def)             Requested size: 435.3303pt x 106.52927pt.
- [25 <./figs/geofence_diagram.pdf> <./figs/cv_pipeline.pdf>]
-<figs/coverage_vs_time.pdf, id=3233, 425.99664pt x 256.37357pt>
+ [28 <./figs/geofence_diagram.pdf>]
+<figs/coverage_vs_time.pdf, id=3547, 425.99664pt x 256.37357pt>
 File: figs/coverage_vs_time.pdf Graphic file (type pdf)
 <use figs/coverage_vs_time.pdf>
 Package pdftex.def Info: figs/coverage_vs_time.pdf  used on input line 131.
 (pdftex.def)             Requested size: 409.72125pt x 246.59306pt.
-<figs/state_machine.pdf, id=3236, 547.08388pt x 498.663pt>
+<figs/search_pattern.pdf, id=3548, 568.93272pt x 535.50877pt>
+File: figs/search_pattern.pdf Graphic file (type pdf)
+<use figs/search_pattern.pdf>
+Package pdftex.def Info: figs/search_pattern.pdf  used on input line 138.
+(pdftex.def)             Requested size: 435.3303pt x 409.7691pt.
+ [29 <./figs/cv_pipeline.pdf> <./figs/coverage_vs_time.pdf>]
+<figs/state_machine.pdf, id=3686, 547.08388pt x 498.663pt>
 File: figs/state_machine.pdf Graphic file (type pdf)
 <use figs/state_machine.pdf>
-Package pdftex.def Info: figs/state_machine.pdf  used on input line 143.
+Package pdftex.def Info: figs/state_machine.pdf  used on input line 150.
 (pdftex.def)             Requested size: 486.54057pt x 443.48909pt.
- [26 <./figs/coverage_vs_time.pdf>]
-<figs/gps_bullseye.pdf, id=3294, 415.84798pt x 426.3403pt>
+<figs/state_machine_generated.pdf, id=3687, 518.53723pt x 754.82625pt>
+File: figs/state_machine_generated.pdf Graphic file (type pdf)
+<use figs/state_machine_generated.pdf>
+Package pdftex.def Info: figs/state_machine_generated.pdf  used on input line 1
+57.
+(pdftex.def)             Requested size: 512.14963pt x 745.57568pt.
+[30 <./figs/search_pattern.pdf>]
+Overfull \vbox (514.06477pt too high) has occurred while \output is active []
+
+
+[31 <./figs/state_machine.pdf> <./figs/state_machine_generated.pdf>]
+<figs/gps_bullseye.pdf, id=4019, 415.84798pt x 426.3403pt>
 File: figs/gps_bullseye.pdf Graphic file (type pdf)
 <use figs/gps_bullseye.pdf>
-Package pdftex.def Info: figs/gps_bullseye.pdf  used on input line 181.
+Package pdftex.def Info: figs/gps_bullseye.pdf  used on input line 207.
 (pdftex.def)             Requested size: 245.82962pt x 252.033pt.
-<figs/gps_error_direction.pdf, id=3295, 743.24844pt x 354.82443pt>
+<figs/gps_error_direction.pdf, id=4020, 743.24844pt x 354.82443pt>
 File: figs/gps_error_direction.pdf Graphic file (type pdf)
 <use figs/gps_error_direction.pdf>
-Package pdftex.def Info: figs/gps_error_direction.pdf  used on input line 188.
+Package pdftex.def Info: figs/gps_error_direction.pdf  used on input line 214.
 (pdftex.def)             Requested size: 245.82962pt x 117.35771pt.
-[27 <./figs/state_machine.pdf>]
-<figs/mission_timeline.pdf, id=3391, 723.18619pt x 291.45325pt>
+ [32]
+<figs/mission_timeline.pdf, id=4036, 723.18619pt x 291.45325pt>
 File: figs/mission_timeline.pdf Graphic file (type pdf)
 <use figs/mission_timeline.pdf>
-Package pdftex.def Info: figs/mission_timeline.pdf  used on input line 208.
+Package pdftex.def Info: figs/mission_timeline.pdf  used on input line 234.
 (pdftex.def)             Requested size: 460.93153pt x 185.7645pt.
-) (sections/requirements_verification.tex
+)
+(sections/requirements_verification.tex
 Overfull \hbox (2.64287pt too wide) in paragraph at lines 12--12
 []|\OT1/lmr/bx/n/9 (-20) Req| 
  []
@@ -1955,7 +2040,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 14--14
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 15--15
-[]|\OT1/lmr/m/n/9 (+20) Four-layer NFZ
+[]|\OT1/lmr/m/n/9 (+20) Five-layer NFZ
  []
 
 
@@ -1966,6 +2051,11 @@ Underfull \hbox (badness 10000) in paragraph at lines 15--15
 
 Underfull \hbox (badness 10000) in paragraph at lines 15--15
 \OT1/lmr/m/n/9 (+20) speed ramp, re-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 15--15
+\OT1/lmr/m/n/9 (+20) cut-off, firmware
  []
 
 
@@ -1997,6 +2087,11 @@ Underfull \hbox (badness 3118) in paragraph at lines 17--17
 
 Overfull \hbox (11.24103pt too wide) in paragraph at lines 17--17
 \OT1/lmtt/m/n/9 send[]global[]target()
+ []
+
+
+Underfull \hbox (badness 6220) in paragraph at lines 18--18
+[]|\OT1/lmr/m/n/9 (+20) Search area +
  []
 
 
@@ -2041,12 +2136,12 @@ Underfull \hbox (badness 10000) in paragraph at lines 20--20
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 20--20
-[]|\OT1/lmr/m/n/9 (+20) 7.5m off-set via
+\OT1/lmr/m/n/9 (+20) from ca-su-alty,
  []
 
 
-Overfull \hbox (14.64302pt too wide) in paragraph at lines 20--20
-\OT1/lmtt/m/n/9 landing[]offset[]7[]5m()
+Underfull \hbox (badness 6725) in paragraph at lines 20--20
+\OT1/lmr/m/n/9 (+20) kit, re-turn to
  []
 
 
@@ -2057,6 +2152,26 @@ Underfull \hbox (badness 10000) in paragraph at lines 20--20
 
 Underfull \hbox (badness 2884) in paragraph at lines 22--22
 []|\OT1/lmr/m/n/9 (+20) RTH + Mo-tor
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 22--22
+[]|\OT1/lmr/m/n/9 (+20) RC kill switch
+ []
+
+
+Underfull \hbox (badness 2772) in paragraph at lines 22--22
+\OT1/lmr/m/n/9 (+20) (mode $\OMS/lmsy/m/n/9 !$ \OT1/lmr/m/n/9 (+20) STA-BI-
+ []
+
+
+Underfull \hbox (badness 1221) in paragraph at lines 22--22
+\OT1/lmr/m/n/9 (+20) LIZE), soft-ware \OT1/lmtt/m/n/9 M
+ []
+
+
+Overfull \hbox (47.33995pt too wide) in paragraph at lines 22--22
+\OT1/lmtt/m/n/9 MAV[]CMD[]COMPONENT[]ARM[]DISARM| 
  []
 
 
@@ -2109,8 +2224,8 @@ Underfull \hbox (badness 10000) in paragraph at lines 25--26
 []|\OT1/lmr/m/n/9 (+20) Verified (in-spec-
  []
 
-[28 <./figs/gps_bullseye.pdf> <./figs/gps_error_direction.pdf> <./figs/mission_
-timeline.pdf>]) (sections/evaluation.tex [29]
+) [33 <./figs/gps_bullseye.pdf> <./figs/gps_error_direction.pdf>]
+(sections/evaluation.tex
 Underfull \hbox (badness 2856) in paragraph at lines 59--59
 []|\OT1/lmtt/m/n/9 vision.py \OT1/lmr/m/n/9 (+20) is the sole file that touches
  CV/AI; all other mod-ules call
@@ -2132,32 +2247,76 @@ Underfull \hbox (badness 10000) in paragraph at lines 59--59
  []
 
 
-LaTeX Warning: Float too large for page by 420.26276pt on input line 60.
+LaTeX Warning: Float too large for page by 431.26276pt on input line 60.
 
-<figs/conf_vs_alt.pdf, id=3717, 359.22015pt x 256.37357pt>
+<figs/conf_vs_alt.pdf, id=4285, 359.22015pt x 256.37357pt>
 File: figs/conf_vs_alt.pdf Graphic file (type pdf)
 <use figs/conf_vs_alt.pdf>
 Package pdftex.def Info: figs/conf_vs_alt.pdf  used on input line 69.
 (pdftex.def)             Requested size: 245.82962pt x 175.44661pt.
-<figs/det_vs_speed.pdf, id=3718, 362.40393pt x 256.37357pt>
+<figs/det_vs_speed.pdf, id=4286, 362.40393pt x 256.37357pt>
 File: figs/det_vs_speed.pdf Graphic file (type pdf)
 <use figs/det_vs_speed.pdf>
 Package pdftex.def Info: figs/det_vs_speed.pdf  used on input line 76.
 (pdftex.def)             Requested size: 245.82962pt x 173.90921pt.
-<figs/latency_breakdown.pdf, id=3719, 362.54507pt x 254.02415pt>
+<figs/latency_breakdown.pdf, id=4287, 362.54507pt x 254.02415pt>
 File: figs/latency_breakdown.pdf Graphic file (type pdf)
 <use figs/latency_breakdown.pdf>
 Package pdftex.def Info: figs/latency_breakdown.pdf  used on input line 88.
 (pdftex.def)             Requested size: 245.82962pt x 172.24962pt.
-<figs/detection_heatmap.pdf, id=3720, 550.9432pt x 380.144pt>
+<figs/detection_heatmap.pdf, id=4288, 550.9432pt x 380.144pt>
 File: figs/detection_heatmap.pdf Graphic file (type pdf)
 <use figs/detection_heatmap.pdf>
 Package pdftex.def Info: figs/detection_heatmap.pdf  used on input line 95.
 (pdftex.def)             Requested size: 245.82962pt x 169.61888pt.
-[30 <./figs/conf_vs_alt.pdf> <./figs/det_vs_speed.pdf> <./figs/latency_breakdow
-n.pdf> <./figs/detection_heatmap.pdf>]) [31] [32] [33] [34]
-(sections/A1_state_table.tex
-<figs/state_machine_full.pdf, id=4092, 973.76273pt x 863.3819pt>
+<figs/detection_montage.pdf, id=4289, 875.67152pt x 658.00113pt>
+File: figs/detection_montage.pdf Graphic file (type pdf)
+<use figs/detection_montage.pdf>
+Package pdftex.def Info: figs/detection_montage.pdf  used on input line 105.
+(pdftex.def)             Requested size: 512.14963pt x 384.8538pt.
+
+Overfull \vbox (211.47136pt too high) has occurred while \output is active []
+
+
+[34 <./figs/mission_timeline.pdf> <./figs/conf_vs_alt.pdf> <./figs/det_vs_speed
+.pdf> <./figs/latency_breakdown.pdf> <./figs/detection_heatmap.pdf>] [35 <./fig
+s/detection_montage.pdf>]
+Underfull \hbox (badness 10000) in paragraph at lines 149--149
+[]|\OT1/lmr/m/n/9 (+20) YOLOv8n
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 151--151
+[]|\OT1/lmr/m/n/9 (+20) YOLOv3-
+ []
+
+
+Overfull \hbox (3.4393pt too wide) in paragraph at lines 152--152
+[]|\OT1/lmr/m/n/9 (-20) Drones+YOLO [[][]32[][]]| 
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 153--153
+[]|\OT1/lmr/m/n/9 (+20) Companion
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 153--153
+[]|\OT1/lmr/m/n/9 (+20) Custom
+ []
+
+<figs/radar_comparison.pdf, id=4650, 488.07156pt x 455.84062pt>
+File: figs/radar_comparison.pdf Graphic file (type pdf)
+<use figs/radar_comparison.pdf>
+Package pdftex.def Info: figs/radar_comparison.pdf  used on input line 164.
+(pdftex.def)             Requested size: 358.50317pt x 334.83365pt.
+[36 <./figs/radar_comparison.pdf>]
+
+LaTeX Warning: Reference `sec:autonomy-level' on page 37 undefined on input lin
+e 186.
+
+[37]) [38] [39] [40] [41] (sections/A1_state_table.tex
+<figs/state_machine_full.pdf, id=4876, 973.76273pt x 863.3819pt>
 File: figs/state_machine_full.pdf Graphic file (type pdf)
 <use figs/state_machine_full.pdf>
 Package pdftex.def Info: figs/state_machine_full.pdf  used on input line 14.
@@ -2471,160 +2630,380 @@ Underfull \hbox (badness 10000) in paragraph at lines 228--228
 []|\OT1/lmr/m/n/9 (+20) Mission com-plete,
  []
 
-ignored error: Infinite glue shrinkage found in box being split [35 <./figs/sta
+ignored error: Infinite glue shrinkage found in box being split [42 <./figs/sta
 te_machine_full.pdf>]
-ignored error: Infinite glue shrinkage found in box being split [36])
-(sections/A2_config_params.tex [37]
-Overfull \hbox (66.20601pt too wide) in paragraph at lines 14--82
+ignored error: Infinite glue shrinkage found in box being split [43])
+(sections/A2_config_params.tex [44]
+Overfull \hbox (66.20595pt too wide) in paragraph at lines 14--82
  [][] 
  []
 
-) (sections/12_model_training.tex [38] [39]
-<figs/training_curves.pdf, id=4276, 569.997pt x 316.75526pt>
+) (sections/12_model_training.tex [45] [46]
+<figs/training_curves.pdf, id=5060, 569.997pt x 316.75526pt>
 File: figs/training_curves.pdf Graphic file (type pdf)
 <use figs/training_curves.pdf>
 Package pdftex.def Info: figs/training_curves.pdf  used on input line 151.
 (pdftex.def)             Requested size: 435.3303pt x 241.93031pt.
-<figs/confusion_matrix.pdf, id=4278, 471.25906pt x 351.91475pt>
+<figs/confusion_matrix.pdf, id=5062, 471.25906pt x 351.91475pt>
 File: figs/confusion_matrix.pdf Graphic file (type pdf)
 <use figs/confusion_matrix.pdf>
 Package pdftex.def Info: figs/confusion_matrix.pdf  used on input line 176.
 (pdftex.def)             Requested size: 435.3303pt x 325.08646pt.
- [40 <./figs/training_curves.pdf>]
-[41 <./figs/confusion_matrix.pdf>]) (sections/13_safety_risk.tex [42]
-Overfull \hbox (33.8198pt too wide) in paragraph at lines 16--17
-[]\OT1/lmr/bx/n/10 (-20) Hard bound-ary cut-off. \OT1/lmr/m/n/10 (-20) If the a
-ir-craft's GPS po-si-tion falls in-side the SSSI poly-gon (or within \OT1/lmtt/
-m/n/10 NFZ[]HARD[]BOUNDARY[]M\OT1/lmr/m/n/10 (-20) =3m
+ [47 <./figs/training_curves.pdf>]
+[48 <./figs/confusion_matrix.pdf>]) (sections/13_safety_risk.tex [49]
+Underfull \hbox (badness 3679) in paragraph at lines 41--41
+[]|\OT1/lmr/m/n/9 (+20) Pre-flight in-spec-tion; RC kill
  []
 
 
-Underfull \hbox (badness 7012) in paragraph at lines 38--39
-\OT1/lmr/m/n/9 (+20) GCS fail-safe (\OT1/lmtt/m/n/9 FS[]GCS[]ENABLE\OT1/lmr/m/n
-/9 (+20) ) pro-vides
+Underfull \hbox (badness 2205) in paragraph at lines 42--42
+[]|\OT1/lmr/m/n/9 (+20) Five-layer ge-ofence (Sec. [][]D.2[][]):
  []
 
 
-Underfull \hbox (badness 4266) in paragraph at lines 39--39
-[]|\OT1/lmr/m/n/9 (+20) Throttle PWM be-low
+Underfull \hbox (badness 1694) in paragraph at lines 43--43
+\OT1/lmtt/m/n/9 FS[]BATT[]ENABLE \OT1/lmr/m/n/9 (+20) RTL/LAND at
  []
 
 
-Underfull \hbox (badness 1231) in paragraph at lines 39--40
-[]|\OT1/lmr/m/n/9 (+20) ArduCopter RC fail-safe (\OT1/lmtt/m/n/9 FS[]THR[]ENABL
-E\OT1/lmr/m/n/9 (+20) )
+Underfull \hbox (badness 2707) in paragraph at lines 44--44
+[]|\OT1/lmr/m/n/9 (+20) Dual link (RC + MAVProxy
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 43--43
-[]|\OT1/lmtt/m/n/9 cv2.pointPolygonTest
- []
-
-[43]
-Underfull \hbox (badness 3219) in paragraph at lines 87--87
-[]|\OT1/lmr/m/n/9 (+20) Autopilot hard-ware
+Underfull \hbox (badness 2073) in paragraph at lines 44--44
+\OT1/lmr/m/n/9 (+20) UDP); \OT1/lmtt/m/n/9 FS[]GCS[]ENABLE \OT1/lmr/m/n/9 (+20)
+ RTL on
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 89--89
-[]|\OT1/lmr/m/n/9 (+20) Battery de-ple-tion
+Underfull \hbox (badness 10000) in paragraph at lines 46--46
+[]|\OT1/lmr/m/n/9 (+20) Multi-pass spa-tial clus-ter-ing;
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 92--92
-[]|\OT1/lmr/m/n/9 (+20) GPS drift causes
+Underfull \hbox (badness 10000) in paragraph at lines 47--47
+\OT1/lmr/m/n/9 (+20) tar-gets; SMART consecutive-
  []
 
 
-Underfull \hbox (badness 2393) in paragraph at lines 94--94
-[]|\OT1/lmr/m/n/9 (+20) High wind ex-ceeds
+Underfull \hbox (badness 3701) in paragraph at lines 48--48
+\OT1/lmtt/m/n/9 LOITER \OT1/lmr/m/n/9 (+20) station-hold; pre-flight
  []
 
 
-Underfull \hbox (badness 5064) in paragraph at lines 95--95
-[]|\OT1/lmr/m/n/9 (+20) Camera/CV fail-ure
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+\OT1/lmr/m/n/9 (+20) all \OT1/lmtt/m/n/9 send[]global[]target \OT1/lmr/m/n/9 (+
+20) calls
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 96--96
-[]|\OT1/lmr/m/n/9 (+20) Regulatory non-
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+\OT1/lmr/m/n/9 (+20) clamped; \OT1/lmtt/m/n/9 config.py \OT1/lmr/m/n/9 (+20) re
+-jects
  []
 
-) (sections/10_testing.tex [44] [45]
-<figs/testing_coverage.pdf, id=4520, 640.37743pt x 351.00548pt>
+LaTeX Font Info:    Trying to load font information for OMS+lmr on input line 5
+1.
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/lm\omslmr.fd
+File: omslmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
+)
+LaTeX Font Info:    Font shape `OMS/lmr/m/n' in size <9> not available
+(Font)              Font shape `OMS/lmsy/m/n' tried instead on input line 51.
+<figs/geofence_layers.pdf, id=5274, 606.87292pt x 569.4632pt>
+File: figs/geofence_layers.pdf Graphic file (type pdf)
+<use figs/geofence_layers.pdf>
+Package pdftex.def Info: figs/geofence_layers.pdf  used on input line 80.
+(pdftex.def)             Requested size: 435.3303pt x 408.50993pt.
+
+[50]
+Underfull \hbox (badness 1168) in paragraph at lines 102--102
+[]|\OT1/lmr/m/n/9 (+20) Search com-pletes with-out de-tec-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 103--103
+[]|\OT1/lmr/m/n/9 (+20) GPS degra-da-
+ []
+
+
+Underfull \hbox (badness 7925) in paragraph at lines 104--104
+[]|\OT1/lmr/m/n/9 (+20) MAVLink link
+ []
+
+
+Underfull \hbox (badness 6641) in paragraph at lines 104--104
+[]|\OT1/lmtt/m/n/9 recv[]match \OT1/lmr/m/n/9 (+20) ex-cep-
+ []
+
+
+Underfull \hbox (badness 3735) in paragraph at lines 104--104
+[]|\OT1/lmr/m/n/9 (+20) Emergency RTL; \OT1/lmtt/m/n/9 FS[]GCS[]ENABLE
+ []
+
+
+Underfull \hbox (badness 2608) in paragraph at lines 105--105
+[]|\OT1/lmr/m/n/9 (+20) ArduCopter \OT1/lmtt/m/n/9 FS[]THR[]ENABLE \OT1/lmr/m/n
+/9 (+20) RTL
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 106--106
+[]|\OT1/lmr/m/n/9 (+20) ArduCopter \OT1/lmtt/m/n/9 FS[]BATT[]ENABLE
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 107--107
+[]|\OT1/lmr/m/n/9 (+20) Heartbeat stream
+ []
+
+
+Underfull \hbox (badness 3690) in paragraph at lines 107--107
+[]|\OT1/lmr/m/n/9 (+20) ArduCopter GCS fail-safe RTL;
+ []
+
+
+Underfull \hbox (badness 3189) in paragraph at lines 108--108
+[]|\OT1/lmr/m/n/9 (+20) Operator time-
+ []
+
+
+Underfull \hbox (badness 1983) in paragraph at lines 108--108
+[]|\OT1/lmr/m/n/9 (+20) Target auto-rejected; search re-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 109--109
+[]|\OT1/lmtt/m/n/9 pointPolygonTest
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 110--110
+[]|\OT1/lmr/m/n/9 (+20) Flight area
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 110--110
+[]|\OT1/lmtt/m/n/9 pointPolygonTest
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 110--110
+[]|\OT1/lmr/m/n/9 (+20) Immediate RTL via
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 111--111
+[]|\OT1/lmr/m/n/9 (+20) Force dis-arm via
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 112--112
+[]|\OT1/lmtt/m/n/9 custom[]mode $\OMS/lmsy/m/n/9 6\OT1/lmr/m/n/9 (+20) =$
+ []
+
+[51 <./figs/geofence_layers.pdf>]
+Underfull \hbox (badness 10000) in paragraph at lines 160--161
+\OT1/lmr/m/n/9 (+20) auto-disarm be-
+ []
+
+
+Underfull \hbox (badness 1215) in paragraph at lines 164--165
+[]|\OT1/lmr/m/n/9 (+20) R6: GPS ac-cu-
+ []
+
+
+Underfull \hbox (badness 3240) in paragraph at lines 166--167
+[]|\OT1/lmr/m/n/9 (+20) LL-04: cor-rupt
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 166--167
+\OT1/lmr/m/n/9 (+20) file man-gles
+ []
+
+
+Underfull \hbox (badness 2088) in paragraph at lines 167--168
+[]|\OT1/lmr/m/n/9 (+20) LL-07: py-se-rial
+ []
+
+
+Underfull \hbox (badness 1394) in paragraph at lines 169--170
+[]|\OT1/lmr/m/n/9 (+20) R5: third-party
+ []
+
+
+Underfull \hbox (badness 1281) in paragraph at lines 189--189
+[]|\OT1/lmr/m/n/9 (+20) Drone crash from mode
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 189--189
+[]|\OT1/lmr/m/n/9 (+20) Software sent
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 189--189
+\OT1/lmtt/m/n/9 SET[]MODE(GUIDED) \OT1/lmr/m/n/9 (+20) while
+ []
+
+
+Underfull \hbox (badness 6396) in paragraph at lines 189--189
+\OT1/lmr/m/n/9 (+20) RC set to \OT1/lmtt/m/n/9 LOITER\OT1/lmr/m/n/9 (+20) ; Ar-
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 189--190
+[]|\OT1/lmr/m/n/9 (+20) RC over-ride guard:
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 189--190
+\OT1/lmr/m/n/9 (+20) sup-press all com-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 189--190
+\OT1/lmr/m/n/9 (+20) mands if mode $\OMS/lmsy/m/n/9 6\OT1/lmr/m/n/9 (+20) =$
+ []
+
+
+Underfull \hbox (badness 5189) in paragraph at lines 190--190
+[]|\OT1/lmr/m/n/9 (+20) TFLite out-put pixel co-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 190--191
+[]|\OT1/lmr/m/n/9 (+20) Auto-detect via
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 190--191
+\OT1/lmtt/m/n/9 PIXEL[]COORD[]THRESHOLD
+ []
+
+
+Underfull \hbox (badness 1603) in paragraph at lines 190--191
+\OT1/lmtt/m/n/9 = 1.5\OT1/lmr/m/n/9 (+20) ; same logic for
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 191--191
+[]|\OT1/lmr/m/n/9 (+20) Corrupt 0-byte
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 191--191
+\OT1/lmtt/m/n/9 calibration[]data.npz\OT1/lmr/m/n/9 (+20) ;
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 191--192
+[]|\OT1/lmr/m/n/9 (+20) Size check at load;
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 191--192
+\OT1/lmtt/m/n/9 UNDISTORT[]ENABLED =
+ []
+
+
+Underfull \hbox (badness 1533) in paragraph at lines 192--192
+[]|\OT1/lmtt/m/n/9 DISARM[]DELAY \OT1/lmr/m/n/9 (+20) de-fault 10s;
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 192--193
+[]|\OT1/lmtt/m/n/9 DISARM[]DELAY = 0 \OT1/lmr/m/n/9 (+20) in
+ []
+
+[52]) (sections/10_testing.tex [53] [54]
+<figs/testing_coverage.pdf, id=5417, 640.37743pt x 351.00548pt>
 File: figs/testing_coverage.pdf Graphic file (type pdf)
 <use figs/testing_coverage.pdf>
-Package pdftex.def Info: figs/testing_coverage.pdf  used on input line 70.
+Package pdftex.def Info: figs/testing_coverage.pdf  used on input line 91.
 (pdftex.def)             Requested size: 435.3303pt x 238.61093pt.
- [46 <./figs/testing_coverage.pdf>]
-[47] [48] [49]) (sections/11_field_results.tex [50] [51]) [52]
-(sections/14_future_work.tex [53]) (sections/inference_architecture.tex
-[54]
+ [55 <./figs/testing_coverage.pdf>]
+[56] [57] [58] [59]) (sections/11_field_results.tex [60] [61] [62])
+(sections/14_future_work.tex [63]) [64] (sections/inference_architecture.tex
+[65]
 Overfull \hbox (41.09068pt too wide) in paragraph at lines 53--54
 \OT1/lmr/m/n/10 (-20) NPACK del-e-gate sup-ports trans-par-ent FP16 ex-e-cu-tio
 n of FP32 mod-els via the \OT1/lmtt/m/n/10 TFLITE[]XNNPACK[]DELEGATE[]FLAG[]FOR
 CE[]FP16
  []
 
-[55] [56]
-<figs/benchmark_comparison.pdf, id=4757, 715.4611pt x 388.22917pt>
+[66]
+<figs/benchmark_comparison.pdf, id=5670, 715.4611pt x 388.22917pt>
 File: figs/benchmark_comparison.pdf Graphic file (type pdf)
 <use figs/benchmark_comparison.pdf>
 Package pdftex.def Info: figs/benchmark_comparison.pdf  used on input line 122.
 
 (pdftex.def)             Requested size: 435.3303pt x 236.22705pt.
-) (sections/cv_extended.tex [57 <./figs/benchmark_comparison.pdf>]
-[58] [59{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-m
-athex.enc}]
-Overfull \hbox (36.0382pt too wide) in paragraph at lines 208--225
+) [67 <./figs/benchmark_comparison.pdf>] (sections/cv_extended.tex [68]
+<figs/vision_pipeline.pdf, id=5782, 814.3197pt x 354.12299pt>
+File: figs/vision_pipeline.pdf Graphic file (type pdf)
+<use figs/vision_pipeline.pdf>
+Package pdftex.def Info: figs/vision_pipeline.pdf  used on input line 75.
+(pdftex.def)             Requested size: 512.14963pt x 222.715pt.
+
+[69 <./figs/vision_pipeline.pdf>] [70{C:/Users/Bristol/AppData/Local/Programs/M
+iKTeX/fonts/enc/dvips/lm/lm-mathex.enc}]
+<figs/gsd_altitude.pdf, id=5958, 855.78558pt x 364.70203pt>
+File: figs/gsd_altitude.pdf Graphic file (type pdf)
+<use figs/gsd_altitude.pdf>
+Package pdftex.def Info: figs/gsd_altitude.pdf  used on input line 201.
+(pdftex.def)             Requested size: 409.72125pt x 174.60423pt.
+
+Overfull \hbox (36.0381pt too wide) in paragraph at lines 222--239
  [][] 
  []
 
-<figs/altitude_detection_table.pdf, id=4886, 783.79636pt x 334.37234pt>
+<figs/altitude_detection_table.pdf, id=5961, 783.79636pt x 334.37234pt>
 File: figs/altitude_detection_table.pdf Graphic file (type pdf)
 <use figs/altitude_detection_table.pdf>
 Package pdftex.def Info: figs/altitude_detection_table.pdf  used on input line 
-229.
+243.
 (pdftex.def)             Requested size: 435.3303pt x 185.7166pt.
+[71 <./figs/gsd_altitude.pdf> <./figs/altitude_detection_table.pdf>]
 File: figs/conf_vs_alt.pdf Graphic file (type pdf)
 <use figs/conf_vs_alt.pdf>
-Package pdftex.def Info: figs/conf_vs_alt.pdf  used on input line 242.
+Package pdftex.def Info: figs/conf_vs_alt.pdf  used on input line 256.
 (pdftex.def)             Requested size: 384.11221pt x 274.13704pt.
-[60]
-<figs/detection_envelope.pdf, id=4902, 571.09987pt x 354.0703pt>
+<figs/detection_envelope.pdf, id=6190, 571.09987pt x 354.0703pt>
 File: figs/detection_envelope.pdf Graphic file (type pdf)
 <use figs/detection_envelope.pdf>
-Package pdftex.def Info: figs/detection_envelope.pdf  used on input line 252.
+Package pdftex.def Info: figs/detection_envelope.pdf  used on input line 266.
 (pdftex.def)             Requested size: 435.3303pt x 269.89581pt.
- [61 <./figs/altitude_detection_table.pdf>] [62 <./figs/detection_envelope.pdf>
-]
+ [72]
+[73 <./figs/detection_envelope.pdf>]
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/listings\lstlang1.sty
 File: lstlang1.sty 2025/11/14 1.11b listings language file
 )
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/listings\lstlang1.sty
 File: lstlang1.sty 2025/11/14 1.11b listings language file
 )
-<figs/blur_vs_altitude.pdf, id=5120, 788.11186pt x 357.6005pt>
+<figs/blur_vs_altitude.pdf, id=6328, 788.11186pt x 357.6005pt>
 File: figs/blur_vs_altitude.pdf Graphic file (type pdf)
 <use figs/blur_vs_altitude.pdf>
-Package pdftex.def Info: figs/blur_vs_altitude.pdf  used on input line 372.
+Package pdftex.def Info: figs/blur_vs_altitude.pdf  used on input line 386.
 (pdftex.def)             Requested size: 435.3303pt x 197.53209pt.
- [63]
 File: figs/det_vs_speed.pdf Graphic file (type pdf)
 <use figs/det_vs_speed.pdf>
-Package pdftex.def Info: figs/det_vs_speed.pdf  used on input line 379.
+Package pdftex.def Info: figs/det_vs_speed.pdf  used on input line 393.
 (pdftex.def)             Requested size: 384.11221pt x 271.75075pt.
 File: figs/latency_breakdown.pdf Graphic file (type pdf)
 <use figs/latency_breakdown.pdf>
-Package pdftex.def Info: figs/latency_breakdown.pdf  used on input line 394.
+Package pdftex.def Info: figs/latency_breakdown.pdf  used on input line 408.
 (pdftex.def)             Requested size: 332.89412pt x 233.25542pt.
- [64 <./figs/blur_vs_altitude.pdf>]) (sections/streaming_architecture.tex [65] 
-[66] [67]) (sections/gps_estimation_deep.tex
-Overfull \hbox (20.75267pt too wide) in paragraph at lines 56--66
+ [74]) (sections/streaming_architecture.tex [75 <./figs/blur_vs_altitude.pdf>] 
+[76] [77]) (sections/gps_estimation_deep.tex [78]
+Overfull \hbox (20.7526pt too wide) in paragraph at lines 56--66
  [][] 
  []
 
-[68]
+[79]
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendlayer/t
 ikz/libraries\tikzlibraryshapes.geometric.code.tex
 File: tikzlibraryshapes.geometric.code.tex 2025-08-29 v3.1.11a (3.1.11a)
@@ -2660,7 +3039,7 @@ File: tikzlibrarycalc.code.tex 2025-08-29 v3.1.11a (3.1.11a)
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendlayer/t
 ikz/libraries\tikzlibraryfit.code.tex
 File: tikzlibraryfit.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-) [69] [70]
+) [80] [81]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
 (hyperref)                removing `\leavevmode@ifvmode' on input line 234.
@@ -2670,21 +3049,21 @@ Package hyperref Warning: Token not allowed in a PDF string (Unicode):
 (hyperref)                \kern 1.66702pt
 (hyperref)                removed on input line 234.
 
-[71]
-<figs/error_waterfall.pdf, id=5331, 715.03262pt x 390.46742pt>
+[82]
+<figs/error_waterfall.pdf, id=6539, 715.03262pt x 390.46742pt>
 File: figs/error_waterfall.pdf Graphic file (type pdf)
 <use figs/error_waterfall.pdf>
 Package pdftex.def Info: figs/error_waterfall.pdf  used on input line 305.
 (pdftex.def)             Requested size: 435.3303pt x 237.73196pt.
- [72 <./figs/error_waterfall.pdf>] [73] [74] [75]
-<figs/attitude_compensation.pdf, id=5512, 702.20938pt x 356.91718pt>
+ [83 <./figs/error_waterfall.pdf>] [84] [85] [86]
+<figs/attitude_compensation.pdf, id=6720, 702.20938pt x 356.91718pt>
 File: figs/attitude_compensation.pdf Graphic file (type pdf)
 <use figs/attitude_compensation.pdf>
 Package pdftex.def Info: figs/attitude_compensation.pdf  used on input line 633
 .
 (pdftex.def)             Requested size: 435.3303pt x 221.27002pt.
- [76 <./figs/attitude_compensation.pdf>] [77] [78] [79] [80] [81] [82] [83] [84
-] [85] [86]
+ [87 <./figs/attitude_compensation.pdf>] [88] [89] [90] [91] [92] [93] [94] [95
+] [96] [97]
 Underfull \hbox (badness 1931) in paragraph at lines 1353--1353
 []|\OT1/lmr/m/n/10 (+20) Moving at $5$$m s[]$,
  []
@@ -2735,18 +3114,18 @@ Underfull \hbox (badness 10000) in paragraph at lines 1359--1360
  []
 
 
-Overfull \hbox (12.8009pt too wide) in paragraph at lines 1349--1364
+Overfull \hbox (12.80084pt too wide) in paragraph at lines 1349--1364
  [][] 
  []
 
-[87]
-<figs/progressive_accuracy.pdf, id=5798, 570.86462pt x 296.07526pt>
+[98]
+<figs/progressive_accuracy.pdf, id=7006, 570.86462pt x 296.07526pt>
 File: figs/progressive_accuracy.pdf Graphic file (type pdf)
 <use figs/progressive_accuracy.pdf>
 Package pdftex.def Info: figs/progressive_accuracy.pdf  used on input line 1487
 .
 (pdftex.def)             Requested size: 435.3303pt x 225.78754pt.
- [88 <./figs/progressive_accuracy.pdf>] [89] [90] [91] [92] [93]
+ [99 <./figs/progressive_accuracy.pdf>] [100] [101] [102] [103] [104]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
 (hyperref)                removing `math shift' on input line 1911.
@@ -2761,7 +3140,7 @@ Package hyperref Warning: Token not allowed in a PDF string (Unicode):
 
 Package pgfplots info on input line 1939: Using 'lua backend=false' for axis: x
  coord trafo unsupported.
-[94] [95] [96] [97] [98]) (sections/testing_deep.tex [99] [100] [101]
+[105] [106] [107] [108] [109]) (sections/testing_deep.tex [110] [111] [112]
 Underfull \hbox (badness 1721) in paragraph at lines 141--141
 []|\OT1/lmr/m/n/9 (+20) Geofence sign con-ven-tion in-
  []
@@ -2791,156 +3170,185 @@ Underfull \hbox (badness 3219) in paragraph at lines 163--164
 []|\OT1/lmr/m/n/9 (+20) Crash on first de-tec-tion in
  []
 
-[102]) (sections/field_day_narrative.tex [103] [104] [105] [106])
-(sections/contingency.tex [107]
+[113]) (sections/field_day_narrative.tex [114] [115] [116] [117]
+Underfull \hbox (badness 2512) in paragraph at lines 194--194
+[]|\OT1/lmr/m/n/9 (+20) Three-terminal work-
+ []
+
+[118] [119]) (sections/contingency.tex
 Overfull \hbox (60.4425pt too wide) in paragraph at lines 64--65
 []\OT1/lmr/bx/n/10 (-20) NCNN in-fer-ence back-end. \OT1/lmr/m/n/10 (-20) The N
 CNN ex-port of the re-trained YOLOv8n model is avail-able in \OT1/lmtt/m/n/10 c
 v[]models/sar[]v2[]1088/ncnn/
  []
 
-[108]
-Underfull \hbox (badness 5832) in paragraph at lines 126--126
+[120]
+Underfull \hbox (badness 5832) in paragraph at lines 129--129
 []|\OT1/lmr/m/n/9 (+20) Pi crashes mid-
  []
 
 
-Underfull \hbox (badness 7667) in paragraph at lines 126--126
+Underfull \hbox (badness 7667) in paragraph at lines 129--129
 []|\OT1/lmr/m/n/9 (+20) Sustained $\OML/lmm/m/it/9 >$$\OT1/lmr/m/n/9 (+20) 8$$m
  s[]$
  []
 
 
-Underfull \hbox (badness 1009) in paragraph at lines 126--126
+Underfull \hbox (badness 1009) in paragraph at lines 129--129
 []|\OT1/lmr/m/n/9 (+20) ArduCopter volt-age
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 126--126
+Underfull \hbox (badness 10000) in paragraph at lines 129--129
+[]|\OT1/lmr/m/n/9 (+20) Camera fail-ure
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 129--129
 []|\OT1/lmr/m/n/9 (+20) Model swapped
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 126--126
+Underfull \hbox (badness 10000) in paragraph at lines 129--129
 []|\OT1/lmr/m/n/9 (+20) TFLite in-ter-preter
  []
 
 
-Underfull \hbox (badness 1622) in paragraph at lines 126--126
-[]|\OT1/lmr/m/n/9 (+20) Geofence mis-con-
+Underfull \hbox (badness 2343) in paragraph at lines 129--129
+[]|\OT1/lmr/m/n/9 (+20) No heart-beat af-ter
  []
 
 
-Overfull \hbox (22.8562pt too wide) in paragraph at lines 149--149
+Underfull \hbox (badness 10000) in paragraph at lines 129--129
+[]|\OT1/lmr/m/n/9 (+20) State ma-chine
+ []
+
+
+Underfull \hbox (badness 1622) in paragraph at lines 129--129
+[]|\OT1/lmr/m/n/9 (+20) Geofence mis-con-
+ []
+
+[121] [122]
+Underfull \hbox (badness 2894) in paragraph at lines 208--208
+\OT1/lmr/m/n/9 (+20) com-pletes, air-craft re-turns
+ []
+
+
+Underfull \hbox (badness 4132) in paragraph at lines 208--208
+[]|\OT1/lmr/m/n/9 (+20) Pilot has di-rect RC; Ar-
+ []
+
+
+Overfull \hbox (22.8562pt too wide) in paragraph at lines 233--233
 []|\OT1/lmtt/m/n/9 tests/hardware/gps[]health.py| 
  []
 
 
-Overfull \hbox (19.45421pt too wide) in paragraph at lines 149--149
+Overfull \hbox (19.45421pt too wide) in paragraph at lines 233--233
 []|\OT1/lmtt/m/n/9 tests/hardware/benchmark.py| 
  []
 
 
-Overfull \hbox (40.43317pt too wide) in paragraph at lines 149--149
+Overfull \hbox (40.43317pt too wide) in paragraph at lines 233--233
 []|\OT1/lmtt/m/n/9 tests/flight/1[]passive[]flight.py| 
  []
 
 
-Overfull \hbox (46.48116pt too wide) in paragraph at lines 149--149
+Overfull \hbox (46.48116pt too wide) in paragraph at lines 233--233
 []|\OT1/lmtt/m/n/9 tests/diagnostics/cube[]monitor.py| 
  []
 
 
-Overfull \hbox (82.95808pt too wide) in paragraph at lines 149--149
+Overfull \hbox (82.95808pt too wide) in paragraph at lines 233--233
 []|\OT1/lmtt/m/n/9 tests/hardware/detection[]snapshot[]test.py| 
  []
 
-) (sections/test_scripts_guide.tex [109]
-Underfull \hbox (badness 10000) in paragraph at lines 73--73
+) (sections/test_scripts_guide.tex [123] [124]
+Underfull \hbox (badness 10000) in paragraph at lines 75--75
 []|\OT1/lmr/m/n/9 (+20) GPS di-ag-nos-tics: satel-lite count, fix type
  []
 
 
-Underfull \hbox (badness 3118) in paragraph at lines 73--73
+Underfull \hbox (badness 3118) in paragraph at lines 75--75
 \OT1/lmr/m/n/9 (+20) (2D/3D/DGPS), HDOP, po-si-tion, and time-to-
  []
 
-[110]
-Underfull \hbox (badness 10000) in paragraph at lines 108--109
+[125]
+Underfull \hbox (badness 10000) in paragraph at lines 110--111
 []|\OT1/lmtt/m/n/9 calibration[]data.npz
  []
 
-[111]
-Underfull \hbox (badness 1596) in paragraph at lines 135--135
+[126]
+Underfull \hbox (badness 1596) in paragraph at lines 137--137
 \OT1/lmr/m/n/9 (+20) hov-ers sta-tion-ary, com-put-ing
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 137--137
+Underfull \hbox (badness 10000) in paragraph at lines 139--139
 []|\OT1/lmr/m/n/9 (+20) Benchmarks all avail-able
  []
 
 
-Underfull \hbox (badness 4569) in paragraph at lines 137--137
+Underfull \hbox (badness 4569) in paragraph at lines 139--139
 \OT1/lmtt/m/n/9 .tflite \OT1/lmr/m/n/9 (+20) mod-els side-by-side:
  []
 
 
-Underfull \hbox (badness 1226) in paragraph at lines 139--139
+Underfull \hbox (badness 1226) in paragraph at lines 141--141
 []|\OT1/lmr/m/n/9 (+20) General-purpose flight log-ger:
  []
 
-[112]
-Underfull \hbox (badness 10000) in paragraph at lines 173--174
+
+Underfull \hbox (badness 10000) in paragraph at lines 175--176
 []|\OT1/lmr/m/n/9 (+20) fov[]calibrate,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 173--174
+Underfull \hbox (badness 10000) in paragraph at lines 175--176
 \OT1/lmr/m/n/9 (+20) lens[]calibrate,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 175--176
+Underfull \hbox (badness 10000) in paragraph at lines 177--178
 []|\OT1/lmr/m/n/9 (+20) cube[]commands,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 175--176
+Underfull \hbox (badness 10000) in paragraph at lines 177--178
 \OT1/lmr/m/n/9 (+20) bench[]mission, feed-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 181--182
+Underfull \hbox (badness 10000) in paragraph at lines 183--184
 []|\OT1/lmr/m/n/9 (+20) auto[]detect, de-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 183--183
+Underfull \hbox (badness 10000) in paragraph at lines 185--185
 []|\OT1/lmr/m/n/9 (+20) Detection rate vs. al-ti-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 183--183
+Underfull \hbox (badness 10000) in paragraph at lines 185--185
 \OT1/lmr/m/n/9 (+20) tude/speed; GPS ac-cu-racy;
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 183--184
+Underfull \hbox (badness 10000) in paragraph at lines 185--186
 []|\OT1/lmr/m/n/9 (+20) altitude[]sweep,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 187--188
+Underfull \hbox (badness 10000) in paragraph at lines 189--190
 []|\OT1/lmr/m/n/9 (+20) video[]test,
  []
 
-[113]
-Underfull \hbox (badness 10000) in paragraph at lines 221--221
+[127]
+Underfull \hbox (badness 10000) in paragraph at lines 223--223
 []|\OT1/lmr/m/n/9 (+20) AUTO pat-tern + AI-triggered
  []
 
-) [114] (sections/calibration_deep.tex
+) [128] (sections/calibration_deep.tex
 Overfull \hbox (53.51639pt too wide) in paragraph at lines 43--44
 \OT1/lmr/m/n/10 (-20) 13 \OMS/lmsy/m/n/10 ^^B \OT1/lmr/m/n/10 (-20) 8$ in-ner c
 or-ners). Ap-prox-i-mately 20 im-ages were cap-tured at vary-ing ori-en-ta-tion
@@ -2948,7 +3356,7 @@ s us-ing \OT1/lmtt/m/n/10 tests/calibration/lens[]calibrate.py\OT1/lmr/m/n/10 (
 -20) ,
  []
 
-[115] [116]
+[129] [130]
 Underfull \hbox (badness 10000) in paragraph at lines 107--107
 []|\OT1/lmr/m/n/10 (+20) Focal length
  []
@@ -2971,18 +3379,18 @@ an-tenna, known ref-er-ence po-si-tion (e.g. the des-ig-nated Take-Off Lo-ca-ti
 on at 51.423406\TS1/lmr/m/n/10 (-20) °\OT1/lmr/m/n/10 (-20) N,
  []
 
-[117]) (sections/simulation_validation.tex
-Overfull \hbox (44.07799pt too wide) in paragraph at lines 15--33
+[131]) (sections/simulation_validation.tex
+Overfull \hbox (44.07791pt too wide) in paragraph at lines 15--33
  [][] 
  []
 
-[118] [119] [120]) [121] (sections/mission_flow.tex [122] [123] [124])
-(sections/centering_analysis.tex [125]
-Overfull \hbox (1.19736pt too wide) in paragraph at lines 63--71
+[132] [133] [134]) [135] (sections/mission_flow.tex [136] [137] [138] [139]
+[140] [141]) (sections/centering_analysis.tex [142]
+Overfull \hbox (1.19728pt too wide) in paragraph at lines 63--71
  [][] 
  []
 
-[126] [127]
+[143] [144]
 Underfull \hbox (badness 10000) in paragraph at lines 159--160
 []|\OT1/lmr/m/n/10 (+20) Re-introduces GSD,
  []
@@ -2992,44 +3400,18 @@ Underfull \hbox (badness 4279) in paragraph at lines 159--160
 \OT1/lmr/m/n/10 (+20) focal-length, and yaw
  []
 
-) (sections/comms_architecture.tex [128] [129]) (sections/pipeline_fps.tex
-[130]
+) (sections/comms_architecture.tex [145] [146]) (sections/pipeline_fps.tex
+[147]
 Package pgfplots info on input line 79: Using 'lua backend=false' for axis: sta
 cked plots unsupported (yet).
 Package pgfplots info on input line 79: Using 'lua backend=false' for axis: x c
 oord trafo unsupported.
-) (sections/path_tradeoffs.tex [131] [132]) (sections/payload_release.tex
-[133]
+) (sections/path_tradeoffs.tex [148] [149]) [150]
+(sections/payload_release.tex
 LaTeX Font Info:    External font `lmex10' loaded for size
 (Font)              <12> on input line 28.
- [134]) (sections/model_comparison.tex [135] [136])
-(sections/search_optimization.tex [137]
-<figs/energy_efficiency.pdf, id=6523, 546.09808pt x 390.17519pt>
-File: figs/energy_efficiency.pdf Graphic file (type pdf)
-<use figs/energy_efficiency.pdf>
-Package pdftex.def Info: figs/energy_efficiency.pdf  used on input line 67.
-(pdftex.def)             Requested size: 435.3303pt x 311.0332pt.
-<figs/rotation_comparison.pdf, id=6524, 1004.2368pt x 382.12764pt>
-File: figs/rotation_comparison.pdf Graphic file (type pdf)
-<use figs/rotation_comparison.pdf>
-Package pdftex.def Info: figs/rotation_comparison.pdf  used on input line 95.
-(pdftex.def)             Requested size: 435.3303pt x 165.64693pt.
- [138 <./figs/energy_efficiency.pdf>]
-[139 <./figs/rotation_comparison.pdf>]
-<figs/nfz_margin_altitude.pdf, id=6715, 571.4587pt x 354.04019pt>
-File: figs/nfz_margin_altitude.pdf Graphic file (type pdf)
-<use figs/nfz_margin_altitude.pdf>
-Package pdftex.def Info: figs/nfz_margin_altitude.pdf  used on input line 165.
-(pdftex.def)             Requested size: 435.3303pt x 269.7108pt.
- [140 <./figs/nfz_margin_altitude.pdf>]
-<figs/speed_detection_energy.pdf, id=6834, 571.83449pt x 389.89288pt>
-File: figs/speed_detection_energy.pdf Graphic file (type pdf)
-<use figs/speed_detection_energy.pdf>
-Package pdftex.def Info: figs/speed_detection_energy.pdf  used on input line 20
-7.
-(pdftex.def)             Requested size: 435.3303pt x 296.82735pt.
-
-[141 <./figs/speed_detection_energy.pdf>]) (sections/focus_and_repulsive.tex
+ [151]) (sections/model_comparison.tex [152]
+[153]) (sections/focus_and_repulsive.tex
 LaTeX Font Info:    Trying to load font information for OMS+lmtt on input line 
 18.
 LaTeX Font Info:    No file OMSlmtt.fd. on input line 18.
@@ -3039,77 +3421,70 @@ LaTeX Font Warning: Font shape `OMS/lmtt/m/n' undefined
 (Font)              using `OMS/cmsy/m/n' instead
 (Font)              for symbol `textbraceleft' on input line 18.
 
+[154]
 Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on in
 put line 29.
-[142]
-Overfull \vbox (159.19595pt too high) has occurred while \output is active []
-
-
-[143]
+ [155]
 Overfull \hbox (28.2121pt too wide) in paragraph at lines 127--128
 [] []\OT1/lmr/bx/n/10 (-20) Di-rec-tional scalar field.[] \OT1/lmr/m/n/10 (-20)
  An al-ter-na-tive scalar field im-ple-men-ta-tion was also de-vel-oped (en-abl
 ed via the \OT1/lmtt/m/n/10 --nfz-directional
  []
 
-) (sections/path_optimization_definitive.tex [144]
-<figs/real_energy_heatmap.png, id=7003, 867.24pt x 578.16pt>
+) (sections/path_optimization_definitive.tex [156] [157]
+<figs/real_energy_heatmap.png, id=7847, 867.24pt x 578.16pt>
 File: figs/real_energy_heatmap.png Graphic file (type png)
 <use figs/real_energy_heatmap.png>
 Package pdftex.def Info: figs/real_energy_heatmap.png  used on input line 96.
 (pdftex.def)             Requested size: 450.69417pt x 300.46849pt.
-<figs/real_energy_vs_altitude.png, id=7007, 722.7pt x 505.89pt>
+<figs/real_energy_vs_altitude.png, id=7851, 722.7pt x 505.89pt>
 File: figs/real_energy_vs_altitude.png Graphic file (type png)
 <use figs/real_energy_vs_altitude.png>
 Package pdftex.def Info: figs/real_energy_vs_altitude.png  used on input line 1
 42.
 (pdftex.def)             Requested size: 450.69417pt x 315.48573pt.
- [145]
-<figs/real_path_patterns.png, id=7028, 1582.713pt x 738.1176pt>
+ [158 <./figs/real_energy_heatmap.png>]
+<figs/real_path_patterns.png, id=7868, 1582.713pt x 738.1176pt>
 File: figs/real_path_patterns.png Graphic file (type png)
 <use figs/real_path_patterns.png>
-Package pdftex.def Info: figs/real_path_patterns.png  used on input line 198.
+Package pdftex.def Info: figs/real_path_patterns.png  used on input line 200.
 (pdftex.def)             Requested size: 486.54057pt x 226.89941pt.
-<figs/top3_paths.pdf, id=7029, 1111.90283pt x 425.66428pt>
+<figs/top3_paths.pdf, id=7869, 1111.90283pt x 425.66428pt>
 File: figs/top3_paths.pdf Graphic file (type pdf)
 <use figs/top3_paths.pdf>
-Package pdftex.def Info: figs/top3_paths.pdf  used on input line 205.
+Package pdftex.def Info: figs/top3_paths.pdf  used on input line 207.
 (pdftex.def)             Requested size: 486.54057pt x 186.26013pt.
 
-Overfull \vbox (350.38388pt too high) has occurred while \output is active []
+Overfull \vbox (360.6764pt too high) has occurred while \output is active []
 
 
-[146 <./figs/real_energy_heatmap.png>] [147 <./figs/real_energy_vs_altitude.png
->]
-<figs/real_optimal_pattern.png, id=7063, 1156.32pt x 578.16pt>
+[159 <./figs/real_energy_vs_altitude.png> <./figs/real_path_patterns.png>]
+[160 <./figs/top3_paths.pdf>]
+<figs/real_optimal_pattern.png, id=8019, 1156.32pt x 578.16pt>
 File: figs/real_optimal_pattern.png Graphic file (type png)
 <use figs/real_optimal_pattern.png>
-Package pdftex.def Info: figs/real_optimal_pattern.png  used on input line 325.
+Package pdftex.def Info: figs/real_optimal_pattern.png  used on input line 327.
 
 (pdftex.def)             Requested size: 450.69417pt x 225.34033pt.
-<figs/pareto_2d_composite.pdf, id=7064, 568.41425pt x 437.38728pt>
+<figs/pareto_2d_composite.pdf, id=8020, 568.41425pt x 437.38728pt>
 File: figs/pareto_2d_composite.pdf Graphic file (type pdf)
 <use figs/pareto_2d_composite.pdf>
-Package pdftex.def Info: figs/pareto_2d_composite.pdf  used on input line 348.
+Package pdftex.def Info: figs/pareto_2d_composite.pdf  used on input line 350.
 (pdftex.def)             Requested size: 450.69417pt x 346.8069pt.
-<figs/altitude_tradeoff_dual.pdf, id=7065, 837.92926pt x 361.55928pt>
+<figs/altitude_tradeoff_dual.pdf, id=8021, 837.92926pt x 361.55928pt>
 File: figs/altitude_tradeoff_dual.pdf Graphic file (type pdf)
 <use figs/altitude_tradeoff_dual.pdf>
 Package pdftex.def Info: figs/altitude_tradeoff_dual.pdf  used on input line 35
-5.
+7.
 (pdftex.def)             Requested size: 450.69417pt x 194.47223pt.
-
-Overfull \vbox (501.10336pt too high) has occurred while \output is active []
-
-
-[148 <./figs/real_path_patterns.png> <./figs/top3_paths.pdf> <./figs/real_optim
-al_pattern.png>]) (sections/optimization_master.tex [149 <./figs/pareto_2d_comp
-osite.pdf>] [150 <./figs/altitude_tradeoff_dual.pdf>]
+ [161 <./figs/real_optimal_pattern.png>])
+(sections/optimization_master.tex [162 <./figs/pareto_2d_composite.pdf>]
+[163 <./figs/altitude_tradeoff_dual.pdf>]
 File: figs/top3_paths.pdf Graphic file (type pdf)
 <use figs/top3_paths.pdf>
 Package pdftex.def Info: figs/top3_paths.pdf  used on input line 134.
 (pdftex.def)             Requested size: 486.54057pt x 186.26013pt.
- [151]
+ [164]
 File: figs/altitude_speed_tradeoff.pdf Graphic file (type pdf)
 <use figs/altitude_speed_tradeoff.pdf>
 Package pdftex.def Info: figs/altitude_speed_tradeoff.pdf  used on input line 1
@@ -3119,161 +3494,179 @@ File: figs/real_energy_heatmap.png Graphic file (type png)
 <use figs/real_energy_heatmap.png>
 Package pdftex.def Info: figs/real_energy_heatmap.png  used on input line 183.
 (pdftex.def)             Requested size: 435.3303pt x 290.22615pt.
- [152]
-<figs/tornado_sensitivity.pdf, id=7479, 571.04657pt x 285.1285pt>
+<figs/tornado_sensitivity.pdf, id=8309, 571.04657pt x 285.1285pt>
 File: figs/tornado_sensitivity.pdf Graphic file (type pdf)
 <use figs/tornado_sensitivity.pdf>
 Package pdftex.def Info: figs/tornado_sensitivity.pdf  used on input line 209.
 (pdftex.def)             Requested size: 384.11221pt x 191.79211pt.
- [153 <./figs/tornado_sensitivity.pdf>]
-<figs/n2_diagram.pdf, id=7605, 629.07869pt x 979.9812pt>
+ [165] [166] [167] [168]
+[169 <./figs/tornado_sensitivity.pdf>] [170] [171] [172] [173] [174] [175]
+[176] [177] [178] [179] [180] [181] [182] [183] [184]
+<figs/n2_diagram.pdf, id=8542, 629.07869pt x 979.9812pt>
 File: figs/n2_diagram.pdf Graphic file (type pdf)
 <use figs/n2_diagram.pdf>
-Package pdftex.def Info: figs/n2_diagram.pdf  used on input line 235.
+Package pdftex.def Info: figs/n2_diagram.pdf  used on input line 236.
 (pdftex.def)             Requested size: 245.82962pt x 382.95375pt.
 File: figs/coupling_matrix.pdf Graphic file (type pdf)
 <use figs/coupling_matrix.pdf>
-Package pdftex.def Info: figs/coupling_matrix.pdf  used on input line 239.
+Package pdftex.def Info: figs/coupling_matrix.pdf  used on input line 240.
 (pdftex.def)             Requested size: 245.82962pt x 246.70604pt.
-<figs/sensitivity_matrix.pdf, id=7608, 680.28354pt x 390.66585pt>
+<figs/sensitivity_matrix.pdf, id=8545, 680.28354pt x 390.66585pt>
 File: figs/sensitivity_matrix.pdf Graphic file (type pdf)
 <use figs/sensitivity_matrix.pdf>
-Package pdftex.def Info: figs/sensitivity_matrix.pdf  used on input line 264.
+Package pdftex.def Info: figs/sensitivity_matrix.pdf  used on input line 265.
 (pdftex.def)             Requested size: 245.82962pt x 141.17012pt.
-<figs/sensitivity_spider.pdf, id=7609, 462.53987pt x 427.51283pt>
+<figs/sensitivity_spider.pdf, id=8546, 462.53987pt x 427.51283pt>
 File: figs/sensitivity_spider.pdf Graphic file (type pdf)
 <use figs/sensitivity_spider.pdf>
-Package pdftex.def Info: figs/sensitivity_spider.pdf  used on input line 268.
+Package pdftex.def Info: figs/sensitivity_spider.pdf  used on input line 269.
 (pdftex.def)             Requested size: 245.82962pt x 227.21347pt.
 File: figs/pareto_2d_composite.pdf Graphic file (type pdf)
 <use figs/pareto_2d_composite.pdf>
-Package pdftex.def Info: figs/pareto_2d_composite.pdf  used on input line 282.
+Package pdftex.def Info: figs/pareto_2d_composite.pdf  used on input line 283.
 (pdftex.def)             Requested size: 435.3303pt x 334.98059pt.
- [154 <./figs/n2_diagram.pdf>]
-<figs/pareto_curve.pdf, id=7771, 488.32996pt x 367.88191pt>
+ [185
+
+ <./figs/n2_diagram.pdf>] [186 <./figs/sensitivity_matrix.pdf> <./figs/sensitiv
+ity_spider.pdf>]
+<figs/pareto_curve.pdf, id=8912, 488.32996pt x 367.88191pt>
 File: figs/pareto_curve.pdf Graphic file (type pdf)
 <use figs/pareto_curve.pdf>
-Package pdftex.def Info: figs/pareto_curve.pdf  used on input line 291.
+Package pdftex.def Info: figs/pareto_curve.pdf  used on input line 293.
 (pdftex.def)             Requested size: 435.3303pt x 327.96397pt.
-<figs/pareto_3d.pdf, id=7772, 536.01518pt x 451.00998pt>
+<figs/pareto_3d.pdf, id=8913, 536.01518pt x 451.00998pt>
 File: figs/pareto_3d.pdf Graphic file (type pdf)
 <use figs/pareto_3d.pdf>
-Package pdftex.def Info: figs/pareto_3d.pdf  used on input line 298.
+Package pdftex.def Info: figs/pareto_3d.pdf  used on input line 300.
 (pdftex.def)             Requested size: 435.3303pt x 366.30017pt.
-<figs/pareto_parallel.pdf, id=7773, 611.26181pt x 379.18648pt>
+<figs/pareto_parallel.pdf, id=8914, 611.26181pt x 379.18648pt>
 File: figs/pareto_parallel.pdf Graphic file (type pdf)
 <use figs/pareto_parallel.pdf>
-Package pdftex.def Info: figs/pareto_parallel.pdf  used on input line 305.
+Package pdftex.def Info: figs/pareto_parallel.pdf  used on input line 307.
 (pdftex.def)             Requested size: 486.54057pt x 301.82211pt.
-<figs/pareto_tradeoff_simple.pdf, id=7774, 500.21567pt x 369.24638pt>
+<figs/pareto_tradeoff_simple.pdf, id=8915, 500.21567pt x 369.24638pt>
 File: figs/pareto_tradeoff_simple.pdf Graphic file (type pdf)
 <use figs/pareto_tradeoff_simple.pdf>
 Package pdftex.def Info: figs/pareto_tradeoff_simple.pdf  used on input line 31
-2.
+4.
 (pdftex.def)             Requested size: 435.3303pt x 321.3657pt.
+<figs/energy_efficiency.pdf, id=8921, 546.09808pt x 390.17519pt>
 File: figs/energy_efficiency.pdf Graphic file (type pdf)
 <use figs/energy_efficiency.pdf>
-Package pdftex.def Info: figs/energy_efficiency.pdf  used on input line 327.
+Package pdftex.def Info: figs/energy_efficiency.pdf  used on input line 329.
 (pdftex.def)             Requested size: 384.11221pt x 274.43651pt.
-)
-(sections/optimization_formal.tex
-Overfull \vbox (224.83284pt too high) has occurred while \output is active []
 
+[187
 
-[155 <./figs/sensitivity_matrix.pdf> <./figs/sensitivity_spider.pdf>] [156]
-[157 <./figs/pareto_curve.pdf>] [158 <./figs/pareto_3d.pdf>] [159 <./figs/paret
-o_parallel.pdf>] [160 <./figs/pareto_tradeoff_simple.pdf>]
+ <./figs/pareto_curve.pdf>]) (sections/optimization_formal.tex [188 <./figs/par
+eto_3d.pdf>] [189 <./figs/pareto_parallel.pdf>] [190 <./figs/pareto_tradeoff_si
+mple.pdf>] [191 <./figs/energy_efficiency.pdf>] [192]
 File: figs/n2_diagram.pdf Graphic file (type pdf)
 <use figs/n2_diagram.pdf>
 Package pdftex.def Info: figs/n2_diagram.pdf  used on input line 196.
 (pdftex.def)             Requested size: 450.69417pt x 702.1018pt.
-<figs/objective_conflict.pdf, id=8416, 736.75905pt x 587.34618pt>
+<figs/objective_conflict.pdf, id=9449, 736.75905pt x 587.34618pt>
 File: figs/objective_conflict.pdf Graphic file (type pdf)
 <use figs/objective_conflict.pdf>
 Package pdftex.def Info: figs/objective_conflict.pdf  used on input line 203.
 (pdftex.def)             Requested size: 450.69417pt x 359.29337pt.
-
-Overfull \vbox (305.82314pt too high) has occurred while \output is active []
-
-
-[161]) (sections/design_strategy.tex [162] [163] [164]
-<figs/optimization_network.pdf, id=8477, 1149.09305pt x 758.835pt>
+ [193])
+(sections/design_strategy.tex [194]
+<figs/development_timeline.pdf, id=9482, 872.53732pt x 504.03271pt>
+File: figs/development_timeline.pdf Graphic file (type pdf)
+<use figs/development_timeline.pdf>
+Package pdftex.def Info: figs/development_timeline.pdf  used on input line 89.
+(pdftex.def)             Requested size: 512.14963pt x 295.8616pt.
+ [195] [196 <./figs/development_timeline.pdf>] [197] [198] [199]
+<figs/optimization_network.pdf, id=9668, 1149.09305pt x 758.835pt>
 File: figs/optimization_network.pdf Graphic file (type pdf)
 <use figs/optimization_network.pdf>
-Package pdftex.def Info: figs/optimization_network.pdf  used on input line 243.
+Package pdftex.def Info: figs/optimization_network.pdf  used on input line 399.
 
 (pdftex.def)             Requested size: 512.14963pt x 338.21893pt.
 File: figs/sensitivity_matrix.pdf Graphic file (type pdf)
 <use figs/sensitivity_matrix.pdf>
-Package pdftex.def Info: figs/sensitivity_matrix.pdf  used on input line 250.
+Package pdftex.def Info: figs/sensitivity_matrix.pdf  used on input line 406.
 (pdftex.def)             Requested size: 435.3303pt x 249.99548pt.
 File: figs/sensitivity_spider.pdf Graphic file (type pdf)
 <use figs/sensitivity_spider.pdf>
-Package pdftex.def Info: figs/sensitivity_spider.pdf  used on input line 257.
+Package pdftex.def Info: figs/sensitivity_spider.pdf  used on input line 413.
 (pdftex.def)             Requested size: 435.3303pt x 402.36441pt.
- [165] [166] [167]
-[168] [169] [170] [171] [172] [173] [174] [175] [176] [177] [178] [179]
-[180] [181] [182 <./figs/objective_conflict.pdf>] [183 <./figs/optimization_net
-work.pdf>] [184]
+ [200] [201] [202 <./figs/objective_conflict.pdf>] [203 <./figs/optimization_ne
+twork.pdf>] [204]
 File: figs/coupling_matrix.pdf Graphic file (type pdf)
 <use figs/coupling_matrix.pdf>
-Package pdftex.def Info: figs/coupling_matrix.pdf  used on input line 266.
+Package pdftex.def Info: figs/coupling_matrix.pdf  used on input line 422.
 (pdftex.def)             Requested size: 435.3303pt x 436.89008pt.
 File: figs/altitude_speed_tradeoff.pdf Graphic file (type pdf)
 <use figs/altitude_speed_tradeoff.pdf>
-Package pdftex.def Info: figs/altitude_speed_tradeoff.pdf  used on input line 2
-73.
+Package pdftex.def Info: figs/altitude_speed_tradeoff.pdf  used on input line 4
+29.
 (pdftex.def)             Requested size: 435.3303pt x 354.73053pt.
-<figs/function_chain.pdf, id=8818, 798.58348pt x 537.06151pt>
+<figs/function_chain.pdf, id=9916, 798.58348pt x 537.06151pt>
 File: figs/function_chain.pdf Graphic file (type pdf)
 <use figs/function_chain.pdf>
-Package pdftex.def Info: figs/function_chain.pdf  used on input line 280.
+Package pdftex.def Info: figs/function_chain.pdf  used on input line 436.
 (pdftex.def)             Requested size: 450.69417pt x 303.10431pt.
- [185
+ [205
 
-] [186 <./figs/function_chain.pdf>]
+] [206 <./figs/function_chain.pdf>]
 File: figs/tornado_sensitivity.pdf Graphic file (type pdf)
 <use figs/tornado_sensitivity.pdf>
-Package pdftex.def Info: figs/tornado_sensitivity.pdf  used on input line 289.
+Package pdftex.def Info: figs/tornado_sensitivity.pdf  used on input line 445.
 (pdftex.def)             Requested size: 450.69417pt x 225.0402pt.
 )
-(sections/vision_performance.tex [187
+(sections/vision_performance.tex [207
 
 ]
-<figs/real_altitude_vs_px.png, id=8947, 505.89pt x 325.215pt>
+<figs/real_altitude_vs_px.png, id=10045, 505.89pt x 325.215pt>
 File: figs/real_altitude_vs_px.png Graphic file (type png)
 <use figs/real_altitude_vs_px.png>
 Package pdftex.def Info: figs/real_altitude_vs_px.png  used on input line 88.
 (pdftex.def)             Requested size: 435.3303pt x 279.8581pt.
-<figs/real_speed_vs_blur.png, id=8950, 505.89pt x 325.215pt>
+<figs/real_speed_vs_blur.png, id=10048, 505.89pt x 325.215pt>
 File: figs/real_speed_vs_blur.png Graphic file (type png)
 <use figs/real_speed_vs_blur.png>
 Package pdftex.def Info: figs/real_speed_vs_blur.png  used on input line 136.
 (pdftex.def)             Requested size: 435.3303pt x 279.8581pt.
- [188 <./figs/real_altitude_vs_px.png>]
-<figs/real_speed_vs_frames.png, id=8963, 505.89pt x 325.215pt>
+ [208 <./figs/real_altitude_vs_px.png>]
+<figs/real_speed_vs_frames.png, id=10061, 505.89pt x 325.215pt>
 File: figs/real_speed_vs_frames.png Graphic file (type png)
 <use figs/real_speed_vs_frames.png>
 Package pdftex.def Info: figs/real_speed_vs_frames.png  used on input line 187.
 
 (pdftex.def)             Requested size: 435.3303pt x 279.8581pt.
 
-[189 <./figs/real_speed_vs_blur.png>]
-<figs/real_coverage.png, id=8972, 505.89pt x 325.215pt>
+[209 <./figs/real_speed_vs_blur.png>]
+<figs/real_coverage.png, id=10070, 505.89pt x 325.215pt>
 File: figs/real_coverage.png Graphic file (type png)
 <use figs/real_coverage.png>
 Package pdftex.def Info: figs/real_coverage.png  used on input line 221.
 (pdftex.def)             Requested size: 435.3303pt x 279.8581pt.
- [190 <./figs/real_speed_vs_frames.png>]
-<figs/real_detection_envelope.png, id=8982, 542.025pt x 361.35pt>
+ [210 <./figs/real_speed_vs_frames.png>]
+<figs/real_detection_envelope.png, id=10080, 542.025pt x 361.35pt>
 File: figs/real_detection_envelope.png Graphic file (type png)
 <use figs/real_detection_envelope.png>
 Package pdftex.def Info: figs/real_detection_envelope.png  used on input line 2
 61.
 (pdftex.def)             Requested size: 450.69417pt x 300.4718pt.
 
-[191 <./figs/real_coverage.png>]) (sections/decision_flow.tex [192 <./figs/real
-_detection_envelope.png>] [193] [194] [195]) (sections/requirements_detail.tex
+[211 <./figs/real_coverage.png>]) (sections/decision_flow.tex [212 <./figs/real
+_detection_envelope.png>]
+<figs/decision_flow.pdf, id=10105, 622.72653pt x 947.94153pt>
+File: figs/decision_flow.pdf Graphic file (type pdf)
+<use figs/decision_flow.pdf>
+Package pdftex.def Info: figs/decision_flow.pdf  used on input line 26.
+(pdftex.def)             Requested size: 399.47607pt x 608.09802pt.
+ [213] [214] [215] [216]) [217]
+(sections/localization_approaches.tex [218] [219 <./figs/decision_flow.pdf>]
+
+LaTeX Warning: Citation 'sun2016sar' on page 220 undefined on input line 16.
+
+[220
+
+] [221] [222] [223] [224] [225] [226]) (sections/requirements_detail.tex
+[227]
 Overfull \hbox (7.87587pt too wide) in paragraph at lines 11--12
 \OT1/lmr/m/n/10 (-20) The four-vertex Flight Area poly-gon is loaded at startup
  by \OT1/lmtt/m/n/10 load[]kml[]zones() \OT1/lmr/m/n/10 (-20) in \OT1/lmtt/m/n/
@@ -3281,7 +3674,7 @@ Overfull \hbox (7.87587pt too wide) in paragraph at lines 11--12
 
  []
 
-[196]
+
 Overfull \hbox (2.93497pt too wide) in paragraph at lines 13--14
 \OT1/lmtt/m/n/10 NFZ[]WAYPOINT[]BUFFER[]M \OT1/lmr/m/n/10 (-20) = 30m of the SS
 SI bound-ary, which lies in-side the flight area. At run-time, []\OT1/lmtt/m/n/
@@ -3311,6 +3704,7 @@ Package hyperref Warning: Token not allowed in a PDF string (Unicode):
 (hyperref)                \kern 1.66702pt
 (hyperref)                removed on input line 35.
 
+[228]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
 (hyperref)                removing `\leavevmode@ifvmode' on input line 41.
@@ -3320,7 +3714,7 @@ Package hyperref Warning: Token not allowed in a PDF string (Unicode):
 (hyperref)                \kern 1.66702pt
 (hyperref)                removed on input line 41.
 
-[197] [198]
+[229]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
 (hyperref)                removing `\leavevmode@ifvmode' on input line 78.
@@ -3338,16 +3732,23 @@ Overfull \hbox (0.58803pt too wide) in paragraph at lines 80--81
 offset[]7[]5m()
  []
 
-[199]
-Overfull \hbox (9.97177pt too wide) in paragraph at lines 108--109
+[230]
+Overfull \hbox (4.91562pt too wide) in paragraph at lines 109--110
+\OT1/lmtt/m/n/10 MAV[]CMD[]NAV[]RETURN[]TO[]LAUNCH \OT1/lmr/m/n/10 (-20) di-rec
+tly to the Cube. Mo-tor cut-off is avail-able via \OT1/lmtt/m/n/10 MAV[]CMD[]CO
+MPONENT[]ARM[]DISARM
+ []
+
+
+Overfull \hbox (9.97177pt too wide) in paragraph at lines 110--111
 []\OT1/lmr/bx/n/10 (-20) Automated fail-safes: \OT1/lmr/m/n/10 (-20) GPS fix de
 gra-da-tion be-yond 5s trig-gers emer-gency RTL. GCS heart-beat loss (\OT1/lmtt
 /m/n/10 FS[]GCS[]ENABLE\OT1/lmr/m/n/10 (-20) )
  []
 
-[200]
+[231]
 
-Package hyperref Warning: Suppressing empty link on input line 137.
+Package hyperref Warning: Suppressing empty link on input line 139.
 
 ) (sections/evaluation_detail.tex
 Underfull \hbox (badness 10000) in paragraph at lines 19--19
@@ -3371,12 +3772,12 @@ Underfull \hbox (badness 10000) in paragraph at lines 39--39
  []
 
 
-Overfull \hbox (17.77493pt too wide) in paragraph at lines 15--49
+Overfull \hbox (17.77492pt too wide) in paragraph at lines 15--49
  [][] 
  []
 
-[201]) (sections/development_methodology.tex [202] [203] [204] [205]) [206]
-(main.aux)
+[232] [233]) (sections/development_methodology.tex [234] [235] [236] [237])
+[238] (main.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-01-19>
@@ -3385,20 +3786,28 @@ L3 programming layer <2026-01-19>
 
 LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 
+
+LaTeX Warning: There were undefined references.
+
 Package rerunfilecheck Info: File `main.out' has not changed.
-(rerunfilecheck)             Checksum: 2593D7B21296BFC3046A2B73E82B49B6;84812.
+(rerunfilecheck)             Checksum: D5DD05B932A464AB6392AE171F698A07;94492.
+
+Package biblatex Warning: Please (re)run Biber on the file:
+(biblatex)                main
+(biblatex)                and rerun LaTeX afterwards.
+
 Package logreq Info: Writing requests to 'main.run.xml'.
 \openout1 = `main.run.xml'.
 
  ) 
 Here is how much of TeX's memory you used:
- 57971 strings out of 467866
- 1303113 string characters out of 5417351
- 2412359 words of memory out of 5000000
- 83761 multiletter control sequences out of 15000+600000
- 756144 words of font info for 429 fonts, out of 8000000 for 9000
+ 58549 strings out of 467866
+ 1313979 string characters out of 5417351
+ 2469451 words of memory out of 5000000
+ 84058 multiletter control sequences out of 15000+600000
+ 757133 words of font info for 440 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 99i,20n,118p,1544b,2541s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 99i,21n,118p,1544b,2541s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/c
 m/cmsy10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public
 /lm/lmbsy10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/pub
@@ -3446,9 +3855,9 @@ ristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtti10.pfb><C:/User
 s/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/symbols/msa
 m10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsf
 onts/symbols/msbm10.pfb>
-Output written on main.pdf (206 pages, 5588148 bytes).
+Output written on main.pdf (238 pages, 10399308 bytes).
 PDF statistics:
- 9686 PDF objects out of 10688 (max. 8388607)
- 1563 named destinations out of 1728 (max. 500000)
- 75259 words of extra memory for PDF output out of 89155 (max. 10000000)
+ 11192 PDF objects out of 12825 (max. 8388607)
+ 1815 named destinations out of 2073 (max. 500000)
+ 75622 words of extra memory for PDF output out of 89155 (max. 10000000)
 

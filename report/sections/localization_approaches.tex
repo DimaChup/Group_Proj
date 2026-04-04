@@ -13,7 +13,7 @@ The approaches span a spectrum from single-frame geometric projection (fast but 
 \subsection{Approach 1: Direct Georeferencing}\label{sec:approach-direct}
 
 \paragraph{Description.}
-Direct georeferencing projects a pixel detection to a ground-plane GPS coordinate using the pinhole camera model, the drone's GPS position, altitude, and heading.  This is the foundational method implemented in \texttt{gps\_utils.py} and described in Section~\ref{sec:gps-math}.
+Direct georeferencing projects a pixel detection to a ground-plane GPS coordinate using the pinhole camera model, the drone's GPS position, altitude, and heading.  This is the foundational method implemented in \texttt{gps\_utils.py} and described in Section~\ref{sec:gps-math}.  The approach follows the framework established by Barber et~al.~\cite{barber2006vision} and applied to SAR by Sun et~al.~\cite{sun2016sar}.
 
 \paragraph{Mathematical basis.}
 The ground sampling distance (GSD) converts pixel offsets to metric displacements:

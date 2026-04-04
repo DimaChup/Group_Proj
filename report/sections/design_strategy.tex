@@ -82,7 +82,14 @@ Of the 15 defects discovered during the project, 12 (80\%) were caught at Tier~1
 The remaining 3---all related to real-world sensor behaviour (BGR colour inversion, lens distortion magnitude, GPS timing lag)---were caught at Tier~3 and Tier~4, where the cost was a single field session rather than a failed autonomous mission.
 No defects were first discovered at Tier~5.
 
-This distribution validates the investment in simulation infrastructure: the 40+~hours spent building the SITL simulation, interactive simulator, and video replay tools were repaid many times over by avoiding field-day debugging.
+This distribution validates the investment in simulation infrastructure: the 40+~hours spent building the SITL simulation, interactive simulator, and video replay tools were repaid many times over by avoiding field-day debugging. Figure~\ref{fig:development_timeline} visualises the full project timeline, showing how each development phase and defect discovery maps onto the progressive testing tiers.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{development_timeline}
+\caption{Project development timeline showing the progression from simulation-first development through hardware integration. Key milestones, defect discoveries, and the weather-cancelled flight day are annotated. The majority of software development (green) was completed before hardware assembly (orange), validating the simulation-first strategy.}
+\label{fig:development_timeline}
+\end{figure}
 
 % =====================================================================
 \subsection{Adapting When Hardware Was Unavailable}\label{sec:adaptation-strategy}

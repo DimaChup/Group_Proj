@@ -1,7 +1,65 @@
-# main.py CLI Flags & Configuration Reference
+# main.py — Complete Usage Guide
+
+## What This Is
+
+`main.py` is the **autonomous SAR mission orchestrator**. It runs the full state machine:
+takeoff → search pattern → AI detection → centering → descent → operator verify → land.
+
+It works on **both platforms** with zero code changes:
+- **Laptop** (SIMULATION): uses `map.jpg` + SITL, cv2 windows for UI
+- **Pi** (REAL): uses Pi camera + Cube, headless web dashboard at `http://PI_IP:8090/`
+
+## Prerequisites
+
+```bash
+# Laptop: activate the correct venv
+cd "c:\Users\Bristol\Desktop\AI for Robotics\v3"
+test_env\Scripts\activate
+
+# SITL must be running (Mission Planner or mavproxy)
+# Use home location: --home=51.423406,-2.671446,50,155
+
+# Pi: over SSH
+source pienv/bin/activate
+cd ~/sar-drone
+# mavproxy must be running (see FIELD_QUICK_REF.md)
+```
+
+## How It Works
+
+1. Connects to Cube (SITL or real) via MAVLink
+2. Waits for GPS fix (≥6 satellites, fix type ≥3)
+3. Arms motors, takes off to search altitude
+4. Flies transit waypoints (if any), then lawnmower search pattern
+5. AI runs on every camera frame (~4.8 FPS TFLite, ~14 FPS NCNN)
+6. On detection: flies to target, centers it in frame, descends
+7. Operator confirms (Y) or rejects (N) via keyboard/browser
+8. On confirm: lands near target. On reject: resumes search
+9. After all waypoints: returns to launch, lands
+
+## Keyboard Controls (during flight)
+
+| Key | Action |
+|-----|--------|
+| `Y` | Confirm target (at VERIFY stage) |
+| `N` | Reject target, resume search |
+| `I` | Mark as "interest" (log but continue) |
+| `X` | Mark as false positive |
+| `M` | Toggle manual override (pause all commands) |
+| `K` | Clear all detection clusters |
+| `L` | Return to launch (RTL) |
+| `O` | Kill motors (emergency) |
+| `B` | Trigger PLB beacon redirect |
+| `Q`/`ESC` | Quit gracefully |
+
+In headless mode, use browser buttons at `http://localhost:8090/` or terminal keys.
+
+---
+
+## Complete CLI Flag Reference
 
 Complete reference for every command-line flag and environment variable
-accepted by `main.py`. Last updated: 2026-04-03.
+accepted by `main.py`. Last updated: 2026-04-04.
 
 ---
 

@@ -70,6 +70,13 @@ Coordinates are rescaled from the $640 \times 640$ model space to the original $
 
 A green bounding box with a confidence label (e.g.\ ``\texttt{AI 0.97 [dummy]}'') is drawn onto the original frame using \texttt{cv2.rectangle} and \texttt{cv2.putText}.  This annotated frame is simultaneously served to the ground station MJPEG stream and (in non-headless mode) displayed locally via \texttt{cv2.imshow}.
 
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{vision_pipeline}
+\caption{End-to-end vision pipeline: from raw CSI-2 capture through lens undistortion, resize, TFLite inference, confidence filtering, and GPS coordinate projection. Stage timings are measured on the Raspberry Pi~5; total latency is \SI{208}{\milli\second} per frame (Table~\ref{tab:pipeline_timing}).}
+\label{fig:vision_pipeline}
+\end{figure}
+
 % ═══════════════════════════════════════════════════════════════
 \subsection{Comprehensive Benchmark Results}\label{app:cv:benchmarks}
 
@@ -187,7 +194,14 @@ This high overlap means that a target appears in many consecutive frames, provid
 % ═══════════════════════════════════════════════════════════════
 \subsection{Detection Performance vs Altitude}\label{app:cv:altitude}
 
-The critical operational question is: ``at what altitude does detection become unreliable?''  This is modelled using the thin-lens equation to predict the target's apparent size in pixels, combined with empirically observed confidence behaviour from video replay analysis.
+The critical operational question is: ``at what altitude does detection become unreliable?''  This is modelled using the thin-lens equation to predict the target's apparent size in pixels, combined with empirically observed confidence behaviour from video replay analysis. Figure~\ref{fig:gsd_altitude} visualises the relationship between altitude, ground sampling distance, and target pixel size.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\linewidth]{gsd_altitude}
+\caption{Ground sampling distance (GSD) and target pixel size as a function of altitude for the IMX296 camera ($f = \SI{5.46}{\milli\metre}$, $w_s = \SI{5.02}{\milli\metre}$, $1456 \times 1088$\,px). The horizontal dashed line marks the 20-pixel detection floor in model-input space; above \SI{63}{\metre} the \SI{1.8}{\metre} mannequin falls below this threshold.}
+\label{fig:gsd_altitude}
+\end{figure}
 
 \subsubsection{Pixel Size Model}
 
