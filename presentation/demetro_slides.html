@@ -187,77 +187,85 @@
 
 <!-- ==================== SLIDE 1: VISION ==================== -->
 <div class="slide slide-1">
-  <div class="tag">Computer Vision</div>
-  <h1>How the Drone Sees, Locates,<br>and Responds to Targets</h1>
-  <h2>From camera pixels to GPS coordinates — the runtime pipeline</h2>
+  <h1 style="font-size:34px; margin-bottom:2px;">Vision Pipeline</h1>
+  <h2 style="margin-bottom:14px;">Camera pixels → GPS coordinates — running on Pi 5 CPU, no GPU</h2>
 
-  <div class="content">
-    <div class="left">
-      <div class="flow">
-        <div class="flow-step"><div class="icon">📷</div>Camera<br>1456×1088<div class="step-label">Pi IMX296</div></div>
-        <div class="flow-arrow">→</div>
-        <div class="flow-step"><div class="icon">🧠</div>YOLOv8n<br>Detect<div class="step-label">Real-time</div></div>
-        <div class="flow-arrow">→</div>
-        <div class="flow-step"><div class="icon">📐</div>Pixel →<br>GPS<div class="step-label">Geometry</div></div>
-        <div class="flow-arrow">→</div>
-        <div class="flow-step"><div class="icon">🔄</div>Tilt<br>Correct<div class="step-label">Attitude</div></div>
-        <div class="flow-arrow">→</div>
-        <div class="flow-step"><div class="icon">🎯</div>Target<br>GPS<div class="step-label">2.3m acc.</div></div>
+  <div class="content" style="gap:24px;">
+
+    <!-- LEFT COLUMN: pipeline + tilt + bullseye -->
+    <div class="left" style="flex:1; display:flex; flex-direction:column; gap:10px;">
+
+      <!-- Compact pipeline (single row, narrow) -->
+      <div class="flow" style="margin-bottom:0;">
+        <div class="flow-step" style="min-width:70px; padding:5px 7px;"><div class="icon" style="font-size:14px;">📷</div><span style="font-size:10px;">Camera</span><div class="step-label">1456×1088</div></div>
+        <div class="flow-arrow" style="font-size:14px;">→</div>
+        <div class="flow-step" style="min-width:70px; padding:5px 7px;"><div class="icon" style="font-size:14px;">🧠</div><span style="font-size:10px;">YOLOv8n</span><div class="step-label">~200ms</div></div>
+        <div class="flow-arrow" style="font-size:14px;">→</div>
+        <div class="flow-step" style="min-width:70px; padding:5px 7px;"><div class="icon" style="font-size:14px;">📐</div><span style="font-size:10px;">Pixel→GPS</span><div class="step-label">FOV+alt</div></div>
+        <div class="flow-arrow" style="font-size:14px;">→</div>
+        <div class="flow-step" style="min-width:70px; padding:5px 7px;"><div class="icon" style="font-size:14px;">🔄</div><span style="font-size:10px;">Tilt Fix</span><div class="step-label">pitch+roll</div></div>
+        <div class="flow-arrow" style="font-size:14px;">→</div>
+        <div class="flow-step" style="min-width:70px; padding:5px 7px; border-color:rgba(0,210,255,0.3);"><div class="icon" style="font-size:14px;">🎯</div><span style="font-size:10px;">Target GPS</span><div class="step-label">estimate</div></div>
       </div>
 
-      <div class="tilt-compare">
-        <div class="tilt-card bad">
-          <div class="tilt-icon">✈️↗️</div>
-          <div class="tilt-label">Without compensation</div>
-          <div class="tilt-error">6.2m error</div>
-          <div style="font-size:9px;color:#555;margin-top:2px;">Assumes straight down</div>
+      <!-- Tilt comparison — prominent but compact -->
+      <div style="font-size:11px; font-weight:700; color:#e94560; margin-top:4px; margin-bottom:2px;">Attitude Compensation</div>
+      <div class="tilt-compare" style="margin-bottom:0; gap:8px;">
+        <div class="tilt-card bad" style="padding:8px;">
+          <div class="tilt-label" style="margin-bottom:1px;">Without compensation</div>
+          <div class="tilt-error" style="font-size:22px;">6.2m</div>
+          <div style="font-size:9px;color:#555;">Assumes straight down</div>
         </div>
-        <div class="tilt-card good">
-          <div class="tilt-icon">✈️✓</div>
-          <div class="tilt-label">With attitude correction</div>
-          <div class="tilt-error">0.3m error</div>
-          <div style="font-size:9px;color:#555;margin-top:2px;">Ray-traced through tilt</div>
+        <div style="display:flex; align-items:center; font-size:22px; color:#e94560; font-weight:800;">→</div>
+        <div class="tilt-card good" style="padding:8px;">
+          <div class="tilt-label" style="margin-bottom:1px;">With ray-trace correction</div>
+          <div class="tilt-error" style="font-size:22px;">0.3m</div>
+          <div style="font-size:9px;color:#555;">Reads pitch & roll from FC</div>
         </div>
       </div>
 
-      <div class="metric-row">
-        <div class="metric"><div class="number">99.5%</div><div class="label">Detection</div></div>
-        <div class="metric"><div class="number">~5 FPS</div><div class="label">On Pi 5</div></div>
-        <div class="metric"><div class="number">2.3m</div><div class="label">Accuracy</div></div>
+      <!-- GPS accuracy scatter plot -->
+      <div style="margin-top:6px; display:flex; gap:10px; align-items:stretch;">
+        <div style="flex:1; border:1px solid rgba(0,210,255,0.15); border-radius:8px; overflow:hidden; background:rgba(0,0,0,0.2);">
+          <img src="../report/figs/gps_bullseye.png" style="width:100%; height:100%; object-fit:contain; display:block;" alt="GPS accuracy scatter">
+        </div>
+        <div style="flex:0.7; display:flex; flex-direction:column; justify-content:center; gap:6px;">
+          <div style="font-size:10px; color:#8892b0; line-height:1.3;">Browser dashboard shows detections live. Operator confirms with one button.</div>
+          <div style="background:rgba(0,210,255,0.06); border:1px solid rgba(0,210,255,0.15); border-radius:6px; padding:6px 8px; font-size:10px; color:#00d2ff; font-weight:600; text-align:center;">One codebase<br><span style="font-weight:400; color:#8892b0;">Sim on laptop = live on Pi</span></div>
+        </div>
       </div>
-
-      <!-- Video is on slide 2, not here -->
     </div>
 
-    <div class="right">
-      <div style="font-size:12px;font-weight:700;color:#e94560;margin-bottom:6px;">Progressive Refinement:</div>
+    <!-- RIGHT COLUMN: four-phase refinement -->
+    <div class="right" style="flex:0.7; display:flex; flex-direction:column;">
+      <div style="font-size:12px;font-weight:700;color:#e94560;margin-bottom:6px;">Four-Phase Refinement</div>
       <div class="phase-row">
         <div class="phase-num">1</div>
-        <div class="phase-info"><div class="phase-name">Detect during flight</div><div class="phase-desc">Tilt-compensated rough estimate</div></div>
+        <div class="phase-info"><div class="phase-name">Detect from altitude</div><div class="phase-desc">Tilt-compensated rough estimate</div></div>
         <div class="phase-cep">~3.5m</div>
       </div>
       <div class="phase-arrow">↓ fly toward</div>
       <div class="phase-row">
         <div class="phase-num">2</div>
-        <div class="phase-info"><div class="phase-name">Approach & slow down</div><div class="phase-desc">Tilt decreases, re-detect each frame</div></div>
+        <div class="phase-info"><div class="phase-name">Approach & re-detect</div><div class="phase-desc">Tilt decreases, estimate sharpens</div></div>
         <div class="phase-cep">~2.5m</div>
       </div>
       <div class="phase-arrow">↓ hover</div>
       <div class="phase-row">
         <div class="phase-num">3</div>
-        <div class="phase-info"><div class="phase-name">Hover lock (nadir)</div><div class="phase-desc">Straight down → drone GPS = target GPS</div></div>
+        <div class="phase-info"><div class="phase-name">Hover lock (nadir)</div><div class="phase-desc">Directly above → drone GPS = target GPS</div></div>
         <div class="phase-cep">~1.8m</div>
       </div>
       <div class="phase-arrow">↓ confirm</div>
       <div class="phase-row">
         <div class="phase-num">4</div>
-        <div class="phase-info"><div class="phase-name">Verify & land</div><div class="phase-desc">Operator Y/N → 7.5m offset → deploy</div></div>
-        <div class="phase-cep">✅</div>
+        <div class="phase-info"><div class="phase-name">Verify & land</div><div class="phase-desc">Operator Y/N → offset landing → deploy</div></div>
+        <div class="phase-cep" style="color:#00c864;">confirmed</div>
       </div>
 
-      <div class="insight-box">
-        <div class="insight-title">💡 Key Insight</div>
-        <p>When hovering above target: pixel offset = 0. All errors × zero = zero. Drone GPS <em>is</em> target GPS.</p>
+      <div class="insight-box" style="margin-top:auto;">
+        <div class="insight-title">Key Insight</div>
+        <p>At hover: pixel offset = 0, so all projection errors multiply by zero. <strong style="color:#fff;">Drone GPS <em>is</em> target GPS.</strong></p>
       </div>
     </div>
   </div>
@@ -265,97 +273,105 @@
   <div class="footer">AENGM0074 D4 Final Design Review</div>
 </div>
 
-<!-- ==================== SLIDE 2: LADDER ==================== -->
+<!-- ==================== SLIDE 2: SIMULATION & TESTING ==================== -->
 <div class="slide slide-2">
-  <div class="content" style="align-items:stretch; height:calc(100vh - 60px); padding-top:20px;">
+  <h1 style="font-size:28px; margin-bottom:2px; padding-top:10px;">Simulation &amp; Testing</h1>
+  <h2 style="margin-bottom:12px; font-size:14px;">Never fly something you haven't proven at every level below it</h2>
+
+  <div class="content" style="align-items:stretch; flex:1; gap:20px;">
 
     <!-- LEFT: Video (45%) -->
-    <div style="flex:0 0 45%; display:flex; flex-direction:column; gap:10px;">
-      <div style="flex:1; background:rgba(0,0,0,0.5); border:2px solid rgba(0,210,255,0.25); border-radius:14px; display:flex; align-items:center; justify-content:center; position:relative;">
+    <div style="flex:0 0 44%; display:flex; flex-direction:column; gap:8px;">
+      <div style="flex:1; background:rgba(0,0,0,0.5); border:2px solid rgba(0,210,255,0.25); border-radius:14px; display:flex; align-items:center; justify-content:center; position:relative; min-height:0;">
         <div style="font-size:70px; color:rgba(0,210,255,0.3); position:absolute;">▶</div>
-        <div style="z-index:1; text-align:center; color:#445;">
+        <div style="z-index:1; text-align:center; color:#556;">
           <div style="font-size:14px; margin-bottom:4px;">Simulation Recording</div>
-          <div style="font-size:10px; color:#334;">takeoff → search → detect → centre → verify → land</div>
+          <div style="font-size:10px; color:#445;">takeoff → search → detect → centre → verify → land</div>
         </div>
       </div>
+      <!-- What the simulation verified -->
+      <div style="background:linear-gradient(135deg,rgba(0,200,100,0.10),rgba(0,200,100,0.03)); border:1px solid rgba(0,200,100,0.25); border-radius:8px; padding:10px 14px;">
+        <div style="font-size:11px; font-weight:700; color:#00c864; margin-bottom:4px;">VERIFIED IN SIMULATION</div>
+        <div style="font-size:10px; color:#8892b0; line-height:1.5; columns:2; column-gap:12px;">
+          <div>Lawnmower search pattern</div>
+          <div>AI detection + centering</div>
+          <div>5-layer geofence + repulsion</div>
+          <div>PLB beacon redirect</div>
+          <div>Attitude-compensated GPS</div>
+          <div>Payload deploy sequence</div>
+          <div>RTL failsafes</div>
+          <div>Offset landing</div>
+        </div>
+        <div style="font-size:10px; color:#00c864; font-weight:600; margin-top:4px;">All 12 requirements verified end-to-end</div>
+      </div>
+      <div style="font-size:10px; color:#556; text-align:center;">One Python codebase — what runs in sim is what flies on the Pi</div>
     </div>
 
-    <!-- RIGHT: Vertical ladder (40%) -->
-    <!-- RIGHT: Ladder (55%) -->
-    <div style="flex:0 0 50%; display:flex; flex-direction:column; justify-content:space-between; padding-left:15px;">
+    <!-- RIGHT: Ladder (52%) -->
+    <div style="flex:0 0 52%; display:flex; flex-direction:column; justify-content:space-between;">
 
-      <!-- TOP: Big star — Real Mission -->
-      <div style="text-align:center; position:relative; height:100px;">
-        <div style="font-size:120px; color:#e94560; line-height:0.85; text-shadow: 0 0 40px rgba(233,69,96,0.4);">★</div>
-        <div style="position:absolute; top:42%; left:50%; transform:translate(-50%,-50%); font-size:11px; font-weight:800; color:#fff; letter-spacing:1px; line-height:1.2;">REAL<br><span style="font-size:8px; letter-spacing:0;">MISSION</span></div>
+      <!-- TOP: Star — Demo Day -->
+      <div style="text-align:center; position:relative; height:70px;">
+        <div style="font-size:90px; color:#e94560; line-height:0.85; text-shadow: 0 0 30px rgba(233,69,96,0.4);">★</div>
+        <div style="position:absolute; top:40%; left:50%; transform:translate(-50%,-50%); font-size:10px; font-weight:800; color:#fff; letter-spacing:1px; line-height:1.2;">DEMO<br><span style="font-size:7px; letter-spacing:0;">DAY</span></div>
       </div>
 
       <!-- STEP 5 -->
-      <div style="display:flex; align-items:center; gap:10px; padding:6px 12px; background:rgba(233,69,96,0.06); border:1px solid rgba(233,69,96,0.2); border-radius:8px;">
-        <div style="width:24px; height:24px; background:#e94560; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; flex-shrink:0;">5</div>
+      <div style="display:flex; align-items:center; gap:8px; padding:5px 10px; background:rgba(233,69,96,0.06); border:1px solid rgba(233,69,96,0.2); border-radius:7px;">
+        <div style="width:22px; height:22px; background:#e94560; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:800; flex-shrink:0;">5</div>
         <div style="flex:1;">
-          <div style="font-family:Consolas,monospace; font-size:9px; color:#e94560;">main.py --headless --compensate-tilt</div>
-          <div style="font-size:10px; color:#d4a847; font-weight:600;">Full autonomous flight on real hardware</div>
+          <div style="font-size:11px; font-weight:700; color:#fff;">Full autonomous mission</div>
+          <div style="font-size:9px; color:#d4a847;">Search, detect, centre, verify, land — real hardware</div>
         </div>
-        <div style="font-size:8px; color:#e94560; font-weight:700;">DEMO DAY</div>
+        <div style="font-size:8px; color:#e94560; font-weight:700;">NEXT</div>
       </div>
 
-      <div style="text-align:center; color:#333; font-size:10px;">▲</div>
+      <div style="text-align:center; color:#333; font-size:9px;">▲</div>
 
       <!-- STEP 4 -->
-      <div style="display:flex; align-items:center; gap:10px; padding:6px 12px; background:rgba(0,210,255,0.04); border:1px solid rgba(0,210,255,0.12); border-radius:8px;">
-        <div style="width:24px; height:24px; background:#00d2ff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; color:#000; flex-shrink:0;">4</div>
+      <div style="display:flex; align-items:center; gap:8px; padding:5px 10px; background:rgba(0,210,255,0.04); border:1px solid rgba(0,210,255,0.12); border-radius:7px;">
+        <div style="width:22px; height:22px; background:#00d2ff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:800; color:#000; flex-shrink:0;">4</div>
         <div style="flex:1;">
-          <div style="font-family:Consolas,monospace; font-size:9px; color:#00d2ff;">passive_watch.py --compensate-tilt</div>
-          <div style="font-size:10px; color:#d4a847; font-weight:600;">Pilot flies manually, Pi detects + logs GPS</div>
+          <div style="font-size:11px; font-weight:700; color:#fff;">Passive flight</div>
+          <div style="font-size:9px; color:#d4a847;">Pilot flies RC, Pi detects silently — zero commands sent</div>
         </div>
-        <div style="font-size:9px; color:#00d2ff;">✓</div>
+        <div style="font-size:9px; color:#00d2ff;">done</div>
       </div>
 
-      <div style="text-align:center; color:#333; font-size:10px;">▲</div>
+      <div style="text-align:center; color:#333; font-size:9px;">▲</div>
 
       <!-- STEP 3 -->
-      <div style="display:flex; align-items:center; gap:10px; padding:6px 12px; background:rgba(0,210,255,0.04); border:1px solid rgba(0,210,255,0.12); border-radius:8px;">
-        <div style="width:24px; height:24px; background:#00d2ff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; color:#000; flex-shrink:0;">3</div>
+      <div style="display:flex; align-items:center; gap:8px; padding:5px 10px; background:rgba(0,210,255,0.04); border:1px solid rgba(0,210,255,0.12); border-radius:7px;">
+        <div style="width:22px; height:22px; background:#00d2ff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:800; color:#000; flex-shrink:0;">3</div>
         <div style="flex:1;">
-          <div style="font-family:Consolas,monospace; font-size:9px; color:#00d2ff;">fov_calibrate.py · benchmark.py</div>
-          <div style="font-size:10px; color:#d4a847; font-weight:600;">Outdoor calibration, real detection benchmarks</div>
+          <div style="font-size:11px; font-weight:700; color:#fff;">Outdoor calibration</div>
+          <div style="font-size:9px; color:#d4a847;">FOV, GPS accuracy, detection at real altitudes</div>
         </div>
-        <div style="font-size:9px; color:#00d2ff;">✓</div>
+        <div style="font-size:9px; color:#00d2ff;">done</div>
       </div>
 
-      <div style="text-align:center; color:#333; font-size:10px;">▲</div>
+      <div style="text-align:center; color:#333; font-size:9px;">▲</div>
 
       <!-- STEP 2 -->
-      <div style="display:flex; align-items:center; gap:10px; padding:6px 12px; background:rgba(0,210,255,0.04); border:1px solid rgba(0,210,255,0.12); border-radius:8px;">
-        <div style="width:24px; height:24px; background:#00d2ff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; color:#000; flex-shrink:0;">2</div>
+      <div style="display:flex; align-items:center; gap:8px; padding:5px 10px; background:rgba(0,210,255,0.04); border:1px solid rgba(0,210,255,0.12); border-radius:7px;">
+        <div style="width:22px; height:22px; background:#00d2ff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:800; color:#000; flex-shrink:0;">2</div>
         <div style="flex:1;">
-          <div style="font-family:Consolas,monospace; font-size:9px; color:#00d2ff;">cube_commands.py · bench_mission.py</div>
-          <div style="font-size:10px; color:#d4a847; font-weight:600;">Pi + Cube + camera verified on bench</div>
+          <div style="font-size:11px; font-weight:700; color:#fff;">Bench integration</div>
+          <div style="font-size:9px; color:#d4a847;">Pi + Cube + camera communicating — no propellers</div>
         </div>
-        <div style="font-size:9px; color:#00d2ff;">✓</div>
+        <div style="font-size:9px; color:#00d2ff;">done</div>
       </div>
 
-      <div style="text-align:center; color:#333; font-size:10px;">▲</div>
+      <div style="text-align:center; color:#333; font-size:9px;">▲</div>
 
       <!-- STEP 1 -->
-      <div style="display:flex; align-items:center; gap:10px; padding:6px 12px; background:rgba(0,210,255,0.04); border:1px solid rgba(0,210,255,0.12); border-radius:8px;">
-        <div style="width:24px; height:24px; background:#00d2ff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; color:#000; flex-shrink:0;">1</div>
+      <div style="display:flex; align-items:center; gap:8px; padding:5px 10px; background:rgba(0,210,255,0.04); border:1px solid rgba(0,210,255,0.12); border-radius:7px;">
+        <div style="width:22px; height:22px; background:#00d2ff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:800; color:#000; flex-shrink:0;">1</div>
         <div style="flex:1;">
-          <div style="font-family:Consolas,monospace; font-size:9px; color:#00d2ff;">run_all_tests.py · 127 unit tests · dry-run</div>
-          <div style="font-size:10px; color:#d4a847; font-weight:600;">All code tested before touching hardware</div>
+          <div style="font-size:11px; font-weight:700; color:#fff;">Unit tests + dry-run</div>
+          <div style="font-size:9px; color:#d4a847;">127 tests: GPS math, geofencing, pattern generation</div>
         </div>
-        <div style="font-size:9px; color:#00d2ff;">✓</div>
-      </div>
-
-      <!-- BOTTOM: Simulated Mission -->
-      <div style="background:linear-gradient(135deg,rgba(0,200,100,0.12),rgba(0,200,100,0.04)); border:2px solid rgba(0,200,100,0.35); border-radius:10px; padding:12px 16px; text-align:center; margin-top:6px;">
-        <div style="font-size:16px; font-weight:800; color:#00c864;">SIMULATED MISSION</div>
-        <div style="font-size:9px; color:#8892b0; margin-top:4px; line-height:1.4;">
-          Search pattern · AI detection · Geofence + repulsive field<br>
-          PLB redirect · Attitude compensation · Payload deploy · RTL<br>
-          <strong style="color:#00c864;">All 12 requirements verified end-to-end</strong>
-        </div>
+        <div style="font-size:9px; color:#00d2ff;">done</div>
       </div>
 
     </div><!-- end right ladder -->
