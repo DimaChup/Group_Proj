@@ -50,6 +50,7 @@ SHAKE_PX = 0  # --shake <pixels>: random pixel offset per frame (simulates vibra
 SIM_PITCH = "--sim-pitch" in sys.argv  # simulate camera pitch offset during forward flight
 SIM_ROLL_DEG = 0.0  # --sim-roll <deg>: random roll oscillation (±degrees)
 SIM_TILT = "--sim-tilt" in sys.argv  # combined: camera tilts in flight direction (replaces separate pitch/roll)
+COMPENSATE_TILT = "--compensate-tilt" in sys.argv  # correct GPS estimation for camera tilt (use in REAL mode)
 BLUR_FACTOR = 0.0  # --blur <factor>: motion blur proportional to speed (1.0=realistic, 2.0=stress)
 
 for _i, _arg in enumerate(sys.argv):
@@ -554,7 +555,7 @@ class VisualFlightMission(StateHandlersMixin):
         # When pitch/roll > 1 degree, the nadir point is NOT at frame center.
         # We ray-trace the detection pixel through the tilted camera to find
         # where it actually hits the ground, rather than assuming nadir.
-        if self.alt > 1.0 and (abs(self.pitch) > 0.02 or abs(self.roll) > 0.02):
+        if (SIM_TILT or COMPENSATE_TILT) and self.alt > 1.0 and (abs(self.pitch) > 0.02 or abs(self.roll) > 0.02):
             # Focal length in pixels
             focal_px = config.FOCAL_LENGTH_MM / config.SENSOR_WIDTH_MM * fw
             # Detection ray in camera frame (u,v → normalised direction)
