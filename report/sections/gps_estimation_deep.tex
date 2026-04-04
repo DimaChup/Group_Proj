@@ -37,6 +37,7 @@ This appendix is organised into seven parts, progressing from low-level image pr
   Phase~4: operator verification.
   False positive handling (Section~\ref{sec:false-positive-handling}).
   Full flow in Section~\ref{sec:two-step}.
+  Cooperative vision-flight feedback loop (Section~\ref{sec:cooperative-arch}).
 
 \item[Part~VII --- Validation] \emph{Does it work?}\\
   DJI video replay results (Section~\ref{sec:dji-validation}), seven-method ground truth comparison (Section~\ref{sec:empirical-comparison}), GPS averaging analysis (Section~\ref{sec:gps-averaging}), fusion strategies and why inverse-variance weighting won (Sections~\ref{sec:fusion-strategies}--\ref{sec:why-ivw}), and multi-pass observation (Section~\ref{sec:multi-pass}).
@@ -1609,6 +1610,88 @@ Four mechanisms reduce the frequency and impact of false positives:
   \caption{Complete four-phase decision flow including false positive recovery.  The left branch shows successful progression: Phase~1 detection $\to$ Phase~2 approach $\to$ Phase~3 hover lock $\to$ Phase~4 operator verification $\to$ offset landing.  The right branch shows the false positive path: no re-detection during Phase~3 hover triggers a \SI{15}{\second} timeout, the location is added to the rejected-targets list (spatial deduplication prevents reinvestigation), and the drone resumes the search pattern at a cost of $<$1\% of mission time.}
   \label{fig:two-step-decision-flow}
 \end{figure}
+
+% =====================================================================
+\subsection{Cooperative Vision-Flight Architecture}\label{sec:cooperative-arch}
+
+The four-phase flow described above reveals a property that distinguishes our system from passive surveillance: the drone and vision system form a \emph{closed-loop feedback system} in which each detection improves the next.  Unlike a static camera whose accuracy is fixed by altitude and calibration, our architecture creates a cycle where detection informs flight, flight improves detection conditions, and improved conditions yield better detections.
+
+\begin{figure}[H]
+  \centering
+  \begin{tikzpicture}[
+      >=Stealth,
+      block/.style={rectangle, rounded corners=5pt, draw=#1!70!black, fill=#1!10,
+                    minimum width=3.6cm, minimum height=1.2cm, font=\small\bfseries,
+                    text=#1!70!black, align=center, text width=3.4cm},
+      data/.style={font=\scriptsize, text=black!70, align=center, text width=2.8cm},
+      arrow/.style={->, very thick, #1!60!black},
+      improve/.style={font=\scriptsize\itshape, text=#1!50!black, text width=3.0cm, align=center},
+  ]
+    % Three main blocks in a triangle
+    \node[block=blue] (detect) at (0, 0) {DETECTION\\{\scriptsize YOLOv8 inference}};
+    \node[block=orange] (estimate) at (6, 0) {GPS ESTIMATION\\{\scriptsize $R \times \mathrm{ray} \to \mathrm{ground}$}};
+    \node[block=green!60!black] (flight) at (3, -3.8) {FLIGHT CONTROL\\{\scriptsize approach, hover, yaw}};
+
+    % Forward arrows with data labels
+    \draw[arrow=blue] (detect.east) -- (estimate.west)
+      node[midway, above, data] {pixel $(u,v)$\\+ confidence};
+    \draw[arrow=orange] (estimate.south) -- ++(0,-0.3) -| (flight.east)
+      node[near start, right, data] {target GPS\\$(\hat\phi, \hat\lambda)$};
+    \draw[arrow=green!60!black] (flight.west) -- ++(-0.0,0) |- (detect.south)
+      node[near end, left, data] {improved\\camera frame};
+
+    % Improvement annotations (outside the loop)
+    \node[improve=green!60!black, anchor=east] at (-1.2, -2.0) {lower altitude\\$\to$ finer GSD\\$\to$ tighter bbox};
+    \node[improve=orange, anchor=west] at (7.2, -2.0) {deceleration\\$\to$ less pitch\\$\to$ less tilt error};
+    \node[improve=blue, anchor=south] at (3, 0.9) {hover at nadir\\$\to$ pixel offset $\to 0$\\$\to$ projection error $\to 0$};
+
+    % Convergence indicator
+    \node[font=\small\bfseries, text=black!60, align=center] at (3, -1.6) {cycle repeats\\$\to$ convergence};
+
+  \end{tikzpicture}
+  \caption{Cooperative vision-flight feedback loop.  Detection produces a pixel coordinate, GPS estimation projects it to the ground, and flight control steers the drone toward the target.  Crucially, flying closer improves the next detection: lower altitude yields finer GSD, deceleration reduces pitch-induced tilt error, and hovering at nadir drives the pixel offset---and therefore all multiplicative projection errors---toward zero.  The cycle repeats until convergence, typically within 15--20\,s.}
+  \label{fig:cooperative-loop}
+\end{figure}
+
+\subsubsection{Three Mechanisms of Flight-Aided Improvement}
+
+Each phase of the mission exploits a different mechanism by which the drone's response to a detection improves subsequent estimates:
+
+\begin{enumerate}
+  \item \textbf{Approaching $\boldsymbol{\to}$ lower GSD $\boldsymbol{\to}$ tighter bounding box.}
+    As the drone flies toward the target, altitude above the target decreases and the ground sampling distance (GSD) shrinks proportionally ($\mathrm{GSD} = h \cdot w_s / (f \cdot W)$, Section~\ref{sec:gps-math}).  More pixels cover the target, producing a tighter bounding box whose centre is more precisely localised.  At \SI{35}{\metre} the dummy subtends $\sim$20 pixels; at \SI{15}{\metre} it subtends $\sim$47 pixels---a $2.3\times$ improvement in spatial resolution without any software change.
+
+  \item \textbf{Decelerating $\boldsymbol{\to}$ less pitch $\boldsymbol{\to}$ less tilt error.}
+    During the SEARCH phase the drone flies at \SI{5}{\metre\per\second}, inducing $\sim$$10^{\circ}$ forward pitch (Section~\ref{sec:roll-pitch-analysis}).  This pitch introduces \SI{6.2}{\metre} of projection error before compensation.  As the drone decelerates toward hover, pitch drops toward $0^{\circ}$, and the tilt error vanishes \emph{even without the attitude compensation algorithm}---the flight manoeuvre itself eliminates the error source.
+
+  \item \textbf{Hovering $\boldsymbol{\to}$ nadir camera $\boldsymbol{\to}$ maximum accuracy.}
+    In stationary hover the camera points straight down.  When the target is centred in the frame, the pixel offset $(u - C_x, v - C_y) \to 0$, and every multiplicative error in the projection chain (GSD, focal length, yaw, lens distortion) is multiplied by zero and vanishes (Section~\ref{sec:centering-mitigation}).  The only remaining error is the drone's own GPS noise, which is reduced by temporal averaging.
+\end{enumerate}
+
+\subsubsection{Static Camera vs.\ Cooperative System}
+
+Table~\ref{tab:static-vs-cooperative} contrasts a fixed surveillance camera with our cooperative architecture.  The key difference is that a static system's accuracy is determined at installation time, while our system's accuracy \emph{improves during the mission} as a direct consequence of the drone responding to detections.
+
+\begin{table}[H]
+  \centering
+  \caption{Comparison of static camera estimation vs.\ cooperative vision-flight estimation.  The cooperative system exploits the drone's ability to reposition, producing accuracy that improves over time rather than remaining fixed.}
+  \label{tab:static-vs-cooperative}
+  \begin{tabular}{lll}
+    \toprule
+    \textbf{Property} & \textbf{Static Camera} & \textbf{Cooperative (Ours)} \\
+    \midrule
+    Altitude          & Fixed                  & Decreases toward target \\
+    GSD               & Fixed                  & Improves as drone approaches \\
+    Tilt error        & Fixed (mounting angle) & Eliminated by hover \\
+    Pixel offset      & Fixed (target position)& Driven to zero by centering \\
+    Observation count & Accumulates over time  & Accumulates \emph{and} improves per-obs \\
+    Accuracy trend    & $\propto 1/\sqrt{N}$ only & $\propto 1/\sqrt{N}$ \emph{and} per-obs $\sigma \downarrow$ \\
+    Typical CEP$_{50}$ & \SI{3}{\metre}--\SI{5}{\metre}  & \SI{3.5}{\metre} $\to$ \SI{1.8}{\metre} (converges) \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\noindent This cooperative property is what allows the three estimation levels (Section~\ref{sec:three-strategies}) to achieve progressively better accuracy: Level~1 (passive) corresponds to a static camera, Level~2 (hover) adds deceleration, and Level~3 (centering) closes the full feedback loop.  The four mission phases (Section~\ref{sec:two-step}) are the operational realisation of this feedback loop, with each phase exploiting a different improvement mechanism.  The architecture ensures that even if early estimates are coarse ($\sim$\SI{3.5}{\metre} CEP), the system converges to GPS-limited accuracy ($\sim$\SI{1.8}{\metre} CEP) through the natural progression of approach, decelerate, and hover.
 
 % =====================================================================
 \subsection{Why Inverse-Variance Weighting Won}\label{sec:why-ivw}
