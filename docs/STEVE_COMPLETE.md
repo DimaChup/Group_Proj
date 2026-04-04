@@ -612,3 +612,92 @@ Dmytro
 - But the fact remains: we received a non-working platform, others didn't
 - The module assumes a working drone. We didn't have one for 6+ weeks.
 - Assessment should reflect this -- either by crediting simulation work fully, or by adjusting expectations for our demo
+
+---
+
+# PART 5: COMMUNICATION STRATEGY WITH STEVE
+
+## The Tone We Want
+- **NOT complaining** -- worried, concerned student who wants to do well
+- **Seeking reassurance** -- "can I still get top marks?"
+- **Seeking clarity** -- "what exactly do you mean by taking it into account?"
+- **Grateful** -- thank him for Easter days, for trying to help
+- **Specific** -- not vague worries, specific questions with specific asks
+
+## What We Want Steve to Clarify
+
+### 1. "Taking it into account" -- what does that MEAN exactly?
+- Steve said he would take into account that our drone wasn't ready
+- But what does that translate to in marks?
+- Does it mean: adjusted expectations for our demo? Or bonus marks for effort? Or just sympathy?
+- We need to know: **can we still achieve 85%+ despite limited outdoor flight data?**
+- If the answer is no, we need to know NOW so we can adjust our approach
+
+### 2. D7 Personal Reflection -- where is the promised update?
+- Steve said "I have a draft update that I'll issue first thing next week"
+- This was weeks ago -- did it ever come?
+- Without it, we're guessing at what gets top marks
+- The brief just says "DETAIL TO FOLLOW" in yellow
+- We're working from Appendix B rubric bands only -- is that enough?
+
+### 3. D6 Group Report -- how much is flight success worth?
+- Specialist Skills (40%) says "implemented highly effectively"
+- Does "implemented" mean "demonstrated on real hardware outdoors"?
+- Or does simulation-validated with extensive testing count as "implemented"?
+- Our simulation meets ALL 12 requirements -- does that score the same as outdoor demo?
+
+### 4. How exactly are marks allocated?
+- D6: 40% specialist + 40% decision + 20% communication -- is that right?
+- D7: Teamwork + Self-management + Insight -- equally weighted? Or different?
+- How much of D6 Specialist depends on the actual mission demo vs the report documenting it?
+
+## Message Sequence (NOT sending yet, just planning)
+
+### Message 1: Light touch, ask for D7 details + reassurance
+Tone: friendly, concerned student
+Purpose: get the D7 update + gentle probe about marks
+When: soon
+
+### Message 2: Follow up on "taking into account"
+Tone: specific, professional
+Purpose: get written confirmation about assessment fairness
+When: after Message 1 response
+
+### Message 3: Complaint letter (ONLY if needed)
+Tone: formal, factual
+Purpose: documented escalation
+When: ONLY if Steve's responses suggest we'll be penalised unfairly
+
+## Notes for Each Message
+
+### Message 1 should:
+- Ask about D7 draft update (he promised it)
+- Mention we're working really hard on reports
+- Casually ask "are we still on track for a good mark despite the hardware issues?"
+- NOT mention complaint, NOT list grievances
+- Be SHORT (5-6 lines max)
+
+### Message 2 should:
+- Reference his previous statement about "taking it into account"
+- Ask specifically: "does that mean our simulation evidence counts the same as outdoor data?"
+- Ask: "what would you advise us to focus on in the remaining time?"
+- Be professional, seeking guidance
+
+### Message 3 (backup):
+- The formal complaint letter already written in Part 2
+- Only use if Msg 1+2 responses are unsatisfactory
+- Include all evidence, chat history, timeline
+
+## Key Phrases to Use (sound natural, not confrontational)
+- "I'm a bit worried about..." (honest, vulnerable)
+- "I just want to make sure I'm focusing my effort in the right places"
+- "Given the hardware situation, what would you recommend we prioritise?"
+- "You mentioned you'd take it into account -- could you help me understand what that means for our marks?"
+- "I've been putting in a lot of hours and I want to make sure it counts"
+
+## Key Phrases to AVOID
+- "It's not fair" (sounds childish)
+- "Other teams had it better" (sounds jealous)
+- "We deserve top marks" (sounds entitled)
+- "You promised" (sounds accusatory)
+- "This is your fault" (burns bridges)
