@@ -550,37 +550,45 @@ class VisualFlightMission(StateHandlersMixin):
         fh = getattr(self, '_frame_h', config.IMAGE_H)
 
         # Tilt compensation: correct for camera not pointing straight down.
-        # Uses ACTUAL pitch/roll from telemetry at the moment of detection.
+        # Uses ACTUAL pitch/roll/yaw from telemetry at the moment of detection.
         # Works in both SIMULATION (--sim-tilt) and REAL mode.
         # When pitch/roll > 1 degree, the nadir point is NOT at frame center.
-        # We ray-trace the detection pixel through the tilted camera to find
-        # where it actually hits the ground, rather than assuming nadir.
+        # We ray-trace the detection pixel through the tilted camera using the
+        # SAME full rotation matrix as the simulation (R = Rz(yaw) @ Ry(-pitch) @ Rx(-roll))
+        # to find where it actually hits the ground.
         if (SIM_TILT or COMPENSATE_TILT) and self.alt > 1.0 and (abs(self.pitch) > 0.02 or abs(self.roll) > 0.02):
-            # Focal length in pixels
             focal_px = config.FOCAL_LENGTH_MM / config.SENSOR_WIDTH_MM * fw
-            # Detection ray in camera frame (u,v → normalised direction)
-            ray_cam_x = (u - fw / 2) / focal_px
-            ray_cam_y = (v - fh / 2) / focal_px
-            ray_cam_z = 1.0  # forward/down
-            # Rotate ray by pitch and roll (small angle, no yaw -- yaw handled later in GPS calc)
-            cp, sp = math.cos(self.pitch), math.sin(self.pitch)
-            cr, sr = math.cos(self.roll), math.sin(self.roll)
-            # Apply pitch (around X) then roll (around Y)
-            ry = ray_cam_x * cr + ray_cam_z * sr
-            rz = -ray_cam_x * sr + ray_cam_z * cr
-            rx = ray_cam_y  # unchanged by roll
-            ry2 = ry
-            rz2 = rx * sp + rz * cp
-            rx2 = rx * cp - rz * sp
-            # Intersect with ground (z = alt below camera)
-            if rz2 > 0.01:
-                t = self.alt / rz2
-                ground_x = ry2 * t  # right in body frame (metres)
-                ground_y = rx2 * t  # forward in body frame (metres)
-                # Convert back to "virtual pixel offset from nadir"
-                gsd = (config.SENSOR_WIDTH_MM * self.alt) / (config.FOCAL_LENGTH_MM * fw)
-                u = fw / 2 + ground_x / gsd
-                v = fh / 2 - ground_y / gsd
+
+            # Build SAME rotation as simulation: R = Rz(yaw) @ Ry(-pitch) @ Rx(-roll)
+            def _Rx(a):
+                c, s = math.cos(a), math.sin(a)
+                return np.array([[1, 0, 0], [0, c, -s], [0, s, c]], dtype=np.float64)
+            def _Ry(a):
+                c, s = math.cos(a), math.sin(a)
+                return np.array([[c, 0, s], [0, 1, 0], [-s, 0, c]], dtype=np.float64)
+            def _Rz(a):
+                c, s = math.cos(a), math.sin(a)
+                return np.array([[c, -s, 0], [s, c, 0], [0, 0, 1]], dtype=np.float64)
+
+            R = _Rz(self.yaw) @ _Ry(-self.pitch) @ _Rx(-self.roll)
+
+            # Ray from detection pixel in camera frame
+            ray_cam = np.array([(u - fw / 2) / focal_px,
+                                (v - fh / 2) / focal_px,
+                                1.0])
+
+            # Rotate to world frame (NED: X=North, Y=East, Z=Down)
+            ray_world = R @ ray_cam
+
+            if ray_world[2] > 0.01:
+                t = self.alt / ray_world[2]
+                north_m = ray_world[0] * t
+                east_m = ray_world[1] * t
+
+                # Convert to GPS directly (matches simulation ground-plane intersection)
+                self.target_lat = self.lat + north_m / 111132.0
+                self.target_lon = self.lon + east_m / (111132.0 * math.cos(math.radians(self.lat)))
+                return  # Skip the normal GSD-based calculation
 
         self.target_lat, self.target_lon = calculate_target_from_pixels(
             u, v, self.alt, self.yaw, self.lat, self.lon,
