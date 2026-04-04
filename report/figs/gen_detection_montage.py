@@ -5,31 +5,32 @@ Scans the DJI 30fps flight video, finds frames with positive YOLOv8 detections
 at approximately 15m, 25m, 35m, and 50m altitude, draws bounding boxes, and
 arranges them in a 2x2 grid saved as PDF and PNG.
 
-Falls back to a placeholder montage if the video or model is unavailable.
+Uses OpenCV DNN + ONNX for fast inference (~0.2s/frame). Falls back to a
+placeholder montage if the video or model is unavailable.
 
-Usage (from project root, using test_env which has ultralytics):
-    test_env/Scripts/python report/figs/gen_detection_montage.py
+Usage:
+    python report/figs/gen_detection_montage.py
 """
 import sys, os, re
 
 PROJECT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-sys.path.insert(0, PROJECT)
 
 import cv2
 import numpy as np
 
 # ── Paths ──
-VIDEO   = os.path.join(PROJECT, "RealVideo", "DJI_0001_1456x1088_cropped_30fps.mp4")
-SRT     = os.path.join(PROJECT, "RealVideo", "DJI_20260311172332_0001_V.SRT")
-PT_MODEL = os.path.join(PROJECT, "cv_models", "sar_v2_1088", "best.pt")
-OUT_DIR = os.path.dirname(os.path.abspath(__file__))
-OUT_PNG = os.path.join(OUT_DIR, "detection_montage.png")
-OUT_PDF = os.path.join(OUT_DIR, "detection_montage.pdf")
+VIDEO    = os.path.join(PROJECT, "RealVideo", "DJI_0001_1456x1088_cropped_30fps.mp4")
+SRT      = os.path.join(PROJECT, "RealVideo", "DJI_20260311172332_0001_V.SRT")
+ONNX_MODEL = os.path.join(PROJECT, "cv_models", "sar_640", "best.onnx")
+OUT_DIR  = os.path.dirname(os.path.abspath(__file__))
+OUT_PNG  = os.path.join(OUT_DIR, "detection_montage.png")
+OUT_PDF  = os.path.join(OUT_DIR, "detection_montage.pdf")
 
 TARGET_ALTS = [15, 25, 35, 50]   # metres
-ALT_TOL     = 3                   # accept if within +/- this of target
-CONF_THRESH = 0.25
-MAX_TRIES   = 10                  # max frames to try per altitude band
+ALT_TOL     = 5                   # accept if within +/- this of target
+CONF_THRESH = 0.20
+MAX_TRIES   = 200                 # max frames to try per altitude band
+INPUT_SIZE  = 640                 # YOLOv8 input size
 
 
 def parse_srt(srt_path):
@@ -54,9 +55,61 @@ def parse_srt(srt_path):
     return telem
 
 
+def yolov8_detect(net, frame, conf_thresh=0.25):
+    """Run YOLOv8 detection via OpenCV DNN. Returns list of (x1, y1, x2, y2, conf)
+    in original frame coordinates, or empty list if no detection."""
+    h, w = frame.shape[:2]
+
+    # Letterbox to INPUT_SIZE x INPUT_SIZE
+    scale = min(INPUT_SIZE / w, INPUT_SIZE / h)
+    new_w, new_h = int(w * scale), int(h * scale)
+    pad_w, pad_h = (INPUT_SIZE - new_w) // 2, (INPUT_SIZE - new_h) // 2
+
+    resized = cv2.resize(frame, (new_w, new_h))
+    padded = np.full((INPUT_SIZE, INPUT_SIZE, 3), 114, dtype=np.uint8)
+    padded[pad_h:pad_h + new_h, pad_w:pad_w + new_w] = resized
+
+    blob = cv2.dnn.blobFromImage(padded, 1 / 255.0, (INPUT_SIZE, INPUT_SIZE),
+                                  swapRB=True, crop=False)
+    net.setInput(blob)
+    output = net.forward()  # shape: (1, 5, 8400)
+
+    # Parse YOLOv8 output: [cx, cy, w, h, conf] x 8400 proposals
+    preds = output[0]  # (5, 8400)
+    cx_arr = preds[0]
+    cy_arr = preds[1]
+    w_arr  = preds[2]
+    h_arr  = preds[3]
+    conf_arr = preds[4]
+
+    # Filter by confidence
+    mask = conf_arr > conf_thresh
+    if not np.any(mask):
+        return []
+
+    # Get best detection
+    idx = np.argmax(conf_arr)
+    if conf_arr[idx] < conf_thresh:
+        return []
+
+    cx, cy, bw, bh = cx_arr[idx], cy_arr[idx], w_arr[idx], h_arr[idx]
+    conf = float(conf_arr[idx])
+
+    # Convert from padded 640x640 coords to original frame coords
+    x1 = int((cx - bw / 2 - pad_w) / scale)
+    y1 = int((cy - bh / 2 - pad_h) / scale)
+    x2 = int((cx + bw / 2 - pad_w) / scale)
+    y2 = int((cy + bh / 2 - pad_h) / scale)
+
+    # Clamp to frame
+    x1, y1 = max(0, x1), max(0, y1)
+    x2, y2 = min(w, x2), min(h, y2)
+
+    return [(x1, y1, x2, y2, conf)]
+
+
 def draw_detection(frame, x1, y1, x2, y2, conf, alt_label):
     """Draw green bbox, confidence, and altitude label on the frame."""
-    # Green bounding box
     cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 220, 0), 3)
 
     # Confidence badge above box
@@ -66,7 +119,7 @@ def draw_detection(frame, x1, y1, x2, y2, conf, alt_label):
     cv2.putText(frame, label, (x1 + 4, y1 - 5),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 0), 2)
 
-    # Altitude overlay (top-left, with shadow for readability)
+    # Altitude overlay (top-left, with shadow)
     cv2.putText(frame, alt_label, (20, 50),
                 cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 0, 0), 4, cv2.LINE_AA)
     cv2.putText(frame, alt_label, (20, 50),
@@ -77,18 +130,17 @@ def draw_detection(frame, x1, y1, x2, y2, conf, alt_label):
 
 def try_real_montage():
     """Attempt to generate montage from real video + model. Returns True on success."""
-    for path, name in [(VIDEO, "Video"), (SRT, "SRT"), (PT_MODEL, "Model")]:
+    for path, name in [(VIDEO, "Video"), (SRT, "SRT"), (ONNX_MODEL, "ONNX model")]:
         if not os.path.exists(path):
             print(f"{name} not found: {path}")
             return False
 
-    # Load model (ultralytics is much faster than TFLite on laptop)
+    # Load ONNX model via OpenCV DNN (fast, no torch dependency)
     try:
-        from ultralytics import YOLO
-        model = YOLO(PT_MODEL)
-        print(f"Model loaded: {PT_MODEL}")
+        net = cv2.dnn.readNetFromONNX(ONNX_MODEL)
+        print(f"ONNX model loaded: {ONNX_MODEL}")
     except Exception as e:
-        print(f"YOLO load error: {e}")
+        print(f"ONNX load error: {e}")
         return False
 
     # Parse telemetry
@@ -126,6 +178,7 @@ def try_real_montage():
                 needed.setdefault(fnum, []).append((ta, actual_alt))
 
     sorted_frames = sorted(needed.keys())
+    print(f"  Scanning {len(sorted_frames)} frames...")
 
     results = {}  # target_alt -> (frame, x1, y1, x2, y2, conf, actual_alt)
     done_alts = set()
@@ -143,28 +196,21 @@ def try_real_montage():
         if not ret:
             continue
 
-        # Run YOLO inference
-        yolo_results = model(frame, conf=CONF_THRESH, verbose=False)
-        boxes = yolo_results[0].boxes if yolo_results else None
-
-        if boxes is not None and len(boxes) > 0:
-            # Take highest-confidence detection
-            best_idx = boxes.conf.argmax()
-            conf = boxes.conf[best_idx].item()
-            x1, y1, x2, y2 = [int(v) for v in boxes.xyxy[best_idx].tolist()]
-
+        dets = yolov8_detect(net, frame, conf_thresh=CONF_THRESH)
+        if dets:
+            x1, y1, x2, y2, conf = dets[0]
             for ta, actual_alt in targets_here:
                 if ta not in done_alts:
                     results[ta] = (frame.copy(), x1, y1, x2, y2, conf, actual_alt)
                     done_alts.add(ta)
-                    print(f"  {ta}m -> frame {fnum} (alt={actual_alt:.1f}m, "
+                    print(f"    {ta}m -> frame {fnum} (alt={actual_alt:.1f}m, "
                           f"conf={conf:.2f}, box={x2-x1}x{y2-y1}px)")
 
     cap.release()
 
     for ta in TARGET_ALTS:
         if ta not in results:
-            print(f"  {ta}m -> NO detection found")
+            print(f"    {ta}m -> NO detection found")
 
     if len(results) < 2:
         print("Too few detections, falling back to placeholder")
