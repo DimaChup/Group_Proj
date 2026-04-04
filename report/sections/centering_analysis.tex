@@ -1,11 +1,19 @@
 \section{Centering vs.\ Direct Offset Landing}\label{sec:centering-analysis}
 
-A critical design decision in the landing pipeline is whether to visually servo the drone above the target before commanding a landing offset, or to proceed directly from a GPS-estimated position.  The state machine includes a dedicated \textsc{Centering} state that flies the drone above the detected target, as well as a \textsc{Descending} state (currently bypassed) that would reduce altitude while maintaining visual lock (Section~\ref{sec:state-machine}). In the current implementation, the drone centres above the target at search altitude (\SI{35}{\metre}), enters VERIFY for operator confirmation and GPS averaging, then proceeds to an offset landing. This section analyses the centering-vs-direct-offset trade-off and justifies the current design choice.
+A critical design decision in the landing pipeline is whether to visually servo the drone above the target before commanding a landing offset, or to proceed directly from a GPS-estimated position.  The target localisation pipeline is structured as a two-step process:
+
+\begin{enumerate}
+    \item \textbf{Step~1 --- GPS estimation from search altitude.}  During the lawnmower search pattern at \SI{35}{\metre}, each detection is projected from pixel coordinates to a ground-level GPS position using the calibrated camera model (Section~\ref{sec:localisation}).  Multiple detections are fused using inverse-variance weighting and Kalman filtering to produce a consolidated target estimate with $\text{CEP}_{50} \approx \SI{2.3}{\metre}$.
+
+    \item \textbf{Step~2 --- Visual servo centering (optional).}  The state machine includes a dedicated \textsc{Centering} state that flies the drone directly above the estimated target and drives the bounding-box centroid toward the image centre, eliminating off-axis projection error.  A subsequent \textsc{Descending} state would reduce altitude from \SI{35}{\metre} to \SI{15}{\metre} while maintaining visual lock, further reducing the ground sampling distance and improving localisation to $\text{CEP}_{50} \approx \SI{1.5}{\metre}$.
+\end{enumerate}
+
+\noindent In the current implementation, Step~2 is bypassed: the drone centres above the target at search altitude (\SI{35}{\metre}), enters \textsc{Verify} for operator confirmation and GPS averaging, then proceeds to an offset landing using only the Step~1 estimate.  This section analyses the centering-vs-direct-offset trade-off and justifies why Step~2 was deferred.
 
 % ─────────────────────────────────────────────────────────────────────
 \subsection{The Centering Option}
 
-In the full centering pipeline as originally designed, the drone transitions from \textsc{Search} to \textsc{Centering}, where it flies toward the GPS-estimated target position and attempts to place the detection bounding box within a pixel-tolerance of the image centre. The code includes a \textsc{Descending} state that would then reduce altitude from \SI{35}{\metre} to \SI{15}{\metre} in increments while maintaining visual lock. In the current implementation, the \textsc{Descending} state is bypassed: the drone transitions directly from \textsc{Centering} to \textsc{Verify} at search altitude (\SI{35}{\metre}). Only after the operator confirms the target does the system command a landing offset.
+In the full centering pipeline (Step~2 above), the drone transitions from \textsc{Search} to \textsc{Centering}, where it flies toward the GPS-estimated target position and attempts to place the detection bounding box within a pixel-tolerance of the image centre. The \textsc{Descending} state then reduces altitude from \SI{35}{\metre} to \SI{15}{\metre} in increments while maintaining visual lock. In the baseline configuration, the descent phase is bypassed: the drone transitions directly from \textsc{Centering} to \textsc{Verify} at search altitude (\SI{35}{\metre}). Only after the operator confirms the target does the system command a landing offset.
 
 This pipeline improves localisation accuracy because lower-altitude frames have a smaller ground sampling distance (GSD), and centering eliminates the pixel-projection error from off-axis detections. However, it introduces three additional risk factors:
 

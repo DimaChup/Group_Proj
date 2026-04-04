@@ -1,4 +1,7 @@
 % search_optimization.tex — Search path optimisation: energy, coverage, NFZ, detection tradeoffs
+%
+% STATUS: SUPERSEDED by path_optimization_definitive.tex (sec:path-opt).
+%         Retained for supplementary detail; all labels carry '-old' suffix.
 
 \section{Multi-Objective Search Optimisation}\label{sec:search-opt}
 
@@ -216,7 +219,7 @@ The exception is the focus area, where the search speed drops to \SI{5}{\metre\p
 When a PLB signal triggers the focus area redirect (Section~\ref{sec:plb-redirect}), the mission dynamics change in several interacting ways:
 
 \begin{enumerate}
-  \item \textbf{Area reduction.} The focus polygon is approximately \SI{0.15}{\hectare} compared to the full survey area of \SI{1.8}{\hectare}---a \SI{92}{\percent} reduction. At \SI{5}{\metre\per\second} with the same lane width, the focus search requires approximately \SI{30}{\second}, compared to \SI{112}{\second} for the full area.
+  \item \textbf{Area reduction.} The focus polygon is approximately \SI{0.15}{\hectare} compared to the full survey area of \SI{3.2}{\hectare}---a \SI{92}{\percent} reduction. At \SI{5}{\metre\per\second} with the same lane width, the focus search requires approximately \SI{30}{\second}, compared to \SI{112}{\second} for the full area.
 
   \item \textbf{Speed reduction.} The search speed drops from \SI{8}{\metre\per\second} (altitude-dependent schedule at \SI{35}{\metre}) to a fixed \SI{5}{\metre\per\second}, increasing the per-target dwell time from 14 frames to 23 frames and raising $P_d$ from \SI{99.97}{\percent} to \SI{99.99}{\percent}.
 

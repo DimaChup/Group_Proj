@@ -85,7 +85,7 @@ The detection subsystem (Section~\ref{sec:cv}) produces, for each frame, a bound
 % =====================================================================
 \subsection{Detection-to-GPS Pipeline Overview}\label{sec:pipeline-overview}
 
-\usetikzlibrary{shapes.geometric, arrows.meta, positioning, calc, fit}
+\usetikzlibrary{shapes.geometric, shapes.misc, arrows.meta, positioning, calc, fit}
 
 The complete detection-to-GPS pipeline traverses 15~stages, grouped into four functional categories: image preprocessing (blue), neural network inference (green), coordinate transformation (orange), and validation/state management (red).  Figure~\ref{fig:pipeline-flow} shows the full data flow from raw sensor capture to a validated GPS estimate, annotated with data shapes, timing, and error contributions at each stage.
 
@@ -271,7 +271,7 @@ A critical step in the detection-to-GPS chain is the mapping between the sensor'
 % =====================================================================
 \subsection{Error Budget}\label{sec:error-budget}
 
-Eight independent error sources contribute to the total position uncertainty.  Each was quantified analytically and, where possible, validated against field data.  The budget now includes two sources---roll/pitch attitude and image resize---that were omitted from earlier analyses.
+Nine independent error sources contribute to the total position uncertainty.  Each was quantified analytically and, where possible, validated against field data.  The budget now includes two sources---roll/pitch attitude and image resize---that were omitted from earlier analyses.
 
 \begin{table}[ht]
   \centering
@@ -312,7 +312,7 @@ Eight independent error sources contribute to the total position uncertainty.  E
 
 \paragraph{Lens distortion} shifts pixel coordinates radially from their true positions, with the largest effect at frame edges.  The IMX296 exhibits minimal barrel distortion; the checkerboard calibration (RMS = 0.399\,px) reduces the residual to sub-pixel levels.  At \SI{35}{\metre} altitude, where the GSD is \SI{22.1}{\milli\metre\per\px}, a 1\,px residual corresponds to \SI{0.02}{\metre}---negligible.  Without undistortion, the edge-of-frame error grows to approximately \SI{0.3}{\metre}.
 
-\paragraph{Camera vibration (shakiness).}  Airframe vibration from motor harmonics and wind gusts displaces the detection bounding-box centre by an estimated $\pm$2--3\,px per frame in random directions.  At \SI{35}{\metre} altitude (GSD\,=\,\SI{22.1}{\milli\metre\per\px}), this corresponds to $\pm$\SI{0.05}{\metre}---well below the GPS receiver noise floor.  Because the displacement is stochastic and zero-mean, it averages out rapidly across the 11--17 frames per flyover (Section~\ref{sec:vp:frames}).  Three mechanisms further suppress its effect on the fused estimate: (i)~the inverse-variance weighted average down-weights high-altitude, large-GSD observations where vibration-induced pixel shifts project to larger ground displacements; (ii)~the spatial clustering algorithm in the SMART consecutive-frame filter rejects isolated pixel outliers caused by single-frame jolts; and (iii)~the IMX296 global shutter captures the entire frame simultaneously, so vibration produces a uniform translational shift rather than the row-dependent distortion that a rolling-shutter sensor would exhibit.  The net contribution to the position error budget is negligible ($<$\SI{0.1}{\metre} after multi-frame averaging) and is subsumed by the ``Detection pixel'' row in Table~\ref{tab:error-budget}.
+\paragraph{Camera vibration (shakiness).}  Airframe vibration from motor harmonics and wind gusts displaces the detection bounding-box centre by an estimated $\pm$2--3\,px per frame in random directions.  At \SI{35}{\metre} altitude (GSD\,=\,\SI{22.1}{\milli\metre\per\px}), this corresponds to $\pm$\SI{0.05}{\metre}---well below the GPS receiver noise floor.  Because the displacement is stochastic and zero-mean, it averages out rapidly across the 11--17 frames per flyover (Section~\ref{sec:gps:strip-visibility}).  Three mechanisms further suppress its effect on the fused estimate: (i)~the inverse-variance weighted average down-weights high-altitude, large-GSD observations where vibration-induced pixel shifts project to larger ground displacements; (ii)~the spatial clustering algorithm in the SMART consecutive-frame filter rejects isolated pixel outliers caused by single-frame jolts; and (iii)~the IMX296 global shutter captures the entire frame simultaneously, so vibration produces a uniform translational shift rather than the row-dependent distortion that a rolling-shutter sensor would exhibit.  The net contribution to the position error budget is negligible ($<$\SI{0.1}{\metre} after multi-frame averaging) and is subsumed by the ``Detection pixel'' row in Table~\ref{tab:error-budget}.
 
 \paragraph{Image resize mapping} introduces no error in the GPS projection.  The coordinate recovery (Equation~\ref{eq:unscale}) is the exact algebraic inverse of the resize: $u_\mathrm{sensor} = u_\mathrm{det} \cdot (1456/640)$, with the division performed in floating point.  The 4:3\,$\to$\,1:1 aspect distortion is confined to the model's internal feature extraction and does not affect the output coordinate geometry, because the rescaling correctly applies different scale factors to the horizontal and vertical axes.
 
@@ -715,7 +715,7 @@ The preceding error analysis reveals that several dominant error sources---roll/
   \item \textbf{Detection confirmation.}  Requiring multiple consecutive detections from the same stationary vantage point provides temporal confirmation that the target is a persistent physical object rather than a transient false positive (shadow, texture artefact, or single-frame noise).
 \end{enumerate}
 
-\noindent The combined effect is a reduction in single-observation RSS from $\sim$\SI{7}{\metre} (during flight) to $\sim$\SI{3}{\metre} (hover), with multi-frame GPS averaging further reducing the fused estimate to $\sim$\SI{1.8}{\metre} precision at search altitude.  This is an elegant engineering solution: rather than implementing complex roll/pitch compensation (Equation~\ref{eq:attitude-correction}), GPS lag correction ($\Delta\mathbf{p} = \mathbf{v} \cdot \Delta t$), and blur deconvolution in software, the mission procedure is designed to \emph{physically eliminate} these errors.  The software complexity remains low, the risk of introducing bugs in safety-critical code is avoided, and the resulting position estimate is more accurate than any single software correction could achieve in isolation.
+\noindent The combined effect is a reduction in single-observation RSS from $\sim$\SI{7}{\metre} (during flight) to $\sim$\SI{3}{\metre} (hover), with multi-frame GPS averaging further reducing the fused estimate to $\sim$\SI{1.8}{\metre} precision at search altitude.  This is an elegant engineering solution: rather than implementing complex roll/pitch compensation (Equation~\ref{eq:full-rotation}), GPS lag correction ($\Delta\mathbf{p} = \mathbf{v} \cdot \Delta t$), and blur deconvolution in software, the mission procedure is designed to \emph{physically eliminate} these errors.  The software complexity remains low, the risk of introducing bugs in safety-critical code is avoided, and the resulting position estimate is more accurate than any single software correction could achieve in isolation.
 
 % =====================================================================
 \subsection{Three-Level Estimation Architecture}\label{sec:three-strategies}
@@ -1354,7 +1354,7 @@ The preceding sections have analysed individual error sources, mitigation strate
 \begin{tikzpicture}[
     state/.style={rectangle, draw, rounded corners=3pt, fill=blue!12,
                   minimum width=2.4cm, minimum height=0.7cm,
-                  font=\small\bfseries},
+                  font=\small\bfseries, align=center},
     ceplabel/.style={font=\small\bfseries, text=red!70!black},
     annot/.style={font=\scriptsize, text width=2.6cm, align=center,
                   text=black!70},
@@ -1477,7 +1477,7 @@ The accuracy progression described above is not an accident of the state machine
 
 During the SEARCH state the drone flies the lawnmower pattern at \SI{5}{\metre\per\second} and \SI{35}{\metre} altitude, inducing a forward pitch of approximately $5$--$10^{\circ}$ to maintain airspeed.  The camera, rigidly mounted to the airframe, is tilted away from nadir by this pitch angle.  When the YOLOv8n detector identifies the mannequin in this tilted frame, the pixel-to-GPS pipeline (Section~\ref{sec:pipeline-overview}) ray-traces the detection through the known pitch and roll angles obtained from the flight controller's attitude quaternion at \SI{50}{\hertz}.
 
-The ray-tracing correction (Equations~\ref{eq:ray-cam}--\ref{eq:virtual-pixel}) constructs a ray from the camera origin through the detected pixel, rotates it by the measured pitch and roll, and intersects it with the ground plane at the known flight altitude.  This produces a rough GPS estimate with CEP$_{50} \approx \SI{3.5}{\metre}$---accurate enough to command the drone toward the target and begin decelerating.  Without tilt compensation, the $10^{\circ}$ pitch alone would contribute $\sim$\SI{6.2}{\metre} of forward bias (Section~\ref{sec:roll-pitch-analysis}), but even this uncompensated estimate would keep the target within the camera's \SI{32}{\metre} ground footprint.  The state machine transitions to CENTERING.
+The ray-tracing correction (Equations~\ref{eq:ray-cam}--\ref{eq:tilt-gps}) constructs a ray from the camera origin through the detected pixel, rotates it by the measured pitch and roll, and intersects it with the ground plane at the known flight altitude.  This produces a rough GPS estimate with CEP$_{50} \approx \SI{3.5}{\metre}$---accurate enough to command the drone toward the target and begin decelerating.  Without tilt compensation, the $10^{\circ}$ pitch alone would contribute $\sim$\SI{6.2}{\metre} of forward bias (Section~\ref{sec:roll-pitch-analysis}), but even this uncompensated estimate would keep the target within the camera's \SI{32}{\metre} ground footprint.  The state machine transitions to CENTERING.
 
 \subsubsection{Phase~2: Approach and Continuous Refinement}
 
@@ -2093,7 +2093,7 @@ For $N$ passes with varying heading configurations, the expected CEP$_{50}$ is:
 \noindent The most significant accuracy improvement occurs between one and two passes: the second pass with an opposing heading eliminates the systematic bias entirely, and the $\sqrt{2}$ averaging improvement reduces random noise by 29\%.  Beyond two passes, gains follow the slower $1/\sqrt{N}$ law.
 
 % ------ 3. Strip spacing and target visibility ------
-\subsubsection{Strip Spacing and Target Visibility}\label{sec:vp:frames}
+\subsubsection{Strip Spacing and Target Visibility}\label{sec:gps:strip-visibility}
 
 The number of observations per pass depends on the camera footprint, search speed, and detection frame rate.  At the nominal search altitude of \SI{35}{\metre}:
 

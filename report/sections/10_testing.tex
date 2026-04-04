@@ -2,7 +2,7 @@
 
 This appendix describes the verification and validation framework used to build confidence in each subsystem before advancing to the next integration level, documenting the rationale behind the five-tier progressive approach and the 20 failure scenarios tested before outdoor operations.
 
-The verification and validation strategy draws on V-model principles~\cite{forsberg1991relationship}, where each level of system integration is paired with a corresponding verification activity, and on incremental autonomy practices from safety-critical robotics~\cite{koopman2016challenges}. The resulting five-tier progressive testing framework advances from pure software simulation to full autonomous flight, supported by 58 dedicated test scripts organised across six categories and a stress-testing campaign that exercised 20 failure scenarios before the first outdoor test.
+The verification and validation strategy draws on V-model principles~\cite{forsberg1991relationship}, where each level of system integration is paired with a corresponding verification activity, and on incremental autonomy practices from safety-critical robotics~\cite{koopman2016challenges}. The resulting five-tier progressive testing framework advances from pure software simulation to full autonomous flight, supported by 74 dedicated test scripts organised across eight categories---including 127 unit tests and 33 automated integration tests---and a stress-testing campaign that exercised 20 failure scenarios before the first outdoor test.
 
 \subsection{V-Model Verification Approach}\label{sec:vmodel}
 
@@ -50,15 +50,17 @@ Table~\ref{tab:five-tier} summarises the five tiers and their verification targe
 
 \subsection{Test Script Organisation}\label{sec:test-org}
 
-The 58 test scripts are organised into six directories, each addressing a distinct verification concern:
+The test scripts are organised into eight directories, each addressing a distinct verification concern:
 
 \begin{itemize}
-    \item \textbf{Hardware} (\texttt{tests/hardware/}, 6 scripts) --- individual component checks: inference benchmark (50-run timing report on Pi~5), detection rate under simulated blur, GPS satellite tracking, GPS step-by-step health verification, and buzzer functionality. These confirm that each peripheral operates correctly before integration.
-    \item \textbf{Flight} (\texttt{tests/flight/}, 7 scripts) --- progressive flight tests numbered 0a through 4 by risk level, plus drawing utilities for search area and waypoint definition. Lower numbers must pass before higher numbers are attempted; see Section~\ref{sec:five-tier} for the full progression.
+    \item \textbf{Hardware} (\texttt{tests/hardware/}, 8 scripts) --- individual component checks: inference benchmarks (standard 50-run and comprehensive multi-model), detection rate under simulated blur, NCNN backend benchmark, GPS satellite tracking, GPS step-by-step health verification, single-frame detection snapshot, and buzzer functionality. These confirm that each peripheral operates correctly before integration.
+    \item \textbf{Flight} (\texttt{tests/flight/}, 14 scripts) --- progressive flight tests numbered 0a through 5 by risk level, plus geofence verification scripts (demo, repulsion test), drawing utilities for search area and waypoint definition, and a live map viewer. Lower numbers must pass before higher numbers are attempted; see Section~\ref{sec:five-tier} for the full progression.
     \item \textbf{Diagnostics} (\texttt{tests/diagnostics/}, 5 scripts) --- runtime monitoring tools: a multi-panel connectivity dashboard aggregating all communication links, live Cube telemetry viewer (attitude, GPS, battery), and MJPEG camera streams (standard, threaded, and H.264 variants). The diagnostics dashboard serves as the final go/no-go gate before arming.
-    \item \textbf{Calibration} (\texttt{tests/calibration/}, 5 scripts) --- parameter measurement: bench FOV calibration (ruler method), quick single-measurement FOV check, altitude-based FOV at real hover height, lens distortion characterisation (checkerboard $\to$ \texttt{calibration\_data.npz}), and GPS ground-truth comparison (CV estimate vs surveyed position).
+    \item \textbf{Calibration} (\texttt{tests/calibration/}, 7 scripts) --- parameter measurement: bench FOV calibration (ruler method), quick single-measurement FOV check, altitude-based FOV at real hover height, lens distortion characterisation (checkerboard $\to$ \texttt{calibration\_data.npz}), GPS ground-truth comparison (CV estimate vs surveyed position), and two focal-length calibration tools (terminal-based and OpenCV GUI).
     \item \textbf{Experiments} (\texttt{tests/day\_1\_experiments/}, 6 scripts) --- structured data collection designed to run passively during Tier~4 manual flights, outputting CSV files for post-flight analysis: altitude sweep, speed sweep, GPS accuracy, GPS drift (CEP50/CEP95), model comparison, and a general detection logger.
-    \item \textbf{Laptop} (\texttt{tests/laptop/}, 10+ scripts) --- development-only tools: model loading, TFLite inspection, synthetic benchmarks, DJI video replay with detection overlay, A/B model comparison, zoom-based detection, and path visualisation. Not used on flight day.
+    \item \textbf{Laptop} (\texttt{tests/laptop/}, 21 scripts) --- development-only tools: model loading, TFLite and NCNN inspection, synthetic benchmarks, DJI video replay with detection overlay, A/B model comparison, zoom-based detection, path visualisation, NFZ manual testing, and approach/descent simulation. Not used on flight day.
+    \item \textbf{Unit} (\texttt{tests/unit/}, 6 files, 127 test functions) --- pytest-based unit tests covering configuration validation, state enum completeness, GPS coordinate transforms, lawnmower pattern generation, vision system initialisation, and GPS utility functions.
+    \item \textbf{Automated} (\texttt{tests/automated/}, 7 scripts, 33 test functions) --- extended integration tests: planning edge cases, utility function coverage, vision pipeline tests, geofence optimisation, coverage simulation, and SITL smoke tests.
 \end{itemize}
 
 All experiment scripts issue zero flight commands and are safe to run at any time. The CSV output format enables direct import into the analysis presented in Section~\ref{sec:results}.

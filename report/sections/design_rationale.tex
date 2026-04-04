@@ -40,12 +40,12 @@ These objectives cannot be optimised independently. Lowering altitude improves d
   \label{fig:coupling-body}
 \end{figure}
 
-A 216-configuration parametric sweep (6~altitudes $\times$ 36~scan angles, Appendix~\ref{sec:path-opt}) evaluated every combination on the real AENGM0074 polygon geometry using a physics-based energy model. The sweep reveals that scan angle selection dominates altitude selection for energy efficiency: varying the angle from optimal (\SI{70}{\degree}) to worst-case (\SI{0}{\degree}) increases energy by 100--200\%, whereas changing altitude from \SI{35}{\metre} to \SI{50}{\metre} saves only 30--40\%. A dependency chain links each parameter to a physical measurement or constraint:
+A 216-configuration parametric sweep (6~altitudes $\times$ 36~scan angles, Appendix~\ref{sec:path-opt}) evaluated every combination on the AENGM0074 polygon geometry using a physics-based energy model. Scan angle dominates altitude for energy efficiency: varying the angle from optimal (\SI{70}{\degree}) to worst-case (\SI{0}{\degree}) increases energy by 100--200\%, whereas changing altitude from \SI{35}{\metre} to \SI{50}{\metre} saves only 30--40\%. A dependency chain links each parameter to a physical measurement or constraint:
 
 \begin{enumerate}[nosep]
   \item \textbf{Target $\rightarrow$ altitude}: the mannequin's \SI{0.5}{\metre} width must subtend $\geq$10~model-input pixels for reliable detection, capping altitude at \SI{35}{\metre} with a $1.4\times$ margin.
-  \item \textbf{Altitude $\rightarrow$ speed}: the \SI{24}{\metre} along-track footprint at \SI{35}{\metre}, combined with \SI{4.8}{FPS} inference, requires $\geq$10~frames per target, yielding $v \leq \SI{11.5}{\metre\per\second}$; the altitude-dependent schedule assigns $v = \SI{8}{\metre\per\second}$.
-  \item \textbf{Polygon geometry $\rightarrow$ scan angle}: alignment with the longest edge (\SI{70}{\degree}) minimises U-turns from 9 to 5 and reduces energy from \SI{25.4}{Wh} to \SI{12.6}{Wh}.
+  \item \textbf{Altitude $\rightarrow$ speed}: the \SI{24}{\metre} along-track footprint at \SI{35}{\metre}, combined with \SI{4.8}{FPS} inference, requires $\geq$10~frames per target, yielding $v \leq \SI{11.5}{\metre\per\second}$; the altitude-dependent speed schedule assigns $v = \SI{8}{\metre\per\second}$.
+  \item \textbf{Polygon geometry $\rightarrow$ scan angle}: aligning with the longest edge (\SI{70}{\degree}) minimises U-turns from 9 to 5 and reduces energy from \SI{25.4}{Wh} to \SI{12.6}{Wh}.
   \item \textbf{Footprint width $\rightarrow$ NFZ margin}: the \SI{32}{\metre} footprint at \SI{35}{\metre} requires \SI{23}{\metre} Root Sum of Squares (RSS) standoff; the \SI{30}{\metre} buffer provides a $2.2\times$ safety factor.
 \end{enumerate}
 
@@ -56,7 +56,7 @@ A 216-configuration parametric sweep (6~altitudes $\times$ 36~scan angles, Appen
   \label{fig:alt-speed-body}
 \end{figure}
 
-\noindent The selected operating point (\SI{35}{\metre}, \SI{70}{\degree}, \SI{8}{\metre\per\second}) is not the energy minimum---that belongs to \SI{50}{\metre}/\SI{70}{\degree}/\SI{10}{\metre\per\second} at \SI{8.2}{Wh}---but it is the best Pareto compromise: 96\% coverage, $P_d > 99.97\%$ (assuming frame independence; 95\% per pass after correlation adjustment, see Section~\ref{sec:req-detail}), \SI{12.6}{Wh} (10.9\% of battery), and a \SI{50}{\metre} NFZ margin with $2.2\times$ surplus. The 4\% coverage gap lies within a fenced wildlife reserve with negligible casualty probability. The full derivation, energy model, strategy comparison, and sensitivity analysis are provided in Appendices~\ref{sec:path-opt} and~\ref{sec:design-strategy}.
+\noindent The selected operating point (\SI{35}{\metre}, \SI{70}{\degree}, \SI{8}{\metre\per\second}) is not the energy minimum---that belongs to \SI{50}{\metre}/\SI{70}{\degree}/\SI{10}{\metre\per\second} at \SI{8.2}{Wh}---but it offers the best Pareto compromise: 96\% coverage, $P_d > 99.97\%$ (assuming frame independence; 95\% per pass after correlation adjustment, see Section~\ref{sec:req-detail}), \SI{12.6}{Wh} (10.9\% of battery), and a \SI{50}{\metre} NFZ margin with $2.2\times$ surplus. The 4\% coverage gap lies within a fenced wildlife reserve with negligible casualty probability. Appendices~\ref{sec:path-opt} and~\ref{sec:design-strategy} provide the full derivation, energy model, strategy comparison, and sensitivity analysis.
 
 \subsection{Parameter Derivation Chain}\label{sec:param-chain}
 
@@ -95,7 +95,7 @@ The hardware integrates a Hexsoon EDU-450 airframe, CubePilot Orange+ flight con
 
 All four trade studies in this section use weighted multi-criteria decision analysis (MCDA). In each case, we established criteria weights before scoring candidates, based on mission requirements and operational constraints, to prevent post-hoc rationalisation.
 
-Three candidate companion computers were evaluated (Table~\ref{tab:mcda-companion}). Cost and Python ecosystem compatibility are paramount for a student team, while raw GPU performance is less critical given the lightweight YOLOv8n model.
+Three candidate companion computers were evaluated (Table~\ref{tab:mcda-companion}). Cost and Python ecosystem compatibility are paramount for a student team, whereas raw GPU performance is less critical given the lightweight YOLOv8n model.
 
 \begin{table}[H]
   \centering\compactTable
@@ -142,11 +142,17 @@ Three architectures for companion-to-autopilot communication were compared (Tabl
   \end{tabularx}
 \end{table}
 
-\noindent Direct serial is the simplest option but is rendered non-viable by a Python~3.13 pyserial regression that drops bytes at 921\,600~baud. MAVProxy resolves this by reading the serial port with its own C-level handler and forwarding via UDP, simultaneously enabling multi-consumer access (scripts on port~14550, Mission Planner on TCP~5762). ROS~2 offers the richest middleware but introduces substantial deployment complexity disproportionate to the system's single-node architecture.
+\noindent Direct serial is the simplest option but a Python~3.13 pyserial regression that drops bytes at 921\,600~baud renders it non-viable. MAVProxy resolves this by reading the serial port with its C-level handler and forwarding via UDP, simultaneously enabling multi-consumer access (scripts on port~14550, Mission Planner on TCP~5762). ROS~2 offers the richest middleware but introduces deployment complexity disproportionate to this single-node architecture.
 
 \subsection{Software Architecture Rationale}\label{sec:arch-rationale}
 
-Four principles govern the architecture: (1)~\textbf{Modular separation}---each concern is isolated with a narrow interface (e.g.\ \texttt{detect\_in\_image(frame)} $\to$ \texttt{(found, x, y, conf)}); (2)~\textbf{Same code, simulation and real}---no conditional branches distinguish platforms; a \texttt{MODE} flag selects the camera, auto-detection selects the flight controller; (3)~\textbf{Configuration-driven tuning}---all parameters in \texttt{config.py}, transitioning to real hardware requires only parameter adjustment; (4)~\textbf{Dual inference backend}---auto-detects Ultralytics (laptop) or TFLite (Pi) at import, both producing identical $[1, 5, 8400]$ tensors.
+Four principles govern the architecture:
+\begin{enumerate}[nosep]
+  \item \textbf{Modular separation}---each concern hides behind a narrow interface (e.g.\ \texttt{detect\_in\_image(frame)} $\to$ \texttt{(found, x, y, conf)}).
+  \item \textbf{Platform-agnostic code}---a \texttt{MODE} flag selects the camera source; auto-detection selects the flight controller. No conditional branches distinguish platforms.
+  \item \textbf{Configuration-driven tuning}---all parameters reside in \texttt{config.py}, so transitioning to real hardware requires only parameter adjustment.
+  \item \textbf{Dual inference backend}---the system auto-detects Ultralytics (laptop) or TFLite (Pi) at import time, both producing identical $[1, 5, 8400]$ tensors.
+\end{enumerate}
 
 \subsection{Detection Model Selection}\label{sec:model-rationale}
 
@@ -171,13 +177,13 @@ YOLOv8n (the nano variant, 3.2~million parameters, 8.7~GFLOPs) was selected afte
   \end{tabularx}
 \end{table}
 
-\noindent YOLOv8n is the only variant that achieves real-time inference on the Pi~5 CPU within the 300\,ms-per-frame budget required for useful detection at search speed. Larger variants (YOLOv8s at 11.2\,M parameters, YOLOv8m at 25.9\,M) exceeded this budget by factors of two and four respectively. SSD~MobileNetV2 matches YOLOv8n on speed but delivers lower accuracy on COCO~\cite{lin2014coco}; note that the SSD mAP of 0.88 is measured on COCO whereas the YOLO figures are on our custom dataset, so the comparison is indicative rather than direct~\cite{edgeai}.
+\noindent YOLOv8n is the only variant that achieves real-time inference on the Pi~5 CPU within the 300\,ms-per-frame budget required for useful detection at search speed. Larger variants (YOLOv8s at 11.2\,M parameters, YOLOv8m at 25.9\,M) exceed this budget by factors of two and four, respectively. SSD~MobileNetV2 matches YOLOv8n on speed but delivers lower accuracy on COCO~\cite{lin2014coco}; the SSD mAP of 0.88 is measured on COCO whereas the YOLO figures are on the custom dataset, so the comparison is indicative rather than direct~\cite{edgeai}.
 
-The model was trained as a single-class detector on 366 mixed images (300 synthetic, 16 real, 50 negatives) at native camera resolution ($1456 \times 1088$), following the domain-randomisation principle~\cite{domainrand}. Training at higher resolution than the $640 \times 640$ inference input allows the network to learn fine-grained features that survive downscaling~\cite{yolov8}. A COCO person detector is carried as a fallback model for field conditions where the custom model underperforms.
+The model was trained as a single-class detector on 366 images (300 synthetic, 16 real, 50 negatives) at native camera resolution ($1456 \times 1088$), following the domain-randomisation principle~\cite{domainrand}. Training at higher resolution than the $640 \times 640$ inference input allows the network to learn fine-grained features that survive downscaling~\cite{yolov8}. A COCO-pretrained person detector is carried as a fallback for field conditions where the custom model underperforms.
 
 \subsection{Coverage Path Planning}\label{sec:plan-rationale}
 
-Four candidate search patterns were evaluated (Table~\ref{tab:mcda-search}), emphasising coverage guarantee and implementability to ensure reliable, verifiable behaviour over theoretically optimal paths.
+Four candidate search patterns were evaluated (Table~\ref{tab:mcda-search}), prioritising coverage guarantee and implementability to ensure reliable, verifiable behaviour over theoretically optimal but harder-to-validate paths.
 
 \begin{table}[H]
   \centering\compactTable
@@ -198,23 +204,23 @@ Four candidate search patterns were evaluated (Table~\ref{tab:mcda-search}), emp
   \end{tabularx}
 \end{table}
 
-\noindent The boustrophedon (lawnmower) pattern was selected~\cite{choset2001coverage, galceran2013survey} for its formal coverage guarantee, closed-form path length, and IAMSAR compliance. The implementation uses a rotate--rasterise--rotate-back algorithm on arbitrary polygons, with scan angle auto-optimised via minimum-area bounding rectangle (validated by 216-configuration sweep).
+\noindent The boustrophedon (lawnmower) pattern was selected~\cite{choset2001coverage, galceran2013survey} for its formal coverage guarantee, closed-form path length, and IAMSAR compliance. The implementation uses a rotate--rasterise--rotate-back algorithm on arbitrary polygons, with the scan angle auto-optimised via the minimum-area bounding rectangle (validated by the 216-configuration sweep).
 
 \subsection{State Machine Design}\label{sec:fsm-rationale}
 
 A deterministic finite state machine (FSM) with 20~states and 32~transitions was chosen over behaviour trees or reactive architectures for its verifiability, traceability, and ease of runtime monitoring~\cite{wagner2006fsm}. Each state maps to a single handler function via a dictionary-based dispatch table ($O(1)$ lookup), eliminating fall-through errors. Defence-in-depth safety is enforced through five independent mechanisms: manual override (M~key), RC kill switch (hardware-level), return-to-launch on link loss, four-layer geofence, and per-state timeouts. Every blocking state carries a wall-clock timeout to prevent indefinite hangs. The complete transition table is provided in Appendix~\ref{app:states}.
 
-The CENTERING state---hovering stationary above a detected target before estimating its GPS position---simultaneously eliminates roll/pitch projection error (\SI{6.2}{\metre} during flight to $<$\SI{0.6}{\metre}), motion blur, and GPS timing lag.  This architectural decision exemplifies the project's approach of solving sensor limitations through mission design rather than software complexity: a single procedural step replaces three independent software corrections (attitude compensation, lag prediction, and blur deconvolution) that would each add complexity and potential failure modes to a safety-critical code path.  The full quantitative analysis is provided in Appendix~\ref{sec:centering-mitigation}.
+The CENTERING state---hovering stationary above a detected target before estimating its GPS position---simultaneously eliminates roll/pitch projection error (\SI{6.2}{\metre} during flight to $<$\SI{0.6}{\metre}), motion blur, and GPS timing lag. This architectural decision exemplifies the project's approach of solving sensor limitations through mission design rather than software complexity: a single procedural step replaces three independent software corrections (attitude compensation, lag prediction, and blur deconvolution) that would each add complexity and potential failure modes to a safety-critical code path. The full quantitative analysis is provided in Appendix~\ref{sec:centering-mitigation}.
 
 \subsection{Autonomy Level Justification}\label{sec:autonomy-rationale}
 
 The system operates at Sheridan Level~7--8 (``computer executes autonomously, human monitors'')~\cite{sheridan2002humans} for the search phase and Level~3--4 (``computer suggests one alternative, human approves'') for the landing decision. This hybrid was chosen after analysing the asymmetric cost structure of SAR false positives versus false negatives~\cite{endsley1999loa, cummings2014man_uav}.
 
-A \emph{false positive landing} (descending on a rock, tree stump, or discarded clothing) incurs three compounding penalties: (1)~battery endurance consumed by descent, hover, and re-climb (\SI{\approx 90}{\second}, roughly 8\% of a 20-minute endurance budget); (2)~search coverage paused during the entire descent--verify--climb cycle; (3)~risk of mechanical damage if the landing site is uneven. In a single-drone mission with no redundancy, even one unnecessary landing significantly reduces the probability of covering the full search area before battery exhaustion.
+A \emph{false-positive landing} (descending on a rock, tree stump, or discarded clothing) incurs three compounding penalties: (1)~battery endurance consumed by descent, hover, and re-climb (${\approx}\SI{90}{\second}$, roughly 8\% of a 20-minute endurance budget); (2)~search coverage paused during the entire descent--verify--climb cycle; and (3)~risk of mechanical damage if the landing site is uneven. In a single-drone mission with no redundancy, even one unnecessary landing significantly reduces the probability of covering the full search area before battery exhaustion.
 
 A \emph{false negative} (failing to investigate a real casualty) is worse in absolute terms but is mitigated by the lawnmower pattern's guarantee of revisiting every cell: a missed detection on pass~1 can be recovered on the return leg. The operator-in-the-loop gate therefore addresses the higher-consequence, lower-recoverable error (committing to a landing) while the autonomous search handles the high-bandwidth, lower-consequence task (scanning terrain at 8\,m/s).
 
-The \textsc{Verify} state implements this gate: the operator classifies each detection as confirmed~(Y), rejected~(N), or item of interest~(I) via the ground station. A \SI{120}{\second} timeout auto-rejects unresponded detections---derived from the energy budget (\SI{6.0}{Wh} per hover event, 5.2\% of battery, permitting two timeouts while retaining 89\% for search)~\cite{goodrich2007human}. Full autonomy (Level~10) was rejected because the single-class detector cannot distinguish casualty from visually similar objects~\cite{murphy2014, lyu2023uav_sar_survey}; manual-only operation was rejected because human operators cannot sustain visual scanning at \SI{8}{\metre\per\second} (automation provides ${\sim}20\times$ coverage rate advantage)~\cite{goodrich2008}.
+The \textsc{Verify} state implements this gate: the operator classifies each detection as confirmed~(Y), rejected~(N), or item of interest~(I) via the ground station. A \SI{120}{\second} timeout auto-rejects unresponded detections---derived from the energy budget (\SI{6.0}{Wh} per hover event, 5.2\% of battery, permitting two timeouts while retaining 89\% for search)~\cite{goodrich2007human}. Full autonomy (Level~10) was rejected because the single-class detector cannot distinguish a casualty from visually similar objects~\cite{murphy2014, lyu2023uav_sar_survey}; manual-only operation was rejected because human operators cannot sustain visual scanning at \SI{8}{\metre\per\second} (automation provides a ${\sim}20\times$ coverage-rate advantage)~\cite{goodrich2008}.
 
 \subsection{Decisions That Changed: Evidence-Based Corrections}\label{sec:decisions-changed}
 
@@ -227,18 +233,18 @@ A tape-measure calibration on field day measured \SI{92}{\centi\metre} visible a
 At $640 \times 480$, a prone casualty at \SI{30}{\metre} subtends only $20 \times 14$\,px---below reliable detection. Switching to native resolution increased this to $46 \times 32$\,px with no inference time change (the model resizes internally to $640 \times 640$).
 
 \paragraph{TFLite runtime: \texttt{tflite-runtime} $\rightarrow$ \texttt{ai-edge-litert}.}
-Google's \texttt{tflite-runtime} has no Python~3.13 wheel; \texttt{ai-edge-litert} provides identical API, eliminating the conflict with \texttt{picamera2} (system Python) with zero code changes.
+Google's \texttt{tflite-runtime} has no Python~3.13 wheel; \texttt{ai-edge-litert} provides an identical API, eliminating the conflict with \texttt{picamera2} (system Python) with zero code changes.
 
 \paragraph{Serial communication: pyserial $\rightarrow$ MAVProxy UDP bridge.}
 A Python~3.13 pyserial regression dropped bytes at 921\,600~baud. MAVProxy resolves this via its C-level serial handler and simultaneously enables multi-consumer telemetry access (Table~\ref{tab:mcda-comms}).
 
 \subsection{Why Not ROS}\label{sec:ros-rationale}
 
-ROS~2 was excluded for three reasons~\cite{quigley2009ros}: (1)~architectural mismatch---the system is a single-node pipeline (one camera, one detector, one flight controller); ROS's pub/sub model adds inter-process overhead without new capability; (2)~deployment complexity---ROS~2 requires $\approx$\SI{2}{\giga\byte} vs four \texttt{pip} packages totalling $<$\SI{50}{\mega\byte}; (3)~timeline---40--60~hr learning curve per developer would have consumed 25\% of available development time for middleware rather than mission logic. ROS remains recommended for future multi-drone extensions.
+ROS~2 was excluded for three reasons~\cite{quigley2009ros}: (1)~architectural mismatch---the system is a single-node pipeline (one camera, one detector, one flight controller), and ROS's pub/sub model adds inter-process overhead without new capability; (2)~deployment complexity---ROS~2 requires ${\approx}$\SI{2}{\giga\byte} versus four \texttt{pip} packages totalling $<$\SI{50}{\mega\byte}; and (3)~timeline---a 40--60\,hr learning curve per developer would have consumed 25\% of available development time on middleware rather than mission logic. ROS remains recommended for future multi-drone extensions.
 
 \subsection{Camera Selection: Global vs Rolling Shutter}\label{sec:camera-rationale}
 
-The IMX296 global shutter camera (provided as university equipment) was validated for aerial search~\cite{imx296, sukhatme2012rolling_global}. At \SI{5}{\metre\per\second} and \SI{30}{\metre} altitude, ground motion across the sensor reaches $\approx$250\,px/s; a rolling-shutter sensor would produce $\approx$7.5\,px parallelogram distortion per frame, shifting detected centroids by up to \SI{0.5}{\metre}. The IMX296's global shutter eliminates this error. The trade-off (lower light sensitivity from \SI{3.45}{\micro\metre} pixel pitch) is acceptable given daylight-only CAA VLOS requirements~\cite{caa2024uas}. During integration, the IMX296 was found to output BGR despite RGB888 labelling---corrected by removing the \texttt{cv2.cvtColor()} call (Section~\ref{sec:decisions-changed}).
+The IMX296 global shutter camera (provided as university equipment) was validated for aerial search~\cite{imx296, sukhatme2012rolling_global}. At \SI{5}{\metre\per\second} and \SI{30}{\metre} altitude, ground motion across the sensor reaches ${\approx}$250\,px/s; a rolling-shutter sensor would produce ${\approx}$7.5\,px parallelogram distortion per frame, shifting detected centroids by up to \SI{0.5}{\metre}. The IMX296's global shutter eliminates this error. The trade-off---lower light sensitivity from the \SI{3.45}{\micro\metre} pixel pitch---is acceptable given daylight-only CAA VLOS requirements~\cite{caa2024uas}. During integration, the IMX296 was found to output BGR despite its RGB888 labelling; the fix was simply removing the erroneous \texttt{cv2.cvtColor()} call (Section~\ref{sec:decisions-changed}).
 
 \subsection{Field Day Adaptation Under Uncertainty}\label{sec:weather-rationale}
 

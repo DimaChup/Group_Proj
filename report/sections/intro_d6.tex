@@ -6,7 +6,7 @@
 
 \subsection*{Context and Background}
 
-A hiker has gone missing in Fenswood Wilderness, a semi-rural landscape of mixed grassland and scrub managed by the University of Bristol for field research. Search and rescue teams have been alerted, but the terrain is uneven, visibility is limited by vegetation, and the search area spans several hectares. At some point during the search the hiker activates a Personal Locator Beacon (PLB), narrowing the probable location to a Focus Area---but a casualty on the ground, potentially incapacitated or partially concealed, still requires visual confirmation before help can reach them.
+A hiker has gone missing in Fenswood Wilderness, a semi-rural landscape of mixed grassland and scrub managed by the University of Bristol for field research. Search and rescue teams have been alerted, but the terrain is uneven, visibility is limited by vegetation, and the search area spans several hectares. At some point during the search, the hiker activates a Personal Locator Beacon (PLB), narrowing the probable location to a Focus Area---but a casualty on the ground, potentially incapacitated or partially concealed, still requires visual confirmation before help can reach them.
 
 This is the scenario posed by the AENGM0074 module. Each student company is provided with identical hardware---a Hexsoon EDU-450 hexacopter airframe, a Cube Orange+ flight controller, a Raspberry Pi~5 companion computer, and a global-shutter camera---and tasked with building an autonomous unmanned aerial vehicle (UAV) capable of:
 
@@ -14,25 +14,25 @@ This is the scenario posed by the AENGM0074 module. Each student company is prov
     \item systematically searching a defined area while respecting a no-fly zone over a Site of Special Scientific Interest (SSSI);
     \item detecting a life-size casualty surrogate (hereafter ``rescue mannequin'' or simply ``mannequin'') using onboard computer vision;
     \item reporting the casualty's estimated GPS coordinates and imagery to a ground operator;
-    \item landing within 10\,m of the casualty (but no closer than 5\,m) and deploying a simulated first-aid kit; and
+    \item landing between 5 and 10\,m from the casualty and deploying a simulated first-aid kit; and
     \item returning to the designated take-off location.
 \end{itemize}
 
-The scenario is deliberately constrained to a single outdoor demonstration flight, preceded by progressive bench and flight testing, reflecting the compressed timeline of a single-term MSc module. All software must be released publicly under the MIT licence, and the system must include automatic geofencing to enforce flight-area and SSSI boundaries without relying on pilot intervention.
+The scenario is deliberately constrained to a single outdoor demonstration flight, preceded by progressive bench and flight testing, reflecting the compressed timeline of a single-term MSc module. A 50\,m altitude ceiling, defined flight-area boundaries, and automatic geofencing to enforce SSSI exclusion must all be respected without relying on pilot intervention. All software must be released publicly under the MIT licence.
 
 \subsection*{Company Description}
 
-Our company was formed at the start of the AENGM0074 module as a team of five MSc students from the Department of Aerospace Engineering. We adopted an agile, workstream-based methodology: five parallel streams---Computer Vision, Hardware Integration, Search Logic, Ground Station, and Safety/Testing---fed into defined integration milestones where subsystems were combined and verified before advancing to the next stage. All development was managed through a shared GitHub repository\footnote{Repository: \url{https://github.com/DimaChup/Group_Proj} (MIT licence, R12).}, with a single protected main branch and feature branches for individual work.
+Our company was formed at the start of the AENGM0074 module as a team of five MSc students from the Department of Aerospace Engineering. We adopted a workstream-based methodology: five parallel streams---Computer Vision, Hardware Integration, Search Logic, Ground Station, and Safety/Testing---fed into defined integration milestones where subsystems were combined and verified before advancing to the next stage. All development was managed through a shared GitHub repository\footnote{Repository: \url{https://github.com/DimaChup/Group_Proj} (MIT licence, R12).}, with a single protected main branch and feature branches for individual work.
 
 Day-to-day coordination relied on a group chat for informal updates and weekly in-person meetings for design decisions, integration planning, and blocker resolution. A shared status tracker documented every group decision, assigned action items with owners and deadlines, and maintained a running log of blockers and dependencies. This lightweight process allowed team members to work independently on their respective streams while ensuring that integration points were well-defined and that no subsystem was developed in isolation from the others.
 
 \subsection*{Team Members and Roles}
 
 \textbf{Dmytro Chuprynyuk --- Lead Software Developer.}
-MSc student in Robotics with a background in software engineering and embedded systems. Dmytro served as the lead software developer for the project, designing and implementing the entire autonomous software stack: the finite state machine, computer vision pipeline (dual-backend YOLOv8n inference on both laptop and Raspberry Pi), lawnmower path planner, GPS-based target localisation, web-based ground station, and the software-in-the-loop simulation environment. He also built the model training pipeline, including synthetic dataset generation and retraining on real flight imagery, and developed the progressive testing framework used to validate the system from simulation through to outdoor flight.
+MSc student in Robotics with a background in software engineering and embedded systems. Designed and implemented the autonomous software stack: finite state machine, computer vision pipeline, lawnmower path planner, GPS-based target localisation, web-based ground station, and the simulation environment. Also built the model training pipeline and developed the progressive testing framework.
 
-\textbf{\textcolor{red}{[TEAMMATE~2]} --- Flight Dynamics and State Machine Testing.}
-MSc student in Aerospace Engineering. Contributed to the flight dynamics analysis and testing of the autonomous state machine, verifying state transitions and flight parameter tuning in both simulation and bench testing. Supported integration of the Cube Orange+ flight controller with the mission software and assisted with flight mode configuration (GUIDED, LOITER, STABILIZE, LAND).
+\textbf{\textcolor{red}{Robin [Surname]} --- Flight Dynamics and State Machine Testing.}
+MSc student in Aerospace Engineering. Contributed to flight dynamics analysis and testing of the autonomous state machine, verifying state transitions and flight parameter tuning in both simulation and bench testing. Supported integration of the Cube Orange+ flight controller with the mission software and assisted with flight mode configuration (GUIDED, LOITER, STABILIZE, LAND).
 
 \textbf{\textcolor{red}{[TEAMMATE~3]} --- Designated Pilot and RC Systems.}
 MSc student in Aerospace Engineering with prior experience in radio-controlled aircraft. Served as the company's designated pilot, responsible for RC transmitter configuration, kill-switch setup, and manual override procedures. Maintained readiness to assume manual control during all autonomous flight tests, ensuring compliance with the requirement that a pilot with override authority be present at all times.
@@ -59,7 +59,7 @@ Table~\ref{tab:contributions} summarises the key contributions of each team memb
 Dmytro Chuprynyuk &
 Autonomous software stack (state machine, CV pipeline, path planner, target localisation, ground station, simulation environment). Custom YOLOv8n model training and dataset generation. Progressive testing framework. Pi hardware integration (camera, TFLite inference, Cube serial link). Lens calibration and FOV characterisation. \\
 \addlinespace
-\textcolor{red}{[TEAMMATE~2]} &
+\textcolor{red}{Robin [Surname]} &
 Flight dynamics analysis. State machine testing in simulation and on bench. Flight parameter tuning (altitude, speed, descent profile). Cube flight-mode configuration and verification. \\
 \addlinespace
 \textcolor{red}{[TEAMMATE~3]} &

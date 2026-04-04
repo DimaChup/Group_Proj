@@ -149,7 +149,7 @@ The altitude and speed were not selected by searching a table; they follow a log
     At what altitude does the target become undetectable?
     The mannequin's width (\SI{0.5}{\metre}) projects to $p_{\mathrm{model}} = 0.5 \times 1584 / h \times 640/1456$ model pixels.
     At \SI{50}{\metre} this is 7\,px---the empirically observed minimum for reliable bounding-box regression.
-    At \SI{70}{\metre} (25\,px height, 4\,px width) the target is below the feature-extraction threshold.
+    At \SI{70}{\metre} (18\,px height, 5\,px width) the target is below the feature-extraction threshold.
     The hard detection ceiling is approximately \SI{50}{\metre}.
 
   \item \textbf{Apply safety margin.}
@@ -165,7 +165,7 @@ The altitude and speed were not selected by searching a table; they follow a log
     The cumulative detection probability over 14 frames is $P_d = 1 - (1 - 0.95)^{14} > 0.9999$.
 \end{enumerate}
 
-This chain is visualised in Figure~\ref{fig:alt-speed-tradeoff}, which maps the composite score across the altitude--speed space.
+This chain is visualised in Figure~\ref{fig:alt-speed-body-app}, which maps the composite score across the altitude--speed space.
 The selected operating point sits above the 95\% detection contour in the high-score region.
 
 \begin{figure}[ht]

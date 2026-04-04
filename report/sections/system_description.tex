@@ -5,7 +5,7 @@
 
 \section{System Description}\label{sec:sysdesc}
 
-The final system integrates six subsystems into an autonomous SAR platform: a hardware airframe with companion computer (\S\ref{sec:hw}), a modular software architecture of eleven Python modules (\S\ref{sec:sw-arch}), a YOLOv8n computer vision pipeline running at 4.8\,FPS on edge hardware (\S\ref{sec:cv}), a boustrophedon search pattern with formal coverage guarantee (\S\ref{sec:search-pattern}), a 20-state mission FSM with six independent safety mechanisms (\S\ref{sec:state-machine}), a GPS target localisation subsystem achieving CEP$_{50}$ = 2.3\,m (\S\ref{sec:localisation}), and a browser-based ground station with \SI{300}{\milli\second} video latency (\S\ref{sec:groundstation}). The design philosophy throughout is \emph{independent modules composed at runtime}: vision, planning, geofencing, and navigation have zero mutual dependencies, enabling isolated testing and single-file model or algorithm swaps with no integration risk. Figure~\ref{fig:mission_overview} shows the complete mission plan overlaid on the Fenswood Farm site.
+The final system integrates seven subsystems into an autonomous SAR platform: a hardware airframe with companion computer (\S\ref{sec:hw}), a modular software architecture of eleven Python modules (\S\ref{sec:sw-arch}), a YOLOv8n computer vision pipeline running at 4.8\,FPS on edge hardware (\S\ref{sec:cv}), a boustrophedon search pattern with formal coverage guarantee (\S\ref{sec:search-pattern}), a 20-state mission FSM with six independent safety mechanisms (\S\ref{sec:state-machine}), a GPS target localisation subsystem achieving CEP$_{50}$ = 2.3\,m (\S\ref{sec:localisation}), and a browser-based ground station with \SI{300}{\milli\second} video latency (\S\ref{sec:groundstation}). The design philosophy throughout is \emph{independent modules composed at runtime}: vision, planning, geofencing, and navigation have zero mutual dependencies, enabling isolated testing and single-file model or algorithm swaps with no integration risk. Figure~\ref{fig:mission_overview} shows the complete mission plan overlaid on the Fenswood Farm site.
 
 \begin{figure}[ht]
 \centering
@@ -17,7 +17,7 @@ The final system integrates six subsystems into an autonomous SAR platform: a ha
 % ═══════════════════════════════════════════════════════════════
 \subsection{Hardware Platform}\label{sec:hw}
 
-Table~\ref{tab:hw-bom} summarises the bill of materials for the Hexsoon EDU-450 airframe, CubePilot Orange+ flight controller (ArduPilot Copter 4.5), Raspberry Pi~5 companion computer, and IMX296 global shutter camera. All hardware was provided by the university as part of the AENGM0074 equipment package; design effort focused on system integration, software architecture, and calibration rather than component selection (see Appendix~\ref{sec:cv:inference} for the edge inference architecture rationale).
+Table~\ref{tab:hw-bom} summarises the bill of materials for the Hexsoon EDU-450 airframe, CubePilot Orange+ flight controller (ArduPilot Copter 4.5), Raspberry Pi~5 companion computer, and IMX296 global shutter camera. All hardware was provided by the university as part of the AENGM0074 equipment package; design effort therefore focused on system integration, software architecture, and calibration rather than component selection (see Appendix~\ref{sec:cv:inference} for the edge inference architecture rationale).
 
 \begin{table}[ht]
   \centering\compactTable
@@ -38,12 +38,12 @@ Table~\ref{tab:hw-bom} summarises the bill of materials for the Hexsoon EDU-450 
   \end{tabularx}
 \end{table}
 
-The Pi communicates with the Cube via UART at 921\,600\,baud through a MAVProxy bridge, which re-publishes MAVLink traffic over UDP. A second output on TCP port~5762 allows Mission Planner on the ground station laptop to monitor telemetry via Wi-Fi (see Appendix~\ref{sec:streaming-arch} for the full communications architecture). The camera captures at $1456 \times 1088$ via CSI-2; lens distortion is corrected using precomputed remap matrices (calibrated RMS = 0.399\,px, +1.5\,ms overhead; methodology in Appendix~\ref{sec:calibration}). The calibrated focal length is \SI{5.46}{\milli\metre}, yielding a Horizontal Field of View (HFOV) of $\approx 49.3^{\circ}$ (Pi IMX296 camera).
+The Pi communicates with the Cube via UART at 921\,600\,baud through a MAVProxy bridge, which republishes MAVLink traffic over UDP. A second output on TCP port~5762 allows Mission Planner on the ground station laptop to monitor telemetry via Wi-Fi (see Appendix~\ref{sec:streaming-arch} for the full communications architecture). The camera captures at $1456 \times 1088$ via CSI-2; lens distortion is corrected using precomputed remap matrices (calibrated RMS = 0.399\,px, $+$1.5\,ms overhead; methodology in Appendix~\ref{sec:calibration}). The calibrated focal length is \SI{5.46}{\milli\metre}, yielding a horizontal field of view (HFOV) of ${\approx}\,49.3^{\circ}$ (Pi IMX296 camera).
 
 % ═══════════════════════════════════════════════════════════════
 \subsection{Software Architecture}\label{sec:sw-arch}
 
-The system comprises eleven Python modules totalling approximately 4\,400 lines of production code, organised in four layers (Figure~\ref{fig:architecture}). An additional 58 test and calibration scripts (see Appendix~\ref{sec:test-scripts} for the full inventory) validate each module in isolation before integration:
+The system comprises eleven Python modules totalling approximately 4\,400 lines of production code, organised in four layers (Figure~\ref{fig:architecture}). An additional 58 test and calibration scripts (Appendix~\ref{sec:test-scripts}) validate each module in isolation before integration:
 
 \begin{figure}[ht]
 \centering

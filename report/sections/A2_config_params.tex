@@ -62,9 +62,12 @@ Parameters are loaded at startup and may be overridden via environment variables
 \texttt{NFZ\_SOFT\_BOUNDARY\_M}     & 8.0   & m   & Outer repulsion zone (quadratic field) \\
 \texttt{NFZ\_WAYPOINT\_BUFFER\_M}   & 30.0  & m   & Skip waypoints within this distance of NFZ \\
 \texttt{NFZ\_SLOW\_ZONE\_M}         & 20.0  & m   & Speed-reduction field active within this distance \\
-\texttt{NFZ\_MIN\_SPEED\_MPS}       & 0.3   & m/s & Minimum speed at NFZ boundary \\
+\texttt{NFZ\_SCALAR\_ZERO\_M}      & 2.0   & m   & Distance at which speed drops to zero (full stop zone) \\
+\texttt{NFZ\_MIN\_SPEED\_MPS}       & 0.0   & m/s & Speed at \texttt{NFZ\_SCALAR\_ZERO\_M} and below (full stop) \\
 \texttt{NFZ\_ZONE\_MAX\_SPEED\_MPS} & 3.0   & m/s & Speed at outer edge of slow zone \\
-\texttt{NFZ\_PUSH\_SPEED\_MPS}      & 3.0   & m/s & Constant repulsive push speed \\
+\texttt{NFZ\_INNER\_OFFSET\_M}      & 20.0  & m   & Inner polygon offset inside NFZ boundary \\
+\texttt{NFZ\_INNER\_RANGE\_M}       & 23.0  & m   & Repulsion active within this from inner polygon \\
+\texttt{NFZ\_PUSH\_SPEED\_MPS}      & 5.0   & m/s & Constant repulsive push speed (away from NFZ) \\
 \addlinespace[4pt]
 
 \multicolumn{4}{@{}l}{\textit{Payload Servo (Tarot Double-Throw)}} \\
