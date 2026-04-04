@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Demetro — FDR Slides</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #1a1a2e; color: white; }
+
+  .slide {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 60px 80px;
+    page-break-after: always;
+  }
+
+  .slide-1 { background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); }
+  .slide-2 { background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460); }
+
+  h1 {
+    font-size: 48px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: #e94560;
+  }
+
+  h2 {
+    font-size: 28px;
+    color: #e94560;
+    margin-bottom: 30px;
+    font-weight: 400;
+  }
+
+  .subtitle {
+    font-size: 20px;
+    color: #aaa;
+    margin-bottom: 40px;
+  }
+
+  .bullets {
+    list-style: none;
+    margin-bottom: 40px;
+  }
+
+  .bullets li {
+    font-size: 26px;
+    line-height: 1.6;
+    padding-left: 30px;
+    position: relative;
+    margin-bottom: 16px;
+  }
+
+  .bullets li::before {
+    content: "▸";
+    position: absolute;
+    left: 0;
+    color: #e94560;
+    font-size: 28px;
+  }
+
+  .highlight {
+    color: #00d2ff;
+    font-weight: 700;
+  }
+
+  .metric-row {
+    display: flex;
+    gap: 40px;
+    margin-top: 30px;
+  }
+
+  .metric {
+    background: rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 20px 30px;
+    text-align: center;
+    flex: 1;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+
+  .metric .number {
+    font-size: 42px;
+    font-weight: 800;
+    color: #00d2ff;
+  }
+
+  .metric .label {
+    font-size: 16px;
+    color: #aaa;
+    margin-top: 5px;
+  }
+
+  table {
+    width: 80%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 22px;
+  }
+
+  th {
+    background: #e94560;
+    color: white;
+    padding: 14px 20px;
+    text-align: left;
+    font-weight: 600;
+  }
+
+  td {
+    padding: 12px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+
+  tr:nth-child(even) { background: rgba(255,255,255,0.04); }
+
+  .closing-quote {
+    font-size: 24px;
+    font-style: italic;
+    color: #ccc;
+    margin-top: 40px;
+    padding: 20px 30px;
+    border-left: 4px solid #e94560;
+  }
+
+  .footer {
+    position: absolute;
+    bottom: 30px;
+    right: 60px;
+    font-size: 14px;
+    color: #555;
+  }
+
+  .slide-num {
+    position: absolute;
+    bottom: 30px;
+    left: 60px;
+    font-size: 14px;
+    color: #555;
+  }
+
+  /* Print / PDF styles */
+  @media print {
+    .slide { page-break-after: always; }
+    body { background: white; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ==================== SLIDE 1: VISION ==================== -->
+<div class="slide slide-1">
+  <h1>Computer Vision Pipeline</h1>
+  <h2>How the Drone Sees and Locates Targets</h2>
+
+  <ul class="bullets">
+    <li><span class="highlight">YOLOv8n</span> trained on 366 images — synthetic + real aerial footage + negatives</li>
+    <li>Detects target → estimates <span class="highlight">GPS position</span> → drone responds</li>
+    <li><span class="highlight">Attitude compensation</span> — corrects for drone tilt during flight</li>
+    <li>Four-phase process: detect → approach → hover lock → operator confirms</li>
+  </ul>
+
+  <div class="metric-row">
+    <div class="metric">
+      <div class="number">99.5%</div>
+      <div class="label">Detection Accuracy (mAP50)</div>
+    </div>
+    <div class="metric">
+      <div class="number">4.8 FPS</div>
+      <div class="label">Inference on Pi 5</div>
+    </div>
+    <div class="metric">
+      <div class="number">2.3m</div>
+      <div class="label">GPS Estimation (CEP50)</div>
+    </div>
+  </div>
+
+  <div class="slide-num">Demetro — SIM & Vision</div>
+  <div class="footer">AENGM0074 Final Design Review</div>
+</div>
+
+<!-- ==================== SLIDE 2: SIMULATION ==================== -->
+<div class="slide slide-2">
+  <h1>Simulation Environment</h1>
+  <h2>Same Code, Full Verification, No Hardware Needed</h2>
+
+  <ul class="bullets">
+    <li><span class="highlight">Same code</span> runs on laptop and Pi — no separate simulation version</li>
+    <li>Built because drone hardware wasn't available → let us develop and test everything</li>
+    <li>All <span class="highlight">12 requirements</span> verified end-to-end in SITL</li>
+    <li>Includes: search pattern, detection, geofencing, PLB redirect, landing, RTL</li>
+  </ul>
+
+  <div class="metric-row">
+    <div class="metric">
+      <div class="number">12/12</div>
+      <div class="label">Requirements Met</div>
+    </div>
+    <div class="metric">
+      <div class="number">58</div>
+      <div class="label">Test Scripts</div>
+    </div>
+    <div class="metric">
+      <div class="number">4,400+</div>
+      <div class="label">Lines of Code</div>
+    </div>
+  </div>
+
+  <div class="subtitle" style="margin-top: 30px; font-size: 18px; color: #888;">
+    📷 [Insert Mission Dashboard screenshot here — god view + camera with detection]
+  </div>
+
+  <div class="slide-num">Demetro — SIM & Vision</div>
+  <div class="footer">AENGM0074 Final Design Review</div>
+</div>
+
+</body>
+</html>
