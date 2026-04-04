@@ -34,9 +34,9 @@ TRANSIT_FILE = "flight_plans/transit.json"
 _TRANSIT_EXPLICIT = False
 STREAM_ENABLED = "--no-stream" not in sys.argv
 STREAM_PORT = 8090
-STREAM_W, STREAM_H = 1456, 1088
+STREAM_W, STREAM_H = 640, 480          # default stream resolution (not full frame)
 STREAM_FPS = 10
-STREAM_QUALITY = 80
+STREAM_QUALITY = 50                    # WiFi-friendly default
 CENTER_VERIFY = "--center-verify" in sys.argv
 SMART_DETECT = "--smart-detect" in sys.argv
 NO_NFZ = "--no-nfz" in sys.argv
@@ -44,6 +44,7 @@ NFZ_DIRECTIONAL = "--nfz-total-speed" not in sys.argv  # directional is default
 USE_SPIRAL = "--spiral" in sys.argv  # Zian's perimeter spiral instead of lawnmower
 config.LOCK_YAW = "--lock-yaw" in sys.argv  # Maintain search yaw throughout sweep
 CLEAN_DETECTIONS = "--clean" in sys.argv  # Wipe mission_detections/ at start
+VERBOSE_GPS = "--verbose-gps" in sys.argv  # Print detailed GPS estimation math for every detection
 SHAKE_PX = 0  # --shake <pixels>: random pixel offset per frame (simulates vibration)
 SIM_PITCH = "--sim-pitch" in sys.argv  # simulate camera pitch offset during forward flight
 SIM_ROLL_DEG = 0.0  # --sim-roll <deg>: random roll oscillation (±degrees)
@@ -60,6 +61,14 @@ for _i, _arg in enumerate(sys.argv):
     elif _arg == "--shake" and _i + 1 < len(sys.argv):        SHAKE_PX = int(sys.argv[_i + 1])
     elif _arg == "--sim-roll" and _i + 1 < len(sys.argv):    SIM_ROLL_DEG = float(sys.argv[_i + 1])
     elif _arg == "--blur" and _i + 1 < len(sys.argv):         BLUR_FACTOR = float(sys.argv[_i + 1])
+    elif _arg == "--stream-scale" and _i + 1 < len(sys.argv):
+        _sc = float(sys.argv[_i + 1])
+        STREAM_W = int(config.IMAGE_W * _sc)
+        STREAM_H = int(config.IMAGE_H * _sc)
+    elif _arg == "--stream-quality" and _i + 1 < len(sys.argv):
+        STREAM_QUALITY = int(sys.argv[_i + 1])
+    elif _arg == "--stream-fps" and _i + 1 < len(sys.argv):
+        STREAM_FPS = int(sys.argv[_i + 1])
 
 if DRY_RUN:
     print("=" * 60)
@@ -539,7 +548,9 @@ class VisualFlightMission(StateHandlersMixin):
         fh = getattr(self, '_frame_h', config.IMAGE_H)
         self.target_lat, self.target_lon = calculate_target_from_pixels(
             u, v, self.alt, self.yaw, self.lat, self.lon,
-            fw, fh, config.SENSOR_WIDTH_MM, config.FOCAL_LENGTH_MM)
+            fw, fh, config.SENSOR_WIDTH_MM, config.FOCAL_LENGTH_MM,
+            verbose=VERBOSE_GPS,
+            drone_roll=self.roll, drone_pitch=self.pitch)
 
     def calculate_landing_spot(self, direction_key):
         self.landing_lat, self.landing_lon = landing_offset_7_5m(

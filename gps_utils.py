@@ -49,6 +49,9 @@ def calculate_target_from_pixels(
     image_h: int,
     sensor_width_mm: float,
     focal_length_mm: float,
+    verbose: bool = False,
+    drone_roll: float = 0.0,
+    drone_pitch: float = 0.0,
 ) -> tuple[float, float]:
     """Project a pixel detection to an estimated GPS position on the ground.
 
@@ -82,6 +85,12 @@ def calculate_target_from_pixels(
         Physical sensor width in millimetres.
     focal_length_mm : float
         Camera focal length in millimetres.
+    verbose : bool
+        If True, print detailed step-by-step estimation math to stdout.
+    drone_roll : float
+        Drone roll in radians (for verbose tilt info only, not compensated).
+    drone_pitch : float
+        Drone pitch in radians (for verbose tilt info only, not compensated).
 
     Returns
     -------
@@ -103,6 +112,7 @@ def calculate_target_from_pixels(
     right_m = delta_x_px * gsd_m
 
     # Rotate by yaw into North/East frame
+    yaw_deg = math.degrees(drone_yaw)
     offset_n = fwd_m * math.cos(drone_yaw) - right_m * math.sin(drone_yaw)
     offset_e = fwd_m * math.sin(drone_yaw) + right_m * math.cos(drone_yaw)
 
@@ -110,7 +120,39 @@ def calculate_target_from_pixels(
     d_lat = (offset_n / R_EARTH) * (180 / math.pi)
     d_lon = (offset_e / (R_EARTH * math.cos(math.radians(drone_lat)))) * (180 / math.pi)
 
-    return drone_lat + d_lat, drone_lon + d_lon
+    est_lat = drone_lat + d_lat
+    est_lon = drone_lon + d_lon
+
+    if verbose:
+        dist_m = math.sqrt(offset_n ** 2 + offset_e ** 2)
+        roll_deg = math.degrees(drone_roll)
+        pitch_deg = math.degrees(drone_pitch)
+        tilt_offset_m = drone_alt * math.sqrt(
+            math.tan(drone_pitch) ** 2 + math.tan(drone_roll) ** 2
+        ) if (abs(drone_pitch) > 0.001 or abs(drone_roll) > 0.001) else 0.0
+        sign = lambda x: "+" if x >= 0 else ""
+        print(f"[GPS-EST] Detection at pixel ({u:.0f}, {v:.0f}) in {image_w}x{image_h} frame")
+        print(f"  Pixel offset from center: dx={sign(delta_x_px)}{delta_x_px:.0f}px, "
+              f"dy={sign(delta_y_px)}{delta_y_px:.0f}px")
+        print(f"  GSD = ({sensor_width_mm}mm x {drone_alt:.1f}m) / "
+              f"({focal_length_mm}mm x {image_w}px) = {gsd_m:.5f} m/px")
+        print(f"  Camera-frame offset: right={sign(right_m)}{right_m:.2f}m, "
+              f"forward={sign(fwd_m)}{fwd_m:.2f}m")
+        print(f"  Drone yaw: {yaw_deg:.1f} deg -> Rotate to NED:")
+        print(f"    North = {fwd_m:+.2f}*cos({yaw_deg:.1f}) - {right_m:+.2f}*sin({yaw_deg:.1f})"
+              f" = {offset_n:+.2f}m")
+        print(f"    East  = {fwd_m:+.2f}*sin({yaw_deg:.1f}) + {right_m:+.2f}*cos({yaw_deg:.1f})"
+              f" = {offset_e:+.2f}m")
+        print(f"  Drone GPS: ({drone_lat:.6f}, {drone_lon:.6f}) alt={drone_alt:.1f}m")
+        print(f"  Target GPS: ({est_lat:.6f}, {est_lon:.6f})")
+        print(f"  Distance from drone: {dist_m:.2f}m")
+        if abs(drone_pitch) > 0.001 or abs(drone_roll) > 0.001:
+            print(f"  Roll: {roll_deg:+.1f} deg  Pitch: {pitch_deg:+.1f} deg"
+                  f" -> tilt offset: {tilt_offset_m:.1f}m (NOT compensated)")
+        else:
+            print(f"  Roll: {roll_deg:+.1f} deg  Pitch: {pitch_deg:+.1f} deg -> level")
+
+    return est_lat, est_lon
 
 
 def offset_gps_by_distance(
