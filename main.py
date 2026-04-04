@@ -711,6 +711,13 @@ class VisualFlightMission(StateHandlersMixin):
 
         # State-specific HUD
         if self.state == State.HOVER_TARGET:
+            # Show distance from casualty during payload deploy
+            if self.target_lat != 0:
+                s = 111132.0
+                cdist = math.sqrt(((self.lat - self.target_lat) * s) ** 2 +
+                                  ((self.lon - self.target_lon) * s * math.cos(math.radians(self.lat))) ** 2)
+                dcolor = (0,255,0) if 5 <= cdist <= 10 else (0,165,255)
+                cv2.putText(frame, f"DIST FROM CASUALTY: {cdist:.1f}m (R07: 5-10m)", (cx-280, cy-60), F, 0.8, dcolor, 2)
             elapsed = time.time() - self.state_start_time
             rem = max(0, 15.0 - elapsed)
             if elapsed < 3.0:
