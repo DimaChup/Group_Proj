@@ -40,7 +40,7 @@ This appendix is organised into seven parts, progressing from low-level image pr
   Cooperative vision-flight feedback loop (Section~\ref{sec:cooperative-arch}).
 
 \item[Part~VII --- Validation] \emph{Does it work?}\\
-  DJI video replay results (Section~\ref{sec:dji-validation}), seven-method ground truth comparison (Section~\ref{sec:empirical-comparison}), GPS averaging analysis (Section~\ref{sec:gps-averaging}), fusion strategies and why inverse-variance weighting won (Sections~\ref{sec:fusion-strategies}--\ref{sec:why-ivw}), and multi-pass observation (Section~\ref{sec:multi-pass}).
+  DJI video replay results (Section~\ref{sec:dji-validation}), seven-method ground truth comparison (Section~\ref{sec:empirical-comparison}), GPS averaging analysis (Section~\ref{sec:gps-averaging}), fusion strategies and why inverse-variance weighting won (Sections~\ref{sec:fusion-strategies}--\ref{sec:why-ivw}), multi-pass observation (Section~\ref{sec:multi-pass}), and passive estimation as a standalone capability (Section~\ref{sec:passive-estimation}).
 
 \end{description}
 
@@ -299,6 +299,13 @@ Nine independent error sources contribute to the total position uncertainty.  Ea
   {\footnotesize\textit{Note:} The measured CEP$_{50}$ of \SI{2.3}{\metre} is lower than the theoretical RSS because (i)~most detections occur near the image centre where GSD-scaled errors are small, (ii)~the lawnmower pattern's alternating headings partially cancel directional biases, and (iii)~the RSS assumes worst-case contributions from all sources simultaneously.\\
   $\dagger$~With attitude compensation enabled (\texttt{-{}-compensate-tilt}), the in-flight roll/pitch term reduces to $\sim$\SI{0.3}{\metre} (Section~\ref{sec:tilt-compensation}), bringing the in-flight RSS down to $\sim$\SI{3.5}{\metre}.}
 \end{table}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\linewidth]{report/figs/error_waterfall.pdf}
+  \caption{Error budget waterfall showing the cumulative contribution of each noise source to the single-observation GPS estimate error at \SI{35}{\metre} altitude.  The stacked bars illustrate how individual terms (GPS receiver, timing lag, roll/pitch, heading, barometric drift, FOV calibration, lens distortion, detection pixel, vibration) combine via root sum of squares to produce the total CEP during flight ($\sim$\SI{7}{\metre} uncompensated, $\sim$\SI{3.5}{\metre} with tilt compensation) and during hover ($\sim$\SI{2.5}{\metre}).}
+  \label{fig:error-waterfall}
+\end{figure}
 
 \paragraph{GPS receiver noise} is the dominant term at all altitudes.  Field measurements with the Cube Orange GNSS module (single-frequency L1) yielded a CEP50 of \SI{1.5}{\metre} and a CEP95 of \SI{2.3}{\metre} while stationary, consistent with published specifications for consumer-grade receivers~\cite{kaplan2017understanding,misra2006global}.  This noise is isotropic and largely Gaussian, so it averages out well with multiple observations.
 
@@ -620,6 +627,13 @@ The ray-tracing mathematics are exact; the only residual error comes from noise 
 \end{table}
 
 \noindent The compensation reduces the dominant in-flight error source by over 95\%, from \SI{6.2}{\metre} to approximately \SI{0.9}{\metre} RSS (dominated by telemetry noise).  This residual is well below the GPS receiver noise floor of $\sim$\SI{2.5}{\metre}.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\linewidth]{report/figs/attitude_compensation.pdf}
+  \caption{GPS target estimate scatter before and after attitude compensation at \SI{35}{\metre} altitude.  Without compensation (left), forward-flight pitch introduces a systematic along-track bias of $\sim$\SI{6.2}{\metre}.  With compensation (right), the ray-trace correction reduces the scatter to $\sim$\SI{0.3}{\metre}, limited by telemetry noise.  Data from the 1440-test verification sweep described above.}
+  \label{fig:attitude-compensation-scatter}
+\end{figure}
 
 \paragraph{Operating modes.}
 The system provides two command-line flags:
@@ -993,7 +1007,7 @@ Altitude has a compound effect on position estimation quality that goes beyond t
 % =====================================================================
 \subsection{Accuracy Progression Through Mission Phases}\label{sec:accuracy-progression}
 
-Table~\ref{tab:accuracy-journey} consolidates the preceding analysis into a single view of how the target position estimate improves from first detection to final landing.
+Table~\ref{tab:accuracy-journey} consolidates the preceding analysis into a single view of how the target position estimate improves from first detection to final landing (cf.\ the preview in Table~\ref{tab:accuracy-progression}; a more detailed breakdown including specific error-source elimination appears in Table~\ref{tab:state-accuracy}).
 
 \begin{table}[H]
 \centering
@@ -1326,7 +1340,7 @@ A typical keyboard-flown simulator mission---flyover at \SI{35}{\metre}, optiona
 % =====================================================================
 \subsection{Detailed Per-State Accuracy Analysis}\label{sec:detailed-accuracy}
 
-The preceding sections have analysed individual error sources, mitigation strategies, and fusion algorithms in isolation.  This subsection draws them together to show how the system's position estimate improves concretely as the mission progresses through its state machine.
+The preceding sections have analysed individual error sources, mitigation strategies, and fusion algorithms in isolation.  This subsection draws them together to show how the system's position estimate improves concretely as the mission progresses through its state machine.  Table~\ref{tab:state-accuracy} expands on the earlier summaries (Tables~\ref{tab:accuracy-progression} and~\ref{tab:accuracy-journey}) by detailing the specific error sources eliminated at each phase transition.
 
 \begin{table}[ht]
   \centering
@@ -1467,6 +1481,13 @@ The preceding sections have analysed individual error sources, mitigation strate
 \end{enumerate}
 
 \noindent The final \SI{1.8}{\metre} CEP$_{50}$ is dominated by the irreducible GPS receiver noise floor---the theoretical minimum achievable with a single-frequency L1 receiver without differential correction (RTK or DGPS).  Implementing the currently-bypassed DESCENDING state (lowering to \SI{15}{\metre} before VERIFY) would improve this further through reduced GSD (Table~\ref{tab:gsd-altitude}).  Further improvement beyond that would require either RTK GPS ($\sim$\SI{0.02}{\metre}) or significantly longer averaging times.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\linewidth]{report/figs/progressive_accuracy.pdf}
+  \caption{CEP$_{50}$ at each phase of the detection-to-landing flow, showing progressive accuracy improvement from $\sim$\SI{3.5}{\metre} (Phase~1, tilt-compensated search) to $\sim$\SI{1.8}{\metre} (Phase~4, GPS-averaged hover lock).  Each phase transition eliminates a specific error category: Phase~2 reduces pitch and timing lag as the drone decelerates; Phase~3 drives the pixel offset to zero through centering; Phase~4 averages GPS noise over 50~samples.}
+  \label{fig:progressive-accuracy-bars}
+\end{figure}
 
 % =====================================================================
 \subsection{Four-Phase Detection-to-Landing Flow}\label{sec:two-step}

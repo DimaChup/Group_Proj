@@ -65,6 +65,13 @@ The test scripts are organised into eight directories, each addressing a distinc
 
 All experiment scripts issue zero flight commands and are safe to run at any time. The CSV output format enables direct import into the analysis presented in Section~\ref{sec:results}.
 
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\linewidth]{report/figs/testing_coverage.pdf}
+  \caption{Requirements coverage by testing tier.  Each bar shows the number of system requirements (R01--R10) verified at each of the five progressive testing levels (simulation, Docker, bench, passive flight, autonomous flight).  Lower tiers verify a broader set of requirements at lower risk; higher tiers provide operational validation of the most critical flight and mission requirements.  The layered coverage ensures that no requirement depends solely on the highest-risk tier for verification.}
+  \label{fig:testing-coverage}
+\end{figure}
+
 \subsection{Dry-Run Validation}\label{sec:dry-run}
 
 The \texttt{-{}-dry-run} flag provides an end-to-end state machine walkthrough without requiring hardware, an autopilot connection, or even SITL. When invoked, the system loads the search polygon from the KML file, generates the lawnmower waypoint set, visualises it on a map with geofence boundaries, prints the full mission plan (altitude, speed, waypoint count, estimated time), and walks through the state machine transitions (INIT$\to$SEARCH$\to$VERIFY$\to$LANDING$\to$DONE) to verify that all imports, configuration parameters, and state logic are correct. The output image (\texttt{dry\_run\_pattern.jpg}) provides immediate visual confirmation that the search pattern covers the intended area and respects the SSSI exclusion zone.

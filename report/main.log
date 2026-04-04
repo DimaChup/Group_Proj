@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.3.27)  4 APR 2026 05:43
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.3.27)  4 APR 2026 05:52
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -2666,77 +2666,95 @@ Package hyperref Warning: Token not allowed in a PDF string (Unicode):
 (hyperref)                \kern 1.66702pt
 (hyperref)                removed on input line 234.
 
-[69] [70] [71] [72] [73] [74] [75] [76] [77] [78] [79] [80] [81] [82] [83]
-Underfull \hbox (badness 1931) in paragraph at lines 1339--1339
+[69] [70] [71] [72]
+
+LaTeX Warning: File `report/figs/attitude_compensation.pdf' not found on input 
+line 626.
+
+
+! Package pdftex.def Error: File `report/figs/attitude_compensation.pdf' not fo
+und: using draft setting.
+
+See the pdftex.def package documentation for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.626 ...h]{report/figs/attitude_compensation.pdf}
+                                                  
+Try typing  <return>  to proceed.
+If that doesn't work, type  X <return>  to quit.
+
+[73] [74] [75] [76] [77] [78] [79] [80] [81] [82] [83] [84]
+Underfull \hbox (badness 1931) in paragraph at lines 1346--1346
 []|\OT1/lmr/m/n/10 (+20) Moving at $5$$m s[]$,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1339--1339
+Underfull \hbox (badness 10000) in paragraph at lines 1346--1346
 \OT1/lmr/m/n/10 (+20) 5$--$10[]$ pitch, tilt-
  []
 
 
-Underfull \hbox (badness 1163) in paragraph at lines 1339--1340
+Underfull \hbox (badness 1163) in paragraph at lines 1346--1347
 []|\OT1/lmr/m/n/10 (+20) Tilt com-pen-sa-tion ray-
  []
 
 
-Underfull \hbox (badness 3826) in paragraph at lines 1339--1340
+Underfull \hbox (badness 3826) in paragraph at lines 1346--1347
 \OT1/lmr/m/n/10 (+20) traces through known
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1341--1341
+Underfull \hbox (badness 10000) in paragraph at lines 1348--1348
 []|\OT1/lmr/m/n/10 (+20) Decelerating to
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1341--1341
+Underfull \hbox (badness 10000) in paragraph at lines 1348--1348
 \OT1/lmr/m/n/10 (+20) hover, con-tin-u-ous
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1343--1343
+Underfull \hbox (badness 10000) in paragraph at lines 1350--1350
 []|\OT1/lmr/m/n/10 (+20) Stationary hover,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1345--1345
+Underfull \hbox (badness 10000) in paragraph at lines 1352--1352
 []|\OT1/lmr/m/n/10 (+20) Operator con-firms
  []
 
 
-Underfull \hbox (badness 2293) in paragraph at lines 1345--1345
+Underfull \hbox (badness 2293) in paragraph at lines 1352--1352
 \OT1/lmr/m/n/10 (+20) via ground sta-tion
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1345--1346
+Underfull \hbox (badness 10000) in paragraph at lines 1352--1353
 []|\OT1/lmr/m/n/10 (+20) Estimate frozen at
  []
 
 
-Overfull \hbox (12.8009pt too wide) in paragraph at lines 1335--1350
+Overfull \hbox (12.8009pt too wide) in paragraph at lines 1342--1357
  [][] 
  []
 
-[84] [85] [86] [87] [88] [89] [90]
+[85] [86] [87] [88] [89] [90] [91]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 1890.
-
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `subscript' on input line 1890.
+(hyperref)                removing `math shift' on input line 1897.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 1890.
+(hyperref)                removing `subscript' on input line 1897.
 
-Package pgfplots info on input line 1918: Using 'lua backend=false' for axis: x
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 1897.
+
+Package pgfplots info on input line 1925: Using 'lua backend=false' for axis: x
  coord trafo unsupported.
-[91] [92] [93] [94]) (sections/testing_deep.tex [95] [96] [97]
+[92] [93] [94] [95]) (sections/testing_deep.tex [96] [97] [98]
 Underfull \hbox (badness 1721) in paragraph at lines 141--141
 []|\OT1/lmr/m/n/9 (+20) Geofence sign con-ven-tion in-
  []
@@ -2766,7 +2784,7 @@ Underfull \hbox (badness 3219) in paragraph at lines 163--164
 []|\OT1/lmr/m/n/9 (+20) Crash on first de-tec-tion in
  []
 
-[98] [99]) (sections/field_day_narrative.tex [100] [101] [102]) [103]
+[99] [100]) (sections/field_day_narrative.tex [101] [102] [103]) [104]
 (sections/contingency.tex
 Overfull \hbox (60.4425pt too wide) in paragraph at lines 64--65
 []\OT1/lmr/bx/n/10 (-20) NCNN in-fer-ence back-end. \OT1/lmr/m/n/10 (-20) The N
@@ -2774,7 +2792,7 @@ CNN ex-port of the re-trained YOLOv8n model is avail-able in \OT1/lmtt/m/n/10 c
 v[]models/sar[]v2[]1088/ncnn/
  []
 
-[104]
+[105]
 Underfull \hbox (badness 5832) in paragraph at lines 126--126
 []|\OT1/lmr/m/n/9 (+20) Pi crashes mid-
  []
@@ -2830,7 +2848,7 @@ Overfull \hbox (82.95808pt too wide) in paragraph at lines 149--149
 []|\OT1/lmtt/m/n/9 tests/hardware/detection[]snapshot[]test.py| 
  []
 
-) (sections/test_scripts_guide.tex [105] [106]
+) (sections/test_scripts_guide.tex [106] [107]
 Underfull \hbox (badness 10000) in paragraph at lines 73--73
 []|\OT1/lmr/m/n/9 (+20) GPS di-ag-nos-tics: satel-lite count, fix type
  []
@@ -2840,12 +2858,12 @@ Underfull \hbox (badness 3118) in paragraph at lines 73--73
 \OT1/lmr/m/n/9 (+20) (2D/3D/DGPS), HDOP, po-si-tion, and time-to-
  []
 
-[107]
+[108]
 Underfull \hbox (badness 10000) in paragraph at lines 108--109
 []|\OT1/lmtt/m/n/9 calibration[]data.npz
  []
 
-[108]
+[109]
 Underfull \hbox (badness 1596) in paragraph at lines 135--135
 \OT1/lmr/m/n/9 (+20) hov-ers sta-tion-ary, com-put-ing
  []
@@ -2865,7 +2883,7 @@ Underfull \hbox (badness 1226) in paragraph at lines 139--139
 []|\OT1/lmr/m/n/9 (+20) General-purpose flight log-ger:
  []
 
-[109]
+[110]
 Underfull \hbox (badness 10000) in paragraph at lines 173--174
 []|\OT1/lmr/m/n/9 (+20) fov[]calibrate,
  []
@@ -2910,12 +2928,12 @@ Underfull \hbox (badness 10000) in paragraph at lines 187--188
 []|\OT1/lmr/m/n/9 (+20) video[]test,
  []
 
-[110]
+[111]
 Underfull \hbox (badness 10000) in paragraph at lines 221--221
 []|\OT1/lmr/m/n/9 (+20) AUTO pat-tern + AI-triggered
  []
 
-) [111] (sections/calibration_deep.tex
+) [112] (sections/calibration_deep.tex
 Overfull \hbox (53.51639pt too wide) in paragraph at lines 43--44
 \OT1/lmr/m/n/10 (-20) 13 \OMS/lmsy/m/n/10 ^^B \OT1/lmr/m/n/10 (-20) 8$ in-ner c
 or-ners). Ap-prox-i-mately 20 im-ages were cap-tured at vary-ing ori-en-ta-tion
@@ -2923,7 +2941,7 @@ s us-ing \OT1/lmtt/m/n/10 tests/calibration/lens[]calibrate.py\OT1/lmr/m/n/10 (
 -20) ,
  []
 
-[112] [113]
+[113] [114]
 Underfull \hbox (badness 10000) in paragraph at lines 107--107
 []|\OT1/lmr/m/n/10 (+20) Focal length
  []
@@ -2946,18 +2964,18 @@ an-tenna, known ref-er-ence po-si-tion (e.g. the des-ig-nated Take-Off Lo-ca-ti
 on at 51.423406\TS1/lmr/m/n/10 (-20) °\OT1/lmr/m/n/10 (-20) N,
  []
 
-[114]) (sections/simulation_validation.tex
+[115]) (sections/simulation_validation.tex
 Overfull \hbox (44.07799pt too wide) in paragraph at lines 15--33
  [][] 
  []
 
-[115] [116] [117]) [118] (sections/mission_flow.tex [119] [120] [121])
-(sections/centering_analysis.tex [122]
+[116] [117] [118]) [119] (sections/mission_flow.tex [120] [121] [122])
+(sections/centering_analysis.tex [123]
 Overfull \hbox (1.19736pt too wide) in paragraph at lines 63--71
  [][] 
  []
 
-[123] [124]
+[124] [125]
 Underfull \hbox (badness 10000) in paragraph at lines 159--160
 []|\OT1/lmr/m/n/10 (+20) Re-introduces GSD,
  []
@@ -2967,55 +2985,55 @@ Underfull \hbox (badness 4279) in paragraph at lines 159--160
 \OT1/lmr/m/n/10 (+20) focal-length, and yaw
  []
 
-) (sections/comms_architecture.tex [125] [126]) (sections/pipeline_fps.tex
-[127]
+) (sections/comms_architecture.tex [126] [127]) (sections/pipeline_fps.tex
+[128]
 Package pgfplots info on input line 79: Using 'lua backend=false' for axis: sta
 cked plots unsupported (yet).
 Package pgfplots info on input line 79: Using 'lua backend=false' for axis: x c
 oord trafo unsupported.
-) (sections/path_tradeoffs.tex [128]
+) (sections/path_tradeoffs.tex [129]
 
 LaTeX Warning: Command \textdegree invalid in math mode on input line 14.
 
 
 LaTeX Warning: Command \textdegree invalid in math mode on input line 14.
 
-[129]
+[130]
 
 LaTeX Warning: Command \textdegree invalid in math mode on input line 70.
 
 
 LaTeX Warning: Command \textdegree invalid in math mode on input line 70.
 
-) (sections/payload_release.tex [130]
+) (sections/payload_release.tex [131]
 LaTeX Font Info:    External font `lmex10' loaded for size
 (Font)              <12> on input line 28.
- [131]) (sections/model_comparison.tex
-[132] [133]) (sections/search_optimization.tex [134]
-<figs/energy_efficiency.pdf, id=6071, 546.09808pt x 390.17519pt>
+ [132]) (sections/model_comparison.tex
+[133] [134]) (sections/search_optimization.tex [135]
+<figs/energy_efficiency.pdf, id=6087, 546.09808pt x 390.17519pt>
 File: figs/energy_efficiency.pdf Graphic file (type pdf)
 <use figs/energy_efficiency.pdf>
 Package pdftex.def Info: figs/energy_efficiency.pdf  used on input line 67.
 (pdftex.def)             Requested size: 435.3303pt x 311.0332pt.
-<figs/rotation_comparison.pdf, id=6072, 1004.2368pt x 382.12764pt>
+<figs/rotation_comparison.pdf, id=6088, 1004.2368pt x 382.12764pt>
 File: figs/rotation_comparison.pdf Graphic file (type pdf)
 <use figs/rotation_comparison.pdf>
 Package pdftex.def Info: figs/rotation_comparison.pdf  used on input line 95.
 (pdftex.def)             Requested size: 435.3303pt x 165.64693pt.
- [135 <./figs/energy_efficiency.pdf>] [136 <./figs/rotation_comparison.pdf>]
-<figs/nfz_margin_altitude.pdf, id=6262, 571.4587pt x 354.04019pt>
+ [136 <./figs/energy_efficiency.pdf>] [137 <./figs/rotation_comparison.pdf>]
+<figs/nfz_margin_altitude.pdf, id=6278, 571.4587pt x 354.04019pt>
 File: figs/nfz_margin_altitude.pdf Graphic file (type pdf)
 <use figs/nfz_margin_altitude.pdf>
 Package pdftex.def Info: figs/nfz_margin_altitude.pdf  used on input line 165.
 (pdftex.def)             Requested size: 435.3303pt x 269.7108pt.
- [137 <./figs/nfz_margin_altitude.pdf>]
-<figs/speed_detection_energy.pdf, id=6381, 571.83449pt x 389.89288pt>
+ [138 <./figs/nfz_margin_altitude.pdf>]
+<figs/speed_detection_energy.pdf, id=6397, 571.83449pt x 389.89288pt>
 File: figs/speed_detection_energy.pdf Graphic file (type pdf)
 <use figs/speed_detection_energy.pdf>
 Package pdftex.def Info: figs/speed_detection_energy.pdf  used on input line 20
 7.
 (pdftex.def)             Requested size: 435.3303pt x 296.82735pt.
- [138 <./figs/speed_detection_energy.pdf>])
+ [139 <./figs/speed_detection_energy.pdf>])
 (sections/focus_and_repulsive.tex
 LaTeX Font Info:    Trying to load font information for OMS+lmtt on input line 
 18.
@@ -3028,36 +3046,36 @@ LaTeX Font Warning: Font shape `OMS/lmtt/m/n' undefined
 
 Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on in
 put line 29.
-[139]
+[140]
 Overfull \vbox (159.19595pt too high) has occurred while \output is active []
 
 
-[140]
+[141]
 Overfull \hbox (28.2121pt too wide) in paragraph at lines 127--128
 [] []\OT1/lmr/bx/n/10 (-20) Di-rec-tional scalar field.[] \OT1/lmr/m/n/10 (-20)
  An al-ter-na-tive scalar field im-ple-men-ta-tion was also de-vel-oped (en-abl
 ed via the \OT1/lmtt/m/n/10 --nfz-directional
  []
 
-) (sections/path_optimization_definitive.tex [141]
-<figs/real_energy_heatmap.png, id=6551, 867.24pt x 578.16pt>
+) (sections/path_optimization_definitive.tex [142]
+<figs/real_energy_heatmap.png, id=6567, 867.24pt x 578.16pt>
 File: figs/real_energy_heatmap.png Graphic file (type png)
 <use figs/real_energy_heatmap.png>
 Package pdftex.def Info: figs/real_energy_heatmap.png  used on input line 96.
 (pdftex.def)             Requested size: 450.69417pt x 300.46849pt.
-<figs/real_energy_vs_altitude.png, id=6555, 722.7pt x 505.89pt>
+<figs/real_energy_vs_altitude.png, id=6571, 722.7pt x 505.89pt>
 File: figs/real_energy_vs_altitude.png Graphic file (type png)
 <use figs/real_energy_vs_altitude.png>
 Package pdftex.def Info: figs/real_energy_vs_altitude.png  used on input line 1
 42.
 (pdftex.def)             Requested size: 450.69417pt x 315.48573pt.
- [142]
-<figs/real_path_patterns.png, id=6575, 1582.713pt x 738.1176pt>
+ [143]
+<figs/real_path_patterns.png, id=6591, 1582.713pt x 738.1176pt>
 File: figs/real_path_patterns.png Graphic file (type png)
 <use figs/real_path_patterns.png>
 Package pdftex.def Info: figs/real_path_patterns.png  used on input line 198.
 (pdftex.def)             Requested size: 486.54057pt x 226.89941pt.
-<figs/top3_paths.pdf, id=6576, 1111.90283pt x 425.66428pt>
+<figs/top3_paths.pdf, id=6592, 1111.90283pt x 425.66428pt>
 File: figs/top3_paths.pdf Graphic file (type pdf)
 <use figs/top3_paths.pdf>
 Package pdftex.def Info: figs/top3_paths.pdf  used on input line 205.
@@ -3066,20 +3084,20 @@ Package pdftex.def Info: figs/top3_paths.pdf  used on input line 205.
 Overfull \vbox (350.38388pt too high) has occurred while \output is active []
 
 
-[143 <./figs/real_energy_heatmap.png>] [144 <./figs/real_energy_vs_altitude.png
+[144 <./figs/real_energy_heatmap.png>] [145 <./figs/real_energy_vs_altitude.png
 >]
-<figs/real_optimal_pattern.png, id=6610, 1156.32pt x 578.16pt>
+<figs/real_optimal_pattern.png, id=6629, 1156.32pt x 578.16pt>
 File: figs/real_optimal_pattern.png Graphic file (type png)
 <use figs/real_optimal_pattern.png>
 Package pdftex.def Info: figs/real_optimal_pattern.png  used on input line 325.
 
 (pdftex.def)             Requested size: 450.69417pt x 225.34033pt.
-<figs/pareto_2d_composite.pdf, id=6611, 568.41425pt x 437.38728pt>
+<figs/pareto_2d_composite.pdf, id=6630, 568.41425pt x 437.38728pt>
 File: figs/pareto_2d_composite.pdf Graphic file (type pdf)
 <use figs/pareto_2d_composite.pdf>
 Package pdftex.def Info: figs/pareto_2d_composite.pdf  used on input line 348.
 (pdftex.def)             Requested size: 450.69417pt x 346.8069pt.
-<figs/altitude_tradeoff_dual.pdf, id=6612, 837.92926pt x 361.55928pt>
+<figs/altitude_tradeoff_dual.pdf, id=6631, 837.92926pt x 361.55928pt>
 File: figs/altitude_tradeoff_dual.pdf Graphic file (type pdf)
 <use figs/altitude_tradeoff_dual.pdf>
 Package pdftex.def Info: figs/altitude_tradeoff_dual.pdf  used on input line 35
@@ -3089,14 +3107,14 @@ Package pdftex.def Info: figs/altitude_tradeoff_dual.pdf  used on input line 35
 Overfull \vbox (501.10336pt too high) has occurred while \output is active []
 
 
-[145 <./figs/real_path_patterns.png> <./figs/top3_paths.pdf> <./figs/real_optim
-al_pattern.png>]) (sections/optimization_master.tex [146 <./figs/pareto_2d_comp
-osite.pdf>] [147 <./figs/altitude_tradeoff_dual.pdf>]
+[146 <./figs/real_path_patterns.png> <./figs/top3_paths.pdf> <./figs/real_optim
+al_pattern.png>]) (sections/optimization_master.tex [147 <./figs/pareto_2d_comp
+osite.pdf>] [148 <./figs/altitude_tradeoff_dual.pdf>]
 File: figs/top3_paths.pdf Graphic file (type pdf)
 <use figs/top3_paths.pdf>
 Package pdftex.def Info: figs/top3_paths.pdf  used on input line 134.
 (pdftex.def)             Requested size: 486.54057pt x 186.26013pt.
- [148]
+ [149]
 File: figs/altitude_speed_tradeoff.pdf Graphic file (type pdf)
 <use figs/altitude_speed_tradeoff.pdf>
 Package pdftex.def Info: figs/altitude_speed_tradeoff.pdf  used on input line 1
@@ -3106,14 +3124,14 @@ File: figs/real_energy_heatmap.png Graphic file (type png)
 <use figs/real_energy_heatmap.png>
 Package pdftex.def Info: figs/real_energy_heatmap.png  used on input line 183.
 (pdftex.def)             Requested size: 435.3303pt x 290.22615pt.
- [149]
-<figs/tornado_sensitivity.pdf, id=7026, 571.04657pt x 285.1285pt>
+ [150]
+<figs/tornado_sensitivity.pdf, id=7045, 571.04657pt x 285.1285pt>
 File: figs/tornado_sensitivity.pdf Graphic file (type pdf)
 <use figs/tornado_sensitivity.pdf>
 Package pdftex.def Info: figs/tornado_sensitivity.pdf  used on input line 209.
 (pdftex.def)             Requested size: 384.11221pt x 191.79211pt.
- [150 <./figs/tornado_sensitivity.pdf>]
-<figs/n2_diagram.pdf, id=7152, 629.07869pt x 979.9812pt>
+ [151 <./figs/tornado_sensitivity.pdf>]
+<figs/n2_diagram.pdf, id=7173, 629.07869pt x 979.9812pt>
 File: figs/n2_diagram.pdf Graphic file (type pdf)
 <use figs/n2_diagram.pdf>
 Package pdftex.def Info: figs/n2_diagram.pdf  used on input line 235.
@@ -3122,12 +3140,12 @@ File: figs/coupling_matrix.pdf Graphic file (type pdf)
 <use figs/coupling_matrix.pdf>
 Package pdftex.def Info: figs/coupling_matrix.pdf  used on input line 239.
 (pdftex.def)             Requested size: 245.82962pt x 246.70604pt.
-<figs/sensitivity_matrix.pdf, id=7155, 680.28354pt x 390.66585pt>
+<figs/sensitivity_matrix.pdf, id=7176, 680.28354pt x 390.66585pt>
 File: figs/sensitivity_matrix.pdf Graphic file (type pdf)
 <use figs/sensitivity_matrix.pdf>
 Package pdftex.def Info: figs/sensitivity_matrix.pdf  used on input line 264.
 (pdftex.def)             Requested size: 245.82962pt x 141.17012pt.
-<figs/sensitivity_spider.pdf, id=7156, 462.53987pt x 427.51283pt>
+<figs/sensitivity_spider.pdf, id=7177, 462.53987pt x 427.51283pt>
 File: figs/sensitivity_spider.pdf Graphic file (type pdf)
 <use figs/sensitivity_spider.pdf>
 Package pdftex.def Info: figs/sensitivity_spider.pdf  used on input line 268.
@@ -3136,23 +3154,23 @@ File: figs/pareto_2d_composite.pdf Graphic file (type pdf)
 <use figs/pareto_2d_composite.pdf>
 Package pdftex.def Info: figs/pareto_2d_composite.pdf  used on input line 282.
 (pdftex.def)             Requested size: 435.3303pt x 334.98059pt.
- [151 <./figs/n2_diagram.pdf>]
-<figs/pareto_curve.pdf, id=7319, 488.32996pt x 367.88191pt>
+ [152 <./figs/n2_diagram.pdf>]
+<figs/pareto_curve.pdf, id=7338, 488.32996pt x 367.88191pt>
 File: figs/pareto_curve.pdf Graphic file (type pdf)
 <use figs/pareto_curve.pdf>
 Package pdftex.def Info: figs/pareto_curve.pdf  used on input line 291.
 (pdftex.def)             Requested size: 435.3303pt x 327.96397pt.
-<figs/pareto_3d.pdf, id=7320, 536.01518pt x 451.00998pt>
+<figs/pareto_3d.pdf, id=7339, 536.01518pt x 451.00998pt>
 File: figs/pareto_3d.pdf Graphic file (type pdf)
 <use figs/pareto_3d.pdf>
 Package pdftex.def Info: figs/pareto_3d.pdf  used on input line 298.
 (pdftex.def)             Requested size: 435.3303pt x 366.30017pt.
-<figs/pareto_parallel.pdf, id=7321, 611.26181pt x 379.18648pt>
+<figs/pareto_parallel.pdf, id=7340, 611.26181pt x 379.18648pt>
 File: figs/pareto_parallel.pdf Graphic file (type pdf)
 <use figs/pareto_parallel.pdf>
 Package pdftex.def Info: figs/pareto_parallel.pdf  used on input line 305.
 (pdftex.def)             Requested size: 486.54057pt x 301.82211pt.
-<figs/pareto_tradeoff_simple.pdf, id=7322, 500.21567pt x 369.24638pt>
+<figs/pareto_tradeoff_simple.pdf, id=7341, 500.21567pt x 369.24638pt>
 File: figs/pareto_tradeoff_simple.pdf Graphic file (type pdf)
 <use figs/pareto_tradeoff_simple.pdf>
 Package pdftex.def Info: figs/pareto_tradeoff_simple.pdf  used on input line 31
@@ -3167,14 +3185,14 @@ Package pdftex.def Info: figs/energy_efficiency.pdf  used on input line 327.
 Overfull \vbox (224.83284pt too high) has occurred while \output is active []
 
 
-[152 <./figs/sensitivity_matrix.pdf> <./figs/sensitivity_spider.pdf>] [153]
-[154 <./figs/pareto_curve.pdf>] [155 <./figs/pareto_3d.pdf>] [156 <./figs/paret
-o_parallel.pdf>] [157 <./figs/pareto_tradeoff_simple.pdf>]
+[153 <./figs/sensitivity_matrix.pdf> <./figs/sensitivity_spider.pdf>] [154]
+[155 <./figs/pareto_curve.pdf>] [156 <./figs/pareto_3d.pdf>] [157 <./figs/paret
+o_parallel.pdf>] [158 <./figs/pareto_tradeoff_simple.pdf>]
 File: figs/n2_diagram.pdf Graphic file (type pdf)
 <use figs/n2_diagram.pdf>
 Package pdftex.def Info: figs/n2_diagram.pdf  used on input line 196.
 (pdftex.def)             Requested size: 450.69417pt x 702.1018pt.
-<figs/objective_conflict.pdf, id=7964, 736.75905pt x 587.34618pt>
+<figs/objective_conflict.pdf, id=7984, 736.75905pt x 587.34618pt>
 File: figs/objective_conflict.pdf Graphic file (type pdf)
 <use figs/objective_conflict.pdf>
 Package pdftex.def Info: figs/objective_conflict.pdf  used on input line 203.
@@ -3183,8 +3201,8 @@ Package pdftex.def Info: figs/objective_conflict.pdf  used on input line 203.
 Overfull \vbox (305.82314pt too high) has occurred while \output is active []
 
 
-[158]) (sections/design_strategy.tex [159] [160] [161]
-<figs/optimization_network.pdf, id=8024, 1149.09305pt x 758.835pt>
+[159]) (sections/design_strategy.tex [160] [161] [162]
+<figs/optimization_network.pdf, id=8045, 1149.09305pt x 758.835pt>
 File: figs/optimization_network.pdf Graphic file (type pdf)
 <use figs/optimization_network.pdf>
 Package pdftex.def Info: figs/optimization_network.pdf  used on input line 243.
@@ -3198,10 +3216,10 @@ File: figs/sensitivity_spider.pdf Graphic file (type pdf)
 <use figs/sensitivity_spider.pdf>
 Package pdftex.def Info: figs/sensitivity_spider.pdf  used on input line 257.
 (pdftex.def)             Requested size: 435.3303pt x 402.36441pt.
- [162] [163] [164]
-[165] [166] [167] [168] [169] [170] [171] [172] [173] [174] [175] [176]
-[177] [178] [179 <./figs/objective_conflict.pdf>] [180 <./figs/optimization_net
-work.pdf>] [181]
+ [163] [164] [165]
+[166] [167] [168] [169] [170] [171] [172] [173] [174] [175] [176] [177]
+[178] [179] [180 <./figs/objective_conflict.pdf>] [181 <./figs/optimization_net
+work.pdf>] [182]
 File: figs/coupling_matrix.pdf Graphic file (type pdf)
 <use figs/coupling_matrix.pdf>
 Package pdftex.def Info: figs/coupling_matrix.pdf  used on input line 266.
@@ -3211,56 +3229,56 @@ File: figs/altitude_speed_tradeoff.pdf Graphic file (type pdf)
 Package pdftex.def Info: figs/altitude_speed_tradeoff.pdf  used on input line 2
 73.
 (pdftex.def)             Requested size: 435.3303pt x 354.73053pt.
-<figs/function_chain.pdf, id=8368, 798.58348pt x 537.06151pt>
+<figs/function_chain.pdf, id=8413, 798.58348pt x 537.06151pt>
 File: figs/function_chain.pdf Graphic file (type pdf)
 <use figs/function_chain.pdf>
 Package pdftex.def Info: figs/function_chain.pdf  used on input line 280.
 (pdftex.def)             Requested size: 450.69417pt x 303.10431pt.
- [182
+ [183
 
-] [183 <./figs/function_chain.pdf>]
+] [184 <./figs/function_chain.pdf>]
 File: figs/tornado_sensitivity.pdf Graphic file (type pdf)
 <use figs/tornado_sensitivity.pdf>
 Package pdftex.def Info: figs/tornado_sensitivity.pdf  used on input line 289.
 (pdftex.def)             Requested size: 450.69417pt x 225.0402pt.
 )
-(sections/vision_performance.tex [184
+(sections/vision_performance.tex [185
 
 ]
-<figs/real_altitude_vs_px.png, id=8496, 505.89pt x 325.215pt>
+<figs/real_altitude_vs_px.png, id=8543, 505.89pt x 325.215pt>
 File: figs/real_altitude_vs_px.png Graphic file (type png)
 <use figs/real_altitude_vs_px.png>
 Package pdftex.def Info: figs/real_altitude_vs_px.png  used on input line 88.
 (pdftex.def)             Requested size: 435.3303pt x 279.8581pt.
-<figs/real_speed_vs_blur.png, id=8499, 505.89pt x 325.215pt>
+<figs/real_speed_vs_blur.png, id=8546, 505.89pt x 325.215pt>
 File: figs/real_speed_vs_blur.png Graphic file (type png)
 <use figs/real_speed_vs_blur.png>
 Package pdftex.def Info: figs/real_speed_vs_blur.png  used on input line 136.
 (pdftex.def)             Requested size: 435.3303pt x 279.8581pt.
- [185 <./figs/real_altitude_vs_px.png>]
-<figs/real_speed_vs_frames.png, id=8512, 505.89pt x 325.215pt>
+ [186 <./figs/real_altitude_vs_px.png>]
+<figs/real_speed_vs_frames.png, id=8560, 505.89pt x 325.215pt>
 File: figs/real_speed_vs_frames.png Graphic file (type png)
 <use figs/real_speed_vs_frames.png>
 Package pdftex.def Info: figs/real_speed_vs_frames.png  used on input line 187.
 
 (pdftex.def)             Requested size: 435.3303pt x 279.8581pt.
 
-[186 <./figs/real_speed_vs_blur.png>]
-<figs/real_coverage.png, id=8521, 505.89pt x 325.215pt>
+[187 <./figs/real_speed_vs_blur.png>]
+<figs/real_coverage.png, id=8573, 505.89pt x 325.215pt>
 File: figs/real_coverage.png Graphic file (type png)
 <use figs/real_coverage.png>
 Package pdftex.def Info: figs/real_coverage.png  used on input line 221.
 (pdftex.def)             Requested size: 435.3303pt x 279.8581pt.
- [187 <./figs/real_speed_vs_frames.png>]
-<figs/real_detection_envelope.png, id=8532, 542.025pt x 361.35pt>
+ [188 <./figs/real_speed_vs_frames.png>]
+<figs/real_detection_envelope.png, id=8583, 542.025pt x 361.35pt>
 File: figs/real_detection_envelope.png Graphic file (type png)
 <use figs/real_detection_envelope.png>
 Package pdftex.def Info: figs/real_detection_envelope.png  used on input line 2
 61.
 (pdftex.def)             Requested size: 450.69417pt x 300.4718pt.
 
-[188 <./figs/real_coverage.png>]) (sections/decision_flow.tex [189 <./figs/real
-_detection_envelope.png>] [190] [191] [192]) (sections/requirements_detail.tex
+[189 <./figs/real_coverage.png>]) (sections/decision_flow.tex [190 <./figs/real
+_detection_envelope.png>] [191] [192] [193]) (sections/requirements_detail.tex
 Overfull \hbox (7.87587pt too wide) in paragraph at lines 11--12
 \OT1/lmr/m/n/10 (-20) The four-vertex Flight Area poly-gon is loaded at startup
  by \OT1/lmtt/m/n/10 load[]kml[]zones() \OT1/lmr/m/n/10 (-20) in \OT1/lmtt/m/n/
@@ -3268,7 +3286,7 @@ Overfull \hbox (7.87587pt too wide) in paragraph at lines 11--12
 
  []
 
-[193]
+[194]
 Overfull \hbox (2.93497pt too wide) in paragraph at lines 13--14
 \OT1/lmtt/m/n/10 NFZ[]WAYPOINT[]BUFFER[]M \OT1/lmr/m/n/10 (-20) = 30m of the SS
 SI bound-ary, which lies in-side the flight area. At run-time, []\OT1/lmtt/m/n/
@@ -3307,7 +3325,7 @@ Package hyperref Warning: Token not allowed in a PDF string (Unicode):
 (hyperref)                \kern 1.66702pt
 (hyperref)                removed on input line 41.
 
-[194] [195]
+[195] [196]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
 (hyperref)                removing `\leavevmode@ifvmode' on input line 78.
@@ -3325,14 +3343,14 @@ Overfull \hbox (0.58803pt too wide) in paragraph at lines 80--81
 offset[]7[]5m()
  []
 
-[196]
+[197]
 Overfull \hbox (9.97177pt too wide) in paragraph at lines 108--109
 []\OT1/lmr/bx/n/10 (-20) Automated fail-safes: \OT1/lmr/m/n/10 (-20) GPS fix de
 gra-da-tion be-yond 5s trig-gers emer-gency RTL. GCS heart-beat loss (\OT1/lmtt
 /m/n/10 FS[]GCS[]ENABLE\OT1/lmr/m/n/10 (-20) )
  []
 
-[197]
+[198]
 
 Package hyperref Warning: Suppressing empty link on input line 137.
 
@@ -3362,7 +3380,7 @@ Overfull \hbox (17.77493pt too wide) in paragraph at lines 15--49
  [][] 
  []
 
-[198]) (sections/development_methodology.tex [199] [200] [201] [202]) [203]
+[199]) (sections/development_methodology.tex [200] [201] [202] [203]) [204]
 (main.aux)
  ***********
 LaTeX2e <2025-11-01>
@@ -3372,6 +3390,9 @@ L3 programming layer <2026-01-19>
 
 LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 
+
+LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
+
 Package rerunfilecheck Info: File `main.out' has not changed.
 (rerunfilecheck)             Checksum: 95157DA0D3810F7B7201656E2DBABAD8;84812.
 Package logreq Info: Writing requests to 'main.run.xml'.
@@ -3379,63 +3400,263 @@ Package logreq Info: Writing requests to 'main.run.xml'.
 
  ) 
 Here is how much of TeX's memory you used:
- 57912 strings out of 467866
- 1301486 string characters out of 5417351
+ 57995 strings out of 467866
+ 1303824 string characters out of 5417351
  2408644 words of memory out of 5000000
- 83721 multiletter control sequences out of 15000+600000
+ 83752 multiletter control sequences out of 15000+600000
  755825 words of font info for 426 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  99i,20n,118p,1544b,2541s stack positions out of 10000i,1000n,20000p,200000b,200000s
-<C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/c
-m/cmsy10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public
-/lm/lmbsy10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/pub
-lic/lm/lmbsy7.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/p
-ublic/lm/lmbx10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1
-/public/lm/lmbx12.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/typ
-e1/public/lm/lmbx6.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/ty
-pe1/public/lm/lmbx7.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/t
-ype1/public/lm/lmbx8.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/
-type1/public/lm/lmbx9.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts
-/type1/public/lm/lmbxi10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fo
-nts/type1/public/lm/lmcsc10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX
-/fonts/type1/public/lm/lmex10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKT
-eX/fonts/type1/public/lm/lmmi10.pfb><C:/Users/Bristol/AppData/Local/Programs/Mi
-KTeX/fonts/type1/public/lm/lmmi12.pfb><C:/Users/Bristol/AppData/Local/Programs/
-MiKTeX/fonts/type1/public/lm/lmmi5.pfb><C:/Users/Bristol/AppData/Local/Programs
-/MiKTeX/fonts/type1/public/lm/lmmi6.pfb><C:/Users/Bristol/AppData/Local/Program
-s/MiKTeX/fonts/type1/public/lm/lmmi7.pfb><C:/Users/Bristol/AppData/Local/Progra
-ms/MiKTeX/fonts/type1/public/lm/lmmi8.pfb><C:/Users/Bristol/AppData/Local/Progr
-ams/MiKTeX/fonts/type1/public/lm/lmmi9.pfb><C:/Users/Bristol/AppData/Local/Prog
-rams/MiKTeX/fonts/type1/public/lm/lmmib10.pfb><C:/Users/Bristol/AppData/Local/P
-rograms/MiKTeX/fonts/type1/public/lm/lmr10.pfb><C:/Users/Bristol/AppData/Local/
-Programs/MiKTeX/fonts/type1/public/lm/lmr12.pfb><C:/Users/Bristol/AppData/Local
-/Programs/MiKTeX/fonts/type1/public/lm/lmr5.pfb><C:/Users/Bristol/AppData/Local
-/Programs/MiKTeX/fonts/type1/public/lm/lmr6.pfb><C:/Users/Bristol/AppData/Local
-/Programs/MiKTeX/fonts/type1/public/lm/lmr7.pfb><C:/Users/Bristol/AppData/Local
-/Programs/MiKTeX/fonts/type1/public/lm/lmr8.pfb><C:/Users/Bristol/AppData/Local
-/Programs/MiKTeX/fonts/type1/public/lm/lmr9.pfb><C:/Users/Bristol/AppData/Local
-/Programs/MiKTeX/fonts/type1/public/lm/lmri10.pfb><C:/Users/Bristol/AppData/Loc
-al/Programs/MiKTeX/fonts/type1/public/lm/lmri12.pfb><C:/Users/Bristol/AppData/L
-ocal/Programs/MiKTeX/fonts/type1/public/lm/lmri7.pfb><C:/Users/Bristol/AppData/
-Local/Programs/MiKTeX/fonts/type1/public/lm/lmri8.pfb><C:/Users/Bristol/AppData
-/Local/Programs/MiKTeX/fonts/type1/public/lm/lmri9.pfb><C:/Users/Bristol/AppDat
-a/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy10.pfb><C:/Users/Bristol/AppD
-ata/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy5.pfb><C:/Users/Bristol/App
-Data/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy6.pfb><C:/Users/Bristol/Ap
-pData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy7.pfb><C:/Users/Bristol/A
-ppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy8.pfb><C:/Users/Bristol/
-AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy9.pfb><C:/Users/Bristol
-/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtk10.pfb><C:/Users/Brist
-ol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtt10.pfb><C:/Users/Bri
-stol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtt8.pfb><C:/Users/Br
-istol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtt9.pfb><C:/Users/B
-ristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtti10.pfb><C:/User
-s/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/symbols/msa
-m10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsf
-onts/symbols/msbm10.pfb>
-Output written on main.pdf (203 pages, 5419171 bytes).
+
+pdfTeX warning (dest): name{table.caption.358} has been referenced but does not
+ exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{table.caption.356} has been referenced but does not
+ exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{table.caption.344} has been referenced but does not
+ exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{table.caption.340} has been referenced but does not
+ exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{figure.caption.339} has been referenced but does no
+t exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{table.caption.338} has been referenced but does not
+ exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{figure.caption.337} has been referenced but does no
+t exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{table.caption.335} has been referenced but does not
+ exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{figure.caption.328} has been referenced but does no
+t exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{table.caption.371} has been referenced but does not
+ exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{table.caption.327} has been referenced but does not
+ exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{table.caption.301} has been referenced but does not
+ exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{figure.caption.314} has been referenced but does no
+t exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{figure.caption.309} has been referenced but does no
+t exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{table.caption.308} has been referenced but does not
+ exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{table.caption.304} has been referenced but does not
+ exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{figure.caption.305} has been referenced but does no
+t exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{table.caption.299} has been referenced but does not
+ exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{figure.caption.295} has been referenced but does no
+t exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{table.caption.294} has been referenced but does not
+ exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{figure.caption.293} has been referenced but does no
+t exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{table.caption.287} has been referenced but does not
+ exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{table.caption.278} has been referenced but does not
+ exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{table.caption.276} has been referenced but does not
+ exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{table.caption.274} has been referenced but does not
+ exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{table.caption.268} has been referenced but does not
+ exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{figure.caption.267} has been referenced but does no
+t exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{table.caption.262} has been referenced but does not
+ exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{table.caption.259} has been referenced but does not
+ exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{figure.caption.258} has been referenced but does no
+t exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{table.caption.257} has been referenced but does not
+ exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{table.caption.253} has been referenced but does not
+ exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{table.caption.319} has been referenced but does not
+ exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{table.caption.231} has been referenced but does not
+ exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{table.caption.229} has been referenced but does not
+ exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{table.caption.212} has been referenced but does not
+ exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{table.caption.206} has been referenced but does not
+ exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{table.caption.199} has been referenced but does not
+ exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{table.caption.194} has been referenced but does not
+ exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{figure.caption.191} has been referenced but does no
+t exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{table.caption.189} has been referenced but does not
+ exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{figure.caption.184} has been referenced but does no
+t exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{table.caption.183} has been referenced but does not
+ exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{table.caption.176} has been referenced but does not
+ exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{table.caption.173} has been referenced but does not
+ exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{figure.caption.172} has been referenced but does no
+t exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{table.caption.170} has been referenced but does not
+ exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{table.caption.166} has been referenced but does not
+ exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{table.caption.149} has been referenced but does not
+ exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{table.caption.145} has been referenced but does not
+ exist, replaced by a fixed one
+
+<C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/
+cmsy10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/l
+m/lmbsy10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/publi
+c/lm/lmbsy7.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/pub
+lic/lm/lmbx10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/p
+ublic/lm/lmbx12.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1
+/public/lm/lmbx6.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type
+1/public/lm/lmbx7.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/typ
+e1/public/lm/lmbx8.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/ty
+pe1/public/lm/lmbx9.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/t
+ype1/public/lm/lmbxi10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/font
+s/type1/public/lm/lmcsc10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/f
+onts/type1/public/lm/lmex10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX
+/fonts/type1/public/lm/lmmi10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKT
+eX/fonts/type1/public/lm/lmmi12.pfb><C:/Users/Bristol/AppData/Local/Programs/Mi
+KTeX/fonts/type1/public/lm/lmmi5.pfb><C:/Users/Bristol/AppData/Local/Programs/M
+iKTeX/fonts/type1/public/lm/lmmi6.pfb><C:/Users/Bristol/AppData/Local/Programs/
+MiKTeX/fonts/type1/public/lm/lmmi7.pfb><C:/Users/Bristol/AppData/Local/Programs
+/MiKTeX/fonts/type1/public/lm/lmmi8.pfb><C:/Users/Bristol/AppData/Local/Program
+s/MiKTeX/fonts/type1/public/lm/lmmi9.pfb><C:/Users/Bristol/AppData/Local/Progra
+ms/MiKTeX/fonts/type1/public/lm/lmmib10.pfb><C:/Users/Bristol/AppData/Local/Pro
+grams/MiKTeX/fonts/type1/public/lm/lmr10.pfb><C:/Users/Bristol/AppData/Local/Pr
+ograms/MiKTeX/fonts/type1/public/lm/lmr12.pfb><C:/Users/Bristol/AppData/Local/P
+rograms/MiKTeX/fonts/type1/public/lm/lmr5.pfb><C:/Users/Bristol/AppData/Local/P
+rograms/MiKTeX/fonts/type1/public/lm/lmr6.pfb><C:/Users/Bristol/AppData/Local/P
+rograms/MiKTeX/fonts/type1/public/lm/lmr7.pfb><C:/Users/Bristol/AppData/Local/P
+rograms/MiKTeX/fonts/type1/public/lm/lmr8.pfb><C:/Users/Bristol/AppData/Local/P
+rograms/MiKTeX/fonts/type1/public/lm/lmr9.pfb><C:/Users/Bristol/AppData/Local/P
+rograms/MiKTeX/fonts/type1/public/lm/lmri10.pfb><C:/Users/Bristol/AppData/Local
+/Programs/MiKTeX/fonts/type1/public/lm/lmri12.pfb><C:/Users/Bristol/AppData/Loc
+al/Programs/MiKTeX/fonts/type1/public/lm/lmri7.pfb><C:/Users/Bristol/AppData/Lo
+cal/Programs/MiKTeX/fonts/type1/public/lm/lmri8.pfb><C:/Users/Bristol/AppData/L
+ocal/Programs/MiKTeX/fonts/type1/public/lm/lmri9.pfb><C:/Users/Bristol/AppData/
+Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy10.pfb><C:/Users/Bristol/AppDat
+a/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy5.pfb><C:/Users/Bristol/AppDa
+ta/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy6.pfb><C:/Users/Bristol/AppD
+ata/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy7.pfb><C:/Users/Bristol/App
+Data/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy8.pfb><C:/Users/Bristol/Ap
+pData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy9.pfb><C:/Users/Bristol/A
+ppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtk10.pfb><C:/Users/Bristol
+/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtt10.pfb><C:/Users/Brist
+ol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtt8.pfb><C:/Users/Bris
+tol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtt9.pfb><C:/Users/Bri
+stol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtti10.pfb><C:/Users/
+Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/symbols/msam1
+0.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfon
+ts/symbols/msbm10.pfb>
+Output written on main.pdf (204 pages, 5426053 bytes).
 PDF statistics:
- 9233 PDF objects out of 10688 (max. 8388607)
- 1550 named destinations out of 1728 (max. 500000)
+ 9297 PDF objects out of 10688 (max. 8388607)
+ 1602 named destinations out of 1728 (max. 500000)
  75239 words of extra memory for PDF output out of 89155 (max. 10000000)
 

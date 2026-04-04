@@ -190,8 +190,6 @@ Training a single-class detector rather than repurposing a multi-class model (e.
 
 With the model architecture established, the next challenge is training data. A detection model is only as good as the data it learns from, and for aerial SAR this presents a distinctive problem: real labelled imagery is scarce (constrained by weather, flight permissions, and manual labelling effort), yet the model must generalise across altitudes, lighting conditions, and terrain types it has never seen during training. This section traces the three-generation evolution of the training pipeline, each generation informed by the failure modes of the previous.
 
-Training a reliable aerial object detector for SAR requires data that closely represents the deployment domain---a mannequin viewed from altitude against a grassy field background. Obtaining large volumes of real labelled aerial imagery is constrained by weather, regulatory clearance, and manual labelling effort. A mixed-source strategy was therefore adopted, combining synthetic composites, real labelled frames, and hard negatives.
-
 \subsection{Three-Generation Model Progression}\label{sec:training:generations}
 
 The model was trained iteratively across three generations, each informed by failures of the previous round:
@@ -363,7 +361,7 @@ The 50 negative images mitigate this risk by presenting the same background with
 
 The Pi~5's BCM2712 SoC integrates four ARM Cortex-A76 cores at \SI{2.4}{\giga\hertz} implementing ARMv8.2-A with mandatory NEON SIMD and optional FP16 extensions~\cite{raspberrypi5}. The VideoCore~VII GPU is a tile-based rasteriser without general-purpose compute support, and no NPU is present. All inference executes on the CPU cores, bounded by NEON multiply-accumulate throughput.
 
-\subsection{Dual-Backend Architecture}\label{sec:inference:dual}
+\subsection{Three-Backend Architecture}\label{sec:inference:dual}
 
 The \texttt{VisionSystem} class implements a three-tier backend selection strategy that automatically adapts to the available runtime environment. At import time, \texttt{vision.py} probes for available backends in priority order:
 
@@ -580,7 +578,7 @@ where $d = \SI{1.8}{\metre}$ is the target height and the resize scale factor is
   \end{tabular}
 \end{table}
 
-The dummy height drops below the ${\sim}$20\,px YOLOv8 detection threshold at approximately \SI{70}{\metre}. Within the 20--50\,m operating range, the target remains at 25--63\,px, comfortably above this floor. The critical dimension is the dummy's width (0.5\,m), which shrinks to 7\,px at \SI{50}{\metre}---the primary reason for the multi-pass descent strategy.
+The dummy height drops below the ${\sim}$20\,px YOLOv8 detection threshold at approximately \SI{70}{\metre}. Within the 20--50\,m operating range, the target remains at 25--63\,px, above this threshold with adequate margin. The critical dimension is the dummy's width (0.5\,m), which shrinks to 7\,px at \SI{50}{\metre}---the primary reason for the multi-pass descent strategy.
 
 \subsection{Speed vs Motion Blur}
 
@@ -627,12 +625,12 @@ The number of inference frames during which the target is visible determines det
   \end{tabular}
 \end{table}
 
-At every altitude in the operating range, the target appears in 11--17 frames. The critical speed at which the target would appear in only one frame evaluates to \SI{66}{\metre\per\second} at \SI{20}{\metre}---well beyond any multirotor capability. Frame coverage is therefore never the limiting factor.
+At every altitude in the operating range, the target appears in 11--17 frames. The critical speed at which the target would appear in only one frame evaluates to \SI{66}{\metre\per\second} at \SI{20}{\metre}---well beyond any multirotor capability. Frame coverage is therefore not a limiting factor within the operating envelope.
 
 \subsection{Detection Probability Model}
 
 The probability of detecting a target during a single flyover is:
-\begin{equation}
+\begin{equation}\label{eq:detect-prob}
     P_{\mathrm{detect}} = 1 - (1 - p_d)^{N_{\mathrm{frames}}}
 \end{equation}
 
@@ -657,13 +655,13 @@ Even in the worst operational case (50\,m at 15\,m/s with conservative 70\% sing
 \subsection{Coverage Efficiency}\label{sec:perf:coverage}
 
 Search efficiency depends on both swath width and speed. The coverage rate (area surveyed per unit time) is:
-\begin{equation}
+\begin{equation}\label{eq:coverage-rate}
   \dot{A} = H_{\mathrm{gnd}}(h) \times v(h)
 \end{equation}
 where $H_{\mathrm{gnd}}$ is the cross-track footprint and $v$ is the altitude-adaptive speed. At \SI{50}{\metre} the coverage rate is approximately $343\;\text{m}^2/\text{s}$---roughly $2.1\times$ that at \SI{20}{\metre} ($164\;\text{m}^2/\text{s}$). Starting the search at \SI{50}{\metre} instead of \SI{35}{\metre} requires approximately 33\% fewer scan lines and permits 25\% faster flight speed; the combined effect is that the initial pass completes in roughly 60\% of the time.
 
 The along-track overlap between consecutive frames at altitude $h$ is:
-\begin{equation}
+\begin{equation}\label{eq:overlap}
   \eta = 1 - \frac{v(h)}{W_{\mathrm{gnd}}(h) \cdot f_{\mathrm{fps}}}
 \end{equation}
 At \SI{35}{\metre} and \SI{8}{\metre\per\second}, $\eta \approx 0.94$ (94\% frame overlap). Even at the maximum operating condition (\SI{50}{\metre}, \SI{10}{\metre\per\second}), overlap remains above 93\%. No part of the ground passes through the FOV without being imaged in multiple frames.
@@ -1272,7 +1270,7 @@ Direct bench testing on the Raspberry Pi~5 with the IMX296 camera confirmed:
 % ════════════════════════════════════════════════════════════════════════
 \section{Future Work}\label{sec:future}
 
-Six directions are identified for improving detection reliability and operational capability:
+Eight directions are identified for improving detection reliability and operational capability:
 
 \begin{enumerate}
     \item \textbf{Expanded real training data.} Increasing the real-image fraction from 4.4\% to 30--50\% would substantially reduce the synthetic-to-real domain gap. Frames should span multiple days, weather conditions, and terrain types.
