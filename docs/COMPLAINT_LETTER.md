@@ -92,3 +92,65 @@ We remain committed to delivering the strongest submission possible. We are happ
 Yours sincerely,
 [Team members]
 MSc AENGM0074, University of Bristol
+
+---
+
+## Appendix: Chat History with Steve (context)
+
+### Pre-flight day preparation
+
+> **Dmytro:** Hi Steve what time will the drones be at the farm tomorrow? I'm thinking of coming maybe 30min earlier just to run some preflight diagnostics on the drone and to set everything up so I know that it's ready to go. Will anyone be there at 9:30?
+>
+> I'm afraid that I won't be in Bristol over Easter so I really want to make the most of it tomorrow. And get as much time in the air as possible I have many experiments I want to run with the drone in the air and I want to make sure everything is set up well for these experiments/test to go smoothly
+>
+> Also could you please confirm what other object there will be there that we need to detect as items of interest? Will it be a cone? I tried using cone image from above with YOLO object detection model it didn't seem to see it though it did recognise the dummy identifying it as human. So I do think I'll need aerial footage of these items of interest so that I could train my custom vision model on them
+
+> **Steve:** Hi Dmytro, we won't be ready for students til 10am I'm afraid.
+
+> **Dmytro:** No worries I'll come at 9:50
+
+> **Steve:** Last week I got a few bits and bobs out of the store - happy for you to structure test as you see fit.
+
+> **Dmytro:** Oh was it the umbrella and the blow up zebra and giraffe?
+
+> **Steve:** Yeah, the animals were silly. Use coats, other stuff - plan for what you want to test
+
+### Lost power bank
+
+> **Dmytro:** Hi Steve I think I left my power bank somewhere at the farm.. with an iPhone cable.. but I don't remember seeing it as I was leaving. Do you know if anyone found it? If it's not there then I must have left it on the bus on my way to the farm
+
+> **Steve:** I didn't see anything on the way out. Sorry. I'll ask Andrew to check.
+
+> **Dmytro:** Do you think our blue box will be in the lab tomorrow morning? We have an iPhone cable in there.. if possible I'd like to go grab it. I'm on 8% now 😥
+
+> **Steve:** Yep, it should be.
+
+### Working drone request
+
+> **Dmytro:** Hi Steve, you mentioned you will try to get us a working drone, any luck with that? Or will we be trying our software on the green team's drone?
+
+> **Steve:** Plan for both just now, Sid's on it but TBC
+
+### Personal reflection report clarification
+
+> **Dmytro:** Hi Steve, just trying to work on my personal reflection report are there anymore details somewhere that I'm missing or is that still to follow?
+
+> **Steve:** Apologies, I have a draft update that I'll issue first thing next week.
+
+> **Dmytro:** Great thank you
+
+---
+
+## Questions to Ask Steve (for report clarity)
+
+1. **D7 Personal Reflection**: You mentioned a "draft update" with more details -- has this been issued? The brief says "DETAIL TO FOLLOW" with yellow highlight. We need the specific structure/expectations.
+
+2. **D6 Report Structure**: The brief lists 8 sections but gives minimal guidance on depth/length per section. Any specific expectations beyond what's in the brief?
+
+3. **D7 Rubric Weights**: Appendix B has 3 criteria (Teamwork, Self-management, Insight) but no percentage weights unlike D6's 40/40/20. Are they equally weighted?
+
+4. **Assessment of simulation work**: You mentioned our hardware situation would be taken into account. How specifically will simulation-validated results be credited vs outdoor flight data?
+
+5. **Items of interest**: For R05, what exactly counts as "items of interest"? Clothing, cones, specific objects?
+
+6. **Appendices**: The brief says "will NOT be assessed" but also says "include excerpts and summaries in main sections." Should we reference appendices from the body, or are they purely supplementary?
