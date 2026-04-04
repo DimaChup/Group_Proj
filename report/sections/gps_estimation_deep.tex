@@ -1244,6 +1244,133 @@ The preceding sections have analysed individual error sources, mitigation strate
 \noindent The final \SI{1.8}{\metre} CEP$_{50}$ is dominated by the irreducible GPS receiver noise floor---the theoretical minimum achievable with a single-frequency L1 receiver without differential correction (RTK or DGPS).  Implementing the currently-bypassed DESCENDING state (lowering to \SI{15}{\metre} before VERIFY) would improve this further through reduced GSD (Table~\ref{tab:gsd-values}).  Further improvement beyond that would require either RTK GPS ($\sim$\SI{0.02}{\metre}) or significantly longer averaging times.
 
 % =====================================================================
+\subsection{Two-Step Detection Process}\label{sec:two-step}
+
+The accuracy progression described above is not an accident of the state machine---it is a deliberate two-step detection architecture.  The system treats target localisation as a progressive refinement process rather than a single-shot measurement.  The first step need only be accurate enough to bring the drone within visual range while hovering; the second step then achieves the precision required for safe offset landing.
+
+\subsubsection{Step~1: Rough Lock (During Flight, Tilted Camera)}
+
+During the SEARCH state the drone flies the lawnmower pattern at \SI{5}{\metre\per\second}, inducing a forward pitch of approximately $10^{\circ}$ to maintain airspeed.  The camera, rigidly mounted to the airframe, is therefore tilted away from nadir.  When the YOLOv8n detector identifies the mannequin in this tilted frame, the pixel-to-GPS pipeline (Section~\ref{sec:pipeline-overview}) projects the detection through the known pitch and roll angles obtained from the flight controller's attitude quaternion.
+
+With tilt compensation active (\texttt{-{}-compensate-tilt}), the rough GPS estimate achieves a CEP$_{50}$ of approximately \SI{3.5}{\metre} (Table~\ref{tab:accuracy-journey}).  Without compensation the geometric projection error from the $10^{\circ}$ pitch alone contributes $\sim$\SI{6.2}{\metre} of forward bias (Section~\ref{sec:roll-pitch-analysis}), inflating the CEP to $\sim$\SI{7}{\metre}.  In either case the estimate is accurate enough to command the drone toward the target and begin decelerating.
+
+\subsubsection{Step~2: Precise Lock (Hovering, Nadir Camera)}
+
+As the drone decelerates toward the rough estimate, its pitch progressively decreases: the flight controller pitches the airframe forward to accelerate and backward to brake, so a decelerating drone naturally approaches level flight.  When the drone reaches a hover above the estimated target position, pitch and roll both settle to approximately $0^{\circ}$ and the camera points straight down (nadir).  At this point, several error sources vanish simultaneously:
+
+\begin{itemize}
+  \item \textbf{Roll/pitch projection error} $\to 0$: with the camera at nadir, there is no off-axis projection to compensate, and the \SI{6.2}{\metre} pitch-induced bias disappears entirely.
+  \item \textbf{GPS timing lag} $\to 0$: the drone is stationary, so the 100--200\,ms GPS latency (Section~\ref{sec:error-budget}) introduces zero position error regardless of lag duration.
+  \item \textbf{Motion blur} $\to 0$: no translational velocity means no inter-frame smearing, improving detection confidence and bounding-box precision.
+  \item \textbf{Calibration-dependent errors} $\to 0$: when the target is at or near the frame centre, the pixel offset $(u - C_x, v - C_y)$ approaches zero.  Because every geometric error in the projection chain (GSD, focal length, yaw, lens distortion) is \emph{multiplied} by this offset (Equation~\ref{eq:body-deep}), they are all multiplied by zero and vanish (Section~\ref{sec:centering-mitigation}).
+\end{itemize}
+
+\noindent The drone's own GPS position, averaged over $\sim$10\,s of stationary hover (50 samples at 5\,Hz via \texttt{-{}-center-verify}), now \emph{is} the target's GPS position to within the irreducible receiver noise floor.  The result is a precise estimate with CEP$_{50} \approx \SI{1.8}{\metre}$---sufficient for the R07 offset landing requirement of 5--10\,m from the casualty.
+
+\subsubsection{Why Two Steps Are Necessary}
+
+A natural question is whether a single step could achieve the required accuracy.  Table~\ref{tab:two-step-comparison} compares the three possible strategies.
+
+\begin{table}[ht]
+  \centering
+  \caption{Comparison of single-step vs.\ two-step detection strategies.  The two-step approach achieves the highest accuracy while retaining the ability to detect at full search speed.}
+  \label{tab:two-step-comparison}
+  \begin{tabular}{lccl}
+    \toprule
+    \textbf{Strategy} & \textbf{CEP$_{50}$} & \textbf{Time cost} & \textbf{Limitation} \\
+    \midrule
+    Single flyover (no compensation) & $\sim$\SI{7}{\metre} & Fastest & Too inaccurate for R07 \\
+    Tilt-compensated flyover only    & $\sim$\SI{3.5}{\metre} & Fast & Relies on calibration quality \\
+    \textbf{Two-step (rough + hover lock)} & $\sim$\SI{1.8}{\metre} & +15\,s & \textbf{Calibration-independent} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\noindent The critical insight is that the rough lock only needs to place the drone close enough to the target that the mannequin remains visible in the camera's field of view while hovering.  At \SI{35}{\metre} altitude the camera footprint is $32.2 \times 24.0$\,m (Table~\ref{tab:gsd-altitude}), so even a \SI{7}{\metre} error in the rough estimate keeps the target well within the frame.  The two-step approach therefore decouples detection sensitivity (which determines whether the target is found at all) from localisation precision (which determines where the drone lands).
+
+\subsubsection{The ``Creep Up'' Trajectory}\label{sec:creep-up}
+
+The transition from rough lock to precise lock is not instantaneous---it is a continuous refinement that occurs during the CENTERING state.  Figure~\ref{fig:creep-up} illustrates the three phases of approach.
+
+\begin{figure}[H]
+  \centering
+  \begin{tikzpicture}[
+      >=Stealth,
+      ground/.style={fill=green!8, draw=none},
+      drone/.style={isosceles triangle, isosceles triangle apex angle=50,
+                    fill=blue!50, draw=blue!70!black, minimum size=0.4cm,
+                    inner sep=0pt},
+      target/.style={star, star points=5, star point ratio=2.3,
+                     fill=orange!80!red, draw=orange!60!black, inner sep=1.8pt},
+      cep/.style={dashed, thick},
+      phase/.style={font=\small\bfseries, text=blue!60!black},
+      annot/.style={font=\scriptsize, text=black!60, text width=3.0cm, align=center},
+  ]
+    % Ground line
+    \fill[ground] (-1,-0.3) rectangle (14.5,0);
+    \draw[thick, green!40!black] (-1,0) -- (14.5,0);
+
+    % Target (ground level)
+    \node[target] (tgt) at (12.5, 0.15) {};
+    \node[font=\scriptsize, below=2pt of tgt] {Target};
+
+    % Phase 1: Fast flight, tilted
+    \node[drone, rotate=200] (d1) at (1.5, 4.0) {};
+    \draw[cep, red!60!black] (1.5, 0.15) circle [x radius=1.6cm, y radius=0.5cm];
+    \node[phase, above=3pt of d1] {Phase 1};
+    \node[annot, below=0.1cm of d1] at (1.5, 2.8) {Fast flight\\$10^{\circ}$ pitch\\CEP $\approx$ 7\,m};
+    % Camera cone (tilted forward)
+    \draw[blue!30, thick, fill=blue!5] (d1.south) -- ++(0.9,-3.6) -- ++(-2.6,0) -- cycle;
+    % Velocity arrow
+    \draw[->, thick, red!60!black] (d1.east) -- ++(1.2,0) node[right, font=\scriptsize] {\SI{5}{\metre\per\second}};
+
+    % Phase 2: Slowing, less tilt
+    \node[drone, rotate=190] (d2) at (6.5, 4.0) {};
+    \draw[cep, red!60!black] (7.0, 0.15) circle [x radius=0.7cm, y radius=0.35cm];
+    \node[phase, above=3pt of d2] {Phase 2};
+    \node[annot, below=0.1cm of d2] at (6.5, 2.8) {Decelerating\\$3^{\circ}$ pitch\\CEP $\approx$ 3\,m};
+    % Camera cone (slightly tilted)
+    \draw[blue!30, thick, fill=blue!5] (d2.south) -- ++(0.5,-3.6) -- ++(-1.6,0) -- cycle;
+    % Velocity arrow (shorter)
+    \draw[->, thick, red!60!black] (d2.east) -- ++(0.5,0) node[right, font=\scriptsize] {\SI{2}{\metre\per\second}};
+
+    % Phase 3: Hovering, nadir
+    \node[drone, rotate=180] (d3) at (12.5, 4.0) {};
+    \draw[cep, red!60!black] (12.5, 0.15) circle [x radius=0.42cm, y radius=0.25cm];
+    \node[phase, above=3pt of d3] {Phase 3};
+    \node[annot, below=0.1cm of d3] at (12.5, 2.8) {Hovering\\$0^{\circ}$ pitch\\CEP $\approx$ 1.8\,m};
+    % Camera cone (straight down)
+    \draw[blue!30, thick, fill=blue!5] (d3.south) -- ++(0.6,-3.6) -- ++(-1.2,0) -- cycle;
+    % No velocity arrow (stationary)
+    \node[font=\scriptsize, text=red!60!black] at (13.8, 4.0) {$v = 0$};
+
+    % Trajectory arrow
+    \draw[->, thick, dashed, blue!40!black] (d1.east) .. controls (4,4.5) and (5,4.0) .. (d2.west);
+    \draw[->, thick, dashed, blue!40!black] (d2.east) .. controls (9,4.5) and (10,4.0) .. (d3.west);
+
+    % Altitude label
+    \draw[<->, thin, black!40] (-0.5,0) -- (-0.5,4.0) node[midway, left, font=\scriptsize] {\SI{35}{\metre}};
+
+  \end{tikzpicture}
+  \caption{The ``creep up'' trajectory showing three phases of the two-step detection process.  Phase~1: fast flight with tilted camera produces a rough GPS estimate (large error ellipse).  Phase~2: the drone decelerates toward the estimate, pitch decreases, and accuracy improves (medium error ellipse).  Phase~3: the drone hovers directly above the target with the camera at nadir, producing the precise lock (small error ellipse).  Camera cones show the field of view at each phase; the blue triangles represent the drone oriented in its direction of travel.}
+  \label{fig:creep-up}
+\end{figure}
+
+\noindent The three phases correspond to distinct segments of the CENTERING state in the state machine:
+
+\begin{enumerate}
+  \item \textbf{Phase~1 (Detection at distance):} The mannequin is first detected during a SEARCH-pattern leg.  The rough GPS estimate (with or without tilt compensation) triggers the transition to CENTERING, and the drone begins flying toward the estimate at reduced speed.
+
+  \item \textbf{Phase~2 (Approach and deceleration):} As the drone approaches the target, it decelerates.  The forward pitch drops from $\sim$$10^{\circ}$ to $\sim$$3^{\circ}$, improving the projection accuracy.  If the target is visible in the frame during approach, additional observations are fused into the estimate, progressively refining it.
+
+  \item \textbf{Phase~3 (Hover and precise lock):} The drone reaches the estimated position and holds a stationary hover.  With pitch and roll at $0^{\circ}$, the camera is at nadir.  The target---now at or near the frame centre---is observed repeatedly.  The \texttt{-{}-center-verify} flag triggers 10\,s of GPS averaging during the subsequent VERIFY state, freezing the final estimate at $\text{CEP}_{50} \approx \SI{1.8}{\metre}$.
+\end{enumerate}
+
+\subsubsection{Design Insight}
+
+The tilt compensation algorithm (Section~\ref{sec:tilt-compensation}) enables the drone to respond to initial detections while acknowledging that the first estimate is inherently approximate.  The system architecture treats detection as a progressive refinement process, not a single-shot measurement.  This philosophy---detect approximately, then refine precisely---is what allows a \SI{2}{\metre}-accuracy consumer GPS receiver to support offset landings within a 5--10\,m annulus.  The two-step approach also provides graceful degradation: even if the tilt compensation is miscalibrated or disabled entirely, the $\sim$\SI{7}{\metre} rough estimate is still sufficient to initiate the approach, because the hover lock in Step~2 eliminates all the errors that the compensation was attempting to correct.
+
+% =====================================================================
 \subsection{Why Inverse-Variance Weighting Won}\label{sec:why-ivw}
 
 Among the four fusion methods evaluated, the inverse-variance method is preferred in the simulator and analysis tools for three reasons:
