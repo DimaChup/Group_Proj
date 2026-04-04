@@ -13,20 +13,21 @@ Before diving into the mathematics, it is useful to preview the overall estimati
 
 \begin{table}[ht]
   \centering
-  \caption{Target position accuracy progression through mission states.  CEP$_{50}$ is the radius containing 50\% of estimates.  $N$ is the number of fused observations at each stage.}
+  \caption{Target position accuracy progression through the four-phase detection-to-landing flow.  CEP$_{50}$ is the radius containing 50\% of estimates.  $N$ is the number of fused observations at each stage.  The system implements a progressive refinement process where each phase eliminates a specific category of error.}
   \label{tab:accuracy-progression}
   \begin{tabular}{llccl}
     \toprule
-    \textbf{State} & \textbf{Drone Condition} & \textbf{CEP$_{50}$} & \textbf{$N_\mathrm{obs}$} & \textbf{Dominant Error} \\
+    \textbf{Phase} & \textbf{Drone Condition} & \textbf{CEP$_{50}$} & \textbf{$N_\mathrm{obs}$} & \textbf{Dominant Error} \\
     \midrule
-    SEARCH     & Moving, $10^{\circ}$ pitch, 35\,m & $\sim$\SI{7}{\metre} & 1--5     & Roll/pitch projection \\
-    CENTERING  & Decelerating $\to$ hover, 35\,m   & $\sim$\SI{3}{\metre} & 5--20    & GPS receiver noise \\
-    VERIFY     & Stationary hover, 35\,m           & $\sim$\SI{1.8}{\metre} & 20--50 & GPS averaging limit \\
+    1. SEARCH (detection)  & Moving at \SI{5}{\metre\per\second}, $\sim$$10^{\circ}$ pitch, 35\,m & $\sim$\SI{3.5}{\metre} & 1--5     & Tilt-compensated projection \\
+    2. CENTERING (approach) & Decelerating $\to$ hover, 35\,m   & $\sim$\SI{2.5}{\metre} & 5--20    & GPS receiver noise \\
+    3. CENTERING (hover lock)  & Stationary hover, nadir camera, 35\,m  & $\sim$\SI{1.8}{\metre} & 20--50 & GPS averaging limit \\
+    4. VERIFY (confirmation) & Stationary hover, operator confirms & $\sim$\SI{1.8}{\metre} & 50+ & Frozen at Phase~3 quality \\
     \bottomrule
   \end{tabular}
 \end{table}
 
-\noindent The key insight is that the mission procedure itself---centering the target in the frame and hovering---eliminates the largest error sources \emph{without any software correction}.  When the target is at the optical centre, pixel offset is zero, and every multiplicative error in the projection chain (GSD, focal length, yaw, lens distortion) is multiplied by zero and vanishes (Section~\ref{sec:two-approaches}).  The only remaining error is the drone's own GPS accuracy, which the \texttt{-{}-center-verify} flag reduces by averaging the drone's GPS position over 10\,s of stationary hover (50 samples at 5\,Hz).  Because the drone is centred directly above the target, its GPS position is the target's GPS position.
+\noindent The system implements a four-phase progressive refinement process.  The key insight is that the mission procedure itself---centering the target in the frame and hovering---eliminates the largest error sources \emph{without any software correction}.  When the target is at the optical centre, pixel offset is zero, and every multiplicative error in the projection chain (GSD, focal length, yaw, lens distortion) is multiplied by zero and vanishes (Section~\ref{sec:two-approaches}).  The only remaining error is the drone's own GPS accuracy, which the \texttt{-{}-center-verify} flag reduces by averaging the drone's GPS position over 10\,s of stationary hover (50 samples at 5\,Hz).  Because the drone is centred directly above the target, its GPS position \emph{is} the target's GPS position.  The architecture degrades gracefully: if the tilt compensation in Phase~1 is inaccurate, the hover lock in Phase~3 eliminates all geometric errors regardless.  False positives are bounded to \SI{15}{\second} of mission time through automatic timeout (Section~\ref{sec:false-positive-handling}).
 
 % =====================================================================
 \subsection{Problem Statement}\label{sec:gps-problem}
@@ -256,7 +257,7 @@ Eight independent error sources contribute to the total position uncertainty.  E
     \textbf{Measured CEP$_{50}$} &          & \textbf{\SI{2.3}{\metre}} & better            & From DJI video \\
     \bottomrule
   \end{tabular}
-  \\[4pt]
+  \par\vspace{4pt}
   {\footnotesize\textit{Note:} The measured CEP$_{50}$ of \SI{2.3}{\metre} is lower than the theoretical RSS because (i)~most detections occur near the image centre where GSD-scaled errors are small, (ii)~the lawnmower pattern's alternating headings partially cancel directional biases, and (iii)~the RSS assumes worst-case contributions from all sources simultaneously.\\
   $\dagger$~With attitude compensation enabled (\texttt{-{}-compensate-tilt}), the in-flight roll/pitch term reduces to $\sim$\SI{0.3}{\metre} (Section~\ref{sec:tilt-compensation}), bringing the in-flight RSS down to $\sim$\SI{3.5}{\metre}.}
 \end{table}
@@ -634,7 +635,7 @@ Table~\ref{tab:hover-vs-centering} consolidates the error-source analysis across
     \textbf{Final estimate}    & Pixel offset + GSD  & Drone GPS + pixel offset & Drone GPS directly \\
     \bottomrule
   \end{tabularx}
-  \\[2pt]
+  \par\vspace{2pt}
   {\footnotesize $\dagger$~With attitude compensation enabled (\texttt{-{}-compensate-tilt}, Section~\ref{sec:tilt-compensation}), the \SI{6.2}{\metre} roll/pitch term reduces to $\sim$\SI{0.3}{\metre} during flight.  Hover-phase values are unchanged (tilt $< 1^{\circ}$, below activation threshold).}
 \end{table}
 
@@ -791,7 +792,7 @@ APPROACH (fly to offset) & 35 & $\sim$1.8 & Uses best VERIFY estimate; 7.5\,m of
 \textbf{Measured (DJI video)} & \textbf{35} & \textbf{2.3} & \textbf{CEP50 from 50+ detections across 6\,min flight video} \\
 \bottomrule
 \end{tabularx}
-\\[2pt]
+\par\vspace{2pt}
 {\footnotesize $\ast$~With attitude compensation (\texttt{-{}-compensate-tilt}), SEARCH single-flyover CEP reduces to $\sim$\SI{3.5}{\metre} and 5-pass average to $\sim$\SI{2}{\metre} (Section~\ref{sec:tilt-compensation}).}
 \end{table}
 
@@ -828,15 +829,15 @@ Table~\ref{tab:gps-averaging} shows the expected CEP improvement as a function o
   \label{tab:gps-averaging}
   \begin{tabular}{rrrcc}
     \toprule
-    \textbf{Avg.\ Time (s)} & \textbf{$N$ (fixes)} & \textbf{$N_\mathrm{eff}$} & \textbf{Improvement ($\sqrt{N_\mathrm{eff}}$)} & \textbf{Expected CEP (m)} \
+    \textbf{Avg.\ Time (s)} & \textbf{$N$ (fixes)} & \textbf{$N_\mathrm{eff}$} & \textbf{Improvement ($\sqrt{N_\mathrm{eff}}$)} & \textbf{Expected CEP (m)} \\
     \midrule
-    0 (single fix) & 1  & 1  & $1.0\times$ & 2.50 \
-    2              & 10 & 1  & $1.0\times$ & 2.50 \
-    5              & 25 & 2.5  & $1.6\times$ & 1.58 \
-    \textbf{10}    & \textbf{50} & \textbf{5}  & $\mathbf{2.2\times}$ & \textbf{1.12} \
-    20             & 100 & 10 & $3.2\times$ & 0.79 \
-    30             & 150 & 15 & $3.9\times$ & 0.65 \
-    60             & 300 & 30 & $5.5\times$ & 0.46 \
+    0 (single fix) & 1  & 1  & $1.0\times$ & 2.50 \\
+    2              & 10 & 1  & $1.0\times$ & 2.50 \\
+    5              & 25 & 2.5  & $1.6\times$ & 1.58 \\
+    \textbf{10}    & \textbf{50} & \textbf{5}  & $\mathbf{2.2\times}$ & \textbf{1.12} \\
+    20             & 100 & 10 & $3.2\times$ & 0.79 \\
+    30             & 150 & 15 & $3.9\times$ & 0.65 \\
+    60             & 300 & 30 & $5.5\times$ & 0.46 \\
     \bottomrule
   \end{tabular}
 \end{table}
