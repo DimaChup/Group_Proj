@@ -268,9 +268,9 @@
 
 <!-- ==================== SLIDE 2: LADDER ==================== -->
 <div class="slide slide-2">
-  <div class="tag">Simulation → Reality</div>
-  <h1>Never Skip a Rung</h1>
-  <h2>Progressive testing — same code at every level, from laptop to autonomous flight</h2>
+  <div class="tag">Simulation</div>
+  <h1>Simulation</h1>
+  <h2 style="font-size:15px;">Simulation → Real &nbsp;&nbsp;|&nbsp;&nbsp; Same code at every level</h2>
 
   <div class="content" style="align-items:stretch; height:calc(100vh - 180px);">
 
@@ -294,69 +294,81 @@
     <!-- RIGHT: Vertical ladder (40%) -->
     <div style="flex:0 0 38%; display:flex; flex-direction:column; justify-content:center; padding-left:10px;">
 
-      <!-- RUNG 4: GOAL (top) -->
-      <!-- TOP: Red star — REAL MISSION -->
-      <div style="background:linear-gradient(135deg,#e94560,#c23152); border-radius:12px; padding:14px 16px; text-align:center; position:relative;">
-        <div style="font-size:11px; letter-spacing:1px; text-transform:uppercase; color:rgba(255,255,255,0.7); margin-bottom:2px;">⭐ Goal</div>
-        <div style="font-size:18px; font-weight:800; color:#fff;">REAL MISSION</div>
-        <div style="font-size:10px; color:rgba(255,255,255,0.7); margin-top:2px;">Demo Day — Full Autonomous Flight</div>
+      <!-- TOP: Star with REAL inside -->
+      <div style="text-align:center; position:relative; height:65px;">
+        <div style="font-size:70px; color:#e94560; line-height:1; text-shadow: 0 0 20px rgba(233,69,96,0.4);">★</div>
+        <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-55%); font-size:11px; font-weight:800; color:#fff; letter-spacing:1px;">REAL</div>
       </div>
 
-      <!-- Arrow up -->
-      <div style="text-align:center; color:#888; font-size:14px; padding:3px 0;">▲</div>
+      <!-- Spacer + steps -->
+      <div style="flex:1; display:flex; flex-direction:column; justify-content:space-between; padding:8px 0;">
 
-      <!-- STEP 4 -->
-      <div style="display:flex; align-items:center; gap:8px; padding:5px 0;">
-        <div style="width:24px; height:24px; background:#e94560; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; flex-shrink:0;">4</div>
-        <div style="flex:1;">
-          <div style="font-size:12px; font-weight:700; color:#fff;">Full autonomous flight test</div>
-          <div style="font-family:Consolas,monospace; font-size:9px; color:#e94560;">main.py --headless --compensate-tilt</div>
+        <!-- STEP 5 -->
+        <div style="display:flex; align-items:center; gap:8px; background:rgba(233,69,96,0.08); border:1px solid rgba(233,69,96,0.2); border-radius:8px; padding:8px 10px;">
+          <div style="width:22px; height:22px; background:#e94560; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:800; flex-shrink:0;">5</div>
+          <div style="flex:1;">
+            <div style="font-size:11px; font-weight:700; color:#fff;">Autonomous flight</div>
+            <div style="font-family:Consolas,monospace; font-size:8px; color:#e94560;">main.py --headless --compensate-tilt</div>
+          </div>
+          <div style="font-size:9px; color:#e94560; font-weight:700;">DEMO DAY</div>
         </div>
-      </div>
 
-      <div style="text-align:center; color:#666; font-size:12px; padding:1px 0;">▲</div>
+        <div style="text-align:center; color:#444; font-size:10px;">▲</div>
 
-      <!-- STEP 3 -->
-      <div style="display:flex; align-items:center; gap:8px; padding:5px 0;">
-        <div style="width:24px; height:24px; background:#00d2ff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; color:#000; flex-shrink:0;">3</div>
-        <div style="flex:1;">
-          <div style="font-size:12px; font-weight:700; color:#fff;">Outdoor field calibration <span style="color:#00d2ff; font-size:9px;">✓</span></div>
-          <div style="font-family:Consolas,monospace; font-size:9px; color:#00d2ff;">fov_calibrate.py · passive_watch.py · benchmark.py</div>
+        <!-- STEP 4 -->
+        <div style="display:flex; align-items:center; gap:8px; background:rgba(0,210,255,0.05); border:1px solid rgba(0,210,255,0.15); border-radius:8px; padding:8px 10px;">
+          <div style="width:22px; height:22px; background:#00d2ff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:800; color:#000; flex-shrink:0;">4</div>
+          <div style="flex:1;">
+            <div style="font-size:11px; font-weight:700; color:#fff;">Passive flight + CV logging</div>
+            <div style="font-family:Consolas,monospace; font-size:8px; color:#00d2ff;">passive_watch.py --compensate-tilt</div>
+          </div>
+          <div style="font-size:9px; color:#00d2ff;">✓</div>
         </div>
-      </div>
 
-      <div style="text-align:center; color:#666; font-size:12px; padding:1px 0;">▲</div>
+        <div style="text-align:center; color:#444; font-size:10px;">▲</div>
 
-      <!-- STEP 2 -->
-      <div style="display:flex; align-items:center; gap:8px; padding:5px 0;">
-        <div style="width:24px; height:24px; background:#00d2ff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; color:#000; flex-shrink:0;">2</div>
-        <div style="flex:1;">
-          <div style="font-size:12px; font-weight:700; color:#fff;">Pi bench testing <span style="color:#00d2ff; font-size:9px;">✓</span></div>
-          <div style="font-family:Consolas,monospace; font-size:9px; color:#00d2ff;">cube_commands.py · bench_mission.py · test_cv.py</div>
+        <!-- STEP 3 -->
+        <div style="display:flex; align-items:center; gap:8px; background:rgba(0,210,255,0.05); border:1px solid rgba(0,210,255,0.15); border-radius:8px; padding:8px 10px;">
+          <div style="width:22px; height:22px; background:#00d2ff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:800; color:#000; flex-shrink:0;">3</div>
+          <div style="flex:1;">
+            <div style="font-size:11px; font-weight:700; color:#fff;">Field calibration (Easter)</div>
+            <div style="font-family:Consolas,monospace; font-size:8px; color:#00d2ff;">fov_calibrate.py · benchmark.py</div>
+          </div>
+          <div style="font-size:9px; color:#00d2ff;">✓</div>
         </div>
-      </div>
 
-      <div style="text-align:center; color:#666; font-size:12px; padding:1px 0;">▲</div>
+        <div style="text-align:center; color:#444; font-size:10px;">▲</div>
 
-      <!-- STEP 1 -->
-      <div style="display:flex; align-items:center; gap:8px; padding:5px 0;">
-        <div style="width:24px; height:24px; background:#00d2ff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; color:#000; flex-shrink:0;">1</div>
-        <div style="flex:1;">
-          <div style="font-size:12px; font-weight:700; color:#fff;">Unit + integration tests <span style="color:#00d2ff; font-size:9px;">✓</span></div>
-          <div style="font-family:Consolas,monospace; font-size:9px; color:#00d2ff;">run_all_tests.py · 127 unit tests · dry-run</div>
+        <!-- STEP 2 -->
+        <div style="display:flex; align-items:center; gap:8px; background:rgba(0,210,255,0.05); border:1px solid rgba(0,210,255,0.15); border-radius:8px; padding:8px 10px;">
+          <div style="width:22px; height:22px; background:#00d2ff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:800; color:#000; flex-shrink:0;">2</div>
+          <div style="flex:1;">
+            <div style="font-size:11px; font-weight:700; color:#fff;">Pi bench testing</div>
+            <div style="font-family:Consolas,monospace; font-size:8px; color:#00d2ff;">cube_commands.py · bench_mission.py</div>
+          </div>
+          <div style="font-size:9px; color:#00d2ff;">✓</div>
         </div>
-      </div>
 
-      <div style="text-align:center; color:#666; font-size:12px; padding:1px 0;">▲</div>
+        <div style="text-align:center; color:#444; font-size:10px;">▲</div>
 
-      <!-- BOTTOM: Green box — SIMULATED MISSION -->
-      <div style="background:linear-gradient(135deg,rgba(0,200,100,0.15),rgba(0,200,100,0.05)); border:2px solid rgba(0,200,100,0.4); border-radius:12px; padding:14px 16px; text-align:center;">
-        <div style="font-size:11px; letter-spacing:1px; text-transform:uppercase; color:rgba(0,200,100,0.8); margin-bottom:2px;">✅ Verified</div>
-        <div style="font-size:18px; font-weight:800; color:#00c864;">SIMULATED MISSION</div>
-        <div style="font-size:9px; color:#8892b0; margin-top:4px; line-height:1.4;">
-          Search pattern · AI detection · Geofence + repulsive field<br>
-          PLB redirect · Centering · Payload deploy · RTL<br>
-          <strong style="color:#00c864;">All 12 requirements met end-to-end</strong>
+        <!-- STEP 1 -->
+        <div style="display:flex; align-items:center; gap:8px; background:rgba(0,210,255,0.05); border:1px solid rgba(0,210,255,0.15); border-radius:8px; padding:8px 10px;">
+          <div style="width:22px; height:22px; background:#00d2ff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:800; color:#000; flex-shrink:0;">1</div>
+          <div style="flex:1;">
+            <div style="font-size:11px; font-weight:700; color:#fff;">Unit + integration tests</div>
+            <div style="font-family:Consolas,monospace; font-size:8px; color:#00d2ff;">run_all_tests.py · 127 tests · dry-run</div>
+          </div>
+          <div style="font-size:9px; color:#00d2ff;">✓</div>
+        </div>
+
+      </div><!-- end spacer -->
+
+      <!-- BOTTOM: Green — SIM -->
+      <div style="background:linear-gradient(135deg,rgba(0,200,100,0.15),rgba(0,200,100,0.05)); border:2px solid rgba(0,200,100,0.4); border-radius:10px; padding:10px 14px; text-align:center;">
+        <div style="font-size:15px; font-weight:800; color:#00c864;">✅ SIM</div>
+        <div style="font-size:8px; color:#8892b0; margin-top:3px; line-height:1.3;">
+          Search · Detection · Geofence · Repulsive field<br>
+          PLB · Centering · Payload · RTL · <strong style="color:#00c864;">12/12 req</strong>
         </div>
       </div>
 
