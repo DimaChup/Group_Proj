@@ -5,7 +5,7 @@
 <title>Demetro — FDR Slides</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Segoe UI', Arial, sans-serif; background: #1a1a2e; color: white; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #0a0a1a; color: white; }
 
   .slide {
     width: 100vw;
@@ -13,206 +13,447 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
-    padding: 60px 80px;
-    page-break-after: always;
+    padding: 45px 65px;
+    position: relative;
+    overflow: hidden;
   }
 
-  .slide-1 { background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); }
-  .slide-2 { background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460); }
+  .slide-1 { background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%); }
+  .slide-1::before {
+    content: '';
+    position: absolute;
+    top: -40%;
+    right: -25%;
+    width: 700px;
+    height: 700px;
+    background: radial-gradient(circle, rgba(233,69,96,0.12) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+
+  .slide-2 { background: linear-gradient(135deg, #0a192f 0%, #112240 50%, #0a192f 100%); }
+  .slide-2::before {
+    content: '';
+    position: absolute;
+    bottom: -35%;
+    left: -15%;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(0,210,255,0.08) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+
+  .tag {
+    display: inline-block;
+    background: #e94560;
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 20px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
 
   h1 {
-    font-size: 48px;
-    font-weight: 700;
-    margin-bottom: 10px;
-    color: #e94560;
+    font-size: 44px;
+    font-weight: 800;
+    margin-bottom: 5px;
+    background: linear-gradient(90deg, #fff, #ddd);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.1;
   }
 
   h2 {
-    font-size: 28px;
-    color: #e94560;
-    margin-bottom: 30px;
+    font-size: 18px;
+    color: #8892b0;
+    margin-bottom: 25px;
     font-weight: 400;
   }
 
-  .subtitle {
-    font-size: 20px;
-    color: #aaa;
-    margin-bottom: 40px;
-  }
+  .content { display: flex; gap: 40px; position: relative; z-index: 1; }
+  .left { flex: 1.1; }
+  .right { flex: 0.9; }
 
-  .bullets {
-    list-style: none;
-    margin-bottom: 40px;
-  }
+  .highlight { color: #00d2ff; font-weight: 700; }
+  .highlight-red { color: #e94560; font-weight: 700; }
 
-  .bullets li {
-    font-size: 26px;
-    line-height: 1.6;
-    padding-left: 30px;
-    position: relative;
-    margin-bottom: 16px;
+  /* ---- VISION PIPELINE FLOW ---- */
+  .flow {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
   }
-
-  .bullets li::before {
-    content: "▸";
-    position: absolute;
-    left: 0;
-    color: #e94560;
-    font-size: 28px;
+  .flow-step {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 10px 14px;
+    text-align: center;
+    font-size: 13px;
+    color: #ccd6f6;
+    min-width: 120px;
   }
+  .flow-step .icon { font-size: 22px; margin-bottom: 4px; }
+  .flow-step .step-label { font-size: 11px; color: #8892b0; }
+  .flow-arrow { color: #e94560; font-size: 20px; padding: 0 6px; }
 
-  .highlight {
+  /* ---- KEY INSIGHT BOX ---- */
+  .insight-box {
+    background: linear-gradient(135deg, rgba(0,210,255,0.08), rgba(0,210,255,0.03));
+    border: 1px solid rgba(0,210,255,0.2);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-top: 15px;
+  }
+  .insight-box .insight-title {
     color: #00d2ff;
     font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 6px;
   }
+  .insight-box p { color: #8892b0; font-size: 14px; line-height: 1.5; }
 
+  /* ---- FOUR PHASE DIAGRAM ---- */
+  .phases {
+    display: flex;
+    gap: 8px;
+    margin-top: 15px;
+  }
+  .phase {
+    flex: 1;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    padding: 12px 10px;
+    text-align: center;
+  }
+  .phase .phase-num {
+    width: 28px;
+    height: 28px;
+    background: linear-gradient(135deg, #e94560, #c23152);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 800;
+    margin: 0 auto 6px;
+  }
+  .phase .phase-name { font-size: 13px; font-weight: 700; color: #fff; margin-bottom: 3px; }
+  .phase .phase-desc { font-size: 11px; color: #8892b0; line-height: 1.3; }
+  .phase .phase-cep { font-size: 16px; font-weight: 800; color: #00d2ff; margin-top: 5px; }
+  .phase-connector { display: flex; align-items: center; color: #e94560; font-size: 16px; }
+
+  /* ---- METRICS ---- */
   .metric-row {
     display: flex;
-    gap: 40px;
-    margin-top: 30px;
+    gap: 12px;
+    margin-top: 15px;
   }
-
   .metric {
-    background: rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
     border-radius: 12px;
-    padding: 20px 30px;
+    padding: 16px 12px;
     text-align: center;
     flex: 1;
-    border: 1px solid rgba(255,255,255,0.1);
   }
-
   .metric .number {
-    font-size: 42px;
+    font-size: 34px;
     font-weight: 800;
-    color: #00d2ff;
+    background: linear-gradient(135deg, #00d2ff, #00ffd5);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
+  .metric .label { font-size: 11px; color: #8892b0; margin-top: 4px; line-height: 1.3; }
 
-  .metric .label {
-    font-size: 16px;
-    color: #aaa;
-    margin-top: 5px;
+  /* ---- TILT DIAGRAM ---- */
+  .tilt-compare {
+    display: flex;
+    gap: 15px;
+    margin-top: 12px;
   }
-
-  table {
-    width: 80%;
-    border-collapse: collapse;
-    margin: 20px 0;
-    font-size: 22px;
+  .tilt-card {
+    flex: 1;
+    background: rgba(255,255,255,0.03);
+    border-radius: 10px;
+    padding: 14px;
+    text-align: center;
+    border: 1px solid rgba(255,255,255,0.06);
   }
+  .tilt-card.bad { border-color: rgba(233,69,96,0.3); }
+  .tilt-card.good { border-color: rgba(0,210,255,0.3); }
+  .tilt-card .tilt-icon { font-size: 28px; margin-bottom: 6px; }
+  .tilt-card .tilt-label { font-size: 12px; color: #8892b0; margin-bottom: 4px; }
+  .tilt-card .tilt-error { font-size: 22px; font-weight: 800; }
+  .tilt-card.bad .tilt-error { color: #e94560; }
+  .tilt-card.good .tilt-error { color: #00d2ff; }
 
-  th {
-    background: #e94560;
-    color: white;
-    padding: 14px 20px;
-    text-align: left;
-    font-weight: 600;
+  /* ---- SLIDE 2 STUFF ---- */
+  .feature-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 15px;
   }
-
-  td {
-    padding: 12px 20px;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+  .feature {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    padding: 14px 16px;
   }
+  .feature .feat-icon { font-size: 20px; margin-bottom: 5px; }
+  .feature .feat-title { font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 3px; }
+  .feature .feat-desc { font-size: 12px; color: #8892b0; line-height: 1.4; }
 
-  tr:nth-child(even) { background: rgba(255,255,255,0.04); }
+  .why-box {
+    background: linear-gradient(135deg, rgba(233,69,96,0.08), rgba(233,69,96,0.03));
+    border: 1px solid rgba(233,69,96,0.15);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-top: 15px;
+  }
+  .why-box .why-title { color: #e94560; font-weight: 700; font-size: 14px; margin-bottom: 6px; }
+  .why-box p { color: #8892b0; font-size: 14px; line-height: 1.5; }
 
-  .closing-quote {
-    font-size: 24px;
-    font-style: italic;
-    color: #ccc;
-    margin-top: 40px;
-    padding: 20px 30px;
-    border-left: 4px solid #e94560;
+  .img-placeholder {
+    width: 100%;
+    height: 250px;
+    background: rgba(255,255,255,0.02);
+    border: 2px dashed rgba(255,255,255,0.08);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #444;
+    font-size: 13px;
+    text-align: center;
+    line-height: 1.6;
   }
 
   .footer {
     position: absolute;
-    bottom: 30px;
-    right: 60px;
-    font-size: 14px;
-    color: #555;
+    bottom: 20px;
+    right: 50px;
+    font-size: 11px;
+    color: #333;
   }
-
-  .slide-num {
+  .slide-indicator {
     position: absolute;
-    bottom: 30px;
-    left: 60px;
-    font-size: 14px;
-    color: #555;
-  }
-
-  /* Print / PDF styles */
-  @media print {
-    .slide { page-break-after: always; }
-    body { background: white; }
+    bottom: 20px;
+    left: 50px;
+    font-size: 11px;
+    color: #333;
   }
 </style>
 </head>
 <body>
 
-<!-- ==================== SLIDE 1: VISION ==================== -->
+<!-- ==================== SLIDE 1: VISION PIPELINE ==================== -->
 <div class="slide slide-1">
-  <h1>Computer Vision Pipeline</h1>
-  <h2>How the Drone Sees and Locates Targets</h2>
+  <div class="tag">Computer Vision</div>
+  <h1>How the Drone Sees, Locates,<br>and Responds to Targets</h1>
+  <h2>From camera pixels to GPS coordinates — the full runtime pipeline</h2>
 
-  <ul class="bullets">
-    <li><span class="highlight">YOLOv8n</span> trained on 366 images — synthetic + real aerial footage + negatives</li>
-    <li>Detects target → estimates <span class="highlight">GPS position</span> → drone responds</li>
-    <li><span class="highlight">Attitude compensation</span> — corrects for drone tilt during flight</li>
-    <li>Four-phase process: detect → approach → hover lock → operator confirms</li>
-  </ul>
+  <div class="content">
+    <div class="left">
 
-  <div class="metric-row">
-    <div class="metric">
-      <div class="number">99.5%</div>
-      <div class="label">Detection Accuracy (mAP50)</div>
+      <!-- Pipeline flow -->
+      <div class="flow">
+        <div class="flow-step">
+          <div class="icon">📷</div>
+          Camera<br>1456×1088
+          <div class="step-label">Pi IMX296</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">
+          <div class="icon">🧠</div>
+          YOLOv8n<br>Detection
+          <div class="step-label">4.8 FPS</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">
+          <div class="icon">📐</div>
+          Pixel →<br>GPS
+          <div class="step-label">GSD + yaw</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">
+          <div class="icon">🔄</div>
+          Tilt<br>Correction
+          <div class="step-label">R matrix</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">
+          <div class="icon">🎯</div>
+          Target<br>GPS
+          <div class="step-label">CEP 2.3m</div>
+        </div>
+      </div>
+
+      <!-- Attitude compensation comparison -->
+      <div class="tilt-compare">
+        <div class="tilt-card bad">
+          <div class="tilt-icon">✈️↗️</div>
+          <div class="tilt-label">Without compensation</div>
+          <div class="tilt-error">6.2m error</div>
+          <div style="font-size:11px; color:#666; margin-top:3px;">Camera assumes straight down</div>
+        </div>
+        <div class="tilt-card good">
+          <div class="tilt-icon">✈️✓</div>
+          <div class="tilt-label">With attitude correction</div>
+          <div class="tilt-error">0.3m error</div>
+          <div style="font-size:11px; color:#666; margin-top:3px;">Ray-traced through actual tilt</div>
+        </div>
+      </div>
+
+      <div class="metric-row">
+        <div class="metric">
+          <div class="number">99.5%</div>
+          <div class="label">Detection Accuracy</div>
+        </div>
+        <div class="metric">
+          <div class="number">4.8 FPS</div>
+          <div class="label">On Raspberry Pi 5</div>
+        </div>
+        <div class="metric">
+          <div class="number">2.3m</div>
+          <div class="label">Position Accuracy</div>
+        </div>
+      </div>
+
     </div>
-    <div class="metric">
-      <div class="number">4.8 FPS</div>
-      <div class="label">Inference on Pi 5</div>
-    </div>
-    <div class="metric">
-      <div class="number">2.3m</div>
-      <div class="label">GPS Estimation (CEP50)</div>
+
+    <div class="right">
+      <!-- Four phase refinement -->
+      <div style="font-size:14px; font-weight:700; color:#e94560; margin-bottom:10px;">How accuracy improves through the mission:</div>
+      <div class="phases" style="flex-direction:column; gap:6px;">
+        <div class="phase" style="display:flex; align-items:center; gap:12px; text-align:left;">
+          <div class="phase-num">1</div>
+          <div>
+            <div class="phase-name">Detect during flight</div>
+            <div class="phase-desc">Tilt-compensated rough estimate</div>
+          </div>
+          <div class="phase-cep" style="margin-left:auto;">~3.5m</div>
+        </div>
+        <div style="text-align:center; color:#e94560; font-size:14px;">↓ fly toward estimate</div>
+        <div class="phase" style="display:flex; align-items:center; gap:12px; text-align:left;">
+          <div class="phase-num">2</div>
+          <div>
+            <div class="phase-name">Approach & slow down</div>
+            <div class="phase-desc">Tilt decreases, estimate improves</div>
+          </div>
+          <div class="phase-cep" style="margin-left:auto;">~2.5m</div>
+        </div>
+        <div style="text-align:center; color:#e94560; font-size:14px;">↓ hover and lock</div>
+        <div class="phase" style="display:flex; align-items:center; gap:12px; text-align:left;">
+          <div class="phase-num">3</div>
+          <div>
+            <div class="phase-name">Hover lock (nadir)</div>
+            <div class="phase-desc">Camera straight down, GPS averaged</div>
+          </div>
+          <div class="phase-cep" style="margin-left:auto;">~1.8m</div>
+        </div>
+        <div style="text-align:center; color:#e94560; font-size:14px;">↓ operator confirms</div>
+        <div class="phase" style="display:flex; align-items:center; gap:12px; text-align:left;">
+          <div class="phase-num">4</div>
+          <div>
+            <div class="phase-name">Verify & land</div>
+            <div class="phase-desc">Operator Y/N, land 7.5m offset</div>
+          </div>
+          <div class="phase-cep" style="margin-left:auto;">✓</div>
+        </div>
+      </div>
+
+      <div class="insight-box" style="margin-top:12px;">
+        <div class="insight-title">💡 Key Insight</div>
+        <p>When the drone hovers directly above the target, its GPS = target GPS. No camera calibration needed. All geometric errors multiply by zero.</p>
+      </div>
     </div>
   </div>
 
-  <div class="slide-num">Demetro — SIM & Vision</div>
-  <div class="footer">AENGM0074 Final Design Review</div>
+  <div class="slide-indicator">Demetro Chuprynyuk</div>
+  <div class="footer">AENGM0074 D4 Final Design Review</div>
 </div>
 
 <!-- ==================== SLIDE 2: SIMULATION ==================== -->
 <div class="slide slide-2">
-  <h1>Simulation Environment</h1>
-  <h2>Same Code, Full Verification, No Hardware Needed</h2>
+  <div class="tag">Simulation</div>
+  <h1>Full Mission Verified<br>Without the Hardware</h1>
+  <h2>Same code. Same logic. Same geofence. Laptop → Pi → Drone.</h2>
 
-  <ul class="bullets">
-    <li><span class="highlight">Same code</span> runs on laptop and Pi — no separate simulation version</li>
-    <li>Built because drone hardware wasn't available → let us develop and test everything</li>
-    <li>All <span class="highlight">12 requirements</span> verified end-to-end in SITL</li>
-    <li>Includes: search pattern, detection, geofencing, PLB redirect, landing, RTL</li>
-  </ul>
+  <div class="content">
+    <div class="left">
 
-  <div class="metric-row">
-    <div class="metric">
-      <div class="number">12/12</div>
-      <div class="label">Requirements Met</div>
+      <div class="feature-grid">
+        <div class="feature">
+          <div class="feat-icon">🔁</div>
+          <div class="feat-title">Same Code Everywhere</div>
+          <div class="feat-desc">Identical Python runs on laptop SITL and Raspberry Pi. No separate sim version. What we test is what we fly.</div>
+        </div>
+        <div class="feature">
+          <div class="feat-icon">🛡️</div>
+          <div class="feat-title">5-Layer Geofence</div>
+          <div class="feat-desc">Flight Area boundary, SSSI no-fly zone, repulsive field, speed ramp, altitude cap. All from KML file.</div>
+        </div>
+        <div class="feature">
+          <div class="feat-icon">📷</div>
+          <div class="feat-title">Camera Effects</div>
+          <div class="feat-desc">Simulates tilt, motion blur, vibration, GPS noise. Stress-tests vision under realistic conditions.</div>
+        </div>
+        <div class="feature">
+          <div class="feat-icon">🧪</div>
+          <div class="feat-title">58 Test Scripts</div>
+          <div class="feat-desc">Hardware checks, flight progression, calibration, diagnostics, experiments. Progressive trust ladder.</div>
+        </div>
+      </div>
+
+      <div class="metric-row">
+        <div class="metric">
+          <div class="number">12/12</div>
+          <div class="label">Requirements Met</div>
+        </div>
+        <div class="metric">
+          <div class="number">58</div>
+          <div class="label">Test Scripts</div>
+        </div>
+        <div class="metric">
+          <div class="number">4,400+</div>
+          <div class="label">Lines of Code</div>
+        </div>
+        <div class="metric">
+          <div class="number">127</div>
+          <div class="label">Unit Tests</div>
+        </div>
+      </div>
+
     </div>
-    <div class="metric">
-      <div class="number">58</div>
-      <div class="label">Test Scripts</div>
-    </div>
-    <div class="metric">
-      <div class="number">4,400+</div>
-      <div class="label">Lines of Code</div>
+
+    <div class="right">
+      <div class="img-placeholder">
+        📷 <strong>Mission Dashboard Screenshot</strong><br><br>
+        Replace with screenshot showing:<br>
+        • God view (map + search pattern + geofence)<br>
+        • Camera view (detection with green box)<br>
+        • HUD overlay (state, altitude, speed)<br><br>
+        <span style="font-size:11px;">Run: python main.py --speed 5 --lock-yaw<br>Screenshot when detection happens</span>
+      </div>
+
+      <div class="why-box">
+        <div class="why-title">💡 Why We Built This</div>
+        <p>Our drone hardware wasn't available for most of the term. Instead of waiting, we built a full simulation running the <strong style="color:#fff;">real mission code</strong>. When we say all 12 requirements are met — we mean with the actual code that flies the drone.</p>
+      </div>
     </div>
   </div>
 
-  <div class="subtitle" style="margin-top: 30px; font-size: 18px; color: #888;">
-    📷 [Insert Mission Dashboard screenshot here — god view + camera with detection]
-  </div>
-
-  <div class="slide-num">Demetro — SIM & Vision</div>
-  <div class="footer">AENGM0074 Final Design Review</div>
+  <div class="slide-indicator">Demetro Chuprynyuk</div>
+  <div class="footer">AENGM0074 D4 Final Design Review</div>
 </div>
 
 </body>
