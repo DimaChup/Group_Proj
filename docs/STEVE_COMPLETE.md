@@ -1,3 +1,77 @@
+# MESSAGE TO STEVE — Send Friday 4 April morning
+
+---
+
+## The Message (ready to copy-paste)
+
+Hi Steve,
+
+I'm deep into the group report and want to make sure I'm targeting the right things for the remaining time I have. The brief gives the rubric but I'd really appreciate some clarity on what distinguishes a 83+ submission from a 90+ one, specifically for each criterion. I've read the brief carefully and I have some specific questions if you don't mind.
+
+**Specialist Skills (40%)**
+
+The top band says technologies "implemented highly effectively, showing initiative, autonomy, and creativity." I want to understand what "implemented" means in practice. Does it require outdoor flight demonstration with real data, or does a system that's fully validated in simulation, bench-tested on Pi hardware, and backed by extensive quantitative evidence count at the same level?
+
+To give you a sense of where we are: we have all 12 requirements met end-to-end in SITL, 58 test scripts across 6 categories, attitude-compensated GPS target estimation verified against DJI flight video (CEP50 = 2.3m), a retrained YOLOv8 model (mAP50 = 0.995 on 366 images), Pi hardware integration verified (camera, Cube, inference at 4.8 FPS), and a full geofence with SSSI avoidance. What we don't have is weeks of outdoor flight data, because our drone hardware wasn't functional until the Easter days you arranged.
+
+Can a simulation-validated system with this depth of evidence realistically score 90+ on Specialist Skills? Or is there an implicit expectation of demonstrated outdoor flight that would cap us lower regardless of software quality?
+
+**Decision Making (40%)**
+
+The top band mentions "confidence and creativity in adapting to changing and unfamiliar circumstances." We have MCDA trade studies, STEEPLE analysis, a 216-configuration parameter sweep for the search pattern, weather adaptation, and a whole section on decisions that changed during the project. Our hardware situation essentially forced us to pioneer a simulation-first development approach -- building a complete SITL environment, synthetic training data pipeline, and DJI video analysis as proxies for the real-world data we couldn't collect. Is that the kind of "adapting to challenging circumstances" this criterion rewards? Is there anything specific you look for that separates a strong submission from an outstanding one here?
+
+**Communication (20%)**
+
+The top band says "engaging and professional, making use of innovative techniques and resources." We have TikZ-generated diagrams, pgfplots data visualisations, a professional LaTeX layout, and a comprehensive report. What we don't have many of are photos of real hardware in the field or screenshots from actual ground station use during outdoor flights. How important are real-world photos compared to generated technical diagrams? Would the absence of hardware photography significantly affect the Communication score?
+
+**D7 Personal Reflection**
+
+You mentioned a draft update for D7 with more details on what's expected -- has that been issued? The brief still says "DETAIL TO FOLLOW" with the yellow highlight, and I want to make sure I'm not missing something. We've been working from the Appendix B rubric (Teamwork, Self-management, Insight) and the AHEP4 standards (M5, M7, M16, M17), but I'm not sure if there's a specific structure you're expecting or whether the three criteria are equally weighted.
+
+**One last thing**
+
+I've probably put in 3x the expected hours on this unit. A lot of that went into building workarounds for the hardware situation -- the simulation environment, synthetic data generation, video analysis tools, the entire progressive testing infrastructure. I built all of that because the drone wasn't available, and I wanted to make sure the engineering output was still there even without flight data. I'm not looking for sympathy, I genuinely just want to make sure the work counts and I'd really value your guidance on where to focus my remaining time before submission.
+
+Thanks,
+Dmytro
+
+---
+
+## Strategy Notes
+
+### What we're hoping Steve says
+1. **Best case**: "Simulation-validated work absolutely counts. Focus on showing the depth of your testing and decision-making process. 90+ is achievable." -- This gives us written confirmation and a clear target.
+2. **Good case**: "The rubric doesn't require outdoor flight. Show comprehensive evidence and justified decisions." -- Implicit green light.
+3. **Neutral case**: "It depends on the quality of the report." -- Not helpful, but not harmful. Follow up with: "Could you give an example of what would push a report from 83 to 90+ in Specialist Skills?"
+
+### What to do if he says simulation doesn't fully count
+- Do NOT panic. The rubric literally says "implemented highly effectively" -- it doesn't say "demonstrated outdoors."
+- Ask: "Is there anything we can do in the remaining time to strengthen that area? Would additional quantitative analysis from the Easter bench testing help?"
+- Pivot the report framing: emphasise the PROCESS and EVIDENCE-BASED decisions, not just the end product.
+- Lean harder into Decision Making (40%) where our adaptation story is genuinely strong -- hardware constraints forced creative solutions, which is exactly what the criterion rewards.
+- Worst case: accept 75-78 on Specialist, push for 90+ on Decision Making and Communication to keep the overall above 83.
+
+### Follow-up plan
+1. **If he replies by text**: screenshot the reply immediately. This is your written evidence.
+2. **If he gives a vague reply**: send a clarifying follow-up: "Just to make sure I understand -- you're saying [paraphrase]. Is that right?" Force specificity.
+3. **If he says "come talk to me"**: go, but afterwards email: "Hi Steve, just to confirm our conversation today -- you said [X, Y, Z]. Thanks for the guidance." Create the paper trail.
+4. **If he doesn't reply by Monday**: send a gentle nudge: "Hi Steve, just following up on my message from Friday -- any guidance you could share would be really helpful as I'm finalising the reports this week."
+5. **If his reply is concerning** (e.g., outdoor data is required for top marks): escalate to the formal complaint letter (Part 2 below), but only as a last resort. Try to resolve informally first.
+
+### Why this message works
+- Opens with a genuine question, not a complaint
+- Shows we've read the rubric word-by-word (quotes specific phrases)
+- Demonstrates massive effort without bragging (the numbers speak)
+- Mentions hardware situation naturally, as context for a question, not as a grievance
+- Asks for actionable guidance ("where should I focus?") which makes Steve the helper
+- The D7 follow-up is a gentle reminder that he promised something and hasn't delivered
+- It's long enough to show seriousness but structured enough that he can skim the bold headings
+- Every section ends with a specific question he can answer
+
+---
+
+---
+
 # AENGM0074 — Complete Context Document
 
 **Everything in one place: complaint, chat history, context, what we built, what we lost.**
