@@ -227,10 +227,7 @@
         <div class="metric"><div class="number">2.3m</div><div class="label">Accuracy</div></div>
       </div>
 
-      <div class="video-box">
-        <div class="play-icon">▶</div>
-        <div style="z-index:1;color:#555;">📹 Sped-up simulation video<br><span style="font-size:10px;">Replace with screen recording</span></div>
-      </div>
+      <!-- Video is on slide 2, not here -->
     </div>
 
     <div class="right">
@@ -272,73 +269,113 @@
 <!-- ==================== SLIDE 2: LADDER ==================== -->
 <div class="slide slide-2">
   <div class="tag">Simulation → Reality</div>
-  <h1>Progressive Testing Ladder</h1>
-  <h2>Same code at every level. Clear steps from simulation to flight.</h2>
+  <h1>Never Skip a Rung</h1>
+  <h2>Progressive testing — same code at every level, from laptop to autonomous flight</h2>
 
-  <div class="content">
-    <div class="left">
-      <div class="ladder">
-        <div class="ladder-rung goal">
-          <div class="rung-icon">🚁</div>
-          <div class="rung-content">
-            <div class="rung-title">Real Autonomous Flight</div>
-            <div class="rung-desc">Full mission on real hardware</div>
-            <div class="rung-scripts">python main.py --headless --compensate-tilt</div>
-          </div>
-          <div class="rung-status status-next">DEMO DAY</div>
+  <div class="content" style="align-items:stretch; height:calc(100vh - 180px);">
+
+    <!-- LEFT: Video placeholder (60%) -->
+    <div style="flex:0 0 58%; display:flex; flex-direction:column; gap:12px;">
+      <div style="flex:1; background:rgba(0,0,0,0.5); border:2px solid rgba(0,210,255,0.25); border-radius:14px; display:flex; align-items:center; justify-content:center; position:relative; min-height:300px;">
+        <div style="font-size:80px; color:rgba(0,210,255,0.3); position:absolute;">▶</div>
+        <div style="z-index:1; text-align:center; color:#445;">
+          <div style="font-size:15px; margin-bottom:4px;">Sped-up Simulation Recording</div>
+          <div style="font-size:11px; color:#334;">Full autonomous mission: takeoff → search → detect → centre → verify → land</div>
         </div>
-        <div class="ladder-connector"></div>
-        <div class="ladder-rung done">
-          <div class="rung-icon">🌿</div>
-          <div class="rung-content">
-            <div class="rung-title">Field Testing (Easter)</div>
-            <div class="rung-desc">FOV calibrated, GPS verified, benchmarks</div>
-            <div class="rung-scripts">fov_calibrate.py · passive_watch.py · benchmark.py</div>
-          </div>
-          <div class="rung-status status-done">✓ DONE</div>
-        </div>
-        <div class="ladder-connector"></div>
-        <div class="ladder-rung done">
-          <div class="rung-icon">🔧</div>
-          <div class="rung-content">
-            <div class="rung-title">Pi Bench Testing</div>
-            <div class="rung-desc">Camera, AI, Cube connected and verified</div>
-            <div class="rung-scripts">cube_commands.py · bench_mission.py · test_cv.py</div>
-          </div>
-          <div class="rung-status status-done">✓ DONE</div>
-        </div>
-        <div class="ladder-connector"></div>
-        <div class="ladder-rung done">
-          <div class="rung-icon">💻</div>
-          <div class="rung-content">
-            <div class="rung-title">Full Simulation (SITL)</div>
-            <div class="rung-desc">12/12 requirements, same code as Pi</div>
-            <div class="rung-scripts">main.py --sim-tilt · dry-run · 127 unit tests</div>
-          </div>
-          <div class="rung-status status-done">✓ DONE</div>
-        </div>
+      </div>
+      <!-- Compact metrics bar -->
+      <div style="display:flex; gap:8px;">
+        <div class="metric" style="flex:1; padding:8px 4px;"><div class="number" style="font-size:18px;">12/12</div><div class="label">Requirements</div></div>
+        <div class="metric" style="flex:1; padding:8px 4px;"><div class="number" style="font-size:18px;">58</div><div class="label">Test Scripts</div></div>
+        <div class="metric" style="flex:1; padding:8px 4px;"><div class="number" style="font-size:18px;">127</div><div class="label">Unit Tests</div></div>
+        <div class="metric" style="flex:1; padding:8px 4px;"><div class="number" style="font-size:18px;">4,400+</div><div class="label">Lines of Code</div></div>
+      </div>
+      <!-- Why insight -->
+      <div class="insight-box" style="margin-top:0; padding:8px 14px;">
+        <div class="insight-title" style="font-size:10px;">🔑 Same Code Everywhere</div>
+        <p style="font-size:10px;">The Python running in simulation is <strong style="color:#fff;">identical</strong> to what runs on the Pi. No separate sim version. What we test is what we fly.</p>
       </div>
     </div>
 
-    <div class="right">
-      <div class="metric-row" style="flex-wrap:wrap;">
-        <div class="metric" style="flex:1 1 45%;"><div class="number">12/12</div><div class="label">Requirements</div></div>
-        <div class="metric" style="flex:1 1 45%;"><div class="number">58</div><div class="label">Test Scripts</div></div>
-        <div class="metric" style="flex:1 1 45%;"><div class="number">127</div><div class="label">Unit Tests</div></div>
-        <div class="metric" style="flex:1 1 45%;"><div class="number">4,400+</div><div class="label">Lines of Code</div></div>
+    <!-- RIGHT: Vertical ladder (40%) -->
+    <div style="flex:0 0 38%; display:flex; flex-direction:column; justify-content:center; padding-left:10px;">
+
+      <!-- RUNG 4: GOAL (top) -->
+      <div style="display:flex; align-items:center; gap:10px;">
+        <!-- Left rail -->
+        <div style="width:4px; height:100%; min-height:60px; background:transparent;"></div>
+        <!-- Rung content -->
+        <div style="flex:1; background:rgba(233,69,96,0.08); border:2px dashed rgba(233,69,96,0.5); border-radius:10px; padding:12px 14px; position:relative;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+            <div style="font-size:15px; font-weight:800; color:#e94560;">🚁 REAL AUTONOMOUS FLIGHT</div>
+            <span style="background:rgba(233,69,96,0.2); color:#e94560; font-size:10px; font-weight:700; padding:3px 10px; border-radius:10px;">DEMO DAY</span>
+          </div>
+          <div style="font-size:10px; color:#8892b0;">Full mission on real hardware — the final step</div>
+          <div style="font-family:Consolas,monospace; font-size:9px; color:#e94560; margin-top:3px;">python main.py --headless</div>
+        </div>
       </div>
 
-      <div class="why-box">
-        <div class="why-title">💡 Why This Ladder?</div>
-        <p>Each rung builds confidence. Jumping to autonomous flight without progressive testing would be risky. The bottom three are solid. Demo day is the final step.</p>
+      <!-- Connector arrow UP -->
+      <div style="display:flex; align-items:center; gap:10px; padding:2px 0;">
+        <div style="width:4px; background:linear-gradient(to top, #00d2ff, #e94560); height:28px; margin-left:0; border-radius:2px;"></div>
+        <div style="color:#556; font-size:18px; transform:rotate(0deg); line-height:1;">&#9650;</div>
+        <div style="font-size:9px; color:#445; font-style:italic;">proven safe to proceed</div>
       </div>
 
-      <div class="insight-box" style="margin-top:8px;">
-        <div class="insight-title">🔑 Same Code Everywhere</div>
-        <p>The Python running in simulation is <strong style="color:#fff;">identical</strong> to the Pi. No separate sim. What we test is what we fly.</p>
+      <!-- RUNG 3: Easter Field -->
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div style="width:4px; background:#00d2ff; height:100%; min-height:60px; border-radius:2px;"></div>
+        <div style="flex:1; background:rgba(0,210,255,0.06); border:1px solid rgba(0,210,255,0.25); border-left:3px solid #00d2ff; border-radius:10px; padding:10px 14px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:3px;">
+            <div style="font-size:13px; font-weight:700; color:#fff;">🌿 Easter Field Testing</div>
+            <span class="rung-status status-done" style="font-size:9px;">✓ DONE</span>
+          </div>
+          <div style="font-size:10px; color:#8892b0; margin-bottom:2px;">FOV calibrated, GPS verified, outdoor detection</div>
+          <div style="font-family:Consolas,monospace; font-size:9px; color:#00d2ff;">fov_calibrate.py · passive_watch.py · benchmark.py</div>
+        </div>
       </div>
-    </div>
-  </div>
+
+      <!-- Connector arrow UP -->
+      <div style="display:flex; align-items:center; gap:10px; padding:2px 0;">
+        <div style="width:4px; background:#00d2ff; height:24px; margin-left:0; border-radius:2px;"></div>
+        <div style="color:#00d2ff; font-size:18px; line-height:1;">&#9650;</div>
+      </div>
+
+      <!-- RUNG 2: Pi Bench -->
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div style="width:4px; background:#00d2ff; height:100%; min-height:60px; border-radius:2px;"></div>
+        <div style="flex:1; background:rgba(0,210,255,0.06); border:1px solid rgba(0,210,255,0.25); border-left:3px solid #00d2ff; border-radius:10px; padding:10px 14px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:3px;">
+            <div style="font-size:13px; font-weight:700; color:#fff;">🔧 Pi Bench Testing</div>
+            <span class="rung-status status-done" style="font-size:9px;">✓ DONE</span>
+          </div>
+          <div style="font-size:10px; color:#8892b0; margin-bottom:2px;">Camera, AI model, Cube connected and verified on hardware</div>
+          <div style="font-family:Consolas,monospace; font-size:9px; color:#00d2ff;">cube_commands.py · bench_mission.py · test_cv.py</div>
+        </div>
+      </div>
+
+      <!-- Connector arrow UP -->
+      <div style="display:flex; align-items:center; gap:10px; padding:2px 0;">
+        <div style="width:4px; background:#00d2ff; height:24px; margin-left:0; border-radius:2px;"></div>
+        <div style="color:#00d2ff; font-size:18px; line-height:1;">&#9650;</div>
+      </div>
+
+      <!-- RUNG 1: Simulation (bottom) -->
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div style="width:4px; background:#00d2ff; height:100%; min-height:60px; border-radius:2px;"></div>
+        <div style="flex:1; background:rgba(0,210,255,0.06); border:1px solid rgba(0,210,255,0.25); border-left:3px solid #00d2ff; border-radius:10px; padding:10px 14px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:3px;">
+            <div style="font-size:13px; font-weight:700; color:#fff;">💻 Full Simulation (SITL)</div>
+            <span class="rung-status status-done" style="font-size:9px;">✓ DONE</span>
+          </div>
+          <div style="font-size:10px; color:#8892b0; margin-bottom:2px;">12/12 requirements verified, identical codebase to Pi</div>
+          <div style="font-family:Consolas,monospace; font-size:9px; color:#00d2ff;">main.py · dry-run · 127 unit tests · 58 scripts</div>
+        </div>
+      </div>
+
+    </div><!-- end right ladder -->
+
+  </div><!-- end content -->
   <div class="slide-indicator">Demetro Chuprynyuk</div>
   <div class="footer">AENGM0074 D4 Final Design Review</div>
 </div>
