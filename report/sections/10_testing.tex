@@ -2,7 +2,7 @@
 
 This appendix describes the verification and validation framework used to build confidence in each subsystem before advancing to the next integration level.  The framework is motivated by the observation that defect discovery cost rises steeply with integration level: a sign-convention bug costs 15 minutes in simulation but an entire field session---or worse, hardware damage---if discovered during autonomous flight.
 
-The verification and validation strategy draws on V-model principles~\cite{forsberg1991relationship}, where each level of system integration is paired with a corresponding verification activity, and on incremental autonomy practices from safety-critical robotics~\cite{koopman2016challenges}. The resulting five-tier progressive testing framework advances from pure software simulation to full autonomous flight, supported by 74 dedicated test scripts organised across eight categories---including 127 unit tests and 33 automated integration tests---and a stress-testing campaign that exercised 20 failure scenarios before the first outdoor test.  Table~\ref{tab:test-summary-topline} provides a top-level summary of the verification effort.
+The verification and validation strategy draws on V-model principles~\cite{forsberg1991relationship}, where each level of system integration is paired with a corresponding verification activity, and on incremental autonomy practices from safety-critical robotics~\cite{koopman2016challenges}. The resulting five-tier progressive testing framework advances from pure software simulation to full autonomous flight, supported by 74 dedicated test scripts organised across eight categories, 150 automated tests (127~unit and 33~integration) with a 98.7\% pass rate, and a stress-testing campaign that exercised 20 failure scenarios before the first outdoor test.  Table~\ref{tab:test-summary-topline} provides a top-level summary of the verification effort.
 
 \begin{table}[H]
 \centering
@@ -16,7 +16,7 @@ The verification and validation strategy draws on V-model principles~\cite{forsb
 Total test scripts & 74 (across 8 categories) \\
 Unit tests (pytest) & 127 functions across 6 files \\
 Automated integration tests & 33 functions across 7 scripts \\
-Unit test pass rate & 33/35 (94\%; 2 known geofence edge cases) \\
+Combined pass rate & 148/150 (98.7\%; 2 known geofence edge cases) \\
 Failure scenarios stress-tested & 20 (11 first-pass, 9 required fixes) \\
 Simulation checklist items & 22 \\
 Defects caught before flight & 12 of 15 total (80\%) \\
