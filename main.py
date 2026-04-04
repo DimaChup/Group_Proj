@@ -576,7 +576,7 @@ class VisualFlightMission(StateHandlersMixin):
             if rz2 > 0.01:
                 t = self.alt / rz2
                 ground_x = ry2 * t  # right in body frame (metres)
-                ground_y = -rx2 * t  # forward in body frame (metres)
+                ground_y = rx2 * t  # forward in body frame (metres)
                 # Convert back to "virtual pixel offset from nadir"
                 gsd = (config.SENSOR_WIDTH_MM * self.alt) / (config.FOCAL_LENGTH_MM * fw)
                 u = fw / 2 + ground_x / gsd
