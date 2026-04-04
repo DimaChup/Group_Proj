@@ -43,7 +43,7 @@ The Pi communicates with the Cube via UART at 921\,600\,baud through a MAVProxy 
 % ═══════════════════════════════════════════════════════════════
 \subsection{Software Architecture}\label{sec:sw-arch}
 
-The system comprises eleven Python modules totalling approximately 4\,400 lines of production code, organised in four layers (Figure~\ref{fig:architecture}). An additional 58 test and calibration scripts (Appendix~\ref{sec:test-scripts}) validate each module in isolation before integration:
+The system comprises eleven Python modules totalling approximately 4\,400 lines of production code, organised in four layers (Figure~\ref{fig:architecture}). An additional 74 test and calibration scripts (Appendix~\ref{sec:test-scripts}), including 127 unit tests, validate each module in isolation before integration:
 
 \begin{figure}[ht]
 \centering
@@ -172,7 +172,7 @@ where $w_s = \SI{5.02}{\milli\metre}$ is the sensor width, $f = \SI{5.46}{\milli
     \item \textbf{Kalman filter} on the $[\phi, \lambda]$ state vector with measurement noise scaled by inverse observation weight, converging within 5--10 observations.
 \end{itemize}
 
-Video replay analysis (DJI flight footage, $1456 \times 1088$ at 30\,fps) yielded CEP$_{50}$ = 2.3\,m, maximum error = 16.5\,m (high-speed outlier). The characteristic directional elongation is attributed to GPS receiver latency (100--200\,ms), mitigated by multi-pass averaging in the lawnmower pattern. Six independent error sources contribute to a single-observation RSS uncertainty of \SI{2.9}{\metre} at \SI{35}{\metre} altitude, dominated by GPS receiver noise (\SI{2.3}{\metre}) and timing lag (\SI{1.5}{\metre}). After inverse-variance fusion of 15+ multi-altitude observations, the fused estimate converges to sub-metre accuracy, exceeding the 5--10\,m landing requirement (R07) with $>$99\% probability. The full error budget, GPS accuracy figures, convergence plots, and fusion strategy comparison are provided in Appendix~\ref{sec:gps-deep}.
+Video replay analysis (DJI flight footage, $1456 \times 1088$ at 30\,fps) yielded CEP$_{50}$ = 2.3\,m and a maximum error of 16.5\,m (high-speed outlier). The characteristic directional elongation stems from GPS receiver latency (100--200\,ms), which multi-pass averaging in the lawnmower pattern partially mitigates. Six independent error sources contribute to a single-observation RSS uncertainty of \SI{2.9}{\metre} at \SI{35}{\metre} altitude, dominated by GPS receiver noise (\SI{2.3}{\metre}) and timing lag (\SI{1.5}{\metre}). After inverse-variance fusion of 15+ multi-altitude observations, the fused estimate converges to sub-metre accuracy, exceeding the 5--10\,m landing requirement (R07) with $>$99\% probability. Appendix~\ref{sec:gps-deep} provides the full error budget, convergence plots, and fusion strategy comparison.
 
 \begin{figure}[ht]
 \centering
@@ -196,12 +196,12 @@ Video replay analysis (DJI flight footage, $1456 \times 1088$ at 30\,fps) yielde
 % ═══════════════════════════════════════════════════════════════
 \subsection{Ground Station}\label{sec:groundstation}
 
-The ground station is a browser-based dashboard served by a threaded HTTP server on the Pi at port~8090, accessible from any device on the local Wi-Fi network. The dashboard provides three panels: (1)~live MJPEG video stream with detection overlays; (2)~2D GPS grid showing detection clusters, drone position, and search path; and (3)~command buttons (investigate, confirm, reject, land, RTL, manual override). MJPEG was selected over H.264/WebRTC for minimal client complexity (single \texttt{<img>} tag), zero transcoding load, and per-frame decodability. Measured latency is \SI{300}{\milli\second} at \SI{0.3}{\mega\byte\per\second}. Headless operation is auto-detected on the Pi (no \texttt{DISPLAY}), enabling SSH deployment without X11 forwarding (Appendix~\ref{sec:streaming-arch}).
+The ground station is a browser-based dashboard served by a threaded HTTP server on the Pi at port~8090, accessible from any device on the local Wi-Fi network. It provides three panels: (1)~live MJPEG video stream with detection overlays; (2)~2D GPS grid showing detection clusters, drone position, and search path; and (3)~command buttons (investigate, confirm, reject, land, RTL, manual override). MJPEG was chosen over H.264/WebRTC for its minimal client complexity (single \texttt{<img>} tag), zero transcoding load, and per-frame decodability. Measured latency is \SI{300}{\milli\second} at \SI{0.3}{\mega\byte\per\second}. The Pi auto-detects headless operation (no \texttt{DISPLAY}), enabling SSH deployment without X11 forwarding (Appendix~\ref{sec:streaming-arch}).
 
 % ═══════════════════════════════════════════════════════════════
 \subsection{Simulation Framework}\label{sec:simulation}
 
-Four simulation levels provide progressive fidelity (Appendix~\ref{sec:sim-validation}): (1)~interactive simulator (keyboard flight over satellite map with ground-truth comparison); (2)~SITL integration (full ArduPilot autopilot with simulated camera view); (3)~SITL with real webcam; (4)~DJI video replay with synchronised SRT telemetry. The same detection model, GPS estimation mathematics, and MAVLink command interface are used at every level, so transitioning to real hardware requires only configuration changes. Defects caught in simulation include a MAVLink race condition during takeoff, incorrect latitude scaling, auto-disarm timeout, and GPS timing lag---12 defects in total were identified and resolved before any hardware integration.
+Four simulation levels provide progressive fidelity (Appendix~\ref{sec:sim-validation}): (1)~interactive simulator (keyboard flight over satellite map with ground-truth comparison); (2)~SITL integration (full ArduPilot autopilot with simulated camera view); (3)~SITL with real webcam; (4)~DJI video replay with synchronised SRT telemetry. All four levels share the same detection model, GPS estimation mathematics, and MAVLink command interface, so transitioning to real hardware requires only configuration changes. Simulation alone caught 12 defects---including a MAVLink race condition during takeoff, incorrect latitude scaling, auto-disarm timeout, and GPS timing lag---all resolved before any hardware integration.
 
 \begin{figure}[ht]
 \centering

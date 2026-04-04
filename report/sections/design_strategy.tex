@@ -144,12 +144,14 @@ The root-sum-square (RSS) of these independent errors is:
   d_{\mathrm{margin}} = \sqrt{16.1^2 + 3^2 + 16^2 + 2^2} = \SI{23.1}{\metre}
 \end{equation}
 
-The system implements a four-layer defence:
+The system implements a five-layer defence (see Section~\ref{sec:geofencing} for full details):
 
 \begin{itemize}
-  \item \textbf{\SI{30}{\metre} waypoint buffer} (\texttt{NFZ\_WAYPOINT\_BUFFER\_M}): any waypoint within \SI{30}{\metre} of the SSSI boundary is excluded.
+  \item \textbf{\SI{30}{\metre} waypoint buffer} (\texttt{NFZ\_WAYPOINT\_BUFFER\_M}): any waypoint within \SI{30}{\metre} of the SSSI boundary is excluded at plan time.
   \item \textbf{\SI{20}{\metre} speed ramp} (\texttt{NFZ\_SLOW\_ZONE\_M}): linear deceleration from \SI{3}{\metre\per\second} to \SI{0.3}{\metre\per\second} within this zone.
+  \item \textbf{Repulsive vector field}: constant-magnitude push away from the boundary when within \SI{3}{\metre}.
   \item \textbf{\SI{3}{\metre} hard boundary} (\texttt{NFZ\_HARD\_BOUNDARY\_M}): automatic switch to MANUAL mode.
+  \item \textbf{Firmware geofence}: independent Cube Orange autopilot geofence triggers LOITER/RTL as a final backstop.
 \end{itemize}
 
 The combined margin of \SI{30}{\metre} (waypoint buffer) + \SI{20}{\metre} (speed ramp) = \SI{50}{\metre} exceeds the RSS requirement of \SI{23}{\metre} by a factor of $2.2\times$.

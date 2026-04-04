@@ -154,7 +154,7 @@ The priority ordering above did not emerge in a vacuum. Table~\ref{tab:steeple} 
     \textbf{T}echnological & Edge AI on SBCs now viable (YOLOv8n at 9\,FPS NCNN on Pi~5); consumer GPS accurate to $\sim$3\,m CEP95 & Hardware ceiling drives altitude/speed envelope; GPS error baked into NFZ margin \\
     \textbf{E}conomic & Single-battery constraint (115.4\,Wh); no mid-mission recharge; replacement drone not available & Energy score weighted 25\% in composite; 14\,min reserve after search \\
     \textbf{E}nvironmental & SSSI (Site of Special Scientific Interest) borders search area; bird nesting season possible & 30\,m NFZ buffer with 5-layer protection; waypoint filtering pre-flight \\
-    \textbf{P}olitical & University flight permissions require demonstrated safety case; CAA drone regulations apply & 50\,m altitude ceiling (R03); progressive flight testing protocol (6 steps) \\
+    \textbf{P}olitical & University flight permissions require demonstrated safety case~\cite{jarus2019sora}; CAA drone regulations apply & 50\,m altitude ceiling (R03); progressive flight testing protocol (6 steps) \\
     \textbf{L}egal & BVLOS operations restricted without specific exemptions; data protection for imagery & Visual line-of-sight operation; no image storage of bystanders; single-class detector \\
     \textbf{E}thical & Casualty may be in distress; false negative delays rescue; false positive wastes critical time & Detection weighted highest (40\%); $>$99.97\% cumulative probability target \\
     \bottomrule
@@ -230,7 +230,7 @@ The composite safety score is a weighted sum:
 
 The margin and waypoint terms carry the highest weights because they determine whether the planned path is geometrically safe \emph{before} the drone takes off. The reactive terms (speed field, repulsive vector, hard boundary, kill switch) are defence-in-depth layers that matter only if the geometric planning fails. For our selected configuration, the geometric sub-scores (margin, waypoint filtering, hard boundary, kill switch) are all 1.0, while the reactive sub-scores are slightly below 1.0 ($s_\text{speed} = 0.9$, $s_\text{repulsive} = 0.85$) because the scalar field does not drive speed fully to zero and the repulsive vector field activates only within 3\,m. This gives $S_\text{safety} = 0.96$ (Figure~\ref{fig:safety-subscore}), confirming that the dominant protection comes from pre-flight geometric design rather than runtime reaction.
 
-\textbf{NFZ incursion risk.} The buffer distance is the primary defence against NFZ entry. The 30\,m buffer exceeds the RSS stopping distance (20.4\,m) by a factor of 1.5$\times$. For the drone to enter the NFZ, it would need to breach \emph{all} of the following layers simultaneously: (1)~the path planner would have to generate a waypoint inside the buffer (eliminated by geometric filtering), (2)~the speed ramp would have to fail to decelerate (software fault), (3)~the repulsive vector field at 3\,m would have to fail (independent code path), (4)~the hard boundary MANUAL switch would have to fail (independent mode change), and (5)~the pilot's RC kill switch would have to be unavailable. With five independent protection layers, the probability of an NFZ incursion is the product of five independent failure probabilities --- negligibly small for any realistic failure rate per layer.
+\textbf{NFZ incursion risk.} The 30\,m buffer exceeds the RSS stopping distance (20.4\,m) by 1.5$\times$. An NFZ entry requires simultaneous failure of all five independent layers: (1)~geometric waypoint filtering, (2)~speed ramp deceleration, (3)~repulsive vector field at 3\,m, (4)~hard boundary mode switch, and (5)~pilot RC kill switch. The incursion probability is the product of five independent failure probabilities --- negligibly small for any realistic per-layer failure rate.
 
 \begin{figure}[H]
   \centering
@@ -543,7 +543,7 @@ The deployed NCNN backend achieves approximately 9\,FPS in the full pipeline. At
   \item \textbf{Random walk} --- stochastic coverage. Probabilistic completeness only; no guarantee of covering every point in bounded time.
 \end{enumerate}
 
-\textbf{The decision.} Lawnmower (boustrophedon) coverage is the standard method recommended by the International Aeronautical and Maritime Search and Rescue Manual (IAMSAR Vol.~III) and is widely deployed on autonomous marine and aerial SAR platforms~\cite{galceran2013survey,choset2001coverage}. It provided the best coverage guarantee for irregular polygons with NFZ constraints. The search area is a 5-corner irregular polygon with an SSSI no-fly zone on one edge --- not a convex shape where spiral patterns excel. The lawnmower pattern's deterministic lane structure means we can \emph{prove} that every accessible point is scanned, which is essential for a safety-critical SAR mission~\cite{murphy2014}. However, spiral inward patterns were also considered for their lower turn count. In a convex search area without NFZ constraints, a spiral would likely be the better choice.
+\textbf{The decision.} Lawnmower (boustrophedon) coverage is the standard method recommended by the International Aeronautical and Maritime Search and Rescue Manual (IAMSAR Vol.~III)~\cite{wca1981} and is widely deployed on autonomous marine and aerial SAR platforms~\cite{galceran2013survey,choset2001coverage}. It provided the best coverage guarantee for irregular polygons with NFZ constraints. The search area is a 5-corner irregular polygon with an SSSI no-fly zone on one edge --- not a convex shape where spiral patterns excel. The lawnmower pattern's deterministic lane structure means we can \emph{prove} that every accessible point is scanned, which is essential for a safety-critical SAR mission~\cite{murphy2014}. However, spiral inward patterns were also considered for their lower turn count. In a convex search area without NFZ constraints, a spiral would likely be the better choice.
 
 
 % ────────────────────────────────────────────────────────────────────────
@@ -758,7 +758,7 @@ These choices reflect constraints that sit outside the quantitative model --- re
 % ════════════════════════════════════════════════════════════════════════
 \section{System Description}\label{sec:system-description}
 
-The preceding sections established \emph{what} parameters to use and \emph{why}. This section describes the system that \emph{implements} those parameters --- the software architecture, state machine, computer vision pipeline, GPS estimation, and testing infrastructure that translate the optimised configuration into a deployable mission.
+The preceding sections established \emph{what} parameters to use and \emph{why}. This section describes the system that \emph{implements} them: the software architecture, state machine, computer vision pipeline, GPS estimation algorithm, and testing infrastructure that translate the optimised configuration into a deployable autonomous mission.
 
 \subsection{Software Architecture}
 
@@ -909,13 +909,13 @@ With 10 of 12 requirements met and two partially met, the system has demonstrate
 
 \subsection{Honest Assessment}
 
-The system scores 7.7/10 in simulation capability (all states exercised, energy model validated, detection pipeline proven) but only 2.1/10 in real-world readiness --- no autonomous flight has been completed. The gap between simulation confidence and field-proven reliability is the project's primary risk. The progressive testing protocol is designed to close this gap incrementally, but weather and scheduling constraints have delayed outdoor testing. The optimisation framework itself is sound and re-evaluable: if field data shifts the detection envelope, the entire chain can be re-run in minutes to produce updated parameters.
+The system scores 7.7/10 in simulation capability (all states exercised, energy model validated, detection pipeline proven) but only 2.1/10 in real-world readiness: bench and video-replay testing are complete, yet no autonomous outdoor flight has been conducted. The 2.1 reflects the absence of Stages~6--7 (manual passive flight and full autonomous mission) in the simulation-to-real progression. The gap between simulation confidence and field-proven reliability is the project's primary risk, driven by weather cancellations and scheduling constraints rather than technical blockers. The optimisation framework itself is re-evaluable: if field data shifts the detection envelope, the entire chain can be re-run in minutes to produce updated parameters.
 
 
 % ════════════════════════════════════════════════════════════════════════
-\section{Decisions That Changed: Evidence-Based Adaptation}\label{sec:decisions-changed}
+\section{Evidence-Based Adaptation}\label{sec:decisions-changed}
 
-A rigorous engineering process is measured not by whether assumptions hold, but by how quickly errors are detected and corrected. During development, four significant corrections were made --- each discovered through testing, each requiring a different diagnostic approach, and each validating the modular architecture that isolated the fix to a single module.
+A rigorous engineering process is measured not by whether initial assumptions hold, but by how quickly errors are detected and corrected. Four significant corrections were made during development --- each discovered through systematic testing, each requiring a different diagnostic approach, and each validating the modular architecture that isolated the fix to a single module.
 
 \subsection{BGR Colour Channel Fix}
 
