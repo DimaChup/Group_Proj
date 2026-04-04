@@ -1106,8 +1106,25 @@ class StateHandlersMixin:
         """Process keyboard/button input per loop iteration."""
         if key == ord('m') or key == ord('M'):
             self._handle_manual_toggle(target_found, px_u, px_v)
-        # RTL: only from browser button (/cmd?key=rtl), not keyboard
-        # R key is used for climb in manual mode (WASD+RF)
+        # L = RTL (Return To Launch)
+        if key == ord('l') or key == ord('L'):
+            print("[OPERATOR] RTL requested")
+            from pymavlink import mavutil
+            self.master.mav.command_long_send(
+                self.master.target_system, self.master.target_component,
+                mavutil.mavlink.MAV_CMD_DO_SET_MODE, 0,
+                mavutil.mavlink.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED,
+                6, 0, 0, 0, 0, 0)  # 6 = RTL
+            self._set_state(State.LANDING)
+        # O = Kill motors (emergency disarm)
+        if key == ord('o') or key == ord('O'):
+            print("[OPERATOR] KILL/DISARM requested")
+            try:
+                if self.master:
+                    self.master.arducopter_disarm()
+                    print("[KILL] Disarm command sent")
+            except Exception as e:
+                print(f"[KILL] Disarm failed: {e}")
         if key == ord('k') or key == ord('K'):
             # K = clear rejected targets + items of interest (original behavior)
             n_rej = len(self.rejected_targets)
