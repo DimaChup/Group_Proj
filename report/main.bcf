@@ -2521,7 +2521,15 @@
     <bcf:citekey order="156" intorder="1">galceran2013survey</bcf:citekey>
     <bcf:citekey order="157" intorder="1">barber2006vision</bcf:citekey>
     <bcf:citekey order="158" intorder="1">sun2016sar</bcf:citekey>
-    <bcf:citekey order="159" intorder="1">sheridan2002humans</bcf:citekey>
+    <bcf:citekey order="159" intorder="1">barber2006vision</bcf:citekey>
+    <bcf:citekey order="159" intorder="2">sambolek2025person</bcf:citekey>
+    <bcf:citekey order="160" intorder="1">sun2016sar</bcf:citekey>
+    <bcf:citekey order="160" intorder="2">sambolek2025person</bcf:citekey>
+    <bcf:citekey order="161" intorder="1">gautam2018error</bcf:citekey>
+    <bcf:citekey order="162" intorder="1">sun2016sar</bcf:citekey>
+    <bcf:citekey order="163" intorder="1">sambolek2025person</bcf:citekey>
+    <bcf:citekey order="164" intorder="1">barber2006vision</bcf:citekey>
+    <bcf:citekey order="165" intorder="1">sheridan2002humans</bcf:citekey>
   </bcf:section>
   <!-- SORTING TEMPLATES -->
   <bcf:sortingtemplate name="none">

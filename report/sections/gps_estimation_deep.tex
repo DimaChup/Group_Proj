@@ -1214,7 +1214,7 @@ This is the method used in the simulator (\texttt{simple\_simulator.py}) and pas
   \qquad (h_\mathrm{ref} = \SI{30}{\metre})
 \end{equation}
 
-\noindent At \SI{30}{\metre} altitude, $w_\mathrm{alt} = 1$; at \SI{15}{\metre}, $w_\mathrm{alt} = 4$; at \SI{10}{\metre}, $w_\mathrm{alt} = 9$.  Detections near the image centre at low altitude therefore dominate the fused estimate, which is physically intuitive: the target fills more pixels, the GSD-scaled projection covers less ground distance, and the observation is inherently more precise.
+\noindent At \SI{30}{\metre} altitude, $w_\mathrm{alt} = 1$; at \SI{15}{\metre}, $w_\mathrm{alt} = 4$; at \SI{10}{\metre}, $w_\mathrm{alt} = 9$.  Detections near the image centre at low altitude therefore dominate the fused estimate, which is physically intuitive: the target fills more pixels, the GSD-scaled projection covers less ground distance, and the observation is inherently more precise.  The spatial distribution of the centrality weight across the image plane is visualised in Figure~\ref{fig:centrality-weighting} (Appendix~\ref{sec:estimation-eval}).
 
 The centre-snap mode amplifies this further: when the target is within 50 pixels of the image centre, the drone's own GPS is used directly (bypassing the GSD projection chain) with a fixed weight of $10 \cdot w_\mathrm{alt}$---yielding a weight of 90 at \SI{10}{\metre} altitude versus approximately 5 for a typical 35\,m edge detection.
 
@@ -2021,7 +2021,7 @@ Sections~\ref{sec:error-budget} and~\ref{sec:roll-pitch-analysis} noted that the
 % ------ 1. The lawnmower pattern advantage ------
 \subsubsection{The Lawnmower Pattern Advantage}
 
-Two dominant systematic error sources---GPS timing lag and roll/pitch displacement---share a critical property: they bias the GPS estimate \emph{in the direction of travel}.  GPS timing lag displaces the estimate forward by $v \cdot \Delta t$ (Section~\ref{sec:error-budget}), while forward-flight pitch displaces the camera footprint forward by $h\tan\theta$ (Section~\ref{sec:roll-pitch-analysis}).  Both biases reverse sign when the drone reverses its heading.
+Two dominant systematic error sources---GPS timing lag and roll/pitch displacement---share a critical property: they bias the GPS estimate \emph{in the direction of travel}.  The heading-dependent nature of this bias is confirmed empirically in Figure~\ref{fig:heading-bias} (Appendix~\ref{sec:estimation-eval}), which shows a sinusoidal along-track error pattern consistent with GPS timing lag.  GPS timing lag displaces the estimate forward by $v \cdot \Delta t$ (Section~\ref{sec:error-budget}), while forward-flight pitch displaces the camera footprint forward by $h\tan\theta$ (Section~\ref{sec:roll-pitch-analysis}).  Both biases reverse sign when the drone reverses its heading.
 
 In the boustrophedon pattern, consecutive scan lines are flown in opposite directions.  At the Bristol field site, scan lines run at headings of approximately $155^{\circ}$ (south-eastbound) and $335^{\circ}$ (north-westbound).  Consider a target detected on both passes:
 

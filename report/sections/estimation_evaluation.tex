@@ -62,6 +62,15 @@ The bullseye scatter plot (Figure~\ref{fig:gps-bullseye}) is the primary diagnos
   \label{fig:gps-bullseye}
 \end{figure}
 
+Figure~\ref{fig:bullseye-comparison} extends this analysis by comparing the bullseye scatter across different estimation strategies side by side, making the effect of multi-frame averaging and hover-lock immediately visible.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{figs/bullseye_comparison}
+  \caption{Side-by-side bullseye comparison of four estimation strategies on the same DJI replay dataset.  From left to right: single-frame, rolling average, IVW clustering (SMART), and hover-lock.  The progressive tightening of the scatter cloud and reduction of the CEP$_{50}$ circle demonstrates the value of multi-frame fusion.  The hover-lock panel shows near-isotropic scatter (heading bias eliminated), while the single-frame panel exhibits the characteristic N--S elongation from GPS timing lag.}
+  \label{fig:bullseye-comparison}
+\end{figure}
+
 % =====================================================================
 \subsection{When Is Enough Data Enough?}\label{sec:enough-data}
 
@@ -150,11 +159,29 @@ Six error sources contribute to the total GPS estimation error.  Their relative 
   \label{fig:error-waterfall}
 \end{figure}
 
+Figure~\ref{fig:error-budget-breakdown} provides a complementary breakdown of the error budget as a stacked bar chart, showing how each source contributes at different altitudes and how multi-frame averaging progressively reduces the dominant GPS noise component.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{figs/error_budget_breakdown}
+  \caption{Error budget breakdown showing the relative contribution of each error source at 20\,m, 35\,m, and 50\,m altitude.  GPS receiver noise (blue) dominates at all altitudes.  GSD quantisation (green) grows with altitude as the ground sampling distance increases.  Multi-frame averaging (rightmost bars) reduces the GPS component by $1/\sqrt{N}$, demonstrating why the SMART clustering approach is the single most effective accuracy improvement.}
+  \label{fig:error-budget-breakdown}
+\end{figure}
+
 \paragraph{Interpretation.}  The error budget has two immediate implications for system design:
 \begin{enumerate}
   \item \emph{Multi-frame averaging is the highest-impact improvement.}  Because GPS receiver noise is both the dominant error source and random (uncorrelated between independent GPS fixes), averaging $N$ observations reduces its contribution by $1/\sqrt{N}$.  With $N = 5$ (SMART default), the GPS noise component drops from $\sim$2.5\,m to $\sim$1.1\,m.
   \item \emph{Hover-lock eliminates projection errors entirely.}  When the drone hovers with the target at the optical centre, the pixel offset is zero and all multiplicative projection errors (GSD, focal length, attitude, lens distortion) are multiplied by zero.  The only remaining error is the drone's own GPS position, which the \texttt{-{}-center-verify} flag reduces by averaging 50 GPS samples over 10\,s of stationary hover~\cite{gautam2018error}.
 \end{enumerate}
+
+Figure~\ref{fig:centrality-weighting} visualises the centrality weighting function $w_\mathrm{cen}$ (Appendix~\ref{sec:gps-deep}, Eq.~\ref{eq:weight-deep}) across the image plane, demonstrating how detections near the optical centre receive up to $5\times$ the weight of edge detections.  This weighting is a key mechanism by which the IVW estimator preferentially trusts low-error observations without requiring explicit error modelling for each source.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.55\textwidth]{figs/centrality_weighting}
+  \caption{Centrality weighting heatmap across the camera image plane.  Detections at the optical centre receive weight $w_\mathrm{cen} = 5.0$; detections at the image corners receive $w_\mathrm{cen} = 1.0$.  Combined with the altitude weight $w_\mathrm{alt} = (h_\mathrm{ref}/h)^2$, a near-centre detection at 15\,m altitude receives $20\times$ the weight of a corner detection at 35\,m, ensuring that the fused estimate is dominated by the geometrically most reliable observations.}
+  \label{fig:centrality-weighting}
+\end{figure}
 
 % =====================================================================
 \subsection{Comparison with Ground Truth}\label{sec:ground-truth-comparison}
@@ -210,6 +237,15 @@ Figure~\ref{fig:gps-convergence} shows how the IVW estimate converges as more de
   \label{fig:gps-convergence}
 \end{figure}
 
+Figure~\ref{fig:convergence-plot-eval} provides an alternative view of the convergence behaviour, comparing the three best estimation strategies (IVW passive, visual centering, and centering + GPS averaging) on a common time axis.  The centering approach converges faster than IVW because it actively eliminates geometric projection errors, while the GPS averaging phase drives the residual error below the single-fix GPS noise floor.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.65\textwidth]{figs/convergence_plot}
+  \caption{Position error vs.\ time for three estimation strategies.  Visual centering converges to $\sim$2.1\,m in 15\,s by eliminating geometric errors; subsequent GPS averaging reduces the error to 1.5\,m.  IVW passive converges more slowly ($\sim$60\,s for comparable accuracy) because it relies on statistical averaging of flyover observations without active geometric correction.}
+  \label{fig:convergence-plot-eval}
+\end{figure}
+
 % =====================================================================
 \subsection{Directional Error Analysis}\label{sec:directional-error}
 
@@ -226,6 +262,15 @@ The bullseye scatter (Figure~\ref{fig:gps-bullseye}) and directional error rose 
   \includegraphics[width=0.5\textwidth]{figs/gps_error_direction}
   \caption{Directional GPS estimation error from DJI replay.  The along-track (N--S) error is $\sim$1.4$\times$ the cross-track (E--W) error, consistent with GPS timing lag and residual pitch compensation error during predominantly North--South flight legs.}
   \label{fig:gps-error-direction}
+\end{figure}
+
+Figure~\ref{fig:heading-bias} further quantifies the heading-dependent bias by plotting the along-track error component as a function of flight heading.  The sinusoidal pattern confirms that the bias is dominated by GPS timing lag (which projects along the velocity vector) rather than a fixed compass offset (which would produce a constant bias regardless of heading).
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.6\textwidth]{figs/heading_bias}
+  \caption{Along-track estimation bias as a function of flight heading from DJI replay data.  The sinusoidal pattern (amplitude $\sim$0.7\,m) is consistent with GPS timing lag of $\sim$140\,ms at 5\,m/s.  Passes on reciprocal headings (e.g., 0\degree{} and 180\degree{}) produce biases of opposite sign, confirming that multi-pass averaging from alternating headings cancels this systematic error.}
+  \label{fig:heading-bias}
 \end{figure}
 
 % =====================================================================

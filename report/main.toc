@@ -732,41 +732,67 @@
 \contentsline {paragraph}{Comparison with higher frame rates.}{227}{paragraph*.507}%
 \contentsline {paragraph}{Sufficient for SMART detection.}{227}{paragraph*.508}%
 \contentsline {paragraph}{Conclusion.}{227}{paragraph*.509}%
-\contentsline {section}{\numberline {AG}Requirements Verification Detail}{228}{appendix.Alph33}%
-\contentsline {subsection}{\numberline {AG.1}R01 --- Fly Within the Flight Area}{228}{subsection.Alph33.1}%
-\contentsline {subsection}{\numberline {AG.2}R02 --- No SSSI Overfly}{228}{subsection.Alph33.2}%
-\contentsline {subsection}{\numberline {AG.3}R03 --- Take Off Within 5\,m of TOL}{228}{subsection.Alph33.3}%
-\contentsline {subsection}{\numberline {AG.4}R04 --- Maximum 50\,m Altitude}{229}{subsection.Alph33.4}%
-\contentsline {subsection}{\numberline {AG.5}R05 --- Search Area and Identify Items of Interest}{229}{subsection.Alph33.5}%
-\contentsline {paragraph}{Coverage guarantee.}{229}{paragraph*.510}%
-\contentsline {paragraph}{Detection capability.}{229}{paragraph*.511}%
-\contentsline {paragraph}{Per-flyover detection probability.}{229}{paragraph*.512}%
-\contentsline {paragraph}{Verification evidence.}{230}{paragraph*.513}%
-\contentsline {subsection}{\numberline {AG.6}R06 --- PLB Focus Area}{230}{subsection.Alph33.6}%
-\contentsline {subsection}{\numberline {AG.7}R07 --- Land 5--10\,m from Casualty}{230}{subsection.Alph33.7}%
-\contentsline {paragraph}{Probability analysis.}{230}{paragraph*.514}%
-\contentsline {paragraph}{Unit and integration tests.}{230}{paragraph*.515}%
-\contentsline {paragraph}{Runtime distance verification.}{231}{paragraph*.516}%
-\contentsline {paragraph}{Payload deployment.}{231}{paragraph*.517}%
-\contentsline {subsection}{\numberline {AG.8}R08 --- Autonomy Level Justified}{231}{subsection.Alph33.8}%
-\contentsline {subsection}{\numberline {AG.9}R09 --- RTH and Motor Cutoff}{231}{subsection.Alph33.9}%
-\contentsline {subsection}{\numberline {AG.10}R10 --- Report Lat/Lon and Images}{232}{subsection.Alph33.10}%
-\contentsline {paragraph}{GPS estimation pipeline.}{232}{paragraph*.518}%
-\contentsline {paragraph}{Detection snapshots and metadata.}{232}{paragraph*.519}%
-\contentsline {paragraph}{Flight log.}{232}{paragraph*.520}%
-\contentsline {subsection}{\numberline {AG.11}R11 --- Company Pilot Designated}{232}{subsection.Alph33.11}%
-\contentsline {subsection}{\numberline {AG.12}R12 --- Public GitHub Repository with MIT Licence}{232}{subsection.Alph33.12}%
-\contentsline {section}{\numberline {AH}Evaluation Detail}{233}{appendix.Alph34}%
-\contentsline {subsection}{\numberline {AH.1}Defect Discovery Register}{233}{subsection.Alph34.1}%
-\contentsline {subsection}{\numberline {AH.2}What Would Change in a Second Iteration}{233}{subsection.Alph34.2}%
-\contentsline {subsection}{\numberline {AH.3}Lessons Learned}{234}{subsection.Alph34.3}%
-\contentsline {section}{\numberline {AI}Development Methodology}{234}{appendix.Alph35}%
-\contentsline {subsection}{\numberline {AI.1}Development Philosophy}{234}{subsection.Alph35.1}%
-\contentsline {subsection}{\numberline {AI.2}Ten-Phase Development Timeline}{235}{subsection.Alph35.2}%
-\contentsline {subsection}{\numberline {AI.3}Simulation Stage (Weeks 12--15)}{235}{subsection.Alph35.3}%
-\contentsline {subsection}{\numberline {AI.4}Pi Deployment (Weeks 16--18)}{236}{subsection.Alph35.4}%
-\contentsline {subsection}{\numberline {AI.5}Field Integration (Weeks 19--20)}{236}{subsection.Alph35.5}%
-\contentsline {subsection}{\numberline {AI.6}Ambition Levels}{236}{subsection.Alph35.6}%
-\contentsline {subsection}{\numberline {AI.7}Progressive Testing Ladder}{236}{subsection.Alph35.7}%
-\contentsline {subsection}{\numberline {AI.8}Achievement Summary}{237}{subsection.Alph35.8}%
-\contentsline {subsection}{\numberline {AI.9}Lessons for Future Teams}{237}{subsection.Alph35.9}%
+\contentsline {section}{\numberline {AG}Evaluating GPS Estimation Against Ground Truth}{228}{appendix.Alph33}%
+\contentsline {subsection}{\numberline {AG.1}Evaluation Methodology}{228}{subsection.Alph33.1}%
+\contentsline {subsubsection}{\numberline {AG.1.1}The Ground-Truth Problem}{228}{subsubsection.Alph33.1.1}%
+\contentsline {subsubsection}{\numberline {AG.1.2}SMART Detection as Convergence Criterion}{228}{subsubsection.Alph33.1.2}%
+\contentsline {subsubsection}{\numberline {AG.1.3}Evaluation Metrics}{228}{subsubsection.Alph33.1.3}%
+\contentsline {subsection}{\numberline {AG.2}Bullseye Visualization}{228}{subsection.Alph33.2}%
+\contentsline {paragraph}{Heading bias.}{229}{paragraph*.510}%
+\contentsline {paragraph}{Altitude dependence.}{229}{paragraph*.511}%
+\contentsline {paragraph}{Systematic bias.}{229}{paragraph*.512}%
+\contentsline {subsection}{\numberline {AG.3}When Is Enough Data Enough?}{230}{subsection.Alph33.3}%
+\contentsline {subsubsection}{\numberline {AG.3.1}Frame Budget Analysis}{230}{subsubsection.Alph33.3.1}%
+\contentsline {subsubsection}{\numberline {AG.3.2}Clustering Threshold Comparison}{231}{subsubsection.Alph33.3.2}%
+\contentsline {paragraph}{Single frame.}{231}{paragraph*.517}%
+\contentsline {paragraph}{Quick cluster (3 samples, 5\,m spread).}{231}{paragraph*.518}%
+\contentsline {paragraph}{SMART default (5 samples, 2\,m spread).}{231}{paragraph*.519}%
+\contentsline {paragraph}{Conservative (10 samples, 1\,m spread).}{231}{paragraph*.520}%
+\contentsline {paragraph}{Multi-pass (5+5 from different headings, 1\,m spread).}{231}{paragraph*.521}%
+\contentsline {subsection}{\numberline {AG.4}Error Sources and Their Relative Contribution}{231}{subsection.Alph33.4}%
+\contentsline {paragraph}{Interpretation.}{232}{paragraph*.525}%
+\contentsline {subsection}{\numberline {AG.5}Comparison with Ground Truth}{233}{subsection.Alph33.5}%
+\contentsline {subsubsection}{\numberline {AG.5.1}DJI Video Replay Results}{233}{subsubsection.Alph33.5.1}%
+\contentsline {subsubsection}{\numberline {AG.5.2}Convergence Behaviour}{233}{subsubsection.Alph33.5.2}%
+\contentsline {subsection}{\numberline {AG.6}Directional Error Analysis}{234}{subsection.Alph33.6}%
+\contentsline {subsection}{\numberline {AG.7}Operational Recommendations}{235}{subsection.Alph33.7}%
+\contentsline {paragraph}{Key insight.}{236}{paragraph*.534}%
+\contentsline {paragraph}{Comparison with published systems.}{236}{paragraph*.535}%
+\contentsline {section}{\numberline {AH}Requirements Verification Detail}{236}{appendix.Alph34}%
+\contentsline {subsection}{\numberline {AH.1}R01 --- Fly Within the Flight Area}{236}{subsection.Alph34.1}%
+\contentsline {subsection}{\numberline {AH.2}R02 --- No SSSI Overfly}{236}{subsection.Alph34.2}%
+\contentsline {subsection}{\numberline {AH.3}R03 --- Take Off Within 5\,m of TOL}{237}{subsection.Alph34.3}%
+\contentsline {subsection}{\numberline {AH.4}R04 --- Maximum 50\,m Altitude}{237}{subsection.Alph34.4}%
+\contentsline {subsection}{\numberline {AH.5}R05 --- Search Area and Identify Items of Interest}{237}{subsection.Alph34.5}%
+\contentsline {paragraph}{Coverage guarantee.}{237}{paragraph*.536}%
+\contentsline {paragraph}{Detection capability.}{237}{paragraph*.537}%
+\contentsline {paragraph}{Per-flyover detection probability.}{237}{paragraph*.538}%
+\contentsline {paragraph}{Verification evidence.}{238}{paragraph*.539}%
+\contentsline {subsection}{\numberline {AH.6}R06 --- PLB Focus Area}{238}{subsection.Alph34.6}%
+\contentsline {subsection}{\numberline {AH.7}R07 --- Land 5--10\,m from Casualty}{238}{subsection.Alph34.7}%
+\contentsline {paragraph}{Probability analysis.}{239}{paragraph*.540}%
+\contentsline {paragraph}{Unit and integration tests.}{239}{paragraph*.541}%
+\contentsline {paragraph}{Runtime distance verification.}{239}{paragraph*.542}%
+\contentsline {paragraph}{Payload deployment.}{239}{paragraph*.543}%
+\contentsline {subsection}{\numberline {AH.8}R08 --- Autonomy Level Justified}{239}{subsection.Alph34.8}%
+\contentsline {subsection}{\numberline {AH.9}R09 --- RTH and Motor Cutoff}{239}{subsection.Alph34.9}%
+\contentsline {subsection}{\numberline {AH.10}R10 --- Report Lat/Lon and Images}{240}{subsection.Alph34.10}%
+\contentsline {paragraph}{GPS estimation pipeline.}{240}{paragraph*.544}%
+\contentsline {paragraph}{Detection snapshots and metadata.}{240}{paragraph*.545}%
+\contentsline {paragraph}{Flight log.}{240}{paragraph*.546}%
+\contentsline {subsection}{\numberline {AH.11}R11 --- Company Pilot Designated}{240}{subsection.Alph34.11}%
+\contentsline {subsection}{\numberline {AH.12}R12 --- Public GitHub Repository with MIT Licence}{241}{subsection.Alph34.12}%
+\contentsline {section}{\numberline {AI}Evaluation Detail}{241}{appendix.Alph35}%
+\contentsline {subsection}{\numberline {AI.1}Defect Discovery Register}{241}{subsection.Alph35.1}%
+\contentsline {subsection}{\numberline {AI.2}What Would Change in a Second Iteration}{242}{subsection.Alph35.2}%
+\contentsline {subsection}{\numberline {AI.3}Lessons Learned}{242}{subsection.Alph35.3}%
+\contentsline {section}{\numberline {AJ}Development Methodology}{243}{appendix.Alph36}%
+\contentsline {subsection}{\numberline {AJ.1}Development Philosophy}{243}{subsection.Alph36.1}%
+\contentsline {subsection}{\numberline {AJ.2}Ten-Phase Development Timeline}{243}{subsection.Alph36.2}%
+\contentsline {subsection}{\numberline {AJ.3}Simulation Stage (Weeks 12--15)}{244}{subsection.Alph36.3}%
+\contentsline {subsection}{\numberline {AJ.4}Pi Deployment (Weeks 16--18)}{244}{subsection.Alph36.4}%
+\contentsline {subsection}{\numberline {AJ.5}Field Integration (Weeks 19--20)}{245}{subsection.Alph36.5}%
+\contentsline {subsection}{\numberline {AJ.6}Ambition Levels}{245}{subsection.Alph36.6}%
+\contentsline {subsection}{\numberline {AJ.7}Progressive Testing Ladder}{245}{subsection.Alph36.7}%
+\contentsline {subsection}{\numberline {AJ.8}Achievement Summary}{246}{subsection.Alph36.8}%
+\contentsline {subsection}{\numberline {AJ.9}Lessons for Future Teams}{246}{subsection.Alph36.9}%

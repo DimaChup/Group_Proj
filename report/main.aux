@@ -2125,58 +2125,141 @@
 \@writefile{toc}{\contentsline {paragraph}{Comparison with higher frame rates.}{227}{paragraph*.507}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Sufficient for SMART detection.}{227}{paragraph*.508}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Conclusion.}{227}{paragraph*.509}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {AG}Requirements Verification Detail}{228}{appendix.Alph33}\protected@file@percent }
-\newlabel{app:req-detail}{{AG}{228}{Requirements Verification Detail}{appendix.Alph33}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {AG.1}R01 --- Fly Within the Flight Area}{228}{subsection.Alph33.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {AG.2}R02 --- No SSSI Overfly}{228}{subsection.Alph33.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {AG.3}R03 --- Take Off Within 5\,m of TOL}{228}{subsection.Alph33.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {AG.4}R04 --- Maximum 50\,m Altitude}{229}{subsection.Alph33.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {AG.5}R05 --- Search Area and Identify Items of Interest}{229}{subsection.Alph33.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Coverage guarantee.}{229}{paragraph*.510}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Detection capability.}{229}{paragraph*.511}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Per-flyover detection probability.}{229}{paragraph*.512}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Verification evidence.}{230}{paragraph*.513}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {AG.6}R06 --- PLB Focus Area}{230}{subsection.Alph33.6}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {AG.7}R07 --- Land 5--10\,m from Casualty}{230}{subsection.Alph33.7}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Probability analysis.}{230}{paragraph*.514}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Unit and integration tests.}{230}{paragraph*.515}\protected@file@percent }
+\abx@aux@cite{0}{barber2006vision}
+\abx@aux@segm{0}{0}{barber2006vision}
+\abx@aux@cite{0}{sambolek2025person}
+\abx@aux@segm{0}{0}{sambolek2025person}
+\@writefile{toc}{\contentsline {section}{\numberline {AG}Evaluating GPS Estimation Against Ground Truth}{228}{appendix.Alph33}\protected@file@percent }
+\newlabel{sec:estimation-eval}{{AG}{228}{Evaluating GPS Estimation Against Ground Truth}{appendix.Alph33}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {AG.1}Evaluation Methodology}{228}{subsection.Alph33.1}\protected@file@percent }
+\newlabel{sec:eval-methodology}{{AG.1}{228}{Evaluation Methodology}{subsection.Alph33.1}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {AG.1.1}The Ground-Truth Problem}{228}{subsubsection.Alph33.1.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {AG.1.2}SMART Detection as Convergence Criterion}{228}{subsubsection.Alph33.1.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {AG.1.3}Evaluation Metrics}{228}{subsubsection.Alph33.1.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {AG.2}Bullseye Visualization}{228}{subsection.Alph33.2}\protected@file@percent }
+\newlabel{sec:bullseye-viz}{{AG.2}{228}{Bullseye Visualization}{subsection.Alph33.2}{}}
+\@writefile{toc}{\contentsline {paragraph}{Heading bias.}{229}{paragraph*.510}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Altitude dependence.}{229}{paragraph*.511}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Systematic bias.}{229}{paragraph*.512}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {86}{\ignorespaces Bullseye scatter plot of GPS target estimates from DJI video replay (53 detections across 3 flyover passes at 35\,m altitude). Each dot is one detection's GPS estimate relative to the surveyed dummy position at the origin. The solid circle is CEP$_{50}$ = 2.3\,m; the dashed circle is CEP$_{95}$ = 5.1\,m. The elongation along the North--South axis reflects GPS timing lag during predominantly N--S flight legs. The centroid (cross marker) is offset 0.7\,m south of truth, consistent with 140\,ms GPS latency at 5\,m/s.}}{229}{figure.caption.513}\protected@file@percent }
+\newlabel{fig:gps-bullseye}{{86}{229}{Bullseye scatter plot of GPS target estimates from DJI video replay (53 detections across 3 flyover passes at 35\,m altitude). Each dot is one detection's GPS estimate relative to the surveyed dummy position at the origin. The solid circle is CEP$_{50}$ = 2.3\,m; the dashed circle is CEP$_{95}$ = 5.1\,m. The elongation along the North--South axis reflects GPS timing lag during predominantly N--S flight legs. The centroid (cross marker) is offset 0.7\,m south of truth, consistent with 140\,ms GPS latency at 5\,m/s}{figure.caption.513}{}}
+\abx@aux@cite{0}{sun2016sar}
+\abx@aux@segm{0}{0}{sun2016sar}
+\abx@aux@cite{0}{sambolek2025person}
+\abx@aux@segm{0}{0}{sambolek2025person}
+\@writefile{lof}{\contentsline {figure}{\numberline {87}{\ignorespaces Side-by-side bullseye comparison of four estimation strategies on the same DJI replay dataset. From left to right: single-frame, rolling average, IVW clustering (SMART), and hover-lock. The progressive tightening of the scatter cloud and reduction of the CEP$_{50}$ circle demonstrates the value of multi-frame fusion. The hover-lock panel shows near-isotropic scatter (heading bias eliminated), while the single-frame panel exhibits the characteristic N--S elongation from GPS timing lag.}}{230}{figure.caption.514}\protected@file@percent }
+\newlabel{fig:bullseye-comparison}{{87}{230}{Side-by-side bullseye comparison of four estimation strategies on the same DJI replay dataset. From left to right: single-frame, rolling average, IVW clustering (SMART), and hover-lock. The progressive tightening of the scatter cloud and reduction of the CEP$_{50}$ circle demonstrates the value of multi-frame fusion. The hover-lock panel shows near-isotropic scatter (heading bias eliminated), while the single-frame panel exhibits the characteristic N--S elongation from GPS timing lag}{figure.caption.514}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {AG.3}When Is Enough Data Enough?}{230}{subsection.Alph33.3}\protected@file@percent }
+\newlabel{sec:enough-data}{{AG.3}{230}{When Is Enough Data Enough?}{subsection.Alph33.3}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {AG.3.1}Frame Budget Analysis}{230}{subsubsection.Alph33.3.1}\protected@file@percent }
+\newlabel{sec:frame-budget}{{AG.3.1}{230}{Frame Budget Analysis}{subsubsection.Alph33.3.1}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {158}{\ignorespaces Frame budget: number of detection opportunities per single flyover at 35\,m altitude, 3.9\,FPS inference rate (Pi~5 TFLite), detection probability $p_d = 0.78$.}}{231}{table.caption.515}\protected@file@percent }
+\newlabel{tab:frame-budget}{{158}{231}{Frame budget: number of detection opportunities per single flyover at 35\,m altitude, 3.9\,FPS inference rate (Pi~5 TFLite), detection probability $p_d = 0.78$}{table.caption.515}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {159}{\ignorespaces Comparison of five clustering threshold configurations. CEP$_{50}$ and lock probability are from DJI video replay (53 detections, 3 passes at 35\,m / 5\,m/s). Response time assumes 3.9\,FPS inference and $p_d = 0.78$.}}{231}{table.caption.516}\protected@file@percent }
+\newlabel{tab:clustering-tradeoffs}{{159}{231}{Comparison of five clustering threshold configurations. CEP$_{50}$ and lock probability are from DJI video replay (53 detections, 3 passes at 35\,m / 5\,m/s). Response time assumes 3.9\,FPS inference and $p_d = 0.78$}{table.caption.516}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {AG.3.2}Clustering Threshold Comparison}{231}{subsubsection.Alph33.3.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Single frame.}{231}{paragraph*.517}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Quick cluster (3 samples, 5\,m spread).}{231}{paragraph*.518}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{SMART default (5 samples, 2\,m spread).}{231}{paragraph*.519}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Conservative (10 samples, 1\,m spread).}{231}{paragraph*.520}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Multi-pass (5+5 from different headings, 1\,m spread).}{231}{paragraph*.521}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {AG.4}Error Sources and Their Relative Contribution}{231}{subsection.Alph33.4}\protected@file@percent }
+\newlabel{sec:error-contributions}{{AG.4}{231}{Error Sources and Their Relative Contribution}{subsection.Alph33.4}{}}
+\abx@aux@cite{0}{gautam2018error}
+\abx@aux@segm{0}{0}{gautam2018error}
+\@writefile{lot}{\contentsline {table}{\numberline {160}{\ignorespaces Error budget for single-frame GPS estimation at 35\,m altitude. Contribution percentages are derived from variance propagation through the pixel-to-GPS projection (Section~\ref {sec:error-budget}) and validated against the DJI replay scatter distribution. The ``Mitigated by'' column indicates which estimation strategy reduces each source.}}{232}{table.caption.522}\protected@file@percent }
+\newlabel{tab:error-budget-relative}{{160}{232}{Error budget for single-frame GPS estimation at 35\,m altitude. Contribution percentages are derived from variance propagation through the pixel-to-GPS projection (Section~\ref {sec:error-budget}) and validated against the DJI replay scatter distribution. The ``Mitigated by'' column indicates which estimation strategy reduces each source}{table.caption.522}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {88}{\ignorespaces Waterfall chart showing the cumulative contribution of each error source to the total single-frame CEP. GPS receiver noise dominates ($\sim $65\% of variance), confirming that multi-frame averaging---which targets random noise---is the most effective single improvement. Attitude compensation eliminates the second-largest contributor.}}{232}{figure.caption.523}\protected@file@percent }
+\newlabel{fig:error-waterfall}{{88}{232}{Waterfall chart showing the cumulative contribution of each error source to the total single-frame CEP. GPS receiver noise dominates ($\sim $65\% of variance), confirming that multi-frame averaging---which targets random noise---is the most effective single improvement. Attitude compensation eliminates the second-largest contributor}{figure.caption.523}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {89}{\ignorespaces Error budget breakdown showing the relative contribution of each error source at 20\,m, 35\,m, and 50\,m altitude. GPS receiver noise (blue) dominates at all altitudes. GSD quantisation (green) grows with altitude as the ground sampling distance increases. Multi-frame averaging (rightmost bars) reduces the GPS component by $1/\sqrt  {N}$, demonstrating why the SMART clustering approach is the single most effective accuracy improvement.}}{232}{figure.caption.524}\protected@file@percent }
+\newlabel{fig:error-budget-breakdown}{{89}{232}{Error budget breakdown showing the relative contribution of each error source at 20\,m, 35\,m, and 50\,m altitude. GPS receiver noise (blue) dominates at all altitudes. GSD quantisation (green) grows with altitude as the ground sampling distance increases. Multi-frame averaging (rightmost bars) reduces the GPS component by $1/\sqrt {N}$, demonstrating why the SMART clustering approach is the single most effective accuracy improvement}{figure.caption.524}{}}
+\@writefile{toc}{\contentsline {paragraph}{Interpretation.}{232}{paragraph*.525}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {90}{\ignorespaces Centrality weighting heatmap across the camera image plane. Detections at the optical centre receive weight $w_\mathrm  {cen} = 5.0$; detections at the image corners receive $w_\mathrm  {cen} = 1.0$. Combined with the altitude weight $w_\mathrm  {alt} = (h_\mathrm  {ref}/h)^2$, a near-centre detection at 15\,m altitude receives $20\times $ the weight of a corner detection at 35\,m, ensuring that the fused estimate is dominated by the geometrically most reliable observations.}}{233}{figure.caption.526}\protected@file@percent }
+\newlabel{fig:centrality-weighting}{{90}{233}{Centrality weighting heatmap across the camera image plane. Detections at the optical centre receive weight $w_\mathrm {cen} = 5.0$; detections at the image corners receive $w_\mathrm {cen} = 1.0$. Combined with the altitude weight $w_\mathrm {alt} = (h_\mathrm {ref}/h)^2$, a near-centre detection at 15\,m altitude receives $20\times $ the weight of a corner detection at 35\,m, ensuring that the fused estimate is dominated by the geometrically most reliable observations}{figure.caption.526}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {AG.5}Comparison with Ground Truth}{233}{subsection.Alph33.5}\protected@file@percent }
+\newlabel{sec:ground-truth-comparison}{{AG.5}{233}{Comparison with Ground Truth}{subsection.Alph33.5}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {AG.5.1}DJI Video Replay Results}{233}{subsubsection.Alph33.5.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {161}{\ignorespaces GPS estimation accuracy from DJI video replay (53 detections, 3 passes, 35\,m altitude, 5\,m/s). All metrics in metres. ``Hover-lock'' simulates the effect of the \texttt  {-{}-center-verify} flag by averaging only near-nadir detections (pixel offset $<$30\,px from frame centre).}}{233}{table.caption.527}\protected@file@percent }
+\newlabel{tab:ground-truth-results}{{161}{233}{GPS estimation accuracy from DJI video replay (53 detections, 3 passes, 35\,m altitude, 5\,m/s). All metrics in metres. ``Hover-lock'' simulates the effect of the \texttt {-{}-center-verify} flag by averaging only near-nadir detections (pixel offset $<$30\,px from frame centre)}{table.caption.527}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {AG.5.2}Convergence Behaviour}{233}{subsubsection.Alph33.5.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {91}{\ignorespaces CEP$_{50}$ comparison of four fusion algorithms on DJI replay data. IVW (inverse-variance weighting) achieves the lowest error at 2.3\,m, highlighted as the selected method. Error bars show 95\% confidence intervals from 1000-iteration bootstrap resampling.}}{234}{figure.caption.528}\protected@file@percent }
+\newlabel{fig:estimator-comparison}{{91}{234}{CEP$_{50}$ comparison of four fusion algorithms on DJI replay data. IVW (inverse-variance weighting) achieves the lowest error at 2.3\,m, highlighted as the selected method. Error bars show 95\% confidence intervals from 1000-iteration bootstrap resampling}{figure.caption.528}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {92}{\ignorespaces Convergence of the IVW GPS estimate during a single flyover at 5\,m/s and 35\,m altitude. The estimate stabilises after $\sim $5 detections, with diminishing returns beyond 10. The dashed line indicates the GPS averaging floor ($\sim $1.0\,m CEP).}}{234}{figure.caption.529}\protected@file@percent }
+\newlabel{fig:gps-convergence}{{92}{234}{Convergence of the IVW GPS estimate during a single flyover at 5\,m/s and 35\,m altitude. The estimate stabilises after $\sim $5 detections, with diminishing returns beyond 10. The dashed line indicates the GPS averaging floor ($\sim $1.0\,m CEP)}{figure.caption.529}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {93}{\ignorespaces Position error vs.\ time for three estimation strategies. Visual centering converges to $\sim $2.1\,m in 15\,s by eliminating geometric errors; subsequent GPS averaging reduces the error to 1.5\,m. IVW passive converges more slowly ($\sim $60\,s for comparable accuracy) because it relies on statistical averaging of flyover observations without active geometric correction.}}{234}{figure.caption.530}\protected@file@percent }
+\newlabel{fig:convergence-plot-eval}{{93}{234}{Position error vs.\ time for three estimation strategies. Visual centering converges to $\sim $2.1\,m in 15\,s by eliminating geometric errors; subsequent GPS averaging reduces the error to 1.5\,m. IVW passive converges more slowly ($\sim $60\,s for comparable accuracy) because it relies on statistical averaging of flyover observations without active geometric correction}{figure.caption.530}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {AG.6}Directional Error Analysis}{234}{subsection.Alph33.6}\protected@file@percent }
+\newlabel{sec:directional-error}{{AG.6}{234}{Directional Error Analysis}{subsection.Alph33.6}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {94}{\ignorespaces Directional GPS estimation error from DJI replay. The along-track (N--S) error is $\sim $1.4$\times $ the cross-track (E--W) error, consistent with GPS timing lag and residual pitch compensation error during predominantly North--South flight legs.}}{235}{figure.caption.531}\protected@file@percent }
+\newlabel{fig:gps-error-direction}{{94}{235}{Directional GPS estimation error from DJI replay. The along-track (N--S) error is $\sim $1.4$\times $ the cross-track (E--W) error, consistent with GPS timing lag and residual pitch compensation error during predominantly North--South flight legs}{figure.caption.531}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {95}{\ignorespaces Along-track estimation bias as a function of flight heading from DJI replay data. The sinusoidal pattern (amplitude $\sim $0.7\,m) is consistent with GPS timing lag of $\sim $140\,ms at 5\,m/s. Passes on reciprocal headings (e.g., 0\ensuremath  {^\circ }{} and 180\ensuremath  {^\circ }{}) produce biases of opposite sign, confirming that multi-pass averaging from alternating headings cancels this systematic error.}}{235}{figure.caption.532}\protected@file@percent }
+\newlabel{fig:heading-bias}{{95}{235}{Along-track estimation bias as a function of flight heading from DJI replay data. The sinusoidal pattern (amplitude $\sim $0.7\,m) is consistent with GPS timing lag of $\sim $140\,ms at 5\,m/s. Passes on reciprocal headings (e.g., 0\degree {} and 180\degree {}) produce biases of opposite sign, confirming that multi-pass averaging from alternating headings cancels this systematic error}{figure.caption.532}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {AG.7}Operational Recommendations}{235}{subsection.Alph33.7}\protected@file@percent }
+\newlabel{sec:eval-recommendations}{{AG.7}{235}{Operational Recommendations}{subsection.Alph33.7}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {162}{\ignorespaces Recommended SMART configurations for three mission profiles. Settings map directly to CLI flags in \texttt  {passive\_watch.py} (\texttt  {-{}-smart-min}, \texttt  {-{}-smart-radius}) and \texttt  {main.py} (\texttt  {-{}-center-verify}).}}{235}{table.caption.533}\protected@file@percent }
+\newlabel{tab:recommendations}{{162}{235}{Recommended SMART configurations for three mission profiles. Settings map directly to CLI flags in \texttt {passive\_watch.py} (\texttt {-{}-smart-min}, \texttt {-{}-smart-radius}) and \texttt {main.py} (\texttt {-{}-center-verify})}{table.caption.533}{}}
+\abx@aux@cite{0}{sun2016sar}
+\abx@aux@segm{0}{0}{sun2016sar}
+\abx@aux@cite{0}{sambolek2025person}
+\abx@aux@segm{0}{0}{sambolek2025person}
+\abx@aux@cite{0}{barber2006vision}
+\abx@aux@segm{0}{0}{barber2006vision}
+\@writefile{toc}{\contentsline {paragraph}{Key insight.}{236}{paragraph*.534}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Comparison with published systems.}{236}{paragraph*.535}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {AH}Requirements Verification Detail}{236}{appendix.Alph34}\protected@file@percent }
+\newlabel{app:req-detail}{{AH}{236}{Requirements Verification Detail}{appendix.Alph34}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {AH.1}R01 --- Fly Within the Flight Area}{236}{subsection.Alph34.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {AH.2}R02 --- No SSSI Overfly}{236}{subsection.Alph34.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {AH.3}R03 --- Take Off Within 5\,m of TOL}{237}{subsection.Alph34.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {AH.4}R04 --- Maximum 50\,m Altitude}{237}{subsection.Alph34.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {AH.5}R05 --- Search Area and Identify Items of Interest}{237}{subsection.Alph34.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Coverage guarantee.}{237}{paragraph*.536}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Detection capability.}{237}{paragraph*.537}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Per-flyover detection probability.}{237}{paragraph*.538}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Verification evidence.}{238}{paragraph*.539}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {AH.6}R06 --- PLB Focus Area}{238}{subsection.Alph34.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {AH.7}R07 --- Land 5--10\,m from Casualty}{238}{subsection.Alph34.7}\protected@file@percent }
 \abx@aux@cite{0}{sheridan2002humans}
 \abx@aux@segm{0}{0}{sheridan2002humans}
-\@writefile{toc}{\contentsline {paragraph}{Runtime distance verification.}{231}{paragraph*.516}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Payload deployment.}{231}{paragraph*.517}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {AG.8}R08 --- Autonomy Level Justified}{231}{subsection.Alph33.8}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {AG.9}R09 --- RTH and Motor Cutoff}{231}{subsection.Alph33.9}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {AG.10}R10 --- Report Lat/Lon and Images}{232}{subsection.Alph33.10}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{GPS estimation pipeline.}{232}{paragraph*.518}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Detection snapshots and metadata.}{232}{paragraph*.519}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Flight log.}{232}{paragraph*.520}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {AG.11}R11 --- Company Pilot Designated}{232}{subsection.Alph33.11}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {AG.12}R12 --- Public GitHub Repository with MIT Licence}{232}{subsection.Alph33.12}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {AH}Evaluation Detail}{233}{appendix.Alph34}\protected@file@percent }
-\newlabel{app:eval-detail}{{AH}{233}{Evaluation Detail}{appendix.Alph34}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {AH.1}Defect Discovery Register}{233}{subsection.Alph34.1}\protected@file@percent }
-\newlabel{app:bug-cost}{{AH.1}{233}{Defect Discovery Register}{subsection.Alph34.1}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {158}{\ignorespaces Defects discovered at each testing tier, with measured resolution time and impact if undetected. All fix times are from git commit timestamps; ``cost if missed'' is the assessed flight-day consequence.}}{233}{table.caption.521}\protected@file@percent }
-\newlabel{tab:bug-cost}{{158}{233}{Defects discovered at each testing tier, with measured resolution time and impact if undetected. All fix times are from git commit timestamps; ``cost if missed'' is the assessed flight-day consequence}{table.caption.521}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {AH.2}What Would Change in a Second Iteration}{233}{subsection.Alph34.2}\protected@file@percent }
-\newlabel{app:what-would-change}{{AH.2}{233}{What Would Change in a Second Iteration}{subsection.Alph34.2}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {AH.3}Lessons Learned}{234}{subsection.Alph34.3}\protected@file@percent }
-\newlabel{app:lessons-learned}{{AH.3}{234}{Lessons Learned}{subsection.Alph34.3}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {AI}Development Methodology}{234}{appendix.Alph35}\protected@file@percent }
-\newlabel{app:dev-methodology}{{AI}{234}{Development Methodology}{appendix.Alph35}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {AI.1}Development Philosophy}{234}{subsection.Alph35.1}\protected@file@percent }
-\newlabel{sec:dev-philosophy}{{AI.1}{234}{Development Philosophy}{subsection.Alph35.1}{}}
+\@writefile{toc}{\contentsline {paragraph}{Probability analysis.}{239}{paragraph*.540}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Unit and integration tests.}{239}{paragraph*.541}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Runtime distance verification.}{239}{paragraph*.542}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Payload deployment.}{239}{paragraph*.543}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {AH.8}R08 --- Autonomy Level Justified}{239}{subsection.Alph34.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {AH.9}R09 --- RTH and Motor Cutoff}{239}{subsection.Alph34.9}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {AH.10}R10 --- Report Lat/Lon and Images}{240}{subsection.Alph34.10}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{GPS estimation pipeline.}{240}{paragraph*.544}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Detection snapshots and metadata.}{240}{paragraph*.545}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Flight log.}{240}{paragraph*.546}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {AH.11}R11 --- Company Pilot Designated}{240}{subsection.Alph34.11}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {AH.12}R12 --- Public GitHub Repository with MIT Licence}{241}{subsection.Alph34.12}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {AI}Evaluation Detail}{241}{appendix.Alph35}\protected@file@percent }
+\newlabel{app:eval-detail}{{AI}{241}{Evaluation Detail}{appendix.Alph35}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {AI.1}Defect Discovery Register}{241}{subsection.Alph35.1}\protected@file@percent }
+\newlabel{app:bug-cost}{{AI.1}{241}{Defect Discovery Register}{subsection.Alph35.1}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {163}{\ignorespaces Defects discovered at each testing tier, with measured resolution time and impact if undetected. All fix times are from git commit timestamps; ``cost if missed'' is the assessed flight-day consequence.}}{241}{table.caption.547}\protected@file@percent }
+\newlabel{tab:bug-cost}{{163}{241}{Defects discovered at each testing tier, with measured resolution time and impact if undetected. All fix times are from git commit timestamps; ``cost if missed'' is the assessed flight-day consequence}{table.caption.547}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {AI.2}What Would Change in a Second Iteration}{242}{subsection.Alph35.2}\protected@file@percent }
+\newlabel{app:what-would-change}{{AI.2}{242}{What Would Change in a Second Iteration}{subsection.Alph35.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {AI.3}Lessons Learned}{242}{subsection.Alph35.3}\protected@file@percent }
+\newlabel{app:lessons-learned}{{AI.3}{242}{Lessons Learned}{subsection.Alph35.3}{}}
 \gdef \LT@xlii {\LT@entry 
     {1}{12.25pt}\LT@entry 
     {1}{94.2597pt}\LT@entry 
     {1}{350.93782pt}\LT@entry 
     {1}{54.7021pt}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {AI.2}Ten-Phase Development Timeline}{235}{subsection.Alph35.2}\protected@file@percent }
-\newlabel{sec:dev-timeline}{{AI.2}{235}{Ten-Phase Development Timeline}{subsection.Alph35.2}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {159}{\ignorespaces Ten-phase development history with outcomes.}}{235}{table.caption.522}\protected@file@percent }
-\newlabel{tab:dev-phases}{{159}{235}{Ten-phase development history with outcomes}{table.caption.522}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {AI.3}Simulation Stage (Weeks 12--15)}{235}{subsection.Alph35.3}\protected@file@percent }
-\newlabel{sec:sim-stage}{{AI.3}{235}{Simulation Stage (Weeks 12--15)}{subsection.Alph35.3}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {AJ}Development Methodology}{243}{appendix.Alph36}\protected@file@percent }
+\newlabel{app:dev-methodology}{{AJ}{243}{Development Methodology}{appendix.Alph36}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {AJ.1}Development Philosophy}{243}{subsection.Alph36.1}\protected@file@percent }
+\newlabel{sec:dev-philosophy}{{AJ.1}{243}{Development Philosophy}{subsection.Alph36.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {AJ.2}Ten-Phase Development Timeline}{243}{subsection.Alph36.2}\protected@file@percent }
+\newlabel{sec:dev-timeline}{{AJ.2}{243}{Ten-Phase Development Timeline}{subsection.Alph36.2}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {164}{\ignorespaces Ten-phase development history with outcomes.}}{244}{table.caption.548}\protected@file@percent }
+\newlabel{tab:dev-phases}{{164}{244}{Ten-phase development history with outcomes}{table.caption.548}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {AJ.3}Simulation Stage (Weeks 12--15)}{244}{subsection.Alph36.3}\protected@file@percent }
+\newlabel{sec:sim-stage}{{AJ.3}{244}{Simulation Stage (Weeks 12--15)}{subsection.Alph36.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {AJ.4}Pi Deployment (Weeks 16--18)}{244}{subsection.Alph36.4}\protected@file@percent }
+\newlabel{sec:pi-deploy}{{AJ.4}{244}{Pi Deployment (Weeks 16--18)}{subsection.Alph36.4}{}}
 \gdef \LT@xliii {\LT@entry 
     {1}{27.45444pt}\LT@entry 
     {1}{79.539pt}\LT@entry 
@@ -2187,24 +2270,22 @@
     {1}{315.71808pt}\LT@entry 
     {1}{105.9808pt}\LT@entry 
     {1}{66.58908pt}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {AI.4}Pi Deployment (Weeks 16--18)}{236}{subsection.Alph35.4}\protected@file@percent }
-\newlabel{sec:pi-deploy}{{AI.4}{236}{Pi Deployment (Weeks 16--18)}{subsection.Alph35.4}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {AI.5}Field Integration (Weeks 19--20)}{236}{subsection.Alph35.5}\protected@file@percent }
-\newlabel{sec:field-int}{{AI.5}{236}{Field Integration (Weeks 19--20)}{subsection.Alph35.5}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {AI.6}Ambition Levels}{236}{subsection.Alph35.6}\protected@file@percent }
-\newlabel{sec:ambition-levels}{{AI.6}{236}{Ambition Levels}{subsection.Alph35.6}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {161}{\ignorespaces Three product levels with autonomy and demonstration scope.}}{236}{table.caption.523}\protected@file@percent }
-\newlabel{tab:ambition-levels}{{161}{236}{Three product levels with autonomy and demonstration scope}{table.caption.523}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {AI.7}Progressive Testing Ladder}{236}{subsection.Alph35.7}\protected@file@percent }
-\newlabel{sec:test-ladder}{{AI.7}{236}{Progressive Testing Ladder}{subsection.Alph35.7}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {163}{\ignorespaces Progressive flight testing ladder with scripts and risk isolation.}}{237}{table.caption.524}\protected@file@percent }
-\newlabel{tab:test-ladder}{{163}{237}{Progressive flight testing ladder with scripts and risk isolation}{table.caption.524}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {AI.8}Achievement Summary}{237}{subsection.Alph35.8}\protected@file@percent }
-\newlabel{sec:achievement-summary}{{AI.8}{237}{Achievement Summary}{subsection.Alph35.8}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {165}{\ignorespaces Simulation vs.\ real hardware readiness (0--10 scale).}}{237}{table.caption.525}\protected@file@percent }
-\newlabel{tab:sim-vs-real}{{165}{237}{Simulation vs.\ real hardware readiness (0--10 scale)}{table.caption.525}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {AI.9}Lessons for Future Teams}{237}{subsection.Alph35.9}\protected@file@percent }
-\newlabel{sec:lessons-future}{{AI.9}{237}{Lessons for Future Teams}{subsection.Alph35.9}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {AJ.5}Field Integration (Weeks 19--20)}{245}{subsection.Alph36.5}\protected@file@percent }
+\newlabel{sec:field-int}{{AJ.5}{245}{Field Integration (Weeks 19--20)}{subsection.Alph36.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {AJ.6}Ambition Levels}{245}{subsection.Alph36.6}\protected@file@percent }
+\newlabel{sec:ambition-levels}{{AJ.6}{245}{Ambition Levels}{subsection.Alph36.6}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {166}{\ignorespaces Three product levels with autonomy and demonstration scope.}}{245}{table.caption.549}\protected@file@percent }
+\newlabel{tab:ambition-levels}{{166}{245}{Three product levels with autonomy and demonstration scope}{table.caption.549}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {AJ.7}Progressive Testing Ladder}{245}{subsection.Alph36.7}\protected@file@percent }
+\newlabel{sec:test-ladder}{{AJ.7}{245}{Progressive Testing Ladder}{subsection.Alph36.7}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {168}{\ignorespaces Progressive flight testing ladder with scripts and risk isolation.}}{245}{table.caption.550}\protected@file@percent }
+\newlabel{tab:test-ladder}{{168}{245}{Progressive flight testing ladder with scripts and risk isolation}{table.caption.550}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {AJ.8}Achievement Summary}{246}{subsection.Alph36.8}\protected@file@percent }
+\newlabel{sec:achievement-summary}{{AJ.8}{246}{Achievement Summary}{subsection.Alph36.8}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {170}{\ignorespaces Simulation vs.\ real hardware readiness (0--10 scale).}}{246}{table.caption.551}\protected@file@percent }
+\newlabel{tab:sim-vs-real}{{170}{246}{Simulation vs.\ real hardware readiness (0--10 scale)}{table.caption.551}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {AJ.9}Lessons for Future Teams}{246}{subsection.Alph36.9}\protected@file@percent }
+\newlabel{sec:lessons-future}{{AJ.9}{246}{Lessons for Future Teams}{subsection.Alph36.9}{}}
 \abx@aux@read@bbl@mdfivesum{BA539A82DF3BF08CE63636FDFA07097E}
 \abx@aux@read@bblrerun
 \abx@aux@defaultrefcontext{0}{mra2023}{none/global//global/global/global}
@@ -2278,4 +2359,4 @@
 \abx@aux@defaultrefcontext{0}{mavlink2}{none/global//global/global/global}
 \abx@aux@defaultrefcontext{0}{settles2009active}{none/global//global/global/global}
 \abx@aux@defaultrefcontext{0}{golden2006hypothermia}{none/global//global/global/global}
-\gdef \@abspage@last{238}
+\gdef \@abspage@last{246}

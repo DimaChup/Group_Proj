@@ -24,6 +24,7 @@
 \usepackage{ltablex}
 \usepackage{siunitx}
 \usepackage{multirow}
+\usepackage{makecell}
 
 % ── Math & Science ──────────────────────────────────────────────────────
 \usepackage{amsmath,amssymb}
@@ -262,10 +263,13 @@ AC & Design strategy: parameter derivation chain --- logical dependency reasonin
 AD & Vision performance analysis --- altitude vs.\ pixel size, motion blur, detection envelope (real data). \\
 AE & Decision flow --- executive narrative of how search parameters were selected. \\
 \addlinespace
+\multicolumn{2}{@{}l}{\textit{Estimation evaluation}} \\
+AG & Evaluating GPS estimation against ground truth --- bullseye scatter, convergence, error budget, heading bias, centrality weighting. \\
+\addlinespace
 \multicolumn{2}{@{}l}{\textit{Extended body sections}} \\
-AF & Requirements verification detail --- R01--R12 evidence narratives. \\
-AG & Evaluation detail --- defect register, lessons learned, second iteration changes. \\
-AH & Development methodology --- simulation-first philosophy, 10-phase timeline, progressive testing, ambition levels, lessons for future teams. \\
+AH & Requirements verification detail --- R01--R12 evidence narratives. \\
+AI & Evaluation detail --- defect register, lessons learned, second iteration changes. \\
+AJ & Development methodology --- simulation-first philosophy, 10-phase timeline, progressive testing, ambition levels, lessons for future teams. \\
 \bottomrule
 \end{tabularx}
 
@@ -370,13 +374,16 @@ AH & Development methodology --- simulation-first philosophy, 10-phase timeline,
 % Appendix AF: Target Geolocation Approaches (literature survey + justification)
 \input{sections/localization_approaches}
 
-% Appendix AG: Requirements verification detail (R01--R12 evidence)
+% Appendix AG: Evaluating GPS Estimation Against Ground Truth
+\input{sections/estimation_evaluation}
+
+% Appendix AH: Requirements verification detail (R01--R12 evidence)
 \input{sections/requirements_detail}
 
-% Appendix AG: Evaluation detail (defect register, lessons learned, second iteration)
+% Appendix AI: Evaluation detail (defect register, lessons learned, second iteration)
 \input{sections/evaluation_detail}
 
-% Appendix AH: Development methodology (simulation-first, progressive trust, timeline)
+% Appendix AJ: Development methodology (simulation-first, progressive trust, timeline)
 \input{sections/development_methodology}
 
 % (Removed) Alternative text versions — draft working material, not for submission
