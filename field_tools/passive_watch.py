@@ -2684,6 +2684,8 @@ def inference_worker(args_ref, csv_writer_ref, csv_file_ref):
 
     _auto_clear_at = None    # timestamp when auto-clear should fire
     _auto_clear_done = False  # True after first auto-clear (only fires once)
+    # Store on module so display thread can reset via P key
+    _mod._auto_clear_reset_requested = False
 
     # last_det is set on the module so display thread can read it
     _mod = sys.modules.get('field_tools.passive_watch') or sys.modules.get('__main__')
@@ -2841,6 +2843,12 @@ def inference_worker(args_ref, csv_writer_ref, csv_file_ref):
                     # Auto-clear: fire ONCE after first lock, so second lock is independent
                     if args_ref.auto_clear > 0 and not _auto_clear_done:
                         _auto_clear_at = time.time() + args_ref.auto_clear
+
+            # ── P key: reset auto-clear cycle ──
+            if getattr(_mod, '_auto_clear_reset_requested', False):
+                _mod._auto_clear_reset_requested = False
+                _auto_clear_done = False
+                _auto_clear_at = None
 
             # ── Auto-clear timer (fires once only) ──
             if _auto_clear_at is not None and time.time() >= _auto_clear_at:
@@ -3445,6 +3453,32 @@ def main():
                 stats["detections"] = 0
                 stats["saved"] = 0
                 print("\n  [CLEAR ALL] Reset SMART + detections. Ready for next detection.\n")
+            elif key == 'p' and args.auto_clear > 0:
+                # Re-trigger the two-image cycle: clear → detect → lock → wait → clear → detect → lock → done
+                _all_gps_estimates.clear()
+                dummy_estimator.reset()
+                if smart_estimator:
+                    smart_estimator.__init__(min_samples=smart_estimator.min_samples, max_spread=smart_estimator.max_spread)
+                _g = globals()
+                _g['_best_center_dist'] = 999.0
+                _g['_best_detection_gps'] = None
+                _g['_snap_request_best'] = False
+                _g['_snap_request_latest'] = False
+                _g['_snap_jpeg_best'] = None
+                _g['_snap_jpeg_latest'] = None
+                draw_overlay._last_class = ''
+                _g['_last_det'] = None
+                _g['latest_detection_jpeg'] = None
+                _g['latest_best_jpeg'] = None
+                _g['latest_bullseye'] = None
+                _g['latest_smart_grid_jpeg'] = None
+                _g['_smart_result_saved'] = False
+                _g['_survey_result_saved'] = False
+                stats["detections"] = 0
+                stats["saved"] = 0
+                # Signal inference thread to reset auto-clear cycle
+                _mod._auto_clear_reset_requested = True
+                print(f"\n  [P] Two-image cycle restarted. Detecting first target...\n")
         except Exception:
             pass
 
