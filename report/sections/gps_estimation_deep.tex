@@ -6,6 +6,43 @@
 
 Translating a bounding-box centre in a camera frame into a world-referenced GPS coordinate is arguably the most error-sensitive computation in the entire SAR pipeline.  Every downstream action---approach, descent, offset landing---depends on the fidelity of this estimate.  A single observation combines at least six independent noise sources (GPS receiver, barometer, compass, camera intrinsics, camera extrinsics, and timing lag), and the engineering challenge is to fuse many such observations into a position estimate precise enough to guide a safe offset landing.  This appendix presents the full mathematical derivation of the pixel-to-GPS projection, catalogues and quantifies the dominant error sources, compares three estimation strategies and four fusion algorithms, describes the spatial clustering algorithm that handles multi-target scenarios, and reports the empirical accuracy obtained from both DJI flight-video replay and interactive simulator trials.
 
+\paragraph{Appendix roadmap.}
+This appendix is organised into seven parts, progressing from low-level image processing to system-level validation:
+
+\begin{description}[leftmargin=1.8em, labelindent=0em, font=\bfseries]
+
+\item[Part~I --- Vision Pipeline] \emph{How we detect and locate in pixels.}\\
+  The 15-stage detection-to-GPS pipeline (Section~\ref{sec:pipeline-overview}), resize handling and coordinate rescaling (Section~\ref{sec:resize-pipeline}).
+
+\item[Part~II --- Pixel-to-GPS Conversion] \emph{How pixels become coordinates.}\\
+  Ground sampling distance, camera-frame to body-frame to NED rotation, and WGS\,84 projection (Section~\ref{sec:gps-math}).
+
+\item[Part~III --- Error Sources] \emph{What goes wrong.}\\
+  Nine-source error budget table (Section~\ref{sec:error-budget}) and roll/pitch analysis showing \SI{6.2}{\metre} error at $10^{\circ}$ tilt (Section~\ref{sec:roll-pitch-analysis}).
+
+\item[Part~IV --- Attitude Compensation] \emph{Our key innovation.}\\
+  The rotation-matrix approach (Section~\ref{sec:tilt-compensation}), 1440-test verification, error reduction from \SI{6.2}{\metre} to \SI{0.3}{\metre}, and literature comparison against standard aerospace methods.
+
+\item[Part~V --- Three Levels of Estimation] \emph{Simple $\to$ advanced.}\\
+  Level~1: passive flyover, $\sim$\SI{3.5}{\metre} with compensation (Section~\ref{sec:level-1-passive}).
+  Level~2: stop-and-look hover, $\sim$\SI{2.5}{\metre} (Section~\ref{sec:hover-in-place}).
+  Level~3: visual centering where drone GPS $=$ target GPS, $\sim$\SI{1.8}{\metre} (Section~\ref{sec:level-3-centering}).
+  Comparative evaluation (Section~\ref{sec:two-approaches}).
+  Centering as multi-error mitigation (Section~\ref{sec:centering-mitigation}).
+
+\item[Part~VI --- The Four-Phase Mission Flow] \emph{How it all comes together.}\\
+  Phase~1: initial detection with tilt compensation.
+  Phase~2: approach with continuous refinement.
+  Phase~3: hover lock with nadir confirmation.
+  Phase~4: operator verification.
+  False positive handling (Section~\ref{sec:false-positive-handling}).
+  Full flow in Section~\ref{sec:two-step}.
+
+\item[Part~VII --- Validation] \emph{Does it work?}\\
+  DJI video replay results (Section~\ref{sec:dji-validation}), seven-method ground truth comparison (Section~\ref{sec:empirical-comparison}), GPS averaging analysis (Section~\ref{sec:gps-averaging}), fusion strategies and why inverse-variance weighting won (Sections~\ref{sec:fusion-strategies}--\ref{sec:why-ivw}), and multi-pass observation (Section~\ref{sec:multi-pass}).
+
+\end{description}
+
 % =====================================================================
 \subsection{Strategy Roadmap}\label{sec:strategy-roadmap}
 
