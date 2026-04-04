@@ -1,0 +1,108 @@
+# Safety Section Deep-Polish Review
+
+**File:** `report/sections/13_safety_risk.tex`
+**Date:** 2026-04-04
+**Before:** ~115 lines, 6 subsections
+**After:** ~200 lines, 8 subsections
+
+---
+
+## What Was Added
+
+### 1. Risk Assessment Matrix (NEW subsection)
+- **3x3 likelihood-severity matrix** (Table `tab:risk-matrix`) with color-coded cells (red/amber/green using `\cellcolor`)
+- Risk IDs (R1--R11) mapped to matrix cells for traceability
+- Clear thresholds: High = must eliminate before flight; Medium = documented mitigations required; Low = accepted with monitoring
+
+### 2. Risk Register Overhaul
+- Added **risk IDs** (R1--R11) for cross-referencing with matrix and lessons learned
+- Added **pre-mitigation and post-mitigation risk ratings** with color coding
+- Added **traceability column** linking each risk to implementing code module, ArduCopter parameter, or requirement ID
+- Added two new risks previously missing:
+  - **R10: Altitude exceedance** -- 50m hard cap in `navigation.py` line 50-52 + `config.py` import-time check
+  - **R11: Mode fighting** -- RC override guard, traced to LL-01 incident
+- Added narrative paragraph explaining R11 origin from real crash incident
+
+### 3. Geofence Section Improvements
+- Fixed speed values: was claiming 0.3 m/s minimum (wrong); corrected to 0.0 m/s at 2m (`NFZ_SCALAR_ZERO_M`)
+- Added directional vs total clamping distinction (`--nfz-total-speed` flag)
+- Added **implementation trace** for each layer (file + method name)
+- Added Flight Area containment check (R01) as separate paragraph -- was entirely missing
+- Added 50m altitude hard cap (R04) paragraph with code reference
+
+### 4. Failure Mode Table Improvements
+- Added **verification status column** (SITL/Bench/Unit test)
+- Added 3 new failure modes previously missing:
+  - Flight area breach -> immediate RTL
+  - Landing stall -> 90s forced disarm (from `state_machine.py` line 798)
+  - Mode fighting -> all commands suppressed
+- Tightened wording throughout
+
+### 5. Operator-in-the-Loop Improvements
+- Added reference to browser ground station URL
+- Added triple-input-channel paragraph: terminal keyboard, browser buttons, cv2.waitKey -- ensures operator is never locked out by single interface failure
+
+### 6. Emergency Procedures Improvements
+- Added RC override guard detail: suppresses commands on same loop iteration
+- Added Ctrl+C wrapping detail: KeyboardInterrupt handler + top-level try/except
+- Added Manual override resume validation: GPS fix + NFZ position check
+- Added explicit statement that firmware failsafes need no functioning companion computer
+
+### 7. Pre-Flight and In-Flight Procedures (NEW subsection)
+- **Table `tab:preflight`**: 10 mandatory pre-flight checks, each with action and rationale linked to risk ID or lesson learned
+- Covers: DISARM_DELAY, GCS failsafe, battery, RC kill switch, GPS, model file, calibration data, mavproxy, wind, site clearance
+- In-flight monitoring responsibilities: VLOS, Verify response, kill switch readiness
+- LINK LOST banner mention
+
+### 8. Lessons Learned from Testing (NEW subsection)
+- **Table `tab:lessons`**: 5 safety-relevant incidents with incident description, root cause, and design change
+- LL-01 (mode fighting crash), LL-03 (TFLite bbox bug), LL-04 (corrupt calibration), LL-06 (auto-disarm), LL-08 (geofence sign inversion)
+- Narrative paragraph emphasizing LL-01 as studied from colleague's crash and reproduced in simulation
+
+### 9. Regulatory Section Restructured
+- Split into three paragraphs: SSSI protection, Data protection (GDPR), Future BVLOS pathway
+- Data protection paragraph explicitly addresses: on-device inference, no network transmission, no facial features stored, frames discarded after inference
+- All previously present content preserved
+
+---
+
+## Cross-Reference Verification
+
+Every safety claim is now traced to implementation evidence:
+
+| Claim | Evidence |
+|-------|----------|
+| Five-layer geofence | `geofence.py` + `main.py` `_enforce_geofence()` |
+| 50m altitude cap | `navigation.py` line 50-52: `if alt > 50: alt = min(alt, 50)` |
+| RC override guard | `main.py` first check in main loop, `custom_mode not in (4, 9)` |
+| GPS degradation RTL | `main.py` 5s persistence filter on `GPS_RAW_INT` |
+| 90s landing timeout | `state_machine.py` line 798: `LANDING_TIMEOUT_S = 90.0` |
+| Landing spot NFZ check | `main.py` tries 4 cardinal directions, picks furthest from NFZ |
+| Operator timeout 120s | `state_machine.py` VERIFY state |
+| Flight area RTL | `main.py` `_emergency_rtl("Outside Flight Area boundary")` |
+| Emergency RTL on Ctrl+C | `main.py` KeyboardInterrupt handler |
+| Resume safety checks | `state_machine.py` GPS + NFZ validation in RETURN_FROM_MANUAL |
+| Camera loss handling | `main.py` "CAMERA LOST" overlay, 5s warning interval |
+
+---
+
+## Gaps Remaining (minor)
+
+1. **No figure reference**: `\ref{fig:geofence-layers}` is referenced but the figure must exist elsewhere (e.g., generated by `report/figs/gen_geofence_layers.py`). If missing, remove the reference or add the figure.
+2. **Landing spot NFZ check** is mentioned in geofence documentation but not in the safety section tables -- could add as a row if space permits.
+3. **No quantitative wind limit** is cited (20 kn is stated but not from a formal source). Consider referencing Hexsoon EDU-450 specs if available.
+4. **`colortbl` or `xcolor` package** required for `\cellcolor` in the risk matrix. Ensure the main .tex file has `\usepackage[table]{xcolor}` or `\usepackage{colortbl}`.
+
+---
+
+## Scoring Impact Estimate
+
+| Criterion | Before | After | Delta |
+|-----------|--------|-------|-------|
+| Risk matrix with color coding | Missing | Full 3x3 matrix + risk IDs | +2 |
+| Specific mitigations (not generic) | Partial | Every risk has code-traced mitigation | +1 |
+| Safety features in code | Listed but not traced | Traced to file, method, line | +1 |
+| Regulatory (CAA, GDPR, SSSI) | Present but thin on GDPR | Structured paragraphs with specifics | +0.5 |
+| Operator procedures | Missing | Pre-flight table + in-flight monitoring | +2 |
+| Lessons learned | Missing | 5-incident table with root cause analysis | +2 |
+| **Estimated total improvement** | | | **+5 to +8 marks** |
