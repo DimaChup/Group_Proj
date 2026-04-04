@@ -22,7 +22,7 @@
 \contentsline {paragraph}{Camera resolution: $640 \times 480$ $\rightarrow $ $1456 \times 1088$.}{19}{paragraph*.16}%
 \contentsline {paragraph}{TFLite runtime: \texttt {tflite-runtime} $\rightarrow $ \texttt {ai-edge-litert}.}{19}{paragraph*.17}%
 \contentsline {paragraph}{Serial communication: pyserial $\rightarrow $ MAVProxy UDP bridge.}{19}{paragraph*.18}%
-\contentsline {subsection}{\numberline {1.11}Why Not ROS}{19}{subsection.1.11}%
+\contentsline {subsection}{\numberline {1.11}Why Not ROS}{20}{subsection.1.11}%
 \contentsline {subsection}{\numberline {1.12}Camera Selection: Global vs Rolling Shutter}{20}{subsection.1.12}%
 \contentsline {subsection}{\numberline {1.13}Field Day Adaptation Under Uncertainty}{20}{subsection.1.13}%
 \contentsline {paragraph}{Decision flow narrative.}{20}{paragraph*.19}%
@@ -35,20 +35,20 @@
 \contentsline {paragraph}{Inference.}{23}{paragraph*.28}%
 \contentsline {paragraph}{Three backends.}{23}{paragraph*.29}%
 \contentsline {paragraph}{Smart detection mode.}{23}{paragraph*.31}%
-\contentsline {paragraph}{Performance.}{23}{paragraph*.32}%
+\contentsline {paragraph}{Performance.}{24}{paragraph*.32}%
 \contentsline {subsection}{\numberline {2.4}Search Pattern Generation}{24}{subsection.2.4}%
-\contentsline {paragraph}{Coverage guarantee.}{24}{paragraph*.33}%
-\contentsline {subsection}{\numberline {2.5}Mission State Machine}{24}{subsection.2.5}%
+\contentsline {paragraph}{Coverage guarantee.}{25}{paragraph*.33}%
+\contentsline {subsection}{\numberline {2.5}Mission State Machine}{25}{subsection.2.5}%
 \contentsline {subsection}{\numberline {2.6}Target Localisation}{25}{subsection.2.6}%
 \contentsline {subsection}{\numberline {2.7}Ground Station}{26}{subsection.2.7}%
-\contentsline {subsection}{\numberline {2.8}Simulation Framework}{26}{subsection.2.8}%
+\contentsline {subsection}{\numberline {2.8}Simulation Framework}{27}{subsection.2.8}%
 \contentsline {section}{\numberline {3}Requirements Verification}{27}{section.3}%
 \contentsline {section}{\numberline {4}Evaluation}{28}{section.4}%
-\contentsline {subsection}{\numberline {4.1}Plus/Delta Summary}{28}{subsection.4.1}%
-\contentsline {subsection}{\numberline {4.2}Discussion of Key Findings}{28}{subsection.4.2}%
-\contentsline {subsection}{\numberline {4.3}Testing Framework Summary}{29}{subsection.4.3}%
-\contentsline {paragraph}{Summary.}{29}{paragraph*.43}%
-\contentsline {section}{References}{30}{paragraph*.43}%
+\contentsline {subsection}{\numberline {4.1}Plus/Delta Summary}{29}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Discussion of Key Findings}{29}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}Testing Framework Summary}{30}{subsection.4.3}%
+\contentsline {paragraph}{Summary.}{30}{paragraph*.43}%
+\contentsline {section}{References}{31}{paragraph*.43}%
 \contentsline {section}{Appendix Guide}{32}{paragraph*.43}%
 \contentsline {section}{\numberline {A}State Transition Table}{33}{appendix.A}%
 \contentsline {section}{\numberline {B}Configuration Parameters}{35}{appendix.B}%

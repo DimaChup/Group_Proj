@@ -1,7 +1,0 @@
-[0] Config.pm:328> INFO - This is Biber 2.21
-[0] Config.pm:331> INFO - Logfile is 'main.blg'
-[248] biber-MSWIN64:342> INFO - === 
-[460] Utils.pm:350> DEBUG - Looking for file 'main.bcf' via kpsewhich
-[1348] Utils.pm:365> DEBUG - Found 'main.bcf' via kpsewhich
-[1350] Utils.pm:479> ERROR - Cannot find control file 'main.bcf'! - Did latex run successfully on your .tex file before you ran biber?
-[1350] Biber.pm:137> INFO - ERRORS: 1

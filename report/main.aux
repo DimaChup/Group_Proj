@@ -53,7 +53,7 @@
     {1}{23.86168pt}\LT@entry 
     {1}{81.31226pt}\LT@entry 
     {1}{46.86783pt}\LT@entry 
-    {1}{338.21347pt}}
+    {1}{360.10786pt}}
 \@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Altitude--speed trade-off space. Colour encodes composite mission score (40\% detection $+$ 35\% coverage $+$ 25\% energy). The selected operating point (\SI {35}{\metre }, \SI {8}{\metre \per \second }) sits above the 95\% detection contour in the high-score region, trading \SI {4.4}{Wh} of energy (10.9\% of battery) for a comfortable detection margin.}}{16}{figure.caption.9}\protected@file@percent }
 \newlabel{fig:alt-speed-body}{{2}{16}{Altitude--speed trade-off space. Colour encodes composite mission score (40\% detection $+$ 35\% coverage $+$ 25\% energy). The selected operating point (\SI {35}{\metre }, \SI {8}{\metre \per \second }) sits above the 95\% detection contour in the high-score region, trading \SI {4.4}{Wh} of energy (10.9\% of battery) for a comfortable detection margin}{figure.caption.9}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {1.3}Parameter Derivation Chain}{16}{subsection.1.3}\protected@file@percent }
@@ -150,8 +150,6 @@
 \@writefile{toc}{\contentsline {paragraph}{Camera resolution: $640 \times 480$ $\rightarrow $ $1456 \times 1088$.}{19}{paragraph*.16}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{TFLite runtime: \texttt  {tflite-runtime} $\rightarrow $ \texttt  {ai-edge-litert}.}{19}{paragraph*.17}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Serial communication: pyserial $\rightarrow $ MAVProxy UDP bridge.}{19}{paragraph*.18}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {1.11}Why Not ROS}{19}{subsection.1.11}\protected@file@percent }
-\newlabel{sec:ros-rationale}{{1.11}{19}{Why Not ROS}{subsection.1.11}{}}
 \abx@aux@cite{0}{imx296}
 \abx@aux@segm{0}{0}{imx296}
 \abx@aux@cite{0}{sukhatme2012rolling_global}
@@ -162,6 +160,8 @@
     {1}{104.6386pt}\LT@entry 
     {1}{210.97406pt}\LT@entry 
     {1}{44.22806pt}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.11}Why Not ROS}{20}{subsection.1.11}\protected@file@percent }
+\newlabel{sec:ros-rationale}{{1.11}{20}{Why Not ROS}{subsection.1.11}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {1.12}Camera Selection: Global vs Rolling Shutter}{20}{subsection.1.12}\protected@file@percent }
 \newlabel{sec:camera-rationale}{{1.12}{20}{Camera Selection: Global vs Rolling Shutter}{subsection.1.12}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {1.13}Field Day Adaptation Under Uncertainty}{20}{subsection.1.13}\protected@file@percent }
@@ -171,16 +171,14 @@
 \newlabel{sec:sysdesc}{{2}{20}{System Description}{section.2}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Hardware Platform}{20}{subsection.2.1}\protected@file@percent }
 \newlabel{sec:hw}{{2.1}{20}{Hardware Platform}{subsection.2.1}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {14}{\ignorespaces System bill of materials and approximate costs.}}{20}{table.caption.21}\protected@file@percent }
-\newlabel{tab:hw-bom}{{14}{20}{System bill of materials and approximate costs}{table.caption.21}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Mission overview on the Fenswood Farm site. The lawnmower search pattern covers the designated survey polygon at \SI {35}{\metre } altitude, with the take-off point, return-to-launch path, and SSSI no-fly zone boundary shown. The flight area boundary constrains all autonomous waypoints.}}{21}{figure.caption.20}\protected@file@percent }
 \newlabel{fig:mission_overview}{{3}{21}{Mission overview on the Fenswood Farm site. The lawnmower search pattern covers the designated survey polygon at \SI {35}{\metre } altitude, with the take-off point, return-to-launch path, and SSSI no-fly zone boundary shown. The flight area boundary constrains all autonomous waypoints}{figure.caption.20}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Software Architecture}{21}{subsection.2.2}\protected@file@percent }
 \newlabel{sec:sw-arch}{{2.2}{21}{Software Architecture}{subsection.2.2}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {14}{\ignorespaces System bill of materials and approximate costs.}}{22}{table.caption.21}\protected@file@percent }
+\newlabel{tab:hw-bom}{{14}{22}{System bill of materials and approximate costs}{table.caption.21}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Module dependency graph. Independent modules have no cross-dependencies; the orchestrator composes them at runtime.}}{22}{figure.caption.22}\protected@file@percent }
 \newlabel{fig:architecture}{{4}{22}{Module dependency graph. Independent modules have no cross-dependencies; the orchestrator composes them at runtime}{figure.caption.22}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {16}{\ignorespaces MAVLink commands used by the navigation module.}}{22}{table.caption.24}\protected@file@percent }
-\newlabel{tab:mavlink-commands}{{16}{22}{MAVLink commands used by the navigation module}{table.caption.24}{}}
 \@writefile{toc}{\contentsline {paragraph}{Geofence enforcement.}{22}{paragraph*.25}\protected@file@percent }
 \abx@aux@cite{0}{yolov8}
 \abx@aux@segm{0}{0}{yolov8}
@@ -188,28 +186,30 @@
 \abx@aux@segm{0}{0}{tflite}
 \abx@aux@cite{0}{ncnn}
 \abx@aux@segm{0}{0}{ncnn}
-\abx@aux@cite{0}{choset2001coverage}
-\abx@aux@segm{0}{0}{choset2001coverage}
 \@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Raspberry Pi~5 companion computer system: hardware interfaces and data flow between the CSI camera, TFLite inference engine, MAVProxy bridge, and ground station.}}{23}{figure.caption.23}\protected@file@percent }
 \newlabel{fig:pi_system}{{5}{23}{Raspberry Pi~5 companion computer system: hardware interfaces and data flow between the CSI camera, TFLite inference engine, MAVProxy bridge, and ground station}{figure.caption.23}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {16}{\ignorespaces MAVLink commands used by the navigation module.}}{23}{table.caption.24}\protected@file@percent }
+\newlabel{tab:mavlink-commands}{{16}{23}{MAVLink commands used by the navigation module}{table.caption.24}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Computer Vision Pipeline}{23}{subsection.2.3}\protected@file@percent }
 \newlabel{sec:cv}{{2.3}{23}{Computer Vision Pipeline}{subsection.2.3}{}}
 \@writefile{toc}{\contentsline {paragraph}{Preprocessing.}{23}{paragraph*.27}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Inference.}{23}{paragraph*.28}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Three backends.}{23}{paragraph*.29}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Smart detection mode.}{23}{paragraph*.31}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Performance.}{23}{paragraph*.32}\protected@file@percent }
+\abx@aux@cite{0}{choset2001coverage}
+\abx@aux@segm{0}{0}{choset2001coverage}
 \@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Geofence protection visualisation. (a)~Five protection layers: Flight Area hard boundary (emergency RTL), SSSI no-fly zone with 30\,m waypoint buffer, 20\,m speed ramp, 3\,m repulsive field, and hard cutoff. (b)~Repulsive force field that deflects the drone away from the SSSI boundary. (c)~Waypoint correction: the commanded waypoint (red) is shifted to a safe position (green) by the repulsive offset. (d)~Emergency mode switch when the drone enters the SSSI zone.}}{24}{figure.caption.26}\protected@file@percent }
 \newlabel{fig:geofence_diagram}{{6}{24}{Geofence protection visualisation. (a)~Five protection layers: Flight Area hard boundary (emergency RTL), SSSI no-fly zone with 30\,m waypoint buffer, 20\,m speed ramp, 3\,m repulsive field, and hard cutoff. (b)~Repulsive force field that deflects the drone away from the SSSI boundary. (c)~Waypoint correction: the commanded waypoint (red) is shifted to a safe position (green) by the repulsive offset. (d)~Emergency mode switch when the drone enters the SSSI zone}{figure.caption.26}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Computer vision pipeline: frame capture, lens undistortion, resize to $640\times 640$, TFLite inference, confidence filtering, and coordinate rescaling. The entire pipeline executes in 208\,ms on the Pi~5.}}{24}{figure.caption.30}\protected@file@percent }
 \newlabel{fig:cv_pipeline}{{7}{24}{Computer vision pipeline: frame capture, lens undistortion, resize to $640\times 640$, TFLite inference, confidence filtering, and coordinate rescaling. The entire pipeline executes in 208\,ms on the Pi~5}{figure.caption.30}{}}
+\@writefile{toc}{\contentsline {paragraph}{Performance.}{24}{paragraph*.32}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.4}Search Pattern Generation}{24}{subsection.2.4}\protected@file@percent }
 \newlabel{sec:search-pattern}{{2.4}{24}{Search Pattern Generation}{subsection.2.4}{}}
-\@writefile{toc}{\contentsline {paragraph}{Coverage guarantee.}{24}{paragraph*.33}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.5}Mission State Machine}{24}{subsection.2.5}\protected@file@percent }
-\newlabel{sec:state-machine}{{2.5}{24}{Mission State Machine}{subsection.2.5}{}}
+\@writefile{toc}{\contentsline {paragraph}{Coverage guarantee.}{25}{paragraph*.33}\protected@file@percent }
 \@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Area coverage progression over time for the boustrophedon search pattern at \SI {35}{\metre } altitude.}}{25}{figure.caption.34}\protected@file@percent }
 \newlabel{fig:coverage_vs_time}{{8}{25}{Area coverage progression over time for the boustrophedon search pattern at \SI {35}{\metre } altitude}{figure.caption.34}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.5}Mission State Machine}{25}{subsection.2.5}\protected@file@percent }
+\newlabel{sec:state-machine}{{2.5}{25}{Mission State Machine}{subsection.2.5}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.6}Target Localisation}{25}{subsection.2.6}\protected@file@percent }
 \newlabel{sec:localisation}{{2.6}{25}{Target Localisation}{subsection.2.6}{}}
 \newlabel{eq:gsd-sysdesc}{{1}{25}{Target Localisation}{equation.1}{}}
@@ -217,14 +217,14 @@
 \newlabel{fig:state_machine}{{9}{26}{State transition diagram. Primary mission path flows left to right; engagement branches downward from SEARCH. Manual override (dashed) is accessible from any active state}{figure.caption.35}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.7}Ground Station}{26}{subsection.2.7}\protected@file@percent }
 \newlabel{sec:groundstation}{{2.7}{26}{Ground Station}{subsection.2.7}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.8}Simulation Framework}{26}{subsection.2.8}\protected@file@percent }
-\newlabel{sec:simulation}{{2.8}{26}{Simulation Framework}{subsection.2.8}{}}
 \newlabel{fig:gps_bullseye}{{10a}{27}{GPS estimation error scatter (bullseye). CEP$_{50}$ = 2.3\,m shown as dashed circle}{figure.caption.36}{}}
 \newlabel{sub@fig:gps_bullseye}{{a}{27}{GPS estimation error scatter (bullseye). CEP$_{50}$ = 2.3\,m shown as dashed circle}{figure.caption.36}{}}
 \newlabel{fig:gps_error_direction}{{10b}{27}{Directional error distribution showing heading-aligned elongation from GPS timing lag}{figure.caption.36}{}}
 \newlabel{sub@fig:gps_error_direction}{{b}{27}{Directional error distribution showing heading-aligned elongation from GPS timing lag}{figure.caption.36}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces Target localisation accuracy from DJI flight video replay analysis.}}{27}{figure.caption.36}\protected@file@percent }
 \newlabel{fig:gps_accuracy}{{10}{27}{Target localisation accuracy from DJI flight video replay analysis}{figure.caption.36}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.8}Simulation Framework}{27}{subsection.2.8}\protected@file@percent }
+\newlabel{sec:simulation}{{2.8}{27}{Simulation Framework}{subsection.2.8}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces Mission timeline showing state transitions during a simulated end-to-end SAR mission. The horizontal axis represents elapsed time; coloured blocks indicate active states.}}{27}{figure.caption.37}\protected@file@percent }
 \newlabel{fig:mission_timeline}{{11}{27}{Mission timeline showing state transitions during a simulated end-to-end SAR mission. The horizontal axis represents elapsed time; coloured blocks indicate active states}{figure.caption.37}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {3}Requirements Verification}{27}{section.3}\protected@file@percent }
@@ -237,26 +237,26 @@
 \newlabel{tab:req-verification}{{17}{28}{Requirements verification summary. Status indicates the highest fidelity at which each requirement has been tested}{table.caption.38}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {4}Evaluation}{28}{section.4}\protected@file@percent }
 \newlabel{sec:evaluation}{{4}{28}{Evaluation}{section.4}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Plus/Delta Summary}{28}{subsection.4.1}\protected@file@percent }
-\newlabel{sec:plus-delta}{{4.1}{28}{Plus/Delta Summary}{subsection.4.1}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Discussion of Key Findings}{28}{subsection.4.2}\protected@file@percent }
-\newlabel{sec:eval-discussion}{{4.2}{28}{Discussion of Key Findings}{subsection.4.2}{}}
-\newlabel{fig:conf_vs_alt}{{12a}{28}{Detection confidence vs.\ altitude. Confidence remains above 0.9 up to \SI {40}{\metre }, dropping at higher altitudes as the target subtends fewer pixels}{figure.caption.40}{}}
-\newlabel{sub@fig:conf_vs_alt}{{a}{28}{Detection confidence vs.\ altitude. Confidence remains above 0.9 up to \SI {40}{\metre }, dropping at higher altitudes as the target subtends fewer pixels}{figure.caption.40}{}}
-\newlabel{fig:det_vs_speed}{{12b}{28}{Detection rate vs.\ flight speed. At the nominal search speed of \SI {8}{\metre \per \second }, detection rate exceeds 95\%}{figure.caption.40}{}}
-\newlabel{sub@fig:det_vs_speed}{{b}{28}{Detection rate vs.\ flight speed. At the nominal search speed of \SI {8}{\metre \per \second }, detection rate exceeds 95\%}{figure.caption.40}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {12}{\ignorespaces Detection performance sensitivity analysis from DJI flight video replay.}}{28}{figure.caption.40}\protected@file@percent }
-\newlabel{fig:det_sensitivity}{{12}{28}{Detection performance sensitivity analysis from DJI flight video replay}{figure.caption.40}{}}
-\newlabel{fig:latency_breakdown}{{13a}{28}{Per-frame latency breakdown: capture, undistortion, resize, inference, and postprocessing}{figure.caption.41}{}}
-\newlabel{sub@fig:latency_breakdown}{{a}{28}{Per-frame latency breakdown: capture, undistortion, resize, inference, and postprocessing}{figure.caption.41}{}}
-\newlabel{fig:detection_heatmap}{{13b}{28}{Spatial detection heatmap showing detection density across the survey area during simulated search}{figure.caption.41}{}}
-\newlabel{sub@fig:detection_heatmap}{{b}{28}{Spatial detection heatmap showing detection density across the survey area during simulated search}{figure.caption.41}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {13}{\ignorespaces System performance: inference latency budget and spatial detection distribution.}}{28}{figure.caption.41}\protected@file@percent }
-\newlabel{fig:perf_analysis}{{13}{28}{System performance: inference latency budget and spatial detection distribution}{figure.caption.41}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Testing Framework Summary}{29}{subsection.4.3}\protected@file@percent }
-\newlabel{sec:test-framework-summary}{{4.3}{29}{Testing Framework Summary}{subsection.4.3}{}}
-\@writefile{toc}{\contentsline {paragraph}{Summary.}{29}{paragraph*.43}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{References}{30}{paragraph*.43}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Plus/Delta Summary}{29}{subsection.4.1}\protected@file@percent }
+\newlabel{sec:plus-delta}{{4.1}{29}{Plus/Delta Summary}{subsection.4.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Discussion of Key Findings}{29}{subsection.4.2}\protected@file@percent }
+\newlabel{sec:eval-discussion}{{4.2}{29}{Discussion of Key Findings}{subsection.4.2}{}}
+\newlabel{fig:conf_vs_alt}{{12a}{29}{Detection confidence vs.\ altitude. Confidence remains above 0.9 up to \SI {40}{\metre }, dropping at higher altitudes as the target subtends fewer pixels}{figure.caption.40}{}}
+\newlabel{sub@fig:conf_vs_alt}{{a}{29}{Detection confidence vs.\ altitude. Confidence remains above 0.9 up to \SI {40}{\metre }, dropping at higher altitudes as the target subtends fewer pixels}{figure.caption.40}{}}
+\newlabel{fig:det_vs_speed}{{12b}{29}{Detection rate vs.\ flight speed. At the nominal search speed of \SI {8}{\metre \per \second }, detection rate exceeds 95\%}{figure.caption.40}{}}
+\newlabel{sub@fig:det_vs_speed}{{b}{29}{Detection rate vs.\ flight speed. At the nominal search speed of \SI {8}{\metre \per \second }, detection rate exceeds 95\%}{figure.caption.40}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {12}{\ignorespaces Detection performance sensitivity analysis from DJI flight video replay.}}{29}{figure.caption.40}\protected@file@percent }
+\newlabel{fig:det_sensitivity}{{12}{29}{Detection performance sensitivity analysis from DJI flight video replay}{figure.caption.40}{}}
+\newlabel{fig:latency_breakdown}{{13a}{29}{Per-frame latency breakdown: capture, undistortion, resize, inference, and postprocessing}{figure.caption.41}{}}
+\newlabel{sub@fig:latency_breakdown}{{a}{29}{Per-frame latency breakdown: capture, undistortion, resize, inference, and postprocessing}{figure.caption.41}{}}
+\newlabel{fig:detection_heatmap}{{13b}{29}{Spatial detection heatmap showing detection density across the survey area during simulated search}{figure.caption.41}{}}
+\newlabel{sub@fig:detection_heatmap}{{b}{29}{Spatial detection heatmap showing detection density across the survey area during simulated search}{figure.caption.41}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {13}{\ignorespaces System performance: inference latency budget and spatial detection distribution.}}{29}{figure.caption.41}\protected@file@percent }
+\newlabel{fig:perf_analysis}{{13}{29}{System performance: inference latency budget and spatial detection distribution}{figure.caption.41}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Testing Framework Summary}{30}{subsection.4.3}\protected@file@percent }
+\newlabel{sec:test-framework-summary}{{4.3}{30}{Testing Framework Summary}{subsection.4.3}{}}
+\@writefile{toc}{\contentsline {paragraph}{Summary.}{30}{paragraph*.43}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{References}{31}{paragraph*.43}\protected@file@percent }
 \gdef \LT@ix {\LT@entry 
     {1}{30.66653pt}\LT@entry 
     {1}{481.4831pt}}
@@ -294,8 +294,6 @@
 \abx@aux@segm{0}{0}{bochkovskiy2020yolov4}
 \abx@aux@cite{0}{synthdata}
 \abx@aux@segm{0}{0}{synthdata}
-\abx@aux@cite{0}{shrivastava2016training}
-\abx@aux@segm{0}{0}{shrivastava2016training}
 \abx@aux@cite{0}{shrivastava2016training}
 \abx@aux@segm{0}{0}{shrivastava2016training}
 \abx@aux@cite{0}{shrivastava2016training}
@@ -1943,64 +1941,6 @@
 \newlabel{tab:sim-vs-real}{{154}{203}{Simulation vs.\ real hardware readiness (0--10 scale)}{table.caption.375}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {AI.9}Lessons for Future Teams}{203}{subsection.Alph35.9}\protected@file@percent }
 \newlabel{sec:lessons-future}{{AI.9}{203}{Lessons for Future Teams}{subsection.Alph35.9}{}}
-\abx@aux@read@bbl@mdfivesum{4B75257F01C3EDEDE44277B9A1EFFE05}
+\abx@aux@read@bbl@mdfivesum{nobblfile}
 \abx@aux@read@bblrerun
-\abx@aux@defaultrefcontext{0}{murphy2014}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{edgeai}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{tflite}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{wca1981}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{caa2024uas}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{jarus2019sora}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{galceran2013survey}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{choset2001coverage}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{thermal_sar}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{mavproxy}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{yolov8}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{lin2014coco}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{domainrand}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{wagner2006fsm}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{sheridan2002humans}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{endsley1999loa}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{cummings2014man_uav}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{goodrich2007human}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{lyu2023uav_sar_survey}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{goodrich2008}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{quigley2009ros}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{imx296}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{sukhatme2012rolling_global}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{ncnn}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{synthdata}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{bochkovskiy2020yolov4}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{shrivastava2016training}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{ardupilot_failsafe}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{forsberg1991relationship}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{koopman2016challenges}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{ardupilot2024}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{nasa2015vv}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{lens_calibration}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{opencv}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{xnnpack}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{misra2006global}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{kalman1960}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{david2021tensorflow}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{hailo2023datasheet}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{tremblay2018training}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{rudol2008human}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{cap722}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{waharte2010supporting}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{multiuav}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{raspberrypi5}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{arm_a76}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{munoz2016mjpeg}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{apple_hls}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{gamma1994design}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{wiegand2003h264}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{qgroundcontrol2020}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{kaplan2017understanding}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{rtca_do178c}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{brown1966decentering}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{mavlink2}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{settles2009active}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{golden2006hypothermia}{none/global//global/global/global}
-\abx@aux@defaultrefcontext{0}{stolaroff2018energy}{none/global//global/global/global}
 \gdef \@abspage@last{203}

@@ -195,7 +195,7 @@ NCNN~\cite{ncnn} scored highest (4.4) due to its 4.5$\times$ speed advantage ove
 With the inference backend selected, the hardware performance ceiling is fixed: 9\,FPS (NCNN) or 4.8\,FPS (TFLite fallback). Each axis of the spider chart (Figure~\ref{fig:sensitivity-spider}) corresponds to a normalised score $S \in [0,1]$, where 1 represents the theoretical best and 0 represents failure. Three of the five dimensions --- detection, coverage, and energy --- are scored continuously and combined into a composite objective for the 216-configuration sweep. The remaining two --- safety and time --- are treated as \emph{pass/fail constraints}; the rationale for this asymmetry is explained at the end of this section.
 
 % ── Safety ────────────────────────────────────────────────────────────
-\subsection{Safety ($S_\text{safety}$)}\label{sec:score-safety}
+\subsection{Safety (\texorpdfstring{$S_\text{safety}$}{S\_safety})}\label{sec:score-safety}
 
 Safety is a composite of six binary and continuous sub-elements, each capturing a distinct layer of the NFZ protection architecture:
 
@@ -239,7 +239,7 @@ The margin and waypoint terms carry the highest weights because they determine w
 \end{figure}
 
 % ── Detection ─────────────────────────────────────────────────────────
-\subsection{Detection ($S_\text{detection}$)}\label{sec:score-detection}
+\subsection{Detection (\texorpdfstring{$S_\text{detection}$}{S\_detection})}\label{sec:score-detection}
 
 Detection score captures the probability of spotting the casualty during a single search pass. It is the product of four normalised sub-scores:
 
@@ -287,7 +287,7 @@ Figure~\ref{fig:detection-subscore} visualises all five detection-related metric
 \end{figure}
 
 % ── Time ──────────────────────────────────────────────────────────────
-\subsection{Time ($S_\text{time}$)}\label{sec:score-time}
+\subsection{Time (\texorpdfstring{$S_\text{time}$}{S\_time})}\label{sec:score-time}
 
 Total search time is the sum of straight-leg time and turn time:
 \begin{equation}
@@ -302,7 +302,7 @@ The time score is normalised as the ratio of the best achievable time to the act
 where $T_\text{best}$ is the shortest search time among all 216 evaluated configurations (82\,s, achieved at 50\,m altitude and 10\,m/s). Our selected configuration achieves $T_\text{actual} = 112$\,s, giving $S_\text{time} = 82/112 = 0.73$. This score penalises longer searches proportionally, with diminishing returns as configurations approach the theoretical minimum.
 
 % ── Energy ────────────────────────────────────────────────────────────
-\subsection{Energy ($S_\text{energy}$)}\label{sec:score-energy}
+\subsection{Energy (\texorpdfstring{$S_\text{energy}$}{S\_energy})}\label{sec:score-energy}
 
 Energy consumption is derived from a physics-based simulation with three components:
 
@@ -338,7 +338,7 @@ The energy score normalises against the battery capacity:
 where $E_\text{battery} = 115.4$\,Wh (6S 5200\,mAh LiPo). Our selected configuration uses $E_\text{total} = 12.6$\,Wh, giving $S_\text{energy} = 0.89$. A score of 1.0 would mean zero energy consumed (impossible); a score of 0.0 would mean the battery is fully depleted.
 
 % ── Coverage ──────────────────────────────────────────────────────────
-\subsection{Coverage ($S_\text{coverage}$)}\label{sec:score-coverage}
+\subsection{Coverage (\texorpdfstring{$S_\text{coverage}$}{S\_coverage})}\label{sec:score-coverage}
 
 Coverage is the fraction of the accessible search area that lies within at least one camera footprint during the scan:
 \begin{equation}\label{eq:coverage-score}
@@ -492,7 +492,7 @@ At 35\,m, the camera footprint on the ground is approximately 46\,m $\times$ 34\
 
 
 % ────────────────────────────────────────────────────────────────────────
-\subsection{Step 4: Determine Maximum Speed at 35\,m}\label{sec:step4}
+\subsection{\texorpdfstring{Step 4: Determine Maximum Speed at 35\,m}{Step 4: Determine Maximum Speed at 35 m}}\label{sec:step4}
 
 \textbf{Why this comes after altitude.} Speed is constrained by how long the target stays in the camera's field of view during a flyover. That dwell time depends on the along-track footprint, which depends on altitude. Without knowing the altitude, we cannot compute the speed limit.
 

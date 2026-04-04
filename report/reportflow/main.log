@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.3.27)  4 APR 2026 05:38
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.3.27)  4 APR 2026 05:40
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1280,29 +1280,160 @@ LaTeX Font Info:    External font `lmex10' loaded for size
 (Font)              <12> on input line 198.
 LaTeX Font Info:    External font `lmex10' loaded for size
 (Font)              <8> on input line 198.
-
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 198.
-
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `subscript' on input line 198.
-
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 198.
-
 <../figs/safety_subscore.pdf, id=409, 362.30199pt x 404.776pt>
 File: ../figs/safety_subscore.pdf Graphic file (type pdf)
 <use ../figs/safety_subscore.pdf>
 Package pdftex.def Info: ../figs/safety_subscore.pdf  used on input line 237.
 (pdftex.def)             Requested size: 256.07481pt x 286.10828pt.
-[4{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathex.
-enc}]
+ [4{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathex
+.enc}] [5 <../figs/safety_subscore.pdf>]
+<../figs/detection_subscore.pdf, id=517, 392.97514pt x 381.28511pt>
+File: ../figs/detection_subscore.pdf Graphic file (type pdf)
+<use ../figs/detection_subscore.pdf>
+Package pdftex.def Info: ../figs/detection_subscore.pdf  used on input line 285
+.
+(pdftex.def)             Requested size: 256.07481pt x 248.4549pt.
+ [6 <../figs/detection_subscore.pdf>] [7]
+<../figs/scoring_overview.pdf, id=622, 581.77347pt x 339.34047pt>
+File: ../figs/scoring_overview.pdf Graphic file (type pdf)
+<use ../figs/scoring_overview.pdf>
+Package pdftex.def Info: ../figs/scoring_overview.pdf  used on input line 370.
+(pdftex.def)             Requested size: 435.3303pt x 253.92996pt.
+<../figs/sensitivity_matrix.pdf, id=625, 680.28354pt x 390.66585pt>
+File: ../figs/sensitivity_matrix.pdf Graphic file (type pdf)
+<use ../figs/sensitivity_matrix.pdf>
+Package pdftex.def Info: ../figs/sensitivity_matrix.pdf  used on input line 405
+.
+(pdftex.def)             Requested size: 281.68385pt x 161.75967pt.
+ [8 <../figs/scoring_overview.pdf>]
+<../figs/decision_flow.pdf, id=771, 622.72653pt x 947.94153pt>
+File: ../figs/decision_flow.pdf Graphic file (type pdf)
+<use ../figs/decision_flow.pdf>
+Package pdftex.def Info: ../figs/decision_flow.pdf  used on input line 423.
+(pdftex.def)             Requested size: 419.96643pt x 639.28328pt.
+ [9 <../figs/sensitivity_matrix.pdf>]
+[10 <../figs/decision_flow.pdf>]
+Underfull \hbox (badness 10000) in alignment at lines 467--467
+[][][][] 
+ []
 
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 242.
+<../figs/lighting_combined.pdf, id=1064, 906.12337pt x 344.83205pt>
+File: ../figs/lighting_combined.pdf Graphic file (type pdf)
+<use ../figs/lighting_combined.pdf>
+Package pdftex.def Info: ../figs/lighting_combined.pdf  used on input line 475.
 
+(pdftex.def)             Requested size: 486.54057pt x 185.15945pt.
+[11 <../figs/lighting_combined.pdf>]
+Underfull \hbox (badness 10000) in alignment at lines 518--518
+[][][][] 
+ []
 
-Package hyperref Warning:
+[12] [13]
+<../figs/real_energy_heatmap.png, id=1214, 867.24pt x 578.16pt>
+File: ../figs/real_energy_heatmap.png Graphic file (type png)
+<use ../figs/real_energy_heatmap.png>
+Package pdftex.def Info: ../figs/real_energy_heatmap.png  used on input line 58
+0.
+(pdftex.def)             Requested size: 435.3303pt x 290.22615pt.
+ [14 <../figs/real_energy_heatmap.png>]
+<../figs/altitude_speed_tradeoff.pdf, id=1228, 491.61806pt x 400.5803pt>
+File: ../figs/altitude_speed_tradeoff.pdf Graphic file (type pdf)
+<use ../figs/altitude_speed_tradeoff.pdf>
+Package pdftex.def Info: ../figs/altitude_speed_tradeoff.pdf  used on input lin
+e 623.
+(pdftex.def)             Requested size: 435.3303pt x 354.73053pt.
+ [15 <../figs/altitude_speed_tradeoff.pdf>]
+<../figs/top3_paths.pdf, id=1330, 1111.90283pt x 425.66428pt>
+File: ../figs/top3_paths.pdf Graphic file (type pdf)
+<use ../figs/top3_paths.pdf>
+Package pdftex.def Info: ../figs/top3_paths.pdf  used on input line 667.
+(pdftex.def)             Requested size: 435.3303pt x 166.65791pt.
+ [16 <../figs/top3_paths.pdf>]
+<../figs/objective_conflict.pdf, id=1464, 736.75905pt x 587.34618pt>
+File: ../figs/objective_conflict.pdf Graphic file (type pdf)
+<use ../figs/objective_conflict.pdf>
+Package pdftex.def Info: ../figs/objective_conflict.pdf  used on input line 675
+.
+(pdftex.def)             Requested size: 486.54057pt x 387.87373pt.
+
+Underfull \hbox (badness 10000) in alignment at lines 705--705
+[][][] 
+ []
+
+[17 <../figs/objective_conflict.pdf>]
+<../figs/tornado_sensitivity.pdf, id=1587, 571.04657pt x 285.1285pt>
+File: ../figs/tornado_sensitivity.pdf Graphic file (type pdf)
+<use ../figs/tornado_sensitivity.pdf>
+Package pdftex.def Info: ../figs/tornado_sensitivity.pdf  used on input line 72
+1.
+(pdftex.def)             Requested size: 384.11221pt x 191.79211pt.
+<../figs/pareto_parallel.pdf, id=1591, 611.26181pt x 379.18648pt>
+File: ../figs/pareto_parallel.pdf Graphic file (type pdf)
+<use ../figs/pareto_parallel.pdf>
+Package pdftex.def Info: ../figs/pareto_parallel.pdf  used on input line 739.
+(pdftex.def)             Requested size: 486.54057pt x 301.82211pt.
+ [18 <../figs/tornado_sensitivity.pdf>]
+<../figs/architecture.pdf, id=1713, 654.40488pt x 570.93298pt>
+File: ../figs/architecture.pdf Graphic file (type pdf)
+<use ../figs/architecture.pdf>
+Package pdftex.def Info: ../figs/architecture.pdf  used on input line 771.
+(pdftex.def)             Requested size: 384.11221pt x 335.13132pt.
+
+[19 <../figs/pareto_parallel.pdf>] [20 <../figs/architecture.pdf>] [21]
+[22]
+Overfull \hbox (21.7196pt too wide) in paragraph at lines 936--937
+[]\OT1/lmr/bx/n/10 (-20) Discovery method: \OT1/lmr/m/n/10 (-20) vi-sual in-spe
+c-tion showed green de-tec-tion boxes drawn off-screen. \OT1/lmr/bx/n/10 (-20) 
+Fix: \OT1/lmr/m/n/10 (-20) added a \OT1/lmtt/m/n/10 PIXEL[]COORD[]THRESHOLD
+ []
+
+[23] [24] [25] (main.bbl [26]) [27] (main.aux)
+ ***********
+LaTeX2e <2025-11-01>
+L3 programming layer <2026-01-19>
+ ***********
+Package rerunfilecheck Info: File `main.out' has not changed.
+(rerunfilecheck)             Checksum: AC2A7DD4E5CF2BB073162BCC385D4502;11134.
+ ) 
+Here is how much of TeX's memory you used:
+ 37035 strings out of 467866
+ 780081 string characters out of 5417351
+ 1204844 words of memory out of 5000000
+ 64856 multiletter control sequences out of 15000+600000
+ 708841 words of font info for 251 fonts, out of 8000000 for 9000
+ 1141 hyphenation exceptions out of 8191
+ 98i,14n,108p,1298b,1206s stack positions out of 10000i,1000n,20000p,200000b,200000s
+<C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx10.
+pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx1
+2.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmb
+x7.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lm
+bx8.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/l
+mbx9.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/
+lmex10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/l
+m/lmmi10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public
+/lm/lmmi12.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/publ
+ic/lm/lmmi6.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/pub
+lic/lm/lmmi7.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/pu
+blic/lm/lmmi8.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/p
+ublic/lm/lmmi9.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/
+public/lm/lmr10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1
+/public/lm/lmr12.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type
+1/public/lm/lmr7.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type
+1/public/lm/lmr8.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type
+1/public/lm/lmr9.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type
+1/public/lm/lmri10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/ty
+pe1/public/lm/lmsy10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/
+type1/public/lm/lmsy6.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts
+/type1/public/lm/lmsy7.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/font
+s/type1/public/lm/lmsy8.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fon
+ts/type1/public/lm/lmsy9.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fo
+nts/type1/public/lm/lmtt10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/
+fonts/type1/public/lm/lmtt8.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX
+/fonts/type1/public/lm/lmtt9.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTe
+X/fonts/type1/public/amsfonts/symbols/msam10.pfb>
+Output written on main.pdf (27 pages, 1451997 bytes).
+PDF statistics:
+ 2237 PDF objects out of 2487 (max. 8388607)
+ 203 named destinations out of 1000 (max. 500000)
+ 49323 words of extra memory for PDF output out of 51595 (max. 10000000)
+
