@@ -340,7 +340,7 @@ class SimulationEnvironment:
         view_h_px = int(view_w_px * (config.IMAGE_H / config.IMAGE_W))
 
         # --- Perspective warp path (pitch/roll != 0) ---
-        if abs(pitch) > 0.001 or abs(roll) > 0.001:
+        if abs(pitch) > 0.02 or abs(roll) > 0.02:  # ~1 degree threshold
             return self._get_perspective_view(cx, cy, safe_alt, yaw, pitch, roll,
                                               view_w_px, view_h_px, ground_w)
 
