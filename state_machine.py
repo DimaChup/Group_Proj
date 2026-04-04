@@ -1106,18 +1106,10 @@ class StateHandlersMixin:
         """Process keyboard/button input per loop iteration."""
         if key == ord('m') or key == ord('M'):
             self._handle_manual_toggle(target_found, px_u, px_v)
-        if key == ord('r') or key == ord('R'):
-            print("[OPERATOR] RTL requested from ground station")
-            self._emergency_rtl(reason="Operator RTL from browser")
+        # RTL: only from browser button (/cmd?key=rtl), not keyboard
+        # R key is used for climb in manual mode (WASD+RF)
         if key == ord('k') or key == ord('K'):
-            print("[OPERATOR] KILL/DISARM requested from ground station")
-            try:
-                if self.master:
-                    self.master.arducopter_disarm()
-                    print("[KILL] Disarm command sent")
-            except Exception as e:
-                print(f"[KILL] Disarm failed: {e}")
-        if key == ord('c') or key == ord('C'):
+            # K = clear rejected targets + items of interest (original behavior)
             n_rej = len(self.rejected_targets)
             n_ioi = len(getattr(self, 'items_of_interest', []))
             self.rejected_targets.clear()
