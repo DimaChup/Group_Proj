@@ -450,55 +450,140 @@ The simulation creates a tilted camera view by: (1)~building the \emph{same} $\m
 
 \begin{figure}[ht]
   \centering
-  \begin{tikzpicture}[>=stealth, scale=0.85, every node/.style={font=\small}]
-    % --- Left panel: without compensation ---
-    \begin{scope}[shift={(-4.5,0)}]
-      \node[font=\bfseries] at (0,4.2) {Without compensation};
-      % Drone
-      \fill[blue!60] (0,3.5) circle (0.12);
-      \node[right, font=\footnotesize] at (0.2,3.5) {Drone};
-      % Nadir line (wrong assumption)
-      \draw[dashed, gray] (0,3.5) -- (0,0);
-      \node[font=\footnotesize, gray, right] at (0.1,1.7) {Nadir};
-      % Tilted camera ray
-      \draw[->, red, thick] (0,3.5) -- (1.8,0);
-      \node[font=\footnotesize, red, right] at (1.0,1.5) {Actual ray};
-      % Ground
-      \draw[thick] (-2.5,0) -- (3.5,0);
-      % Detection point (assumed nadir)
-      \fill[gray] (0,0) circle (0.08);
-      \node[font=\footnotesize, below, gray] at (0,-0.15) {Assumed};
-      % True position
-      \fill[red] (1.8,0) circle (0.08);
-      \node[font=\footnotesize, below, red] at (1.8,-0.15) {True};
-      % Error arrow
-      \draw[<->, thick, orange] (0,-0.6) -- (1.8,-0.6);
-      \node[font=\footnotesize, orange, below] at (0.9,-0.6) {\SI{6.2}{\metre} error};
+  \begin{tikzpicture}[>=stealth, scale=0.82, every node/.style={font=\small}]
+    %
+    % ==================== LEFT PANEL: WITHOUT COMPENSATION ====================
+    %
+    \begin{scope}[shift={(-5.2,0)}]
+      \node[font=\bfseries, text=red!70!black] at (0.6,5.8) {Without Compensation};
+      \node[font=\footnotesize, text=gray] at (0.6,5.3) {(Naive nadir assumption)};
+
+      % Ground plane with grass shading
+      \fill[green!8] (-3.0,-0.05) rectangle (4.5,0);
+      \draw[thick, green!40!black] (-3.0,0) -- (4.5,0) node[right, font=\footnotesize] {Ground};
+
+      % Altitude annotation
+      \draw[|<->|, gray, thin] (-2.6,0) -- (-2.6,4.0);
+      \node[font=\footnotesize, gray, rotate=90] at (-2.9,2.0) {\SI{35}{\metre}};
+
+      % --- Drone body (tilted 10 deg forward) ---
+      \begin{scope}[shift={(0,4.0)}, rotate=-10]
+        % Body
+        \fill[blue!50!gray] (-0.5,-0.08) rectangle (0.5,0.08);
+        \draw[blue!70!black] (-0.5,-0.08) rectangle (0.5,0.08);
+        % Rotors
+        \fill[blue!40] (-0.55,0.08) circle (0.06);
+        \fill[blue!40] (0.55,0.08) circle (0.06);
+        % Camera lens (pointing down from body)
+        \fill[black] (0,-0.08) -- (-0.06,-0.18) -- (0.06,-0.18) -- cycle;
+      \end{scope}
+
+      % Tilt angle arc
+      \draw[thick, blue!60, ->] (0,3.4) arc[start angle=-90, end angle=-80, radius=0.6];
+      \node[font=\footnotesize, blue!60] at (0.45,3.2) {$\theta{=}10^{\circ}$};
+
+      % --- Nadir line (what the naive method assumes) ---
+      \draw[dashed, gray, thick] (0,4.0) -- (0,0);
+      \node[font=\footnotesize, gray, anchor=west] at (0.1,2.6) {Assumed};
+      \node[font=\footnotesize, gray, anchor=west] at (0.1,2.25) {nadir};
+
+      % --- Actual camera ray (where camera truly points) ---
+      \draw[->, red!70!black, very thick] (0,4.0) -- (2.45,0);
+      \node[font=\footnotesize, red!70!black, anchor=west] at (1.55,1.6) {True};
+      \node[font=\footnotesize, red!70!black, anchor=west] at (1.55,1.25) {camera ray};
+
+      % --- Wrong position (nadir projection) ---
+      \node[cross out, draw=red, very thick, minimum size=6pt, inner sep=0pt] at (0,0) {};
+      \node[font=\footnotesize, below, red!80!black, anchor=north] at (0,-0.15) {Estimated};
+
+      % --- True target position ---
+      \node[star, star points=5, star point ratio=2.2, fill=green!60!black, draw=green!40!black,
+            minimum size=7pt, inner sep=0pt] at (2.45,0) {};
+      \node[font=\footnotesize, below, green!60!black, anchor=north] at (2.45,-0.15) {Actual target};
+
+      % --- Error arrow ---
+      \draw[<->, very thick, orange!80!red] (0,-0.7) -- (2.45,-0.7);
+      \node[font=\small\bfseries, orange!80!red, below] at (1.225,-0.7) {\SI{6.2}{\metre} error};
+
+      % FOV cone (faint, showing what camera sees)
+      \draw[gray!30, thin] (0,4.0) -- (-0.8,0);
+      \draw[gray!30, thin] (0,4.0) -- (3.2,0);
     \end{scope}
-    % --- Right panel: with compensation ---
-    \begin{scope}[shift={(4.5,0)}]
-      \node[font=\bfseries] at (0,4.2) {With compensation};
-      % Drone
-      \fill[blue!60] (0,3.5) circle (0.12);
-      \node[right, font=\footnotesize] at (0.2,3.5) {Drone};
-      % Tilted camera ray (known from R)
-      \draw[->, green!60!black, thick] (0,3.5) -- (1.8,0);
-      \node[font=\footnotesize, green!60!black, left] at (0.6,1.5) {Ray via $\mathbf{R}$};
-      % Ground
-      \draw[thick] (-2.5,0) -- (3.5,0);
-      % Compensated position (correct)
-      \fill[green!60!black] (1.8,0) circle (0.08);
-      \node[font=\footnotesize, below, green!60!black] at (1.8,-0.15) {Estimated};
-      % True position
-      \fill[black] (1.85,0) circle (0.06);
-      \node[font=\footnotesize, below right] at (1.95,-0.15) {True};
-      % Small error
-      \draw[<->, thick, orange] (1.8,-0.6) -- (1.85,-0.6);
-      \node[font=\footnotesize, orange, below] at (1.825,-0.6) {$\sim$\SI{0.3}{\metre}};
-      \node[font=\footnotesize, gray, below] at (1.825,-1.0) {(telemetry noise)};
+
+    %
+    % ==================== CENTRE: R MATRIX EQUATION ====================
+    %
+    \node[draw=blue!40, fill=blue!5, rounded corners=4pt, inner sep=6pt,
+          font=\footnotesize, text width=2.8cm, align=center] at (0,2.0) {%
+      $\mathbf{R} = \mathbf{R}_z(\psi)\;\mathbf{R}_y(\text{-}\theta)\;\mathbf{R}_x(\text{-}\phi)$\\[4pt]
+      $\mathbf{r}_\mathrm{world} = \mathbf{R}\,\mathbf{r}_\mathrm{cam}$\\[3pt]
+      {\scriptsize Ray-trace through}\\[-1pt]
+      {\scriptsize known attitude}
+    };
+    % Arrow from left to centre
+    \draw[->, thick, gray!60] (-2.4,2.0) -- (-1.7,2.0);
+    % Arrow from centre to right
+    \draw[->, thick, gray!60] (1.7,2.0) -- (2.4,2.0);
+
+    %
+    % ==================== RIGHT PANEL: WITH COMPENSATION ====================
+    %
+    \begin{scope}[shift={(5.2,0)}]
+      \node[font=\bfseries, text=green!50!black] at (0.6,5.8) {With Compensation};
+      \node[font=\footnotesize, text=gray] at (0.6,5.3) {(Attitude-compensated ray-trace)};
+
+      % Ground plane with grass shading
+      \fill[green!8] (-3.0,-0.05) rectangle (4.5,0);
+      \draw[thick, green!40!black] (-3.0,0) -- (4.5,0) node[right, font=\footnotesize] {Ground};
+
+      % Altitude annotation
+      \draw[|<->|, gray, thin] (-2.6,0) -- (-2.6,4.0);
+      \node[font=\footnotesize, gray, rotate=90] at (-2.9,2.0) {\SI{35}{\metre}};
+
+      % --- Drone body (tilted 10 deg forward, same as left) ---
+      \begin{scope}[shift={(0,4.0)}, rotate=-10]
+        % Body
+        \fill[blue!50!gray] (-0.5,-0.08) rectangle (0.5,0.08);
+        \draw[blue!70!black] (-0.5,-0.08) rectangle (0.5,0.08);
+        % Rotors
+        \fill[blue!40] (-0.55,0.08) circle (0.06);
+        \fill[blue!40] (0.55,0.08) circle (0.06);
+        % Camera lens
+        \fill[black] (0,-0.08) -- (-0.06,-0.18) -- (0.06,-0.18) -- cycle;
+      \end{scope}
+
+      % Tilt angle arc
+      \draw[thick, blue!60, ->] (0,3.4) arc[start angle=-90, end angle=-80, radius=0.6];
+      \node[font=\footnotesize, blue!60] at (0.45,3.2) {$\theta{=}10^{\circ}$};
+
+      % --- Compensated ray (correct, via R matrix) ---
+      \draw[->, green!60!black, very thick] (0,4.0) -- (2.45,0);
+      \node[font=\footnotesize, green!60!black, anchor=east] at (0.85,1.6) {Ray via};
+      \node[font=\footnotesize, green!60!black, anchor=east] at (0.85,1.25) {$\mathbf{R}$};
+
+      % --- Estimated position (correct, via compensation) ---
+      \node[circle, fill=green!60!black, draw=green!40!black, minimum size=5pt,
+            inner sep=0pt] at (2.35,0) {};
+
+      % --- True target position ---
+      \node[star, star points=5, star point ratio=2.2, fill=green!60!black, draw=green!40!black,
+            minimum size=7pt, inner sep=0pt] at (2.45,0) {};
+      \node[font=\footnotesize, below, green!60!black, anchor=north] at (2.45,-0.15) {Actual target};
+
+      % --- Checkmark near estimated position ---
+      \node[font=\normalsize, green!60!black] at (2.0,0.35) {\checkmark};
+
+      % --- Tiny residual error ---
+      \draw[<->, thick, orange!70] (2.35,-0.55) -- (2.45,-0.55);
+      \node[font=\footnotesize, orange!70, anchor=north] at (2.4,-0.6) {${\sim}$\SI{0.3}{\metre}};
+      \node[font=\scriptsize, gray, anchor=north] at (2.4,-1.0) {(IMU angular noise)};
+
+      % FOV cone (faint)
+      \draw[gray!30, thin] (0,4.0) -- (-0.8,0);
+      \draw[gray!30, thin] (0,4.0) -- (3.2,0);
     \end{scope}
   \end{tikzpicture}
-  \caption{GPS estimation with and without attitude compensation at $10^{\circ}$ pitch and \SI{35}{\metre} altitude.  \textbf{Left:} nadir assumption projects the detection directly below the drone, producing \SI{6.2}{\metre} error.  \textbf{Right:} ray-tracing through the rotation matrix $\mathbf{R}$ recovers the true ground position; the residual $\sim$\SI{0.3}{\metre} error is due to IMU angular noise only.}
+  \caption{GPS estimation with and without attitude compensation at $10^{\circ}$ pitch and \SI{35}{\metre} altitude.  \textbf{Left:} the naive nadir assumption projects the detection straight below the drone, producing a \SI{6.2}{\metre} systematic error equal to $h\tan\theta$.  \textbf{Right:} the attitude-compensated estimator ray-traces the detection pixel through the full rotation matrix $\mathbf{R}$ constructed from real-time telemetry, recovering the true ground position; the residual $\sim$\SI{0.3}{\metre} error is due to IMU angular noise only ($\pm 0.5^{\circ}$).}
   \label{fig:tilt-before-after}
 \end{figure}
 
