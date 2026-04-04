@@ -1,58 +1,218 @@
 # Passive Watch Usage Guide
 
-**File:** `field_tools/passive_watch.py` (3421 lines)
+```
+THIS FILE IS FOR ROBIN
+Passive watch runs AI detection and saves GPS coordinates to a directory.
+Sends ZERO drone commands. Completely safe to run during any flight.
+```
 
 ---
 
-## What It Does
-
-Passive camera observer that runs AI detection, estimates target GPS coordinates, and streams results to a web dashboard. It sends **ZERO commands** to the drone -- completely safe to run at any time, during manual RC flight or on the bench.
-
-Features:
-- Live MJPEG video stream with detection overlay at `http://PI_IP:8090/`
-- YOLOv8 AI detection (TFLite or NCNN backend)
-- GPS estimation of detected targets using camera geometry
-- SMART consensus lock: accumulates detections until a tight GPS cluster emerges
-- Saves detection images + JSON metadata to disk
-- Model switching, confidence tuning, and class filtering from the browser UI
-- Tilt-compensated GPS projection (corrects for drone pitch/roll)
-- Fake mode: replay DJI video with SRT telemetry on laptop (no hardware needed)
-
----
-
-## Quick Start
-
-### Simulation / Laptop (replay DJI video)
+## Robin's Exact Command
 
 ```bash
-cd v3
-python field_tools/passive_watch.py --fake --no-mavlink --conf 0.3
-# Open http://localhost:8090/ in browser
-```
-
-### Real Flight on Pi (with GPS from mavproxy)
-
-```bash
-source pienv/bin/activate
-cd ~/dima/Group_Proj
-python field_tools/passive_watch.py --compensate-tilt --conf 0.3 \
-  --smart-estimate --smart-dir robin_detections
-# Open http://PI_IP:8090/ in browser
-```
-
-### Robin's Recommended Command
-
-```bash
+cd ~/dima/Group_Proj && source pienv/bin/activate
 python field_tools/passive_watch.py --compensate-tilt --conf 0.3 \
   --smart-estimate --smart-min 5 --smart-radius 2.0 \
   --smart-dir robin_detections --model best.tflite
 ```
 
-### Minimal (stream only, no saving)
+**Browser dashboard:** `http://PI_IP:8090/` (replace PI_IP with the Pi's IP, find it with `hostname -I`)
+
+Use `--port 8091` if another script already uses port 8090.
+
+---
+
+## What Robin Gets
+
+When the SMART estimator locks (enough detections agree on a GPS position), it saves:
+
+1. **A PNG image** in `robin_detections/` with the GPS coordinate embedded in the filename
+2. **A terminal printout** with the coordinate and spread
+
+### Filename format
+
+```
+robin_detections/0001_51.4233990_-2.6715320.png
+robin_detections/0002_51.4234050_-2.6715410.png
+```
+
+The format is: `<counter>_<latitude>_<longitude>.png`
+
+### How to parse the filename
+
+```python
+import os, re
+
+for fname in sorted(os.listdir("robin_detections")):
+    if not fname.endswith(".png"):
+        continue
+    parts = fname.replace(".png", "").split("_")
+    # parts = ["0001", "51.4233990", "-2.6715320"]
+    lat = float(parts[1])
+    lon = float(parts[2])
+    print(f"Target at {lat}, {lon}")
+```
+
+### Per-detection JSON sidecars (in detections/ directory)
+
+In addition to SMART results, every individual detection also saves a JSON sidecar in `detections/` (the default save directory). Example JSON:
+
+```json
+{
+  "timestamp": "2026-03-31T14:22:05.123456",
+  "frame": 1523,
+  "detection": {
+    "confidence": 0.87,
+    "pixel_x": 728,
+    "pixel_y": 544,
+    "bbox_centre": [728, 544]
+  },
+  "drone": {
+    "lat": 51.4234060,
+    "lon": -2.6715320,
+    "alt_m": 35.0,
+    "yaw_deg": 155.2,
+    "pitch_deg": -2.1,
+    "roll_deg": 0.3,
+    "sats": 14,
+    "mode": "GUIDED"
+  },
+  "fov": {
+    "focal_mm": 5.46,
+    "sensor_w_mm": 5.02,
+    "hfov_deg": 49.3,
+    "ground_w_m": 32.18,
+    "ground_h_m": 24.03
+  },
+  "estimate": {
+    "lat": 51.4233990,
+    "lon": -2.6715320,
+    "n_observations": 7
+  },
+  "image": "det_0001_0.87_51.4234060_-2.6715320.jpg"
+}
+```
+
+Key fields for Robin:
+- `estimate.lat` / `estimate.lon` -- the estimated GPS of the target (not the drone)
+- `drone.lat` / `drone.lon` -- where the drone was when it saw the target
+- `detection.confidence` -- how confident the AI is (0.0 to 1.0)
+
+### HTTP API (alternative to reading files)
+
+Robin's code can also poll the HTTP API instead of reading files:
+
+```
+GET http://PI_IP:8090/api/estimates-full
+```
+
+Returns JSON with cluster data:
+```json
+{
+  "estimates": [[51.4234, -2.6715, 0.3, 35.0, 0.87], ...],
+  "smart": {
+    "locked": true,
+    "cluster": [[51.4233990, -2.6715320, 0.15], ...],
+    "spread": 0.83,
+    "median": [51.4233990, -2.6715320]
+  },
+  "mean": [51.4234010, -2.6715300],
+  "n": 12
+}
+```
+
+When `smart.locked` is `true`, `smart.median` is the consensus target position.
+
+Other useful endpoints:
+- `GET /api/status` -- detection counts, FPS, whether SMART has locked
+- `GET /api/drone` -- current drone GPS, altitude, heading
+- `GET /api/estimates` -- simple list of all GPS estimates as `[[lat, lon], ...]`
+
+---
+
+## Prerequisites
+
+### 1. mavproxy must be running (Terminal 1 on Pi)
 
 ```bash
-python field_tools/passive_watch.py --no-save --no-mavlink
+sudo /opt/mavlink/mavlink-venv/bin/mavproxy.py \
+  --master=/dev/ttyAMA0 --baudrate=921600 --streamrate=10 \
+  --out=udpout:127.0.0.1:14550 \
+  --out=tcpin:0.0.0.0:5762
 ```
+
+Wait for: `Detected vehicle 1:0` and `online system 1`.
+
+Without mavproxy, passive_watch has no GPS data and cannot geotag detections. You can still run with `--no-mavlink` for stream-only mode (no GPS, no coordinate output -- mostly useless for Robin).
+
+### 2. Camera must be available
+
+The Pi camera (IMX296) must not be in use by another script. Only ONE process can use the camera at a time.
+
+### 3. pienv venv activated
+
+```bash
+source pienv/bin/activate
+```
+
+### 4. Model file exists
+
+Default: `best.tflite` in the project root. Copy the best model:
+```bash
+cp cv_models/sar_v2_1088/best.tflite best.tflite
+```
+
+---
+
+## Troubleshooting
+
+| Problem | Fix |
+|---------|-----|
+| **"Cannot open camera"** | Another script has the camera. Kill it: `sudo pkill -f python; sleep 2` |
+| **"Address already in use" (port conflict)** | Another script is on port 8090. Use `--port 8091` or kill: `sudo pkill -f passive_watch; sleep 2` |
+| **No GPS overlay / no coordinates** | mavproxy not running. Start it first (see Prerequisites above) |
+| **No detections at all** | Lower confidence: `--conf 0.2`. Check model file exists: `ls -la best.tflite` |
+| **SMART never locks** | Increase `--smart-radius` to 3.0 or decrease `--smart-min` to 3. Fly over the target multiple times. |
+| **Browser shows black frame** | Camera warming up (1-2 seconds), or camera not connected |
+| **Very slow on Pi** | Use `--fps 3` to limit CPU. Or switch to NCNN model from browser dropdown |
+| **Camera stuck after crash** | `sudo pkill -f libcamera; sudo pkill -f python; sleep 2` |
+| **Pi IP unknown** | Run `hostname -I` on the Pi |
+
+---
+
+## Browser Dashboard
+
+Open `http://PI_IP:8090/` (or whatever `--port` you set) in any browser on the same network.
+
+### What you see
+
+- **Camera Feed** -- live MJPEG stream with green detection overlay, GPS bar, crosshair
+- **Latest Detection** -- most recent detection snapshot (zoomable)
+- **Best Detection** -- detection closest to frame centre (zoomable)
+- **SMART Frames** -- grid of frames contributing to the SMART cluster
+- **Satellite Map** -- interactive map with drone position and detection markers
+- **GPS Analysis** -- scatter plots of GPS estimates, error distribution
+
+### Control Bar (top of page)
+
+All controls adjust live without restarting:
+
+| Control | What it does |
+|---------|-------------|
+| **Model** dropdown | Switch between Original, SAR v2 TFLite, SAR v2 NCNN, COCO Person |
+| **Conf** slider | Adjust confidence threshold (0.05 - 0.95) |
+| **Class** checkboxes | Filter: person, bird, dummy, other |
+| **Clear All** button | Reset all detection state (SMART cluster, best detection, estimates) |
+| **Reset Best** button | Reset the "best detection" panel only |
+| **Smart spread/count** inputs | Adjust SMART parameters live |
+
+### Terminal Keys
+
+| Key | Action |
+|-----|--------|
+| `C` | **Clear All** -- reset SMART cluster, detection counts, best detection |
+| `Ctrl+C` | Exit cleanly |
 
 ---
 
@@ -99,168 +259,20 @@ python field_tools/passive_watch.py --simple-names --save-dir training_captures
 
 # Custom port (avoid conflicts with other scripts)
 python field_tools/passive_watch.py --port 8091
+
+# Laptop replay (no hardware needed)
+python field_tools/passive_watch.py --fake --no-mavlink --conf 0.3
 ```
 
 ---
 
-## Web Dashboard
-
-Open `http://PI_IP:8090/` in any browser. The dashboard shows:
-
-### Row 1: Video + Detections
-- **Camera Feed** -- live MJPEG stream with detection overlay (green bounding box, GPS bar, crosshair)
-- **Latest Detection** -- most recent detection snapshot (zoomable)
-- **Best Detection** -- detection closest to frame centre (zoomable)
-- **SMART Frames** -- grid of frames contributing to the SMART cluster
-
-### Row 2: Map + GPS Analysis
-- **Satellite Map** -- interactive map with drone position and detection markers
-- **GPS Analysis** -- scatter plots of GPS estimates, error distribution
-
-### Row 3: Pipeline Visualizations
-- **CV Detection Pipeline** -- step-by-step detection pipeline visualization
-- **GPS Estimation Pipeline** -- GPS projection math visualization
-
-### Control Bar (top of page)
-All controls are adjustable live from the browser without restarting:
-
-| Control | What it does |
-|---------|-------------|
-| **Model** dropdown | Switch between Original, SAR v2 TFLite, SAR v2 NCNN, COCO Person |
-| **Conf** slider | Adjust confidence threshold (0.05 - 0.95) |
-| **Class** checkboxes | Filter: person, bird, dummy, other |
-| **Clear All** button | Reset all detection state (SMART cluster, best detection, estimates) |
-| **Reset Best** button | Reset the "best detection" panel only |
-| **Smart spread/count** inputs | Adjust SMART parameters live |
-
-### HTTP Endpoints
-
-| Endpoint | Returns |
-|----------|---------|
-| `/` | Dashboard HTML page |
-| `/stream` | Raw MJPEG stream (for embedding in other tools) |
-| `/snapshot` | Latest detection JPEG |
-| `/latest` | Latest detection thumbnail |
-| `/best` | Best detection thumbnail |
-| `/smart-grid` | SMART frames grid image |
-| `/api/status` | JSON: frame count, FPS, detections, saved count |
-| `/api/drone` | JSON: drone GPS, altitude, heading, attitude |
-| `/api/estimates` | JSON: all GPS estimates (lat, lon) |
-| `/api/estimates-full` | JSON: full estimate data with cluster info |
-| `/api/switch-model?id=N` | Switch AI model (0-3) |
-| `/api/set-conf?val=X` | Set confidence threshold |
-| `/api/set-class?name=X` | Set class filter |
-| `/api/clear-all` | Reset all detection state |
-| `/api/reset-best` | Reset best detection |
-| `/api/set-smart?spread=X&count=Y` | Update SMART parameters |
-| `/api/set-ground-truth?lat=X&lon=Y` | Set known target position (for error calculation) |
-| `/api/clear-ground-truth` | Remove ground truth marker |
-| `/api/toggle-bullseye-bg` | Toggle satellite map behind bullseye scatter plots |
-
----
-
-## Terminal Keys
-
-While running in a terminal (PuTTY/SSH or local):
-
-| Key | Action |
-|-----|--------|
-| `C` | **Clear All** -- reset SMART cluster, detection counts, best detection |
-| `Ctrl+C` | Exit cleanly |
-
----
-
-## Output Format
-
-### Standard Mode (default)
-
-Detection images saved to `<save-dir>/` (default: `detections/`):
-
-**Image filename:**
-```
-det_0001_0.87_51.4234060_-2.6715320.jpg    # with GPS
-det_0002_0.65_nogps.jpg                     # without GPS
-```
-
-**JSON sidecar** (same name, `.json` extension):
-```json
-{
-  "timestamp": "2026-03-31T14:22:05.123456",
-  "frame": 1523,
-  "detection": {
-    "confidence": 0.87,
-    "pixel_x": 728, "pixel_y": 544,
-    "bbox_centre": [728, 544]
-  },
-  "drone": {
-    "lat": 51.4234060, "lon": -2.6715320,
-    "alt_m": 35.0,
-    "yaw_deg": 155.2,
-    "pitch_deg": -2.1
-  }
-}
-```
-
-**CSV log** (`detection_log.csv` in save-dir): one row per detection with frame, timestamp, confidence, drone GPS, estimated target GPS.
-
-### Simple Names Mode (`--simple-names`)
-
-Clean filenames, no JSON sidecars, no CSV log:
-```
-0001_51.4233990_-2.6715320.jpg    # estimated target GPS in filename
-0002_51.4234010_-2.6715280.jpg
-0003_nogps.jpg                     # no GPS available
-```
-
-### SMART Result Images
-
-When the SMART estimator locks (enough detections agree), a result image is saved to `<smart-dir>/`:
-
-```
-smart_detections/0001_51.4233990_-2.6715320.png
-```
-
-The result image includes:
-- The best detection frame (target most centred)
-- SMART coordinate overlay (median lat/lon of the locked cluster)
-- Spread and CEP50 statistics
-- Map panel showing SSSI polygon (red), search area (yellow), and target position (magenta star)
-
----
-
-## How Tilt Compensation Works (`--compensate-tilt`)
-
-Without tilt compensation, GPS estimation assumes the camera points straight down. In reality, drones tilt during flight (pitch forward when flying, roll in turns). This causes GPS estimation errors of 5-10+ metres.
-
-### The Math
-
-1. Reads pitch, roll, yaw from the MAVLink ATTITUDE message
-2. Builds a full rotation matrix: `R = Rz(yaw) @ Ry(-pitch) @ Rx(-roll)`
-3. Converts the detection pixel to a camera-frame ray using focal length
-4. Rotates the ray into the world frame (NED: North, East, Down)
-5. Ray-traces from drone position at altitude down to the ground plane
-6. Intersection point = estimated target GPS
-
-### When It Activates
-
-- Only when tilt exceeds 0.5 degrees in pitch or roll
-- Below 0.5 degrees, falls back to flat-earth projection (equivalent, less computation)
-- If the ray is nearly horizontal (rw2 < 0.01), falls back to flat-earth to avoid extreme projections
-
-### Improvement
-
-- Tested reduction from ~6.2m average error to ~0.3m error
-- Uses the same verified rotation matrix approach as main.py (proven with 1440 unit tests)
-
----
-
-## How SMART Estimation Works (`--smart-estimate`)
+## How SMART Estimation Works
 
 SMART (Smart Multi-pass Accumulation for Robust Targeting) accumulates GPS estimates from multiple flyover detections and locks when enough estimates agree.
 
 ### Algorithm: Greedy Tightest Cluster
 
-1. Each detection produces a noisy GPS estimate via `DummyEstimator`
+1. Each detection produces a noisy GPS estimate via camera geometry
 2. Once there are >= `--smart-min` estimates, search for the tightest cluster:
    - Compute all pairwise GPS distances (metres) between estimates
    - Seed the cluster with the closest pair of points
@@ -268,46 +280,33 @@ SMART (Smart Multi-pass Accumulation for Robust Targeting) accumulates GPS estim
    - Repeat until the cluster has `smart-min` points
 3. If the cluster's max spread < `--smart-radius` metres: **LOCK**
    - Median lat/lon of the cluster = target position
-   - Best frame (detection closest to image centre) saved as reference
-   - No further estimates accepted after lock
+   - Result image saved to `--smart-dir`
+   - Terminal prints the coordinate
+   - No further estimates accepted after lock (press Clear All or 'C' to reset and re-lock)
 
-### Parameters
-
-| Parameter | Flag | Default | Effect |
-|-----------|------|---------|--------|
-| Min samples | `--smart-min` | 5 | More = higher confidence, takes longer to lock |
-| Max spread | `--smart-radius` | 1.0m | Smaller = stricter agreement, may not lock in high-noise conditions |
-
-### Typical Values
+### Recommended Parameters
 
 | Scenario | `--smart-min` | `--smart-radius` |
 |----------|---------------|-------------------|
-| Quick test | 3 | 2.0 |
-| Normal flight | 5 | 1.0 |
+| Quick test | 3 | 3.0 |
+| Normal flight | 5 | 2.0 |
 | High confidence | 10 | 0.5 |
 
-### Adjusting Live
-
-SMART parameters can be changed from the browser control bar without restarting. The cluster resets when parameters change.
+Parameters can be changed live from the browser control bar without restarting.
 
 ---
 
-## Integration with Robin's State Machine
+## How Tilt Compensation Works (`--compensate-tilt`)
 
-Robin's autonomous code can poll the SMART output directory for locked target coordinates:
+Without tilt compensation, GPS estimation assumes the camera points straight down. In reality, drones tilt during flight (pitch forward when flying, roll in turns). This causes GPS estimation errors of 5-10+ metres.
 
-1. passive_watch runs continuously during flight, saving SMART results to `--smart-dir`
-2. Each SMART lock produces a PNG image and the GPS coordinate is embedded in the filename:
-   ```
-   robin_detections/0001_51.4233990_-2.6715320.png
-   ```
-3. Robin's code can parse the filename to extract lat/lon, or query the HTTP API:
-   ```
-   GET /api/estimates-full
-   ```
-   Returns JSON with cluster data, spread, and median coordinate.
+With `--compensate-tilt`:
+1. Reads pitch, roll, yaw from the MAVLink ATTITUDE message
+2. Builds a full rotation matrix to correct for drone orientation
+3. Ray-traces from drone position through the detection pixel down to the ground plane
+4. Reduces error from ~6.2m average to ~0.3m average
 
-4. The `/api/status` endpoint reports detection counts and whether a SMART lock has occurred.
+Always use this flag during real flights.
 
 ---
 
@@ -322,41 +321,16 @@ Models can be switched live from the browser dropdown:
 | 2 | SAR v2 NCNN | `cv_models/sar_v2_1088/best.tflite` | Same model, NCNN backend (~4.5x faster) |
 | 3 | COCO Person | `cv_models/human.tflite` | 80-class COCO detector, detects people (~13MB, slower) |
 
-To use a different model from the command line:
-```bash
-python field_tools/passive_watch.py --model cv_models/sar_v2_1088/best.tflite
-```
-
 ---
 
-## Troubleshooting
+## Camera Sharing Warning
 
-| Problem | Fix |
-|---------|-----|
-| "Cannot open camera" | Another script has the camera. Kill it: `pkill -f passive_watch` |
-| No GPS overlay | Mavproxy not running, or use `--no-mavlink` for stream-only |
-| Port already in use | Use `--port 8091` or kill the other process |
-| Very slow on Pi | Lower FPS: `--fps 3`. Or use NCNN model (switch from browser) |
-| No detections | Lower confidence: `--conf 0.2`. Check model path. |
-| SMART never locks | Increase `--smart-radius` (e.g., 2.0) or decrease `--smart-min` (e.g., 3) |
-| Browser shows black | Camera warming up (1-2 seconds), or camera not connected |
-| Fake mode won't start | Ensure `RealVideo/DJI_0001_1456x1088_cropped_30fps.mp4` exists |
+**passive_watch and main.py CANNOT run at the same time.** Both open the Pi camera -- only one process can use it.
 
----
+Workflow:
+1. Run passive_watch during manual RC flights
+2. `Ctrl+C` passive_watch when done
+3. Wait 2 seconds for camera release
+4. Then start main.py if needed
 
-## Prerequisites
-
-### On Raspberry Pi
-- mavproxy running (for GPS):
-  ```bash
-  sudo /opt/mavlink/mavlink-venv/bin/mavproxy.py \
-    --master=/dev/ttyAMA0 --baudrate=921600 --streamrate=10 \
-    --out=udpout:127.0.0.1:14550 --out=tcpin:0.0.0.0:5762
-  ```
-- Camera connected (picamera2 + IMX296)
-- `pienv` venv activated with requirements_pi.txt installed
-
-### On Laptop (fake mode)
-- `test_env` venv activated
-- DJI video file in `RealVideo/`
-- OpenCV + NumPy installed
+If camera is stuck: `sudo pkill -f libcamera; sudo pkill -f python; sleep 2`
