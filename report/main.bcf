@@ -2480,21 +2480,23 @@
     <bcf:citekey order="116" intorder="1">forsberg1991relationship</bcf:citekey>
     <bcf:citekey order="117" intorder="1">rtca_do178c</bcf:citekey>
     <bcf:citekey order="118" intorder="1">brown1966decentering</bcf:citekey>
-    <bcf:citekey order="119" intorder="1">mavproxy</bcf:citekey>
-    <bcf:citekey order="120" intorder="1">mavlink2</bcf:citekey>
-    <bcf:citekey order="121" intorder="1">lin2014coco</bcf:citekey>
-    <bcf:citekey order="122" intorder="1">yolov8</bcf:citekey>
-    <bcf:citekey order="123" intorder="1">yolov8</bcf:citekey>
-    <bcf:citekey order="124" intorder="1">rudol2008human</bcf:citekey>
-    <bcf:citekey order="125" intorder="1">settles2009active</bcf:citekey>
-    <bcf:citekey order="126" intorder="1">golden2006hypothermia</bcf:citekey>
-    <bcf:citekey order="127" intorder="1">stolaroff2018energy</bcf:citekey>
+    <bcf:citekey order="119" intorder="1">johnson2013helicopter</bcf:citekey>
+    <bcf:citekey order="120" intorder="1">murphy2016disaster</bcf:citekey>
+    <bcf:citekey order="121" intorder="1">mavproxy</bcf:citekey>
+    <bcf:citekey order="122" intorder="1">mavlink2</bcf:citekey>
+    <bcf:citekey order="123" intorder="1">lin2014coco</bcf:citekey>
+    <bcf:citekey order="124" intorder="1">yolov8</bcf:citekey>
+    <bcf:citekey order="125" intorder="1">yolov8</bcf:citekey>
+    <bcf:citekey order="126" intorder="1">rudol2008human</bcf:citekey>
+    <bcf:citekey order="127" intorder="1">settles2009active</bcf:citekey>
     <bcf:citekey order="128" intorder="1">golden2006hypothermia</bcf:citekey>
-    <bcf:citekey order="129" intorder="1">choset2001coverage</bcf:citekey>
-    <bcf:citekey order="130" intorder="1">galceran2013survey</bcf:citekey>
-    <bcf:citekey order="131" intorder="1">golden2006hypothermia</bcf:citekey>
+    <bcf:citekey order="129" intorder="1">stolaroff2018energy</bcf:citekey>
+    <bcf:citekey order="130" intorder="1">golden2006hypothermia</bcf:citekey>
+    <bcf:citekey order="131" intorder="1">choset2001coverage</bcf:citekey>
     <bcf:citekey order="132" intorder="1">galceran2013survey</bcf:citekey>
-    <bcf:citekey order="133" intorder="1">sheridan2002humans</bcf:citekey>
+    <bcf:citekey order="133" intorder="1">golden2006hypothermia</bcf:citekey>
+    <bcf:citekey order="134" intorder="1">galceran2013survey</bcf:citekey>
+    <bcf:citekey order="135" intorder="1">sheridan2002humans</bcf:citekey>
   </bcf:section>
   <!-- SORTING TEMPLATES -->
   <bcf:sortingtemplate name="none">
