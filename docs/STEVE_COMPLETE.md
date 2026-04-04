@@ -701,3 +701,28 @@ When: ONLY if Steve's responses suggest we'll be penalised unfairly
 - "We deserve top marks" (sounds entitled)
 - "You promised" (sounds accusatory)
 - "This is your fault" (burns bridges)
+
+---
+
+# PART 6: DRAFT MESSAGE 1 TO STEVE (ready to review/send)
+
+> Hi Steve,
+>
+> Hope you're well. Just following up on our last chat -- you mentioned you had a draft update for the D7 personal reflection report with more details on what's expected. Has that been issued? I just want to make sure I'm not missing anything as I'm working on it now.
+>
+> Also had a quick question about the group report -- for the top mark band, the rubric mentions technologies "implemented highly effectively." Given our hardware situation this term, would our simulation-validated work (all 12 requirements met in SITL, extensive testing, benchmarks) be credited the same as outdoor flight data? I've been putting in a huge amount of work and I want to make sure I'm focusing in the right areas.
+>
+> I know you mentioned you'd take our situation into account and I really appreciate that. I'm just a bit worried about whether we can still achieve a strong mark given the setbacks. Any guidance on what to prioritise would be really helpful.
+>
+> Thanks,
+> Dmytro
+
+### Why this message works:
+1. **Opens with HIS promise** -- he said he'd send D7 details, natural follow-up
+2. **Asks THE key question** -- does simulation count as "implemented"?
+3. **Shows effort** -- "I've been putting in a huge amount of work"
+4. **Worried tone, not angry** -- "I'm just a bit worried"
+5. **Asks for guidance** -- makes him the helper, not the target
+6. **References his own words** -- "you mentioned you'd take it into account"
+7. **SHORT** -- he'll actually read and reply to this
+8. **Gets written confirmation** -- his reply is evidence for later if needed
