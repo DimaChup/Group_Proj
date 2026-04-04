@@ -489,3 +489,78 @@ Dmytro
 | Training images | 3,500+ (multi-class) |
 | GPS estimation accuracy | CEP50 = 2.3m (DJI validated) |
 | Requirements met in simulation | 12/12 |
+
+---
+
+# PART 4: ADDITIONAL CONTEXT (raw notes, keep adding here)
+
+## The Motor Wiring Issue (Flight Day 2)
+- Drone didn't fly because motor wires were connected incorrectly
+- This MAY have been done by our team members -- fair enough
+- BUT: it wasn't our job to BUILD the drone in the first place
+- The brief says we're provided with a working platform
+- We had to try and build it ourselves since we weren't provided a working drone
+- Other teams received assembled, flight-tested drones. We received parts and problems.
+
+## The Stress and Personal Time Cost
+- Personally spent probably 3x the expected hours on this unit
+- Much of that time was workarounds: building simulation environment, synthetic data generation, DJI video analysis -- all because we couldn't test on real hardware
+- Stressful not knowing if our software actually works in reality
+- Built on unverified foundations for 2 months -- what if detection doesn't work from real altitude? What if GPS estimation is off? No way to know until Easter.
+- The uncertainty was the worst part -- couldn't plan properly because didn't know what works and what doesn't
+- Had to keep building features without knowing if the foundation is solid
+
+## Simulation vs Reality Gap
+- Our simulation is 100% complete -- all 12 requirements met in SITL
+- But we don't feel comfortable diving right into autonomous flight without progressive testing
+- We WANTED: bench → passive → waypoint → autonomous (each step building confidence before the next)
+- We GOT: nothing → nothing → Easter scramble → demo day
+- No time for the gradual trust-building the course is designed around
+- Can't just launch autonomous mode on a drone that's never been tested progressively
+- That would be irresponsible from a safety perspective
+
+## Robin's Last-Minute Integration
+- Robin (teammate) scraped together a working flight system since Easter
+- But it's been last-minute, since the drone only finally worked during Easter holiday
+- His state machine reads our passive_watch GPS outputs
+- The integration is fragile because there was no time for proper iteration
+- We needed weeks of progressive testing, got days
+
+## What We're Going For (and our concern)
+- We want top marks (85%+) -- we believe the software quality justifies it
+- But we're NOT confident we CAN get top marks given all the setbacks
+- We'd like reassurance from Steve that simulation work + Easter testing is sufficient for top marks
+- The simulation demonstrates everything the brief asks for -- just not on real hardware outdoors
+- If the marking penalises lack of outdoor data, it penalises us for hardware we didn't receive
+
+## The Cascading Effect of Lost Flight Days
+- Day 1 hardware failure → couldn't calibrate outdoors
+- → couldn't train model on real aerial data
+- → couldn't validate detection at real altitude
+- → couldn't verify GPS estimation pipeline outdoors
+- → couldn't build progressive confidence (bench → passive → waypoint → auto)
+- → each lost day cascaded into weeks of uncertainty
+- → other teams had this data from Day 1 and could iterate all term
+- → we got our first real hardware data during Easter -- 6 weeks after Day 1
+
+## Steve's Promises (track these)
+- Said he would **take the hardware situation into account** in marking
+- Said he would provide a **D7 draft update "first thing next week"** -- did it ever come?
+- Said **"Sid's on it"** for getting us a working drone -- what happened?
+- Arranged Easter days (appreciated) but that's a **holiday**, not teaching time
+- Said "plan for both" (our drone fixed OR use green team's) -- neither was a real plan
+
+## Items of Interest Question
+- Steve said "use coats, other stuff" for items of interest
+- The "animals were silly" (blow-up zebra and giraffe)
+- So items of interest = clothing, equipment, everyday objects on the ground
+- Our model detects "dummy" (mannequin) -- COCO backup detects person, backpack, etc.
+- Multi-class model (5 classes) trained but Colab GPU quota ran out before finishing
+
+## Personal Reflection Report (D7)
+- Steve said "I have a draft update that I'll issue first thing next week"
+- This was the LAST message in our chat -- did the update ever come?
+- The brief has "DETAIL TO FOLLOW" in yellow highlight
+- We've been working from the rubric bands in Appendix B (Teamwork, Self-management, Insight)
+- Without Steve's update, we don't know the exact expectations
+- Our D7 is at 83-84/100 after 7 iterations -- but is that what they're actually looking for?
