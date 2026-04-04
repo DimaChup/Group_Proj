@@ -14,13 +14,13 @@ Every major design decision was evaluated against the seven STEEPLE dimensions (
     \toprule
     \textbf{Dimension} & \textbf{Key consideration and design response} \\
     \midrule
-    Social & Serves community safety via volunteer rescue teams; operator-in-the-loop verification maintains public trust~\cite{murphy2014}. \\
-    Technological & Pi~5 with TFLite (4 packages vs 90+); dual-backend architecture enables GPU development with edge deployment~\cite{edgeai, tflite}. \\
-    Economic & \pounds565 total cost ($\sim$10\% of DJI Matrice 30T); onboard inference eliminates high-bandwidth comms and dedicated analyst. \\
-    Environmental & Four-layer geofence + firmware fence protects adjacent SSSI; 30\,m waypoint buffer; \SI{3}{\kilo\gram} AUW minimises wildlife disturbance~\cite{wca1981}. \\
-    Political & UK CAA Open Category A3 compliant~\cite{caa2024uas}; VLOS only (BVLOS requires SORA~\cite{jarus2019sora}); MIT licence (R12). \\
-    Legal & Images stored locally (no cloud); SSSI compliance auditable via logged boundary distances at every loop iteration~\cite{wca1981}. \\
-    Ethical & No autonomous landing without human confirmation; 120\,s auto-reject prioritises continued search over uncertain detections. \\
+    Social & Reduces volunteer foot-search time from hours to minutes for missing-person cases; open-source MIT licence (R12) enables volunteer SAR teams to replicate the platform without proprietary dependencies~\cite{murphy2014}. \\
+    Technological & Pi~5 with TFLite (4 packages vs 90+); IMX296 global shutter eliminates rolling-shutter distortion at \SI{8}{\metre\per\second}; fully on-device inference---no cloud link required during mission~\cite{edgeai, tflite}. \\
+    Economic & \pounds150 compute stack ($<$10\% of DJI Matrice 30T); free-tier Colab training on 366-image dataset; zero per-mission cloud cost, viable for resource-constrained organisations. \\
+    Environmental & Five-layer geofence with graduated speed reduction protects adjacent SSSI nesting habitat; \SI{30}{\metre} waypoint buffer; electric propulsion limits acoustic disturbance; \SI{3}{\kilo\gram} AUW minimises rotor wash on ground fauna~\cite{wca1981}. \\
+    Political & UK CAA Open Category A3 compliant~\cite{caa2024uas}; VLOS only (BVLOS requires SORA~\cite{jarus2019sora}); aligns with CAA Innovation Hub policy encouraging civilian drone SAR trials; public GitHub repo ensures full auditability. \\
+    Legal & On-device inference---no imagery transmitted over any network; detection logs record bounding-box coordinates only (no facial features), minimising UK GDPR risk; SSSI compliance auditable via logged boundary distances at every loop iteration~\cite{wca1981}. \\
+    Ethical & No autonomous landing without human confirmation (\textsc{Verify} gate); 120\,s auto-reject prioritises continued search over uncertain detections; frames processed in memory and discarded after inference---no persistent image storage of bystanders. \\
     \bottomrule
   \end{tabularx}
 \end{table}
@@ -87,7 +87,8 @@ The hardware integrates a Hexsoon EDU-450 airframe, CubePilot Orange+ flight con
 
 \begin{itemize}
     \item \textbf{Global shutter camera.} The IMX296 was selected over cheaper rolling-shutter alternatives because rolling-shutter distortion during forward flight at up to \SI{10}{\metre\per\second} skews bounding boxes and degrades detection accuracy. The CSI interface leaves USB ports free for telemetry radios.
-    \item \textbf{No thermal imaging.} Thermal cameras add \pounds2\,000--\pounds10\,000 to the platform cost and have lower spatial resolution than RGB at equivalent price points. This project deliberately explores RGB-only detection feasibility at the low-cost extreme~\cite{thermal_sar}.
+    \item \textbf{No thermal imaging.} Thermal cameras (e.g.\ FLIR Boson, DJI Zenmuse H20T) add \pounds2\,000--\pounds10\,000 to the platform cost, have lower spatial resolution (typically $640 \times 512$ vs $1456 \times 1088$ RGB), and require radiometric calibration that varies with ambient temperature. While thermal imaging offers superior night-time and foliage-penetration capability, this project deliberately explores RGB-only detection feasibility at the low-cost extreme~\cite{thermal_sar}. A fused RGB+thermal system would be ideal for operational deployment but exceeds the \pounds565 budget constraint by $4$--$18\times$.
+    \item \textbf{Onboard vs offboard inference.} Offloading detection to a ground station via video downlink was rejected for three reasons: (1)~reliable video streaming at \SI{1456}{} $\times$ \SI{1088}{} at 5\,FPS requires ${\approx}$\SI{15}{Mbps} sustained throughput, exceeding typical \SI{2.4}{\giga\hertz} telemetry radio capacity; (2)~round-trip latency (encode, transmit, detect, return command) adds 200--500\,ms to the decision loop, during which the drone travels 1--4\,m; and (3)~link loss during detection would leave the drone without situational awareness. Onboard inference on the Pi~5 eliminates all three failure modes at the cost of lower computational headroom.
     \item \textbf{MAVProxy bridge.} A Python~3.13 incompatibility with pyserial (dropped bytes causing \texttt{BAD\_DATA} errors) is resolved by interposing MAVProxy as a UDP bridge, which reads the serial port reliably using its own C-level handler~\cite{mavproxy}.
 \end{itemize}
 
@@ -181,6 +182,8 @@ YOLOv8n (the nano variant, 3.2~million parameters, 8.7~GFLOPs) was selected afte
 
 The model was trained as a single-class detector on 366 images (300 synthetic, 16 real, 50 negatives) at native camera resolution ($1456 \times 1088$), following the domain-randomisation principle~\cite{domainrand}. Training at higher resolution than the $640 \times 640$ inference input allows the network to learn fine-grained features that survive downscaling~\cite{yolov8}. A COCO-pretrained person detector is carried as a fallback for field conditions where the custom model underperforms.
 
+\paragraph{Why TFLite over other inference runtimes?} Three alternative runtimes were considered: ONNX Runtime, TensorRT, and NCNN. TensorRT requires an NVIDIA GPU (absent on the Pi~5). ONNX Runtime supports ARM CPU but its Python wheel for aarch64 lags behind mainline releases and benchmarked 15--20\% slower than TFLite with XNNPACK on the Pi~5. NCNN (Tencent) achieved $4.5\times$ faster inference than TFLite in benchmarks (\SI{72}{\milli\second} vs \SI{327}{\milli\second} full pipeline) and is supported as a secondary backend; however, its Python bindings are less mature, and the TFLite ecosystem provides the most robust export path from Ultralytics. The dual-backend architecture (TFLite primary, NCNN secondary) preserves the option to switch at deployment time via a single command-line flag.
+
 \subsection{Coverage Path Planning}\label{sec:plan-rationale}
 
 Four candidate search patterns were evaluated (Table~\ref{tab:mcda-search}), prioritising coverage guarantee and implementability to ensure reliable, verifiable behaviour over theoretically optimal but harder-to-validate paths.
@@ -208,7 +211,13 @@ Four candidate search patterns were evaluated (Table~\ref{tab:mcda-search}), pri
 
 \subsection{State Machine Design}\label{sec:fsm-rationale}
 
-A deterministic finite state machine (FSM) with 20~states and 32~transitions was chosen over behaviour trees or reactive architectures for its verifiability, traceability, and ease of runtime monitoring~\cite{wagner2006fsm}. Each state maps to a single handler function via a dictionary-based dispatch table ($O(1)$ lookup), eliminating fall-through errors. Defence-in-depth safety is enforced through five independent mechanisms: manual override (M~key), RC kill switch (hardware-level), return-to-launch on link loss, five-layer geofence, and per-state timeouts. Every blocking state carries a wall-clock timeout to prevent indefinite hangs. The complete transition table is provided in Appendix~\ref{app:states}.
+A deterministic finite state machine (FSM) with 20~states and 32~transitions was chosen over behaviour trees and reactive architectures for its verifiability, traceability, and ease of runtime monitoring~\cite{wagner2006fsm}.
+
+\paragraph{Why not behaviour trees?} Behaviour trees offer superior composability for complex agent behaviours and are widely used in game AI and multi-robot systems. However, they introduce implicit priority ordering through selector/sequence nodes that is harder to audit than an explicit transition table, debugging requires tree-visualisation tooling, and the SAR mission's strictly sequential phase structure (search $\rightarrow$ detect $\rightarrow$ verify $\rightarrow$ land) does not benefit from the parallel subtree execution that behaviour trees enable. For a single-drone, single-objective mission, the FSM's one-state-at-a-time guarantee makes every transition auditable in a flat log file.
+
+\paragraph{Why not reactive/subsumption architectures?} Reactive architectures (e.g.\ Brooks' subsumption) excel at low-latency obstacle avoidance but lack the persistent state memory required for multi-phase missions: the system must remember which search legs have been completed, which targets have been classified, and how long the current hover has lasted. Layering these concerns onto a purely reactive stack would replicate FSM functionality without its formal verifiability.
+
+\noindent Each state maps to a single handler function via a dictionary-based dispatch table ($O(1)$ lookup), eliminating fall-through errors. Defence-in-depth safety is enforced through five independent mechanisms: manual override (M~key), RC kill switch (hardware-level), return-to-launch on link loss, five-layer geofence, and per-state timeouts. Every blocking state carries a wall-clock timeout to prevent indefinite hangs. The complete transition table is provided in Appendix~\ref{app:states}.
 
 The CENTERING state---hovering stationary above a detected target before estimating its GPS position---simultaneously eliminates roll/pitch projection error (\SI{6.2}{\metre} during flight to $<$\SI{0.6}{\metre}), motion blur, and GPS timing lag. This single procedural step replaces three independent software corrections (attitude compensation, lag prediction, and blur deconvolution), each of which would add complexity and potential failure modes to a safety-critical code path. Appendix~\ref{sec:centering-mitigation} provides the full quantitative analysis.
 
@@ -224,19 +233,49 @@ The \textsc{Verify} state implements this gate: the operator classifies each det
 
 \subsection{Decisions That Changed: Evidence-Based Corrections}\label{sec:decisions-changed}
 
-Four design parameters were revised when empirical evidence contradicted initial assumptions:
+Seven design decisions were revised when empirical evidence contradicted initial assumptions. Each correction followed the same pattern: observe anomalous behaviour, diagnose root cause, implement fix, verify improvement---demonstrating evidence-driven iteration rather than assumption-driven design.
 
-\paragraph{Focal length: \SI{7.0}{\milli\metre} $\rightarrow$ \SI{5.46}{\milli\metre}.}
-A tape-measure calibration on field day measured \SI{92}{\centi\metre} visible at \SI{1}{\metre} height, revealing a 22\% overestimate in the assumed focal length. This single correction shifted GPS estimations by up to \SI{3}{\metre} at \SI{30}{\metre} altitude---without it, landing errors would have exceeded the \SI{10}{\metre} R07 requirement.
+\paragraph{1. Focal length: \SI{7.0}{\milli\metre} $\rightarrow$ \SI{5.46}{\milli\metre}.}
+\emph{Original decision:} use the datasheet focal length of \SI{7.0}{\milli\metre} for GPS estimation.
+\emph{Evidence:} a tape-measure calibration on field day measured \SI{92}{\centi\metre} visible at \SI{1}{\metre} height---22\% wider than predicted.
+\emph{Revised decision:} back-calculate focal length from the physical measurement: $f = w_s \times d / W_{\text{visible}} = 5.02 \times 1.0 / 0.92 = \SI{5.46}{\milli\metre}$.
+\emph{Outcome:} GPS estimation error at \SI{30}{\metre} reduced by up to \SI{3}{\metre}; without this correction, landing errors would have exceeded the \SI{10}{\metre} R07 requirement. All downstream parameters (footprint width, lane spacing, NFZ buffer) were recalculated from the corrected value.
 
-\paragraph{Camera resolution: $640 \times 480$ $\rightarrow$ $1456 \times 1088$.}
-At $640 \times 480$, a prone casualty at \SI{30}{\metre} subtends only $20 \times 14$\,px---below reliable detection. Switching to native resolution increased this to $46 \times 32$\,px with no inference time change (the model resizes internally to $640 \times 640$).
+\paragraph{2. Camera colour space: RGB assumed $\rightarrow$ BGR confirmed.}
+\emph{Original decision:} apply \texttt{cv2.cvtColor(frame, cv2.COLOR\_RGB2BGR)} because \texttt{picamera2} labels the stream as \texttt{RGB888}.
+\emph{Evidence:} detection confidence on the Pi was anomalously low ($<$0.3) despite identical model performance on the laptop. Systematic testing of all six channel permutations (RGB, RBG, GBR, GRB, BRG, BGR) revealed that the IMX296 sensor outputs BGR data despite the RGB888 label---the \texttt{cvtColor} call was inverting the channels.
+\emph{Revised decision:} remove the erroneous conversion; pass raw frames directly to the detector.
+\emph{Outcome:} detection confidence recovered to 0.96+ on the Pi, matching laptop performance. This bug would have caused complete detection failure in flight.
 
-\paragraph{TFLite runtime: \texttt{tflite-runtime} $\rightarrow$ \texttt{ai-edge-litert}.}
-Google's \texttt{tflite-runtime} has no Python~3.13 wheel; \texttt{ai-edge-litert} provides an identical API, eliminating the conflict with \texttt{picamera2} (system Python) with zero code changes.
+\paragraph{3. Camera resolution: $640 \times 480$ $\rightarrow$ $1456 \times 1088$.}
+\emph{Original decision:} capture at $640 \times 480$ (common webcam default) to minimise processing load.
+\emph{Evidence:} at $640 \times 480$ and \SI{30}{\metre} altitude, a prone casualty subtends only $20 \times 14$\,px---at the minimum detection threshold with no safety margin.
+\emph{Revised decision:} capture at the IMX296's native resolution ($1456 \times 1088$), since the model resizes internally to $640 \times 640$ regardless.
+\emph{Outcome:} target subtends $46 \times 32$\,px ($2.3\times$ improvement) with zero inference time penalty, providing a comfortable $1.6\times$ margin above the 20\,px detection floor.
 
-\paragraph{Serial communication: pyserial $\rightarrow$ MAVProxy UDP bridge.}
-A Python~3.13 pyserial regression dropped bytes at 921\,600~baud. MAVProxy resolves this via its C-level serial handler and simultaneously enables multi-consumer telemetry access (Table~\ref{tab:mcda-comms}).
+\paragraph{4. TFLite bounding box interpretation: normalised $\rightarrow$ pixel coordinates.}
+\emph{Original decision:} treat TFLite output coordinates as normalised values in $[0, 1]$ and multiply by frame dimensions, following the standard TFLite convention.
+\emph{Evidence:} during Pi bench testing, detection overlay boxes were drawn off-screen (coordinates exceeding 640). Inspection revealed the TFLite backend was returning raw pixel coordinates in $[0, 640]$, not normalised values---an undocumented deviation from the expected convention.
+\emph{Revised decision:} add a coordinate-range check: if any output coordinate exceeds 1.0, treat as pixel coordinates and skip the normalisation multiply. The same guard was already present in the NCNN inference path.
+\emph{Outcome:} detection overlays rendered correctly; GPS estimation accuracy improved because bounding box centres were no longer scaled by an extra factor of 640. This also fixed a downstream double-scaling bug in \texttt{passive\_watch.py} where pixel coordinates were multiplied by frame dimensions a second time, placing GPS estimates over \SI{100}{\metre} from the true position.
+
+\paragraph{5. Geofence repulsive force: sign inversion corrected.}
+\emph{Original decision:} the repulsive offset function returns positive lat/lon deltas to push the drone away from the NFZ boundary.
+\emph{Evidence:} SITL simulation showed the drone being pushed \emph{toward} the SSSI boundary instead of away. Root cause: \texttt{cv2.pointPolygonTest} returns positive values for points \emph{inside} a polygon (opposite to the assumed convention), and the repulsive offset signs were not negated.
+\emph{Revised decision:} negate the repulsive offset returns and correct the inside/outside boundary logic.
+\emph{Outcome:} geofence now correctly repels the drone from the NFZ. This defect would have caused a Wildlife and Countryside Act 1981 violation in flight~\cite{wca1981}, and was caught at Tier~1 (simulation) at zero hardware cost.
+
+\paragraph{6. TFLite runtime: \texttt{tflite-runtime} $\rightarrow$ \texttt{ai-edge-litert}.}
+\emph{Original decision:} use Google's \texttt{tflite-runtime} package for edge inference on the Pi.
+\emph{Evidence:} \texttt{tflite-runtime} has no Python~3.13 wheel; \texttt{picamera2} requires system Python~3.13 on the Pi~5, creating an unresolvable dependency conflict.
+\emph{Revised decision:} switch to \texttt{ai-edge-litert}, which provides an identical API with Python~3.13 support.
+\emph{Outcome:} dependency conflict eliminated with zero code changes; verified by 50-run benchmark producing identical inference times (\SI{206.5}{\milli\second}).
+
+\paragraph{7. Serial communication: pyserial $\rightarrow$ MAVProxy UDP bridge.}
+\emph{Original decision:} connect the Pi directly to the Cube flight controller via pyserial at 921\,600~baud.
+\emph{Evidence:} a Python~3.13 pyserial regression dropped bytes, producing persistent \texttt{BAD\_DATA} errors that prevented reliable MAVLink communication.
+\emph{Revised decision:} interpose MAVProxy as a UDP bridge; it reads the serial port with its C-level handler and forwards to UDP endpoints.
+\emph{Outcome:} reliable communication restored; MAVProxy simultaneously enables multi-consumer access (scripts on port~14550, Mission Planner on TCP~5762, diagnostics on port~14551), turning a workaround into an architectural improvement (Table~\ref{tab:mcda-comms}).
 
 \subsection{Why Not ROS}\label{sec:ros-rationale}
 
@@ -253,4 +292,4 @@ The scheduled flight test (2026-03-11) was cancelled due to sustained winds exce
 \paragraph{Decision flow narrative.} Appendix~\ref{app:decision-flow} presents the six-step reasoning chain---from detection ceiling through altitude, speed, scan angle, NFZ margin, and coverage acceptance---as a self-contained executive narrative. It includes the 216-configuration sweep results, top-three configuration comparison, Pareto optimality analysis, and non-quantifiable design choices.
 
 \medskip
-\noindent\textbf{Section summary.} Every design decision in this project traces to a quantified rationale---physical measurement, parametric sweep, weighted trade study, or energy budget analysis---and four decisions were revised when empirical evidence contradicted initial assumptions, demonstrating the evidence-driven engineering process that underpins the system.
+\noindent\textbf{Section summary.} Every design decision in this project traces to a quantified rationale---physical measurement, parametric sweep, weighted trade study, or energy budget analysis---and seven decisions were revised when empirical evidence contradicted initial assumptions. Three of those corrections (BGR colour inversion, geofence sign error, bounding box coordinate mismatch) would have caused mission-critical failures in flight, yet all were caught and resolved at low-cost tiers through the progressive testing framework, demonstrating the evidence-driven engineering process that underpins the system.

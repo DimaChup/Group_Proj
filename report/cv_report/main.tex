@@ -106,7 +106,7 @@ This report presents the computer vision subsystem developed for an autonomous S
 % ════════════════════════════════════════════════════════════════════════
 \section{Introduction}\label{sec:intro}
 
-Search and rescue operations in wilderness environments face a fundamental challenge: large areas must be searched rapidly while the human target---often immobile, camouflaged by terrain, or partially occluded---occupies a tiny fraction of the visual field. Conventional approaches rely on manned aircraft or ground teams, both constrained by cost, crew fatigue, and limited coverage rates. Autonomous unmanned aerial vehicles (UAVs) equipped with onboard computer vision offer a compelling alternative: systematic coverage of predefined search areas with consistent, fatigue-free detection capability~\cite{rudol2008human}.
+Search and rescue operations in wilderness environments face a fundamental challenge: large areas must be searched rapidly while the human target---often immobile, camouflaged by terrain, or partially occluded---occupies a tiny fraction of the visual field. Conventional approaches rely on manned aircraft or ground teams, both constrained by cost, crew fatigue, and limited coverage rates. Autonomous unmanned aerial vehicles (UAVs) equipped with onboard computer vision offer an alternative: systematic coverage of predefined search areas with consistent, fatigue-free detection capability~\cite{rudol2008human}.
 
 This report documents the computer vision subsystem of an autonomous SAR drone developed as part of the AENGM0074 MSc Group Design Project at the University of Bristol. The complete system comprises a Hexsoon EDU-450 hexacopter airframe, a CubePilot Orange+ flight controller running ArduPilot, and a Raspberry Pi~5 companion computer with a Sony IMX296 global shutter camera. The CV subsystem is responsible for detecting a mannequin casualty from search altitudes of 20--50\,m and estimating the target's GPS coordinates for subsequent investigation and landing.
 
@@ -234,7 +234,7 @@ The final dataset (\texttt{dataset\_v2}) contains 366 images at the native camer
   \end{tabular}
 \end{table}
 
-Despite constituting only 4.4\% of the dataset, the 16 real frames serve a disproportionate role: they anchor the learned feature space to real-world appearance, preventing the model from overfitting to artefacts of the synthetic compositing process. This ``few-shot anchoring'' approach---using a small number of real examples to ground a predominantly synthetic dataset---has been shown to be effective in sim-to-real transfer for robotics and autonomous systems~\cite{domainrand}.
+Despite constituting only 4.4\% of the dataset, the 16 real frames serve an outsized role: they anchor the learned feature space to real-world appearance, reducing overfitting to artefacts of the synthetic compositing process. This ``few-shot anchoring'' approach---using a small number of real examples to ground a predominantly synthetic dataset---has been shown to be effective in sim-to-real transfer for robotics and autonomous systems~\cite{domainrand}.
 
 \subsection{Domain Randomisation}\label{sec:training:domainrand}
 
@@ -284,7 +284,7 @@ A custom labelling tool (\texttt{tools/label\_tool.py}) was developed for rapid 
 
 \subsection{Negative Mining}
 
-Fifty frames were extracted from flight video at locations where no mannequin was present. Each negative image is paired with an empty label file. The v1 model (trained without negatives) frequently hallucinated detections on shadows, path markings, and field equipment. After retraining with the negative set, false activations on these terrain features were substantially reduced while maintaining high recall on the mannequin target. The negative-to-positive ratio of 50:316 (${\sim}$16\%) follows the heuristic recommended by~\textcite{shrivastava2016training}.
+Fifty frames were extracted from flight video at locations where no mannequin was present. Each negative image is paired with an empty label file. The v1 model (trained without negatives) frequently hallucinated detections on shadows, path markings, and field equipment. After retraining with the negative set, false activations on these terrain features were reduced while maintaining high recall on the mannequin target. The negative-to-positive ratio of 50:316 (${\sim}$16\%) follows the heuristic recommended by~\textcite{shrivastava2016training}.
 
 \subsection{Training Configuration and Convergence}
 
@@ -492,10 +492,10 @@ Three model variants are maintained in the \texttt{cv\_models/} directory, each 
     \textbf{Configuration} & \textbf{Status} & \textbf{Latency} & \textbf{FPS} & \textbf{Notes} \\
     \midrule
     TFLite FP32 (XNNPACK)    & Measured  & 206.5\,ms & 4.8  & Production baseline \\
-    TFLite FP16 (XNNPACK)    & Projected & ${\sim}$100\,ms  & ${\sim}$10   & Native A76 FP16 FMLA \\
-    NCNN FP32 (4 threads)    & Projected & ${\sim}$68\,ms   & ${\sim}$15   & Ultralytics benchmark \\
-    NCNN FP16                & Projected & ${\sim}$45\,ms   & ${\sim}$22   & NEON FP16 + NCNN kernels \\
-    Hailo-8L NPU             & Hardware  & $<$15\,ms & $>$60   & External accelerator \\
+    \textit{TFLite FP16 (XNNPACK)}    & \textit{Projected} & \textit{${\sim}$100\,ms}  & \textit{${\sim}$10}   & \textit{Native A76 FP16 FMLA} \\
+    \textit{NCNN FP32 (4 threads)}    & \textit{Projected} & \textit{${\sim}$68\,ms}   & \textit{${\sim}$15}   & \textit{Ultralytics benchmark} \\
+    \textit{NCNN FP16}                & \textit{Projected} & \textit{${\sim}$45\,ms}   & \textit{${\sim}$22}   & \textit{NEON FP16 + NCNN kernels} \\
+    \textit{Hailo-8L NPU}             & \textit{Hardware}  & \textit{$<$15\,ms} & \textit{$>$60}   & \textit{External accelerator} \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -508,7 +508,7 @@ Three model variants are maintained in the \texttt{cv\_models/} directory, each 
 
 \section{Detection Performance}\label{sec:performance}
 
-With the model trained and the inference pipeline deployed, the critical engineering question shifts from ``can it detect?'' to ``under what conditions does it detect reliably?'' This section characterises the detection system's operational envelope by deriving, from first principles, the relationships between altitude, speed, target pixel size, motion blur, and frame coverage from the calibrated hardware parameters (Table~\ref{tab:vision-params}).
+With the model trained and the inference pipeline deployed, the engineering question shifts from ``can it detect?'' to ``under what conditions does it detect reliably?'' This section characterises the detection system's operational envelope by deriving the relationships between altitude, speed, target pixel size, motion blur, and frame coverage from the calibrated hardware parameters (Table~\ref{tab:vision-params}).
 
 \begin{table}[ht]
   \centering
@@ -582,7 +582,7 @@ The dummy height drops below the ${\sim}$20\,px YOLOv8 detection threshold at ap
 
 \subsection{Speed vs Motion Blur}
 
-The IMX296 is a global shutter sensor, eliminating rolling-shutter artefacts entirely. Translational motion blur remains a function of exposure time:
+The IMX296 is a global shutter sensor, eliminating rolling-shutter distortion. Translational motion blur remains a function of exposure time:
 \begin{equation}\label{eq:blur}
   b_{\mathrm{px}} = \frac{v \cdot t_{\mathrm{exp}}}{\mathrm{GSD}}
 \end{equation}
@@ -601,7 +601,7 @@ The IMX296 is a global shutter sensor, eliminating rolling-shutter artefacts ent
   \end{tabular}
 \end{table}
 
-At all operational speeds, blur is sub-pixel with the global shutter at 1/1000\,s. Even at \SI{15}{\metre\per\second} and \SI{20}{\metre} altitude, blur reaches only 1.2\,px. The global shutter is the decisive hardware choice: a rolling-shutter sensor would introduce 5--10\,px of geometric distortion at typical multirotor vibration frequencies.
+At all operational speeds, blur is sub-pixel with the global shutter at 1/1000\,s. Even at \SI{15}{\metre\per\second} and \SI{20}{\metre} altitude, blur reaches only 1.2\,px. The global shutter is an important hardware choice: a rolling-shutter sensor would introduce 5--10\,px of geometric distortion at typical multirotor vibration frequencies.
 
 \subsection{Speed vs Frames on Target}
 
@@ -756,7 +756,7 @@ Calibration was performed using a printed checkerboard (calib.io pattern, $14 \t
 
 \subsection{Camera Colour-Space Discovery}\label{sec:cal:colour}
 
-During integration testing on the Raspberry Pi~5, detection confidence dropped significantly below the values observed in simulation. The YOLO model---trained on BGR images (OpenCV's default channel order)---produced anomalously low confidence scores, and visual inspection of the MJPEG stream showed subtly incorrect colour reproduction. The cause was not immediately obvious because the colour swap between red and blue channels is difficult to distinguish on outdoor scenes dominated by greens and browns.
+During integration testing on the Raspberry Pi~5, detection confidence dropped markedly below the values observed in simulation. The YOLO model---trained on BGR images (OpenCV's default channel order)---produced anomalously low confidence scores, and visual inspection of the MJPEG stream showed subtly incorrect colour reproduction. The cause was not immediately obvious because the colour swap between red and blue channels is difficult to distinguish on outdoor scenes dominated by greens and browns.
 
 The IMX296 sensor is configured via \texttt{picamera2} with the \texttt{RGB888} pixel format, which the library documents as returning 8-bit RGB data. The initial code therefore included a \texttt{cv2.cvtColor(frame, cv2.COLOR\_RGB2BGR)} conversion to match OpenCV's expected BGR format. However, this conversion was \emph{itself} the problem: the IMX296 driver delivers data in BGR byte order despite the \texttt{RGB888} format label, so applying the conversion actually \emph{swapped} the channels into an incorrect order.
 
@@ -909,16 +909,16 @@ The pipeline executes once per camera frame and comprises fifteen sequential sta
 \noindent The entire pipeline from frame capture to GPS estimate completes in ${\sim}$208\,ms, with inference (stage~5) accounting for 94\% of the total time.
 
 % ── Pipeline flow diagram ──────────────────────────────────────────────
-\begin{figure}[ht]
+\begin{figure}[p]
 \centering
 \resizebox{\textwidth}{!}{%
 \begin{tikzpicture}[
-  node distance=0.55cm and 0.3cm,
-  every node/.style={font=\small},
-  imgbox/.style={draw, rounded corners=2pt, fill=blue!8, minimum width=3.8cm, minimum height=0.7cm, align=center, font=\small\sffamily},
-  nnbox/.style={draw, rounded corners=2pt, fill=green!12, minimum width=3.8cm, minimum height=0.7cm, align=center, font=\small\sffamily},
-  coordbox/.style={draw, rounded corners=2pt, fill=orange!10, minimum width=3.8cm, minimum height=0.7cm, align=center, font=\small\sffamily},
-  valbox/.style={draw, rounded corners=2pt, fill=red!8, minimum width=3.8cm, minimum height=0.7cm, align=center, font=\small\sffamily},
+  node distance=0.3cm and 0.3cm,
+  every node/.style={font=\scriptsize},
+  imgbox/.style={draw, rounded corners=2pt, fill=blue!8, minimum width=3.4cm, minimum height=0.55cm, align=center, font=\scriptsize\sffamily},
+  nnbox/.style={draw, rounded corners=2pt, fill=green!12, minimum width=3.4cm, minimum height=0.55cm, align=center, font=\scriptsize\sffamily},
+  coordbox/.style={draw, rounded corners=2pt, fill=orange!10, minimum width=3.4cm, minimum height=0.55cm, align=center, font=\scriptsize\sffamily},
+  valbox/.style={draw, rounded corners=2pt, fill=red!8, minimum width=3.4cm, minimum height=0.55cm, align=center, font=\scriptsize\sffamily},
   decision/.style={draw, diamond, aspect=2.2, fill=yellow!15, inner sep=1pt, align=center, font=\scriptsize\sffamily},
   annot/.style={font=\scriptsize\itshape, text=gray!70!black},
   errlabel/.style={font=\scriptsize, text=red!70!black},
@@ -926,35 +926,35 @@ The pipeline executes once per camera frame and comprises fifteen sequential sta
 ]
 % ── Image acquisition ──
 \node[imgbox] (s1) {1. Camera capture\\[-1pt]{\scriptsize 1456$\times$1088 BGR, 2\,ms}};
-\node[decision, below=0.4cm of s1] (d1) {calib data\\exists?};
-\node[imgbox, below=0.4cm of d1] (s2) {2. Lens undistortion\\[-1pt]{\scriptsize cv2.remap, +1.5\,ms}};
+\node[decision, below=0.2cm of s1] (d1) {calib data\\exists?};
+\node[imgbox, below=0.2cm of d1] (s2) {2. Lens undistortion\\[-1pt]{\tiny cv2.remap, +1.5\,ms}};
 \draw[arr] (s1) -- (d1);
 \draw[arr] (d1) -- node[right, annot]{Yes} (s2);
 \draw[arr] (d1.east) -- ++(0.9,0) |- node[near start, above, annot]{No (skip)} (s2.east);
 
 % ── Preprocessing ──
-\node[imgbox, below=0.4cm of s2] (s3) {3. Resize 640$\times$640\\[-1pt]{\scriptsize squish, $s_x$=0.44, $s_y$=0.59}};
-\node[imgbox, below=0.4cm of s3] (s4) {4. BGR$\to$RGB + normalise\\[-1pt]{\scriptsize float32 $[0,1]$, shape $[1,640,640,3]$}};
+\node[imgbox, below=0.2cm of s2] (s3) {3. Resize 640$\times$640\\[-1pt]{\tiny squish, $s_x$=0.44, $s_y$=0.59}};
+\node[imgbox, below=0.2cm of s3] (s4) {4. BGR$\to$RGB + normalise\\[-1pt]{\tiny float32 $[0,1]$, shape $[1,640,640,3]$}};
 \draw[arr] (s2) -- (s3);
 \draw[arr] (s3) -- (s4);
 
 % ── Inference ──
-\node[nnbox, below=0.4cm of s4] (s5) {5. YOLOv8n inference\\[-1pt]{\scriptsize $[1,5,8400]$, 196\,ms TFLite / 68\,ms NCNN}};
+\node[nnbox, below=0.2cm of s4] (s5) {5. YOLOv8n inference\\[-1pt]{\tiny $[1,5,8400]$, 196\,ms TFLite / 68\,ms NCNN}};
 \draw[arr] (s4) -- (s5);
 
 % ── Post-processing ──
-\node[decision, below=0.4cm of s5] (d2) {conf $>$ 0.2?};
-\node[coordbox, below=0.4cm of d2] (s7) {7. Rescale to 1456$\times$1088\\[-1pt]{\scriptsize $\times$2.275 horiz, $\times$1.700 vert}};
+\node[decision, below=0.2cm of s5] (d2) {conf $>$ 0.2?};
+\node[coordbox, below=0.2cm of d2] (s7) {7. Rescale to 1456$\times$1088\\[-1pt]{\tiny $\times$2.275 horiz, $\times$1.700 vert}};
 \draw[arr] (s5) -- (d2);
 \draw[arr] (d2) -- node[right, annot]{Yes} (s7);
 \node[annot, right=0.6cm of d2] (discard) {Discard};
 \draw[arr] (d2.east) -- (discard);
 
-\node[coordbox, below=0.4cm of s7] (s8) {8. Pixel offset from centre\\[-1pt]{\scriptsize $\Delta x = u - 728$, $\Delta y = v - 544$}};
-\node[coordbox, below=0.4cm of s8] (s9) {9. GSD calculation\\[-1pt]{\scriptsize $0.0221$\,m/px at 35\,m}};
-\node[coordbox, below=0.4cm of s9] (s10) {10. Camera-frame offset\\[-1pt]{\scriptsize $d_\text{fwd}$, $d_\text{right}$ in metres}};
-\node[coordbox, below=0.4cm of s10] (s11) {11. Yaw rotation\\[-1pt]{\scriptsize camera $\to$ NED frame}};
-\node[coordbox, below=0.4cm of s11] (s12) {12. WGS\,84 projection\\[-1pt]{\scriptsize $\Delta\phi$, $\Delta\lambda$ from drone GPS}};
+\node[coordbox, below=0.2cm of s7] (s8) {8. Pixel offset from centre\\[-1pt]{\tiny $\Delta x = u - 728$, $\Delta y = v - 544$}};
+\node[coordbox, below=0.2cm of s8] (s9) {9. GSD calculation\\[-1pt]{\tiny $0.0221$\,m/px at 35\,m}};
+\node[coordbox, below=0.2cm of s9] (s10) {10. Camera-frame offset\\[-1pt]{\tiny $d_\text{fwd}$, $d_\text{right}$ in metres}};
+\node[coordbox, below=0.2cm of s10] (s11) {11. Yaw rotation\\[-1pt]{\tiny camera $\to$ NED frame}};
+\node[coordbox, below=0.2cm of s11] (s12) {12. WGS\,84 projection\\[-1pt]{\tiny $\Delta\phi$, $\Delta\lambda$ from drone GPS}};
 \draw[arr] (s7) -- (s8);
 \draw[arr] (s8) -- (s9);
 \draw[arr] (s9) -- (s10);
@@ -962,31 +962,31 @@ The pipeline executes once per camera frame and comprises fifteen sequential sta
 \draw[arr] (s11) -- (s12);
 
 % ── Validation ──
-\node[decision, below=0.4cm of s12] (d3) {passes\\filters?};
-\node[valbox, below=0.4cm of d3] (s15) {15. Enqueue target\\[-1pt]{\scriptsize $(\phi, \lambda, \text{conf})$ $\to$ CENTERING}};
+\node[decision, below=0.2cm of s12] (d3) {passes\\filters?};
+\node[valbox, below=0.2cm of d3] (s15) {15. Enqueue target\\[-1pt]{\tiny $(\phi, \lambda, \text{conf})$ $\to$ CENTERING}};
 \draw[arr] (s12) -- (d3);
 \draw[arr] (d3) -- node[right, annot]{Yes} (s15);
 \node[annot, right=0.6cm of d3] (reject) {Reject};
 \draw[arr] (d3.east) -- (reject);
 
 % ── Error annotations (right side) ──
-\node[errlabel, right=1.8cm of s1] {$\pm$2\,px sensor noise};
-\node[errlabel, right=1.8cm of s5] {$\pm$3\,px bbox regression};
-\node[errlabel, right=1.8cm of s7] {$\pm$6.8\,px rescaled};
-\node[errlabel, right=1.8cm of s9] {$\pm$1.4\% (baro drift)};
-\node[errlabel, right=1.8cm of s11] {$\pm$0.35\,m (compass)};
-\node[errlabel, right=1.8cm of s12] {$\pm$2--3\,m (GPS noise)};
+\node[errlabel, right=1.4cm of s1] {$\pm$2\,px sensor noise};
+\node[errlabel, right=1.4cm of s5] {$\pm$3\,px bbox regression};
+\node[errlabel, right=1.4cm of s7] {$\pm$6.8\,px rescaled};
+\node[errlabel, right=1.4cm of s9] {$\pm$1.4\% (baro drift)};
+\node[errlabel, right=1.4cm of s11] {$\pm$0.35\,m (compass)};
+\node[errlabel, right=1.4cm of s12] {$\pm$2--3\,m (GPS noise)};
 
 % ── Telemetry inputs (left side) ──
-\node[annot, left=1.2cm of s9] (tel1) {altitude $h$};
-\node[annot, left=1.2cm of s11] (tel2) {heading $\psi$};
-\node[annot, left=1.2cm of s12] (tel3) {$\phi_d, \lambda_d$};
+\node[annot, left=0.8cm of s9] (tel1) {altitude $h$};
+\node[annot, left=0.8cm of s11] (tel2) {heading $\psi$};
+\node[annot, left=0.8cm of s12] (tel3) {$\phi_d, \lambda_d$};
 \draw[-{Stealth[length=3pt]}, gray, dashed] (tel1) -- (s9.west);
 \draw[-{Stealth[length=3pt]}, gray, dashed] (tel2) -- (s11.west);
 \draw[-{Stealth[length=3pt]}, gray, dashed] (tel3) -- (s12.west);
 
 % ── Legend ──
-\node[below=0.6cm of s15, font=\scriptsize\sffamily] (leg) {%
+\node[below=0.4cm of s15, font=\scriptsize\sffamily] (leg) {%
   \colorbox{blue!8}{\rule{0.6cm}{0pt}\rule{0pt}{0.25cm}}\,Image proc.\quad
   \colorbox{green!12}{\rule{0.6cm}{0pt}\rule{0pt}{0.25cm}}\,Inference\quad
   \colorbox{orange!10}{\rule{0.6cm}{0pt}\rule{0pt}{0.25cm}}\,Coord.\ maths\quad
@@ -1248,7 +1248,7 @@ Processing the full 8-minute flight video (${\sim}$6850 frames) through the v3 m
     \item Reliable detection across the full 15--50\,m altitude range with zero missed detections at altitudes below 40\,m
     \item Zero false positives on background terrain (grass, paths, shadows, field equipment)---the negative-mining strategy from training was validated against real flight conditions
     \item GPS estimation convergence consistent with the theoretical error budget: CEP$_{50}$ = 2.3\,m using the Kalman filter, with the characteristic directional elongation from GPS timing lag visible in scatter plots
-    \item The v3 model substantially outperformed v1 on the same video: v1 produced 12 false positives across the flight, v3 produced zero
+    \item The v3 model outperformed v1 on the same video: v1 produced 12 false positives across the flight, while v3 produced zero
 \end{itemize}
 
 \subsection{GPS Timing Lag}

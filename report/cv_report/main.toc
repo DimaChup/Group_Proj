@@ -1,0 +1,85 @@
+\contentsline {section}{\numberline {1}Introduction}{2}{section.1}%
+\contentsline {subsection}{\numberline {1.1}Constraints and Design Drivers}{3}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}Architectural Principle: Single-Interface Encapsulation}{3}{subsection.1.2}%
+\contentsline {subsection}{\numberline {1.3}Report Structure}{3}{subsection.1.3}%
+\contentsline {section}{\numberline {2}Detection Model}{3}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Why YOLOv8 Nano}{3}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}Architecture Overview}{3}{subsection.2.2}%
+\contentsline {subsection}{\numberline {2.3}Single-Class Design Rationale}{4}{subsection.2.3}%
+\contentsline {section}{\numberline {3}Training Pipeline}{4}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Three-Generation Model Progression}{4}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Final Dataset Composition}{5}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}Domain Randomisation}{5}{subsection.3.3}%
+\contentsline {subsection}{\numberline {3.4}Augmentation Pipeline}{5}{subsection.3.4}%
+\contentsline {subsection}{\numberline {3.5}Real Data Labelling}{5}{subsection.3.5}%
+\contentsline {subsection}{\numberline {3.6}Negative Mining}{5}{subsection.3.6}%
+\contentsline {subsection}{\numberline {3.7}Training Configuration and Convergence}{6}{subsection.3.7}%
+\contentsline {subsection}{\numberline {3.8}Training Results}{6}{subsection.3.8}%
+\contentsline {subsection}{\numberline {3.9}Training Resolution vs Inference Resolution}{6}{subsection.3.9}%
+\contentsline {subsection}{\numberline {3.10}Limitations}{7}{subsection.3.10}%
+\contentsline {subsection}{\numberline {3.11}Overfitting Risk in Single-Class Detection}{7}{subsection.3.11}%
+\contentsline {section}{\numberline {4}Edge Inference Architecture}{7}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Compute Platform: Raspberry Pi 5}{7}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Three-Backend Architecture}{7}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}Backend Comparison}{7}{subsection.4.3}%
+\contentsline {paragraph}{TFLite with XNNPACK delegate (deployed).}{7}{paragraph*.8}%
+\contentsline {paragraph}{NCNN (benchmarked, not deployed).}{8}{paragraph*.9}%
+\contentsline {paragraph}{Ultralytics/PyTorch (development only).}{8}{paragraph*.10}%
+\contentsline {subsection}{\numberline {4.4}Quantisation Trade-offs}{8}{subsection.4.4}%
+\contentsline {subsection}{\numberline {4.5}Detection Pipeline: Step-by-Step}{8}{subsection.4.5}%
+\contentsline {paragraph}{Preprocessing details.}{8}{paragraph*.12}%
+\contentsline {paragraph}{Postprocessing.}{8}{paragraph*.13}%
+\contentsline {subsection}{\numberline {4.6}Raw Inference vs Effective Pipeline Throughput}{8}{subsection.4.6}%
+\contentsline {subsection}{\numberline {4.7}COCO Person Detector as Fallback}{9}{subsection.4.7}%
+\contentsline {subsection}{\numberline {4.8}Model Swapping and Field Deployment}{9}{subsection.4.8}%
+\contentsline {paragraph}{File-copy swap.}{9}{paragraph*.15}%
+\contentsline {paragraph}{CLI flag swap.}{9}{paragraph*.16}%
+\contentsline {paragraph}{Zero-code-change guarantee.}{9}{paragraph*.17}%
+\contentsline {subsection}{\numberline {4.9}Improvement Roadmap}{9}{subsection.4.9}%
+\contentsline {section}{\numberline {5}Detection Performance}{9}{section.5}%
+\contentsline {subsection}{\numberline {5.1}Benchmark Results}{10}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}Altitude vs Target Pixel Size}{10}{subsection.5.2}%
+\contentsline {subsection}{\numberline {5.3}Speed vs Motion Blur}{10}{subsection.5.3}%
+\contentsline {subsection}{\numberline {5.4}Speed vs Frames on Target}{10}{subsection.5.4}%
+\contentsline {subsection}{\numberline {5.5}Detection Probability Model}{11}{subsection.5.5}%
+\contentsline {subsection}{\numberline {5.6}Coverage Efficiency}{11}{subsection.5.6}%
+\contentsline {subsection}{\numberline {5.7}Tiling vs Full-Frame Detection}{11}{subsection.5.7}%
+\contentsline {subsection}{\numberline {5.8}Combined Detection Envelope}{12}{subsection.5.8}%
+\contentsline {section}{\numberline {6}Sensor Calibration}{12}{section.6}%
+\contentsline {subsection}{\numberline {6.1}Field-of-View Calibration}{12}{subsection.6.1}%
+\contentsline {subsection}{\numberline {6.2}Lens Distortion Calibration}{13}{subsection.6.2}%
+\contentsline {subsection}{\numberline {6.3}Camera Colour-Space Discovery}{13}{subsection.6.3}%
+\contentsline {subsection}{\numberline {6.4}DJI Video FOV Calibration}{14}{subsection.6.4}%
+\contentsline {subsection}{\numberline {6.5}Calibration Impact Summary}{14}{subsection.6.5}%
+\contentsline {section}{\numberline {7}GPS Target Estimation}{14}{section.7}%
+\contentsline {subsection}{\numberline {7.1}Full Detection-to-GPS Pipeline}{14}{subsection.7.1}%
+\contentsline {subsubsection}{\numberline {7.1.1}Image Acquisition (Stages 1--2)}{14}{subsubsection.7.1.1}%
+\contentsline {subsubsection}{\numberline {7.1.2}Preprocessing and Inference (Stages 3--5)}{14}{subsubsection.7.1.2}%
+\contentsline {subsubsection}{\numberline {7.1.3}Coordinate Recovery and Geospatial Projection (Stages 6--12)}{15}{subsubsection.7.1.3}%
+\contentsline {subsubsection}{\numberline {7.1.4}Validation and State Transition (Stages 13--15)}{15}{subsubsection.7.1.4}%
+\contentsline {subsection}{\numberline {7.2}Multi-Observation Fusion}{16}{subsection.7.2}%
+\contentsline {subsection}{\numberline {7.3}Comprehensive Error Budget}{16}{subsection.7.3}%
+\contentsline {paragraph}{GPS receiver noise}{16}{paragraph*.30}%
+\contentsline {paragraph}{GPS timing lag}{18}{paragraph*.31}%
+\contentsline {paragraph}{Image resize mapping}{18}{paragraph*.32}%
+\contentsline {paragraph}{RSS calculation.}{18}{paragraph*.33}%
+\contentsline {paragraph}{Measured vs predicted.}{18}{paragraph*.34}%
+\contentsline {subsection}{\numberline {7.4}Roll/Pitch Attitude Error and Compensation}{18}{subsection.7.4}%
+\contentsline {subsubsection}{\numberline {7.4.1}Attitude-Compensated Estimation}{18}{subsubsection.7.4.1}%
+\contentsline {paragraph}{Ray construction.}{19}{paragraph*.37}%
+\contentsline {paragraph}{Full rotation matrix.}{19}{paragraph*.38}%
+\contentsline {paragraph}{Ground-plane intersection.}{19}{paragraph*.39}%
+\contentsline {paragraph}{Why it works.}{19}{paragraph*.40}%
+\contentsline {paragraph}{Verification.}{19}{paragraph*.41}%
+\contentsline {paragraph}{Operating modes.}{19}{paragraph*.43}%
+\contentsline {paragraph}{Operational context.}{19}{paragraph*.44}%
+\contentsline {subsection}{\numberline {7.5}Estimator Comparison}{20}{subsection.7.5}%
+\contentsline {section}{\numberline {8}Real-World Validation}{20}{section.8}%
+\contentsline {subsection}{\numberline {8.1}DJI Video Replay Analysis}{20}{subsection.8.1}%
+\contentsline {subsubsection}{\numberline {8.1.1}Video Analysis Pipeline}{20}{subsubsection.8.1.1}%
+\contentsline {subsubsection}{\numberline {8.1.2}SRT Synchronisation Issue}{20}{subsubsection.8.1.2}%
+\contentsline {subsubsection}{\numberline {8.1.3}Results}{20}{subsubsection.8.1.3}%
+\contentsline {subsection}{\numberline {8.2}GPS Timing Lag}{21}{subsection.8.2}%
+\contentsline {subsection}{\numberline {8.3}Bench Testing on Pi Hardware}{21}{subsection.8.3}%
+\contentsline {section}{\numberline {9}Future Work}{21}{section.9}%
+\contentsline {section}{\numberline {10}Key Metrics Summary}{22}{section.10}%

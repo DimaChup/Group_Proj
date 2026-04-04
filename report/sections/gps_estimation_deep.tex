@@ -302,7 +302,7 @@ Nine independent error sources contribute to the total position uncertainty.  Ea
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.85\linewidth]{report/figs/error_waterfall.pdf}
+  \includegraphics[width=0.85\linewidth]{error_waterfall.pdf}
   \caption{Error budget waterfall showing the cumulative contribution of each noise source to the single-observation GPS estimate error at \SI{35}{\metre} altitude.  The stacked bars illustrate how individual terms (GPS receiver, timing lag, roll/pitch, heading, barometric drift, FOV calibration, lens distortion, detection pixel, vibration) combine via root sum of squares to produce the total CEP during flight ($\sim$\SI{7}{\metre} uncompensated, $\sim$\SI{3.5}{\metre} with tilt compensation) and during hover ($\sim$\SI{2.5}{\metre}).}
   \label{fig:error-waterfall}
 \end{figure}
@@ -1484,7 +1484,7 @@ The preceding sections have analysed individual error sources, mitigation strate
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.85\linewidth]{report/figs/progressive_accuracy.pdf}
+  \includegraphics[width=0.85\linewidth]{progressive_accuracy.pdf}
   \caption{CEP$_{50}$ at each phase of the detection-to-landing flow, showing progressive accuracy improvement from $\sim$\SI{3.5}{\metre} (Phase~1, tilt-compensated search) to $\sim$\SI{1.8}{\metre} (Phase~4, GPS-averaged hover lock).  Each phase transition eliminates a specific error category: Phase~2 reduces pitch and timing lag as the drone decelerates; Phase~3 drives the pixel offset to zero through centering; Phase~4 averages GPS noise over 50~samples.}
   \label{fig:progressive-accuracy-bars}
 \end{figure}
