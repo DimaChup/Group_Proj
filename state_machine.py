@@ -513,12 +513,18 @@ class StateHandlersMixin:
     def _handle_centering(self, target_found, px_u, px_v, key):
         import __main__ as _main
         center_verify = getattr(_main, 'CENTER_VERIFY', False)
+        sim_tilt = getattr(_main, 'SIM_TILT', False) or getattr(_main, 'COMPENSATE_TILT', False)
 
-        if time.time() - self.state_start_time > 15 and not self._centering_timeout_warned:
-            print(f"[WARN] CENTERING TIMEOUT (15s) — dist {self.get_dist_to_target():.1f}m. Resuming search.")
+        if time.time() - self.state_start_time > 30 and not self._centering_timeout_warned:
+            print(f"[WARN] CENTERING TIMEOUT (30s) — dist {self.get_dist_to_target():.1f}m. Resuming search.")
             self._centering_timeout_warned = True
             self._set_state(State.SEARCH)
             return
+
+        # Two-step centering when tilt compensation is active:
+        # Step 1: Fly to rough tilt-compensated estimate
+        # Step 2: Hover 3s to eliminate tilt, re-detect with nadir math, update estimate
+        hover_relock = getattr(self, '_hover_relock_done', False)
 
         if target_found:
             self.calculate_target_gps(px_u, px_v)
@@ -540,6 +546,30 @@ class StateHandlersMixin:
         if time.time() - self.last_req > 0.2:
             self.nav.send_global_target(self.target_lat, self.target_lon, self.alt)
             self.last_req = time.time()
+
+        # Step 1 complete: arrived at rough estimate
+        if self.get_dist_to_target() < 3.0 and sim_tilt and not hover_relock:
+            # Hover for 3 seconds to eliminate tilt, then re-detect
+            if not hasattr(self, '_hover_relock_start'):
+                self._hover_relock_start = time.time()
+                print(f"[CENTERING] Step 1 complete — hovering 3s to eliminate tilt for re-detection...")
+                # Send hold-position command
+                self.nav.send_global_target(self.lat, self.lon, self.alt)
+                return
+            elif time.time() - self._hover_relock_start < 3.0:
+                # Still hovering -- hold position, keep detecting
+                self.nav.send_global_target(self.lat, self.lon, self.alt)
+                return
+            else:
+                # 3s elapsed -- pitch/roll should be ~0 now
+                self._hover_relock_done = True
+                if target_found:
+                    print(f"[CENTERING] Step 2 — nadir re-detection at ({self.target_lat:.6f}, {self.target_lon:.6f})")
+                    self._locked_target = (self.target_lat, self.target_lon)
+                else:
+                    print(f"[CENTERING] Step 2 — no detection during hover (false positive?)")
+                del self._hover_relock_start
+                # Continue to fly toward updated/original estimate
 
         if self.get_dist_to_target() < 1.0:
             if center_verify:
