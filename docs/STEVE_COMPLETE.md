@@ -564,3 +564,51 @@ Dmytro
 - We've been working from the rubric bands in Appendix B (Teamwork, Self-management, Insight)
 - Without Steve's update, we don't know the exact expectations
 - Our D7 is at 83-84/100 after 7 iterations -- but is that what they're actually looking for?
+
+## MAIN CONCERN: Can We Still Get Top Marks?
+
+### The core worry
+- Our mission is NOT where we'd like it to be
+- Even though we'll get something working for demo day, it could have been 2-3 times as good
+- We can demonstrate ALL requirements are met -- but only in simulation
+- The real-flight demonstration will be whatever Robin scraped together since Easter
+- That's not the polished, progressively-tested system we planned
+
+### What we COULD have demonstrated (had hardware worked from Day 1)
+- Progressive trust ladder fully executed: bench → passive → waypoint → autonomous
+- Multiple fly-test-tune-fly iteration cycles
+- Real outdoor calibration data from early March
+- Model retrained on actual aerial footage (not just one DJI video)
+- GPS estimation validated against real ground truth
+- Detection performance characterized at multiple altitudes and speeds
+- Fully confident autonomous mission with operator in the loop
+- All 12 requirements demonstrated on REAL hardware, not just simulation
+
+### What we'll actually demonstrate
+- Robin's integration since Easter (last-minute, fragile)
+- Our passive_watch providing GPS coordinates
+- Maybe one autonomous attempt if time allows
+- Simulation video showing everything working end-to-end
+- 198-page goldmine report proving we built everything
+
+### The gap
+- The difference is NOT our software quality -- it's testing depth
+- We have the software. We have the simulation. We have the tests.
+- What we DON'T have is the outdoor flight data proving it all works in reality
+- This gap exists ENTIRELY because of hardware provision, not our effort
+- We spent 3x expected hours BECAUSE of the workarounds we had to build
+- Other teams had this data from Day 1 and refined their systems all term
+
+### What "taking it into account" should mean
+- Our simulation-validated work should be credited at the SAME level as outdoor-tested work
+- The 198-page report, 2200-line GPS appendix, 1440-test verification should count
+- The progressive testing infrastructure (58 scripts, 127 unit tests) shows we WOULD have done it
+- The fact that we built a full simulation environment out of necessity demonstrates initiative
+- We should not be capped at 72 because our demo is less polished than teams who had 8 weeks more hardware access
+
+### Steve's responsibility
+- He acknowledged the problem: "will take into account"
+- He tried to help: arranged Easter days, asked Sid to fix drone
+- But the fact remains: we received a non-working platform, others didn't
+- The module assumes a working drone. We didn't have one for 6+ weeks.
+- Assessment should reflect this -- either by crediting simulation work fully, or by adjusting expectations for our demo
