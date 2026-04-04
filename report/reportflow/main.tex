@@ -92,25 +92,25 @@
 % ════════════════════════════════════════════════════════════════════════
 \section*{Executive Summary}\label{sec:exec-summary}
 
-This report presents the design, optimisation, and verification of an autonomous Search and Rescue (SAR) drone system that locates a casualty within an irregular polygon bounded by a protected ecological no-fly zone (SSSI). Drawing on SAR robotics methodology~\cite{murphy2014} and coverage path planning theory~\cite{galceran2013survey}, the system comprises a Raspberry Pi~5 running a retrained YOLOv8n detector~\cite{yolov8} (mAP50\,=\,0.995, 4.8\,FPS TFLite / 9\,FPS NCNN), a 20-state finite state machine atop the ArduPilot autopilot~\cite{ardupilot}, and a lawnmower path planner with layered geofencing. A physics-based 216-configuration parameter sweep identified the optimal operating point (35\,m altitude, 8\,m/s, 70\textdegree{} scan angle), yielding $>$99.97\% single-pass detection probability at 10.9\% battery usage with a 1.5$\times$ NFZ safety margin. Video-replay field testing confirmed GPS target estimation accuracy of CEP50\,=\,2.3\,m. Twelve formal requirements were verified against quantitative evidence (10~met, 2~partially met), and a plus/delta evaluation identifies the remaining gaps before full autonomous flight.
+This report presents the design, optimisation, and verification of an autonomous Search and Rescue (SAR) drone that locates a casualty within an irregular polygon bounded by a protected ecological no-fly zone (SSSI). following established SAR robotics methodology~\cite{murphy2014} and coverage path planning theory~\cite{galceran2013survey}, the system combines a Raspberry Pi~5 running a retrained YOLOv8n detector~\cite{yolov8} (mAP50\,=\,0.995, 4.8\,FPS TFLite / 9\,FPS NCNN), a 20-state finite state machine~\cite{wagner2006fsm} on the ArduPilot autopilot~\cite{ardupilot}, and a lawnmower path planner with layered geofencing. A physics-based 216-configuration parameter sweep identified the optimal operating point (35\,m altitude, 8\,m/s, 70\textdegree{} scan angle), yielding $>$99.97\% single-pass detection probability at 10.9\% battery usage with a 1.5$\times$ NFZ safety margin. Video-replay testing confirmed GPS target estimation accuracy of CEP50\,=\,2.3\,m. Verification against twelve formal requirements shows 10~met and 2~partially met; a plus/delta evaluation identifies the gaps remaining before full autonomous flight.
 
 % ════════════════════════════════════════════════════════════════════════
 \section{Objective}\label{sec:df-objective}
 
-The mission objective is to \textbf{locate a casualty as quickly as possible} within a defined search area, using autonomous aerial search with onboard computer vision.
+The mission objective is to \textbf{locate a casualty as quickly as possible} within a defined search area, using autonomous aerial search with onboard computer vision~\citep{goodrich2008,lyu2023uav_sar_survey}.
 
 % ════════════════════════════════════════════════════════════════════════
 \section{Constraints}\label{sec:df-constraints}
 
-This objective is bounded by hard constraints that cannot be relaxed and that shape every downstream design choice:
+Hard constraints that cannot be relaxed bound this objective and shape every downstream design choice:
 
 \begin{itemize}[nosep]
-  \item \textbf{No-Fly Zone (SSSI)} --- a protected ecological site borders the search area; entry is prohibited.
+  \item \textbf{No-Fly Zone (SSSI)} --- a protected ecological site~\citep{wca1981} borders the search area; entry is prohibited.
   \item \textbf{Flight area boundary} --- the search polygon is fixed by the mission brief (R01).
-  \item \textbf{Altitude limit} --- 50\,m maximum (regulation R03).
+  \item \textbf{Altitude limit} --- 50\,m maximum per CAA regulations~\citep{ukcaa,cap722} (R03).
   \item \textbf{Single battery} --- one LiPo pack must cover transit, search, descent, verification, and return.
   \item \textbf{One pass} --- there is no opportunity to re-fly missed strips; the pattern must cover every accessible point in a single traversal.
-  \item \textbf{Hardware ceiling} --- onboard inference runs at approximately 9\,FPS with the deployed NCNN backend (YOLOv8n on Raspberry Pi~5), with TFLite at 4.8\,FPS available as a fallback.
+  \item \textbf{Hardware ceiling} --- onboard inference runs at approximately 9\,FPS with the deployed NCNN backend~\citep{ncnn} (YOLOv8n~\citep{yolov8} on Raspberry Pi~5~\citep{raspberrypi5}), with TFLite~\citep{tflite} at 4.8\,FPS available as a fallback.
 \end{itemize}
 
 % ════════════════════════════════════════════════════════════════════════
@@ -121,12 +121,12 @@ These constraints produce five competing performance dimensions that must be bal
 \begin{enumerate}[nosep]
   \item \textbf{Safety} --- the drone must never enter the SSSI no-fly zone.
   \item \textbf{Detection} --- actually see a person-sized target from altitude.
-  \item \textbf{Time} --- the critical early hours of hypothermia survivability are ticking.
+  \item \textbf{Time} --- the critical early hours of hypothermia survivability are ticking~\citep{golden2006hypothermia}.
   \item \textbf{Energy} --- the battery must last the full mission profile, not just the search.
   \item \textbf{Coverage} --- scan every square metre of the accessible search area.
 \end{enumerate}
 
-No single configuration maximises all five simultaneously. Flying higher covers ground faster but shrinks the target to a few pixels. Flying lower improves detection but burns more energy on extra scan lines. Flying near the boundary maximises coverage but risks an NFZ incursion.
+No single configuration maximises all five simultaneously. Flying higher covers ground faster but shrinks the target to a few pixels; flying lower improves detection but burns more energy on extra scan lines; flying near the boundary maximises coverage but risks an NFZ incursion.
 
 We adopted a clear priority stack: \textbf{safety $>$ detection $>$ time $>$ energy $>$ coverage}. An NFZ violation grounds the project. A missed casualty defeats its purpose. A slow search wastes the critical early hours. High energy use is undesirable but survivable. Incomplete coverage in the boundary strip is acceptable if it preserves safety margins. Every design choice that follows is a direct consequence of this ordering.
 
@@ -141,7 +141,7 @@ Figure~\ref{fig:sensitivity-spider} shows the \emph{desired performance envelope
 % ════════════════════════════════════════════════════════════════════════
 \section{STEEPLE Context Analysis}\label{sec:steeple}
 
-The priority ordering above did not emerge in a vacuum. Table~\ref{tab:steeple} maps each STEEPLE dimension to a concrete design consequence, showing how external factors shaped both the constraint hierarchy and specific technical choices such as operator-in-the-loop verification and single-class detection.
+External factors shaped this priority ordering. Table~\ref{tab:steeple} maps each STEEPLE dimension to a concrete design consequence, showing how these factors influenced both the constraint hierarchy and specific technical choices such as operator-in-the-loop verification and single-class detection.
 
 \begin{table}[H]
   \centering\compactTable
@@ -151,11 +151,11 @@ The priority ordering above did not emerge in a vacuum. Table~\ref{tab:steeple} 
     \textbf{Dimension} & \textbf{Assessment} & \textbf{Design Impact} \\
     \midrule
     \textbf{S}ocial & Public trust in autonomous drones for rescue is growing but fragile; a high-profile false positive or NFZ breach would set back adoption & Operator-in-the-loop verification; conservative confidence threshold (0.4) \\
-    \textbf{T}echnological & Edge AI on SBCs now viable (YOLOv8n at 9\,FPS NCNN on Pi~5); consumer GPS accurate to $\sim$3\,m CEP95 & Hardware ceiling drives altitude/speed envelope; GPS error baked into NFZ margin \\
+    \textbf{T}echnological & Edge AI on SBCs now viable~\citep{edgeai} (YOLOv8n at 9\,FPS NCNN on Pi~5); consumer GPS accurate to $\sim$3\,m CEP95~\citep{misra2006global} & Hardware ceiling drives altitude/speed envelope; GPS error baked into NFZ margin \\
     \textbf{E}conomic & Single-battery constraint (115.4\,Wh); no mid-mission recharge; replacement drone not available & Energy score weighted 25\% in composite; 14\,min reserve after search \\
     \textbf{E}nvironmental & SSSI (Site of Special Scientific Interest) borders search area; bird nesting season possible & 30\,m NFZ buffer with 5-layer protection; waypoint filtering pre-flight \\
     \textbf{P}olitical & University flight permissions require demonstrated safety case~\cite{jarus2019sora}; CAA drone regulations apply & 50\,m altitude ceiling (R03); progressive flight testing protocol (6 steps) \\
-    \textbf{L}egal & BVLOS operations restricted without specific exemptions; data protection for imagery & Visual line-of-sight operation; no image storage of bystanders; single-class detector \\
+    \textbf{L}egal & BVLOS operations restricted without specific exemptions~\citep{caa2024uas}; data protection for imagery & Visual line-of-sight operation; no image storage of bystanders; single-class detector \\
     \textbf{E}thical & Casualty may be in distress; false negative delays rescue; false positive wastes critical time & Detection weighted highest (40\%); $>$99.97\% cumulative probability target \\
     \bottomrule
   \end{tabularx}
@@ -185,14 +185,14 @@ With the operational context established, we turn to a key architectural decisio
   \end{tabularx}
 \end{table}
 
-NCNN~\cite{ncnn} scored highest (4.4) due to its 4.5$\times$ speed advantage over TFLite~\cite{tflite} (72\,ms vs 327\,ms per frame, benchmarked on Pi~5) with no accuracy loss and minimal deployment overhead. TFLite (4.0) serves as a proven fallback. Ultralytics requires PyTorch (2\,GB+ dependencies, slow on ARM), while Hailo-8 offers hardware acceleration but requires a separate NPU board (\textsterling65+) with limited YOLOv8 support and a complex toolchain --- impractical for the project timeline. A dual-backend architecture was adopted: \texttt{vision.py} accepts a \texttt{backend} parameter, and model files are drop-in replacements with identical input/output tensor shapes (\texttt{[1,640,640,3]} / \texttt{[1,5,8400]}).
+NCNN~\cite{ncnn} scored highest (4.4) due to its 4.5$\times$ speed advantage over TFLite~\cite{tflite} (72\,ms vs 327\,ms per frame, benchmarked on Pi~5) with no accuracy loss and minimal deployment overhead. TFLite (4.0) serves as a proven fallback. Ultralytics requires PyTorch (2\,GB+ dependencies, slow on ARM), while Hailo-8~\citep{hailo2023datasheet} offers hardware acceleration but requires a separate NPU board (\textsterling65+) with limited YOLOv8 support and a complex toolchain --- impractical for the project timeline. We adopted a dual-backend architecture: \texttt{vision.py} accepts a \texttt{backend} parameter, and model files are drop-in replacements with identical input/output tensor shapes (\texttt{[1,640,640,3]} / \texttt{[1,5,8400]}).
 
-\textbf{Sensitivity.} The ranking is robust to reasonable weight perturbations. NCNN retains first place even if inference speed weight is halved (0.15 instead of 0.30) --- its score drops to 3.95, still above TFLite (3.85) and Ultralytics (3.85). NCNN loses to TFLite only if deployment simplicity is weighted above 0.40, which would contradict the mission's time-critical detection requirement. This confirms that the backend choice is not an artefact of the weighting scheme.
+\textbf{Sensitivity.} The ranking holds under reasonable weight perturbations. NCNN retains first place even if inference speed weight is halved (0.15 instead of 0.30) --- its score drops to 3.95, still above TFLite (3.85) and Ultralytics (3.85). NCNN loses to TFLite only if deployment simplicity is weighted above 0.40, which would contradict the mission's time-critical detection requirement. This confirms that the backend choice is not an artefact of the weighting scheme.
 
 % ════════════════════════════════════════════════════════════════════════
 \section{Scoring the Five Dimensions}\label{sec:df-scoring}
 
-With the inference backend selected, the hardware performance ceiling is fixed: 9\,FPS (NCNN) or 4.8\,FPS (TFLite fallback). Each axis of the spider chart (Figure~\ref{fig:sensitivity-spider}) corresponds to a normalised score $S \in [0,1]$, where 1 represents the theoretical best and 0 represents failure. Three of the five dimensions --- detection, coverage, and energy --- are scored continuously and combined into a composite objective for the 216-configuration sweep. The remaining two --- safety and time --- are treated as \emph{pass/fail constraints}; the rationale for this asymmetry is explained at the end of this section.
+With the inference backend selected, the hardware performance ceiling is fixed: 9\,FPS (NCNN) or 4.8\,FPS (TFLite fallback). Each axis of the spider chart (Figure~\ref{fig:sensitivity-spider}) corresponds to a normalised score $S \in [0,1]$, where 1 represents the theoretical best and 0 represents failure. Three of the five dimensions --- detection, coverage, and energy --- score continuously and combine into a composite objective for the 216-configuration sweep. The remaining two --- safety and time --- serve as \emph{pass/fail constraints}; the rationale for this asymmetry is explained at the end of this section.
 
 % ── Safety ────────────────────────────────────────────────────────────
 \subsection{Safety (\texorpdfstring{$S_\text{safety}$}{S\_safety})}\label{sec:score-safety}
@@ -276,7 +276,7 @@ The overall detection score is the product:
   S_\text{detection} = s_\text{conf} \times s_\text{frames} \times s_\text{cum} \times s_\text{px}
 \end{equation}
 
-A multiplicative combination is used rather than a weighted sum because a zero in \emph{any} sub-component (e.g.\ zero frames on target, or target below minimum pixel size) should collapse the entire detection score to zero --- you cannot compensate for an invisible target by having a confident model. Model mAP50 (0.995) is not included in the composite product because it is constant across all configurations; it serves as a prerequisite validated in Step~1 of the decision chain.
+We use a multiplicative combination rather than a weighted sum because a zero in \emph{any} sub-component (e.g.\ zero frames on target, or target below minimum pixel size) should collapse the entire detection score to zero --- you cannot compensate for an invisible target by having a confident model. We exclude model mAP50 (0.995) from the composite product because it is constant across all configurations; it serves as a prerequisite validated in Step~1 of the decision chain.
 
 Figure~\ref{fig:detection-subscore} visualises all five detection-related metrics, including the constant mAP50 for completeness. The weakest axis is target pixel size (0.85), reflecting the trade-off inherent in flying at 35\,m: flying lower would push this score closer to 1.0 but at the cost of more scan lines, more energy, and longer search time.
 
@@ -304,7 +304,7 @@ where $T_\text{best}$ is the shortest search time among all 216 evaluated config
 % ── Energy ────────────────────────────────────────────────────────────
 \subsection{Energy (\texorpdfstring{$S_\text{energy}$}{S\_energy})}\label{sec:score-energy}
 
-Energy consumption is derived from a physics-based simulation with three components:
+Energy consumption is derived from a physics-based simulation~\citep{stolaroff2018energy} with three components:
 
 \begin{enumerate}[nosep]
   \item \textbf{Hover power} (momentum theory):
@@ -323,7 +323,7 @@ Energy consumption is derived from a physics-based simulation with three compone
   \begin{equation}
     E_\text{turn} = P_\text{hover} \times t_\text{turn}
   \end{equation}
-  This is a conservative upper bound: it assumes full deceleration to hover for each U-turn, whereas actual banked turns retain partial forward speed and therefore consume less energy. The conservatism ensures that the energy budget is never underestimated.
+  This is a conservative upper bound: it assumes full deceleration to hover for each U-turn, whereas actual banked turns retain partial forward speed and therefore consume less energy. This ensures the energy budget is never underestimated.
 \end{enumerate}
 
 The total mission energy integrates over the flight profile:
@@ -335,7 +335,7 @@ The energy score normalises against the battery capacity:
 \begin{equation}\label{eq:energy-score}
   S_\text{energy} = 1 - \frac{E_\text{total}}{E_\text{battery}}
 \end{equation}
-where $E_\text{battery} = 115.4$\,Wh (6S 5200\,mAh LiPo). Our selected configuration uses $E_\text{total} = 12.6$\,Wh, giving $S_\text{energy} = 0.89$. A score of 1.0 would mean zero energy consumed (impossible); a score of 0.0 would mean the battery is fully depleted.
+where $E_\text{battery} = 115.4$\,Wh (6S 5200\,mAh LiPo). Our selected configuration uses $E_\text{total} = 12.6$\,Wh, giving $S_\text{energy} = 0.89$. A score of 1.0 means zero energy consumed (impossible); 0.0 means full battery depletion.
 
 % ── Coverage ──────────────────────────────────────────────────────────
 \subsection{Coverage (\texorpdfstring{$S_\text{coverage}$}{S\_coverage})}\label{sec:score-coverage}
@@ -347,7 +347,7 @@ Coverage is the fraction of the accessible search area that lies within at least
 
 The scanned area is computed geometrically by buffering each scan line by half the cross-track footprint width, unioning the resulting polygons, and intersecting with the search area polygon. Overlap between adjacent swaths contributes to detection reliability but does not increase the coverage score beyond 1.0 (redundant coverage is still counted as coverage, not double-counted as area).
 
-The NFZ buffer removes approximately 4\% of the total search area from the accessible polygon. This is deliberate: the 30\,m buffer sacrifices a thin strip of coverage in exchange for guaranteed NFZ clearance. Our selected configuration achieves $S_\text{coverage} = 0.96$, meaning 96\% of the total area is covered and the remaining 4\% lies within the fenced reserve where a casualty is unlikely to be found.
+The NFZ buffer removes approximately 4\% of the total search area from the accessible polygon. This is deliberate: the 30\,m buffer sacrifices a thin strip of coverage in exchange for guaranteed NFZ clearance. Our selected configuration achieves $S_\text{coverage} = 0.96$, meaning 96\% of the total area is covered and the remaining 4\% lies within the fenced reserve where casualty presence is unlikely given the NFZ protection status.
 
 % ── Composite Score ───────────────────────────────────────────────────
 \subsection{Composite Score and the Constraint--Objective Split}\label{sec:score-composite}
@@ -361,7 +361,7 @@ The weights reflect the priority ordering established in Section~\ref{sec:df-dim
 
 \textbf{Why safety and time are constraints, not continuous scores.} Safety is a hard pass/fail gate: either the drone stays clear of the SSSI or it does not. There is no useful gradient between ``30\,m buffer'' and ``31\,m buffer'' --- both are safe, and no configuration that violates the NFZ is acceptable at \emph{any} score. Including safety as a weighted term would allow a high detection score to ``compensate'' for a marginal NFZ clearance, which is precisely the trade-off we refuse to make. Any configuration where $S_\text{safety}$ falls below an acceptable threshold (i.e.\ a protection layer is missing) is eliminated before scoring.
 
-Time is treated similarly: SAR missions have a maximum acceptable search duration dictated by the operational scenario, not by optimisation. In our case, any configuration that completes the search in under 300\,s is operationally acceptable --- the difference between 112\,s and 150\,s matters far less than the difference between 99.97\% and 95\% detection probability. Configurations exceeding 300\,s are eliminated; among those that pass, time differences are too small to justify influencing the ranking. Time \emph{is} computed and reported (see Section~\ref{sec:df-result}) but does not enter the composite.
+Time follows the same logic: SAR missions have a maximum acceptable search duration dictated by the operational scenario, not by optimisation. In our case, any configuration that completes the search in under 300\,s is operationally acceptable --- the difference between 112\,s and 150\,s matters far less than the difference between 99.97\% and 95\% detection probability. Configurations exceeding 300\,s are eliminated; among those that pass, time differences are too small to justify influencing the ranking. Time \emph{is} computed and reported (see Section~\ref{sec:df-result}) but does not enter the composite.
 
 This constraint--objective split ensures that the optimisation never trades safety for performance or accepts a dangerously slow search because it scores well on other axes. The spider chart (Figure~\ref{fig:sensitivity-spider}) still displays all five dimensions for visual comparison, but the composite score that drives configuration selection uses only the three continuously traded objectives.
 
@@ -441,7 +441,7 @@ Each step is detailed below. At each step we state (a) why this decision must co
 
 \textbf{Why this comes first.} Every downstream decision depends on the detector's capability. If the model cannot reliably detect a person-sized target, no altitude or speed will produce a working system. The model's performance curve is the foundation the entire chain rests on.
 
-\textbf{What we did.} The YOLOv8n model~\cite{yolov8} was retrained on a mixed dataset of 300~synthetic images (using domain randomisation techniques~\cite{synthdata}), 16~manually labelled real flight frames, and 50~hard-negative backgrounds at the camera's native 1456$\times$1088 resolution. Validation yielded mAP50\,=\,0.995.
+\textbf{What we did.} We retrained the YOLOv8n model~\cite{yolov8} on a mixed dataset of 300~synthetic images (using domain randomisation techniques~\cite{synthdata}), 16~manually labelled real flight frames, and 50~hard-negative backgrounds at the camera's native 1456$\times$1088 resolution. Validation yielded mAP50\,=\,0.995.
 
 \textbf{Why we proceeded.} Only after confirming that the detector itself was not the bottleneck did we ask \emph{how high} and \emph{how fast} it could operate. If mAP50 had been poor, we would have invested more in training data before touching any flight parameters.
 
@@ -526,7 +526,7 @@ For the baseline configuration we adopted \textbf{8\,m/s}, which sits within the
 P_d = 1 - (1 - 0.95)^{14} = 1 - 0.05^{14} > 99.97\%
 \]
 
-The deployed NCNN backend achieves approximately 9\,FPS in the full pipeline. At this frame rate, requiring just 5~frames on target---empirically sufficient for reliable detection across lighting conditions---gives $v_{\text{max}} = 24 / (5/9) = 43$\,m/s, far above any practical flight speed. With the deployed backend, \textbf{detection is no longer the speed-limiting factor}; speed is instead constrained by energy budget, NFZ reaction time, GPS update rate, and wind tolerance. The choice of 5~frames as the minimum was determined empirically: testing across bright, overcast, and dusk conditions showed that 5~independent observations at $\geq$85\% per-frame confidence consistently yielded $>$99\% cumulative detection. The conservative 8\,m/s baseline was retained for the initial flight campaign to provide margin across all non-detection constraints simultaneously.
+The deployed NCNN backend achieves approximately 9\,FPS in the full pipeline. At this frame rate, requiring just 5~frames on target---empirically sufficient for reliable detection across lighting conditions---gives $v_{\text{max}} = 24 / (5/9) = 43$\,m/s, far above any practical flight speed. With the deployed backend, \textbf{detection is no longer the speed-limiting factor}; speed is instead constrained by energy budget, NFZ reaction time, GPS update rate, and wind tolerance. We determined the 5-frame minimum empirically: testing across bright, overcast, and dusk conditions showed that 5~independent observations at $\geq$85\% per-frame confidence consistently yielded $>$99\% cumulative detection. We retained the conservative 8\,m/s baseline for the initial flight campaign to provide margin across all non-detection constraints simultaneously.
 
 
 % ────────────────────────────────────────────────────────────────────────
@@ -543,7 +543,7 @@ The deployed NCNN backend achieves approximately 9\,FPS in the full pipeline. At
   \item \textbf{Random walk} --- stochastic coverage. Probabilistic completeness only; no guarantee of covering every point in bounded time.
 \end{enumerate}
 
-\textbf{The decision.} Lawnmower (boustrophedon) coverage is the standard method recommended by the International Aeronautical and Maritime Search and Rescue Manual (IAMSAR Vol.~III)~\cite{wca1981} and is widely deployed on autonomous marine and aerial SAR platforms~\cite{galceran2013survey,choset2001coverage}. It provided the best coverage guarantee for irregular polygons with NFZ constraints. The search area is a 5-corner irregular polygon with an SSSI no-fly zone on one edge --- not a convex shape where spiral patterns excel. The lawnmower pattern's deterministic lane structure means we can \emph{prove} that every accessible point is scanned, which is essential for a safety-critical SAR mission~\cite{murphy2014}. However, spiral inward patterns were also considered for their lower turn count. In a convex search area without NFZ constraints, a spiral would likely be the better choice.
+\textbf{The decision.} Lawnmower (boustrophedon) coverage is the standard method recommended by the International Aeronautical and Maritime Search and Rescue Manual (IAMSAR Vol.~III)~\cite{wca1981} and is widely deployed on autonomous marine and aerial SAR platforms~\cite{galceran2013survey,choset2001coverage}. The lawnmower pattern provided the best coverage guarantee for irregular polygons with NFZ constraints. The search area is a 5-corner irregular polygon with an SSSI no-fly zone on one edge --- not a convex shape where spiral patterns excel. The lawnmower pattern's deterministic lane structure means we can \emph{prove} that every accessible point is scanned, which is essential for a safety-critical SAR mission~\cite{murphy2014}. However, spiral inward patterns were also considered for their lower turn count. In a convex search area without NFZ constraints, a spiral would likely be the better choice.
 
 
 % ────────────────────────────────────────────────────────────────────────
@@ -563,7 +563,7 @@ The deployed NCNN backend achieves approximately 9\,FPS in the full pipeline. At
 
 \textbf{The NFZ margin consequence.} Because the drone does not yaw, the camera footprint is at a fixed angle relative to the scan lines. The scan lines run at 70\textdegree{} (longest-edge alignment, determined in Step~7). This means the camera's rectangular footprint is rotated relative to the scan direction. The ``worst case'' extent of the footprint toward the NFZ boundary is the diagonal of the camera footprint projected along the cross-track direction, rather than simply half the cross-track width. This required us to increase the NFZ safety margin slightly (from the na\"ive 16\,m half-width to a larger value that accounts for the diagonal extent). The exact margin calculation is detailed in Step~8.
 
-\textbf{An alternative we considered.} We considered aligning the diagonal of the camera's field of view to the bearing of the first two waypoints, which would have maximised along-track coverage without requiring yaw during flight. This approach was not adopted because it couples the camera mounting angle to the path geometry, making the system less flexible if the search area or scan angle changes. The fixed-heading approach is simpler and more robust.
+\textbf{An alternative we considered.} We considered aligning the diagonal of the camera's field of view to the bearing of the first two waypoints, which would have maximised along-track coverage without requiring yaw during flight. We did not adopt this approach because it couples the camera mounting angle to the path geometry, making the system less flexible if the search area or scan angle changes. The fixed-heading approach is simpler and more robust.
 
 
 % ────────────────────────────────────────────────────────────────────────
@@ -571,9 +571,9 @@ The deployed NCNN backend achieves approximately 9\,FPS in the full pipeline. At
 
 \textbf{Why this comes after pattern type and heading mode.} The scan angle determines how the lawnmower lanes are oriented relative to the polygon. Different angles produce different numbers of scan lines and U-turns, which directly affects energy. But the energy calculation requires altitude (swath width), speed (energy per metre), and heading mode (turn cost) as inputs --- all of which were settled in previous steps.
 
-\textbf{The energy model.} The physics-based energy simulation defined in Section~\ref{sec:score-energy} (momentum-theory hover power plus quadratic parasitic drag) was applied to every candidate angle. U-turns are modelled as decelerate--turn--reaccelerate sequences with energy cost proportional to the square of the entry speed; \emph{fewer U-turns} therefore translates directly to \emph{less energy}, and the scan angle that minimises U-turns is the one that aligns the scan lines with the polygon's longest edge.
+\textbf{The energy model.} We applied the physics-based energy simulation from Section~\ref{sec:score-energy} (momentum-theory hover power plus quadratic parasitic drag) to every candidate angle. U-turns are modelled as decelerate--turn--reaccelerate sequences with energy cost proportional to the square of the entry speed; \emph{fewer U-turns} therefore translates directly to \emph{less energy}, and the scan angle that minimises U-turns is the one that aligns the scan lines with the polygon's longest edge.
 
-\textbf{The 216-configuration sweep.} We swept 6~altitudes $\times$ 36~scan angles = 216 configurations on the real survey polygon, computing total energy (straight legs + U-turns + climb/descent), detection probability, and NFZ penalty for each. The results are shown in Figure~\ref{fig:energy-heatmap}: a clear low-energy valley runs through 65--75\textdegree{} at all altitudes.
+\textbf{The 216-configuration sweep.} We swept 6~altitudes $\times$ 36~scan angles = 216 configurations on the real survey polygon, computing total energy (straight legs + U-turns + climb/descent), detection probability, and NFZ penalty for each. Figure~\ref{fig:energy-heatmap}: a clear low-energy valley runs through 65--75\textdegree{} at all altitudes.
 
 \begin{figure}[H]
   \centering
@@ -608,9 +608,9 @@ RSS combination: $\sqrt{18^2 + 3^2 + 4^2 + 2^2} \approx 19$\,m. Rounding up give
 
 \textbf{The constraint.} Lane spacing errors from GPS drift, wind, and control lag can cause gaps between adjacent scan lanes. The overlap must be large enough to cover these errors with margin.
 
-\textbf{The calculation.} At 35\,m altitude, the cross-track footprint is 34\,m. With 20\% overlap, adjacent lanes overlap by 6.8\,m. The maximum expected lane error (GPS + wind + control) is approximately 4.6\,m, leaving 2.2\,m of spare coverage. This is sufficient to ensure no gaps under normal conditions.
+\textbf{The calculation.} At 35\,m altitude, the cross-track footprint is 34\,m. With 20\% overlap, adjacent lanes overlap by 6.8\,m. The maximum expected lane error (GPS + wind + control) is approximately 4.6\,m, leaving 2.2\,m of spare coverage. This ensures gap-free coverage under normal conditions.
 
-\textbf{Why not more?} Higher overlap means more scan lines, more energy, and more time. The 20\% value was selected as the minimum that provides reliable gap-free coverage.
+\textbf{Why not more?} Higher overlap means more scan lines, more energy, and more time. We selected 20\% as the minimum that provides reliable gap-free coverage.
 
 
 % ════════════════════════════════════════════════════════════════════════
@@ -628,7 +628,7 @@ The logic can be summarised as a chain of ``because'' statements:
 
 \begin{enumerate}[nosep, leftmargin=2em]
   \item We fly at \textbf{35\,m} \emph{because} higher altitude means fewer scan lines (saving time and energy), but the target must remain detectable --- 35\,m is 15\% below the worst-case detection ceiling, giving comfortable pixel extent in all lighting conditions.
-  \item We fly at \textbf{8\,m/s} \emph{because} at 35\,m the along-track footprint is 24\,m, and at 4.8\,FPS we need the target in view for $\geq$10 frames --- 8\,m/s gives 14 frames (27 at 9\,FPS with NCNN), yielding $>$99.97\% cumulative detection probability. With NCNN, detection is no longer the speed-limiting factor; the conservative speed was retained for energy, NFZ, and GPS margins.
+  \item We fly at \textbf{8\,m/s} \emph{because} at 35\,m the along-track footprint is 24\,m, and at 4.8\,FPS we need the target in view for $\geq$10 frames --- 8\,m/s gives 14 frames (27 at 9\,FPS with NCNN), yielding $>$99.97\% cumulative detection probability. With NCNN, detection is no longer the speed-limiting factor; we retained the conservative speed for energy, NFZ, and GPS margins.
   \item We use a \textbf{lawnmower pattern} \emph{because} it provides a deterministic coverage guarantee for our irregular polygon with NFZ cutouts, unlike spiral or expanding-square patterns.
   \item We \textbf{do not yaw} the drone \emph{because} eliminating yaw rotations at U-turns saves 15\,s and 3--5\% energy, with no meaningful detection loss --- but this requires a slightly larger NFZ margin to account for the diagonal camera footprint.
   \item We scan at \textbf{70\textdegree} \emph{because} this aligns with the polygon's longest edge, minimising U-turns (5 instead of 9) and halving the worst-case energy.
@@ -640,7 +640,7 @@ The logic can be summarised as a chain of ``because'' statements:
 % ════════════════════════════════════════════════════════════════════════
 \section{What We Evaluated: The 216-Configuration Sweep}\label{sec:df-evaluation}
 
-We did not rely on intuition. A physics-based simulation evaluated \textbf{216~configurations} (6~altitudes $\times$ 36~scan angles) on the real survey polygon, modelling energy consumption with momentum-theory hover power and quadratic parasitic drag, detection probability from the empirical detection envelope, and NFZ penalties for every combination.
+A physics-based simulation evaluated \textbf{216~configurations} (6~altitudes $\times$ 36~scan angles) on the real survey polygon, modelling energy consumption with momentum-theory hover power and quadratic parasitic drag, detection probability from the empirical detection envelope, and NFZ penalties for every combination.
 
 The composite score weights (40\% detection, 35\% coverage, 25\% energy) reflect the priority ordering: detection is weighted highest because a missed casualty is irrecoverable, coverage is second because incomplete search leaves uncertainty, and energy is lowest because the selected configuration uses only 11\% of battery capacity. Table~\ref{tab:df-top3} lists the three highest-scoring configurations.
 
@@ -705,7 +705,7 @@ Table~\ref{tab:df-final} consolidates the selected values and their predicted pe
   \end{tabularx}
 \end{table}
 
-Every parameter traces back to a physical measurement or regulatory constraint through the sequential chain detailed in Section~\ref{sec:df-chain}. No value was assumed or rounded for convenience.
+Every parameter traces back to a physical measurement or regulatory constraint through the sequential chain detailed in Section~\ref{sec:df-chain}. Each value traces to measurement or regulation.
 
 \smallskip
 \noindent\textsuperscript{$\dagger$}This assumes frame independence; with 95\% along-track overlap, effective independent observations are fewer, yielding a conservative single-pass estimate of approximately 92\%.
@@ -732,7 +732,7 @@ The chain can be re-evaluated instantly if conditions change --- a faster infere
 % ════════════════════════════════════════════════════════════════════════
 \section{Pareto Optimality}\label{sec:df-pareto}
 
-The selected configuration sits at the knee of the Pareto frontier (Figure~\ref{fig:pareto-parallel}). Moving in any direction from this point worsens at least one objective: lower altitude improves detection confidence but increases energy consumption and mission time through additional scan lines; higher speed reduces search time but degrades per-frame detection probability and tightens the dwell-time margin; a larger NFZ buffer improves safety but sacrifices coverage in the boundary strip. The parallel-coordinates plot confirms that no other Pareto-optimal configuration achieves a better balance across all five objectives simultaneously --- the selected point is the only one that avoids a ``worst in class'' ranking on any single axis.
+The selected configuration sits at the knee of the Pareto frontier (Figure~\ref{fig:pareto-parallel}). Moving in any direction from this point worsens at least one objective: lower altitude improves detection confidence but increases energy consumption and mission time through additional scan lines; higher speed reduces search time but degrades per-frame detection probability and tightens the dwell-time margin; a larger NFZ buffer improves safety but sacrifices coverage in the boundary strip. The parallel-coordinates plot confirms that no other Pareto-optimal configuration achieves a better balance across all five objectives simultaneously --- the selected point avoids a ``worst in class'' ranking on any single axis.
 
 \begin{figure}[H]
   \centering
@@ -783,19 +783,31 @@ INIT $\to$ CONNECTING $\to$ ARMING $\to$ TAKEOFF $\to$ TRANSIT $\to$ SEARCH $\to
 
 Additional states handle edge cases: MANUAL (RC override), RETURN (RTL), BEACON\_REDIRECT (PLB signal integration), RESUME (post-override recovery with GPS fix and NFZ position validation), and several internal bookkeeping states. The RC override guard runs \emph{before} the state handler on every loop iteration: if the pilot switches away from GUIDED mode, all autonomous commands cease immediately and cannot resume until the pilot explicitly returns control. This prevents the software from ``fighting'' the pilot.
 
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\linewidth]{state_machine_generated}
+  \caption{Complete 20-state finite state machine. Green arrows show the nominal mission path; orange arrows show recovery transitions (manual override, resume, beacon redirect). Every state has an explicit exit to either the next nominal state or a safe fallback (MANUAL or RETURN).}\label{fig:state-machine}
+\end{figure}
+
 \subsection{Computer Vision Pipeline}
 
 The CV pipeline processes each camera frame through four stages:
 
 \begin{enumerate}[nosep]
-  \item \textbf{Capture}: IMX296 global shutter sensor at 1456$\times$1088 native resolution (BGR output, no colour conversion needed).
-  \item \textbf{Undistort}: optional lens correction via precomputed \texttt{cv2.remap()} maps (+1.5\,ms).
+  \item \textbf{Capture}: IMX296 global shutter sensor~\cite{imx296} at 1456$\times$1088 native resolution (BGR output, no colour conversion needed).
+  \item \textbf{Undistort}: optional lens correction via precomputed \texttt{cv2.remap()} maps~\cite{opencv} (+1.5\,ms).
   \item \textbf{Resize \& normalise}: bilinear interpolation to 640$\times$640, float32 normalisation to $[0,1]$.
   \item \textbf{Inference}: YOLOv8n forward pass --- TFLite (206.5\,ms, 4.8\,FPS) or NCNN (72\,ms, 9\,FPS) on Pi~5 CPU.
   \item \textbf{Post-process}: NMS, confidence threshold (0.4), bounding box extraction. Output: \texttt{(found, x, y, conf)}.
 \end{enumerate}
 
-The retrained model~\cite{yolov8} (mAP50\,=\,0.995) was trained on 366 images: 300 synthetic composites at altitude-correct scale~\cite{synthdata}, 16 manually labelled real flight frames, and 50 hard-negative backgrounds, all at native 1456$\times$1088 resolution.
+We trained the model~\cite{yolov8} (mAP50\,=\,0.995) on 366 images: 300 synthetic composites at altitude-correct scale~\cite{synthdata}, 16 manually labelled real flight frames, and 50 hard-negative backgrounds, all at native 1456$\times$1088 resolution.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\linewidth]{detection_montage}
+  \caption{Detection montage from DJI flight video at varying altitudes and lighting conditions. Each frame shows the bounding box, confidence score, and estimated altitude. The model reliably detects the rescue dummy from 15--50\,m, with confidence degrading gracefully as the target shrinks to fewer pixels at higher altitudes.}\label{fig:detection-montage}
+\end{figure}
 
 \subsection{Detection-to-GPS Pipeline}
 
@@ -829,9 +841,50 @@ Roll / pitch tilt & 0--6\,m$^\dagger$ & Flight only \\
 {\footnotesize $\dagger$~Reduced to ${\sim}0.3$\,m with attitude compensation enabled (\texttt{-{}-compensate-tilt}).}
 \end{table}
 
-Without correction, forward flight pitch introduces up to 6.2\,m offset ($h\tan\theta = 35\tan 10^{\circ}\approx 6.2$\,m)---larger than all other error sources combined.  Attitude-compensated estimation (\texttt{-{}-compensate-tilt}) reduces this to ${\sim}0.3$\,m by ray-tracing each detection through the full rotation matrix $\mathbf{R} = \mathbf{R}_z(\psi)\,\mathbf{R}_y(-\theta)\,\mathbf{R}_x(-\phi)$ constructed from the drone's \texttt{ATTITUDE} telemetry, which is the exact mathematical inverse of the camera model used in simulation.  This was verified with 1440 automated test cases across all altitudes and tilt angles, each producing errors below 0.01\,m.  The centering procedure further mitigates residual error by hovering ($\theta < 1^{\circ}$) before the final landing estimate.
+Without correction, forward flight pitch introduces up to 6.2\,m offset ($h\tan\theta = 35\tan 10^{\circ}\approx 6.2$\,m)---larger than all other error sources combined.  Attitude-compensated estimation (\texttt{-{}-compensate-tilt}) reduces this to ${\sim}0.3$\,m by ray-tracing each detection through the full rotation matrix $\mathbf{R} = \mathbf{R}_z(\psi)\,\mathbf{R}_y(-\theta)\,\mathbf{R}_x(-\phi)$ constructed from the drone's \texttt{ATTITUDE} telemetry, which is the exact mathematical inverse of the camera model used in simulation.  We verified this with 1440 automated test cases across all altitudes and tilt angles, each producing errors below 0.01\,m.  The centering procedure further mitigates residual error by hovering ($\theta < 1^{\circ}$) before the final landing estimate.
 
 Field testing with DJI flight video replay yielded \textbf{CEP50\,=\,2.3\,m} (50\% of estimates within 2.3\,m of the true position). The primary residual error source is GPS receiver latency (100--200\,ms), causing ${\sim}1$\,m along-track offset at 5\,m/s; multi-pass averaging from different headings cancels this systematic bias.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.75\linewidth]{bullseye_comparison}
+  \caption{GPS target estimation accuracy from DJI video replay. Left: raw single-frame estimates showing along-track spread caused by GPS receiver latency. Right: after inverse-variance weighted averaging and spatial clustering, the estimate converges to CEP50\,=\,2.3\,m. Bullseye rings at 2, 5, and 10\,m.}\label{fig:bullseye}
+\end{figure}
+
+\subsubsection{Localization Approach Selection}
+
+We surveyed ten localization approaches, spanning single-frame direct georeferencing, multi-frame triangulation, Kalman filtering, visual odometry/SLAM, optical flow, homography decomposition, terrain-referenced navigation, multi-UAV cooperative estimation, RTK-GPS, and photogrammetric bundle adjustment.  We evaluated each against three constraints: real-time operation at 3--5\,FPS on a Raspberry Pi~5, no additional hardware beyond the standard autopilot sensor suite (GPS, barometer, compass), and graceful degradation if the drone cannot hover.  The selected combination---direct georeferencing with attitude compensation, fused via inverse-variance weighting (IVW) and spatial clustering---operates on single frames (no history bootstrapping), runs in $<$0.1\,ms per estimate, and naturally handles variable-quality observations by weighting near-centre detections more heavily than edge detections.
+
+\subsubsection{Progressive Accuracy Improvement}
+
+The mission architecture exploits the state machine to progressively eliminate error sources as the drone transitions from search to landing.  Table~\ref{tab:accuracy-progression-body} summarises the four phases.
+
+\begin{table}[H]
+  \centering\small
+  \caption{Target position accuracy progression through the detection-to-landing flow.}\label{tab:accuracy-progression-body}
+  \begin{tabular}{@{}llcc@{}}
+    \toprule
+    \textbf{Phase} & \textbf{Drone condition} & \textbf{CEP$_{50}$} & \textbf{Dominant error} \\
+    \midrule
+    SEARCH (detection)    & 5\,m/s, ${\sim}10^{\circ}$ pitch  & ${\sim}3.5$\,m & Tilt projection \\
+    CENTERING (approach)  & Decelerating $\to$ hover           & ${\sim}2.3$\,m & GPS receiver noise \\
+    CENTERING (hover lock)& Stationary, nadir camera           & ${\sim}1.8$\,m & GPS averaging limit \\
+    Tilt-compensated      & Any phase with \texttt{ATTITUDE}   & ${\sim}0.3$\,m & Residual calibration \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\noindent The key insight is that centering the target in the frame and hovering eliminates the largest error sources \emph{without software correction}: when the target is at the optical centre, pixel offset is zero, so every multiplicative error in the projection chain (GSD, focal length, yaw, lens distortion) is multiplied by zero and vanishes.  The only remaining error is the drone's own GPS position, which dominates the budget at 60--70\% of total variance across all phases.  Figure~\ref{fig:bullseye-comparison-body} shows the progressive tightening across estimation strategies.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\linewidth]{bullseye_comparison}
+  \caption{Bullseye comparison of four estimation strategies on DJI replay data.  Left to right: single-frame (CEP$_{50}$\,=\,5.1\,m), rolling average, IVW clustering (2.3\,m), and hover-lock (1.8\,m).  The progressive tightening of the scatter cloud demonstrates the value of multi-frame fusion and centering.}\label{fig:bullseye-comparison-body}
+\end{figure}
+
+\subsubsection{Frame Rate Sufficiency}
+
+At 35\,m altitude the camera footprint is $32.2 \times 24.0$\,m, so a target at the strip centreline remains visible for $24.0/5 = 4.8$\,s at the 5\,m/s search speed.  At 4.8\,FPS (Pi~5 TFLite), this yields ${\sim}23$ inference frames per pass with a per-frame detection probability $p_d \approx 0.78$ (measured from DJI replay), giving ${\sim}18$ expected detections.  The probability of obtaining zero detections in a single pass is $(1 - 0.78)^{23} < 10^{-15}$, and the probability of at least 5 detections (the SMART clustering threshold) exceeds 99.9\%.  A single flyover therefore provides sufficient data for a reliable position lock.
 
 \subsection{Testing Infrastructure}
 
@@ -848,11 +901,33 @@ The project includes 58 test scripts organised in six categories:
 
 Additionally, 127 unit test functions across 6 test files validate config ranges, state completeness, geo-math accuracy, planning correctness, and vision system initialisation.
 
+\subsection{Safety Architecture}\label{sec:safety-arch}
+
+The survey area is adjacent to a Site of Special Scientific Interest (SSSI), making boundary enforcement a hard safety constraint. The system implements a \textbf{five-layer geofence} (Figure~\ref{fig:geofence_layers}), where each layer operates independently so that failure of any single layer is caught by the next:
+
+\begin{enumerate}[nosep]
+  \item \textbf{Speed scalar field} (20--2\,m from SSSI): linearly reduces maximum approach speed to zero near the boundary, allowing full-speed parallel flight via directional clamping.
+  \item \textbf{Repulsive vector field} ($<$\,3\,m): applies a 5\,m/s push perpendicular to the nearest boundary segment, exceeding the near-zero speed cap to prevent penetration.
+  \item \textbf{Hard boundary cutoff}: if GPS places the aircraft inside the SSSI polygon (\texttt{cv2.pointPolygonTest}), all commands halt and the system transitions to manual mode.
+  \item \textbf{Plan-time waypoint filter}: removes any search waypoints within 30\,m of the NFZ during pattern generation, preventing the planner from routing near the boundary.
+  \item \textbf{Firmware geofence}: an independent Cube Orange polygon fence triggers RTL if all software layers fail---this operates at the flight-controller level and cannot be overridden by companion-computer code.
+\end{enumerate}
+
+\noindent A separate Flight Area containment check triggers emergency RTL if the aircraft exits the 4-vertex operational boundary; this is independent of the SSSI geofence and cannot be disabled.
+
+The \textbf{RC override guard} is the first check on every main-loop iteration: if the pilot switches the transmitter away from GUIDED or LAND mode, \emph{all} MAVLink commands are suppressed on the same loop tick. A real incident motivated this design (a colleague's drone crashed when software fought the pilot's RC input) and ensures the pilot can always regain control with a single switch. Additional safety features include a \textbf{50\,m altitude hard cap} enforced at the navigation layer (every \texttt{send\_global\_target()} call is clamped), \textbf{link-loss RTL} via ArduCopter's GCS failsafe when heartbeats cease, and an \textbf{RC kill switch} that returns the aircraft to manual STABILIZE mode independently of all software.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.80\linewidth]{geofence_layers}
+  \caption{Five-layer geofence shown to scale on the Fenswood Farm site. From outermost to innermost: Flight Area hard boundary, 30\,m waypoint buffer, 20\,m speed scalar field, 3\,m repulsive vector field, and SSSI hard cutoff. Graduated protection ensures that even if one layer fails, subsequent layers prevent boundary incursion.}\label{fig:geofence_layers}
+\end{figure}
+
 
 % ════════════════════════════════════════════════════════════════════════
 \section{Requirements Verification}\label{sec:requirements}
 
-The system architecture and optimisation chain described above were designed to satisfy twelve formal requirements drawn from the AENGM0074 mission brief and the team's derived specifications. Table~\ref{tab:requirements} traces each requirement to quantitative evidence, referencing specific test scripts and measurements from the preceding sections.
+The system architecture and optimisation chain satisfy twelve formal requirements from the AENGM0074 mission brief and the team's derived specifications. Table~\ref{tab:requirements} traces each requirement to quantitative evidence, referencing specific test scripts and measurements from the preceding sections.
 
 \begin{table}[H]
   \centering\compactTable
@@ -883,15 +958,15 @@ R07 is partially met: GPS estimation accuracy is verified from video replay, but
 % ════════════════════════════════════════════════════════════════════════
 \section{Evaluation: Plus / Delta}\label{sec:plusdelta}
 
-With 10 of 12 requirements met and two partially met, the system has demonstrated strong simulation-level capability but has not yet completed autonomous outdoor flight. This section reflects honestly on what worked, what would change, and where the primary risks remain.
+With 10 of 12 requirements met and two partially met, the system demonstrates simulation-level capability but has not yet completed autonomous outdoor flight. This section examines what worked, what would change, and where the primary risks remain.
 
 \subsection{Plus (What Worked Well)}
 
 \begin{enumerate}[nosep]
   \item \textbf{Modular architecture.} The single-interface design (\texttt{vision.py} exposes only \texttt{detect\_in\_image}) meant that switching from TFLite to NCNN (4.5$\times$ speed gain) required zero changes outside \texttt{vision.py}. The same \texttt{main.py} runs identically on laptop simulation and Pi hardware.
-  \item \textbf{Physics-based optimisation.} The 216-configuration sweep with a momentum-theory energy model replaced guesswork with quantified trade-offs. The Pareto analysis confirmed that the selected point is genuinely optimal, not merely ``good enough.''
-  \item \textbf{Progressive testing protocol.} The 6-step flight test ladder (bench commands $\to$ passive CV $\to$ waypoints $\to$ auto detect $\to$ full mission) meant each step added exactly one new risk. No step was skipped.
-  \item \textbf{Retrained model quality.} Mixed synthetic + real + negative training at native resolution produced mAP50\,=\,0.995 --- a near-perfect detector that validated as the foundation for all altitude/speed decisions.
+  \item \textbf{Physics-based optimisation.} The 216-configuration sweep with a momentum-theory energy model replaced guesswork with quantified trade-offs. The Pareto analysis confirmed that the selected point is optimal, not merely ``good enough.''
+  \item \textbf{Progressive testing protocol.} The 6-step flight test ladder (bench commands $\to$ passive CV $\to$ waypoints $\to$ auto detect $\to$ full mission) meant each step added exactly one new risk.
+  \item \textbf{Retrained model quality.} Mixed synthetic + real + negative training at native resolution produced mAP50\,=\,0.995 --- a detector that validated as the foundation for all altitude/speed decisions.
   \item \textbf{Layered safety architecture.} Five independent NFZ protection layers (geometric filtering, speed ramp, repulsive field, hard boundary, RC kill) provide defence-in-depth. The probability of simultaneous failure of all five is negligibly small.
   \item \textbf{Dual-backend flexibility.} Supporting both TFLite and NCNN with drop-in model files (\texttt{[1,640,640,3]} $\to$ \texttt{[1,5,8400]}) eliminated single-point-of-failure risk in the inference pipeline.
 \end{enumerate}
@@ -900,7 +975,7 @@ With 10 of 12 requirements met and two partially met, the system has demonstrate
 
 \begin{enumerate}[nosep]
   \item \textbf{Earlier real-world validation.} The detection envelope and GPS accuracy were characterised from DJI video replay and bench calibration, not from the actual Pi + drone platform in flight. Weather cancellations prevented outdoor validation. Future work: fly the passive detection script (\texttt{1\_passive\_flight.py}) before committing to autonomous parameters.
-  \item \textbf{GPS timing lag compensation.} The 100--200\,ms GPS latency causes 1\,m along-track error at 5\,m/s, visible as diagonal spread in target estimates (max error 16.5\,m). A velocity-based offset correction was designed but not implemented. This would improve CEP50 from 2.3\,m toward sub-metre accuracy.
+  \item \textbf{GPS timing lag compensation.} The 100--200\,ms GPS latency causes 1\,m along-track error at 5\,m/s, visible as diagonal spread in target estimates (max error 16.5\,m). We designed a velocity-based offset correction but did not implement it. This would improve CEP50 from 2.3\,m toward sub-metre accuracy.
   \item \textbf{INT8 quantisation.} All deployed models are float32. INT8 quantisation could roughly double inference speed (to $\sim$18\,FPS on NCNN) with $<$1\% accuracy loss, but the quantisation-aware training pipeline was not set up within the project timeline.
   \item \textbf{Multi-pass search strategy.} The current system assumes a single search pass. If the first pass yields no detection, a second pass at lower altitude (25\,m) or different scan angle (perpendicular) would increase coverage confidence. The state machine supports RTL after search but not automatic re-planning.
   \item \textbf{Wind modelling.} The energy model assumes calm conditions. Adding a wind speed/direction input would shift the optimal scan angle (fly into headwind on short legs, downwind on long legs) and improve energy prediction accuracy.
@@ -909,13 +984,13 @@ With 10 of 12 requirements met and two partially met, the system has demonstrate
 
 \subsection{Honest Assessment}
 
-The system scores 7.7/10 in simulation capability (all states exercised, energy model validated, detection pipeline proven) but only 2.1/10 in real-world readiness: bench and video-replay testing are complete, yet no autonomous outdoor flight has been conducted. The 2.1 reflects the absence of Stages~6--7 (manual passive flight and full autonomous mission) in the simulation-to-real progression. The gap between simulation confidence and field-proven reliability is the project's primary risk, driven by weather cancellations and scheduling constraints rather than technical blockers. The optimisation framework itself is re-evaluable: if field data shifts the detection envelope, the entire chain can be re-run in minutes to produce updated parameters.
+We rate simulation capability at 7.7/10 (all states exercised, energy model validated, detection pipeline proven) but only 2.1/10 in real-world readiness: bench and video-replay testing are complete, yet no autonomous outdoor flight has been conducted. This 2.1 reflects the absence of Stages~6--7 (manual passive flight and full autonomous mission) in the simulation-to-real progression. The gap between simulation confidence and field-proven reliability is the project's primary risk, driven by weather cancellations and scheduling constraints rather than technical blockers. The optimisation framework is re-evaluable: if field data shifts the detection envelope, the entire chain can be re-run in minutes to produce updated parameters.
 
 
 % ════════════════════════════════════════════════════════════════════════
 \section{Evidence-Based Adaptation}\label{sec:decisions-changed}
 
-A rigorous engineering process is measured not by whether initial assumptions hold, but by how quickly errors are detected and corrected. Four significant corrections were made during development --- each discovered through systematic testing, each requiring a different diagnostic approach, and each validating the modular architecture that isolated the fix to a single module.
+Four significant corrections were made during development --- each discovered through systematic testing, each requiring a different diagnostic approach, and each validating the modular architecture that isolated the fix to a single module.
 
 \subsection{BGR Colour Channel Fix}
 
@@ -933,7 +1008,7 @@ The initial focal length was set to 7.0\,mm (from an approximate datasheet value
 
 YOLOv8 TFLite exports are inconsistent: some models output normalised coordinates (0--1), others output pixel coordinates (0--640). Our code assumed normalised coordinates, so a detection at pixel position $(320, 240)$ was multiplied by frame dimensions $(1456, 1088)$, producing a bounding box at $(466\,560,\; 261\,120)$ --- far off-screen.
 
-\textbf{Discovery method:} visual inspection showed green detection boxes drawn off-screen. \textbf{Fix:} added a \texttt{PIXEL\_COORD\_THRESHOLD = 1.5} check in \texttt{vision.py} --- if raw coordinates exceed 1.5, they are treated as pixel coordinates and scaled by the ratio of frame size to model input size; otherwise they are treated as normalised. This handles both formats automatically. \textbf{Impact:} detection overlay, GPS estimation from pixel offset, and all downstream centering logic depended on correct bounding box coordinates.
+{\sloppy\textbf{Discovery method:} visual inspection showed green detection boxes drawn off-screen. \textbf{Fix:} added a \texttt{PIXEL\_COORD\_THRESHOLD\,=\,1.5} check in \texttt{vision.py}---if raw coordinates exceed~1.5, they are treated as pixel coordinates and scaled by the ratio of frame size to model input size; otherwise they are treated as normalised. This handles both formats automatically. \textbf{Impact:} detection overlay, GPS estimation from pixel offset, and all downstream centering logic depended on correct bounding box coordinates.\par}
 
 \subsection{Calibration Data Corruption}
 
@@ -942,7 +1017,7 @@ On the Pi, \texttt{calibration\_data.npz} (lens distortion calibration) was an e
 \textbf{Discovery method:} detection worked on laptop but failed entirely on Pi with identical model and code. Bisecting the pipeline isolated the remap step. \textbf{Fix:} delete the corrupt file; the IMX296 global shutter has minimal barrel distortion, so undistortion is optional (\texttt{UNDISTORT\_ENABLED = False} by default). \textbf{Impact:} complete detection failure on Pi until resolved.
 
 \medskip
-\noindent\textbf{Pattern.} All four bugs share a common structure: a silent failure that produced plausible but incorrect output, discovered only through systematic testing against known-good baselines. The modular architecture confined each fix to a single file (\texttt{vision.py} or \texttt{config.py}), with no ripple effects into the state machine or path planner. This validates the design decision to isolate all CV/AI behind a single-function interface (\texttt{detect\_in\_image}).
+\noindent\textbf{Pattern.} All four bugs share a common structure: a silent failure that produced plausible but incorrect output, discovered only through systematic testing against known-good baselines. The modular architecture confined each fix to a single file (\texttt{vision.py} or \texttt{config.py}), with no ripple effects into the state machine or path planner. This confirms the value of isolating all CV/AI behind a single-function interface (\texttt{detect\_in\_image}).
 
 
 % ════════════════════════════════════════════════════════════════════════
@@ -1013,7 +1088,7 @@ The optimisation script accounts for this by numerically integrating the effecti
 % ════════════════════════════════════════════════════════════════════════
 \section{Testing Methodology}\label{sec:testing-methodology}
 
-The 58 test scripts and 127 unit test functions were not written as an afterthought --- they are integral to the optimisation methodology, providing the empirical evidence that anchors every link in the decision chain.
+The 58 test scripts and 127 unit test functions are integral to the optimisation methodology, providing the empirical evidence that anchors every link in the decision chain.
 
 \subsection{Test Categories and Their Role in Validation}
 
@@ -1092,7 +1167,9 @@ The gap between Stages~5 and~6 is the project's primary risk: bench testing cann
 
 A physics-based 216-configuration parameter sweep, grounded in momentum-theory energy modelling and empirical detection envelopes, identified 35\,m altitude, 8\,m/s speed, and 70\textdegree{} scan angle as the optimal operating point --- achieving $>$99.97\% single-pass detection probability at 10.9\% battery usage with a 1.5$\times$ NFZ safety margin. The nine-step sequential decision chain ensures that every parameter traces to a physical measurement or regulatory constraint, and the Pareto analysis confirms that no alternative configuration improves one objective without degrading another.
 
-Four mid-development corrections --- BGR colour fix, focal length recalibration, TFLite coordinate bug, and calibration corruption --- demonstrated that the modular architecture contained errors to single files without ripple effects. The 58 test scripts and 127 unit tests provided the empirical foundation for every link in the decision chain, while the seven-stage simulation-to-real progression introduced each new variable incrementally. The framework can be re-evaluated in minutes as field data replaces simulation assumptions, closing the gap between demonstrated simulation capability (7.7/10) and the outdoor flight validation (2.1/10) that remains the next critical milestone.
+Four mid-development corrections --- BGR colour fix, focal length recalibration, TFLite coordinate bug, and calibration corruption --- demonstrated that the modular architecture confined errors to single files without ripple effects. The 58 test scripts and 127 unit tests provided the empirical foundation for every link in the decision chain, while the seven-stage simulation-to-real progression introduced each new variable incrementally.
+
+The framework can be re-evaluated in minutes as field data replaces simulation assumptions, closing the gap between demonstrated simulation capability (7.7/10) and the outdoor flight validation (2.1/10) that remains the next critical milestone.
 
 
 % ════════════════════════════════════════════════════════════════════════
