@@ -631,13 +631,35 @@ class VisualFlightMission(StateHandlersMixin):
                 dy = random.randint(-SHAKE_PX, SHAKE_PX)
                 M = np.float32([[1, 0, dx], [0, 1, dy]])
                 frame = cv2.warpAffine(frame, M, (frame.shape[1], frame.shape[0]))
-            # Simulate motion blur proportional to drone speed
+            # Simulate motion blur from ALL pixel-motion sources
+            # Blur = how many pixels a ground point moves during exposure
             if BLUR_FACTOR > 0:
-                speed = math.sqrt(self.vx**2 + self.vy**2)
-                gsd = (config.SENSOR_WIDTH_MM * max(self.alt, 1.0)) / (config.FOCAL_LENGTH_MM * config.IMAGE_W)
-                pixel_motion = (speed * 0.005 * BLUR_FACTOR) / max(gsd, 0.001)  # 5ms exposure
+                fw = getattr(self, '_frame_w', config.IMAGE_W)
+                exposure_time = 0.005  # 5ms typical exposure
+                gsd = (config.SENSOR_WIDTH_MM * max(self.alt, 1.0)) / (config.FOCAL_LENGTH_MM * fw)
+
+                # 1) Translation blur: ground speed → pixel motion
+                trans_px = (spd * exposure_time) / max(gsd, 0.001)
+
+                # 2) Rotation blur: yaw rate → pixel motion at frame edge
+                rot_px = 0.0
+                if hasattr(self, '_prev_yaw_blur'):
+                    dt = max(0.02, time.time() - self._prev_yaw_blur_time)
+                    dyaw = abs(self.yaw - self._prev_yaw_blur)
+                    if dyaw > math.pi:
+                        dyaw = 2 * math.pi - dyaw
+                    yaw_rate = dyaw / dt  # rad/s
+                    focal_px = config.FOCAL_LENGTH_MM / config.SENSOR_WIDTH_MM * fw
+                    rot_px = yaw_rate * focal_px * exposure_time
+                self._prev_yaw_blur = self.yaw
+                self._prev_yaw_blur_time = time.time()
+
+                # Total pixel motion (RSS of translation + rotation)
+                pixel_motion = math.sqrt(trans_px**2 + rot_px**2) * BLUR_FACTOR
+
                 if pixel_motion > 1.0:
                     kernel_size = int(pixel_motion) | 1  # must be odd
+                    kernel_size = min(kernel_size, 51)    # cap to avoid huge kernels
                     kernel = np.zeros((kernel_size, kernel_size))
                     angle = math.degrees(self.yaw)
                     mid = kernel_size // 2
