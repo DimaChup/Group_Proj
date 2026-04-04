@@ -2,8 +2,9 @@
 \providecommand\hyper@newdestlabel[2]{}
 \providecommand\HyField@AuxAddToFields[1]{}
 \providecommand\HyField@AuxAddToCoFields[2]{}
-\citation{murphy2014}
+\citation{murphy2014,lyu2023uav_sar_survey}
 \citation{galceran2013survey}
+\citation{raspberrypi5}
 \citation{yolov8}
 \citation{wagner2006fsm}
 \citation{ardupilot}
@@ -22,15 +23,19 @@
 \newlabel{sec:df-constraints}{{2}{1}{Constraints}{section.2}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {3}Five Competing Dimensions}{1}{section.3}\protected@file@percent }
 \newlabel{sec:df-dimensions}{{3}{1}{Five Competing Dimensions}{section.3}{}}
+\citation{goodrich2007human}
 \citation{edgeai}
 \citation{misra2006global}
+\citation{wca1981}
 \citation{jarus2019sora}
 \citation{caa2024uas}
+\citation{golden2006hypothermia}
 \@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Desired envelope (grey dashed) vs.\ actual performance (blue) for the selected configuration. Safety and detection are pushed to the outer edge as non-negotiable constraints; time and energy sit lower as acceptable trade-offs. The envelope shape reflects the priority ordering: the target is not a circle but a shape that prioritises the axes that matter most.}}{2}{figure.caption.1}\protected@file@percent }
 \providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
 \newlabel{fig:sensitivity-spider}{{1}{2}{Desired envelope (grey dashed) vs.\ actual performance (blue) for the selected configuration. Safety and detection are pushed to the outer edge as non-negotiable constraints; time and energy sit lower as acceptable trade-offs. The envelope shape reflects the priority ordering: the target is not a circle but a shape that prioritises the axes that matter most}{figure.caption.1}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {4}STEEPLE Context Analysis}{2}{section.4}\protected@file@percent }
 \newlabel{sec:steeple}{{4}{2}{STEEPLE Context Analysis}{section.4}{}}
+\citation{raspberrypi5,arm_a76}
 \citation{ncnn}
 \citation{tflite}
 \citation{hailo2023datasheet}
@@ -50,6 +55,7 @@
 \@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Detection ($S_\text  {detection}$)}{5}{subsection.6.2}\protected@file@percent }
 \newlabel{sec:score-detection}{{6.2}{5}{Detection (\texorpdfstring {$S_\text {detection}$}{S\_detection})}{subsection.6.2}{}}
 \newlabel{eq:detection-composite}{{9}{5}{Detection (\texorpdfstring {$S_\text {detection}$}{S\_detection})}{equation.9}{}}
+\citation{stolaroff2018energy}
 \@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Detection score decomposition. The spider shows all five detection-related metrics; the overall score (0.93) is driven by the four variable sub-scores. Target pixel size (0.85) is the weakest axis --- flying lower would improve it but at the cost of coverage and energy.}}{6}{figure.caption.5}\protected@file@percent }
 \newlabel{fig:detection-subscore}{{3}{6}{Detection score decomposition. The spider shows all five detection-related metrics; the overall score (0.93) is driven by the four variable sub-scores. Target pixel size (0.85) is the weakest axis --- flying lower would improve it but at the cost of coverage and energy}{figure.caption.5}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {6.3}Time ($S_\text  {time}$)}{6}{subsection.6.3}\protected@file@percent }
@@ -57,6 +63,7 @@
 \newlabel{eq:time-score}{{11}{6}{Time (\texorpdfstring {$S_\text {time}$}{S\_time})}{equation.11}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {6.4}Energy ($S_\text  {energy}$)}{6}{subsection.6.4}\protected@file@percent }
 \newlabel{sec:score-energy}{{6.4}{6}{Energy (\texorpdfstring {$S_\text {energy}$}{S\_energy})}{subsection.6.4}{}}
+\citation{boustrophedon,covpath}
 \newlabel{eq:energy-score}{{16}{7}{Energy (\texorpdfstring {$S_\text {energy}$}{S\_energy})}{equation.16}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {6.5}Coverage ($S_\text  {coverage}$)}{7}{subsection.6.5}\protected@file@percent }
 \newlabel{sec:score-coverage}{{6.5}{7}{Coverage (\texorpdfstring {$S_\text {coverage}$}{S\_coverage})}{subsection.6.5}{}}
@@ -78,8 +85,9 @@
 \newlabel{sec:df-chain}{{9}{9}{The Decision Chain}{section.9}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Decision flow infographic: the nine-step sequential chain from model training through altitude, speed, pattern selection, scan angle, and NFZ margins to the final operating configuration. Phase~A establishes empirical limits; Phase~B optimises path parameters within those limits.}}{10}{figure.caption.9}\protected@file@percent }
 \newlabel{fig:decision-flow}{{6}{10}{Decision flow infographic: the nine-step sequential chain from model training through altitude, speed, pattern selection, scan angle, and NFZ margins to the final operating configuration. Phase~A establishes empirical limits; Phase~B optimises path parameters within those limits}{figure.caption.9}{}}
-\citation{yolov8}
-\citation{synthdata}
+\citation{yolov8,yolohistory}
+\citation{synthdata,domainrand}
+\citation{lin2014coco}
 \@writefile{toc}{\contentsline {subsection}{\numberline {9.1}Step 1: Train a Reliable Vision Model}{11}{subsection.9.1}\protected@file@percent }
 \newlabel{sec:step1}{{9.1}{11}{Step 1: Train a Reliable Vision Model}{subsection.9.1}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {9.2}Step 2: Find the Maximum Altitude (Detection Ceiling)}{11}{subsection.9.2}\protected@file@percent }
@@ -88,6 +96,8 @@
 \newlabel{tab:df-detection-envelope}{{4}{11}{Detection envelope: approximate maximum detection altitude under different lighting conditions (derived from brightness-adjusted video replay with the retrained model)}{table.caption.10}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Detection performance under three lighting conditions. Left: maximum detection altitude vs.\ lighting (bright, overcast, dusk). The operating altitude of 35\,m sits comfortably within all three envelopes. Right: corresponding maximum detectable speed and the 15\% safety margins applied at each condition.}}{11}{figure.caption.11}\protected@file@percent }
 \newlabel{fig:lighting}{{7}{11}{Detection performance under three lighting conditions. Left: maximum detection altitude vs.\ lighting (bright, overcast, dusk). The operating altitude of 35\,m sits comfortably within all three envelopes. Right: corresponding maximum detectable speed and the 15\% safety margins applied at each condition}{figure.caption.11}{}}
+\citation{imx296}
+\citation{sukhatme2012rolling_global}
 \@writefile{toc}{\contentsline {subsection}{\numberline {9.3}Step 3: Apply Safety Margin to Get Operating Altitude}{12}{subsection.9.3}\protected@file@percent }
 \newlabel{sec:step3}{{9.3}{12}{Step 3: Apply Safety Margin to Get Operating Altitude}{subsection.9.3}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {9.4}Step 4: Determine Maximum Speed at 35\,m}{12}{subsection.9.4}\protected@file@percent }
@@ -103,6 +113,7 @@
 \newlabel{sec:step6}{{9.6}{13}{Step 6: Fixed Heading vs.\ Yaw-to-Face}{subsection.9.6}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {9.7}Step 7: Find the Energy-Optimal Scan Angle}{13}{subsection.9.7}\protected@file@percent }
 \newlabel{sec:step7}{{9.7}{13}{Step 7: Find the Energy-Optimal Scan Angle}{subsection.9.7}{}}
+\citation{kaplan2017understanding}
 \@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Energy heatmap across 216 altitude--angle configurations. A clear low-energy valley runs through 65--75\textdegree {} at all altitudes, corresponding to longest-edge alignment. The red star marks the global energy minimum (50\,m, 70\textdegree ). The selected point (35\,m, 70\textdegree ) trades 4.4\,Wh of energy for a 44\% increase in target pixel extent.}}{14}{figure.caption.13}\protected@file@percent }
 \newlabel{fig:energy-heatmap}{{8}{14}{Energy heatmap across 216 altitude--angle configurations. A clear low-energy valley runs through 65--75\textdegree {} at all altitudes, corresponding to longest-edge alignment. The red star marks the global energy minimum (50\,m, 70\textdegree ). The selected point (35\,m, 70\textdegree ) trades 4.4\,Wh of energy for a 44\% increase in target pixel extent}{figure.caption.13}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {9.8}Step 8: Determine NFZ Safety Margins}{14}{subsection.9.8}\protected@file@percent }
@@ -131,6 +142,9 @@
 \newlabel{fig:tornado-sensitivity}{{12}{18}{Tornado chart of parameter sensitivities. Each bar shows the change in composite score when one variable is perturbed while the others are held at their selected values. Altitude dominates: a $\pm $7\,m change ($\pm $20\%) has nearly double the effect of a $\pm $1.6\,m/s speed change}{figure.caption.19}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {14}Pareto Optimality}{18}{section.14}\protected@file@percent }
 \newlabel{sec:df-pareto}{{14}{18}{Pareto Optimality}{section.14}{}}
+\citation{sheridan2002humans,endsley1999loa,cummings2014man_uav}
+\citation{gamma1994design}
+\citation{rfc2435}
 \@writefile{lof}{\contentsline {figure}{\numberline {13}{\ignorespaces Parallel coordinates plot showing all five objectives simultaneously. Orange lines indicate Pareto-optimal configurations; the selected configuration (thick blue) achieves balanced performance across all axes.}}{19}{figure.caption.20}\protected@file@percent }
 \newlabel{fig:pareto-parallel}{{13}{19}{Parallel coordinates plot showing all five objectives simultaneously. Orange lines indicate Pareto-optimal configurations; the selected configuration (thick blue) achieves balanced performance across all axes}{figure.caption.20}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {15}Non-Quantifiable Design Choices}{19}{section.15}\protected@file@percent }
@@ -138,21 +152,35 @@
 \@writefile{toc}{\contentsline {section}{\numberline {16}System Description}{19}{section.16}\protected@file@percent }
 \newlabel{sec:system-description}{{16}{19}{System Description}{section.16}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {16.1}Software Architecture}{19}{subsection.16.1}\protected@file@percent }
+\citation{fsm,wagner2006fsm}
+\citation{ardupilot_failsafe}
 \@writefile{lof}{\contentsline {figure}{\numberline {14}{\ignorespaces Software architecture: seven modules with strict dependency ordering. \texttt  {vision.py} encapsulates all CV/AI behind a single-function interface; \texttt  {config.py} auto-detects the platform (laptop SITL or Pi hardware). The same \texttt  {main.py} runs identically in both environments.}}{20}{figure.caption.21}\protected@file@percent }
 \newlabel{fig:architecture}{{14}{20}{Software architecture: seven modules with strict dependency ordering. \texttt {vision.py} encapsulates all CV/AI behind a single-function interface; \texttt {config.py} auto-detects the platform (laptop SITL or Pi hardware). The same \texttt {main.py} runs identically in both environments}{figure.caption.21}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {16.2}State Machine}{20}{subsection.16.2}\protected@file@percent }
 \@writefile{lof}{\contentsline {figure}{\numberline {15}{\ignorespaces Complete 20-state finite state machine. Green arrows show the nominal mission path; orange arrows show recovery transitions (manual override, resume, beacon redirect). Every state has an explicit exit to either the next nominal state or a safe fallback (MANUAL or RETURN).}}{21}{figure.caption.22}\protected@file@percent }
 \newlabel{fig:state-machine}{{15}{21}{Complete 20-state finite state machine. Green arrows show the nominal mission path; orange arrows show recovery transitions (manual override, resume, beacon redirect). Every state has an explicit exit to either the next nominal state or a safe fallback (MANUAL or RETURN)}{figure.caption.22}{}}
 \citation{imx296}
+\citation{lens_calibration}
 \citation{opencv}
+\citation{nms}
 \citation{yolov8}
-\citation{synthdata}
+\citation{synthdata,domainrand}
+\citation{shrivastava2016training}
+\citation{spagnolo2025kalman}
+\citation{barber2006vision,sun2016sar}
+\citation{gautam2018error}
+\citation{gautam2018error}
 \@writefile{toc}{\contentsline {subsection}{\numberline {16.3}Computer Vision Pipeline}{22}{subsection.16.3}\protected@file@percent }
 \@writefile{lof}{\contentsline {figure}{\numberline {16}{\ignorespaces Detection montage from DJI flight video at varying altitudes and lighting conditions. Each frame shows the bounding box, confidence score, and estimated altitude. The model reliably detects the rescue dummy from 15--50\,m, with confidence degrading gracefully as the target shrinks to fewer pixels at higher altitudes.}}{22}{figure.caption.23}\protected@file@percent }
 \newlabel{fig:detection-montage}{{16}{22}{Detection montage from DJI flight video at varying altitudes and lighting conditions. Each frame shows the bounding box, confidence score, and estimated altitude. The model reliably detects the rescue dummy from 15--50\,m, with confidence degrading gracefully as the target shrinks to fewer pixels at higher altitudes}{figure.caption.23}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {16.4}Detection-to-GPS Pipeline}{22}{subsection.16.4}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {8}{\ignorespaces Error budget for detection-to-GPS estimation.}}{23}{table.caption.24}\protected@file@percent }
-\newlabel{tab:error-budget}{{8}{23}{Error budget for detection-to-GPS estimation}{table.caption.24}{}}
+\citation{beard2012small}
+\citation{mavlink}
+\citation{barber2006vision,paulin2024raycast,sambolek2025person}
+\citation{kalman1960}
+\citation{takasu2009development}
+\@writefile{lot}{\contentsline {table}{\numberline {8}{\ignorespaces Error budget for detection-to-GPS estimation~\citep  {gautam2018error}.}}{23}{table.caption.24}\protected@file@percent }
+\newlabel{tab:error-budget}{{8}{23}{Error budget for detection-to-GPS estimation~\citep {gautam2018error}}{table.caption.24}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {17}{\ignorespaces GPS target estimation accuracy from DJI video replay. Left: raw single-frame estimates showing along-track spread caused by GPS receiver latency. Right: after inverse-variance weighted averaging and spatial clustering, the estimate converges to CEP50\,=\,2.3\,m. Bullseye rings at 2, 5, and 10\,m.}}{23}{figure.caption.25}\protected@file@percent }
 \newlabel{fig:bullseye}{{17}{23}{GPS target estimation accuracy from DJI video replay. Left: raw single-frame estimates showing along-track spread caused by GPS receiver latency. Right: after inverse-variance weighted averaging and spatial clustering, the estimate converges to CEP50\,=\,2.3\,m. Bullseye rings at 2, 5, and 10\,m}{figure.caption.25}{}}
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {16.4.1}Localization Approach Selection}{23}{subsubsection.16.4.1}\protected@file@percent }
@@ -163,10 +191,13 @@
 \newlabel{fig:bullseye-comparison-body}{{18}{25}{Bullseye comparison of four estimation strategies on DJI replay data. Left to right: single-frame (CEP$_{50}$\,=\,5.1\,m), rolling average, IVW clustering (2.3\,m), and hover-lock (1.8\,m). The progressive tightening of the scatter cloud demonstrates the value of multi-frame fusion and centering}{figure.caption.27}{}}
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {16.4.3}Frame Rate Sufficiency}{25}{subsubsection.16.4.3}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {16.5}Testing Infrastructure}{25}{subsection.16.5}\protected@file@percent }
+\citation{cubepilot}
+\citation{ardupilot_failsafe}
 \@writefile{toc}{\contentsline {subsection}{\numberline {16.6}Safety Architecture}{26}{subsection.16.6}\protected@file@percent }
 \newlabel{sec:safety-arch}{{16.6}{26}{Safety Architecture}{subsection.16.6}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {19}{\ignorespaces Five-layer geofence shown to scale on the Fenswood Farm site. From outermost to innermost: Flight Area hard boundary, 30\,m waypoint buffer, 20\,m speed scalar field, 3\,m repulsive vector field, and SSSI hard cutoff. Graduated protection ensures that even if one layer fails, subsequent layers prevent boundary incursion.}}{26}{figure.caption.28}\protected@file@percent }
 \newlabel{fig:geofence_layers}{{19}{26}{Five-layer geofence shown to scale on the Fenswood Farm site. From outermost to innermost: Flight Area hard boundary, 30\,m waypoint buffer, 20\,m speed scalar field, 3\,m repulsive vector field, and SSSI hard cutoff. Graduated protection ensures that even if one layer fails, subsequent layers prevent boundary incursion}{figure.caption.28}{}}
+\citation{nasa2015vv,koopman2016challenges}
 \@writefile{toc}{\contentsline {section}{\numberline {17}Requirements Verification}{27}{section.17}\protected@file@percent }
 \newlabel{sec:requirements}{{17}{27}{Requirements Verification}{section.17}{}}
 \@writefile{lot}{\contentsline {table}{\numberline {10}{\ignorespaces Requirements verification matrix. Status: \text  {$\mathsurround \z@ \mathchar "458$}\,=\,met, $\sim $\,=\,partially met, $\times $\,=\,not yet verified.}}{27}{table.caption.29}\protected@file@percent }
@@ -175,51 +206,123 @@
 \newlabel{sec:plusdelta}{{18}{27}{Evaluation: Plus / Delta}{section.18}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {18.1}Plus (What Worked Well)}{27}{subsection.18.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {18.2}Delta (What Would Change)}{27}{subsection.18.2}\protected@file@percent }
+\citation{lyu2023uav_sar_survey,mishra2020}
+\citation{auspex2025}
+\citation{sambolek2021}
+\citation{searchwing2024}
+\citation{auspex2025}
+\citation{edgeai,david2021tensorflow}
+\citation{sambolek2021,auspex2025,realtimesar2025}
+\citation{ncnn}
+\citation{searchwing2024}
 \@writefile{toc}{\contentsline {subsection}{\numberline {18.3}Honest Assessment}{28}{subsection.18.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {19}Evidence-Based Adaptation}{28}{section.19}\protected@file@percent }
-\newlabel{sec:decisions-changed}{{19}{28}{Evidence-Based Adaptation}{section.19}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {19.1}BGR Colour Channel Fix}{28}{subsection.19.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {19.2}Focal Length Recalibration}{28}{subsection.19.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {19.3}TFLite Bounding Box Coordinate Bug}{28}{subsection.19.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {19.4}Calibration Data Corruption}{29}{subsection.19.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {20}Energy Model Detail}{29}{section.20}\protected@file@percent }
-\newlabel{sec:energy-detail}{{20}{29}{Energy Model Detail}{section.20}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {20.1}Power Decomposition}{29}{subsection.20.1}\protected@file@percent }
-\newlabel{eq:power-decomp}{{19}{29}{Power Decomposition}{equation.19}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {20.2}Hover vs.\ Cruise Energy Budget}{29}{subsection.20.2}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {11}{\ignorespaces Energy budget breakdown for a single search pass at 35\,m, 8\,m/s, 70\textdegree {} scan angle.}}{29}{table.caption.30}\protected@file@percent }
-\newlabel{tab:energy-budget}{{11}{29}{Energy budget breakdown for a single search pass at 35\,m, 8\,m/s, 70\textdegree {} scan angle}{table.caption.30}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {20.3}Turn Cost and Scan Angle Sensitivity}{30}{subsection.20.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {20.4}NFZ Speed Ramp Energy Impact}{30}{subsection.20.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {21}Testing Methodology}{30}{section.21}\protected@file@percent }
-\newlabel{sec:testing-methodology}{{21}{30}{Testing Methodology}{section.21}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {21.1}Test Categories and Their Role in Validation}{30}{subsection.21.1}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {12}{\ignorespaces Test categories and the design decisions they validate.}}{30}{table.caption.31}\protected@file@percent }
-\newlabel{tab:test-categories}{{12}{30}{Test categories and the design decisions they validate}{table.caption.31}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {21.2}How Tests Anchored Design Decisions}{30}{subsection.21.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {18.4}Comparison with Published SAR Systems}{28}{subsection.18.4}\protected@file@percent }
+\newlabel{sec:eval-comparison}{{18.4}{28}{Comparison with Published SAR Systems}{subsection.18.4}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {11}{\ignorespaces Performance comparison with published SAR systems. Our results are from bench/video proxy (no outdoor flight); published results are from outdoor flights.}}{28}{table.caption.30}\protected@file@percent }
+\newlabel{tab:sar-comparison}{{11}{28}{Performance comparison with published SAR systems. Our results are from bench/video proxy (no outdoor flight); published results are from outdoor flights}{table.caption.30}{}}
+\citation{imx296}
+\citation{picamera2}
+\@writefile{lof}{\contentsline {figure}{\numberline {20}{\ignorespaces Multi-dimensional comparison against published SAR platforms (Table~\ref {tab:sar-comparison}). This project scores highest on cost-effectiveness and test coverage but lowest on inference speed due to CPU-only deployment.}}{29}{figure.caption.31}\protected@file@percent }
+\newlabel{fig:radar_comparison}{{20}{29}{Multi-dimensional comparison against published SAR platforms (Table~\ref {tab:sar-comparison}). This project scores highest on cost-effectiveness and test coverage but lowest on inference speed due to CPU-only deployment}{figure.caption.31}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {19}Evidence-Based Adaptation}{29}{section.19}\protected@file@percent }
+\newlabel{sec:decisions-changed}{{19}{29}{Evidence-Based Adaptation}{section.19}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {19.1}BGR Colour Channel Fix}{29}{subsection.19.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {19.2}Focal Length Recalibration}{29}{subsection.19.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {19.3}TFLite Bounding Box Coordinate Bug}{29}{subsection.19.3}\protected@file@percent }
+\citation{johnson2013helicopter}
+\@writefile{toc}{\contentsline {subsection}{\numberline {19.4}Calibration Data Corruption}{30}{subsection.19.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {20}Energy Model Detail}{30}{section.20}\protected@file@percent }
+\newlabel{sec:energy-detail}{{20}{30}{Energy Model Detail}{section.20}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {20.1}Power Decomposition}{30}{subsection.20.1}\protected@file@percent }
+\newlabel{eq:power-decomp}{{19}{30}{Power Decomposition}{equation.19}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {20.2}Hover vs.\ Cruise Energy Budget}{30}{subsection.20.2}\protected@file@percent }
+\citation{forsberg1991relationship}
+\@writefile{lot}{\contentsline {table}{\numberline {12}{\ignorespaces Energy budget breakdown for a single search pass at 35\,m, 8\,m/s, 70\textdegree {} scan angle.}}{31}{table.caption.32}\protected@file@percent }
+\newlabel{tab:energy-budget}{{12}{31}{Energy budget breakdown for a single search pass at 35\,m, 8\,m/s, 70\textdegree {} scan angle}{table.caption.32}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {20.3}Turn Cost and Scan Angle Sensitivity}{31}{subsection.20.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {20.4}NFZ Speed Ramp Energy Impact}{31}{subsection.20.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {21}Testing Methodology}{31}{section.21}\protected@file@percent }
+\newlabel{sec:testing-methodology}{{21}{31}{Testing Methodology}{section.21}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {21.1}Test Categories and Their Role in Validation}{31}{subsection.21.1}\protected@file@percent }
+\citation{ardupilot2024,nasa2015vv,forsberg1991relationship}
 \citation{ardupilot2024}
-\citation{ardupilot2024}
-\@writefile{toc}{\contentsline {subsection}{\numberline {21.3}Unit Test Coverage}{31}{subsection.21.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {22}Simulation-to-Real Progression}{31}{section.22}\protected@file@percent }
-\newlabel{sec:sim-to-real}{{22}{31}{Simulation-to-Real Progression}{section.22}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {23}Conclusion}{31}{section.23}\protected@file@percent }
-\newlabel{sec:conclusion}{{23}{31}{Conclusion}{section.23}{}}
+\citation{rfc2435}
+\@writefile{lot}{\contentsline {table}{\numberline {13}{\ignorespaces Test categories and the design decisions they validate.}}{32}{table.caption.33}\protected@file@percent }
+\newlabel{tab:test-categories}{{13}{32}{Test categories and the design decisions they validate}{table.caption.33}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {21.2}How Tests Anchored Design Decisions}{32}{subsection.21.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {21.3}Unit Test Coverage}{32}{subsection.21.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {22}Simulation-to-Real Progression}{32}{section.22}\protected@file@percent }
+\newlabel{sec:sim-to-real}{{22}{32}{Simulation-to-Real Progression}{section.22}{}}
+\citation{mavproxy}
 \bibstyle{plainnat}
 \bibdata{../references}
-\bibcite{ardupilot}{{1}{2023}{{ArduPilot Dev Team}}{{}}}
-\bibcite{ardupilot2024}{{2}{2024}{{ArduPilot Dev Team}}{{}}}
-\bibcite{opencv}{{3}{2000}{{Bradski}}{{}}}
-\bibcite{choset2001coverage}{{4}{2001}{{Choset}}{{}}}
-\bibcite{galceran2013survey}{{5}{2013}{{Galceran and Carreras}}{{}}}
-\bibcite{goodrich2008}{{6}{2008}{{Goodrich et~al.}}{{Goodrich, Morse, Gerhardt, Cooper, Quigley, Adams, and Humphrey}}}
-\bibcite{tflite}{{7}{2023}{{Google}}{{}}}
-\bibcite{jarus2019sora}{{8}{2019}{{JARUS}}{{}}}
-\bibcite{yolov8}{{9}{2023}{{Jocher et~al.}}{{Jocher, Chaurasia, and Qiu}}}
-\bibcite{lyu2023uav_sar_survey}{{10}{2023}{{Lyu et~al.}}{{Lyu, Zhao, Huang, and Huang}}}
-\bibcite{murphy2014}{{11}{2014}{{Murphy}}{{}}}
-\bibcite{ncnn}{{12}{2017}{{Ni}}{{}}}
-\bibcite{imx296}{{13}{2020}{{Sony Semiconductor Solutions}}{{}}}
-\bibcite{synthdata}{{14}{2018}{{Tremblay et~al.}}{{Tremblay, Prakash, Acuna, Brober, Jampani, Anil, To, Cameracci, Boochoon, and Birchfield}}}
-\bibcite{wca1981}{{15}{1981}{{UK Government}}{{}}}
-\bibcite{wagner2006fsm}{{16}{2006}{{Wagner et~al.}}{{Wagner, Wolfe, Phelps, and Hoy}}}
-\gdef \@abspage@last{32}
+\bibcite{realtimesar2025}{{1}{2025}{{Alsharif and Rawashdeh}}{{}}}
+\bibcite{ardupilot}{{2}{2023{}}{{ArduPilot Dev Team}}{{}}}
+\bibcite{mavproxy}{{3}{2023{}}{{ArduPilot Dev Team}}{{}}}
+\bibcite{ardupilot2024}{{4}{2024{}}{{ArduPilot Dev Team}}{{}}}
+\bibcite{ardupilot_failsafe}{{5}{2024{}}{{ArduPilot Dev Team}}{{}}}
+\bibcite{arm_a76}{{6}{2018}{{Arm Ltd.}}{{}}}
+\bibcite{auspex2025}{{7}{2025}{{Aucone et~al.}}{{Aucone, Kirchgeorg, Kaufmann, and Scaramuzza}}}
+\bibcite{barber2006vision}{{8}{2006}{{Barber et~al.}}{{Barber, Redding, McLain, Beard, and Taylor}}}
+\bibcite{beard2012small}{{9}{2012}{{Beard and McLain}}{{}}}
+\bibcite{rfc2435}{{10}{1998}{{Berc et~al.}}{{Berc, Fenner, Frederick, McCanne, and Stewart}}}
+\bibcite{sukhatme2012rolling_global}{{11}{2012}{{Bona and Indri}}{{}}}
+\bibcite{opencv}{{12}{2000}{{Bradski}}{{}}}
+\bibcite{edgeai}{{13}{2019}{{Chen and Ran}}{{}}}
+\@writefile{toc}{\contentsline {section}{\numberline {23}Conclusion}{33}{section.23}\protected@file@percent }
+\newlabel{sec:conclusion}{{23}{33}{Conclusion}{section.23}{}}
+\bibcite{boustrophedon}{{14}{2000}{{Choset}}{{}}}
+\bibcite{choset2001coverage}{{15}{2001}{{Choset}}{{}}}
+\bibcite{cubepilot}{{16}{2023}{{CubePilot}}{{}}}
+\bibcite{cummings2014man_uav}{{17}{2014}{{Cummings}}{{}}}
+\bibcite{david2021tensorflow}{{18}{2021}{{David et~al.}}{{David, Duke, Jain, Janapa~Reddi, Kanber, Mezzetti, Natsev, Tucker, and Zhu}}}
+\bibcite{endsley1999loa}{{19}{1999}{{Endsley and Kaber}}{{}}}
+\bibcite{forsberg1991relationship}{{20}{1991}{{Forsberg and Mooz}}{{}}}
+\bibcite{covpath}{{21}{2013{}}{{Galceran and Carreras}}{{}}}
+\bibcite{galceran2013survey}{{22}{2013{}}{{Galceran and Carreras}}{{}}}
+\bibcite{gamma1994design}{{23}{1994}{{Gamma et~al.}}{{Gamma, Helm, Johnson, and Vlissides}}}
+\bibcite{gautam2018error}{{24}{2018}{{Gautam et~al.}}{{Gautam, Watson, Lucieer, and Malenovsky}}}
+\bibcite{golden2006hypothermia}{{25}{2002}{{Golden and Tipton}}{{}}}
+\bibcite{goodrich2007human}{{26}{2007}{{Goodrich and Schultz}}{{}}}
+\bibcite{goodrich2008}{{27}{2008}{{Goodrich et~al.}}{{Goodrich, Morse, Gerhardt, Cooper, Quigley, Adams, and Humphrey}}}
+\bibcite{tflite}{{28}{2023}{{Google}}{{}}}
+\bibcite{hailo2023datasheet}{{29}{2023}{{Hailo Technologies}}{{}}}
+\bibcite{fsm}{{30}{1987}{{Harel}}{{}}}
+\bibcite{jarus2019sora}{{31}{2019}{{JARUS}}{{}}}
+\bibcite{yolov8}{{32}{2023}{{Jocher et~al.}}{{Jocher, Chaurasia, and Qiu}}}
+\bibcite{johnson2013helicopter}{{33}{2013}{{Johnson}}{{}}}
+\bibcite{kalman1960}{{34}{1960}{{Kalman}}{{}}}
+\bibcite{kaplan2017understanding}{{35}{2017}{{Kaplan and Hegarty}}{{}}}
+\bibcite{koopman2016challenges}{{36}{2016}{{Koopman and Wagner}}{{}}}
+\bibcite{lin2014coco}{{37}{2014}{{Lin et~al.}}{{Lin, Maire, Belongie, Hays, Perona, Ramanan, Doll\'{a}r, and Zitnick}}}
+\bibcite{lyu2023uav_sar_survey}{{38}{2023}{{Lyu et~al.}}{{Lyu, Zhao, Huang, and Huang}}}
+\bibcite{mavlink}{{39}{2013}{{Meier et~al.}}{{Meier, Camacho, Godbolt, Goppert, Heng, and Lizarraga}}}
+\bibcite{mishra2020}{{40}{2020}{{Mishra et~al.}}{{Mishra, Garg, Narang, and Mishra}}}
+\bibcite{misra2006global}{{41}{2006}{{Misra and Enge}}{{}}}
+\bibcite{murphy2014}{{42}{2014}{{Murphy}}{{}}}
+\bibcite{nasa2015vv}{{43}{2015}{{National Aeronautics and Space Administration}}{{}}}
+\bibcite{nms}{{44}{2006}{{Neubeck and Van~Gool}}{{}}}
+\bibcite{ncnn}{{45}{2017}{{Ni}}{{}}}
+\bibcite{paulin2024raycast}{{46}{2024}{{Paulin et~al.}}{{Paulin, Sambolek, and Ivasic-Kos}}}
+\bibcite{picamera2}{{47}{2023{}}{{Raspberry Pi Foundation}}{{}}}
+\bibcite{raspberrypi5}{{48}{2023{}}{{Raspberry Pi Foundation}}{{}}}
+\bibcite{yolohistory}{{49}{2016}{{Redmon et~al.}}{{Redmon, Divvala, Girshick, and Farhadi}}}
+\bibcite{sambolek2025person}{{50}{2025}{{Sambolek and Ivasic-Kos}}{{}}}
+\bibcite{sambolek2021}{{51}{2021}{{Sambolek and Ivasic-Kos}}{{}}}
+\bibcite{searchwing2024}{{52}{2024}{{SearchWing Project}}{{}}}
+\bibcite{sheridan2002humans}{{53}{2002}{{Sheridan}}{{}}}
+\bibcite{shrivastava2016training}{{54}{2016}{{Shrivastava et~al.}}{{Shrivastava, Gupta, and Girshick}}}
+\bibcite{imx296}{{55}{2020}{{Sony Semiconductor Solutions}}{{}}}
+\bibcite{spagnolo2025kalman}{{56}{2025}{{Spagnolo et~al.}}{{Spagnolo, Cacciatore, and Pestelli}}}
+\bibcite{stolaroff2018energy}{{57}{2018}{{Stolaroff et~al.}}{{Stolaroff, Samaras, O'Neill, Lubers, Mitchell, and Ceperley}}}
+\bibcite{sun2016sar}{{58}{2016}{{Sun et~al.}}{{Sun, Li, Jiang, and Wen}}}
+\bibcite{takasu2009development}{{59}{2009}{{Takasu and Yasuda}}{{}}}
+\bibcite{domainrand}{{60}{2017}{{Tobin et~al.}}{{Tobin, Fong, Ray, Schneider, Zaremba, and Abbeel}}}
+\bibcite{synthdata}{{61}{2018}{{Tremblay et~al.}}{{Tremblay, Prakash, Acuna, Brober, Jampani, Anil, To, Cameracci, Boochoon, and Birchfield}}}
+\bibcite{ukcaa}{{62}{2023}{{UK Civil Aviation Authority}}{{}}}
+\bibcite{caa2024uas}{{63}{2024{}}{{UK Civil Aviation Authority}}{{}}}
+\bibcite{cap722}{{64}{2024{}}{{UK Civil Aviation Authority}}{{}}}
+\bibcite{wca1981}{{65}{1981}{{UK Government}}{{}}}
+\bibcite{wagner2006fsm}{{66}{2006}{{Wagner et~al.}}{{Wagner, Wolfe, Phelps, and Hoy}}}
+\bibcite{lens_calibration}{{67}{2000}{{Zhang}}{{}}}
+\gdef \@abspage@last{36}

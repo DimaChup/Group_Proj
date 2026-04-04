@@ -150,13 +150,13 @@ External factors shaped this priority ordering. Table~\ref{tab:steeple} maps eac
     \toprule
     \textbf{Dimension} & \textbf{Assessment} & \textbf{Design Impact} \\
     \midrule
-    \textbf{S}ocial & Public trust in autonomous drones for rescue is growing but fragile; a high-profile false positive or NFZ breach would set back adoption & Operator-in-the-loop verification; conservative confidence threshold (0.4) \\
+    \textbf{S}ocial & Public trust in autonomous drones for rescue is growing but fragile~\citep{goodrich2007human}; a high-profile false positive or NFZ breach would set back adoption & Operator-in-the-loop verification; conservative confidence threshold (0.4) \\
     \textbf{T}echnological & Edge AI on SBCs now viable~\citep{edgeai} (YOLOv8n at 9\,FPS NCNN on Pi~5); consumer GPS accurate to $\sim$3\,m CEP95~\citep{misra2006global} & Hardware ceiling drives altitude/speed envelope; GPS error baked into NFZ margin \\
     \textbf{E}conomic & Single-battery constraint (115.4\,Wh); no mid-mission recharge; replacement drone not available & Energy score weighted 25\% in composite; 14\,min reserve after search \\
-    \textbf{E}nvironmental & SSSI (Site of Special Scientific Interest) borders search area; bird nesting season possible & 30\,m NFZ buffer with 5-layer protection; waypoint filtering pre-flight \\
+    \textbf{E}nvironmental & SSSI (Site of Special Scientific Interest) borders search area~\citep{wca1981}; bird nesting season possible & 30\,m NFZ buffer with 5-layer protection; waypoint filtering pre-flight \\
     \textbf{P}olitical & University flight permissions require demonstrated safety case~\cite{jarus2019sora}; CAA drone regulations apply & 50\,m altitude ceiling (R03); progressive flight testing protocol (6 steps) \\
     \textbf{L}egal & BVLOS operations restricted without specific exemptions~\citep{caa2024uas}; data protection for imagery & Visual line-of-sight operation; no image storage of bystanders; single-class detector \\
-    \textbf{E}thical & Casualty may be in distress; false negative delays rescue; false positive wastes critical time & Detection weighted highest (40\%); $>$99.97\% cumulative probability target \\
+    \textbf{E}thical & Casualty may be in distress~\citep{golden2006hypothermia}; false negative delays rescue; false positive wastes critical time & Detection weighted highest (40\%); $>$99.97\% cumulative probability target \\
     \bottomrule
   \end{tabularx}
 \end{table}
@@ -164,7 +164,7 @@ External factors shaped this priority ordering. Table~\ref{tab:steeple} maps eac
 % ════════════════════════════════════════════════════════════════════════
 \section{MCDA: Inference Backend Trade-off}\label{sec:mcda}
 
-With the operational context established, we turn to a key architectural decision: the choice of inference backend for the Raspberry Pi~5. This decision directly constrains the detection and energy dimensions. Table~\ref{tab:mcda-backend} presents a multi-criteria decision analysis (MCDA) comparing four viable options, each scored 1--5 and weighted by importance to the mission.
+With the operational context established, we turn to a key architectural decision: the choice of inference backend for the Raspberry Pi~5~\citep{raspberrypi5,arm_a76}. This decision directly constrains the detection and energy dimensions. Table~\ref{tab:mcda-backend} presents a multi-criteria decision analysis (MCDA) comparing four viable options, each scored 1--5 and weighted by importance to the mission.
 
 \begin{table}[H]
   \centering\compactTable
@@ -340,7 +340,7 @@ where $E_\text{battery} = 115.4$\,Wh (6S 5200\,mAh LiPo). Our selected configura
 % ── Coverage ──────────────────────────────────────────────────────────
 \subsection{Coverage (\texorpdfstring{$S_\text{coverage}$}{S\_coverage})}\label{sec:score-coverage}
 
-Coverage is the fraction of the accessible search area that lies within at least one camera footprint during the scan:
+Coverage is the fraction of the accessible search area~\citep{boustrophedon,covpath} that lies within at least one camera footprint during the scan:
 \begin{equation}\label{eq:coverage-score}
   S_\text{coverage} = \frac{A_\text{scanned}}{A_\text{total}}
 \end{equation}
@@ -441,7 +441,7 @@ Each step is detailed below. At each step we state (a) why this decision must co
 
 \textbf{Why this comes first.} Every downstream decision depends on the detector's capability. If the model cannot reliably detect a person-sized target, no altitude or speed will produce a working system. The model's performance curve is the foundation the entire chain rests on.
 
-\textbf{What we did.} We retrained the YOLOv8n model~\cite{yolov8} on a mixed dataset of 300~synthetic images (using domain randomisation techniques~\cite{synthdata}), 16~manually labelled real flight frames, and 50~hard-negative backgrounds at the camera's native 1456$\times$1088 resolution. Validation yielded mAP50\,=\,0.995.
+\textbf{What we did.} We retrained the YOLOv8n model~\citep{yolov8,yolohistory} on a mixed dataset of 300~synthetic images (using domain randomisation techniques~\citep{synthdata,domainrand}), 16~manually labelled real flight frames, and 50~hard-negative backgrounds at the camera's native 1456$\times$1088 resolution. Validation on the COCO-style metric~\citep{lin2014coco} yielded mAP50\,=\,0.995.
 
 \textbf{Why we proceeded.} Only after confirming that the detector itself was not the bottleneck did we ask \emph{how high} and \emph{how fast} it could operate. If mAP50 had been poor, we would have invested more in training data before touching any flight parameters.
 
@@ -748,7 +748,7 @@ Not every decision admits numerical optimisation. Three choices were made on eng
 
 \begin{itemize}[nosep]
   \item \textbf{Speed adaptation to lighting conditions.} As shown in Table~\ref{tab:df-speed-envelope}, the maximum detectable speed varies significantly with ambient light. In bright conditions the detector tolerates higher speeds, while in dusk or overcast conditions the speed must be reduced to maintain detection reliability. Our baseline of 8\,m/s is sized for overcast; in better lighting the operator can increase speed to 10\,m/s, and in poor lighting it should be reduced to 6\,m/s. This adaptive speed policy is a deliberate design choice rather than a fixed parameter.
-  \item \textbf{Operator-in-the-loop verification.} Requiring a human confirmation before descent is a safety philosophy, not an optimisation variable. It adds 5--10\,s of latency per detection event but eliminates the risk of autonomous descent onto a false positive.
+  \item \textbf{Operator-in-the-loop verification.} Requiring a human confirmation before descent reflects established human--robot interaction principles for safety-critical tasks~\citep{sheridan2002humans,endsley1999loa,cummings2014man_uav}. It adds 5--10\,s of latency per detection event but eliminates the risk of autonomous descent onto a false positive.
   \item \textbf{Single-class detector.} Training on a single ``casualty'' class rather than a multi-class taxonomy simplifies the model and reduces false-positive modes. This is a deliberate simplification for first-flight reliability.
 \end{itemize}
 
@@ -762,9 +762,9 @@ The preceding sections established \emph{what} parameters to use and \emph{why}.
 
 \subsection{Software Architecture}
 
-The codebase ($\sim$4\,400 lines across 11 modules) is structured around a strict separation of concerns (Figure~\ref{fig:architecture}). The central design principle is that \texttt{vision.py} is the \emph{only} module that touches CV/AI, exposing a single interface: \texttt{detect\_in\_image(frame)} $\to$ \texttt{(found, x, y, conf)}. This allowed switching from TFLite to NCNN (a 4.5$\times$ speed gain) with zero changes outside \texttt{vision.py}.
+The codebase ($\sim$4\,400 lines across 11 modules) is structured around a strict separation of concerns~\citep{gamma1994design} (Figure~\ref{fig:architecture}). The central design principle is that \texttt{vision.py} is the \emph{only} module that touches CV/AI, exposing a single interface: \texttt{detect\_in\_image(frame)} $\to$ \texttt{(found, x, y, conf)}. This allowed switching from TFLite to NCNN (a 4.5$\times$ speed gain) with zero changes outside \texttt{vision.py}.
 
-Key modules include: \texttt{config.py} (all mission parameters; auto-detects hardware so no code changes between laptop and Pi), \texttt{planning.py} (lawnmower pattern generator for arbitrary polygons with NFZ cutouts), \texttt{utils.py} (GPS $\leftrightarrow$ pixel conversion via \texttt{GeoTransformer}), \texttt{states.py} (20-state enum), and \texttt{main.py} (mission orchestrator with headless web UI and RC override guard). A separate \texttt{passive\_watch.py} provides a zero-command observer mode for manual flights, streaming MJPEG video with AI detection overlays and GPS estimates.
+Key modules include: \texttt{config.py} (all mission parameters; auto-detects hardware so no code changes between laptop and Pi), \texttt{planning.py} (lawnmower pattern generator for arbitrary polygons with NFZ cutouts), \texttt{utils.py} (GPS $\leftrightarrow$ pixel conversion via \texttt{GeoTransformer}), \texttt{states.py} (20-state enum), and \texttt{main.py} (mission orchestrator with headless web UI and RC override guard). A separate \texttt{passive\_watch.py} provides a zero-command observer mode for manual flights, streaming MJPEG video~\citep{rfc2435} with AI detection overlays and GPS estimates.
 
 \begin{figure}[H]
   \centering
@@ -853,7 +853,7 @@ Field testing with DJI flight video replay yielded \textbf{CEP50\,=\,2.3\,m} (50
 
 \subsubsection{Localization Approach Selection}
 
-We surveyed ten localization approaches, spanning single-frame direct georeferencing, multi-frame triangulation, Kalman filtering, visual odometry/SLAM, optical flow, homography decomposition, terrain-referenced navigation, multi-UAV cooperative estimation, RTK-GPS, and photogrammetric bundle adjustment.  We evaluated each against three constraints: real-time operation at 3--5\,FPS on a Raspberry Pi~5, no additional hardware beyond the standard autopilot sensor suite (GPS, barometer, compass), and graceful degradation if the drone cannot hover.  The selected combination---direct georeferencing with attitude compensation, fused via inverse-variance weighting (IVW) and spatial clustering---operates on single frames (no history bootstrapping), runs in $<$0.1\,ms per estimate, and naturally handles variable-quality observations by weighting near-centre detections more heavily than edge detections.
+We surveyed ten localization approaches~\citep{barber2006vision,paulin2024raycast,sambolek2025person}, spanning single-frame direct georeferencing, multi-frame triangulation, Kalman filtering~\citep{kalman1960}, visual odometry/SLAM, optical flow, homography decomposition, terrain-referenced navigation, multi-UAV cooperative estimation, RTK-GPS~\citep{takasu2009development}, and photogrammetric bundle adjustment.  We evaluated each against three constraints: real-time operation at 3--5\,FPS on a Raspberry Pi~5, no additional hardware beyond the standard autopilot sensor suite (GPS, barometer, compass), and graceful degradation if the drone cannot hover.  The selected combination---direct georeferencing with attitude compensation, fused via inverse-variance weighting (IVW) and spatial clustering---operates on single frames (no history bootstrapping), runs in $<$0.1\,ms per estimate, and naturally handles variable-quality observations by weighting near-centre detections more heavily than edge detections.
 
 \subsubsection{Progressive Accuracy Improvement}
 
@@ -915,7 +915,7 @@ The survey area is adjacent to a Site of Special Scientific Interest (SSSI), mak
 
 \noindent A separate Flight Area containment check triggers emergency RTL if the aircraft exits the 4-vertex operational boundary; this is independent of the SSSI geofence and cannot be disabled.
 
-The \textbf{RC override guard} is the first check on every main-loop iteration: if the pilot switches the transmitter away from GUIDED or LAND mode, \emph{all} MAVLink commands are suppressed on the same loop tick. A real incident motivated this design (a colleague's drone crashed when software fought the pilot's RC input) and ensures the pilot can always regain control with a single switch. Additional safety features include a \textbf{50\,m altitude hard cap} enforced at the navigation layer (every \texttt{send\_global\_target()} call is clamped), \textbf{link-loss RTL} via ArduCopter's GCS failsafe when heartbeats cease, and an \textbf{RC kill switch} that returns the aircraft to manual STABILIZE mode independently of all software.
+The \textbf{RC override guard} is the first check on every main-loop iteration: if the pilot switches the transmitter away from GUIDED or LAND mode, \emph{all} MAVLink commands are suppressed on the same loop tick. A real incident motivated this design (a colleague's drone crashed when software fought the pilot's RC input) and ensures the pilot can always regain control with a single switch. Additional safety features include a \textbf{50\,m altitude hard cap} enforced at the navigation layer (every \texttt{send\_global\_target()} call is clamped), \textbf{link-loss RTL} via ArduCopter's GCS failsafe~\citep{ardupilot_failsafe} when heartbeats cease, and an \textbf{RC kill switch} that returns the aircraft to manual STABILIZE mode independently of all software.
 
 \begin{figure}[H]
   \centering
@@ -990,7 +990,7 @@ We rate simulation capability at 7.7/10 (all states exercised, energy model vali
 
 \subsection{Comparison with Published SAR Systems}\label{sec:eval-comparison}
 
-Table~\ref{tab:sar-comparison} positions this project against published SAR drone systems. Direct comparison is imperfect---differing hardware, environments, and target types---but provides context that internal metrics alone cannot.
+Table~\ref{tab:sar-comparison} positions this project against published SAR drone systems~\citep{lyu2023uav_sar_survey,mishra2020}. Direct comparison is imperfect---differing hardware, environments, and target types---but provides context that internal metrics alone cannot.
 
 \begin{table}[H]
   \centering\small
@@ -1009,7 +1009,7 @@ Table~\ref{tab:sar-comparison} positions this project against published SAR dron
   \end{tabular}
 \end{table}
 
-The system is competitive on detection accuracy (mAP$_{50}$\,$\geq$\,0.89 after realistic adjustment) and GPS estimation (CEP$_{50}$\,=\,2.3\,m vs.\ $<$5\,m for RTK-aided AUSPEX~\cite{auspex2025}), while operating at roughly one-fifth the hardware cost by using a \pounds35 Raspberry Pi~5 rather than an NVIDIA Jetson. The primary deficit is inference speed: 4.8\,FPS on CPU versus 22--30\,FPS on GPU platforms~\cite{sambolek2021,auspex2025,realtimesar2025}. This was mitigated by the NCNN backend~\cite{ncnn} (9\,FPS) and the altitude/speed optimisation in Section~\ref{sec:step4}, which ensures the slower frame rate does not reduce cumulative detection probability. SearchWing~\cite{searchwing2024}, the closest analogue in cost and compute class, achieves similar FPS but lower accuracy, suggesting that the mixed real+synthetic retraining strategy (Section~\ref{sec:step1}) provides a meaningful advantage even on constrained hardware. Figure~\ref{fig:radar_comparison} presents a radar comparison across six capability dimensions.
+The system is competitive on detection accuracy (mAP$_{50}$\,$\geq$\,0.89 after realistic adjustment) and GPS estimation (CEP$_{50}$\,=\,2.3\,m vs.\ $<$5\,m for RTK-aided AUSPEX~\cite{auspex2025}), while operating at roughly one-fifth the hardware cost by using a \pounds35 Raspberry Pi~5 rather than an NVIDIA Jetson~\citep{edgeai,david2021tensorflow}. The primary deficit is inference speed: 4.8\,FPS on CPU versus 22--30\,FPS on GPU platforms~\citep{sambolek2021,auspex2025,realtimesar2025}. This was mitigated by the NCNN backend~\cite{ncnn} (9\,FPS) and the altitude/speed optimisation in Section~\ref{sec:step4}, which ensures the slower frame rate does not reduce cumulative detection probability. SearchWing~\cite{searchwing2024}, the closest analogue in cost and compute class, achieves similar FPS but lower accuracy, suggesting that the mixed real+synthetic retraining strategy (Section~\ref{sec:step1}) provides a meaningful advantage even on constrained hardware. Figure~\ref{fig:radar_comparison} presents a radar comparison across six capability dimensions.
 
 \begin{figure}[H]
   \centering
@@ -1024,7 +1024,7 @@ Four significant corrections were made during development --- each discovered th
 
 \subsection{BGR Colour Channel Fix}
 
-The IMX296 global shutter sensor outputs BGR-ordered bytes despite picamera2 labelling the format as \texttt{RGB888}. Our initial code included \texttt{cv2.cvtColor(frame, cv2.COLOR\_RGB2BGR)}, which double-swapped the red and blue channels, producing a persistent blue tint on all camera images. Standard debugging (adjusting white balance, colour gains, ISP tuning) failed because the raw data was already correct --- the conversion was the problem.
+The IMX296 global shutter sensor~\citep{imx296} outputs BGR-ordered bytes despite picamera2~\citep{picamera2} labelling the format as \texttt{RGB888}. Our initial code included \texttt{cv2.cvtColor(frame, cv2.COLOR\_RGB2BGR)}, which double-swapped the red and blue channels, producing a persistent blue tint on all camera images. Standard debugging (adjusting white balance, colour gains, ISP tuning) failed because the raw data was already correct --- the conversion was the problem.
 
 \textbf{Discovery method:} we tested all six permutations of R, G, B channel ordering and compared them visually. The ``no conversion'' permutation produced correct colours. \textbf{Fix:} remove the \texttt{cvtColor} call entirely from \texttt{vision.py}. \textbf{Impact:} all downstream detection was affected --- the model had been trained on correctly-coloured synthetic images but receiving blue-tinted input, reducing confidence by an estimated 10--15\%.
 
@@ -1057,7 +1057,7 @@ The energy predictions in Sections~\ref{sec:score-energy} and~\ref{sec:step7} re
 
 \subsection{Power Decomposition}
 
-Total power at forward speed~$v$ comprises three terms:
+Total power at forward speed~$v$ comprises three terms~\citep{johnson2013helicopter}:
 
 \begin{equation}\label{eq:power-decomp}
   P_{\mathrm{total}}(v) = \underbrace{\frac{(mg)^{3/2}}{\sqrt{2 \rho A_{\mathrm{disk}}}}}_{\text{hover (induced)}} \;+\; \underbrace{\tfrac{1}{2}\,\rho\,C_D A_{\mathrm{flat}}\,v^3}_{\text{parasitic drag}} \;+\; \underbrace{P_{\mathrm{avionics}}}_{\text{payload}}
@@ -1118,7 +1118,7 @@ The optimisation script accounts for this by numerically integrating the effecti
 % ════════════════════════════════════════════════════════════════════════
 \section{Testing Methodology}\label{sec:testing-methodology}
 
-The 58 test scripts and 127 unit test functions are integral to the optimisation methodology, providing the empirical evidence that anchors every link in the decision chain.
+The 58 test scripts and 127 unit test functions are integral to the optimisation methodology~\citep{forsberg1991relationship}, providing the empirical evidence that anchors every link in the decision chain.
 
 \subsection{Test Categories and Their Role in Validation}
 
@@ -1169,7 +1169,7 @@ The 127 unit test functions across 6 files (\texttt{test\_config.py}, \texttt{te
 % ════════════════════════════════════════════════════════════════════════
 \section{Simulation-to-Real Progression}\label{sec:sim-to-real}
 
-The system follows a deliberate progression from simulation to reality, where each stage adds exactly one new variable. This approach is standard practice in autonomous systems development~\cite{ardupilot2024} and ensures that failures at any stage can be attributed to the newly introduced variable rather than an unknown interaction.
+The system follows a deliberate progression from simulation to reality, where each stage adds exactly one new variable. This approach is standard practice in autonomous systems development~\citep{ardupilot2024,nasa2015vv,forsberg1991relationship} and ensures that failures at any stage can be attributed to the newly introduced variable rather than an unknown interaction.
 
 \begin{enumerate}[nosep]
   \item \textbf{Laptop SITL} (completed): full state machine exercised with ArduPilot's Software-in-the-Loop simulator~\cite{ardupilot2024}. Simulated camera, perfect GPS, no wind. Validates: state transitions, waypoint navigation, detection logic, landing sequence.
@@ -1178,7 +1178,7 @@ The system follows a deliberate progression from simulation to reality, where ea
 
   \item \textbf{Docker Pi environment} (completed): Pi-like ARM Linux container running TFLite model loading. Validates: dependency compatibility, model loads on target architecture.
 
-  \item \textbf{Pi + camera, no Cube} (completed): camera capture, AI inference, MJPEG streaming on real hardware. Validates: IMX296 integration, BGR colour order, inference speed on Pi~5 (206.5\,ms confirmed).
+  \item \textbf{Pi + camera, no Cube} (completed): camera capture, AI inference, MJPEG streaming~\citep{rfc2435} on real hardware. Validates: IMX296 integration, BGR colour order, inference speed on Pi~5 (206.5\,ms confirmed).
 
   \item \textbf{Pi + camera + Cube on bench} (completed): MAVLink connection via mavproxy UDP bridge, heartbeat exchange, GPS telemetry read, mode switching. Validates: serial communication, command path, no flight.
 
@@ -1187,7 +1187,7 @@ The system follows a deliberate progression from simulation to reality, where ea
   \item \textbf{Full autonomous mission} (pending): all systems engaged. The progressive testing protocol ensures this step introduces only the combination of autonomous control + real flight, not any untested subsystem.
 \end{enumerate}
 
-Each stage produced quantitative data that fed back into the optimisation chain: Stage~4 established the 4.8\,FPS inference rate used in Step~4 of the decision chain; Stage~5 confirmed the mavproxy bridge architecture; the DJI video replay (a parallel validation track using real flight footage from a manual DJI flight) provided the detection envelope data used in Steps~2--3 and the GPS estimation accuracy (CEP50\,=\,2.3\,m) reported in Section~\ref{sec:df-result}.
+Each stage produced quantitative data that fed back into the optimisation chain: Stage~4 established the 4.8\,FPS inference rate used in Step~4 of the decision chain; Stage~5 confirmed the mavproxy~\citep{mavproxy} bridge architecture; the DJI video replay (a parallel validation track using real flight footage from a manual DJI flight) provided the detection envelope data used in Steps~2--3 and the GPS estimation accuracy (CEP50\,=\,2.3\,m) reported in Section~\ref{sec:df-result}.
 
 The gap between Stages~5 and~6 is the project's primary risk: bench testing cannot replicate wind, vibration, GPS multipath, or the interaction between autonomous control commands and real flight dynamics. The progressive testing protocol is specifically designed to make this transition incremental rather than a leap of faith.
 

@@ -1,29 +1,107 @@
-\begin{thebibliography}{16}
+\begin{thebibliography}{67}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
   \providecommand{\doi}[1]{doi: #1}\else
   \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
 
-\bibitem[{ArduPilot Dev Team}(2023)]{ardupilot}
+\bibitem[Alsharif and Rawashdeh(2025)]{realtimesar2025}
+Mohammed Alsharif and Samir Rawashdeh.
+\newblock Real-time search and rescue with {YOLO}-based object detection on
+  {UAVs}.
+\newblock \emph{Drones}, 9\penalty0 (8):\penalty0 514, 2025.
+\newblock \doi{10.3390/drones9080514}.
+
+\bibitem[{ArduPilot Dev Team}(2023{\natexlab{a}})]{ardupilot}
 {ArduPilot Dev Team}.
 \newblock {ArduPilot}: Open source autopilot.
-\newblock \url{https://ardupilot.org/}, 2023.
+\newblock \url{https://ardupilot.org/}, 2023{\natexlab{a}}.
 \newblock Accessed: 2026.
 
-\bibitem[{ArduPilot Dev Team}(2024)]{ardupilot2024}
+\bibitem[{ArduPilot Dev Team}(2023{\natexlab{b}})]{mavproxy}
+{ArduPilot Dev Team}.
+\newblock {MAVProxy}: A uav ground station software package for {MAVLink} based
+  systems.
+\newblock \url{https://ardupilot.org/mavproxy/}, 2023{\natexlab{b}}.
+\newblock Accessed: 2026.
+
+\bibitem[{ArduPilot Dev Team}(2024{\natexlab{a}})]{ardupilot2024}
 {ArduPilot Dev Team}.
 \newblock {ArduPilot SITL Simulator}: Software in the loop simulation.
 \newblock
   \url{https://ardupilot.org/dev/docs/sitl-simulator-software-in-the-loop.html},
-  2024.
+  2024{\natexlab{a}}.
 \newblock Accessed: 2026.
+
+\bibitem[{ArduPilot Dev Team}(2024{\natexlab{b}})]{ardupilot_failsafe}
+{ArduPilot Dev Team}.
+\newblock {ArduCopter} failsafe mechanisms.
+\newblock \url{https://ardupilot.org/copter/docs/failsafe-landing-page.html},
+  2024{\natexlab{b}}.
+\newblock Accessed: 2026.
+
+\bibitem[{Arm Ltd.}(2018)]{arm_a76}
+{Arm Ltd.}
+\newblock \emph{Cortex-A76 Technical Reference Manual}, 2018.
+\newblock Revision r3p0.
+
+\bibitem[Aucone et~al.(2025)Aucone, Kirchgeorg, Kaufmann, and
+  Scaramuzza]{auspex2025}
+Emanuele Aucone, Silas Kirchgeorg, Elia Kaufmann, and Davide Scaramuzza.
+\newblock {AUSPEX}: An open-source framework for autonomous search and rescue
+  with {UAVs}.
+\newblock \emph{Frontiers in Robotics and AI}, 12, 2025.
+\newblock \doi{10.3389/frobt.2025.1583479}.
+
+\bibitem[Barber et~al.(2006)Barber, Redding, McLain, Beard, and
+  Taylor]{barber2006vision}
+D.~Blake Barber, Joshua~D. Redding, Timothy~W. McLain, Randal~W. Beard, and
+  Clark~N. Taylor.
+\newblock Vision-based target geo-location using a fixed-wing miniature air
+  vehicle.
+\newblock \emph{Journal of Intelligent and Robotic Systems}, 47\penalty0
+  (4):\penalty0 361--382, 2006.
+\newblock \doi{10.1007/s10846-006-9088-7}.
+
+\bibitem[Beard and McLain(2012)]{beard2012small}
+Randal~W. Beard and Timothy~W. McLain.
+\newblock \emph{Small Unmanned Aircraft: Theory and Practice}.
+\newblock Princeton University Press, 2012.
+\newblock ISBN 978-0691149219.
+
+\bibitem[Berc et~al.(1998)Berc, Fenner, Frederick, McCanne, and
+  Stewart]{rfc2435}
+Leonard Berc, William Fenner, Ron Frederick, Steven McCanne, and Paul Stewart.
+\newblock {RFC 2435}: {RTP} payload format for {JPEG}-compressed video.
+\newblock \url{https://www.rfc-editor.org/rfc/rfc2435}, 1998.
+\newblock Accessed: 2026.
+
+\bibitem[Bona and Indri(2012)]{sukhatme2012rolling_global}
+Basilio Bona and Marina Indri.
+\newblock Rolling and global shutter effect compensation for cameras mounted on
+  moving platforms.
+\newblock \emph{IEEE Sensors Journal}, 12\penalty0 (11):\penalty0 3100--3108,
+  2012.
+\newblock \doi{10.1109/JSEN.2012.2210867}.
 
 \bibitem[Bradski(2000)]{opencv}
 Gary Bradski.
 \newblock The {OpenCV} library.
 \newblock \url{https://opencv.org/}, 2000.
 \newblock Accessed: 2026.
+
+\bibitem[Chen and Ran(2019)]{edgeai}
+Jiasi Chen and Xukan Ran.
+\newblock Deep learning with edge computing: A review.
+\newblock \emph{Proceedings of the IEEE}, 107\penalty0 (8):\penalty0
+  1655--1674, 2019.
+\newblock \doi{10.1109/JPROC.2019.2921977}.
+
+\bibitem[Choset(2000)]{boustrophedon}
+Howie Choset.
+\newblock Coverage of known spaces: The boustrophedon cellular decomposition.
+\newblock \emph{Autonomous Robots}, 9\penalty0 (3):\penalty0 247--253, 2000.
+\newblock \doi{10.1023/A:1008958800904}.
 
 \bibitem[Choset(2001)]{choset2001coverage}
 Howie Choset.
@@ -32,12 +110,83 @@ Howie Choset.
   (1--4):\penalty0 113--126, 2001.
 \newblock \doi{10.1023/A:1016639210559}.
 
-\bibitem[Galceran and Carreras(2013)]{galceran2013survey}
+\bibitem[{CubePilot}(2023)]{cubepilot}
+{CubePilot}.
+\newblock {The Cube Orange+}: Open source flight controller.
+\newblock \url{https://docs.cubepilot.org/}, 2023.
+\newblock Accessed: 2026.
+
+\bibitem[Cummings(2014)]{cummings2014man_uav}
+Mary~L. Cummings.
+\newblock Man versus machine or man + machine?
+\newblock \emph{IEEE Intelligent Systems}, 29\penalty0 (5):\penalty0 62--69,
+  2014.
+\newblock \doi{10.1109/MIS.2014.68}.
+
+\bibitem[David et~al.(2021)David, Duke, Jain, Janapa~Reddi, Kanber, Mezzetti,
+  Natsev, Tucker, and Zhu]{david2021tensorflow}
+Robert David, Jared Duke, Advait Jain, Vijay Janapa~Reddi, Nat Kanber, Jon
+  Mezzetti, Alexander Natsev, Paul Tucker, and Arun Zhu.
+\newblock {TensorFlow Lite Micro}: Embedded machine learning for {TinyML}
+  systems.
+\newblock \emph{Proceedings of Machine Learning and Systems (MLSys)},
+  3:\penalty0 800--811, 2021.
+
+\bibitem[Endsley and Kaber(1999)]{endsley1999loa}
+Mica~R. Endsley and David~B. Kaber.
+\newblock Level of automation effects on performance, situation awareness and
+  workload in a dynamic control task.
+\newblock \emph{Ergonomics}, 42\penalty0 (3):\penalty0 462--492, 1999.
+\newblock \doi{10.1080/001401399185595}.
+
+\bibitem[Forsberg and Mooz(1991)]{forsberg1991relationship}
+Kevin Forsberg and Harold Mooz.
+\newblock The relationship of system engineering to the project cycle.
+\newblock \emph{Engineering Management Journal}, 3\penalty0 (3):\penalty0
+  36--43, 1991.
+\newblock \doi{10.1080/10429247.1991.11414687}.
+
+\bibitem[Galceran and Carreras(2013{\natexlab{a}})]{covpath}
 Enric Galceran and Marc Carreras.
 \newblock A survey on coverage path planning for robotics.
 \newblock \emph{Robotics and Autonomous Systems}, 61\penalty0 (12):\penalty0
-  1258--1276, 2013.
+  1258--1276, 2013{\natexlab{a}}.
 \newblock \doi{10.1016/j.robot.2013.09.004}.
+
+\bibitem[Galceran and Carreras(2013{\natexlab{b}})]{galceran2013survey}
+Enric Galceran and Marc Carreras.
+\newblock A survey on coverage path planning for robotics.
+\newblock \emph{Robotics and Autonomous Systems}, 61\penalty0 (12):\penalty0
+  1258--1276, 2013{\natexlab{b}}.
+\newblock \doi{10.1016/j.robot.2013.09.004}.
+
+\bibitem[Gamma et~al.(1994)Gamma, Helm, Johnson, and
+  Vlissides]{gamma1994design}
+Erich Gamma, Richard Helm, Ralph Johnson, and John Vlissides.
+\newblock \emph{Design Patterns: Elements of Reusable Object-Oriented
+  Software}.
+\newblock Addison-Wesley, 1994.
+
+\bibitem[Gautam et~al.(2018)Gautam, Watson, Lucieer, and
+  Malenovsky]{gautam2018error}
+Deepak Gautam, Christopher Watson, Arko Lucieer, and Zbynek Malenovsky.
+\newblock Error budget for geolocation of spectroradiometer point observations
+  from an unmanned aircraft system.
+\newblock \emph{Sensors}, 18\penalty0 (10):\penalty0 3465, 2018.
+\newblock \doi{10.3390/s18103465}.
+
+\bibitem[Golden and Tipton(2002)]{golden2006hypothermia}
+Frank Golden and Michael Tipton.
+\newblock Essentials of sea survival.
+\newblock In \emph{Essentials of Sea Survival}. Human Kinetics, 2002.
+\newblock Hypothermia survival curves.
+
+\bibitem[Goodrich and Schultz(2007)]{goodrich2007human}
+Michael~A. Goodrich and Alan~C. Schultz.
+\newblock Human--robot interaction: A survey.
+\newblock \emph{Foundations and Trends in Human--Computer Interaction},
+  1\penalty0 (3):\penalty0 203--275, 2007.
+\newblock \doi{10.1561/1100000005}.
 
 \bibitem[Goodrich et~al.(2008)Goodrich, Morse, Gerhardt, Cooper, Quigley,
   Adams, and Humphrey]{goodrich2008}
@@ -56,6 +205,21 @@ Michael~A. Goodrich, Bryan~S. Morse, Damon Gerhardt, Joseph~L. Cooper, Morgan
 \newblock \url{https://www.tensorflow.org/lite}, 2023.
 \newblock Accessed: 2026.
 
+\bibitem[{Hailo Technologies}(2023)]{hailo2023datasheet}
+{Hailo Technologies}.
+\newblock {Hailo-8L}: Edge {AI} processor datasheet.
+\newblock
+  \url{https://hailo.ai/products/ai-accelerators/hailo-8l-ai-accelerator/},
+  2023.
+\newblock Accessed: 2026.
+
+\bibitem[Harel(1987)]{fsm}
+David Harel.
+\newblock Statecharts: A visual formalism for complex systems.
+\newblock \emph{Science of Computer Programming}, 8\penalty0 (3):\penalty0
+  231--274, 1987.
+\newblock \doi{10.1016/0167-6423(87)90035-9}.
+
 \bibitem[{JARUS}(2019)]{jarus2019sora}
 {JARUS}.
 \newblock {JARUS} guidelines on specific operations risk assessment ({SORA}).
@@ -69,17 +233,86 @@ Glenn Jocher, Ayush Chaurasia, and Jing Qiu.
 \newblock \url{https://github.com/ultralytics/ultralytics}, 2023.
 \newblock Accessed: 2026.
 
+\bibitem[Johnson(2013)]{johnson2013helicopter}
+Wayne Johnson.
+\newblock \emph{Rotorcraft Aeromechanics}.
+\newblock Cambridge University Press, 2013.
+\newblock ISBN 978-1-107-02807-4.
+
+\bibitem[Kalman(1960)]{kalman1960}
+Rudolf~E. Kalman.
+\newblock A new approach to linear filtering and prediction problems.
+\newblock \emph{Journal of Basic Engineering}, 82\penalty0 (1):\penalty0
+  35--45, 1960.
+\newblock \doi{10.1115/1.3662552}.
+
+\bibitem[Kaplan and Hegarty(2017)]{kaplan2017understanding}
+Elliott~D. Kaplan and Christopher~J. Hegarty.
+\newblock \emph{Understanding {GPS/GNSS}: Principles and Applications}.
+\newblock Artech House, Boston, MA, 3rd edition, 2017.
+\newblock ISBN 978-1-63081-058-0.
+
+\bibitem[Koopman and Wagner(2016)]{koopman2016challenges}
+Philip Koopman and Michael Wagner.
+\newblock Challenges in autonomous vehicle testing and validation.
+\newblock In \emph{SAE International Journal of Transportation Safety},
+  volume~4, pages 15--24, 2016.
+\newblock \doi{10.4271/2016-01-0128}.
+
+\bibitem[Lin et~al.(2014)Lin, Maire, Belongie, Hays, Perona, Ramanan,
+  Doll\'{a}r, and Zitnick]{lin2014coco}
+Tsung-Yi Lin, Michael Maire, Serge Belongie, James Hays, Pietro Perona, Deva
+  Ramanan, Piotr Doll\'{a}r, and C.~Lawrence Zitnick.
+\newblock {Microsoft COCO}: Common objects in context.
+\newblock \emph{arXiv preprint arXiv:1405.0312}, 2014.
+
 \bibitem[Lyu et~al.(2023)Lyu, Zhao, Huang, and Huang]{lyu2023uav_sar_survey}
 Mingyang Lyu, Yibo Zhao, Chao Huang, and Hailong Huang.
 \newblock Unmanned aerial vehicles for search and rescue: A survey.
 \newblock \emph{Remote Sensing}, 15\penalty0 (13):\penalty0 3266, 2023.
 \newblock \doi{10.3390/rs15133266}.
 
+\bibitem[Meier et~al.(2013)Meier, Camacho, Godbolt, Goppert, Heng, and
+  Lizarraga]{mavlink}
+Lorenz Meier, Julian Camacho, Brian Godbolt, James Goppert, Lionel Heng, and
+  Michael Lizarraga.
+\newblock {MAVLink}: Micro air vehicle communication protocol.
+\newblock \url{https://mavlink.io/en/}, 2013.
+\newblock Accessed: 2026.
+
+\bibitem[Mishra et~al.(2020)Mishra, Garg, Narang, and Mishra]{mishra2020}
+Brij Mishra, Deepak Garg, Pratik Narang, and Vipul Mishra.
+\newblock Drone-surveillance for search and rescue in natural disaster.
+\newblock \emph{Computer Communications}, 156:\penalty0 1--10, 2020.
+\newblock \doi{10.1016/j.comcom.2020.03.012}.
+
+\bibitem[Misra and Enge(2006)]{misra2006global}
+Pratap Misra and Per Enge.
+\newblock \emph{Global Positioning System: Signals, Measurements, and
+  Performance}.
+\newblock Ganga-Jamuna Press, Lincoln, MA, 2nd edition, 2006.
+\newblock ISBN 978-0-9709544-1-1.
+
 \bibitem[Murphy(2014)]{murphy2014}
 Robin~R. Murphy.
 \newblock \emph{Disaster Robotics}.
 \newblock MIT Press, Cambridge, MA, 2014.
 \newblock ISBN 978-0-262-02735-9.
+
+\bibitem[{National Aeronautics and Space Administration}(2015)]{nasa2015vv}
+{National Aeronautics and Space Administration}.
+\newblock {Unmanned Aircraft Systems (UAS) Integration in the National Airspace
+  System (NAS) Project: Test and Evaluation}.
+\newblock Technical Report NASA/TM-2015-218817, NASA, 2015.
+\newblock Describes progressive V\&V methodology for UAS: simulation,
+  hardware-in-the-loop, limited flight envelope, full mission.
+
+\bibitem[Neubeck and Van~Gool(2006)]{nms}
+Alexander Neubeck and Luc Van~Gool.
+\newblock Efficient non-maximum suppression.
+\newblock In \emph{Proceedings of the 18th International Conference on Pattern
+  Recognition (ICPR)}, volume~3, pages 850--855. IEEE, 2006.
+\newblock \doi{10.1109/ICPR.2006.479}.
 
 \bibitem[Ni(2017)]{ncnn}
 Teng Ni.
@@ -88,6 +321,73 @@ Teng Ni.
 \newblock \url{https://github.com/Tencent/ncnn}, 2017.
 \newblock Accessed: 2026.
 
+\bibitem[Paulin et~al.(2024)Paulin, Sambolek, and
+  Ivasic-Kos]{paulin2024raycast}
+Goran Paulin, Sasa Sambolek, and Marina Ivasic-Kos.
+\newblock Application of raycast method for person geolocalization and distance
+  determination using {UAV} images in real-world land search and rescue
+  scenarios.
+\newblock \emph{Expert Systems with Applications}, 238, 2024.
+\newblock \doi{10.1016/j.eswa.2023.121757}.
+
+\bibitem[{Raspberry Pi Foundation}(2023{\natexlab{a}})]{picamera2}
+{Raspberry Pi Foundation}.
+\newblock {Picamera2}: The native python camera library for raspberry pi.
+\newblock \url{https://github.com/raspberrypi/picamera2}, 2023{\natexlab{a}}.
+\newblock Accessed: 2026.
+
+\bibitem[{Raspberry Pi Foundation}(2023{\natexlab{b}})]{raspberrypi5}
+{Raspberry Pi Foundation}.
+\newblock {Raspberry Pi 5} documentation.
+\newblock
+  \url{https://www.raspberrypi.com/documentation/computers/raspberry-pi-5.html},
+  2023{\natexlab{b}}.
+\newblock Accessed: 2026.
+
+\bibitem[Redmon et~al.(2016)Redmon, Divvala, Girshick, and
+  Farhadi]{yolohistory}
+Joseph Redmon, Santosh Divvala, Ross Girshick, and Ali Farhadi.
+\newblock You only look once: Unified, real-time object detection.
+\newblock In \emph{Proceedings of the IEEE Conference on Computer Vision and
+  Pattern Recognition (CVPR)}, pages 779--788, 2016.
+\newblock \doi{10.1109/CVPR.2016.91}.
+
+\bibitem[Sambolek and Ivasic-Kos(2025)]{sambolek2025person}
+Sasa Sambolek and Marina Ivasic-Kos.
+\newblock Person detection and geolocation estimation in drone images.
+\newblock \emph{SN Computer Science}, 6, 2025.
+\newblock \doi{10.1007/s42979-024-03553-0}.
+
+\bibitem[Sambolek and Ivasic-Kos(2021)]{sambolek2021}
+Stjepan Sambolek and Marina Ivasic-Kos.
+\newblock Automatic person detection in search and rescue operations using deep
+  {CNN} detectors.
+\newblock In \emph{IEEE Access}, volume~9, pages 37905--37922, 2021.
+\newblock \doi{10.1109/ACCESS.2021.3063681}.
+
+\bibitem[{SearchWing Project}(2024)]{searchwing2024}
+{SearchWing Project}.
+\newblock {SearchWing SAR MissionTools}.
+\newblock
+  \url{https://discuss.ardupilot.org/t/searchwing-sar-missiontools/115139},
+  2024.
+\newblock ArduPilot Community, Accessed: 2026.
+
+\bibitem[Sheridan(2002)]{sheridan2002humans}
+Thomas~B. Sheridan.
+\newblock \emph{Humans and Automation: System Design and Research Issues}.
+\newblock Wiley, New York, 2002.
+\newblock ISBN 978-0-471-23428-1.
+
+\bibitem[Shrivastava et~al.(2016)Shrivastava, Gupta, and
+  Girshick]{shrivastava2016training}
+Abhinav Shrivastava, Abhinav Gupta, and Ross Girshick.
+\newblock Training region-based object detectors with online hard example
+  mining.
+\newblock In \emph{Proceedings of the IEEE Conference on Computer Vision and
+  Pattern Recognition (CVPR)}, pages 761--769, 2016.
+\newblock \doi{10.1109/CVPR.2016.89}.
+
 \bibitem[{Sony Semiconductor Solutions}(2020)]{imx296}
 {Sony Semiconductor Solutions}.
 \newblock {IMX296}: 1/2.9-type global shutter {CMOS} image sensor.
@@ -95,6 +395,47 @@ Teng Ni.
   \url{https://www.sony-semicon.com/en/products/is/industry/global-shutter.html},
   2020.
 \newblock Accessed: 2026.
+
+\bibitem[Spagnolo et~al.(2025)Spagnolo, Cacciatore, and
+  Pestelli]{spagnolo2025kalman}
+Fausto Spagnolo, Vincenzo Cacciatore, and Giovanni Pestelli.
+\newblock Vision-based geolocation of moving ground targets using kalman
+  filtering with a gimbal camera on board a {UAV}.
+\newblock \emph{Aerospace}, 12\penalty0 (12):\penalty0 1065, 2025.
+\newblock \doi{10.3390/aerospace12121065}.
+
+\bibitem[Stolaroff et~al.(2018)Stolaroff, Samaras, O'Neill, Lubers, Mitchell,
+  and Ceperley]{stolaroff2018energy}
+Joshuah~K. Stolaroff, Constantine Samaras, Emma~R. O'Neill, Alia Lubers,
+  Alexandra~S. Mitchell, and Daniel Ceperley.
+\newblock Energy use and life cycle greenhouse gas emissions of drones for
+  commercial package delivery.
+\newblock \emph{Nature Communications}, 9\penalty0 (1):\penalty0 409, 2018.
+\newblock \doi{10.1038/s41467-017-02411-5}.
+
+\bibitem[Sun et~al.(2016)Sun, Li, Jiang, and Wen]{sun2016sar}
+Jingxian Sun, Bowen Li, Yifan Jiang, and Chih-Yung Wen.
+\newblock A camera-based target detection and positioning {UAV} system for
+  search and rescue ({SAR}) purposes.
+\newblock \emph{Sensors}, 16\penalty0 (11):\penalty0 1778, 2016.
+\newblock \doi{10.3390/s16111778}.
+
+\bibitem[Takasu and Yasuda(2009)]{takasu2009development}
+Tomoji Takasu and Akio Yasuda.
+\newblock Development of the low-cost {RTK-GPS} receiver with an open source
+  program package {RTKLIB}.
+\newblock In \emph{Proceedings of the International Symposium on GPS/GNSS},
+  pages 4--6, Jeju, Korea, 2009.
+
+\bibitem[Tobin et~al.(2017)Tobin, Fong, Ray, Schneider, Zaremba, and
+  Abbeel]{domainrand}
+Josh Tobin, Rachel Fong, Alex Ray, Jonas Schneider, Wojciech Zaremba, and
+  Pieter Abbeel.
+\newblock Domain randomization for transferring deep neural networks from
+  simulation to the real world.
+\newblock In \emph{Proceedings of the IEEE/RSJ International Conference on
+  Intelligent Robots and Systems (IROS)}, pages 23--30. IEEE, 2017.
+\newblock \doi{10.1109/IROS.2017.8202133}.
 
 \bibitem[Tremblay et~al.(2018)Tremblay, Prakash, Acuna, Brober, Jampani, Anil,
   To, Cameracci, Boochoon, and Birchfield]{synthdata}
@@ -105,6 +446,27 @@ Jonathan Tremblay, Aayush Prakash, David Acuna, Mark Brober, Varun Jampani, Cem
 \newblock In \emph{Proceedings of the IEEE Conference on Computer Vision and
   Pattern Recognition Workshops (CVPRW)}, pages 969--977, 2018.
 \newblock \doi{10.1109/CVPRW.2018.00143}.
+
+\bibitem[{UK Civil Aviation Authority}(2023)]{ukcaa}
+{UK Civil Aviation Authority}.
+\newblock The drone and model aircraft code.
+\newblock \url{https://www.caa.co.uk/drones/}, 2023.
+\newblock Accessed: 2026.
+
+\bibitem[{UK Civil Aviation Authority}(2024{\natexlab{a}})]{caa2024uas}
+{UK Civil Aviation Authority}.
+\newblock Unmanned aircraft system operations in {UK} airspace -- guidance
+  ({CAP 722}).
+\newblock \url{https://www.caa.co.uk/drones/}, 2024{\natexlab{a}}.
+\newblock Accessed: 2026.
+
+\bibitem[{UK Civil Aviation Authority}(2024{\natexlab{b}})]{cap722}
+{UK Civil Aviation Authority}.
+\newblock {CAP 722}: Unmanned aircraft system operations in {UK} airspace.
+\newblock
+  \url{https://publicapps.caa.co.uk/modalapplication.aspx?catid=1\&pagetype=65\&appid=11\&mode=detail\&id=13177},
+  2024{\natexlab{b}}.
+\newblock Accessed: 2026.
 
 \bibitem[{UK Government}(1981)]{wca1981}
 {UK Government}.
@@ -118,5 +480,12 @@ Thomas Wagner, Vicki Wolfe, Michael Phelps, and Matthew Hoy.
 \newblock In \emph{Proceedings of the 44th AIAA Aerospace Sciences Meeting and
   Exhibit}. AIAA, 2006.
 \newblock \doi{10.2514/6.2006-1389}.
+
+\bibitem[Zhang(2000)]{lens_calibration}
+Zhengyou Zhang.
+\newblock A flexible new technique for camera calibration.
+\newblock \emph{IEEE Transactions on Pattern Analysis and Machine
+  Intelligence}, 22\penalty0 (11):\penalty0 1330--1334, 2000.
+\newblock \doi{10.1109/34.888718}.
 
 \end{thebibliography}
