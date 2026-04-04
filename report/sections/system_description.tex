@@ -5,7 +5,7 @@
 
 \section{System Description}\label{sec:sysdesc}
 
-Having established the rationale behind each design choice (Section~\ref{sec:rationale}), this section describes how those choices were realised in the final integrated system. The platform integrates seven subsystems into an autonomous SAR architecture: a hardware airframe with companion computer (\S\ref{sec:hw}), eleven Python modules (\S\ref{sec:sw-arch}), a YOLOv8n vision pipeline at 4.8\,FPS (\S\ref{sec:cv}), a boustrophedon search pattern with formal coverage guarantee (\S\ref{sec:search-pattern}), a 20-state mission FSM with six safety mechanisms (\S\ref{sec:state-machine}), GPS target localisation at CEP$_{50}$ = 2.3\,m (\S\ref{sec:localisation}), and a browser-based ground station at \SI{300}{\milli\second} video latency (\S\ref{sec:groundstation}). The design philosophy is \emph{independent modules composed at runtime}: vision, planning, geofencing, and navigation have zero mutual dependencies, enabling isolated testing and single-file swaps with no integration risk. Figure~\ref{fig:mission_overview} shows the complete mission plan overlaid on the Fenswood Farm site.
+With the design rationale established (Section~\ref{sec:rationale}), this section describes how those choices are realised in the final system. The platform integrates seven subsystems: a hardware airframe with companion computer (\S\ref{sec:hw}), eleven Python modules (\S\ref{sec:sw-arch}), a YOLOv8n vision pipeline at 4.8\,FPS (\S\ref{sec:cv}), a boustrophedon search pattern with formal coverage guarantee (\S\ref{sec:search-pattern}), a 20-state mission FSM with six independent safety layers (\S\ref{sec:state-machine}), GPS target localisation at CEP$_{50}$ = 2.3\,m (\S\ref{sec:localisation}), and a browser-based ground station at \SI{300}{\milli\second} video latency (\S\ref{sec:groundstation}). The design philosophy is \emph{independent modules composed at runtime}: vision, planning, geofencing, and navigation have zero mutual dependencies, enabling isolated testing and single-file swaps. Figure~\ref{fig:mission_overview} shows the complete mission plan overlaid on the Fenswood Farm site.
 
 \begin{figure}[ht]
 \centering
@@ -17,7 +17,7 @@ Having established the rationale behind each design choice (Section~\ref{sec:rat
 % ═══════════════════════════════════════════════════════════════
 \subsection{Hardware Platform}\label{sec:hw}
 
-Table~\ref{tab:hw-bom} summarises the bill of materials for the Hexsoon EDU-450 airframe, CubePilot Orange+ flight controller (ArduPilot Copter 4.5), Raspberry Pi~5 companion computer, and IMX296 global shutter camera. All hardware was provided by the university as part of the AENGM0074 equipment package; design effort therefore focused on system integration, software architecture, and calibration rather than component selection (see Appendix~\ref{sec:cv:inference} for the edge inference architecture rationale).
+Table~\ref{tab:hw-bom} lists the bill of materials. All hardware was provided by the university as part of the AENGM0074 equipment package; design effort therefore focused on system integration, software architecture, and calibration rather than component selection (see Appendix~\ref{sec:cv:inference} for the edge inference architecture rationale).
 
 \begin{table}[ht]
   \centering\compactTable
@@ -38,12 +38,12 @@ Table~\ref{tab:hw-bom} summarises the bill of materials for the Hexsoon EDU-450 
   \end{tabularx}
 \end{table}
 
-The Pi communicates with the Cube via UART at 921\,600\,baud through a MAVProxy bridge, which republishes MAVLink traffic on two outputs: UDP port~14550 (consumed by the Python mission code) and TCP port~5762 (consumed by Mission Planner on the ground station laptop via Wi-Fi). This architecture decouples the flight controller from the companion computer --- any component can be restarted independently, and the same MAVLink stream is available for monitoring and commanding without message contention (see Appendix~\ref{sec:streaming-arch} for the full communications architecture). The camera captures $1456 \times 1088$ global-shutter frames via CSI-2 at up to 30\,fps (throttled by inference to ${\sim}$4.8\,fps); lens distortion is corrected using precomputed \texttt{cv2.remap} matrices (calibrated RMS = 0.399\,px, $+$1.5\,ms overhead; methodology in Appendix~\ref{sec:calibration}). The calibrated focal length is \SI{5.46}{\milli\metre}, yielding a horizontal field of view (HFOV) of ${\approx}\,49.3^{\circ}$. The global shutter eliminates rolling-shutter distortion during flight, an important property for accurate bounding-box geometry during GPS estimation.
+The Pi communicates with the Cube via UART at 921\,600\,baud through a MAVProxy bridge, which republishes MAVLink traffic on two outputs: UDP port~14550 (Python mission code) and TCP port~5762 (Mission Planner via Wi-Fi). This decouples the flight controller from the companion computer---any component can restart independently, and the same MAVLink stream serves both monitoring and commanding without message contention (Appendix~\ref{sec:streaming-arch}). The camera captures $1456 \times 1088$ global-shutter frames via CSI-2 at up to 30\,fps (throttled by inference to ${\sim}$4.8\,fps); lens distortion is corrected using precomputed \texttt{cv2.remap} matrices (calibrated RMS = 0.399\,px, $+$1.5\,ms overhead; Appendix~\ref{sec:calibration}). The calibrated focal length is \SI{5.46}{\milli\metre}, yielding a HFOV of ${\approx}\,49.3^{\circ}$. The global shutter eliminates rolling-shutter distortion during flight, preserving accurate bounding-box geometry for GPS estimation.
 
 % ═══════════════════════════════════════════════════════════════
 \subsection{Software Architecture}\label{sec:sw-arch}
 
-The system comprises eleven Python modules totalling approximately 4\,400 lines of production code, organised in four layers (Figure~\ref{fig:architecture}). An additional 74 test and calibration scripts (Appendix~\ref{sec:test-scripts}), including 127 unit tests, validate each module in isolation before integration:
+Eleven Python modules totalling approximately 4\,400 lines of production code are organised in four layers (Figure~\ref{fig:architecture}). An additional 74 test and calibration scripts (Appendix~\ref{sec:test-scripts}), including 127 unit tests, validate each module in isolation before integration:
 
 \begin{figure}[ht]
 \centering
@@ -99,13 +99,13 @@ The geofence module implements five independent protection layers (Figure~\ref{f
 % ═══════════════════════════════════════════════════════════════
 \subsection{Computer Vision Pipeline}\label{sec:cv}
 
-The vision subsystem is encapsulated in \texttt{vision.py}, exposing a single interface: \texttt{detect\_in\_image(frame)} $\to$ \texttt{(found, cx, cy, confidence)}. The pipeline proceeds as follows:
+The vision subsystem resides in \texttt{vision.py}, exposing a single interface: \texttt{detect\_in\_image(frame)} $\to$ \texttt{(found, cx, cy, confidence)}. The pipeline proceeds as follows:
 
 \paragraph{Preprocessing.} Lens undistortion (if calibration data are available), colour-space handling (the IMX296 outputs BGR despite its RGB888 label---no conversion applied), resize from $1456\times1088$ to $640\times640$ via bilinear interpolation, and float32 normalisation ($[0,255] \to [0,1]$), yielding input tensor $[1, 640, 640, 3]$.
 
 \paragraph{Inference.} The TFLite model produces output tensor $[1, 5, 8400]$ (8400 anchor-free candidates across three feature pyramid scales at $8\times$, $16\times$, and $32\times$ downsampling). Postprocessing applies confidence filtering (threshold 0.4), greedy best-detection selection (single highest-confidence target per frame), and coordinate rescaling to original frame dimensions. A pixel-coordinate heuristic (threshold $>1.5$) auto-detects whether the model returns normalised or absolute coordinates, handling both TFLite and NCNN output conventions without manual configuration. The Ultralytics backend handles non-maximum suppression (NMS) internally; the TFLite backend implements equivalent greedy filtering in \texttt{vision.py}.
 
-\paragraph{Three backends.} The system supports Ultralytics~\cite{yolov8} (development laptop) and TFLite~\cite{tflite} (production Pi), with an NCNN~\cite{ncnn} backend implemented but not yet benchmarked on the Pi. Backend selection is automatic at import time. Both validated backends consume the same model weights and produce identical detection semantics (Appendix~\ref{app:cv-extended} provides full benchmark results and the dual-backend architecture details).
+\paragraph{Three backends.} The system supports Ultralytics~\cite{yolov8} (development laptop) and TFLite~\cite{tflite} (production Pi), with an NCNN~\cite{ncnn} backend implemented but not yet validated on the Pi. Backend selection is automatic at import time. Both validated backends consume the same model weights and produce identical detection semantics (Appendix~\ref{app:cv-extended}).
 
 \begin{figure}[ht]
 \centering
@@ -170,13 +170,13 @@ Appendix~\ref{app:states} lists all 20~states with their entry conditions, exit 
 % ═══════════════════════════════════════════════════════════════
 \subsection{Target Localisation}\label{sec:localisation}
 
-Each detection is converted from pixel coordinates to GPS using the pinhole camera model. The pixel offset $(\Delta u, \Delta v)$ from the image centre is projected to a body-frame displacement via the ground sampling distance:
+Each detection converts from pixel coordinates to GPS using the pinhole camera model. The pixel offset $(\Delta u, \Delta v)$ from the image centre projects to a body-frame displacement via the ground sampling distance:
 \begin{equation}\label{eq:gsd-sysdesc}
   \mathrm{GSD} = \frac{w_s \cdot h}{f \cdot W},\qquad
   d_x = \Delta u \cdot \mathrm{GSD},\quad
   d_y = \Delta v \cdot \mathrm{GSD}
 \end{equation}
-where $w_s = \SI{5.02}{\milli\metre}$ is the sensor width, $f = \SI{5.46}{\milli\metre}$ the calibrated focal length, $h$ the barometric altitude, and $W = 1456$\,px the image width. The body-frame displacement $(d_x, d_y)$ is rotated into North--East coordinates using the drone's heading and converted to latitude/longitude on the WGS\,84 ellipsoid. Appendix~\ref{sec:gps-deep} documents the complete 15-stage detection-to-GPS pipeline with a full flowchart, error budget decomposition by flight phase, and roll/pitch geometry analysis (Figure~\ref{fig:pipeline-flow}). Multiple observations are fused through:
+where $w_s = \SI{5.02}{\milli\metre}$ is the sensor width, $f = \SI{5.46}{\milli\metre}$ the calibrated focal length, $h$ the barometric altitude, and $W = 1456$\,px the image width. The body-frame displacement $(d_x, d_y)$ is rotated into North--East coordinates using the drone's heading and converted to latitude/longitude on the WGS\,84 ellipsoid. Appendix~\ref{sec:gps-deep} documents the full 15-stage pipeline with flowchart, error budget by flight phase, and roll/pitch geometry analysis (Figure~\ref{fig:pipeline-flow}). Multiple observations are fused through:
 
 \begin{itemize}
     \item \textbf{Spatial clustering} (30\,m merge radius) for multi-target tracking;
@@ -184,7 +184,7 @@ where $w_s = \SI{5.02}{\milli\metre}$ is the sensor width, $f = \SI{5.46}{\milli
     \item \textbf{Kalman filter} on the $[\phi, \lambda]$ state vector with measurement noise scaled by inverse observation weight, converging within 5--10 observations.
 \end{itemize}
 
-Video replay analysis (DJI flight footage, $1456 \times 1088$ at 30\,fps) yielded CEP$_{50}$ = 2.3\,m and a maximum error of 16.5\,m (high-speed outlier). The characteristic directional elongation stems from GPS receiver latency (100--200\,ms), which multi-pass averaging in the lawnmower pattern partially mitigates. Six independent error sources contribute to a single-observation RSS uncertainty of \SI{2.9}{\metre} at \SI{35}{\metre} altitude, dominated by GPS receiver noise (\SI{2.3}{\metre}) and timing lag (\SI{1.5}{\metre}). After inverse-variance fusion of 15+ multi-altitude observations, the fused estimate converges to sub-metre accuracy, exceeding the 5--10\,m landing requirement (R07) with $>$99\% probability. Appendix~\ref{sec:gps-deep} provides the full error budget, convergence plots, and fusion strategy comparison.
+Video replay analysis (DJI flight footage, $1456 \times 1088$ at 30\,fps) yielded CEP$_{50}$ = 2.3\,m and a maximum error of 16.5\,m (high-speed outlier). The directional elongation stems from GPS receiver latency (100--200\,ms), which multi-pass averaging partially mitigates. Six independent error sources contribute to a single-observation RSS uncertainty of \SI{2.9}{\metre} at \SI{35}{\metre} altitude, dominated by GPS receiver noise (\SI{2.3}{\metre}) and timing lag (\SI{1.5}{\metre}). After inverse-variance fusion of 15+ multi-altitude observations, the fused estimate converges to sub-metre accuracy, exceeding the 5--10\,m landing requirement (R07) with $>$99\% probability. Appendix~\ref{sec:gps-deep} provides the full error budget, convergence plots, and fusion strategy comparison.
 
 \begin{figure}[ht]
 \centering
@@ -213,7 +213,7 @@ The ground station is a browser-based dashboard served by a \texttt{ThreadingMix
 % ═══════════════════════════════════════════════════════════════
 \subsection{Simulation Framework}\label{sec:simulation}
 
-Four simulation levels provide progressive fidelity (Appendix~\ref{sec:sim-validation}): (1)~interactive simulator (keyboard flight over satellite map with ground-truth comparison); (2)~SITL integration (full ArduPilot autopilot with simulated camera view); (3)~SITL with real webcam; (4)~DJI video replay with synchronised SRT telemetry. All four levels share the same detection model, GPS estimation mathematics, and MAVLink command interface, so transitioning to real hardware requires only configuration changes. Simulation alone caught 12 defects---including a MAVLink race condition during takeoff, incorrect latitude scaling, auto-disarm timeout, and GPS timing lag---all resolved before any hardware integration.
+Four simulation levels provide progressive fidelity (Appendix~\ref{sec:sim-validation}): (1)~interactive simulator (\texttt{simple\_simulator.py}: keyboard flight over satellite map with ground-truth GPS comparison); (2)~SITL integration (full ArduPilot autopilot with simulated camera view, testing the real MAVLink command path); (3)~SITL with real webcam (validates CV on live video without flight risk); and (4)~DJI video replay with synchronised SRT telemetry (30\,fps frame-accurate altitude and GPS, calibrating detection altitude and GPS estimation accuracy). All four levels share the same \texttt{vision.py} model, \texttt{gps\_utils.py} estimation mathematics, and \texttt{navigation.py} MAVLink interface, so transitioning to real hardware requires only a configuration change (\texttt{DRONE\_MODE=REAL}). Simulation alone caught 12 defects---including a \texttt{SET\_POSITION\_TARGET} race condition that cancelled \texttt{NAV\_TAKEOFF}, an incorrect latitude-scaling constant ($\cos\phi$ omitted from longitude conversion), a 10-second auto-disarm timeout (\texttt{DISARM\_DELAY}), and GPS receiver timing lag causing 1\,m directional bias at 5\,m/s---all resolved before any hardware integration.
 
 \begin{figure}[ht]
 \centering

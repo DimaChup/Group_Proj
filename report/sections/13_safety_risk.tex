@@ -4,43 +4,105 @@ This appendix presents the safety architecture, failure-mode analysis, and regul
 
 Autonomous flight adjacent to an environmentally protected site introduces hazards spanning airspace violation, equipment failure, and loss of control. A layered safety architecture mitigates these risks through geofencing, failure-mode handling, operator oversight, and regulatory compliance, following the Specific Operations Risk Assessment (SORA) methodology~\cite{jarus2019sora} and UK CAA guidance for unmanned aircraft operations~\cite{caa2024uas}.
 
-\subsection{Geofence Implementation}\label{sec:geofencing}
+\subsection{Risk Assessment Matrix}\label{sec:risk-matrix}
 
-The survey area is adjacent to a Site of Special Scientific Interest (SSSI) designated as a no-fly zone (NFZ). Three polygon zones --- flight area (4~vertices), search area (5~vertices), and SSSI exclusion zone (7~vertices) --- are loaded from a KML file at startup and validated against hardcoded fallback coordinates in \texttt{config.py}. Because a single point of failure in boundary enforcement could result in an airspace violation, the system employs five independent protection layers (three runtime software layers, plan-time waypoint filtering, and a firmware-level backup):
-
-\begin{enumerate}
-    \item \textbf{Speed scalar field.} Within \texttt{NFZ\_SLOW\_ZONE\_M}\,=\,20\,m of the SSSI boundary, a \texttt{MAV\_CMD\_DO\_CHANGE\_SPEED} command linearly reduces the maximum ground speed from \texttt{NFZ\_ZONE\_MAX\_SPEED\_MPS}\,=\,3.0\,m/s at the zone edge to \texttt{NFZ\_MIN\_SPEED\_MPS}\,=\,0.3\,m/s at the boundary itself. At 0.3\,m/s the aircraft is effectively hovering; the autopilot can arrest all remaining momentum in well under one metre even in moderate wind.
-
-    \item \textbf{Repulsive vector field.} A virtual inner polygon is offset \texttt{NFZ\_INNER\_OFFSET\_M}\,=\,20\,m inward from the SSSI boundary. When the aircraft is within \texttt{NFZ\_INNER\_RANGE\_M}\,=\,23\,m of this inner polygon --- effectively 3\,m outside the actual NFZ boundary --- a constant-magnitude repulsive velocity of \texttt{NFZ\_PUSH\_SPEED\_MPS}\,=\,3.0\,m/s is applied away from the nearest boundary segment. The constant magnitude ensures that the repulsive force always exceeds the near-zero speed cap at the boundary, preventing penetration regardless of approach velocity.
-
-    \item \textbf{Hard boundary cutoff.} If the aircraft's GPS position falls inside the SSSI polygon (or within \texttt{NFZ\_HARD\_BOUNDARY\_M}\,=\,3\,m of it), the system immediately halts all velocity commands, saves the current state, and transitions to \textsc{Manual} mode, requiring the operator to fly the aircraft clear before autonomy can resume.
-
-    \item \textbf{Plan-time waypoint filtering.} Search waypoints within \texttt{NFZ\_WAYPOINT\_BUFFER\_M}\,=\,30\,m of the NFZ are removed during path generation, preventing the lawnmower pattern from routing the aircraft close to the boundary in the first place.
-
-    \item \textbf{Firmware-level geofence.} On real hardware, an independent geofence configured on the Cube Orange autopilot triggers \texttt{LOITER} or \texttt{RTL} if all four software layers fail entirely. This layer operates at the flight-controller firmware level and cannot be overridden by companion-computer software.
-\end{enumerate}
-
-\subsection{Failure Mode Analysis}\label{sec:failure-modes}
-
-Table~\ref{tab:failure-modes} summarises the system's response to each anticipated failure mode. All software responses were verified in SITL simulation; the RTL and \texttt{LOITER} fallbacks additionally rely on ArduCopter's flight-proven failsafe modes~\cite{ardupilot_failsafe}.
+Table~\ref{tab:risk-matrix} presents a 3$\times$3 likelihood--severity matrix consistent with SORA ground risk assessment~\cite{jarus2019sora}. Each cell identifies the applicable risks from the risk register (Table~\ref{tab:risk-register}); shading indicates the combined risk level. Risks rated \textbf{High} (red) require elimination or reduction to Medium before flight is permitted; \textbf{Medium} (amber) risks must have documented mitigations in place; \textbf{Low} (green) risks are accepted with monitoring.
 
 \begin{table}[htbp]
 \centering
-\caption{Failure modes and automated responses.}
+\caption{Likelihood--severity risk matrix. Cell labels reference risk IDs from Table~\ref{tab:risk-register}.}
+\label{tab:risk-matrix}
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{c|>{\centering\arraybackslash}p{3.4cm}|>{\centering\arraybackslash}p{3.4cm}|>{\centering\arraybackslash}p{3.4cm}|}
+\cline{2-4}
+ & \textbf{Minor (1)} & \textbf{Moderate (2)} & \textbf{Severe (3)} \\
+\hline
+\multicolumn{1}{|c|}{\textbf{High}} & \cellcolor{yellow!30} & \cellcolor{red!25}R11 & \cellcolor{red!25} \\
+\hline
+\multicolumn{1}{|c|}{\textbf{Medium}} & \cellcolor{green!20}R9 & \cellcolor{yellow!30}R6, R7, R8 & \cellcolor{red!25}R10 \\
+\hline
+\multicolumn{1}{|c|}{\textbf{Low}} & \cellcolor{green!20} & \cellcolor{green!20} & \cellcolor{yellow!30}R1--R5 \\
+\hline
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:risk-register} expands each risk with its pre-mitigation rating, specific mitigation measures, residual rating after mitigation, and traceability to the implementing code module or ArduCopter parameter.
+
+\begin{table}[htbp]
+\centering
+\caption{Risk register with mitigations and implementation traceability.}
+\label{tab:risk-register}
+\small
+\begin{tabular}{clcccp{4.8cm}cc}
+\toprule
+\textbf{ID} & \textbf{Risk} & \textbf{L} & \textbf{S} & \textbf{Pre} & \textbf{Mitigation} & \textbf{Post} & \textbf{Trace} \\
+\midrule
+R1 & Autopilot hardware failure & L & 3 & \cellcolor{yellow!30}M & Pre-flight inspection; RC kill switch; ArduCopter watchdog reboot & \cellcolor{green!20}L & RC ch.~5 \\
+R2 & SSSI boundary incursion & L & 3 & \cellcolor{yellow!30}M & Five-layer geofence (Sec.~\ref{sec:geofencing}): speed field, repulsion, hard cutoff, waypoint filter, firmware backup & \cellcolor{green!20}L & \texttt{geofence.py} \\
+R3 & Battery depletion mid-flight & L & 3 & \cellcolor{yellow!30}M & Pre-flight voltage check ($>$80\%); \texttt{FS\_BATT\_ENABLE} RTL/LAND at configurable thresholds & \cellcolor{green!20}L & Cube param \\
+R4 & Loss of all comms & L & 3 & \cellcolor{yellow!30}M & Dual link (RC + MAVProxy UDP); \texttt{FS\_GCS\_ENABLE} RTL on heartbeat timeout & \cellcolor{green!20}L & \texttt{main.py} \\
+R5 & Injury to bystanders & L & 3 & \cellcolor{yellow!30}M & Site clearance; flight area geofence RTL; VLOS; propeller guards; A3 150\,m exclusion & \cellcolor{green!20}L & R01 \\
+R6 & GPS drift $\to$ wrong landing & M & 2 & \cellcolor{yellow!30}M & Multi-pass spatial clustering; inverse-variance weighting; operator \textsc{Verify} gate; 7.5\,m offset landing & \cellcolor{green!20}L & \texttt{gps\_utils.py} \\
+R7 & False positive $\to$ descent & M & 2 & \cellcolor{yellow!30}M & Operator confirmation required; 5\,m spatial exclusion of rejected targets; SMART consecutive-frame filter & \cellcolor{green!20}L & \texttt{state\_machine.py} \\
+R8 & High wind exceeds limits & M & 2 & \cellcolor{yellow!30}M & Weather go/no-go gate ($<$20\,kn); \texttt{LOITER} station-hold; pre-flight wind check & \cellcolor{green!20}L & Checklist \\
+R9 & Camera / CV failure & M & 1 & \cellcolor{green!20}L & Search pattern completes safely; ``CAMERA LOST'' overlay warns operator; RTL after pattern & \cellcolor{green!20}L & \texttt{main.py} \\
+R10 & Altitude exceedance & M & 3 & \cellcolor{red!25}H & 50\,m hard cap in \texttt{navigation.py}: all \texttt{send\_global\_target} calls clamped; \texttt{config.py} rejects \texttt{TARGET\_ALT}\,$>$\,50 at import & \cellcolor{green!20}L & R04 \\
+R11 & Mode fighting (SW vs RC) & H & 2 & \cellcolor{red!25}H & RC override guard: if \texttt{custom\_mode} $\notin$ \{GUIDED, LAND, RTL\}, all MAVLink commands suppressed; pilot cannot be overridden by software & \cellcolor{green!20}L & \texttt{main.py} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Risk R11 warrants emphasis because it was identified from a real incident (Lesson LL-01, Section~\ref{sec:lessons}): a colleague's drone crashed when onboard software fought the pilot's RC mode. The RC override guard was implemented as the \emph{first} check in the main loop, before any key handling or state dispatch, ensuring that when the pilot takes manual control the companion computer sends \emph{zero} MAVLink commands.
+
+\subsection{Geofence Implementation}\label{sec:geofencing}
+
+The survey area is adjacent to a Site of Special Scientific Interest (SSSI) designated as a no-fly zone (NFZ). Three polygon zones --- flight area (4~vertices), search area (5~vertices), and SSSI exclusion zone (7~vertices) --- are loaded from a KML file at startup and validated against hardcoded fallback coordinates in \texttt{config.py}. Because a single point of failure in boundary enforcement could result in an airspace violation, the system employs five independent protection layers (three runtime software layers, plan-time waypoint filtering, and a firmware-level backup), illustrated in Figure~\ref{fig:geofence-layers}:
+
+\begin{enumerate}
+    \item \textbf{Speed scalar field (20\,m--2\,m from boundary).} Within \texttt{NFZ\_SLOW\_ZONE\_M}\,=\,20\,m of the SSSI boundary, the maximum approach speed is linearly reduced from 3.0\,m/s at the zone edge to 0.0\,m/s at 2\,m from the boundary (\texttt{NFZ\_SCALAR\_ZERO\_M}). Two modes are available: directional clamping (default) limits only the velocity component \emph{toward} the boundary, allowing full-speed parallel flight; total clamping (\texttt{-{}-nfz-total-speed} flag) limits all velocity components.
+    \emph{Implementation:} \texttt{main.py}, method \texttt{\_enforce\_geofence()}, executed every main-loop iteration ($\sim$20--50\,Hz).
+
+    \item \textbf{Repulsive vector field (MANUAL mode, $<$\,3\,m from boundary).} When the aircraft is in \textsc{Manual} mode and within 3\,m of the SSSI boundary, a constant-magnitude repulsive velocity of \texttt{NFZ\_PUSH\_SPEED\_MPS}\,=\,5.0\,m/s is applied perpendicular to and away from the nearest boundary segment. The repulsive force always exceeds the near-zero speed cap at the boundary, preventing penetration.
+    \emph{Implementation:} \texttt{geofence.py}, method \texttt{repulsive\_offset()}, called from \texttt{\_enforce\_geofence()}.
+
+    \item \textbf{Hard boundary cutoff.} If the aircraft's GPS position falls inside the SSSI polygon, the system immediately sends a zero-velocity command, saves the current state, and transitions to \textsc{Manual} mode. All autonomous commands are halted until the operator manually flies the aircraft clear and the system validates GPS fix and NFZ position before resuming.
+    \emph{Implementation:} \texttt{main.py}, \texttt{\_enforce\_geofence()}, using \texttt{cv2.pointPolygonTest()}.
+
+    \item \textbf{Plan-time waypoint filtering.} Search waypoints within \texttt{NFZ\_WAYPOINT\_BUFFER\_M}\,=\,30\,m of the NFZ are removed during path generation, preventing the lawnmower pattern from routing the aircraft close to the boundary in the first place.
+    \emph{Implementation:} \texttt{geofence.py}, method \texttt{filter\_waypoints()}.
+
+    \item \textbf{Firmware-level geofence.} On real hardware, an independent geofence configured on the Cube Orange autopilot (\texttt{FENCE\_TYPE}, \texttt{FENCE\_ACTION}\,=\,RTL) triggers \texttt{RTL} if all four software layers fail entirely. This layer operates at the flight-controller firmware level and cannot be overridden by companion-computer software.
+\end{enumerate}
+
+In addition to the SSSI geofence, a separate \textbf{Flight Area containment check} (R01) runs every loop iteration: if the aircraft's GPS position falls outside the 4-vertex flight area polygon, \texttt{\_emergency\_rtl()} is called immediately with no buffer zone. This operates independently of the SSSI geofence and cannot be disabled by the \texttt{-{}-no-nfz} flag.
+
+A \textbf{50\,m altitude hard cap} (R04) is enforced at the navigation layer: every call to \texttt{send\_global\_target()} in \texttt{navigation.py} clamps the altitude argument to $\leq$\,50\,m and logs a warning if the limit is exceeded. This cap cannot be overridden by mission logic.
+
+\subsection{Failure Mode Analysis}\label{sec:failure-modes}
+
+Table~\ref{tab:failure-modes} summarises the system's response to each anticipated failure mode. All software responses were verified in SITL simulation; the RTL and \texttt{LOITER} fallbacks additionally rely on ArduCopter's flight-proven failsafe modes~\cite{ardupilot_failsafe}. The right column identifies whether the mitigation was verified by automated test, SITL simulation, or bench test.
+
+\begin{table}[htbp]
+\centering
+\caption{Failure modes, automated responses, and verification status.}
 \label{tab:failure-modes}
 \small
-\begin{tabular}{p{2.8cm}p{3.5cm}p{6.2cm}}
+\begin{tabular}{p{2.3cm}p{2.8cm}p{5.0cm}p{1.8cm}}
 \toprule
-\textbf{Failure} & \textbf{Detection Method} & \textbf{Automated Response} \\
+\textbf{Failure} & \textbf{Detection} & \textbf{Automated Response} & \textbf{Verified} \\
 \midrule
-Camera failure & Frame returns \texttt{None} & Search pattern completes without detections; aircraft returns home safely. During \textsc{Verify}, HUD displays ``CAMERA LOST''; operator should reject. \\
-GPS degradation & Fix type $<$ 3D or satellites $<$ 6 for 5\,s continuously & Emergency RTL via \texttt{MAV\_CMD\_DO\_SET\_MODE}. If command fails, ArduCopter GCS failsafe triggers RTL independently. \\
-MAVLink link loss & \texttt{recv\_match} raises exception & Script issues emergency RTL; ArduCopter GCS failsafe (\texttt{FS\_GCS\_ENABLE}) provides firmware-level backup after heartbeat timeout. \\
-RC link loss & Throttle PWM below threshold & ArduCopter RC failsafe (\texttt{FS\_THR\_ENABLE}) triggers RTL independently of onboard computer. \\
-Low battery & Voltage below configured threshold & ArduCopter battery failsafe triggers RTL or LAND depending on severity level. \\
-Pi software crash & Heartbeat stream ceases & ArduCopter GCS failsafe RTL; Cube continues flying autonomously. \\
-Operator timeout & 120\,s without Y/N/I input at \textsc{Verify} & Target auto-rejected; search resumes. \\
-NFZ incursion & \texttt{cv2.pointPolygonTest} returns positive & Immediate transition to \textsc{Manual}; all autonomous commands halted. \\
+Camera failure & Frame returns \texttt{None} & Search completes without detections; ``CAMERA LOST'' overlay; operator should reject at \textsc{Verify} & SITL \\
+GPS degradation & Fix $<$ 3D or sats $<$ 6 for 5\,s & Emergency RTL; ArduCopter GCS failsafe backup & SITL \\
+MAVLink link loss & \texttt{recv\_match} exception & Emergency RTL; \texttt{FS\_GCS\_ENABLE} firmware backup & SITL \\
+RC link loss & Throttle PWM below threshold & ArduCopter \texttt{FS\_THR\_ENABLE} RTL (firmware-level) & Bench \\
+Low battery & Voltage $<$ threshold & ArduCopter \texttt{FS\_BATT\_ENABLE} RTL/LAND & Bench \\
+Pi crash & Heartbeat stream ceases & ArduCopter GCS failsafe RTL; Cube flies home autonomously & SITL \\
+Operator timeout & 120\,s without Y/N/I & Target auto-rejected; search resumes & SITL \\
+NFZ incursion & \texttt{pointPolygonTest} $\geq$ 0 & Zero velocity + \textsc{Manual} mode; repulsive push outward & SITL \\
+Flight area breach & \texttt{pointPolygonTest} $<$ 0 & Immediate RTL via \texttt{\_emergency\_rtl()} & SITL \\
+Landing stall & Altitude $>$ 0.5\,m for 90\,s & Force disarm via \texttt{MAV\_CMD\_COMPONENT\_ARM\_DISARM} & SITL \\
+Mode fighting & \texttt{custom\_mode} $\neq$ GUIDED/LAND & All commands suppressed; pilot has full control & Bench \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -49,7 +111,7 @@ The GPS degradation handler monitors \texttt{GPS\_RAW\_INT} messages continuousl
 
 \subsection{Operator-in-the-Loop}\label{sec:operator-loop}
 
-The \textsc{Verify} state is the critical decision gate that prevents the system from acting on false-positive detections (see also Section~\ref{sec:operator-loop} for the full classification taxonomy). When the detection pipeline identifies a candidate target, the aircraft navigates to its estimated GPS position and holds altitude while presenting the live camera feed to the operator via the browser-based ground station. The operator classifies the detection using one of three inputs:
+The \textsc{Verify} state is the critical decision gate that prevents the system from acting on false-positive detections. When the detection pipeline identifies a candidate target, the aircraft navigates to its estimated GPS position and holds altitude while presenting the live camera feed to the operator via the browser-based ground station (\texttt{http://PI\_IP:8090}). The operator classifies the detection using one of three inputs:
 
 \begin{itemize}
     \item \textbf{Y (Confirm)} --- the target is a genuine casualty. The system initiates GPS position averaging (10\,s of samples for improved accuracy), then prompts the operator to select a landing side (N/E/S/W) before proceeding to the approach and payload delivery sequence.
@@ -59,46 +121,76 @@ The \textsc{Verify} state is the critical decision gate that prevents the system
 
 A 120\,s timeout ensures the aircraft does not hover indefinitely if the operator is unresponsive. Countdown warnings are issued at 60\,s, 90\,s, and every 10\,s thereafter. If the timeout expires, the target is auto-rejected and the search resumes --- a safe default that prioritises continued area coverage over a single uncertain detection.
 
+Input is available through three independent channels --- terminal keyboard (PuTTY/SSH), browser buttons (ground station web UI), and \texttt{cv2.waitKey} (simulation display) --- ensuring the operator is never locked out by a single interface failure.
+
 \subsection{Emergency Procedures}\label{sec:emergency}
 
 Three independent abort mechanisms are available at all times, each operating at a different level of the system stack:
 
 \begin{enumerate}
-    \item \textbf{RC kill switch.} The RC transmitter mode channel can switch the autopilot to \texttt{STABILIZE} or \texttt{LOITER} at any time, immediately returning full manual control to the safety pilot. This hardware-level override operates independently of the onboard computer and cannot be blocked by software faults.
-    \item \textbf{Keyboard abort (Ctrl+C\,/\,ESC).} Pressing either key in the Raspberry Pi terminal triggers \texttt{\_emergency\_rtl()}, which commands the Cube to enter RTL mode before exiting the script. The Cube then executes the return-to-launch sequence autonomously.
-    \item \textbf{Manual override (M key).} Available from any active state, the M key transitions the system to \textsc{Manual} mode, saving the departure point for later resumption. Upon exiting manual mode, the system routes through \textsc{Return\_From\_Manual} to navigate back to the departure point before resuming the previous state.
+    \item \textbf{RC kill switch (hardware, highest priority).} The RC transmitter mode channel can switch the autopilot to \texttt{STABILIZE} or \texttt{LOITER} at any time, immediately returning full manual control to the safety pilot. The RC override guard in \texttt{main.py} detects the mode change via \texttt{HEARTBEAT.custom\_mode} and suppresses all MAVLink commands from the companion computer on the \emph{same loop iteration}. This hardware-level override operates independently of the onboard computer and cannot be blocked by software faults.
+
+    \item \textbf{Keyboard abort (Ctrl+C\,/\,ESC).} Pressing either key in the Raspberry Pi terminal triggers \texttt{\_emergency\_rtl()}, which commands the Cube to enter RTL mode (mode~6) before exiting the script. The Cube then executes the return-to-launch sequence autonomously. This mechanism is wrapped in a Python \texttt{KeyboardInterrupt} handler and a top-level \texttt{try/except} block, ensuring it fires even if the main loop is stuck.
+
+    \item \textbf{Manual override (M key).} Available from any active state, the M key transitions the system to \textsc{Manual} mode, saving the departure point (lat, lon, alt) for later resumption. Upon exiting manual mode, the system routes through \textsc{Return\_From\_Manual}, validates GPS fix quality ($\geq$\,3D, $\geq$\,6 satellites) and confirms the aircraft is outside the NFZ, then navigates back to the departure point before resuming the previous state.
 \end{enumerate}
 
-ArduCopter provides additional firmware-level failsafes that operate regardless of the companion computer state: GCS failsafe (\texttt{FS\_GCS\_ENABLE}) triggers RTL on heartbeat loss, RC failsafe (\texttt{FS\_THR\_ENABLE}) triggers RTL on transmitter signal loss, and battery failsafe (\texttt{FS\_BATT\_ENABLE}) triggers RTL or LAND when voltage drops below configured thresholds.
+ArduCopter provides additional firmware-level failsafes that operate regardless of the companion computer state: GCS failsafe (\texttt{FS\_GCS\_ENABLE}) triggers RTL on heartbeat loss, RC failsafe (\texttt{FS\_THR\_ENABLE}) triggers RTL on transmitter signal loss, and battery failsafe (\texttt{FS\_BATT\_ENABLE}) triggers RTL or LAND when voltage drops below configured thresholds. These three firmware failsafes constitute a completely independent safety layer that requires no functioning software on the companion computer.
 
-\subsection{Risk Assessment}\label{sec:risk-register}
+\subsection{Pre-Flight and In-Flight Procedures}\label{sec:procedures}
 
-Table~\ref{tab:risk-register} presents a risk register following a likelihood--severity matrix consistent with SORA ground risk assessment~\cite{jarus2019sora}. Likelihood is rated L~(low), M~(medium), or H~(high); severity is rated 1~(minor), 2~(moderate), or 3~(severe).
+Safety during operations depends not only on software safeguards but on disciplined operator procedures. Table~\ref{tab:preflight} summarises the mandatory pre-flight checks, each linked to the risk or lesson that motivated its inclusion.
 
 \begin{table}[htbp]
 \centering
-\caption{Risk register with mitigations.}
-\label{tab:risk-register}
+\caption{Mandatory pre-flight checks with rationale.}
+\label{tab:preflight}
 \small
-\begin{tabular}{p{3.0cm}ccp{6.5cm}}
+\begin{tabular}{p{4.5cm}p{5.0cm}p{2.5cm}}
 \toprule
-\textbf{Risk} & \textbf{L} & \textbf{S} & \textbf{Mitigation} \\
+\textbf{Check} & \textbf{Action} & \textbf{Rationale} \\
 \midrule
-Autopilot hardware failure & L & 3 & Pre-flight inspection; RC kill switch; ArduCopter watchdog reboot \\
-SSSI boundary incursion & L & 3 & Five-layer geofence (speed field, repulsion, hard cutoff, waypoint filter, firmware backup) \\
-Battery depletion mid-mission & L & 3 & Pre-flight voltage check; ArduCopter battery failsafe triggers RTL/LAND \\
-Loss of all communications & L & 3 & Dual link (RC + MAVProxy); GCS failsafe RTL on heartbeat loss \\
-Injury to bystanders & L & 3 & Site clearance; flight area boundary; VLOS maintained; propeller guards \\
-GPS drift causes wrong landing & M & 2 & Multi-pass spatial clustering; inverse-variance weighting; operator confirms at \textsc{Verify}; 7.5\,m offset landing \\
-False positive triggers descent & M & 2 & Operator confirmation required; spatial exclusion of rejected targets; detection queue filtering \\
-High wind exceeds limits & M & 2 & Weather go/no-go gate; wind check before launch; \texttt{LOITER} mode for station-holding \\
-Camera/CV failure mid-flight & M & 1 & Search pattern completes safely without CV; aircraft returns home \\
-Regulatory non-compliance & L & 3 & Site risk assessment; CAA Open Category A3 procedures; VLOS maintained \\
+\texttt{DISARM\_DELAY} = 0 & Verify in Mission Planner params & LL-06: prevents auto-disarm before takeoff \\
+GCS failsafe enabled & \texttt{FS\_GCS\_ENABLE} = RTL & R4: backup if Pi crashes \\
+Battery voltage $>$ 80\% & Visual check + failsafe threshold & R3: prevents mid-mission RTL \\
+RC kill switch mapped & Flip and confirm \texttt{STABILIZE} & R1: independent hardware abort \\
+GPS fix $\geq$ 3D, $\geq$ 6 sats & \texttt{preflight.py} or ARMING state & R6: GPS accuracy \\
+Correct \texttt{best.tflite} loaded & \texttt{-{}-dry-run} or \texttt{preflight.py} & R7: correct detection model \\
+\texttt{calibration\_data.npz} valid & Delete if $<$ 1\,KB & LL-04: corrupt file mangles frames \\
+mavproxy running on Pi & Start before flight script & LL-07: pyserial broken on 3.13 \\
+Wind $<$ 20\,kn & Weather check, site observation & R8: aircraft stability \\
+Site cleared of bystanders & Visual sweep of flight area & R5: third-party safety \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\subsection{Regulatory Considerations}\label{sec:regulatory}
+During flight, the operator monitors the browser-based ground station, which displays a live MJPEG video stream with detection overlays, GPS position, altitude, satellite count, and link status. A ``LINK LOST'' banner appears automatically if no MAVLink heartbeat is received for 3\,s. The operator's primary in-flight responsibilities are: (1) maintain VLOS of the aircraft, (2) respond to \textsc{Verify} prompts within 120\,s, and (3) be ready to activate the RC kill switch at any time.
+
+\subsection{Lessons Learned from Testing}\label{sec:lessons}
+
+Five specific incidents during development and bench testing directly shaped the safety architecture. Each lesson is documented with root-cause analysis in \texttt{docs/LESSONS\_LEARNED.md}; Table~\ref{tab:lessons} summarises the safety-relevant subset.
+
+\begin{table}[htbp]
+\centering
+\caption{Safety-relevant lessons learned and resulting design changes.}
+\label{tab:lessons}
+\small
+\begin{tabular}{cp{3.8cm}p{4.0cm}p{3.5cm}}
+\toprule
+\textbf{ID} & \textbf{Incident} & \textbf{Root Cause} & \textbf{Design Change} \\
+\midrule
+LL-01 & Drone crash from mode fighting & Software sent \texttt{SET\_MODE(GUIDED)} while RC set to \texttt{LOITER}; ArduCopter oscillated & RC override guard: suppress all commands if mode $\neq$ GUIDED/LAND \\
+LL-03 & Detection boxes drawn off-screen & TFLite output pixel coords (0--640) treated as normalised (0--1) & Auto-detect via \texttt{PIXEL\_COORD\_THRESHOLD = 1.5}; same logic for TFLite and NCNN \\
+LL-04 & AI stopped detecting on Pi & Corrupt 0-byte \texttt{calibration\_data.npz}; \texttt{cv2.remap} produced noise & Size check at load; \texttt{UNDISTORT\_ENABLED = False} default \\
+LL-06 & Auto-disarm before takeoff & \texttt{DISARM\_DELAY} default 10\,s; arming-to-takeoff delay exceeded & \texttt{DISARM\_DELAY = 0} in pre-flight checklist \\
+LL-08 & Geofence pushed drone \emph{toward} NFZ & \texttt{cv2.pointPolygonTest} positive = inside; repulsive offset sign inverted & Negated offset; unit tests in \texttt{0e\_geofence\_test.py} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Lesson LL-01 is particularly instructive: the crash occurred on a colleague's system, not our own, but was studied and reproduced in simulation. The resulting RC override guard was made the \emph{first} check in the main loop, ensuring that even if every other safety layer fails, the pilot can always regain control by switching a single RC channel.
+
+\subsection{Regulatory Compliance}\label{sec:regulatory}
 
 Flight tests were conducted under the UK Civil Aviation Authority (CAA) Open Category framework~\cite{caa2024uas}. The aircraft operates in subcategory A3 (far from uninvolved persons), which requires:
 
@@ -109,6 +201,11 @@ Flight tests were conducted under the UK Civil Aviation Authority (CAA) Open Cat
     \item A site risk assessment is completed for the designated flight field, identifying the adjacent SSSI, public footpaths, and prevailing wind patterns.
 \end{itemize}
 
-The adjacent SSSI imposes additional constraints beyond standard CAA requirements. Natural England guidance prohibits UAV operations over or within SSSIs without specific consent, as disturbance to protected habitats and species constitutes an offence under the Wildlife and Countryside Act 1981~\cite{wca1981}. The five-layer geofence described in Section~\ref{sec:geofencing} was designed specifically to enforce this exclusion, combining four software layers with a firmware-level backstop.
+\paragraph{SSSI protection.}
+The adjacent SSSI imposes constraints beyond standard CAA requirements. Natural England guidance prohibits UAV operations over or within SSSIs without specific consent, as disturbance to protected habitats and species constitutes an offence under the Wildlife and Countryside Act 1981~\cite{wca1981}. The five-layer geofence described in Section~\ref{sec:geofencing} was designed specifically to enforce this exclusion, combining four software layers with a firmware-level backstop.
 
-Although the system architecture supports beyond-visual-line-of-sight (BVLOS) operation---the autonomous state machine, RTL failsafes, and ground station telemetry do not require direct visual contact---all test flights were conducted within VLOS range ($<$200\,m) with the operator maintaining direct visual contact. Future deployment in an operational SAR context would require a Specific Category authorisation with a full SORA assessment~\cite{jarus2019sora}, including detailed ground and air risk analyses, a ConOps document, and potentially an operational authorisation from the CAA.
+\paragraph{Data protection.}
+All AI inference is performed on-device; raw imagery is not transmitted over any network. Detection logs record only bounding-box coordinates, confidence scores, and GPS estimates --- no identifiable facial features or personal data are stored. Frames are processed in memory and discarded after inference, with only annotated detection snapshots retained for post-mission review. This design minimises data-protection obligations under the UK GDPR for aerial photography.
+
+\paragraph{Future BVLOS pathway.}
+Although the system architecture supports beyond-visual-line-of-sight (BVLOS) operation --- the autonomous state machine, RTL failsafes, and ground station telemetry do not require direct visual contact --- all test flights were conducted within VLOS range ($<$\,200\,m) with the operator maintaining direct visual contact. Future deployment in an operational SAR context would require a Specific Category authorisation with a full SORA assessment~\cite{jarus2019sora}, including detailed ground and air risk analyses, a ConOps document, and potentially an operational authorisation from the CAA.

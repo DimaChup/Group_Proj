@@ -68,7 +68,7 @@ The resulting calibration achieved an RMS reprojection error of \SI{0.399}{px}. 
 
 \subsubsection{Inference Benchmark}\label{sec:field-benchmark}
 
-The inference benchmark ran 50 passes of the YOLOv8n TFLite model (float32, 3.2~MB) on a static test image containing the dummy target:
+The inference benchmark (Table~\ref{tab:bench-results}) ran 50 passes of the YOLOv8n TFLite model (float32, 3.2~MB) on a static test image containing the dummy target:
 
 \begin{table}[H]
 \centering
@@ -120,7 +120,7 @@ Removing the extra scaling and ensuring that pixel coordinates are normalised to
 
 \subsubsection{NCNN Backend Benchmark}\label{sec:field-ncnn}
 
-With the detection pipeline corrected, the team benchmarked the NCNN inference backend---a C++-based neural network framework that bypasses TFLite's Python overhead.  The results were striking:
+With the detection pipeline corrected, the team benchmarked the NCNN inference backend---a C++-based neural network framework that bypasses TFLite's Python overhead.  The results (Table~\ref{tab:ncnn-bench}) were striking:
 
 \begin{table}[H]
 \centering
