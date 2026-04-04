@@ -150,6 +150,7 @@ parser.add_argument('--smart-estimate', action='store_true', help='Accumulate ce
 parser.add_argument('--smart-min', type=int, default=5, help='Min central detections before saving (default 5)')
 parser.add_argument('--smart-radius', type=float, default=1.0, help='Max spread for smart cluster (default 1.0m)')
 parser.add_argument('--smart-dir', type=str, default=None, help='Directory for SMART result images (default: <save-dir>/smart_detections/)')
+parser.add_argument('--auto-clear', type=float, default=0, help='Auto-clear SMART after N seconds of lock (0=off). Allows multiple independent locks per run.')
 parser.add_argument('--fake', action='store_true', help='Replay DJI video + SRT telemetry (no camera/mavproxy)')
 parser.add_argument('--fake-video', default='RealVideo/DJI_0001_1456x1088_cropped_30fps.mp4')
 parser.add_argument('--fake-srt', default='RealVideo/DJI_20260311172332_0001_V.SRT')
@@ -2681,6 +2682,8 @@ def inference_worker(args_ref, csv_writer_ref, csv_file_ref):
     global _best_center_dist, _best_detection_gps, _smart_result_saved, _survey_result_saved, _smart_image_counter
     global _result_banner
 
+    _auto_clear_at = None  # timestamp when auto-clear should fire
+
     # last_det is set on the module so display thread can read it
     _mod = sys.modules.get('field_tools.passive_watch') or sys.modules.get('__main__')
 
@@ -2833,6 +2836,36 @@ def inference_worker(args_ref, csv_writer_ref, csv_file_ref):
                     print(f"  [SMART IMAGE SAVED] {s_fname}")
                     print(f"  Coordinate: {s_lat:.7f}, {s_lon:.7f}  Spread: {s_spread:.2f}m")
                     print(f"{'='*60}\n", flush=True)
+
+                    # Auto-clear: schedule a clear after delay so next target gets its own lock
+                    if args_ref.auto_clear > 0:
+                        _auto_clear_at = time.time() + args_ref.auto_clear
+
+            # ── Auto-clear timer ──
+            if args_ref.auto_clear > 0 and _auto_clear_at is not None and time.time() >= _auto_clear_at:
+                _auto_clear_at = None
+                _all_gps_estimates.clear()
+                dummy_estimator.reset()
+                if smart_estimator:
+                    smart_estimator.__init__(min_samples=smart_estimator.min_samples, max_spread=smart_estimator.max_spread)
+                _g = globals()
+                _g['_best_center_dist'] = 999.0
+                _g['_best_detection_gps'] = None
+                _g['_snap_request_best'] = False
+                _g['_snap_request_latest'] = False
+                _g['_snap_jpeg_best'] = None
+                _g['_snap_jpeg_latest'] = None
+                draw_overlay._last_class = ''
+                _g['_last_det'] = None
+                _g['latest_detection_jpeg'] = None
+                _g['latest_best_jpeg'] = None
+                _g['latest_bullseye'] = None
+                _g['latest_smart_grid_jpeg'] = None
+                _g['_smart_result_saved'] = False
+                _g['_survey_result_saved'] = False
+                stats["detections"] = 0
+                stats["saved"] = 0
+                print(f"\n  [AUTO-CLEAR] Reset after {args_ref.auto_clear}s. Ready for next target.\n")
 
             # Flag snapshot requests for display thread
             # Build GPS info dicts here so display thread has everything it needs
