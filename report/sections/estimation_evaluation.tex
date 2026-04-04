@@ -71,6 +71,15 @@ Figure~\ref{fig:bullseye-comparison} extends this analysis by comparing the bull
   \label{fig:bullseye-comparison}
 \end{figure}
 
+Figure~\ref{fig:estimation-heatmap-all} extends the bullseye analysis by colour-mapping each detection according to its centrality weight, revealing the spatial distribution of high-confidence versus peripheral estimates.  Detections near the optical centre (warm colours) receive the highest IVW weight and cluster tightly around the true position, while edge detections (cool colours) exhibit larger scatter---visually confirming the centrality weighting function plotted in Figure~\ref{fig:centrality-weighting}.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.6\textwidth]{figs/estimation_heatmap_all}
+  \caption{Centrality-heatmapped bullseye of all 53 GPS estimates from DJI video replay.  Each dot is coloured by its inverse-variance centrality weight: warm (yellow/red) indicates near-centre detections with high weight; cool (blue/purple) indicates edge detections with low weight.  The high-weight detections cluster within the CEP$_{50}$ circle, demonstrating that the IVW weighting scheme preferentially trusts geometrically favourable observations.}
+  \label{fig:estimation-heatmap-all}
+\end{figure}
+
 % =====================================================================
 \subsection{When Is Enough Data Enough?}\label{sec:enough-data}
 
