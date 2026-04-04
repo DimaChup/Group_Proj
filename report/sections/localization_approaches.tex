@@ -1,0 +1,390 @@
+% localization_approaches.tex — Survey of Aerial Target Geolocation Approaches
+% Appendix — Approaches to Aerial Target Geolocation
+% ─────────────────────────────────────────────────────────────────────
+
+\section{Approaches to Aerial Target Geolocation}\label{sec:loc-approaches}
+
+Aerial target geolocation---the problem of estimating a ground target's geographic coordinates from imagery acquired by a moving UAV---admits a wide range of solutions drawn from photogrammetry, computer vision, state estimation, and sensor fusion.  This appendix surveys ten distinct approaches, evaluates their theoretical accuracy, computational cost, and practical suitability for a resource-constrained SAR drone operating at 3--5\,FPS on a Raspberry Pi~5, and provides the engineering justification for the combination adopted in this project.
+
+The approaches span a spectrum from single-frame geometric projection (fast but noisy) to full photogrammetric bundle adjustment (accurate but computationally prohibitive in real time).  No single method dominates all criteria; the optimal choice depends on the available sensors, onboard compute, frame rate, and whether the drone can hover over the target or must estimate its position from a single flyover pass.
+
+\FloatBarrier
+% =====================================================================
+\subsection{Approach 1: Direct Georeferencing}\label{sec:approach-direct}
+
+\paragraph{Description.}
+Direct georeferencing projects a pixel detection to a ground-plane GPS coordinate using the pinhole camera model, the drone's GPS position, altitude, and heading.  This is the foundational method implemented in \texttt{gps\_utils.py} and described in Section~\ref{sec:gps-math}.
+
+\paragraph{Mathematical basis.}
+The ground sampling distance (GSD) converts pixel offsets to metric displacements:
+\begin{equation}
+  \mathrm{GSD} = \frac{w_s \cdot h}{f \cdot W}
+\end{equation}
+where $w_s$ is the sensor width, $h$ the altitude, $f$ the focal length, and $W$ the image width in pixels.  The pixel offset from the image centre is rotated by the drone heading $\psi$ into North--East coordinates, then projected to latitude--longitude using the WGS\,84 spherical approximation:
+\begin{equation}
+  \Delta\phi = \frac{\Delta N}{R_\oplus}, \qquad
+  \Delta\lambda = \frac{\Delta E}{R_\oplus \cos\phi}
+\end{equation}
+With attitude compensation (Section~\ref{sec:tilt-compensation}), the full rotation matrix $\mathbf{R}_{ypr}$ is applied to the camera-frame ray before ground-plane intersection.
+
+\paragraph{Pros.}
+Single-frame operation (no history required).  Computationally trivial ($<$0.1\,ms per estimate).  Requires only GPS, barometer, and compass---sensors already present on any autopilot.  Transparent and debuggable.
+
+\paragraph{Cons.}
+Accuracy is limited by all six noise sources simultaneously (GPS $\pm$2--3\,m, barometer $\pm$0.5--1\,m, compass $\pm$3--5$^\circ$, pixel quantisation, focal length calibration error, and timing lag).  A single estimate at 35\,m altitude with 10$^\circ$ pitch yields $\sim$6.2\,m error without tilt compensation, reduced to $\sim$3.5\,m with compensation.
+
+\paragraph{Accuracy.}  CEP$_{50}$ $\approx$ 3.5\,m (single frame, compensated).
+
+\paragraph{Computational cost.}  Negligible (pure arithmetic).
+
+\paragraph{Suitability.}  Excellent as the baseline projection layer.  Every other approach in this survey either builds upon or replaces the direct georeferencing step.
+
+% =====================================================================
+\subsection{Approach 2: Multi-Frame Triangulation}\label{sec:approach-triangulation}
+
+\paragraph{Description.}
+As the drone flies, the same ground target is observed from different positions.  The parallax between observations constrains the target's 3D position through ray intersection.  Two or more camera poses with known GPS and attitude define rays from the camera centre through the detected pixel; the target lies at or near their intersection on the ground plane.
+
+\paragraph{Mathematical basis.}
+For two observations from positions $\mathbf{p}_1, \mathbf{p}_2$ with unit ray directions $\hat{\mathbf{r}}_1, \hat{\mathbf{r}}_2$, the target position $\mathbf{t}$ minimises:
+\begin{equation}
+  \mathbf{t}^* = \arg\min_{\mathbf{t}} \sum_{i=1}^{N} \| (\mathbf{t} - \mathbf{p}_i) \times \hat{\mathbf{r}}_i \|^2
+\end{equation}
+This is a linear least-squares problem solvable via SVD.  With a flat-earth assumption and known altitude, the problem reduces to two-ray intersection in the horizontal plane.
+
+\paragraph{Pros.}
+Does not require an altimeter if the baseline between observations is sufficient.  Can resolve altitude ambiguity.  Well-studied in photogrammetry with mature algorithms.
+
+\paragraph{Cons.}
+Requires accurate camera poses (GPS + attitude) for both frames---the same noise sources that limit direct georeferencing also degrade triangulation.  At 35\,m altitude with a 5\,m/s drone and 3\,FPS, the baseline between consecutive frames is only $\sim$1.7\,m, yielding a base-to-height ratio of $1.7/35 \approx 0.05$---far below the 0.3--0.6 recommended for reliable triangulation.  GPS noise ($\pm$2--3\,m) exceeds the baseline, making the geometry degenerate.  Requires data association (matching the same target across frames), which is non-trivial with a single-class detector.
+
+\paragraph{Accuracy.}  Theoretical CEP$_{50}$ $\approx$ 5--15\,m given our geometry (poor base-to-height ratio).  Worse than direct georeferencing in our operating regime.
+
+\paragraph{Computational cost.}  Low (SVD on small matrices), but requires multi-frame bookkeeping.
+
+\paragraph{Suitability.}  Poor for our system.  The low frame rate and high altitude create an unfavourable geometry.  Multi-frame triangulation is better suited to mapping drones flying low and slow with overlapping stereo imagery.
+
+% =====================================================================
+\subsection{Approach 3: Kalman Filter Tracking}\label{sec:approach-kalman}
+
+\paragraph{Description.}
+A Kalman filter (KF) or Extended Kalman Filter (EKF) models the target as a stationary point with state $\mathbf{x} = [\phi, \lambda]^T$ and fuses sequential GPS estimates, weighting each by its expected uncertainty.  The prediction step propagates the state (trivially, since the target is stationary), and the update step incorporates each new pixel-to-GPS observation.
+
+\paragraph{Mathematical basis.}
+For a stationary target, the state transition is the identity:
+\begin{equation}
+  \mathbf{x}_{k|k-1} = \mathbf{x}_{k-1|k-1}, \qquad
+  \mathbf{P}_{k|k-1} = \mathbf{P}_{k-1|k-1} + \mathbf{Q}
+\end{equation}
+where $\mathbf{Q}$ is process noise (zero for a truly stationary target, small nonzero for numerical stability).  The measurement update is:
+\begin{equation}
+  \mathbf{K}_k = \mathbf{P}_{k|k-1} (\mathbf{P}_{k|k-1} + \mathbf{R}_k)^{-1}, \qquad
+  \mathbf{x}_{k|k} = \mathbf{x}_{k|k-1} + \mathbf{K}_k (\mathbf{z}_k - \mathbf{x}_{k|k-1})
+\end{equation}
+where $\mathbf{R}_k$ is the observation noise covariance, which can be made altitude- and tilt-dependent.
+
+\paragraph{Pros.}
+Optimal linear estimator for Gaussian noise.  Naturally handles observations of varying quality by adjusting $\mathbf{R}_k$.  Provides a principled uncertainty estimate ($\mathbf{P}_{k|k}$).  Computationally lightweight ($2\times2$ matrices).  Can incorporate additional sensor inputs (e.g., optical flow for velocity estimation).
+
+\paragraph{Cons.}
+Assumes Gaussian, unimodal noise---violated by GPS multipath or systematic calibration errors.  Does not handle multiple targets (a separate filter per target is needed, requiring data association).  Sensitive to initialisation; a bad first observation can take many updates to correct.  For a stationary target with independent observations, the Kalman filter reduces to a running weighted average, so the benefit over simpler fusion methods is marginal.
+
+\paragraph{Accuracy.}  CEP$_{50}$ $\approx$ 2.0--2.5\,m after 20+ observations (comparable to inverse-variance weighted mean).
+
+\paragraph{Computational cost.}  Negligible ($2\times2$ matrix operations).
+
+\paragraph{Suitability.}  Good.  Implemented in our simulator (\texttt{simple\_simulator.py}) for single-target tracking.  In the flight system, the simpler inverse-variance weighted mean was preferred for transparency, but a Kalman filter is a natural upgrade path.
+
+% =====================================================================
+\subsection{Approach 4: Visual Odometry and SLAM}\label{sec:approach-slam}
+
+\paragraph{Description.}
+Visual Simultaneous Localisation and Mapping (VSLAM) builds a 3D map of the environment from sequential images while simultaneously estimating the camera trajectory.  Target detections are placed into the map as 3D landmarks, yielding a geo-referenced position once the map is aligned to GPS.
+
+\paragraph{Mathematical basis.}
+Feature extraction (ORB, SIFT, or learned features) followed by feature matching across frames.  The essential matrix or homography decomposes into relative camera pose.  Bundle adjustment jointly optimises all camera poses and 3D point positions to minimise reprojection error:
+\begin{equation}
+  \min_{\{\mathbf{R}_i, \mathbf{t}_i\}, \{\mathbf{X}_j\}} \sum_{i,j} \rho\!\left(\| \pi(\mathbf{R}_i \mathbf{X}_j + \mathbf{t}_i) - \mathbf{u}_{ij} \|^2 \right)
+\end{equation}
+where $\pi$ is the projection function and $\rho$ is a robust loss.
+
+\paragraph{Pros.}
+Can achieve sub-metre accuracy in the map frame.  Provides rich environmental context (obstacle detection, terrain mapping).  Does not strictly require GPS if the map can be georeferenced by other means.
+
+\paragraph{Cons.}
+Computationally expensive: real-time VSLAM (ORB-SLAM3, RTAB-MAP) requires a GPU or a powerful CPU to maintain $>$10\,FPS.  On a Raspberry Pi~5 at 3\,FPS, feature extraction alone may consume the entire frame budget.  The flat, textureless terrain typical of SAR search areas (grass fields, moorland) provides few reliable features, causing tracking failure.  Requires significant software complexity (thousands of lines of code) and careful tuning.  Georeferencing the SLAM map to WGS\,84 coordinates reintroduces GPS error.
+
+\paragraph{Accuracy.}  0.5--2\,m in well-textured environments with loop closure.  Degrades to $>$5\,m in featureless terrain.
+
+\paragraph{Computational cost.}  High.  ORB-SLAM3 requires $>$30\,FPS input on a GPU-equipped platform.  Not feasible at 3\,FPS on a Pi~5.
+
+\paragraph{Suitability.}  Poor.  The computational requirements and terrain characteristics make VSLAM impractical for our system.  The marginal accuracy gain over direct georeferencing does not justify the complexity.
+
+% =====================================================================
+\subsection{Approach 5: Photogrammetric Bundle Adjustment}\label{sec:approach-bundle}
+
+\paragraph{Description.}
+Bundle adjustment (BA) is the gold standard in photogrammetric surveying.  All camera poses and 3D point positions are optimised simultaneously to minimise the total reprojection error across all images.  Post-processing software (Agisoft Metashape, OpenDroneMap, Pix4D) uses ground control points (GCPs) to achieve centimetre-level georeferencing.
+
+\paragraph{Mathematical basis.}
+The same optimisation as Equation in Approach~4, but applied to the full image set with sparse or dense point clouds.  GCPs with known survey-grade coordinates constrain the global reference frame.  The Levenberg--Marquardt algorithm iterates until convergence, typically requiring minutes to hours of computation.
+
+\paragraph{Pros.}
+Highest achievable accuracy (1--5\,cm with GCPs and RTK GPS).  Mature, well-validated software ecosystem.  Produces orthorectified maps as a byproduct.
+
+\paragraph{Cons.}
+Strictly a post-processing technique---cannot run in real time on any current hardware.  Requires high image overlap ($>$70\% forward, $>$60\% side) at consistent altitude.  Needs GCPs for absolute accuracy.  Totally unsuitable for time-critical SAR where the target position is needed \emph{during} the flight.
+
+\paragraph{Accuracy.}  1--5\,cm (with GCPs), 5--20\,cm (with RTK, no GCPs).
+
+\paragraph{Computational cost.}  Very high (minutes to hours offline).
+
+\paragraph{Suitability.}  None for real-time SAR.  Useful only for post-mission analysis or mapping.  Included here for completeness and as a reference upper bound on achievable accuracy.
+
+% =====================================================================
+\subsection{Approach 6: Template Matching and Tracking}\label{sec:approach-template}
+
+\paragraph{Description.}
+After an initial detection, a visual tracker (KCF, CSRT, MOSSE, or a learned tracker like SiamFC) locks onto the target's appearance and tracks it across subsequent frames.  The tracked pixel position is converted to GPS at each frame, and the positions are averaged.
+
+\paragraph{Mathematical basis.}
+Correlation-based tracking in the Fourier domain (MOSSE, KCF) or discriminative correlation filters (CSRT):
+\begin{equation}
+  \hat{\mathbf{p}}_k = \arg\max_{\mathbf{p}} \; \mathrm{NCC}(T, I_k[\mathbf{p}])
+\end{equation}
+where $T$ is the target template, $I_k[\mathbf{p}]$ is the image patch at position $\mathbf{p}$, and NCC is normalised cross-correlation.
+
+\paragraph{Pros.}
+Runs at hundreds of FPS on CPU (MOSSE: $>$500\,FPS, KCF: $>$100\,FPS).  Provides sub-pixel localisation.  Does not require re-running the neural network on every frame---the YOLO detector initialises the tracker, which then runs between detection frames.
+
+\paragraph{Cons.}
+Drift: without periodic re-detection, the tracker gradually loses the target, especially under viewpoint change (the drone is moving, so the target's apparent shape changes continuously).  At 35\,m altitude, the target occupies only $\sim$20$\times$20\,px in the 640$\times$640 model input, providing minimal texture for correlation.  Scale changes as altitude varies.  The tracker does not improve the GPS estimate---it only provides a more frequent pixel position, which still suffers from the same GSD and GPS noise.
+
+\paragraph{Accuracy.}  Same as direct georeferencing (GPS-limited), but with more frequent position updates.
+
+\paragraph{Computational cost.}  Very low (sub-millisecond for MOSSE/KCF).
+
+\paragraph{Suitability.}  Marginal.  The small target size at search altitude limits tracking reliability.  Could be useful during the descent phase when the target is larger, but our centering algorithm already achieves this by re-running YOLO at each frame during hover.
+
+% =====================================================================
+\subsection{Approach 7: Centroid Clustering with Inverse-Variance Weighting}\label{sec:approach-clustering}
+
+\paragraph{Description.}
+This is one of our implemented approaches.  Each GPS estimate from the direct georeferencing step is added to a spatial cluster.  The cluster centroid is computed as the inverse-variance weighted mean of all observations, where the variance is a function of the observation's altitude and pixel offset from the image centre.
+
+\paragraph{Mathematical basis.}
+The weight assigned to observation $i$ is:
+\begin{equation}\label{eq:ivw}
+  w_i = \frac{1}{\sigma_i^2}, \qquad
+  \sigma_i^2 = \sigma_\mathrm{GPS}^2 + \left(\frac{h_i \cdot d_i}{f_\mathrm{px}}\right)^2
+\end{equation}
+where $\sigma_\mathrm{GPS} \approx 2$\,m is the GPS receiver noise, $h_i$ is the altitude, $d_i$ is the pixel distance from the image centre, and $f_\mathrm{px}$ is the focal length in pixels.  The second term captures the geometric amplification: detections near the image edge at high altitude have larger projection errors and receive lower weight.  The fused estimate is:
+\begin{equation}
+  \hat{\phi} = \frac{\sum_i w_i \phi_i}{\sum_i w_i}, \qquad
+  \hat{\lambda} = \frac{\sum_i w_i \lambda_i}{\sum_i w_i}
+\end{equation}
+
+New observations are assigned to the nearest existing cluster if within a configurable radius (default 30\,m), or spawn a new cluster otherwise.  This naturally handles multiple targets without cross-contamination.
+
+\paragraph{Pros.}
+Handles multiple targets simultaneously without data association.  Down-weights unreliable observations automatically.  Trivial to implement and debug.  No Gaussian assumption required---robust to outliers through the weighting scheme.  Constant-memory if the rolling window is bounded (our implementation uses the most recent 50 observations per cluster).
+
+\paragraph{Cons.}
+Does not model temporal dynamics (all observations are treated as independent).  The weighting heuristic is manually designed rather than learned or optimal in a Bayesian sense.  Can be biased if the drone consistently flies over the target from one direction (systematic errors do not cancel).
+
+\paragraph{Accuracy.}  CEP$_{50}$ $\approx$ 2.3\,m from DJI flight-video replay (Section~\ref{sec:dji-validation}).
+
+\paragraph{Computational cost.}  Negligible (one distance comparison per cluster per observation).
+
+\paragraph{Suitability.}  Excellent.  This is the primary fusion method in our system, providing the initial target position estimate that guides the centering phase.
+
+% =====================================================================
+\subsection{Approach 8: Multi-Pass Averaging}\label{sec:approach-multipass}
+
+\paragraph{Description.}
+The drone flies over the search area multiple times on parallel legs.  Each pass generates one or more GPS estimates for the target.  The final position is the average of all per-pass estimates, potentially weighted by the number of detections or confidence in each pass.
+
+\paragraph{Mathematical basis.}
+If the lawnmower pattern has $L$ legs spaced at $\Delta s$ metres, and the target is visible on leg $j$ from $N_j$ frames, the multi-pass estimate is:
+\begin{equation}
+  \hat{\phi} = \frac{1}{L_\mathrm{det}} \sum_{j \in \mathrm{legs}} \bar{\phi}_j, \qquad
+  L_\mathrm{det} = |\{j : N_j > 0\}|
+\end{equation}
+where $\bar{\phi}_j$ is the per-leg average.  Because each leg approaches the target from a different direction (alternating headings), systematic errors from heading-dependent bias tend to cancel.
+
+\paragraph{Pros.}
+Naturally cancels directional biases (e.g., GPS timing lag, which shifts estimates along the flight direction).  No additional sensors or algorithms required---it is a property of the search pattern itself.  Each pass is independent, providing redundancy.
+
+\paragraph{Cons.}
+Requires the target to be within the field of view on multiple passes, which depends on leg spacing and detection range.  Adds significant mission time if additional passes are flown solely for averaging.  At our search altitude (35\,m) and strip width ($\sim$20\,m with 30\% overlap), a target near the edge of the footprint may only be visible on one pass.
+
+\paragraph{Accuracy.}  CEP$_{50}$ $\approx$ 2--3\,m with 2--3 passes (similar to single-pass clustering with more observations).
+
+\paragraph{Computational cost.}  Zero additional compute (averaging is trivial); cost is in flight time.
+
+\paragraph{Suitability.}  Implicitly used.  Our lawnmower pattern with overlap means most targets are observed on 1--2 passes.  The clustering algorithm fuses observations from all passes automatically.
+
+% =====================================================================
+\subsection{Approach 9: Hover-and-Lock (Visual Centering)}\label{sec:approach-hover}
+
+\paragraph{Description.}
+This is our primary accuracy-enhancement strategy.  Upon detecting a target, the drone transitions to CENTERING mode: it flies toward the target, positions it at the optical centre of the frame, and hovers directly above.  In this configuration, the pixel offset is zero, so the pixel-to-GPS projection is bypassed entirely---the drone's own GPS position \emph{is} the target position.
+
+\paragraph{Mathematical basis.}
+When the target is at the image centre $(u, v) = (C_x, C_y)$, the pixel offsets $\Delta u = \Delta v = 0$, and consequently the body-frame displacements and all downstream rotations are zero.  Every multiplicative error in the projection chain (GSD calibration, focal length error, yaw error, lens distortion) is multiplied by zero:
+\begin{equation}
+  \text{Projection error} = f(\Delta u, \Delta v, \epsilon_\mathrm{GSD}, \epsilon_f, \epsilon_\psi, \epsilon_\mathrm{dist}) = 0 \quad \text{when} \quad \Delta u = \Delta v = 0
+\end{equation}
+The residual error is solely the drone's GPS receiver accuracy, which can be further reduced by averaging over time during a stationary hover.  Averaging $N$ GPS samples reduces the standard deviation by $\sqrt{N}$:
+\begin{equation}
+  \sigma_\mathrm{avg} = \frac{\sigma_\mathrm{GPS}}{\sqrt{N}}
+\end{equation}
+With 50 samples at 5\,Hz (10\,s hover), $\sigma_\mathrm{avg} = 2.5/\sqrt{50} \approx 0.35$\,m.
+
+\paragraph{Pros.}
+Eliminates all geometric projection errors in a single physical manoeuvre.  Achieves the theoretical GPS accuracy floor ($\sim$1.8\,m CEP$_{50}$) without any algorithmic sophistication.  Self-verifying: if the target drifts from the image centre during hover, the system knows the estimate is degraded.  The hover also provides the operator with a stable view for visual confirmation.
+
+\paragraph{Cons.}
+Requires the drone to interrupt the search pattern and fly to the target---adds 15--30\,s per investigation.  Cannot be applied to targets that cannot be re-observed (e.g., a single flyover with no return).  Assumes the target is stationary.  Wind gusts during hover cause the drone to oscillate, reintroducing small pixel offsets.  The centering controller must converge before the GPS average is meaningful.
+
+\paragraph{Accuracy.}  CEP$_{50}$ $\approx$ 1.8\,m (limited by GPS receiver, not projection).
+
+\paragraph{Computational cost.}  None (the computation is in the flight controller, not the CV pipeline).
+
+\paragraph{Suitability.}  Excellent.  This is the core accuracy strategy.  The mission architecture is designed around it: detection triggers centering, centering eliminates projection error, hover-lock provides the GPS average, and the operator confirms from the centred view.
+
+% =====================================================================
+\subsection{Approach 10: Bayesian Position Estimation}\label{sec:approach-bayesian}
+
+\paragraph{Description.}
+A Bayesian estimator maintains a probability distribution over the target's position, updating it with each new detection using Bayes' rule.  The prior encodes spatial expectations (e.g., the target is within the search area), and the likelihood for each observation is derived from the projection model's error characteristics.
+
+\paragraph{Mathematical basis.}
+The posterior after $k$ observations:
+\begin{equation}
+  p(\mathbf{t} | \mathbf{z}_{1:k}) \propto p(\mathbf{z}_k | \mathbf{t}) \cdot p(\mathbf{t} | \mathbf{z}_{1:k-1})
+\end{equation}
+For computational tractability, the distribution can be represented as:
+\begin{itemize}
+  \item A Gaussian (equivalent to the Kalman filter---Approach~3),
+  \item A particle filter (set of weighted samples---handles multimodality), or
+  \item A grid (discretise the search area into cells and update probabilities).
+\end{itemize}
+A particle filter with $M$ particles represents the posterior as $\{(\mathbf{t}^{(m)}, w^{(m)})\}_{m=1}^M$ and updates weights by evaluating the likelihood $p(\mathbf{z}_k | \mathbf{t}^{(m)})$ for each particle.
+
+\paragraph{Pros.}
+Theoretically optimal given a correct likelihood model.  Can represent multimodal distributions (multiple hypothesised target locations).  Naturally incorporates prior information (e.g., ``the target is in a field, not on a road'').  Provides a full uncertainty distribution, not just a point estimate.
+
+\paragraph{Cons.}
+The likelihood model must accurately capture the error characteristics of the pixel-to-GPS projection---mis-specification leads to overconfident or biased estimates.  Particle filters require hundreds to thousands of particles for adequate representation, adding computational overhead at each frame.  Grid-based methods scale poorly with area (a 500$\times$500\,m search area at 1\,m resolution requires 250,000 cells).  The theoretical optimality rarely translates to practical advantage when the dominant error source (GPS noise) is well-approximated as Gaussian.
+
+\paragraph{Accuracy.}  Equivalent to Kalman filter for Gaussian errors ($\sim$2\,m CEP$_{50}$).  Potentially better if non-Gaussian effects (multipath, systematic bias) are correctly modelled.
+
+\paragraph{Computational cost.}  Moderate (particle filter with 1000 particles: $\sim$1\,ms per update on Pi~5) to high (grid-based: memory-intensive).
+
+\paragraph{Suitability.}  Theoretically attractive but over-engineered for our use case.  The inverse-variance weighted clustering (Approach~7) achieves similar accuracy with far less complexity.  A Bayesian upgrade would be justified if the system needed to reason about target probability across the entire search area (e.g., guiding the search pattern toward high-probability regions), but our fixed lawnmower pattern does not benefit from this.
+
+
+\FloatBarrier
+% =====================================================================
+\subsection{Comparison Summary}\label{sec:approach-comparison}
+
+Table~\ref{tab:approach-comparison} summarises the ten approaches across six evaluation criteria relevant to our operational constraints: a Raspberry Pi~5 running TFLite inference at 3--5\,FPS, a single RGB camera with no stereo baseline, consumer-grade GPS ($\pm$2--3\,m), and a requirement for real-time target position estimates during flight.
+
+\begin{table}[H]
+  \centering
+  \caption{Comparison of aerial target geolocation approaches.  Accuracy is the expected CEP$_{50}$ under our operating conditions (35\,m altitude, consumer GPS, IMX296 camera).  ``Real-time?'' means the method can produce updated estimates within one frame period ($\sim$300\,ms at 3\,FPS).  ``GPU'' indicates whether a GPU is required for practical operation.  ``3\,FPS OK?'' indicates whether the method produces useful results at our frame rate.}
+  \label{tab:approach-comparison}
+  \small
+  \begin{tabular}{@{}p{4.2cm}cccccp{3.2cm}@{}}
+    \toprule
+    \textbf{Approach} & \textbf{CEP$_{50}$} & \textbf{Compute} & \textbf{Real-time?} & \textbf{GPU?} & \textbf{3\,FPS?} & \textbf{Status} \\
+    \midrule
+    1. Direct georeferencing     & 3.5\,m  & Negligible & Yes & No  & Yes & \textbf{Implemented} \\
+    2. Multi-frame triangulation & 5--15\,m & Low       & Yes & No  & Poor & Not used \\
+    3. Kalman filter             & 2.0\,m  & Negligible & Yes & No  & Yes & In simulator \\
+    4. Visual odometry / SLAM    & 0.5--5\,m & High     & No  & Yes & No  & Not feasible \\
+    5. Bundle adjustment         & 0.01--0.2\,m & Very high & No & Yes & No & Post-processing only \\
+    6. Template tracking         & 3.5\,m  & Very low   & Yes & No  & Yes & Not needed \\
+    7. Centroid clustering + IVW & 2.3\,m  & Negligible & Yes & No  & Yes & \textbf{Implemented} \\
+    8. Multi-pass averaging      & 2--3\,m & Zero       & Yes & No  & Yes & Implicit \\
+    9. Hover-and-lock            & 1.8\,m  & Zero       & Yes & No  & Yes & \textbf{Implemented} \\
+    10. Bayesian estimation      & 2.0\,m  & Moderate   & Yes & No  & Yes & Not needed \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\FloatBarrier
+% =====================================================================
+\subsection{Justification of Our Approach}\label{sec:approach-justification}
+
+The system combines three complementary approaches: \textbf{direct georeferencing with attitude compensation} (Approach~1) as the per-frame projection engine, \textbf{centroid clustering with inverse-variance weighting} (Approach~7) for multi-observation fusion, and \textbf{hover-and-lock visual centering} (Approach~9) as the accuracy-maximising manoeuvre.  This combination was selected through an informed engineering trade-off driven by five constraints:
+
+\paragraph{1. Computational budget.}
+The Raspberry Pi~5 running TFLite YOLOv8n inference at 207\,ms per frame leaves approximately 90\,ms per frame cycle for all other processing (telemetry, state machine, streaming, GPS estimation).  Any approach requiring more than $\sim$5\,ms for geolocation is competing with the detection pipeline for CPU time.  Direct georeferencing and clustering together consume $<$0.2\,ms---negligible.  SLAM and bundle adjustment are excluded on computational grounds alone.
+
+\paragraph{2. Frame rate reality.}
+At 3--5\,FPS, methods that require high temporal resolution (visual odometry, dense tracking) cannot function.  Multi-frame triangulation suffers from an insufficient baseline-to-height ratio.  Our chosen methods are explicitly designed to work with sparse, intermittent observations.
+
+\paragraph{3. Sensor limitations.}
+A single consumer-grade GPS receiver with $\pm$2--3\,m accuracy sets a hard floor on geolocation precision.  No algorithmic sophistication can reduce error below this floor from projection alone---only the hover-and-lock manoeuvre, which replaces projection with direct GPS reading, can approach it.  This insight drove the mission architecture: invest engineering effort in the \emph{flight procedure} (centering, hovering) rather than in increasingly complex estimation algorithms.
+
+\paragraph{4. Multi-target capability.}
+The search area may contain multiple objects of interest (the actual casualty, debris, false positives).  Spatial clustering handles this naturally---each target accumulates its own independent estimate.  Approaches that assume a single target (Kalman filter, template tracking) require explicit data association, adding complexity.
+
+\paragraph{5. Transparency and debuggability.}
+In a safety-critical SAR context, the operator must understand and trust the system's position estimates.  Direct georeferencing produces interpretable intermediate values (GSD, pixel offset, North/East displacement) that can be logged and inspected.  Bayesian or SLAM-based estimates are opaque to the operator.
+
+\paragraph{Progressive refinement architecture.}
+The key architectural insight is that the three approaches address different phases of the mission:
+
+\begin{enumerate}
+  \item \textbf{SEARCH phase}: Direct georeferencing provides a coarse initial estimate (CEP$_{50}$ $\approx$ 3.5\,m) sufficient to trigger investigation and guide the approach.
+  \item \textbf{CENTERING phase}: Clustering fuses 5--20 observations as the drone approaches, refining the estimate to CEP$_{50}$ $\approx$ 2.5\,m.
+  \item \textbf{HOVER-LOCK phase}: The drone positions the target at the optical centre and averages its own GPS over 10\,s, achieving CEP$_{50}$ $\approx$ 1.8\,m.
+\end{enumerate}
+
+\noindent Each phase eliminates a specific error category: Phase~1 eliminates detection false negatives (the target is found); Phase~2 eliminates high-variance outliers (IVW down-weights edge detections); Phase~3 eliminates all projection errors (zero pixel offset).  The architecture degrades gracefully: if hover-lock fails (e.g., the target is lost during approach), the clustering estimate from Phase~2 is still accurate enough for operator-guided investigation.
+
+\FloatBarrier
+% =====================================================================
+\subsection{Frame Rate Sufficiency Analysis}\label{sec:frame-rate-analysis}
+
+A common concern is whether 3\,FPS provides enough observations for reliable target detection and position estimation.  This section demonstrates that the frame rate is sufficient for our operating profile.
+
+\paragraph{Observation geometry.}
+At the nominal search speed of $v = 5$\,m/s and altitude $h = 35$\,m, the camera footprint is approximately $32 \times 24$\,m (from GSD $\times$ image dimensions).  A ground target enters the forward edge of the footprint and exits the rear edge after traversing 24\,m in the along-track direction.  The dwell time---the time the target is within the field of view---is:
+\begin{equation}
+  t_\mathrm{dwell} = \frac{H_\mathrm{footprint}}{v} = \frac{24}{5} = 4.8\,\mathrm{s}
+\end{equation}
+At 3\,FPS, this yields:
+\begin{equation}
+  N_\mathrm{frames} = t_\mathrm{dwell} \times \mathrm{FPS} = 4.8 \times 3 = 14.4 \approx 14 \text{ frames}
+\end{equation}
+
+\noindent However, the target is only detectable when it occupies enough pixels to trigger the neural network.  At 35\,m altitude, a 1.8\,m tall dummy subtends approximately $1.8/\mathrm{GSD} \approx 82$\,px in the native frame, which is resized to $\sim$36\,px in the 640$\times$640 model input.  YOLOv8n reliably detects objects above $\sim$16$\times$16\,px (the smallest anchor scale), so the target is detectable across most of the footprint, not just near the centre.
+
+\paragraph{Detection probability per pass.}
+Empirical testing with DJI flight video (Section~\ref{sec:dji-validation}) showed detection confidence $>$0.9 for frames where the target was within the central 80\% of the footprint, dropping to $\sim$0.3--0.5 at the edges.  With 14 frames per pass and per-frame detection probability $p_d \approx 0.7$ (averaging across the footprint), the probability of at least one detection per pass is:
+\begin{equation}
+  P(\text{at least 1 detection}) = 1 - (1 - p_d)^N = 1 - 0.3^{14} > 0.999
+\end{equation}
+
+\noindent Even with a conservative per-frame detection probability of $p_d = 0.3$, the probability of at least one detection in 14 frames is $1 - 0.7^{14} \approx 0.993$.  Target miss is therefore extremely unlikely on any single pass.
+
+\paragraph{Position estimation quality.}
+With an expected $N_\mathrm{det} = p_d \times N_\mathrm{frames} \approx 0.7 \times 14 = 9.8 \approx 10$ detections per pass, the inverse-variance weighted estimate benefits from $\sqrt{10} \approx 3.2\times$ noise reduction compared to a single observation:
+\begin{equation}
+  \sigma_\mathrm{fused} \approx \frac{\sigma_\mathrm{single}}{\sqrt{N_\mathrm{det}}} = \frac{3.5}{\sqrt{10}} \approx 1.1\,\mathrm{m}
+\end{equation}
+
+\noindent This is a theoretical lower bound assuming independent errors; in practice, correlated GPS noise limits the improvement to approximately $\sigma_\mathrm{fused} \approx 2.3$\,m (matching the empirical CEP$_{50}$ from DJI video replay).
+
+\paragraph{Comparison with higher frame rates.}
+At 10\,FPS (hypothetical), the same pass would yield $\sim$48 frames and $\sim$34 detections.  The theoretical noise reduction would be $\sqrt{34}/\sqrt{10} \approx 1.8\times$ better---but since the floor is set by GPS receiver noise ($\sim$2\,m), the practical improvement is marginal.  The additional frames do not provide new information; they provide redundant observations of the same GPS-noisy position.  This confirms that 3\,FPS is not a significant limitation for position estimation.
+
+\paragraph{Sufficient for SMART detection.}
+The \texttt{-{}-smart-detect} mode requires $N_\mathrm{confirm}$ consecutive confirmed frames (default 3) before triggering investigation.  At 3\,FPS, this requires 1\,s of continuous detection---easily achievable given the 4.8\,s dwell time.  Even with intermittent detection (every other frame), 3 consecutive detections are expected within the first 2\,s of the 4.8\,s window.
+
+\paragraph{Conclusion.}
+At 3\,FPS and 5\,m/s, the system obtains $\sim$14 frames and $\sim$10 detections per target pass.  This is more than sufficient for reliable detection ($>$99.9\% per-pass probability), robust position estimation (CEP$_{50}$ $\approx$ 2.3\,m from a single flyover), and consecutive-frame confirmation (SMART mode).  Higher frame rates would provide diminishing returns due to the GPS noise floor.
