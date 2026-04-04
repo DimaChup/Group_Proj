@@ -140,49 +140,48 @@
 <!-- ==================== TELEPROMPTER SIDEBAR ==================== -->
 <div class="teleprompter" id="teleprompter">
 
-  <div class="slide-label">SLIDE 1 — VISION (1.6 min, 246 words)</div>
+  <div class="slide-label">SLIDE 1 — VISION (225 words, 1.5 min)</div>
 
-  <span class="cue">[After Edward finishes]</span>
-  <strong>So Edward showed you how we trained the model — now let me walk you through what actually happens when it runs on the drone.</strong>
+  So Edward showed you how we trained the model. Now let me walk you through what actually happens when it runs on the drone.
 
   <span class="cue">[Point to pipeline]</span>
-  The Pi camera captures frames at about 5 FPS. Each frame goes through our YOLOv8 model running on TFLite, and when we get a detection, we convert that pixel position into a real-world GPS estimate using the drone's altitude and field of view.
+  The Raspberry Pi 5 captures frames from a global shutter camera and feeds them into our YOLOv8 model every 200 milliseconds. <strong>No GPU, no accelerator</strong> — just the Pi's CPU doing inference on each frame.
 
-  <span class="cue">[Point to tilt boxes]</span>
-  Now, one problem we hit early was attitude error. If the drone is tilted even a few degrees during flight, your GPS estimate drifts significantly — we measured up to <strong>6.2 metres</strong> off. So we added attitude compensation using the IMU pitch and roll data, which brought that error down to about <strong>0.3 metres</strong>.
+  When the model spots a target, it gives us a bounding box in pixels. But pixels don't tell us where to fly. We need GPS coordinates. We know the camera's field of view and the drone's altitude from the barometer, so we project pixel offsets into real-world metres and add them to the drone's GPS position.
+
+  <span class="cue">[Point to tilt comparison]</span>
+  Simple enough — except the drone is never perfectly level. If you ignore that tilt, your estimate lands <strong>six metres off</strong>. So we read pitch and roll directly from the flight controller and ray-trace through the actual camera angle. That brings the error down to about <strong>thirty centimetres</strong>. Same principle military surveillance drones use.
 
   <span class="cue">[Point to four phases]</span>
-  But a single estimate is still noisy, so we use a four-phase approach. Multiple detections get clustered and averaged, bringing our estimate from about 3.5 metres down to 1.8. And then — <strong>this is the key insight</strong> — once we centre the drone directly above the target, the drone's own GPS becomes our target GPS. No more pixel maths needed.
+  But we don't rely on a single detection. The system refines progressively — detect from altitude, fly toward the estimate, hover directly above, and lock. At hover, <strong>the drone's own GPS becomes the target's GPS</strong>. Accuracy goes from three and a half metres down to one point eight.
 
-  <span class="cue">[Point to video / dashboard]</span>
-  As you can see in the simulation video, the operator gets a live browser dashboard showing detections, the GPS estimate, and simple Y, N, or I buttons to confirm or reject each target.
-
-  Worth noting — the same codebase runs on both the Pi with TFLite and our laptops with Ultralytics, so we can test everything in simulation before it ever touches real hardware.
+  The operator sees everything through a browser dashboard and confirms with a single button press. And importantly — the exact same code runs in simulation on a laptop and live on the Pi. <strong>One codebase, zero porting.</strong>
 
   <div class="divider"></div>
 
-  <div class="slide-label">SLIDE 2 — LADDER (1.5 min, 219 words)</div>
+  <div class="slide-label">SLIDE 2 — SIMULATION (222 words, 1.5 min)</div>
 
-  <span class="cue">[Slide appears]</span>
-  <strong>Our testing philosophy was simple: never skip a rung.</strong> We built a four-level progressive testing ladder, where each level had to pass before we moved to the next.
+  <span class="cue">[Slide appears, video playing on left]</span>
+  Our testing philosophy is simple: <strong>never fly something you haven't proven at every level below it.</strong> This ladder shows how we built confidence systematically.
 
-  <span class="cue">[Point to bottom rung]</span>
-  At the base, full software-in-the-loop simulation. The same Python code that runs on the Raspberry Pi runs identically on a laptop with a simulated drone. No separate sim version — one codebase throughout. In simulation, we verified all twelve mission requirements, backed by fifty-eight test scripts and a hundred and twenty-seven unit tests.
+  <span class="cue">[Point to bottom steps]</span>
+  At the base, 127 unit tests validate core logic — GPS math, geofencing, pattern generation. Dry-run mode visualises the full mission without touching hardware. Step two: bench integration on the Pi. Camera, AI model, and flight controller communicating — no propellers, no risk.
 
-  <span class="cue">[Move up]</span>
-  Level two: Pi bench testing. Camera capturing frames, AI model running inference, flight controller connected and responding to commands — all verified on the hardware, on the bench, before anything left the ground.
+  <span class="cue">[Point to middle steps]</span>
+  Over Easter, we went outdoors. Calibrated field-of-view, verified GPS estimation against known positions, confirmed detection at realistic altitudes. Step four: passive flight. A pilot flies manually while the Pi runs detection silently — <strong>zero commands sent</strong>. Real-world CV validation with zero autonomy risk.
 
-  <span class="cue">[Next rung]</span>
-  Level three: Easter field testing. We took the system outdoors, calibrated the camera's field of view with a real dummy at measured distances, verified GPS accuracy, and confirmed detection performance under natural lighting conditions.
+  <span class="cue">[Point to top star]</span>
+  Step five is demo day — full autonomous search, detection, and landing.
 
-  <span class="cue">[Top rung]</span>
-  Level four is today — real autonomous flight.
+  <span class="cue">[Point to video on left]</span>
+  Now, what you're seeing on the left is our simulation running a complete mission. Hardware delays forced us into simulation early — and it became our greatest strength. We verified all twelve requirements: five-layer geofencing with repulsive fields, PLB beacon redirect, payload drop, RTL failsafes, and <strong>attitude-compensated GPS estimation</strong> — meaning we simulate camera tilt during flight and correct for it so target positions stay accurate even when the drone is banking.
 
-  <span class="cue">[Pause]</span>
-  What made this work is that we started building simulation early, before we had hardware access. <strong>That constraint became our greatest strength.</strong> By the time the drone was physically assembled at Easter, the software was already solid. Over four thousand lines of flight code, tested at every level.
+  Critically, this is <strong>one Python codebase throughout</strong>. No separate simulation version. What runs in sim is what flies on the Pi.
 
-  <span class="cue">[Hand off]</span>
-  Now I'll hand over to Herish, who'll walk you through the personal locator beacon integration.
+  <span class="cue">[Strong finish]</span>
+  <strong>We're ready. The software is proven. Demo day brings it together.</strong>
+
+  <span class="cue">[Hand to Herish]</span>
 
 </div>
 
