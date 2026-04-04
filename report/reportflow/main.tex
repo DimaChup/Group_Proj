@@ -33,12 +33,6 @@
 \titleformat{\subsection}{\normalfont\large\bfseries\color{headblue}}{\thesubsection}{0.5em}{}
 \titleformat{\subsubsection}{\normalfont\normalsize\bfseries\color{headblue}}{\thesubsubsection}{0.4em}{}
 
-% ── PDF bookmark safety ────────────────────────────────────────────────
-\usepackage{bookmark}
-\pdfstringdefDisableCommands{%
-  \def\textdegree{deg}%
-  \def\textsuperscript#1{(#1)}%
-}
 \titlespacing*{\section}{0pt}{10pt plus 2pt}{4pt plus 1pt}
 \titlespacing*{\subsection}{0pt}{8pt plus 2pt}{3pt plus 1pt}
 
@@ -58,6 +52,12 @@
 
 % ── Hyperlinks (must be last) ───────────────────────────────────────────
 \usepackage[hidelinks,colorlinks=true,linkcolor=headblue,citecolor=headblue,urlcolor=blue!60]{hyperref}
+
+% ── PDF bookmark safety ────────────────────────────────────────────────
+\pdfstringdefDisableCommands{%
+  \def\textdegree{deg}%
+  \def\textsuperscript#1{(#1)}%
+}
 
 % ── Float control ───────────────────────────────────────────────────────
 \renewcommand{\topfraction}{0.9}
@@ -1092,7 +1092,7 @@ The gap between Stages~5 and~6 is the project's primary risk: bench testing cann
 
 A physics-based 216-configuration parameter sweep, grounded in momentum-theory energy modelling and empirical detection envelopes, identified 35\,m altitude, 8\,m/s speed, and 70\textdegree{} scan angle as the optimal operating point --- achieving $>$99.97\% single-pass detection probability at 10.9\% battery usage with a 1.5$\times$ NFZ safety margin. The nine-step sequential decision chain ensures that every parameter traces to a physical measurement or regulatory constraint, and the Pareto analysis confirms that no alternative configuration improves one objective without degrading another.
 
-Four mid-development corrections (BGR colour fix, focal length recalibration, TFLite coordinate bug, calibration corruption) demonstrated that the modular architecture --- particularly the single-function CV interface --- contained errors to single files without ripple effects. The 58 test scripts and 127 unit tests provided the empirical foundation for every decision, while the seven-stage simulation-to-real progression ensured that each new variable was introduced incrementally. The framework is designed to be re-evaluated in minutes as field data replaces simulation assumptions, closing the gap between the system's demonstrated simulation capability and the outdoor flight validation that remains the next critical milestone.
+Four mid-development corrections --- BGR colour fix, focal length recalibration, TFLite coordinate bug, and calibration corruption --- demonstrated that the modular architecture contained errors to single files without ripple effects. The 58 test scripts and 127 unit tests provided the empirical foundation for every link in the decision chain, while the seven-stage simulation-to-real progression introduced each new variable incrementally. The framework can be re-evaluated in minutes as field data replaces simulation assumptions, closing the gap between demonstrated simulation capability (7.7/10) and the outdoor flight validation (2.1/10) that remains the next critical milestone.
 
 
 % ════════════════════════════════════════════════════════════════════════

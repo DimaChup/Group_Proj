@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.3.27)  4 APR 2026 05:34
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.3.27)  4 APR 2026 05:38
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1003,9 +1003,9 @@ ode.tex
 Library (tcolorbox): 'tcbposter.code.tex' version '6.9.0'
 ))
 Package translations Info: No language package found. I am going to use `englis
-h' as default language. on input line 73.
-LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 7
-3.
+h' as default language. on input line 80.
+LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 8
+0.
  (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/lm\ot1lmr.fd
 File: ot1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
@@ -1016,24 +1016,24 @@ File: l3backend-pdftex.def 2025-10-09 L3 backend support: PDF output (pdfTeX)
 ) (main.aux)
 \openout1 = `main.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 73.
-LaTeX Font Info:    ... okay on input line 73.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 73.
-LaTeX Font Info:    ... okay on input line 73.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 73.
-LaTeX Font Info:    ... okay on input line 73.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 73.
-LaTeX Font Info:    ... okay on input line 73.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 73.
-LaTeX Font Info:    ... okay on input line 73.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 73.
-LaTeX Font Info:    ... okay on input line 73.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 73.
-LaTeX Font Info:    ... okay on input line 73.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 73.
-LaTeX Font Info:    ... okay on input line 73.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 73.
-LaTeX Font Info:    ... okay on input line 73.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 80.
+LaTeX Font Info:    ... okay on input line 80.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 80.
+LaTeX Font Info:    ... okay on input line 80.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 80.
+LaTeX Font Info:    ... okay on input line 80.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 80.
+LaTeX Font Info:    ... okay on input line 80.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 80.
+LaTeX Font Info:    ... okay on input line 80.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 80.
+LaTeX Font Info:    ... okay on input line 80.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 80.
+LaTeX Font Info:    ... okay on input line 80.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 80.
+LaTeX Font Info:    ... okay on input line 80.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 80.
+LaTeX Font Info:    ... okay on input line 80.
 
 *geometry* driver: auto-detecting
 *geometry* detected driver: pdftex
@@ -1069,13 +1069,13 @@ LaTeX Font Info:    ... okay on input line 73.
 * \@reversemarginfalse
 * (1in=72.27pt=25.4mm, 1cm=28.453pt)
 
-LaTeX Info: Redefining \microtypecontext on input line 73.
-Package microtype Info: Applying patch `item' on input line 73.
-Package microtype Info: Applying patch `toc' on input line 73.
-Package microtype Info: Applying patch `eqnum' on input line 73.
-Package microtype Info: Applying patch `footnote' on input line 73.
-Package microtype Info: Applying patch `verbatim' on input line 73.
-LaTeX Info: Redefining \microtypesetup on input line 73.
+LaTeX Info: Redefining \microtypecontext on input line 80.
+Package microtype Info: Applying patch `item' on input line 80.
+Package microtype Info: Applying patch `toc' on input line 80.
+Package microtype Info: Applying patch `eqnum' on input line 80.
+Package microtype Info: Applying patch `footnote' on input line 80.
+Package microtype Info: Applying patch `verbatim' on input line 80.
+LaTeX Info: Redefining \microtypesetup on input line 80.
 Package microtype Info: Generating PDF output.
 Package microtype Info: Character protrusion enabled (level 2).
 Package microtype Info: Using default protrusion set `alltext'.
@@ -1127,8 +1127,8 @@ File: translations-basic-dictionary-english.trsl (english translation file `tra
 nslations-basic-dictionary')
 )
 Package translations Info: loading dictionary `translations-basic-dictionary' f
-or `english'. on input line 73.
-Package hyperref Info: Link coloring ON on input line 73.
+or `english'. on input line 80.
+Package hyperref Info: Link coloring ON on input line 80.
  (main.out) (main.out)
 \@outlinefile=\write4
 \openout4 = `main.out'.
@@ -1140,37 +1140,37 @@ Package: inputenc 2024/02/08 v1.3d Input encoding file
 \inpenc@prehook=\toks50
 \inpenc@posthook=\toks51
 )
-LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 8
-8.
+LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 9
+5.
 
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/lm\ts1lmr.fd
 File: ts1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
-LaTeX Font Info:    Trying to load font information for OML+lmm on input line 8
-8.
+LaTeX Font Info:    Trying to load font information for OML+lmm on input line 9
+5.
 
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/lm\omllmm.fd
 File: omllmm.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    Trying to load font information for OMS+lmsy on input line 
-88.
+95.
 
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/lm\omslmsy.fd
 File: omslmsy.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    Trying to load font information for OMX+lmex on input line 
-88.
+95.
 
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/lm\omxlmex.fd
 File: omxlmex.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <10> on input line 88.
+(Font)              <10> on input line 95.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <7> on input line 88.
+(Font)              <7> on input line 95.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <5> on input line 88.
-LaTeX Font Info:    Trying to load font information for U+msa on input line 88.
+(Font)              <5> on input line 95.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 95.
 
 
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsa.fd
@@ -1179,7 +1179,7 @@ File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/microtype\mt-msa.cfg
 File: mt-msa.cfg 2006/02/04 v1.1 microtype config. file: AMS symbols (a) (RS)
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 88.
+LaTeX Font Info:    Trying to load font information for U+msb on input line 95.
 
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
@@ -1190,7 +1190,7 @@ File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
 <../figs/sensitivity_spider.pdf, id=275, 462.53987pt x 427.51283pt>
 File: ../figs/sensitivity_spider.pdf Graphic file (type pdf)
 <use ../figs/sensitivity_spider.pdf>
-Package pdftex.def Info: ../figs/sensitivity_spider.pdf  used on input line 130
+Package pdftex.def Info: ../figs/sensitivity_spider.pdf  used on input line 137
 .
 (pdftex.def)             Requested size: 281.68385pt x 260.3519pt.
 [1
@@ -1198,68 +1198,74 @@ Package pdftex.def Info: ../figs/sensitivity_spider.pdf  used on input line 130
 {C:/Users/Bristol/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map}{C:/Users/Br
 istol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-rm.enc}{C:/Users/Bris
 tol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-ts1.enc}{C:/Users/Brist
-ol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathit.enc}]
-Underfull \hbox (badness 10000) in paragraph at lines 154--154
+ol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathit.enc}{C:/Users/Bri
+stol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathsy.enc}]
+Underfull \hbox (badness 10000) in paragraph at lines 161--161
 []|\OT1/lmr/m/n/9 (+20) Public trust in au-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 154--154
+Underfull \hbox (badness 10000) in paragraph at lines 161--161
 \OT1/lmr/m/n/9 (+20) tonomous drones for
  []
 
 
-Underfull \hbox (badness 2591) in paragraph at lines 154--154
+Underfull \hbox (badness 2591) in paragraph at lines 161--161
 \OT1/lmr/m/n/9 (+20) res-cue is grow-ing but
  []
 
 
-Underfull \hbox (badness 5954) in paragraph at lines 154--154
+Underfull \hbox (badness 5954) in paragraph at lines 161--161
 \OT1/lmr/m/n/9 (+20) frag-ile; a high-profile
  []
 
 
-Underfull \hbox (badness 2846) in paragraph at lines 154--154
+Underfull \hbox (badness 2846) in paragraph at lines 161--161
 \OT1/lmr/m/n/9 (+20) false pos-i-tive or NFZ
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 154--154
+Underfull \hbox (badness 10000) in paragraph at lines 161--161
 []|\OT1/lmr/m/n/9 (+20) Single-battery con-
  []
 
 
-Underfull \hbox (badness 1527) in paragraph at lines 154--154
+Underfull \hbox (badness 1527) in paragraph at lines 161--161
 \OT1/lmr/m/n/9 (+20) straint (115.4Wh); no
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 154--154
+Underfull \hbox (badness 10000) in paragraph at lines 161--161
 \OT1/lmr/m/n/9 (+20) mid-mission recharge;
  []
 
 
-Underfull \hbox (badness 2080) in paragraph at lines 154--154
+Underfull \hbox (badness 2080) in paragraph at lines 161--161
 \OT1/lmr/m/n/9 (+20) re-place-ment drone not
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 154--154
+Underfull \hbox (badness 10000) in paragraph at lines 161--161
 []|\OT1/lmr/m/n/9 (+20) University flight per-
  []
 
 
-Underfull \hbox (badness 3428) in paragraph at lines 154--154
+Underfull \hbox (badness 1199) in paragraph at lines 161--161
+\OT1/lmr/m/n/9 (+20) strated safety case [[]];
+ []
+
+
+Underfull \hbox (badness 3428) in paragraph at lines 161--161
 []|\OT1/lmr/m/n/9 (+20) BVLOS op-er-a-tions re-
  []
 
 [2 <../figs/sensitivity_spider.pdf>]
-Underfull \hbox (badness 10000) in alignment at lines 178--178
+Underfull \hbox (badness 10000) in alignment at lines 185--185
 [][][][][][] 
  []
 
 LaTeX Font Info:    Trying to load font information for OT1+lmtt on input line 
-181.
+188.
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/lm\ot1lmtt.fd
 File: ot1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
@@ -1268,242 +1274,35 @@ Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             For optimal results, create family-specific settings.
 (microtype)             See the microtype manual for details.
 
-[3{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathsy.
-enc}{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-rmtt.
-enc}]
+[3{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-rmtt.en
+c}]
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <12> on input line 191.
+(Font)              <12> on input line 198.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <8> on input line 191.
+(Font)              <8> on input line 198.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 191.
+(hyperref)                removing `math shift' on input line 198.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `subscript' on input line 191.
+(hyperref)                removing `subscript' on input line 198.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 191.
+(hyperref)                removing `math shift' on input line 198.
 
-[4{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathex.
-enc}]
-<../figs/safety_subscore.pdf, id=424, 362.30199pt x 404.776pt>
+<../figs/safety_subscore.pdf, id=409, 362.30199pt x 404.776pt>
 File: ../figs/safety_subscore.pdf Graphic file (type pdf)
 <use ../figs/safety_subscore.pdf>
-Package pdftex.def Info: ../figs/safety_subscore.pdf  used on input line 230.
+Package pdftex.def Info: ../figs/safety_subscore.pdf  used on input line 237.
 (pdftex.def)             Requested size: 256.07481pt x 286.10828pt.
-
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 235.
-
+[4{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathex.
+enc}]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `subscript' on input line 235.
+(hyperref)                removing `math shift' on input line 242.
 
 
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 235.
-
-[5 <../figs/safety_subscore.pdf>]
-<../figs/detection_subscore.pdf, id=512, 392.97514pt x 381.28511pt>
-File: ../figs/detection_subscore.pdf Graphic file (type pdf)
-<use ../figs/detection_subscore.pdf>
-Package pdftex.def Info: ../figs/detection_subscore.pdf  used on input line 278
-.
-(pdftex.def)             Requested size: 256.07481pt x 248.4549pt.
-
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 283.
-
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `subscript' on input line 283.
-
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 283.
-
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 298.
-
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `subscript' on input line 298.
-
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 298.
-
-[6 <../figs/detection_subscore.pdf>]
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 334.
-
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `subscript' on input line 334.
-
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 334.
-
-[7]
-<../figs/scoring_overview.pdf, id=618, 581.77347pt x 339.34047pt>
-File: ../figs/scoring_overview.pdf Graphic file (type pdf)
-<use ../figs/scoring_overview.pdf>
-Package pdftex.def Info: ../figs/scoring_overview.pdf  used on input line 363.
-(pdftex.def)             Requested size: 435.3303pt x 253.92996pt.
-<../figs/sensitivity_matrix.pdf, id=621, 680.28354pt x 390.66585pt>
-File: ../figs/sensitivity_matrix.pdf Graphic file (type pdf)
-<use ../figs/sensitivity_matrix.pdf>
-Package pdftex.def Info: ../figs/sensitivity_matrix.pdf  used on input line 398
-.
-(pdftex.def)             Requested size: 281.68385pt x 161.75967pt.
- [8 <../figs/scoring_overview.pdf>]
-<../figs/decision_flow.pdf, id=767, 622.72653pt x 947.94153pt>
-File: ../figs/decision_flow.pdf Graphic file (type pdf)
-<use ../figs/decision_flow.pdf>
-Package pdftex.def Info: ../figs/decision_flow.pdf  used on input line 416.
-(pdftex.def)             Requested size: 419.96643pt x 639.28328pt.
- [9 <../figs/sensitivity_matrix.pdf>]
-[10 <../figs/decision_flow.pdf>]
-Underfull \hbox (badness 10000) in alignment at lines 460--460
-[][][][] 
- []
-
-<../figs/lighting_combined.pdf, id=1060, 906.12337pt x 344.83205pt>
-File: ../figs/lighting_combined.pdf Graphic file (type pdf)
-<use ../figs/lighting_combined.pdf>
-Package pdftex.def Info: ../figs/lighting_combined.pdf  used on input line 468.
-
-(pdftex.def)             Requested size: 486.54057pt x 185.15945pt.
-[11 <../figs/lighting_combined.pdf>]
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `\leavevmode@ifvmode' on input line 488.
-
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                \kern 1.66702pt
-(hyperref)                removed on input line 488.
-
-
-Underfull \hbox (badness 10000) in alignment at lines 511--511
-[][][][] 
- []
-
-[12] [13]
-<../figs/real_energy_heatmap.png, id=1208, 867.24pt x 578.16pt>
-File: ../figs/real_energy_heatmap.png Graphic file (type png)
-<use ../figs/real_energy_heatmap.png>
-Package pdftex.def Info: ../figs/real_energy_heatmap.png  used on input line 57
-3.
-(pdftex.def)             Requested size: 435.3303pt x 290.22615pt.
- [14 <../figs/real_energy_heatmap.png>]
-<../figs/altitude_speed_tradeoff.pdf, id=1222, 491.61806pt x 400.5803pt>
-File: ../figs/altitude_speed_tradeoff.pdf Graphic file (type pdf)
-<use ../figs/altitude_speed_tradeoff.pdf>
-Package pdftex.def Info: ../figs/altitude_speed_tradeoff.pdf  used on input lin
-e 616.
-(pdftex.def)             Requested size: 435.3303pt x 354.73053pt.
- [15 <../figs/altitude_speed_tradeoff.pdf>]
-<../figs/top3_paths.pdf, id=1324, 1111.90283pt x 425.66428pt>
-File: ../figs/top3_paths.pdf Graphic file (type pdf)
-<use ../figs/top3_paths.pdf>
-Package pdftex.def Info: ../figs/top3_paths.pdf  used on input line 660.
-(pdftex.def)             Requested size: 435.3303pt x 166.65791pt.
- [16 <../figs/top3_paths.pdf>]
-<../figs/objective_conflict.pdf, id=1458, 736.75905pt x 587.34618pt>
-File: ../figs/objective_conflict.pdf Graphic file (type pdf)
-<use ../figs/objective_conflict.pdf>
-Package pdftex.def Info: ../figs/objective_conflict.pdf  used on input line 668
-.
-(pdftex.def)             Requested size: 486.54057pt x 387.87373pt.
-
-Underfull \hbox (badness 10000) in alignment at lines 698--698
-[][][] 
- []
-
-[17 <../figs/objective_conflict.pdf>]
-<../figs/tornado_sensitivity.pdf, id=1581, 571.04657pt x 285.1285pt>
-File: ../figs/tornado_sensitivity.pdf Graphic file (type pdf)
-<use ../figs/tornado_sensitivity.pdf>
-Package pdftex.def Info: ../figs/tornado_sensitivity.pdf  used on input line 71
-4.
-(pdftex.def)             Requested size: 384.11221pt x 191.79211pt.
-<../figs/pareto_parallel.pdf, id=1585, 611.26181pt x 379.18648pt>
-File: ../figs/pareto_parallel.pdf Graphic file (type pdf)
-<use ../figs/pareto_parallel.pdf>
-Package pdftex.def Info: ../figs/pareto_parallel.pdf  used on input line 732.
-(pdftex.def)             Requested size: 486.54057pt x 301.82211pt.
- [18 <../figs/tornado_sensitivity.pdf>]
-<../figs/architecture.pdf, id=1707, 654.40488pt x 570.93298pt>
-File: ../figs/architecture.pdf Graphic file (type pdf)
-<use ../figs/architecture.pdf>
-Package pdftex.def Info: ../figs/architecture.pdf  used on input line 764.
-(pdftex.def)             Requested size: 384.11221pt x 335.13132pt.
-
-[19 <../figs/pareto_parallel.pdf>] [20 <../figs/architecture.pdf>] [21]
-[22]
-Overfull \hbox (21.7196pt too wide) in paragraph at lines 929--930
-[]\OT1/lmr/bx/n/10 (-20) Discovery method: \OT1/lmr/m/n/10 (-20) vi-sual in-spe
-c-tion showed green de-tec-tion boxes drawn off-screen. \OT1/lmr/bx/n/10 (-20) 
-Fix: \OT1/lmr/m/n/10 (-20) added a \OT1/lmtt/m/n/10 PIXEL[]COORD[]THRESHOLD
- []
-
-[23] [24] [25] (main.bbl [26]) [27] (main.aux)
- ***********
-LaTeX2e <2025-11-01>
-L3 programming layer <2026-01-19>
- ***********
-Package rerunfilecheck Info: File `main.out' has not changed.
-(rerunfilecheck)             Checksum: C56F79DDD1918A56542C3CCFA33B1D94;11215.
- ) 
-Here is how much of TeX's memory you used:
- 37027 strings out of 467866
- 779941 string characters out of 5417351
- 1204613 words of memory out of 5000000
- 64850 multiletter control sequences out of 15000+600000
- 708897 words of font info for 251 fonts, out of 8000000 for 9000
- 1141 hyphenation exceptions out of 8191
- 98i,14n,108p,1330b,1202s stack positions out of 10000i,1000n,20000p,200000b,200000s
-<C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx10.
-pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx1
-2.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmb
-x7.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lm
-bx8.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/l
-mbx9.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/
-lmex10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/l
-m/lmmi10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public
-/lm/lmmi12.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/publ
-ic/lm/lmmi6.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/pub
-lic/lm/lmmi7.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/pu
-blic/lm/lmmi8.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/p
-ublic/lm/lmmi9.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/
-public/lm/lmr10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1
-/public/lm/lmr12.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type
-1/public/lm/lmr7.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type
-1/public/lm/lmr8.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type
-1/public/lm/lmr9.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type
-1/public/lm/lmri10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/ty
-pe1/public/lm/lmsy10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/
-type1/public/lm/lmsy6.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts
-/type1/public/lm/lmsy7.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/font
-s/type1/public/lm/lmsy8.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fon
-ts/type1/public/lm/lmsy9.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fo
-nts/type1/public/lm/lmtt10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/
-fonts/type1/public/lm/lmtt8.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX
-/fonts/type1/public/lm/lmtt9.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTe
-X/fonts/type1/public/amsfonts/symbols/msam10.pfb>
-Output written on main.pdf (27 pages, 1451011 bytes).
-PDF statistics:
- 2230 PDF objects out of 2487 (max. 8388607)
- 201 named destinations out of 1000 (max. 500000)
- 49323 words of extra memory for PDF output out of 51595 (max. 10000000)
-
+Package hyperref Warning:
