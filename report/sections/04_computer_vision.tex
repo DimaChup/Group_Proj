@@ -20,11 +20,9 @@ The model is trained as a single-class detector (target class: \textit{dummy}). 
 
 Although training was conducted at $1088$\,px resolution, TFLite inference resizes all inputs to $640\times640$. Training at higher resolution allows the network to learn fine-grained features that survive the downscale, a strategy shown to improve small-object detection~\cite{yolov8}.
 
-% --- Figure placeholder ---
 \begin{figure}[ht]
     \centering
-    % \includegraphics[width=\linewidth]{figures/cv_pipeline.pdf}
-    \fbox{\parbox{0.9\linewidth}{\centering\vspace{2em}\textbf{[Figure placeholder]}\\ Detection pipeline: camera frame $\rightarrow$ undistort $\rightarrow$ resize 640$\times$640 $\rightarrow$ normalise $\rightarrow$ inference $\rightarrow$ NMS $\rightarrow$ (found, cx, cy, conf)\vspace{2em}}}
+    \includegraphics[width=\linewidth]{cv_pipeline}
     \caption{Computer vision detection pipeline from raw camera frame to detection output. Lens undistortion is applied using precomputed remap matrices when calibration data is available.}
     \label{fig:cv_pipeline}
 \end{figure}
@@ -97,7 +95,7 @@ All benchmarks were conducted on the Raspberry Pi~5 (Broadcom BCM2712, quad-core
         \midrule
         Inference time (avg)    & 206.5\,ms  & 208.0\,ms  \\
         Throughput              & 4.8\,FPS   & 4.8\,FPS   \\
-        Detection rate          & 30/30      & 30/30      \\
+        Detection rate          & 50/50      & 50/50      \\
         Mean confidence         & 0.966      & 0.958      \\
         Model file size         & 3.2\,MB    & 3.2\,MB    \\
         Undistortion overhead   & ---        & +1.5\,ms   \\

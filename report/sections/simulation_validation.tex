@@ -16,7 +16,7 @@ Each simulation level targets a different subset of the system. Table~\ref{tab:s
 \toprule
 \textbf{System Property} & \textbf{Interactive} & \textbf{SITL + Sim Cam} & \textbf{SITL + Webcam} & \textbf{Video Replay} \\
 \midrule
-State machine logic (19 states, 32 transitions) & \checkmark & \checkmark & \checkmark & --- \\
+State machine logic (20 states, 32 transitions) & \checkmark & \checkmark & \checkmark & --- \\
 MAVLink command interface (arm, takeoff, guided, land) & --- & \checkmark & \checkmark & --- \\
 Geofence enforcement and SSSI avoidance & $\sim$ & \checkmark & \checkmark & --- \\
 Lawnmower pattern coverage & \checkmark & \checkmark & \checkmark & --- \\
@@ -78,7 +78,7 @@ Table~\ref{tab:sim-val-results} summarises the quantitative validation outcomes 
 \toprule
 \textbf{Metric} & \textbf{Simulation Result} & \textbf{Real / Video Result} \\
 \midrule
-State machine end-to-end (19 states) & All transitions correct & Bench-verified (no flight) \\
+State machine end-to-end (20 states) & All transitions correct & Bench-verified (no flight) \\
 Search pattern coverage & 100\% of polygon area & Pattern executed in SITL \\
 GPS estimate convergence (Kalman, 20+ obs) & $< 0.5$\,m from ground truth & CEP50 = 2.3\,m (DJI video) \\
 Detection rate (target $> 20 \times 20$\,px) & 100\% (synthetic background) & 87\% (real video) \\

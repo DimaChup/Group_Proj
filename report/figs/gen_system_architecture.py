@@ -89,7 +89,7 @@ block(cube_cx, cube_cy, 2.8, 1.2,
       ["Cube Orange+", "ArduCopter 4.x"], COMPUTE_BG, COMPUTE_EC, fs=10)
 
 # ── MAVProxy ─────────────────────────────────────────────────────────
-mavp_cx, mavp_cy = 5.8, 7.2
+mavp_cx, mavp_cy = 5.9, 7.2
 block(mavp_cx, mavp_cy, 1.7, 0.55,
       ["MAVProxy"], COMMS_BG, COMMS_EC, fs=8)
 
@@ -119,7 +119,7 @@ sw_band = FancyBboxPatch((6.55, sw_y - sw_h/2 - 0.15), 5.55, sw_h + 0.3,
                           boxstyle="round,pad=0.08", lw=1.0,
                           ec=SW_EC, fc="#f5f3ff", ls=":", zorder=2, alpha=0.5)
 ax.add_patch(sw_band)
-ax.text(6.7, sw_y + sw_h/2 + 0.25, "Python Software Stack",
+ax.text(6.8, sw_y + sw_h/2 + 0.25, "Python Software Stack",
         ha="left", va="bottom", fontsize=7, color=SW_EC,
         fontstyle="italic", zorder=5)
 for mx, txt in mods:
@@ -139,14 +139,14 @@ block(1.0, 4.6, 1.3, 0.55,
 block(1.0, 3.7, 1.3, 0.55,
       ["IMU / Baro", "(EKF)"], SENSOR_BG, SENSOR_EC, fs=7.5)
 
-block(4.5, 3.7, 1.3, 0.55,
+block(4.8, 3.7, 1.3, 0.55,
       ["RC Receiver", "(SBUS)"], SENSOR_BG, SENSOR_EC, fs=7.5)
 
 # ── Actuators ─────────────────────────────────────────────────────────
-block(2.0, 1.5, 2.0, 0.7,
+block(1.8, 1.5, 2.0, 0.7,
       ["Motors / ESCs", "(\u00d74)"], GROUND_BG, GROUND_EC, fs=8.5)
 
-block(4.8, 1.5, 1.4, 0.6,
+block(5.2, 1.5, 1.4, 0.6,
       ["Buzzer"], GROUND_BG, GROUND_EC, fs=8.5)
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -155,22 +155,22 @@ block(4.8, 1.5, 1.4, 0.6,
 
 # --- Ground → Airborne ---
 # RC Tx → RC Receiver (433 MHz)
-arr(2.8, 9.5 - 0.4, 4.5, 3.7 + 0.28,
-    label="433 MHz", color="#7c3aed", lw=1.3, loff=(0.9, 0.2))
+arr(2.8, 9.5 - 0.4, 4.8, 3.7 + 0.28,
+    label="433 MHz", color="#7c3aed", lw=1.3, loff=(1.0, 0.2))
 
 # Ground Station ↔ Pi (WiFi)
 arr(9.8, 9.5 - 0.4, 9.8, pi_cy + pi_h/2 + 0.05,
     label="WiFi / HTTP\nMJPEG :8090", color=COMMS_EC, bidir=True,
-    loff=(1.3, 0))
+    loff=(1.4, 0))
 
 # --- Cube ↔ MAVProxy ↔ Pi ---
-arr(cube_cx + 1.4, 6.4, mavp_cx - 0.85, mavp_cy,
+arr(cube_cx + 1.4, 6.5, mavp_cx - 0.85, mavp_cy,
     label="Serial\n921600 baud", color=COMMS_EC, bidir=True,
-    loff=(0, 0.35))
+    loff=(-0.15, 0.38))
 
-arr(mavp_cx + 0.85, mavp_cy, pi_cx - pi_w/2 + 0.1, 6.4,
-    label="UDP :14550", color=COMMS_EC, bidir=True,
-    loff=(0, 0.35))
+arr(mavp_cx + 0.85, mavp_cy, pi_cx - pi_w/2 + 0.1, 6.5,
+    label="UDP\n:14550", color=COMMS_EC, bidir=True,
+    loff=(0.1, 0.38))
 
 # --- Sensors → Cube ---
 # GPS → Cube
@@ -182,30 +182,30 @@ arr(1.0 + 0.65, 3.7, cube_cx - 1.4, 5.4,
     label="SPI", color=SENSOR_EC, loff=(-0.5, 0.3))
 
 # RC Rx → Cube
-arr(4.5 - 0.3, 3.7 + 0.28, cube_cx + 0.5, 5.4,
+arr(4.8 - 0.3, 3.7 + 0.28, cube_cx + 0.5, 5.4,
     label="SBUS", color=SENSOR_EC, loff=(-0.5, 0.18))
 
 # --- Cube → Actuators ---
 # Cube → Motors
-arr(cube_cx - 0.3, 5.4, 2.0, 1.5 + 0.35,
-    label="PWM", color=GROUND_EC, loff=(-0.6, 0))
+arr(cube_cx - 0.3, 5.4, 1.8, 1.5 + 0.35,
+    label="PWM", color=GROUND_EC, loff=(-0.55, 0))
 
 # Cube → Buzzer
-arr(cube_cx + 1.0, 5.4, 4.8, 1.5 + 0.3,
-    label="MAVLink", color=GROUND_EC, loff=(0.5, 0.2))
+arr(cube_cx + 1.0, 5.4, 5.2, 1.5 + 0.3,
+    label="MAVLink", color=GROUND_EC, loff=(0.7, -0.15))
 
 # --- Pi internals ---
 # Pi → SW modules (vertical connectors)
-for mx in [7.2, 8.5, 9.8, 11.1]:
+for mx in [7.3, 8.65, 10.0, 11.35]:
     arr(mx, pi_cy - pi_h/2, mx, sw_y + sw_h/2,
         color=COMPUTE_EC, lw=0.7)
 
 # Vision → YOLOv8n
-arr(8.5, sw_y - sw_h/2, 8.5, 2.9 + 0.3,
-    label="Inference\n~70 ms (NCNN)", color=COMPUTE_EC, loff=(-0.95, 0), lw=1.1)
+arr(8.65, sw_y - sw_h/2, 8.65, 2.9 + 0.3,
+    label="Inference\n~70 ms (NCNN)", color=COMPUTE_EC, loff=(-1.0, 0), lw=1.1)
 
 # Camera → Pi
-arr(10.5, 2.9 + 0.3, 10.5, pi_cy - pi_h/2 - 0.05,
+arr(10.8, 2.9 + 0.3, 10.8, pi_cy - pi_h/2 - 0.05,
     label="CSI-2", color=SENSOR_EC, loff=(0.55, 0))
 
 # ═══════════════════════════════════════════════════════════════════════

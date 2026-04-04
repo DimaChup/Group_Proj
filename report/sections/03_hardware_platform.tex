@@ -1,16 +1,11 @@
 \section{Hardware Platform}\label{sec:hardware}
 
-The hardware platform integrates a quadcopter airframe, an open-source flight controller, a single-board companion computer, and a global shutter camera into a self-contained system capable of autonomous flight and onboard inference. A central design goal was to demonstrate that effective SAR capability does not require the price point of commercial platforms: the complete system costs under \pounds500, compared with \pounds5\,000+ for a DJI Matrice 30T or \pounds12\,000+ for a DJI Matrice 350 RTK with thermal payload. The trade-off is manual integration effort and a narrower sensor suite, but the core capability---autonomous visual search with onboard AI---is preserved.
+The hardware platform integrates a quadcopter airframe, an open-source flight controller, a single-board companion computer, and a global shutter camera into a self-contained system capable of autonomous flight and onboard inference. A central design goal was to demonstrate that effective SAR capability does not require the price point of commercial platforms: the complete system costs approximately \pounds565, compared with \pounds5\,000+ for a DJI Matrice 30T or \pounds12\,000+ for a DJI Matrice 350 RTK with thermal payload. The trade-off is manual integration effort and a narrower sensor suite, but the core capability---autonomous visual search with onboard AI---is preserved.
 
 % ── Block diagram placeholder ─────────────────────────────────────────
 \begin{figure}[ht]
   \centering
-  % \includegraphics[width=\linewidth]{hardware_block_diagram}
-  \fbox{\parbox{0.92\linewidth}{\centering\vspace{2.8cm}
-    \textit{Hardware block diagram: Camera $\xrightarrow{\text{CSI}}$ Pi~5
-    $\xrightarrow{\text{UART}}$ Cube Orange+
-    $\xrightarrow{\text{Radio}}$ Ground Station}
-  \vspace{2.8cm}}}
+  \includegraphics[width=\linewidth]{pi_system}
   \caption{Hardware block diagram showing data and command flow between subsystems.
            Solid lines indicate wired links; dashed lines indicate wireless.}
   \label{fig:hw-block}

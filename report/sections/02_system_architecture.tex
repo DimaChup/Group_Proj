@@ -22,14 +22,14 @@ The system comprises eleven Python modules totalling approximately 4\,400 lines 
 
 \begin{figure}[H]
 \centering
-\fbox{\parbox{0.8\textwidth}{\centering\vspace{2cm}System Architecture Block Diagram\vspace{2cm}}}
+\includegraphics[width=0.85\textwidth]{architecture}
 \caption{Software module diagram. Arrows indicate data dependencies. \texttt{vision.py} and \texttt{planning.py} are independent modules with no cross-dependencies; both feed into \texttt{main.py}, which orchestrates the mission state machine.}
 \label{fig:architecture}
 \end{figure}
 
 \begin{figure}[H]
 \centering
-\fbox{\parbox{0.85\textwidth}{\centering\vspace{2cm}Module Dependency Graph\vspace{2cm}}}
+\includegraphics[width=0.85\textwidth]{system_architecture}
 \caption{Module dependency graph. \texttt{config.py} sits at the base, read by eight modules. Independent modules (\texttt{vision.py}, \texttt{planning.py}, \texttt{gps\_utils.py}) have no cross-dependencies. The orchestrator (\texttt{main.py}) inherits from \texttt{state\_machine.py} via a mixin pattern, which in turn calls \texttt{navigation.py} for MAVLink commands.}
 \label{fig:arch-block}
 \end{figure}
@@ -39,7 +39,7 @@ The modules are organised into four layers, listed from lowest dependency to hig
 \paragraph{Configuration layer.}
 \textbf{config.py} (267\,lines) centralises all tuneable parameters: flight altitudes and speeds, camera sensor dimensions and focal length, detection confidence thresholds, servo PWM values, GPS zone polygons, and geofence buffer distances. It also performs platform auto-detection at import time (Section~\ref{sec:arch-deployment}). The module contains values only---no control logic beyond auto-detection and KML parsing.
 
-\textbf{states.py} (22\,lines) defines a state enumeration with 19 named states spanning the full mission lifecycle, including \texttt{INIT}, \texttt{CONNECTING}, \texttt{ARMING}, \texttt{TAKEOFF}, \texttt{TRANSIT\_TO\_SEARCH}, \texttt{SEARCH}, \texttt{CENTERING}, \texttt{DESCENDING}, \texttt{VERIFY}, \texttt{APPROACH}, \texttt{LANDING}, and \texttt{DONE}. Each state maps to a handler function in the orchestrator. Additional states cover manual override (\texttt{MANUAL}), return-to-home (\texttt{RETURN\_HOME}), and hover behaviours.
+\textbf{states.py} (22\,lines) defines a state enumeration with 20 named states spanning the full mission lifecycle, including \texttt{INIT}, \texttt{CONNECTING}, \texttt{ARMING}, \texttt{TAKEOFF}, \texttt{TRANSIT\_TO\_SEARCH}, \texttt{SEARCH}, \texttt{CENTERING}, \texttt{DESCENDING}, \texttt{VERIFY}, \texttt{APPROACH}, \texttt{LANDING}, and \texttt{DONE}. Each state maps to a handler function in the orchestrator. Additional states cover manual override (\texttt{MANUAL}), return-to-home (\texttt{RETURN\_HOME}), and hover behaviours.
 
 \paragraph{Independent modules.}
 Four modules sit above the configuration layer with no mutual dependencies:
@@ -75,7 +75,7 @@ The pipeline from camera frame to motor command traverses five stages:
 \begin{enumerate}
     \item \textbf{Capture.} The vision module acquires a frame from the camera ($1456\times1088$ on the Pi, $640\times480$ in simulation), applies lens undistortion from a precomputed calibration~\cite{lens_calibration}, and resizes the frame to $640\times640$ for model input.
 
-    \item \textbf{Detection.} The YOLOv8n model runs inference and returns pixel coordinates $(x, y)$ in model space along with a confidence score. On the Pi, this takes approximately 200\,ms per frame using the TFLite XNNPACK CPU delegate~\cite{david2021tensorflow, tflite}.
+    \item \textbf{Detection.} The YOLOv8n model runs inference and returns pixel coordinates $(x, y)$ in model space along with a confidence score. On the Pi, this takes approximately 206\,ms per frame using the TFLite XNNPACK CPU delegate~\cite{david2021tensorflow, tflite}.
 
     \item \textbf{GPS estimation.} The GPS utilities module converts the pixel coordinates to a world-frame GPS position using the drone's current latitude, longitude, altitude, and heading from MAVLink telemetry. The conversion uses the calibrated camera focal length (5.46\,mm) and sensor width (5.02\,mm) to compute the ground footprint at the current altitude, then projects the pixel offset from the frame centre onto a flat-Earth coordinate system.
 

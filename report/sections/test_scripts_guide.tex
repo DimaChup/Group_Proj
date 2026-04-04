@@ -57,6 +57,8 @@ Three laptop-only drawing utilities support the flight scripts without running o
 % ─────────────────────────────────────────────────────────────────────
 \subsection{Hardware Tests}\label{sec:hw-tests}
 
+Table~\ref{tab:hw-tests} lists all hardware test scripts that run on the Pi bench with zero flight commands.
+
 \begin{table}[H]
 \centering
 \caption{Hardware test scripts.  All run on the Pi bench with zero flight commands.}
@@ -88,7 +90,7 @@ Three laptop-only drawing utilities support the flight scripts without running o
 % ─────────────────────────────────────────────────────────────────────
 \subsection{Calibration Tests}\label{sec:cal-tests}
 
-Calibration scripts measure physical parameters that the coordinate-transform pipeline (Section~\ref{sec:localisation}) depends on.  Errors in these parameters propagate directly into GPS estimation accuracy.
+Calibration scripts (Table~\ref{tab:cal-tests}) measure physical parameters that the coordinate-transform pipeline (Section~\ref{sec:localisation}) depends on.  Errors in these parameters propagate directly into GPS estimation accuracy.
 
 \begin{table}[H]
 \centering
@@ -115,7 +117,7 @@ Calibration scripts measure physical parameters that the coordinate-transform pi
 % ─────────────────────────────────────────────────────────────────────
 \subsection{Experiment Scripts}\label{sec:experiment-scripts-app}
 
-Six structured experiment scripts are designed to run passively during Tier~4 manual flights.  Each connects to the MAVLink telemetry stream (read-only) and the camera, but issues zero flight commands.  All output timestamped CSV files suitable for direct statistical analysis.
+Six structured experiment scripts (Table~\ref{tab:experiment-scripts}) are designed to run passively during Tier~4 manual flights.  Each connects to the MAVLink telemetry stream (read-only) and the camera, but issues zero flight commands.  All output timestamped CSV files suitable for direct statistical analysis.
 
 \begin{table}[H]
 \centering

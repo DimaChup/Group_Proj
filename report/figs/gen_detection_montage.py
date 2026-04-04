@@ -7,27 +7,29 @@ arranges them in a 2x2 grid saved as PDF and PNG.
 
 Falls back to a placeholder montage if the video or model is unavailable.
 
-Usage:
-    python report/figs/gen_detection_montage.py
+Usage (from project root, using test_env which has ultralytics):
+    test_env/Scripts/python report/figs/gen_detection_montage.py
 """
-import sys, os, re, math
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+import sys, os, re
+
+PROJECT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.insert(0, PROJECT)
 
 import cv2
 import numpy as np
 
 # ── Paths ──
-PROJECT  = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-VIDEO    = os.path.join(PROJECT, "RealVideo", "DJI_0001_1456x1088_cropped_30fps.mp4")
-SRT      = os.path.join(PROJECT, "RealVideo", "DJI_20260311172332_0001_V.SRT")
-MODEL    = os.path.join(PROJECT, "best.tflite")
-OUT_DIR  = os.path.dirname(os.path.abspath(__file__))
-OUT_PNG  = os.path.join(OUT_DIR, "detection_montage.png")
-OUT_PDF  = os.path.join(OUT_DIR, "detection_montage.pdf")
+VIDEO   = os.path.join(PROJECT, "RealVideo", "DJI_0001_1456x1088_cropped_30fps.mp4")
+SRT     = os.path.join(PROJECT, "RealVideo", "DJI_20260311172332_0001_V.SRT")
+PT_MODEL = os.path.join(PROJECT, "cv_models", "sar_v2_1088", "best.pt")
+OUT_DIR = os.path.dirname(os.path.abspath(__file__))
+OUT_PNG = os.path.join(OUT_DIR, "detection_montage.png")
+OUT_PDF = os.path.join(OUT_DIR, "detection_montage.pdf")
 
 TARGET_ALTS = [15, 25, 35, 50]   # metres
-ALT_TOL     = 3                   # accept frame if within +/- this of target
-CONF_THRESH = 0.25                # lowered to maximise chance of finding detections
+ALT_TOL     = 3                   # accept if within +/- this of target
+CONF_THRESH = 0.25
+MAX_TRIES   = 10                  # max frames to try per altitude band
 
 
 def parse_srt(srt_path):
@@ -52,50 +54,41 @@ def parse_srt(srt_path):
     return telem
 
 
-def draw_detection(frame, cx, cy, bw, bh, conf, alt_label):
+def draw_detection(frame, x1, y1, x2, y2, conf, alt_label):
     """Draw green bbox, confidence, and altitude label on the frame."""
-    x1 = int(cx - bw / 2)
-    y1 = int(cy - bh / 2)
-    x2 = int(cx + bw / 2)
-    y2 = int(cy + bh / 2)
-
     # Green bounding box
     cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 220, 0), 3)
 
-    # Confidence badge
+    # Confidence badge above box
     label = f"{conf:.0%}"
     (tw, th), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.8, 2)
     cv2.rectangle(frame, (x1, y1 - th - 10), (x1 + tw + 8, y1), (0, 220, 0), -1)
     cv2.putText(frame, label, (x1 + 4, y1 - 5),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 0), 2)
 
-    # Altitude overlay (top-left)
+    # Altitude overlay (top-left, with shadow for readability)
     cv2.putText(frame, alt_label, (20, 50),
-                cv2.FONT_HERSHEY_SIMPLEX, 1.2, (255, 255, 255), 3, cv2.LINE_AA)
+                cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 0, 0), 4, cv2.LINE_AA)
     cv2.putText(frame, alt_label, (20, 50),
-                cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 180, 0), 2, cv2.LINE_AA)
+                cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 220, 0), 2, cv2.LINE_AA)
 
     return frame
 
 
 def try_real_montage():
     """Attempt to generate montage from real video + model. Returns True on success."""
-    if not os.path.exists(VIDEO):
-        print(f"Video not found: {VIDEO}")
-        return False
-    if not os.path.exists(SRT):
-        print(f"SRT not found: {SRT}")
-        return False
-
-    # Load model
-    try:
-        from vision import VisionSystem
-        vs = VisionSystem(camera_index=None, model_path=MODEL)
-        if not vs.using_ai:
-            print("AI model failed to load")
+    for path, name in [(VIDEO, "Video"), (SRT, "SRT"), (PT_MODEL, "Model")]:
+        if not os.path.exists(path):
+            print(f"{name} not found: {path}")
             return False
+
+    # Load model (ultralytics is much faster than TFLite on laptop)
+    try:
+        from ultralytics import YOLO
+        model = YOLO(PT_MODEL)
+        print(f"Model loaded: {PT_MODEL}")
     except Exception as e:
-        print(f"VisionSystem error: {e}")
+        print(f"YOLO load error: {e}")
         return False
 
     # Parse telemetry
@@ -112,7 +105,7 @@ def try_real_montage():
     total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     print(f"Video: {total} frames, SRT: {len(telem)} entries")
 
-    # Build altitude index: for each target alt, collect candidate frame numbers
+    # Build candidate lists per altitude, sorted by closeness to target
     candidates = {a: [] for a in TARGET_ALTS}
     for fnum, t in telem.items():
         alt = t["rel_alt"]
@@ -121,45 +114,65 @@ def try_real_montage():
                 candidates[ta].append((fnum, alt))
 
     for ta in TARGET_ALTS:
-        # Sort by closeness to target altitude
         candidates[ta].sort(key=lambda x: abs(x[1] - ta))
+        candidates[ta] = candidates[ta][:MAX_TRIES]
         print(f"  {ta}m: {len(candidates[ta])} candidate frames")
 
-    # For each altitude, scan candidates until we find a detection
-    results = {}  # alt -> (frame_img, cx, cy, bw, bh, conf, actual_alt)
-
+    # Collect unique frames needed, sorted for sequential reads
+    needed = {}  # fnum -> [(target_alt, actual_alt), ...]
     for ta in TARGET_ALTS:
-        found = False
         for fnum, actual_alt in candidates[ta]:
-            if fnum < 1 or fnum > total:
-                continue
-            cap.set(cv2.CAP_PROP_POS_FRAMES, fnum - 1)
-            ret, frame = cap.read()
-            if not ret:
-                continue
+            if 1 <= fnum <= total:
+                needed.setdefault(fnum, []).append((ta, actual_alt))
 
-            ok, cx, cy, conf = vs.detect_in_image(frame)
-            if ok and conf >= CONF_THRESH:
-                bw = vs.last_bbox_w
-                bh = vs.last_bbox_h
-                results[ta] = (frame.copy(), cx, cy, bw, bh, conf, actual_alt)
-                print(f"  {ta}m -> frame {fnum} (alt={actual_alt:.1f}m, conf={conf:.2f})")
-                found = True
-                break
+    sorted_frames = sorted(needed.keys())
 
-        if not found:
-            print(f"  {ta}m -> NO detection found among {len(candidates[ta])} candidates")
+    results = {}  # target_alt -> (frame, x1, y1, x2, y2, conf, actual_alt)
+    done_alts = set()
+
+    for fnum in sorted_frames:
+        if len(done_alts) == len(TARGET_ALTS):
+            break
+
+        targets_here = [(ta, aa) for ta, aa in needed[fnum] if ta not in done_alts]
+        if not targets_here:
+            continue
+
+        cap.set(cv2.CAP_PROP_POS_FRAMES, fnum - 1)
+        ret, frame = cap.read()
+        if not ret:
+            continue
+
+        # Run YOLO inference
+        yolo_results = model(frame, conf=CONF_THRESH, verbose=False)
+        boxes = yolo_results[0].boxes if yolo_results else None
+
+        if boxes is not None and len(boxes) > 0:
+            # Take highest-confidence detection
+            best_idx = boxes.conf.argmax()
+            conf = boxes.conf[best_idx].item()
+            x1, y1, x2, y2 = [int(v) for v in boxes.xyxy[best_idx].tolist()]
+
+            for ta, actual_alt in targets_here:
+                if ta not in done_alts:
+                    results[ta] = (frame.copy(), x1, y1, x2, y2, conf, actual_alt)
+                    done_alts.add(ta)
+                    print(f"  {ta}m -> frame {fnum} (alt={actual_alt:.1f}m, "
+                          f"conf={conf:.2f}, box={x2-x1}x{y2-y1}px)")
 
     cap.release()
 
+    for ta in TARGET_ALTS:
+        if ta not in results:
+            print(f"  {ta}m -> NO detection found")
+
     if len(results) < 2:
-        print("Too few detections found, falling back to placeholder")
+        print("Too few detections, falling back to placeholder")
         return False
 
     # Build 2x2 montage
     cell_w, cell_h = 728, 544  # half of 1456x1088
     montage = np.zeros((cell_h * 2, cell_w * 2, 3), dtype=np.uint8)
-
     positions = [(0, 0), (1, 0), (0, 1), (1, 1)]  # (col, row)
 
     for idx, ta in enumerate(TARGET_ALTS):
@@ -168,12 +181,11 @@ def try_real_montage():
         y_off = row * cell_h
 
         if ta in results:
-            frame, cx, cy, bw, bh, conf, actual_alt = results[ta]
+            frame, bx1, by1, bx2, by2, conf, actual_alt = results[ta]
             alt_label = f"{actual_alt:.0f}m altitude"
-            draw_detection(frame, cx, cy, bw, bh, conf, alt_label)
+            draw_detection(frame, bx1, by1, bx2, by2, conf, alt_label)
             cell = cv2.resize(frame, (cell_w, cell_h), interpolation=cv2.INTER_AREA)
         else:
-            # Grey placeholder for this altitude
             cell = np.full((cell_h, cell_w, 3), 40, dtype=np.uint8)
             text = f"No detection at {ta}m"
             (tw, th), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 1.0, 2)
@@ -184,15 +196,15 @@ def try_real_montage():
 
         montage[y_off:y_off + cell_h, x_off:x_off + cell_w] = cell
 
-    # Thin white grid lines
+    # White grid lines
     cv2.line(montage, (cell_w, 0), (cell_w, cell_h * 2), (255, 255, 255), 2)
     cv2.line(montage, (0, cell_h), (cell_w * 2, cell_h), (255, 255, 255), 2)
 
-    # Save
+    # Save PNG
     cv2.imwrite(OUT_PNG, montage)
     print(f"Saved: {OUT_PNG}")
 
-    # PDF via matplotlib
+    # Save PDF via matplotlib
     try:
         import matplotlib
         matplotlib.use("Agg")
@@ -221,7 +233,6 @@ def generate_placeholder():
     fig, axes = plt.subplots(2, 2, figsize=(12, 9))
     fig.suptitle("Detection Montage (Placeholder)", fontsize=16, fontweight="bold")
 
-    # Simulate decreasing bbox size with altitude
     bbox_sizes = {15: (120, 180), 25: (70, 110), 35: (50, 75), 50: (30, 50)}
 
     for idx, (ax, alt) in enumerate(zip(axes.flat, TARGET_ALTS)):
@@ -239,7 +250,6 @@ def generate_placeholder():
         )
         ax.add_patch(rect)
 
-        # Confidence label
         conf = max(0.35, 0.97 - alt * 0.012)
         ax.text(cx - bw / 2, cy - bh / 2 - 8, f"{conf:.0%}",
                 color="black", fontsize=10, fontweight="bold",

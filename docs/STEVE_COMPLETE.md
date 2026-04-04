@@ -1,36 +1,50 @@
-# MESSAGE TO STEVE — Send Friday 4 April morning
+# AENGM0074 -- Communication with Steve: Scoring Clarity and Assessment Fairness
 
 ---
 
-## The Message (ready to copy-paste)
+## Key Points to Make
+
+1. **D7 update is overdue.** Steve promised a draft update for the personal reflection report -- it has not been issued. The brief still reads "DETAIL TO FOLLOW."
+2. **"Implemented" needs defining.** The top rubric band says technologies "implemented highly effectively." We need to know whether simulation-validated work counts at the same level as outdoor flight demonstration.
+3. **"Taking it into account" needs specifics.** Steve acknowledged our hardware situation verbally. We need written clarity on what that means for assessment.
+4. **Our evidence base is strong.** 12/12 requirements met in SITL, 58 test scripts, retrained AI model (mAP50 = 0.995), Pi hardware integration verified, 198-page report. The gap is outdoor flight data -- and that gap is not our fault.
+5. **We are seeking guidance, not lodging a complaint.** The goal is clarity so we can focus remaining effort effectively.
+
+---
+
+# PART 1: PRIMARY MESSAGE TO STEVE
+
+**Send: Friday 4 April morning**
+
+---
 
 Hi Steve,
 
-I'm deep into the group report and want to make sure I'm targeting the right things for the remaining time I have. The brief gives the rubric but I'd really appreciate some clarity on what distinguishes a 83+ submission from a 90+ one, specifically for each criterion. I've read the brief carefully and I have some specific questions if you don't mind.
+I am working through the final submissions and want to make sure I am targeting the right areas. I have read the brief carefully and have a few specific questions, if you do not mind.
 
 **Specialist Skills (40%)**
 
-The top band says technologies "implemented highly effectively, showing initiative, autonomy, and creativity." I want to understand what "implemented" means in practice. Does it require outdoor flight demonstration with real data, or does a system that's fully validated in simulation, bench-tested on Pi hardware, and backed by extensive quantitative evidence count at the same level?
+The top band refers to technologies "implemented highly effectively, showing initiative, autonomy, and creativity." I would like to understand what "implemented" means in practice. Does it require outdoor flight demonstration with real data, or can a system that is fully validated in simulation, bench-tested on Pi hardware, and supported by quantitative evidence reach the same level?
 
-To give you a sense of where we are: we have all 12 requirements met end-to-end in SITL, 58 test scripts across 6 categories, attitude-compensated GPS target estimation verified against DJI flight video (CEP50 = 2.3m), a retrained YOLOv8 model (mAP50 = 0.995 on 366 images), Pi hardware integration verified (camera, Cube, inference at 4.8 FPS), and a full geofence with SSSI avoidance. What we don't have is weeks of outdoor flight data, because our drone hardware wasn't functional until the Easter days you arranged.
+To give context: we have all 12 requirements met end-to-end in SITL, 58 test scripts across 6 categories, attitude-compensated GPS target estimation verified against DJI flight video (CEP50 = 2.3 m), a retrained YOLOv8 model (mAP50 = 0.995 on 366 images), Pi hardware integration verified (camera, Cube, inference at 4.8 FPS), and a geofence with SSSI avoidance. What we do not have is extensive outdoor flight data, because our drone hardware was not functional until the Easter sessions you arranged.
 
-Can a simulation-validated system with this depth of evidence realistically score 90+ on Specialist Skills? Or is there an implicit expectation of demonstrated outdoor flight that would cap us lower regardless of software quality?
+Can a simulation-validated system with this depth of evidence realistically score 90+ on Specialist Skills, or is there an implicit expectation of demonstrated outdoor flight that would cap us lower regardless of software quality?
 
 **Decision Making (40%)**
 
-The top band mentions "confidence and creativity in adapting to changing and unfamiliar circumstances." We have MCDA trade studies, STEEPLE analysis, a 216-configuration parameter sweep for the search pattern, weather adaptation, and a whole section on decisions that changed during the project. Our hardware situation essentially forced us to pioneer a simulation-first development approach -- building a complete SITL environment, synthetic training data pipeline, and DJI video analysis as proxies for the real-world data we couldn't collect. Is that the kind of "adapting to challenging circumstances" this criterion rewards? Is there anything specific you look for that separates a strong submission from an outstanding one here?
+The top band mentions "confidence and creativity in adapting to changing and unfamiliar circumstances." We have MCDA trade studies, STEEPLE analysis, a 216-configuration parameter sweep for the search pattern, weather adaptation, and a section on decisions that changed during the project. Our hardware situation essentially required us to develop a simulation-first approach -- building a complete SITL environment, synthetic training data pipeline, and DJI video analysis as proxies for real-world data we could not collect. Is that the kind of adaptation this criterion rewards? Is there anything specific that separates a strong submission from an outstanding one here?
 
 **Communication (20%)**
 
-The top band says "engaging and professional, making use of innovative techniques and resources." We have TikZ-generated diagrams, pgfplots data visualisations, a professional LaTeX layout, and a comprehensive report. What we don't have many of are photos of real hardware in the field or screenshots from actual ground station use during outdoor flights. How important are real-world photos compared to generated technical diagrams? Would the absence of hardware photography significantly affect the Communication score?
+The top band says "engaging and professional, making use of innovative techniques and resources." We have TikZ-generated diagrams, pgfplots data visualisations, a professional LaTeX layout, and a comprehensive report. What we do not have many of are photographs of real hardware in the field or screenshots from outdoor ground station use. How important are real-world photographs compared to generated technical diagrams? Would the absence of hardware photography significantly affect the Communication score?
 
 **D7 Personal Reflection**
 
-You mentioned a draft update for D7 with more details on what's expected -- has that been issued? The brief still says "DETAIL TO FOLLOW" with the yellow highlight, and I want to make sure I'm not missing something. We've been working from the Appendix B rubric (Teamwork, Self-management, Insight) and the AHEP4 standards (M5, M7, M16, M17), but I'm not sure if there's a specific structure you're expecting or whether the three criteria are equally weighted.
+You mentioned a draft update for D7 with more details on what is expected -- has that been issued? The brief still says "DETAIL TO FOLLOW" with a yellow highlight, and I want to make sure I am not missing something. We have been working from the Appendix B rubric (Teamwork, Self-management, Insight) and the AHEP4 standards (M5, M7, M16, M17), but I am unsure whether there is a specific structure you expect or whether the three criteria are equally weighted.
 
-**One last thing**
+**Final question**
 
-I've probably put in 3x the expected hours on this unit. A lot of that went into building workarounds for the hardware situation -- the simulation environment, synthetic data generation, video analysis tools, the entire progressive testing infrastructure. I built all of that because the drone wasn't available, and I wanted to make sure the engineering output was still there even without flight data. I'm not looking for sympathy, I genuinely just want to make sure the work counts and I'd really value your guidance on where to focus my remaining time before submission.
+I have spent considerably more hours than expected on this unit, much of it building workarounds for the hardware situation -- the simulation environment, synthetic data generation, video analysis tools, the entire progressive testing infrastructure. I built all of that because the drone was not available and I wanted to ensure the engineering output was still substantive even without flight data. I am not looking for special treatment; I would simply appreciate your guidance on where to focus my remaining time before submission.
 
 Thanks,
 Dmytro
@@ -39,281 +53,31 @@ Dmytro
 
 ## Strategy Notes
 
-### What we're hoping Steve says
-1. **Best case**: "Simulation-validated work absolutely counts. Focus on showing the depth of your testing and decision-making process. 90+ is achievable." -- This gives us written confirmation and a clear target.
-2. **Good case**: "The rubric doesn't require outdoor flight. Show comprehensive evidence and justified decisions." -- Implicit green light.
-3. **Neutral case**: "It depends on the quality of the report." -- Not helpful, but not harmful. Follow up with: "Could you give an example of what would push a report from 83 to 90+ in Specialist Skills?"
+### Possible responses and how to handle them
 
-### What to do if he says simulation doesn't fully count
-- Do NOT panic. The rubric literally says "implemented highly effectively" -- it doesn't say "demonstrated outdoors."
-- Ask: "Is there anything we can do in the remaining time to strengthen that area? Would additional quantitative analysis from the Easter bench testing help?"
-- Pivot the report framing: emphasise the PROCESS and EVIDENCE-BASED decisions, not just the end product.
-- Lean harder into Decision Making (40%) where our adaptation story is genuinely strong -- hardware constraints forced creative solutions, which is exactly what the criterion rewards.
-- Worst case: accept 75-78 on Specialist, push for 90+ on Decision Making and Communication to keep the overall above 83.
+1. **Best case:** "Simulation-validated work absolutely counts. Focus on showing the depth of your testing and decision-making process. 90+ is achievable." This gives written confirmation and a clear target.
+2. **Good case:** "The rubric does not require outdoor flight. Show comprehensive evidence and justified decisions." Implicit confirmation.
+3. **Neutral case:** "It depends on the quality of the report." Follow up with: "Could you give an example of what would push a report from 83 to 90+ in Specialist Skills?"
+
+### If he indicates simulation does not fully count
+
+- The rubric says "implemented highly effectively" -- it does not say "demonstrated outdoors."
+- Ask: "Is there anything we can do in the remaining time to strengthen that area? Would additional quantitative analysis from Easter bench testing help?"
+- Adjust report framing: emphasise process and evidence-based decisions, not just the end product.
+- Lean into Decision Making (40%) where the adaptation narrative is genuinely strong -- hardware constraints forced creative solutions, which is what the criterion rewards.
+- If necessary: accept 75-78 on Specialist, target 90+ on Decision Making and Communication to keep the overall above 83.
 
 ### Follow-up plan
-1. **If he replies by text**: screenshot the reply immediately. This is your written evidence.
-2. **If he gives a vague reply**: send a clarifying follow-up: "Just to make sure I understand -- you're saying [paraphrase]. Is that right?" Force specificity.
-3. **If he says "come talk to me"**: go, but afterwards email: "Hi Steve, just to confirm our conversation today -- you said [X, Y, Z]. Thanks for the guidance." Create the paper trail.
-4. **If he doesn't reply by Monday**: send a gentle nudge: "Hi Steve, just following up on my message from Friday -- any guidance you could share would be really helpful as I'm finalising the reports this week."
-5. **If his reply is concerning** (e.g., outdoor data is required for top marks): escalate to the formal complaint letter (Part 2 below), but only as a last resort. Try to resolve informally first.
 
-### Why this message works
-- Opens with a genuine question, not a complaint
-- Shows we've read the rubric word-by-word (quotes specific phrases)
-- Demonstrates massive effort without bragging (the numbers speak)
-- Mentions hardware situation naturally, as context for a question, not as a grievance
-- Asks for actionable guidance ("where should I focus?") which makes Steve the helper
-- The D7 follow-up is a gentle reminder that he promised something and hasn't delivered
-- It's long enough to show seriousness but structured enough that he can skim the bold headings
-- Every section ends with a specific question he can answer
+1. **If he replies by text:** save the reply immediately -- this is written evidence.
+2. **If he gives a vague reply:** send a clarifying follow-up: "Just to make sure I understand -- you are saying [paraphrase]. Is that correct?" Seek specificity.
+3. **If he says "come talk to me":** go, then follow up by email: "Hi Steve, just to confirm our conversation today -- you said [X, Y, Z]. Thanks for the guidance." Create a paper trail.
+4. **If he does not reply by Monday:** send a brief follow-up: "Hi Steve, just following up on my message from Friday -- any guidance you could share would be really helpful as I am finalising the reports this week."
+5. **If his reply raises concerns** (e.g., outdoor data is required for top marks): consider the formal feedback letter (Part 2 below) as a last resort. Try to resolve informally first.
 
 ---
 
----
-
-# AENGM0074 — Complete Context Document
-
-**Everything in one place: complaint, chat history, context, what we built, what we lost.**
-
----
-
-## The Situation
-
-Three teams on AENGM0074. Two received working drones. Ours didn't work for the entire teaching period.
-
-### Flight Day Timeline
-
-| Date | What | Outcome | Impact |
-|------|------|---------|--------|
-| ~12 March | Flight Day 1 | Drone hardware didn't work. Weather also poor. | We had scripts, checklists, progressive test plan READY. All wasted. |
-| ~19 March | Flight Day 2 | Drone didn't take off — hardware issues (GPS, joints) | Again prepared. Again nothing. Two precious flight days lost. |
-| 30 April | Easter Day 1 | Steve arranged extra days during Easter holiday | Finally got some bench testing done. Pi + Cube + camera working. |
-| 31 April | Easter Day 2 | Continued Easter testing | FOV calibration, lens calibration, benchmarks. First real hardware data. |
-| Demo Day | Demonstration | Industry guests, presentation — not a real testing day | Third "flight day" is actually the demo. No time for iteration. |
-
-**Total real flight opportunities: 2. Both failed due to hardware. Not our fault.**
-**Easter days shouldn't count — it's a holiday. We travelled back to Bristol specifically for this.**
-**Demo day is the third day — but that's the presentation, not testing.**
-
-### What Steve Said
-
-After the second failed flight day, Steve mentioned:
-- He would **try to get us a working drone** ("Sid's on it but TBC")
-- We could **try using the green team's drone** as a backup
-- He would **take into account** that we didn't have a working drone
-- Our situation would be **reflected in assessment**
-
-### Why Using Another Team's Drone Isn't a Real Solution
-
-- Our Pi integration involves specific wiring, network configuration, weeks of calibration
-- Scheduling around two teams + shared vehicle + farm availability is impractical
-- Risks disrupting a team whose hardware actually works
-- A last-minute swap introduces new unknowns at the worst possible time
-- The course brief doesn't ask us to build a drone — it assumes a working platform
-
----
-
-## What We Had Ready (Day 1)
-
-**We were ready to fly on Day 1.** Had the hardware worked, we would have been far ahead:
-
-### Software (all built and tested in simulation BEFORE Day 1):
-- Complete 20-state state machine (INIT → SEARCH → DETECT → CENTER → VERIFY → LAND → RTL)
-- Lawnmower search pattern generator with 216-configuration parametric sweep
-- YOLOv8n AI detection model (mAP50 = 0.995, retrained 3 times)
-- Web ground station with MJPEG stream and browser controls
-- 4-layer geofence (Flight Area, SSSI NFZ, repulsive buffer, altitude cap)
-- Progressive test scripts (58 scripts across 6 categories)
-- Passive detection mode (zero commands, safe for manual flight)
-- Interactive simulator for end-to-end mission testing
-
-### Test Plan (printed checklist, ready to execute):
-1. Mission Planner AUTO waypoints (no custom code) — verify Cube, GPS, motors
-2. Waypoint test script (our code, no CV) — verify MAVLink commands work on real hardware
-3. Manual flight + passive CV — pilot flies, Pi detects + logs
-4. Autonomous search + CV logging only — search pattern, detect, but don't act
-5. Full autonomous mission — everything enabled
-
-### Calibration Plan:
-- FOV calibration (tape measure at 1m)
-- Lens distortion calibration (checkerboard)
-- GPS accuracy measurement (CEP50)
-- Detection altitude sweep
-- Speed vs detection rate
-
-**All of this was wasted on Day 1 and Day 2 because the hardware didn't work.**
-
----
-
-## What We Lost
-
-### Had Day 1 worked (12 March):
-- Passive detection testing ✓
-- Altitude threshold calibration ✓
-- GPS estimation pipeline validation ✓
-- Real outdoor detection data for model retraining ✓
-- Confidence in the system before Day 2 ✓
-
-### Had Day 2 worked (19 March):
-- Autonomous waypoint flight ✓
-- Real-world AI benchmarking ✓
-- Two full fly-test-tune-fly iteration cycles ✓
-- The feedback loop this course is designed around ✓
-
-### What we got instead:
-- Zero flight data until Easter (6+ weeks after first scheduled flight)
-- No way to verify if our software actually works on real hardware
-- Stressful because we couldn't build on top of unverified foundations
-- What if our detection doesn't work from altitude? We had no way to know.
-- What if GPS estimation is off? No way to verify.
-- We were building blind — simulation said it works, but real world is different
-
-### The Easter breakthrough:
-- Finally got hardware working during Easter holiday (which shouldn't count)
-- Pi + Cube + camera all connected and communicating
-- FOV calibrated (5.46mm), lens calibrated (RMS 0.399)
-- Benchmark: 206.5ms inference, 4.8 FPS, 50/50 detection at 0.966 confidence
-- DJI video analysis as proxy for altitude testing
-- But by then it was too late for the full iteration cycle we planned
-
----
-
-## What We Built Despite This
-
-Without a flyable drone for approximately two months, we built our own path forward:
-
-### System (4,400+ lines of code, 11 modules):
-- Complete autonomous SAR mission pipeline
-- Dual-backend CV (Ultralytics laptop / TFLite Pi)
-- Config auto-detection (same code runs on laptop and Pi)
-- Headless operation (SSH/PuTTY + browser ground station)
-
-### Testing (58 scripts, 6 categories):
-- Hardware checks, flight progression, diagnostics, calibration, experiments, laptop tools
-- Progressive trust ladder: bench → passive → waypoint → autonomous
-- 127 unit test functions across 6 test files
-
-### AI/CV:
-- 3 model generations (640, 1280, 1088 resolution)
-- 366-image training dataset (300 synthetic + 16 real + 50 negatives)
-- Multi-class dataset (3,500 images, 5 classes)
-- DJI video analysis pipeline for altitude/speed/detection profiling
-
-### GPS Target Estimation (2,200-line analysis):
-- Attitude-compensated estimation (R matrix, 1440-test verified)
-- Three-level estimation architecture (passive/hover/centering)
-- Four-phase detection flow
-- 7-method ground truth comparison
-- Literature comparison (matches standard aerospace approach)
-- CEP50 = 2.3m measured from DJI video
-
-### Documentation (198-page goldmine report):
-- 35 appendices (A-AI)
-- 12+ TikZ diagrams
-- Complete error analysis with all sources quantified
-- Literature references (Barber 2006, Beard & McLain 2012)
-
-### Simulation:
-- Full SITL environment with interactive map
-- Camera tilt simulation (perspective warp)
-- Motion blur, shake, noise simulation
-- All 12 requirements verified met in simulation
-
----
-
-## The Stress Factor
-
-This situation was genuinely stressful because:
-
-1. **We couldn't verify our foundations.** Simulation said everything works, but real hardware is different. BGR camera color issue wasn't found until Easter. Python 3.13 breaking tflite-runtime wasn't found until Pi deployment. How many other issues are hiding?
-
-2. **We couldn't iterate.** The course is designed around fly-test-tune-fly cycles. We had zero cycles until Easter. Other teams had the full term.
-
-3. **We couldn't build confidence progressively.** Our progressive test plan (bench → passive → waypoint → autonomous) requires each step to succeed before the next. We were stuck at step 0 for two months.
-
-4. **Demo day is our third "flight day."** We essentially get one shot to demonstrate everything. Other teams have had weeks of flight data to refine their systems.
-
-5. **We had to work during Easter holiday.** We travelled back to Bristol during the break specifically because the hardware finally became available. This shouldn't be necessary.
-
----
-
-## What We're Asking
-
-1. **That our simulation work, test infrastructure, and software completeness be credited fully.** We built everything that was within our control to an exceptional standard.
-
-2. **That the absence of outdoor flight data not be penalised.** It was not within our control.
-
-3. **That Steve's verbal commitment to "take it into account" be honoured in the marking.**
-
-4. **Clarity on report expectations** — specifically:
-   - D7 "DETAIL TO FOLLOW" — was the update ever issued?
-   - D7 rubric weights — are Teamwork/Self-management/Insight equally weighted?
-   - How specifically will simulation-validated results be credited vs outdoor flight data?
-   - What exactly counts as "items of interest" for R05?
-
----
-
-## Chat History with Steve (verbatim)
-
-### Pre-flight day preparation
-
-> **Dmytro:** Hi Steve what time will the drones be at the farm tomorrow? I'm thinking of coming maybe 30min earlier just to run some preflight diagnostics on the drone and to set everything up so I know that it's ready to go. Will anyone be there at 9:30?
->
-> I'm afraid that I won't be in Bristol over Easter so I really want to make the most of it tomorrow. And get as much time in the air as possible I have many experiments I want to run with the drone in the air and I want to make sure everything is set up well for these experiments/test to go smoothly
->
-> Also could you please confirm what other object there will be there that we need to detect as items of interest? Will it be a cone? I tried using cone image from above with YOLO object detection model it didn't seem to see it though it did recognise the dummy identifying it as human. So I do think I'll need aerial footage of these items of interest so that I could train my custom vision model on them
-
-> **Steve:** Hi Dmytro, we won't be ready for students til 10am I'm afraid.
-
-> **Dmytro:** No worries I'll come at 9:50
-
-> **Steve:** Last week I got a few bits and bobs out of the store - happy for you to structure test as you see fit.
-
-> **Dmytro:** Oh was it the umbrella and the blow up zebra and giraffe?
-
-> **Steve:** Yeah, the animals were silly. Use coats, other stuff - plan for what you want to test
-
-### Lost power bank
-
-> **Dmytro:** Hi Steve I think I left my power bank somewhere at the farm.. with an iPhone cable.. but I don't remember seeing it as I was leaving. Do you know if anyone found it? If it's not there then I must have left it on the bus on my way to the farm
-
-> **Steve:** I didn't see anything on the way out. Sorry. I'll ask Andrew to check.
-
-> **Dmytro:** Do you think our blue box will be in the lab tomorrow morning? We have an iPhone cable in there.. if possible I'd like to go grab it. I'm on 8% now 😥
-
-> **Steve:** Yep, it should be.
-
-### Working drone request
-
-> **Dmytro:** Hi Steve, you mentioned you will try to get us a working drone, any luck with that? Or will we be trying our software on the green team's drone?
-
-> **Steve:** Plan for both just now, Sid's on it but TBC
-
-### Personal reflection report clarification
-
-> **Dmytro:** Hi Steve, just trying to work on my personal reflection report are there anymore details somewhere that I'm missing or is that still to follow?
-
-> **Steve:** Apologies, I have a draft update that I'll issue first thing next week.
-
-> **Dmytro:** Great thank you
-
----
-
-## Key Evidence to Reference
-
-- **We were ready Day 1**: printed checklist, 40+ test scripts, simulation validated
-- **Hardware failed twice**: not our fault, documented
-- **Steve acknowledged**: "will take into account", "plan for both", "Sid's on it"
-- **Easter work**: shouldn't be required, we did it anyway
-- **Simulation is comprehensive**: 198-page report, 2200-line GPS appendix, all R01-R12 met
-- **Software exceeds expectations**: attitude compensation, multi-class detection, 4-phase estimation, literature-grade accuracy on £60 hardware
-
----
-
-# PART 2: FORMAL COMPLAINT LETTER (draft)
-
-# AENGM0074 — Student Feedback on Hardware Provision and Flight Testing
+# PART 2: FORMAL FEEDBACK LETTER (draft -- use only if needed)
 
 **To:** Steve, Course Organiser
 **Cc:** Sid, Technical Assistant
@@ -325,11 +89,11 @@ This situation was genuinely stressful because:
 
 Dear Steve,
 
-We are writing to provide a factual account of our experience on AENGM0074 and to raise specific concerns about how hardware availability has affected our project. This is intended as constructive feedback — for our assessment, and for future cohorts. We are not assigning personal blame. We are documenting what happened.
+We are writing to provide a factual account of our experience on AENGM0074 and to raise specific concerns about how hardware availability has affected our project. This is intended as constructive feedback -- for our assessment and for future cohorts. We are not assigning blame. We are documenting what happened.
 
-## The numbers
+## Summary of the situation
 
-There are three teams on this course. Two received working, flight-ready drones. One — ours — did not.
+There are three teams on this course. Two received working, flight-ready drones. Ours did not.
 
 Three flight days were scheduled. Our team completed zero successful flights across all three.
 
@@ -337,72 +101,81 @@ It has been approximately eight weeks since the first scheduled flight day. In t
 
 Our drone was not assembled for the first several weeks of the module. A servo was missing. The other two teams had complete platforms from the outset.
 
-## What happened
+## Timeline
+
+| Date | Event | Outcome |
+|------|-------|---------|
+| ~12 March | Flight Day 1 | Drone hardware not functional. We had scripts, checklists, and a progressive test plan ready. |
+| ~19 March | Flight Day 2 | Drone did not take off (GPS, joint issues). Again fully prepared. |
+| 30 March | Easter Day 1 | Steve arranged extra days during Easter. Bench testing completed: Pi + Cube + camera working. |
+| 31 March | Easter Day 2 | FOV calibration, lens calibration, benchmarks. First real hardware data. |
+| Demo Day | Demonstration | Industry guests and presentation -- not a testing day. |
+
+## What happened at each stage
 
 On approximately 12 March, we arrived at the farm with tested software, a progressive flight test plan, and a printed checklist. The drone hardware was not functional. We were told it would be fixed.
 
-Had the drone been operational that day, we would have completed passive detection testing, calibrated our altitude thresholds with real outdoor data, and validated our GPS estimation pipeline — the foundation for everything that follows.
+Had the drone been operational, we would have completed passive detection testing, calibrated altitude thresholds with real outdoor data, and validated the GPS estimation pipeline.
 
-On approximately 19 March, we arrived again, prepared again. The hardware failed again. We were told it would be fixed.
+On approximately 19 March, we arrived again, prepared again. The hardware failed again.
 
-Had it worked, we would have progressed to autonomous waypoint flight and real-world AI benchmarking. By now we would have had two full fly-test-tune-fly iteration cycles — the feedback loop this course is designed around.
+Had it worked, we would have progressed to autonomous waypoint flight and real-world AI benchmarking -- two full iteration cycles of the feedback loop this course is designed around.
 
-On 30 April, during the Easter holiday, we travelled back to Bristol to try a third time. The hardware was still not functional. We were then told to build it ourselves, or to ask another team to share their drone.
+During the Easter holiday, we travelled back to Bristol to try a third time. The hardware was still not fully functional. We were advised to build it ourselves or to ask another team to share their drone.
 
-The course brief does not ask us to build a drone. It asks us to plan and implement an autonomous mission. The entire module assumes a working platform.
+The course brief does not ask us to build a drone. It asks us to plan and implement an autonomous mission. The module assumes a working platform.
 
-Being offered another team's drone is not a solution. It is a gesture. Scheduling around two teams, a shared vehicle, and a farm with limited availability — while also risking disruption to a team whose hardware actually works — does not constitute a plan. Our Pi integration involves specific wiring, network configuration, and weeks of calibration. A last-minute swap introduces new unknowns at the worst possible time.
+## Why sharing another team's drone is not a practical solution
 
-## Compounding constraints
+- Our Pi integration involves specific wiring, network configuration, and weeks of calibration.
+- Scheduling around two teams, a shared vehicle, and limited farm availability is impractical.
+- It risks disrupting a team whose hardware works.
+- A last-minute swap introduces new unknowns at the worst possible time.
 
-GPS does not work indoors. The university campus cannot be used for outdoor drone testing. GPS-dependent work can only happen at the farm, where access is limited to scheduled days.
+## Additional constraints
 
-When we are at the farm, the shared Wi-Fi creates conflicts between teams working indoors and teams flying outdoors. Outdoor flying takes priority, so indoor teams lose connectivity. IP addresses change between visits without notice. These are solvable problems — a second router, a simple network plan — but they erode the already scarce time we have.
+- GPS does not work indoors. Outdoor testing is only possible at the farm on scheduled days.
+- Shared Wi-Fi at the farm creates conflicts between teams. Outdoor flying takes priority, so indoor teams lose connectivity. IP addresses change between visits.
+- We received one aerial video for AI training. It arrived late in the term. We used it -- retrained the model, generated synthetic data, hand-labelled frames, calibrated FOV -- but we cannot know whether our detector generalises beyond that single video without further test data.
 
-We received one aerial video from Sid for AI training purposes. It arrived late in the term. We used it — retrained our model, generated synthetic data, hand-labelled frames, calibrated FOV. But we genuinely do not know whether our detector will work on a real dummy from altitude, or whether it is overtrained on that single video. Proper test imagery from different altitudes and conditions should have been available much earlier. We had no way to collect our own without a flying drone.
+## What we built despite the constraints
 
-## What we built despite this
+Without a flyable drone for approximately two months, we created our own development path:
 
-Without a flyable drone for approximately two months, we built our own path forward:
-
-- A complete SITL simulation environment, validating the full mission end-to-end
+- A complete SITL simulation environment validating the full mission end-to-end
 - A state machine covering takeoff, search, detection, centering, descent, verification, and landing
-- Over 40 categorised test scripts (hardware, flight progression, calibration, diagnostics, experiments)
+- 58 categorised test scripts (hardware, flight progression, calibration, diagnostics, experiments)
 - A YOLOv8 detection model retrained on 300 synthetic + 16 real + 50 negative images (mAP50 = 0.995)
 - A web-based ground station with live video stream and browser controls
 - Full Raspberry Pi integration: camera, AI inference, Cube telemetry, lens calibration
 
-We were ready in early March. The simulation framework we created ourselves is the only reason this project produced any verifiable engineering output at all. Without it, nearly two months would have been dead time. We want to acknowledge that you provided the Raspberry Pi, screens, and keyboards — that was genuinely helpful. But the simulation was our initiative, not something the course provided or accounted for.
+We were ready in early March. The simulation framework is the only reason this project produced verifiable engineering output. We acknowledge that you provided the Raspberry Pi, screens, and keyboards -- that was genuinely helpful. But the simulation was our initiative, not something the course provided or anticipated.
 
 ## Assessment concern
 
-The course marking scheme assumes teams can demonstrate autonomous flight on real hardware. Our team has been unable to do so — not for lack of preparation, not for lack of effort, but because the hardware provided to us did not work. Two other teams had that opportunity. We did not.
+The marking scheme assumes teams can demonstrate autonomous flight on real hardware. Our team has been unable to do so -- not for lack of preparation or effort, but because the hardware provided to us did not work. Two other teams had that opportunity. We did not.
 
-We ask that this disparity be reflected in how our work is assessed. If grading penalises the absence of flight data, it penalises us for circumstances entirely outside our control. Our simulation results, test infrastructure, and software completeness should carry appropriate weight.
+We ask that this disparity be reflected in how our work is assessed. If grading penalises the absence of flight data, it penalises us for circumstances entirely outside our control.
 
-## What we are asking
+## Specific requests
 
-1. **A flight-ready drone, verified before we arrive.** We cannot afford to waste another session on diagnosis. Technical staff should confirm the hardware is functional before we travel to the farm.
+1. **A flight-ready drone, verified before we arrive.** Technical staff should confirm the hardware is functional before we travel to the farm.
 2. **At least two dedicated flight sessions before submission**, with guaranteed airfield access.
 3. **Written acknowledgement** that the hardware failures were not caused by our team, so that any external examiner reviewing our submission understands the context.
 4. **Assessment criteria that account for the situation.** Simulation-validated systems, test coverage, and software architecture should be credited where flight data was unobtainable through no fault of the team.
 
-## Feedback for future cohorts
+## Recommendations for future cohorts
 
-We understand that staff are stretched. We are not asking for the impossible. But ambition must be matched by support. The vision for this course — autonomous drones, industry demos, real-world testing — is genuinely exciting. With a few structural changes, future students would spend their time on autonomy and perception rather than on sourcing missing parts:
-
-1. **Verify all drones are assembled and flight-tested before allocation.** A simple checklist — motors spin, GPS locks, telemetry streams — would catch problems before students lose weeks.
-2. **Provide representative aerial training data in the first two weeks**, so CV development can begin immediately rather than waiting for flights.
-3. **Schedule backup flight slots.** Three days is not enough when hardware failures, weather, and logistics can consume all of them.
-4. **Document the farm site's network configuration** and provide a stable setup so teams don't lose time to IP conflicts.
-5. **Define a hardware-support escalation path** with expected response times, rather than relying on verbal assurances that are not followed through.
-6. **Ensure the marking scheme explicitly credits simulation-validated work**, so that no team's grade is capped by equipment failures outside their control.
-
-No team should have to go through this again.
+1. Verify all drones are assembled and flight-tested before allocation.
+2. Provide representative aerial training data in the first two weeks.
+3. Schedule backup flight slots -- three days is not sufficient when hardware failures and weather can consume all of them.
+4. Document the farm network configuration and provide a stable setup.
+5. Define a hardware-support escalation path with expected response times.
+6. Ensure the marking scheme explicitly credits simulation-validated work.
 
 ---
 
-We remain committed to delivering the strongest submission possible. We are happy to discuss any of the above in person.
+We remain committed to delivering the strongest submission possible and are happy to discuss any of the above in person.
 
 Yours sincerely,
 [Team members]
@@ -410,7 +183,7 @@ MSc AENGM0074, University of Bristol
 
 ---
 
-## Appendix: Chat History with Steve (context)
+# PART 3: CHAT HISTORY WITH STEVE (verbatim)
 
 ### Pre-flight day preparation
 
@@ -436,7 +209,7 @@ MSc AENGM0074, University of Bristol
 
 > **Steve:** I didn't see anything on the way out. Sorry. I'll ask Andrew to check.
 
-> **Dmytro:** Do you think our blue box will be in the lab tomorrow morning? We have an iPhone cable in there.. if possible I'd like to go grab it. I'm on 8% now 😥
+> **Dmytro:** Do you think our blue box will be in the lab tomorrow morning? We have an iPhone cable in there.. if possible I'd like to go grab it. I'm on 8% now
 
 > **Steve:** Yep, it should be.
 
@@ -456,347 +229,132 @@ MSc AENGM0074, University of Bristol
 
 ---
 
-## Questions to Ask Steve (for report clarity)
+# PART 4: QUESTIONS REQUIRING ANSWERS
 
-1. **D7 Personal Reflection**: You mentioned a "draft update" with more details -- has this been issued? The brief says "DETAIL TO FOLLOW" with yellow highlight. We need the specific structure/expectations.
+These are the specific questions that remain unresolved:
 
-2. **D6 Report Structure**: The brief lists 8 sections but gives minimal guidance on depth/length per section. Any specific expectations beyond what's in the brief?
-
-3. **D7 Rubric Weights**: Appendix B has 3 criteria (Teamwork, Self-management, Insight) but no percentage weights unlike D6's 40/40/20. Are they equally weighted?
-
-4. **Assessment of simulation work**: You mentioned our hardware situation would be taken into account. How specifically will simulation-validated results be credited vs outdoor flight data?
-
-5. **Items of interest**: For R05, what exactly counts as "items of interest"? Clothing, cones, specific objects?
-
-6. **Appendices**: The brief says "will NOT be assessed" but also says "include excerpts and summaries in main sections." Should we reference appendices from the body, or are they purely supplementary?
-
----
-
-# PART 3: COMMUNICATION PLAN & DRAFT EMAIL
-
-# Communication Plan with Steve
-
-**Strategy: be professional, specific, and constructive. Not complaining -- seeking clarity to maximise our grade.**
+| # | Topic | Question | Status |
+|---|-------|----------|--------|
+| 1 | D7 structure | Has the promised draft update with D7 details been issued? | Unresolved -- Steve said "first thing next week" |
+| 2 | D7 weighting | Are Teamwork, Self-management, and Insight equally weighted? | Unknown |
+| 3 | D6 Specialist | Does "implemented highly effectively" require outdoor flight, or does simulation validation count? | Unknown |
+| 4 | Assessment fairness | What does "taking it into account" mean in terms of marks? | Verbal only -- no written confirmation |
+| 5 | Items of interest | For R05, what exactly counts? Steve said "coats, other stuff." | Partially answered |
+| 6 | Appendices | The brief says appendices "will NOT be assessed" but also says "include excerpts and summaries." How should we handle this? | Unknown |
 
 ---
 
-## Email to Steve (draft)
+# PART 5: EVIDENCE SUMMARY
 
-Hi Steve,
-
-Hope you're well. I'm working hard on the final submissions and wanted to ask for some clarity on a few things so I can make sure I'm focusing my effort in the right places.
-
-### 1. Personal Reflection Report (D7)
-
-The brief mentions "DETAIL TO FOLLOW" for D7 and you mentioned you had a draft update coming -- has that been issued? I want to make sure I'm not missing anything.
-
-Specifically, could you clarify:
-- Is there a specific structure you're looking for? (e.g., should it follow M5 → M7 → M16 → M17 in order, or is the structure flexible?)
-- Are the three rubric criteria (Teamwork, Self-management, Insight) equally weighted, or is one more important?
-- What distinguishes an 83+ submission from a 72+ one in your experience?
-- Should we reference specific AHEP4 page numbers, or is addressing the themes sufficient?
-
-### 2. Group Report (D6)
-
-The brief gives the 8 section headings but quite minimal guidance on depth. Could you clarify:
-- Is there an expected balance between sections? (e.g., should Design Rationale be longer than Evaluation?)
-- How important are figures/photos vs text? The brief mentions "flow charts, schematics, images recommended" -- is this a strong expectation?
-- For Requirements Verification -- what level of evidence is expected? We have extensive simulation data but limited outdoor flight data due to the hardware situation.
-- Are appendices looked at by markers at all, or are they purely supplementary?
-
-### 3. Our hardware situation
-
-I know you mentioned you'd take into account that we didn't have a working drone for most of the term. I just wanted to follow up on that -- we've put an enormous amount of work into this project despite the hardware challenges:
-
-- We had tested software, printed checklists, and a progressive flight plan ready for Day 1 (12 March). The hardware wasn't functional.
-- Same preparation for Day 2 (19 March). Same outcome.
-- We used the Easter days you arranged (thank you for that) and finally got hardware working -- FOV calibrated, benchmarks run, Pi fully integrated.
-- But by then we'd lost two full iteration cycles that the other teams had.
-
-I've probably spent 3x the expected hours on this unit, much of it on workarounds for the hardware situation (building a full simulation environment, synthetic data generation, DJI video analysis as a proxy for real flights).
-
-I'm not looking for sympathy -- I just want to make sure the marking reflects the work we actually did rather than penalising us for circumstances outside our control. Could you confirm how this will be handled?
-
-Thanks,
-Dmytro
-
----
-
-## Strategy Notes
-
-### Tone
-- **Professional, not emotional.** Facts and specific questions.
-- **Seeking clarity, not complaining.** "I want to maximise my grade" not "this is unfair."
-- **Grateful where appropriate.** Thank him for Easter days, Pi equipment.
-- **Specific asks.** Not "can you help" but "could you clarify X, Y, Z."
-
-### What we want from this:
-1. **D7 structure/expectations** -- so we can target exactly what scores 83+
-2. **D6 depth guidance** -- so we know where to focus the 15 pages
-3. **Written confirmation** that hardware situation is accounted for -- email trail is evidence
-
-### What NOT to say:
-- Don't mention the complaint letter
-- Don't compare ourselves to other teams explicitly
-- Don't sound like we're making excuses
-- Don't imply Steve personally failed us
-
-### Follow-up:
-- If he gives verbal answers, summarise in a follow-up email: "Just to confirm our conversation..."
-- Keep email trail -- written evidence is stronger than verbal
-
----
-
-## Key Numbers to Have Ready (if he asks)
+Key metrics to reference if needed:
 
 | Metric | Value |
 |--------|-------|
-| Hours spent | ~300+ (est. 3x expected for the unit) |
 | Lines of code | 4,400+ |
 | Test scripts | 58 |
-| Unit tests | 127 |
+| Unit test functions | 127 |
 | Report pages | 198 (goldmine) |
 | Flight days with working hardware | 0 (until Easter) |
-| Days hardware was non-functional | ~45 (12 March to 30 April) |
-| Simulation hours | 100+ SITL hours |
+| Days hardware was non-functional | ~45 |
 | AI model iterations | 3 (640, 1280, 1088) |
 | Training images | 3,500+ (multi-class) |
-| GPS estimation accuracy | CEP50 = 2.3m (DJI validated) |
+| GPS estimation accuracy | CEP50 = 2.3 m (DJI validated) |
 | Requirements met in simulation | 12/12 |
+| Estimated hours spent | 300+ (~3x expected) |
+| SITL simulation hours | 100+ |
 
 ---
 
-# PART 4: ADDITIONAL CONTEXT (raw notes, keep adding here)
+# PART 6: COMMUNICATION STRATEGY
 
-## The Motor Wiring Issue (Flight Day 2)
-- Drone didn't fly because motor wires were connected incorrectly
-- This MAY have been done by our team members -- fair enough
-- BUT: it wasn't our job to BUILD the drone in the first place
-- The brief says we're provided with a working platform
-- We had to try and build it ourselves since we weren't provided a working drone
-- Other teams received assembled, flight-tested drones. We received parts and problems.
+## Guiding principles
 
-## The Stress and Personal Time Cost
-- Personally spent probably 3x the expected hours on this unit
-- Much of that time was workarounds: building simulation environment, synthetic data generation, DJI video analysis -- all because we couldn't test on real hardware
-- Stressful not knowing if our software actually works in reality
-- Built on unverified foundations for 2 months -- what if detection doesn't work from real altitude? What if GPS estimation is off? No way to know until Easter.
-- The uncertainty was the worst part -- couldn't plan properly because didn't know what works and what doesn't
-- Had to keep building features without knowing if the foundation is solid
+- **Seek clarity, not sympathy.** Frame every message as "help me focus my effort" rather than "this is unfair."
+- **Be specific.** Not "can you help" but "could you clarify X."
+- **Acknowledge support.** Thank Steve for Easter days, Pi equipment, and effort to resolve the drone issue.
+- **Create a paper trail.** Every verbal answer should be confirmed in writing.
 
-## Simulation vs Reality Gap
-- Our simulation is 100% complete -- all 12 requirements met in SITL
-- But we don't feel comfortable diving right into autonomous flight without progressive testing
-- We WANTED: bench → passive → waypoint → autonomous (each step building confidence before the next)
-- We GOT: nothing → nothing → Easter scramble → demo day
-- No time for the gradual trust-building the course is designed around
-- Can't just launch autonomous mode on a drone that's never been tested progressively
-- That would be irresponsible from a safety perspective
+## Phrases to use
 
-## Robin's Last-Minute Integration
-- Robin (teammate) scraped together a working flight system since Easter
-- But it's been last-minute, since the drone only finally worked during Easter holiday
-- His state machine reads our passive_watch GPS outputs
-- The integration is fragile because there was no time for proper iteration
-- We needed weeks of progressive testing, got days
-
-## What We're Going For (and our concern)
-- We want top marks (85%+) -- we believe the software quality justifies it
-- But we're NOT confident we CAN get top marks given all the setbacks
-- We'd like reassurance from Steve that simulation work + Easter testing is sufficient for top marks
-- The simulation demonstrates everything the brief asks for -- just not on real hardware outdoors
-- If the marking penalises lack of outdoor data, it penalises us for hardware we didn't receive
-
-## The Cascading Effect of Lost Flight Days
-- Day 1 hardware failure → couldn't calibrate outdoors
-- → couldn't train model on real aerial data
-- → couldn't validate detection at real altitude
-- → couldn't verify GPS estimation pipeline outdoors
-- → couldn't build progressive confidence (bench → passive → waypoint → auto)
-- → each lost day cascaded into weeks of uncertainty
-- → other teams had this data from Day 1 and could iterate all term
-- → we got our first real hardware data during Easter -- 6 weeks after Day 1
-
-## Steve's Promises (track these)
-- Said he would **take the hardware situation into account** in marking
-- Said he would provide a **D7 draft update "first thing next week"** -- did it ever come?
-- Said **"Sid's on it"** for getting us a working drone -- what happened?
-- Arranged Easter days (appreciated) but that's a **holiday**, not teaching time
-- Said "plan for both" (our drone fixed OR use green team's) -- neither was a real plan
-
-## Items of Interest Question
-- Steve said "use coats, other stuff" for items of interest
-- The "animals were silly" (blow-up zebra and giraffe)
-- So items of interest = clothing, equipment, everyday objects on the ground
-- Our model detects "dummy" (mannequin) -- COCO backup detects person, backpack, etc.
-- Multi-class model (5 classes) trained but Colab GPU quota ran out before finishing
-
-## Personal Reflection Report (D7)
-- Steve said "I have a draft update that I'll issue first thing next week"
-- This was the LAST message in our chat -- did the update ever come?
-- The brief has "DETAIL TO FOLLOW" in yellow highlight
-- We've been working from the rubric bands in Appendix B (Teamwork, Self-management, Insight)
-- Without Steve's update, we don't know the exact expectations
-- Our D7 is at 83-84/100 after 7 iterations -- but is that what they're actually looking for?
-
-## MAIN CONCERN: Can We Still Get Top Marks?
-
-### The core worry
-- Our mission is NOT where we'd like it to be
-- Even though we'll get something working for demo day, it could have been 2-3 times as good
-- We can demonstrate ALL requirements are met -- but only in simulation
-- The real-flight demonstration will be whatever Robin scraped together since Easter
-- That's not the polished, progressively-tested system we planned
-
-### What we COULD have demonstrated (had hardware worked from Day 1)
-- Progressive trust ladder fully executed: bench → passive → waypoint → autonomous
-- Multiple fly-test-tune-fly iteration cycles
-- Real outdoor calibration data from early March
-- Model retrained on actual aerial footage (not just one DJI video)
-- GPS estimation validated against real ground truth
-- Detection performance characterized at multiple altitudes and speeds
-- Fully confident autonomous mission with operator in the loop
-- All 12 requirements demonstrated on REAL hardware, not just simulation
-
-### What we'll actually demonstrate
-- Robin's integration since Easter (last-minute, fragile)
-- Our passive_watch providing GPS coordinates
-- Maybe one autonomous attempt if time allows
-- Simulation video showing everything working end-to-end
-- 198-page goldmine report proving we built everything
-
-### The gap
-- The difference is NOT our software quality -- it's testing depth
-- We have the software. We have the simulation. We have the tests.
-- What we DON'T have is the outdoor flight data proving it all works in reality
-- This gap exists ENTIRELY because of hardware provision, not our effort
-- We spent 3x expected hours BECAUSE of the workarounds we had to build
-- Other teams had this data from Day 1 and refined their systems all term
-
-### What "taking it into account" should mean
-- Our simulation-validated work should be credited at the SAME level as outdoor-tested work
-- The 198-page report, 2200-line GPS appendix, 1440-test verification should count
-- The progressive testing infrastructure (58 scripts, 127 unit tests) shows we WOULD have done it
-- The fact that we built a full simulation environment out of necessity demonstrates initiative
-- We should not be capped at 72 because our demo is less polished than teams who had 8 weeks more hardware access
-
-### Steve's responsibility
-- He acknowledged the problem: "will take into account"
-- He tried to help: arranged Easter days, asked Sid to fix drone
-- But the fact remains: we received a non-working platform, others didn't
-- The module assumes a working drone. We didn't have one for 6+ weeks.
-- Assessment should reflect this -- either by crediting simulation work fully, or by adjusting expectations for our demo
-
----
-
-# PART 5: COMMUNICATION STRATEGY WITH STEVE
-
-## The Tone We Want
-- **NOT complaining** -- worried, concerned student who wants to do well
-- **Seeking reassurance** -- "can I still get top marks?"
-- **Seeking clarity** -- "what exactly do you mean by taking it into account?"
-- **Grateful** -- thank him for Easter days, for trying to help
-- **Specific** -- not vague worries, specific questions with specific asks
-
-## What We Want Steve to Clarify
-
-### 1. "Taking it into account" -- what does that MEAN exactly?
-- Steve said he would take into account that our drone wasn't ready
-- But what does that translate to in marks?
-- Does it mean: adjusted expectations for our demo? Or bonus marks for effort? Or just sympathy?
-- We need to know: **can we still achieve 85%+ despite limited outdoor flight data?**
-- If the answer is no, we need to know NOW so we can adjust our approach
-
-### 2. D7 Personal Reflection -- where is the promised update?
-- Steve said "I have a draft update that I'll issue first thing next week"
-- This was weeks ago -- did it ever come?
-- Without it, we're guessing at what gets top marks
-- The brief just says "DETAIL TO FOLLOW" in yellow
-- We're working from Appendix B rubric bands only -- is that enough?
-
-### 3. D6 Group Report -- how much is flight success worth?
-- Specialist Skills (40%) says "implemented highly effectively"
-- Does "implemented" mean "demonstrated on real hardware outdoors"?
-- Or does simulation-validated with extensive testing count as "implemented"?
-- Our simulation meets ALL 12 requirements -- does that score the same as outdoor demo?
-
-### 4. How exactly are marks allocated?
-- D6: 40% specialist + 40% decision + 20% communication -- is that right?
-- D7: Teamwork + Self-management + Insight -- equally weighted? Or different?
-- How much of D6 Specialist depends on the actual mission demo vs the report documenting it?
-
-## Message Sequence (NOT sending yet, just planning)
-
-### Message 1: Light touch, ask for D7 details + reassurance
-Tone: friendly, concerned student
-Purpose: get the D7 update + gentle probe about marks
-When: soon
-
-### Message 2: Follow up on "taking into account"
-Tone: specific, professional
-Purpose: get written confirmation about assessment fairness
-When: after Message 1 response
-
-### Message 3: Complaint letter (ONLY if needed)
-Tone: formal, factual
-Purpose: documented escalation
-When: ONLY if Steve's responses suggest we'll be penalised unfairly
-
-## Notes for Each Message
-
-### Message 1 should:
-- Ask about D7 draft update (he promised it)
-- Mention we're working really hard on reports
-- Casually ask "are we still on track for a good mark despite the hardware issues?"
-- NOT mention complaint, NOT list grievances
-- Be SHORT (5-6 lines max)
-
-### Message 2 should:
-- Reference his previous statement about "taking it into account"
-- Ask specifically: "does that mean our simulation evidence counts the same as outdoor data?"
-- Ask: "what would you advise us to focus on in the remaining time?"
-- Be professional, seeking guidance
-
-### Message 3 (backup):
-- The formal complaint letter already written in Part 2
-- Only use if Msg 1+2 responses are unsatisfactory
-- Include all evidence, chat history, timeline
-
-## Key Phrases to Use (sound natural, not confrontational)
-- "I'm a bit worried about..." (honest, vulnerable)
-- "I just want to make sure I'm focusing my effort in the right places"
+- "I want to make sure I am focusing my effort in the right places."
 - "Given the hardware situation, what would you recommend we prioritise?"
-- "You mentioned you'd take it into account -- could you help me understand what that means for our marks?"
-- "I've been putting in a lot of hours and I want to make sure it counts"
+- "You mentioned you would take it into account -- could you help me understand what that means for assessment?"
 
-## Key Phrases to AVOID
-- "It's not fair" (sounds childish)
-- "Other teams had it better" (sounds jealous)
-- "We deserve top marks" (sounds entitled)
-- "You promised" (sounds accusatory)
-- "This is your fault" (burns bridges)
+## Phrases to avoid
+
+- "It is not fair" -- sounds adversarial.
+- "Other teams had it better" -- sounds like blame-shifting.
+- "We deserve top marks" -- sounds presumptuous.
+- "You promised" -- sounds accusatory.
+
+## Message sequence
+
+### Message 1 (Part 1 of this document): Comprehensive, professional
+
+Covers all four rubric areas, asks specific questions, demonstrates effort, seeks guidance. Send Friday morning.
+
+### Message 2 (if needed): Short follow-up
+
+If Message 1 gets a vague reply, send a brief clarification: "Just to confirm I understand correctly -- you are saying [paraphrase]. Is that right?"
+
+### Message 3 (last resort): Formal feedback letter
+
+The letter in Part 2. Only send if Messages 1-2 indicate the marking will penalise us for circumstances outside our control.
 
 ---
 
-# PART 6: DRAFT MESSAGE 1 TO STEVE (ready to review/send)
+# PART 7: RAW NOTES AND ADDITIONAL CONTEXT
+
+## Motor wiring issue (Flight Day 2)
+
+The drone did not fly because motor wires were connected incorrectly. This may have been done by a team member. However, the brief does not ask students to build the drone -- it assumes a working platform. Other teams received assembled, flight-tested drones.
+
+## Simulation vs reality gap
+
+Our simulation is complete -- all 12 requirements met in SITL. However, responsible engineering requires progressive testing (bench, passive, waypoint, autonomous), with each step building confidence before the next. We planned for this. What we got was: nothing, nothing, Easter scramble, demo day. There was no time for the gradual trust-building the course is designed around.
+
+## Cascading effect of lost flight days
+
+- Day 1 failure meant no outdoor calibration.
+- No calibration meant no model retraining on real aerial data.
+- No retraining meant no validated detection at real altitude.
+- No validated detection meant no confidence in GPS estimation outdoors.
+- No confidence meant no progressive testing ladder.
+- Each lost day cascaded into weeks of uncertainty.
+- Other teams had this data from Day 1 and iterated all term.
+
+## Steve's commitments (for reference)
+
+| What he said | Context | Status |
+|--------------|---------|--------|
+| Would take hardware situation into account in marking | After second failed flight day | Verbal only |
+| Would issue D7 draft update "first thing next week" | Last message in chat | Not received |
+| "Sid's on it" for getting a working drone | In response to drone request | Outcome unclear |
+| Arranged Easter testing days | Proactive | Completed -- appreciated |
+
+## Items of interest (R05)
+
+Steve indicated "use coats, other stuff" and that the inflatable animals "were silly." Items of interest therefore appear to be everyday objects: clothing, equipment, personal effects. Our model detects the dummy (mannequin). The COCO backup model detects person, backpack, and other common objects.
+
+## D7 personal reflection
+
+Steve said he had a draft update to issue "first thing next week." This was the last exchange in the chat history. The brief retains the "DETAIL TO FOLLOW" yellow highlight. We have been working from the Appendix B rubric (Teamwork, Self-management, Insight) and AHEP4 standards (M5, M7, M16, M17). Current D7 score after 7 iterations: 83-84/100.
+
+## Core concern
+
+The difference between what we can demonstrate and what we could have demonstrated is not software quality -- it is testing depth. We have the software, the simulation, and the tests. What we lack is outdoor flight data proving it works in reality. This gap exists entirely because of hardware provision, not effort. Our simulation-validated work should be credited at the same level as outdoor-tested work from teams that had functioning hardware from the start.
+
+---
+
+# PART 8: ALTERNATIVE SHORT MESSAGE (if Part 1 feels too long)
 
 > Hi Steve,
 >
-> Hope you're well. Just following up on our last chat -- you mentioned you had a draft update for the D7 personal reflection report with more details on what's expected. Has that been issued? I just want to make sure I'm not missing anything as I'm working on it now.
+> Hope you are well. Just following up on our last chat -- you mentioned you had a draft update for the D7 personal reflection report with more details on what is expected. Has that been issued? I want to make sure I am not missing anything as I am working on it now.
 >
-> Also had a quick question about the group report -- for the top mark band, the rubric mentions technologies "implemented highly effectively." Given our hardware situation this term, would our simulation-validated work (all 12 requirements met in SITL, extensive testing, benchmarks) be credited the same as outdoor flight data? I've been putting in a huge amount of work and I want to make sure I'm focusing in the right areas.
+> Also had a quick question about the group report -- for the top mark band, the rubric mentions technologies "implemented highly effectively." Given our hardware situation this term, would our simulation-validated work (all 12 requirements met in SITL, extensive testing, benchmarks) be credited the same as outdoor flight data? I have been putting in a significant amount of work and want to make sure I am focusing in the right areas.
 >
-> I know you mentioned you'd take our situation into account and I really appreciate that. I'm just a bit worried about whether we can still achieve a strong mark given the setbacks. Any guidance on what to prioritise would be really helpful.
+> I know you mentioned you would take our situation into account and I appreciate that. I would just value some clarity on whether we can still achieve a strong mark given the constraints. Any guidance on what to prioritise would be very helpful.
 >
 > Thanks,
 > Dmytro
-
-### Why this message works:
-1. **Opens with HIS promise** -- he said he'd send D7 details, natural follow-up
-2. **Asks THE key question** -- does simulation count as "implemented"?
-3. **Shows effort** -- "I've been putting in a huge amount of work"
-4. **Worried tone, not angry** -- "I'm just a bit worried"
-5. **Asks for guidance** -- makes him the helper, not the target
-6. **References his own words** -- "you mentioned you'd take it into account"
-7. **SHORT** -- he'll actually read and reply to this
-8. **Gets written confirmation** -- his reply is evidence for later if needed

@@ -3,7 +3,7 @@
 
 \section{Decision Flow: How We Chose Our Search Parameters}\label{app:decision-flow}
 
-This appendix presents the full reasoning chain behind the search-parameter selection summarised in Section~\ref{sec:rationale}. It is written as a self-contained narrative so that it can be read independently; all figures and tables referenced here appear either in this appendix or in the main body, with explicit cross-references in both directions.
+This appendix presents the full reasoning chain behind the search-parameter selection summarised in Section~\ref{sec:rationale}. It is written as a self-contained narrative so that it can be read independently; all figures and tables referenced here appear either in this appendix or in the main body, with explicit cross-references in both directions. Runtime decision-making (detect/reject, verify, manual override, geofence trigger) is covered separately in the mission flow (Section~\ref{sec:mission-flow}); this appendix focuses on the \emph{design-time} choices that determine what the mission flow operates with.
 
 \subsection{The Problem}\label{sec:df-problem}
 
@@ -19,12 +19,19 @@ A hiker is missing. The drone has one battery, one camera, and roughly twenty mi
 
 No single configuration maximises all five simultaneously. Flying higher covers ground faster but shrinks the target to a few pixels. Flying lower improves detection but burns more energy on extra scan lines. Flying near the boundary maximises coverage but risks an incursion.
 
-We adopted a clear priority stack: \textbf{safety $>$ detection $>$ speed $>$ energy}. An NFZ violation grounds the project. A missed casualty defeats its purpose. A slow search wastes the golden hour. High energy use is undesirable but survivable. This ordering underpins every trade-off described below and is consistent with the design rationale in Section~\ref{sec:rationale}.
+We adopted a clear priority stack: \textbf{safety $>$ detection $>$ speed $>$ energy}. An NFZ violation grounds the project. A missed casualty defeats its purpose. A slow search wastes the golden hour. High energy use is undesirable but survivable. This ordering underpins every trade-off described below and is consistent with the design rationale in Section~\ref{sec:rationale}. Figure~\ref{fig:decision-flow} summarises the nine-step chain.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.78\linewidth]{decision_flow}
+  \caption{Nine-step decision flow for search parameter selection. Each step constrains the next, flowing from the two primary objectives (safety, detection) through secondary trade-offs (time, energy) to the selected configuration. Green steps are safety-driven; blue steps are detection-driven; grey steps are secondary optimisations.}
+  \label{fig:decision-flow}
+\end{figure}
 
 % =====================================================================
 \subsection{The Variables We Control}\label{sec:df-variables}
 
-Five parameters define the search pattern (see also the parameter-chain traceability in Table~\ref{tab:param-chain} of the main body). Each affects multiple objectives; altitude alone touches all five.
+Five parameters define the search pattern (Table~\ref{tab:df-variables}; see also the parameter-chain traceability in Table~\ref{tab:param-chain} of the main body). Each affects multiple objectives; altitude alone touches all five.
 
 \begin{table}[H]
   \centering\compactTable
@@ -47,7 +54,7 @@ The coupling structure is shown in Figure~\ref{fig:sensitivity-matrix}: darker c
 % =====================================================================
 \subsection{Our Strategy: Safety-First, Detection-Optimised}\label{sec:df-strategy}
 
-Rather than searching a table of numbers, we followed a logical chain where each decision constrains the next. The reasoning runs in six steps:
+Rather than searching a table of numbers, we followed a logical chain where each decision constrains the next. The reasoning runs in seven steps:
 
 \paragraph{1. Start from detection: how high can we fly and still see the target?}
 The rescue dummy is 1.8\,m tall, 0.5\,m wide. As altitude increases, the target shrinks in the camera frame. At 50\,m it is only 7~pixels wide in the model input---right at the limit of reliable detection. At 70\,m it disappears entirely. The hard ceiling is roughly 63\,m.
@@ -66,7 +73,10 @@ With altitude and speed locked, the only lever left for the lawnmower pattern is
 \paragraph{5. How much NFZ margin do we need?}
 At 35\,m the camera footprint extends 16\,m from directly below the drone. Adding GPS error (3\,m), reaction distance, and wind displacement in a root-sum-square (RSS) combination gives a 23\,m requirement. Our \textbf{30\,m buffer} provides a 2.2$\times$ safety factor. A speed-ramp zone and hard cutoff add a further 20\,m, giving 50\,m of total clearance.
 
-\paragraph{6. Is 96\% coverage acceptable?}
+\paragraph{6. How much lane overlap is needed?}
+The cross-track camera footprint at 35\,m is 32\,m. However, three error sources can cause the drone to miss a strip between adjacent scan lines: GPS lateral error ($\pm$3\,m), wind displacement ($\pm$1\,m), and yaw-induced footprint shift ($\pm$0.5\,m). Adding these in quadrature gives $\sigma_{\text{lane}} = \sqrt{3^2 + 1^2 + 0.5^2} \approx 3.2$\,m. A 20\% overlap---6.4\,m of overlap per 32\,m swath---provides 1.8\,m of spare margin beyond the worst-case lane offset, ensuring no ground strip is left unscanned. Higher overlaps (25--30\%) were tested but added two extra scan lines, consuming 3.6\,Wh of additional energy for negligible coverage improvement.
+
+\paragraph{7. Is 96\% coverage acceptable?}
 The buffer trims 4\% of the polygon along the SSSI edge. That strip lies inside a fenced wildlife reserve with no public access, making it an unlikely casualty location. \textbf{96\% coverage was accepted} as a deliberate trade-off against NFZ safety.
 
 The altitude--speed trade-off space is visualised in Figure~\ref{fig:alt-speed-body}, where the selected point sits above the 95\% detection contour in the high-score region.
@@ -74,7 +84,7 @@ The altitude--speed trade-off space is visualised in Figure~\ref{fig:alt-speed-b
 % =====================================================================
 \subsection{What We Evaluated}\label{sec:df-evaluation}
 
-We did not rely on intuition. A physics-based simulation evaluated \textbf{216~configurations} (6~altitudes $\times$ 36~scan angles) on the real survey polygon, modelling energy consumption, detection probability, and NFZ penalties for every combination.
+We did not rely on intuition. A physics-based simulation evaluated \textbf{216~configurations} (6~altitudes $\times$ 36~scan angles) on the real survey polygon, modelling energy consumption, detection probability, and NFZ penalties for every combination. Table~\ref{tab:df-top3} shows the top three results.
 
 \begin{table}[H]
   \centering\compactTable
@@ -92,6 +102,9 @@ We did not rely on intuition. A physics-based simulation evaluated \textbf{216~c
 
 \noindent\textsuperscript{$\dagger$}Assumes frame independence. Accounting for 95\% inter-frame overlap, the effective independent observations reduce to $N_{\text{eff}} \approx 1$, giving a per-pass probability of ${\sim}95\%$ (99.75\% over two passes). See Section~\ref{app:req-detail} for the full correlation-adjusted derivation.
 
+\paragraph{A note on correlation.}
+The 99.97\% figure assumes statistical independence between consecutive frames. In practice, adjacent frames share $\sim$95\% of their content (at 8\,m/s and 4.8\,FPS the drone moves only 1.67\,m between frames). This inter-frame correlation reduces the effective number of independent observations from 14 to approximately $N_{\text{eff}} \approx 1$--2, giving a single-pass detection probability closer to 95\%. However, the lawnmower pattern with 20\% overlap means that the target is scanned on at least two adjacent passes from different along-track positions, yielding a cumulative probability of $1 - (1 - 0.95)^2 = 99.75\%$. The full correlation-adjusted derivation appears in Section~\ref{app:req-detail}.
+
 \medskip
 Configuration \#1 wins because it sits at the ``sweet spot'' of the trade-off frontier (Figure~\ref{fig:pareto-parallel}): moving in either direction trades a large penalty in one objective for a negligible gain in another. Compared to \#2, it saves 17\% energy while sacrificing an unobservable 0.02~percentage points of detection. Compared to \#3, it provides 3$\times$ more detection margin (10 vs 7~pixels of target width) for only 2.5\,Wh of extra energy.
 
@@ -99,6 +112,8 @@ The top three lawnmower paths overlaid on the survey polygon are shown in Figure
 
 % =====================================================================
 \subsection{The Result}\label{sec:df-result}
+
+The final operating configuration is summarised in Table~\ref{tab:df-final}.
 
 \begin{table}[H]
   \centering\compactTable
@@ -111,7 +126,7 @@ The top three lawnmower paths overlaid on the survey polygon are shown in Figure
     Search speed          & 8\,m/s            & 14 frames per target at 4.8\,FPS (10 required) \\
     Inference rate         & 4.8\,FPS (TFLite) / 9\,FPS (NCNN) & YOLOv8n on Raspberry Pi~5 \\
     Scan angle            & 70\textdegree     & Longest-edge alignment, fewest U-turns \\
-    Swath overlap         & 20\%              & Covers 4.6\,m lane error with 1.8\,m spare \\
+    Swath overlap         & 20\%              & Covers 3.2\,m RSS lane error with 1.8\,m spare (Step~6) \\
     NFZ buffer            & 30\,m             & 2.2$\times$ safety factor over RSS margin \\
     \midrule
     Detection probability & $>$99.97\%\textsuperscript{$\dagger$} & 14 frames $\times$ 95\% per-frame, assuming independence (at 4.8\,FPS) \\
@@ -135,7 +150,7 @@ A common pitfall in multi-objective design is attempting to optimise everything 
 Before any flight-parameter decisions, we invested in the detection pipeline itself. The YOLOv8n model was retrained on a mixed dataset of 300~synthetic images, 16~manually labelled real flight frames, and 50~hard-negative backgrounds at the camera's native 1456$\times$1088 resolution. Validation yielded mAP50\,=\,0.995. Only after confirming that the detector itself was not the bottleneck did we proceed to ask \emph{how high} and \emph{how fast} it could operate.
 
 \paragraph{Step~2: Map the detection envelope.}
-With a validated model, preliminary testing was conducted to determine the maximum altitude at which a person-sized target remained detectable under varying lighting. Initial measurements suggested the envelope shown in Table~\ref{tab:df-detection-envelope}.
+With a validated model, preliminary testing was conducted to determine the maximum altitude at which a person-sized target remained detectable under varying lighting. Preliminary simulation-based measurements and synthetic-image testing suggested the envelope shown in Table~\ref{tab:df-detection-envelope}. These figures represent conservative design targets derived from the model's performance on representative imagery; full outdoor validation across all lighting conditions remains a flight-day activity (see Section~\ref{sec:mf-buildup} for the progressive test strategy).
 
 \begin{table}[H]
   \centering\compactTable
@@ -198,6 +213,34 @@ The lawnmower pattern admits a design choice: should the drone \emph{rotate to f
 Simulation with the energy model showed that the no-rotation variant saves approximately 15\,s per mission and reduces energy consumption by 3--5\%, because the drone eliminates yaw transients during U-turns. Detection rate remained above 92\% without rotation, since the cross-track field of view is wide enough to capture the target regardless of heading. The \textbf{no-rotation} variant was selected for efficiency, with rotation available as a fallback for degraded-visibility conditions.
 
 % =====================================================================
+\subsection{Robustness to Runtime Edge Cases}\label{sec:df-robustness}
+
+The parameters above were selected for nominal conditions, but the design must also tolerate off-nominal scenarios. Table~\ref{tab:df-robustness} summarises how the chosen configuration responds to the most likely runtime perturbations.
+
+\begin{table}[H]
+  \centering\compactTable
+  \caption{Runtime edge cases and how the selected parameters absorb them.}\label{tab:df-robustness}
+  \begin{tabularx}{\linewidth}{@{}l X@{}}
+    \toprule
+    \textbf{Scenario} & \textbf{Design margin} \\
+    \midrule
+    Detection at polygon boundary &
+      The 30\,m NFZ buffer and 20\% lane overlap mean the outermost scan line sits $\geq$16\,m inside the boundary. A target detected at the edge of the camera footprint still has a GPS estimate inside the search polygon, so it passes the boundary validity check (Section~\ref{sec:mf-detection}). \\
+    Multiple targets in the same pass &
+      Detections are queued (up to 20) and investigated in priority order (Section~\ref{sec:mf-investigation}). The 8\,m/s speed and 14-frame dwell time ensure each target receives sufficient frames for GPS averaging before the drone moves on. \\
+    GPS degradation ($>$5\,m error) &
+      The 7.5\,m landing offset provides 2.5\,m of margin beyond a 5\,m GPS error. The 30\,m NFZ buffer absorbs GPS wander without risk of incursion. If GPS fix drops below 3D, the preflight gate prevents arming (Section~\ref{sec:mf-preflight}). \\
+    Sustained headwind (5\,m/s) &
+      Ground speed drops to 3\,m/s, increasing dwell time from 14 to 38 frames---improving detection probability. Energy consumption increases by $\sim$40\%, but the 14-minute post-search reserve (Table~\ref{tab:df-final}) absorbs this with margin. \\
+    Inference rate drop (e.g.\ thermal throttle) &
+      At half the nominal rate (2.4\,FPS), the target still receives 7~frames per pass---above the 5-frame empirical minimum. The conservative 8\,m/s speed provides this headroom by design. \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\noindent These margins are not coincidental; they result from the 15--30\% safety factors applied at each step of the sequential measurement chain (Section~\ref{sec:df-sequential}). The compound effect of individual margins is that the system degrades gracefully rather than failing abruptly when any single assumption is violated.
+
+% =====================================================================
 \subsection{Pareto Optimality of the Selected Point}\label{sec:df-pareto}
 
 The selected configuration sits at the knee of the Pareto frontier (Figure~\ref{fig:pareto-parallel}). Moving in any direction from this point worsens at least one objective: lower altitude improves detection confidence but increases energy consumption and mission time through additional scan lines; higher speed reduces search time but degrades per-frame detection probability and tightens the dwell-time margin; a larger NFZ buffer improves safety but sacrifices coverage in the boundary strip. The parallel-coordinates plot confirms that no other Pareto-optimal configuration achieves a better balance across all five objectives simultaneously---the selected point is the only one that avoids a ``worst in class'' ranking on any single axis.
@@ -205,12 +248,18 @@ The selected configuration sits at the knee of the Pareto frontier (Figure~\ref{
 % =====================================================================
 \subsection{Non-Quantifiable Design Choices}\label{sec:df-qualitative}
 
-Not every decision admits numerical optimisation. Three choices were made on engineering judgement rather than objective scoring:
+Not every decision admits numerical optimisation. Four choices were made on engineering judgement rather than objective scoring:
 
 \begin{itemize}[nosep]
   \item \textbf{Lawnmower vs.\ spiral pattern.} A spiral can be marginally more energy-efficient for convex polygons, but a lawnmower provides a \emph{coverage guarantee}: every point in the polygon lies within a scan lane of known width. For a safety-critical search, guaranteed coverage outweighs marginal efficiency.
   \item \textbf{Operator-in-the-loop verification.} Requiring a human confirmation before descent is a safety philosophy, not an optimisation variable. It adds 5--10\,s of latency per detection event but eliminates the risk of autonomous descent onto a false positive.
   \item \textbf{Single-class detector.} Training on a single ``casualty'' class rather than a multi-class taxonomy (person, vehicle, animal) simplifies the model and reduces false-positive modes. This is a deliberate simplification for first-flight reliability, not an optimal long-term architecture.
+  \item \textbf{PLB redirect mid-search.} When a Personal Locator Beacon narrows the search area (R06), the system regenerates the lawnmower pattern over the focus polygon at reduced speed (5\,m/s) rather than abandoning the broader search. This is a procedural decision---the operator triggers it manually, and the timing depends on when the beacon data arrives, not on an optimisation variable.
 \end{itemize}
 
 These choices are not on any Pareto frontier---they reflect constraints that sit outside the quantitative model (regulatory requirements, operational risk tolerance, project timeline). Their rationale is discussed further in Section~\ref{sec:rationale}.
+
+% =====================================================================
+\subsection{Summary}\label{sec:df-summary}
+
+The decision flow follows a strict sequential chain---vision model, detection envelope, speed, path geometry, safety margins---where each variable is locked before the next is addressed. This ordering prevents circular dependencies and ensures every parameter traces to a physical measurement or regulatory constraint. The selected configuration (35\,m, 8\,m/s, 70\textdegree, 20\% overlap, 30\,m NFZ buffer) sits at the knee of the Pareto frontier with compound safety margins that absorb GPS degradation, wind, thermal throttling, and boundary effects without requiring mid-mission re-planning. The runtime decision-making that operates within these parameters---when to investigate a detection, how to classify a target, when to override autonomy---is described in the mission flow (Section~\ref{sec:mission-flow}).

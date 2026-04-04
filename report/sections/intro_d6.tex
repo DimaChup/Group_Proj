@@ -6,19 +6,21 @@
 
 \subsection*{Context and Background}
 
-A hiker has gone missing in Fenswood Wilderness, a semi-rural landscape of mixed grassland and scrub managed by the University of Bristol for field research. Search and rescue teams have been alerted, but the terrain is uneven, visibility is limited by vegetation, and the search area spans several hectares. At some point during the search, the hiker activates a Personal Locator Beacon (PLB), narrowing the probable location to a Focus Area---but a casualty on the ground, potentially incapacitated or partially concealed, still requires visual confirmation before help can reach them.
+In 2023, UK mountain rescue teams responded to over 3{,}000 incidents, with search phases frequently lasting several hours across terrain that is difficult or dangerous to traverse on foot~\cite{mra2023}. The \textit{golden hour}---the window within which medical intervention most significantly improves survival---places severe pressure on response teams to locate casualties rapidly~\cite{goodrich2008}. A ground search team of ten can sweep approximately $0.1$--$0.5$\,km$^{2}$/hr; a single UAV at \SI{35}{\metre} altitude with a \ang{60} field of view can survey a 32\,m-wide swath at \SI{8}{\metre\per\second}, covering approximately $0.6$\,km$^{2}$/hr---an order-of-magnitude improvement per searcher deployed~\cite{goodrich2008, murphy2014}. Recent advances in lightweight object-detection models, particularly the YOLO family~\cite{yolohistory, yolov8}, have made it feasible to run real-time inference on edge hardware such as the Raspberry Pi, enabling fully onboard detection without continuous video downlinks~\cite{edgeai}.
 
-This is the scenario posed by the AENGM0074 module. Each student company is provided with identical hardware---a Hexsoon EDU-450 hexacopter airframe, a Cube Orange+ flight controller, a Raspberry Pi~5 companion computer, and a global-shutter camera---and tasked with building an autonomous unmanned aerial vehicle (UAV) capable of:
+This report presents the design, implementation, and evaluation of an autonomous search and rescue (SAR) drone that addresses the gap between expensive commercial platforms (\pounds5\,000--\pounds30\,000 requiring dedicated ground operators) and research prototypes relying on GPU-class computers too heavy for volunteer rescue organisations. The central question is whether a \textit{low-cost, fully autonomous} SAR UAV---built from a Raspberry Pi, an RGB camera, and commodity components---can detect, localise, and respond to a casualty with all decision-making performed onboard.
+
+The project scenario, set by the AENGM0074 module, is as follows. A hiker has gone missing in Fenswood Wilderness, a semi-rural landscape managed by the University of Bristol. Each student company receives identical hardware---a Hexsoon EDU-450 hexacopter, a Cube Orange+ flight controller, a Raspberry Pi~5, and a global-shutter camera---and must build a UAV capable of:
 
 \begin{itemize}
     \item systematically searching a defined area while respecting a no-fly zone over a Site of Special Scientific Interest (SSSI);
-    \item detecting a life-size casualty surrogate (hereafter ``rescue mannequin'' or simply ``mannequin'') using onboard computer vision;
+    \item detecting a life-size casualty surrogate (``rescue mannequin'') using onboard computer vision;
     \item reporting the casualty's estimated GPS coordinates and imagery to a ground operator;
     \item landing between 5 and 10\,m from the casualty and deploying a simulated first-aid kit; and
     \item returning to the designated take-off location.
 \end{itemize}
 
-The scenario is deliberately constrained to a single outdoor demonstration flight, preceded by progressive bench and flight testing, reflecting the compressed timeline of a single-term MSc module. A 50\,m altitude ceiling, defined flight-area boundaries, and automatic geofencing to enforce SSSI exclusion must all be respected without relying on pilot intervention. All software must be released publicly under the MIT licence.
+A 50\,m altitude ceiling, defined flight-area boundaries, and automatic geofencing to enforce SSSI exclusion must all be respected without pilot intervention. The scenario is deliberately constrained to a single outdoor demonstration flight preceded by progressive bench and flight testing, reflecting the compressed timeline of a single-term MSc module. Twelve requirements (R01--R12) govern the mission. All software is released publicly under the MIT licence.
 
 \subsection*{Company Description}
 
@@ -74,6 +76,19 @@ Project scheduling and milestone tracking. Flight-slot booking and risk assessme
 \end{tabular}
 \end{table}
 
+\subsection*{Approach and Objectives}
+
+Our approach rests on three principles. \textbf{First, simulation before flight}: the full autonomy stack---state machine, computer vision, path planning, geofencing---was developed and tested end-to-end in a Software-In-The-Loop (SITL) environment before any hardware was powered on, ensuring that logic errors were caught at zero hardware risk. \textbf{Second, modular single-interface design}: a single function (\texttt{detect\_in\_image}) encapsulates all computer vision, allowing three model retrains and backend changes with zero modifications to the mission orchestrator. \textbf{Third, progressive testing}: a five-tier framework (simulation $\to$ Docker $\to$ bench $\to$ passive flight $\to$ autonomous flight) gates each integration step, catching defects at the lowest-cost tier possible.
+
+The project objectives, derived from the twelve module requirements, are:
+\begin{enumerate}[nosep]
+    \item Autonomously search a polygon area with 100\% coverage while avoiding the SSSI no-fly zone.
+    \item Detect a casualty surrogate from $\geq$\SI{30}{\metre} altitude using onboard AI at $\geq$\SI{4}{FPS}.
+    \item Localise the target to $<$\SI{5}{\metre} GPS accuracy using vision-based estimation.
+    \item Land within 5--10\,m of the target, deploy a first-aid payload, and return to the take-off location.
+    \item Validate all capabilities through progressive testing with quantitative evidence.
+\end{enumerate}
+
 \subsection*{Report Structure}
 
-The remainder of this report is organised to address all requirements of the D6 brief. Section~\ref{sec:rationale} presents the \emph{Design Rationale}, including STEEPLE analysis and four MCDA trade studies. Sections~\ref{sec:sysdesc}--\ref{sec:groundstation} provide the \emph{System Description}: hardware platform, computer vision pipeline, path planning, state machine, target localisation, and ground station. Section~\ref{sec:testing} covers the progressive testing methodology and simulation environment. Section~\ref{sec:requirements} presents \emph{Requirements Verification} with evidence of compliance for R01--R12. Section~\ref{sec:evaluation} provides a plus/delta \emph{Evaluation} of technical performance. References and appendices follow, including the full state-transition table, detection samples, and calibration data.
+The report is organised as follows. Section~\ref{sec:rationale} presents the \emph{Design Rationale}, including STEEPLE analysis and four MCDA trade studies that justify the key architectural choices. Sections~\ref{sec:sysdesc}--\ref{sec:groundstation} provide the \emph{System Description}: hardware platform, computer vision pipeline, path planning, state machine, target localisation, and ground station. Section~\ref{sec:testing} covers the progressive testing methodology, simulation environment, and defect discovery results. Section~\ref{sec:requirements} presents \emph{Requirements Verification} with evidence of compliance for all twelve requirements. Section~\ref{sec:evaluation} provides a plus/delta \emph{Evaluation} of technical performance, including comparison with published SAR systems and a critical assessment of design choices. Appendices provide the full state-transition table, detection samples, calibration data, and the complete defect register.

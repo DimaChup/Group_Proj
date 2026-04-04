@@ -1,16 +1,165 @@
-% design_strategy.tex — Design strategy reasoning chain
-% Shows the logical dependency chain that determined all operating parameters.
+% design_strategy.tex — Design strategy: philosophy, methodology, and parameter derivation
+% Shows the overall design philosophy, simulation-first approach, progressive testing
+% rationale, team organisation, and the logical dependency chain for operating parameters.
 %
 % STATUS: DEFINITIVE for the step-by-step parameter derivation chain.
 %         References results from path_optimization_definitive.tex (216-config sweep,
 %         Pareto table) and optimization_master.tex (composite score).
 %         Some figures appear in optimization_master.tex with '-app' suffix.
 
-\section{Design Strategy: Parameter Derivation Chain}\label{sec:design-strategy}
+\section{Design Strategy}\label{sec:design-strategy}
 
+This appendix presents the strategic rationale that shaped the project from inception through field deployment: why a simulation-first development model was adopted, how the progressive testing framework mitigated risk with limited hardware access, how the team adapted when conditions changed, and how every operating parameter was derived from evidence rather than assumption.
+
+% =====================================================================
+\subsection{Design Philosophy: Simulation-First Development}\label{sec:sim-first-philosophy}
+
+Three interlocking principles governed the development strategy from the outset.
+They were not adopted reactively---each was a deliberate engineering choice made before any code was written, based on the project's defining constraint: a student team with a single shared drone, limited flight-test opportunities, and a fixed deadline.
+
+\paragraph{Principle 1: Prove it in software before touching hardware.}
+Every algorithmic component---the 20-state finite state machine, the boustrophedon path planner, the dual-backend detection pipeline, the GPS estimation chain, and the five-layer geofence---was developed and end-to-end tested in Software-In-The-Loop (SITL) simulation on a laptop before any hardware was assembled.
+SITL provides three properties that field testing cannot: repeatability (identical initial conditions), instant restart (no battery swap, no re-arming), and zero crash risk.
+A simulated camera extracted FOV-correct sub-images from a georeferenced satellite map of the Fenswood site, enabling the full detect$\to$estimate$\to$land pipeline to execute against realistic terrain imagery without leaving the lab.
+
+This approach was chosen over two alternatives.
+A \emph{hardware-first} strategy---assembling the drone and iterating through flight tests---would have consumed the limited flight-day budget on debugging basic logic errors (wrong state transitions, incorrect coordinate transforms, sign inversions) that cost minutes to fix in simulation but hours in the field.
+A \emph{model-based design} approach (e.g.\ Simulink/Modelica plant models with auto-generated code) would have offered higher physical fidelity but required 40--60~hours of plant modelling before the first state machine test, time that was instead spent on mission logic and detection pipeline development.
+
+\paragraph{Principle 2: One codebase, every platform.}
+A single codebase runs unmodified on the Windows development laptop, WSL/Linux, and the Raspberry~Pi~5.
+Platform differences are confined to two files: \texttt{config.py} (auto-detection of serial ports, camera backends, and display availability) and \texttt{vision.py} (dual inference backend: Ultralytics on laptop, TFLite/NCNN on Pi).
+No \texttt{if platform ==} guards appear in mission logic.
+This eliminates an entire class of ``works on my machine'' integration failures and ensures that every simulation run exercises the same control flow that will execute in flight.
+
+\paragraph{Principle 3: Isolate one variable per test step.}
+Each test in the progressive framework introduces exactly one new variable: a new sensor, a new communication link, a new flight mode.
+A failure at step~$N$ is therefore attributable to the single change introduced at step~$N$, not to an unknown interaction among multiple untested components.
+This principle---borrowed from experimental design practice---transforms debugging from a combinatorial search into a linear walk through the integration ladder.
+
+% =====================================================================
+\subsection{Why This Approach Over Alternatives}\label{sec:strategy-alternatives}
+
+The simulation-first methodology was not the only viable development strategy.
+Table~\ref{tab:dev-strategy-comparison} compares three candidate approaches against the project's constraints.
+
+\begin{table}[ht]
+  \centering\compactTable
+  \caption{Development strategy comparison. Scores are qualitative assessments on a 1--5 scale (5 = best fit for project constraints).}\label{tab:dev-strategy-comparison}
+  \begin{tabularx}{\linewidth}{@{}X c c c@{}}
+    \toprule
+    \textbf{Criterion} & \textbf{Simulation-first} & \textbf{Hardware-first} & \textbf{Model-based} \\
+    \midrule
+    Time to first integration test      & 5 (days)   & 2 (weeks)  & 1 (months) \\
+    Hardware access requirement          & 5 (none)   & 1 (daily)  & 3 (late)   \\
+    Defect discovery cost                & 5 (low)    & 2 (high)   & 4 (medium) \\
+    Fidelity of pre-flight validation    & 3 (medium) & 5 (high)   & 4 (high)   \\
+    Team parallelism (5 members)         & 5 (full)   & 2 (serial) & 3 (partial)\\
+    Risk of logic errors surviving to flight & 5 (low) & 2 (high)  & 4 (low)    \\
+    \midrule
+    \textbf{Total}                       & \textbf{28} & 14         & 19         \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+The simulation-first approach dominates on every criterion except pre-flight fidelity, where hardware-first testing provides direct validation of real-world effects (wind, GPS noise, motor vibration) that simulation cannot replicate.
+This fidelity gap is addressed explicitly by the progressive testing ladder (Section~\ref{sec:progressive-ladder-strategy}), which introduces hardware incrementally after the software has been proven in simulation.
+
+The hardware-first approach scores poorly on team parallelism because it serialises development around a single shared airframe: only one person can fly the drone at a time, and a crash grounds the entire team.
+The simulation-first approach allows all five team members to run the full software stack simultaneously on their laptops, with integration points defined by narrow interfaces (\texttt{detect\_in\_image()} returns \texttt{(found, x, y, conf)}; \texttt{generate\_lawnmower()} returns a waypoint list) rather than by physical hardware availability.
+
+% =====================================================================
+\subsection{Progressive Testing as Risk Management}\label{sec:progressive-ladder-strategy}
+
+The five-tier progressive testing framework (described operationally in Section~\ref{sec:testing}) is not merely a testing plan---it is the project's primary risk management instrument.
+Each tier gates advancement to the next, and each failure is resolved at the cheapest possible tier before proceeding.
+
+The cost asymmetry that motivates this structure is stark.
+A sign-convention error in the geofence repulsive force (Section~\ref{sec:decisions-changed}, correction~5) cost 15~minutes to diagnose and fix in Tier~1 simulation.
+Had the same error survived to Tier~5 autonomous flight, the drone would have been driven \emph{into} the SSSI no-fly zone---a Wildlife and Countryside Act 1981 violation, potential hardware loss, and a consumed flight-day slot.
+
+Of the 15 defects discovered during the project, 12 (80\%) were caught at Tier~1 (simulation) or Tier~3 (bench test), at a combined cost of approximately 8~person-hours.
+The remaining 3---all related to real-world sensor behaviour (BGR colour inversion, lens distortion magnitude, GPS timing lag)---were caught at Tier~3 and Tier~4, where the cost was a single field session rather than a failed autonomous mission.
+No defects were first discovered at Tier~5.
+
+This distribution validates the investment in simulation infrastructure: the 40+~hours spent building the SITL simulation, interactive simulator, and video replay tools were repaid many times over by avoiding field-day debugging.
+
+% =====================================================================
+\subsection{Adapting When Hardware Was Unavailable}\label{sec:adaptation-strategy}
+
+The project's defining constraint adaptation occurred on 2026-03-11, when the scheduled first flight test was cancelled due to sustained winds exceeding the EDU-450's \SI{10}{\metre\per\second} operational limit (measured \SI{12}{\metre\per\second}, gusts to \SI{18}{\metre\per\second}).
+Rather than losing the field session entirely, the team executed a pre-planned bench-testing fallback---a contingency that had been designed into the test schedule precisely because weather cancellations are a known risk for outdoor robotics projects in the UK.
+
+The bench session yielded four results that would have been impossible to obtain without the assembled hardware:
+\begin{enumerate}[nosep]
+  \item \textbf{FOV calibration correction:} the datasheet focal length (\SI{7.0}{\milli\metre}) was found to be 22\% too long via a tape-measure calibration (\SI{92}{\centi\metre} visible at \SI{1}{\metre} height), yielding a corrected value of \SI{5.46}{\milli\metre}. Without this correction, GPS estimation errors at \SI{30}{\metre} would have exceeded the \SI{10}{\metre} R07 landing requirement.
+  \item \textbf{Lens distortion calibration:} a 14$\times$9 checkerboard calibration produced an RMS residual of 0.399, enabling sub-pixel lens correction at \SI{1.5}{\milli\second} per frame.
+  \item \textbf{Inference benchmark:} TFLite on the Pi~5 achieved \SI{206.5}{\milli\second} per frame (4.8~FPS), confirming that the search speed of \SI{8}{\metre\per\second} provides 14~frames of target visibility per flyover---well above the 3-frame minimum.
+  \item \textbf{End-to-end connectivity verification:} Pi$\to$MAVProxy$\to$Cube$\to$Mission Planner chain confirmed operational, validating the MAVProxy UDP bridge architecture.
+\end{enumerate}
+
+The broader adaptation strategy extended beyond a single weather event.
+Because hardware access was intermittent throughout the project (shared lab, booking conflicts, component delivery delays), the simulation-first philosophy ensured that software development was never blocked by hardware availability.
+The DJI video replay tool (Section~\ref{sec:dji-proxy}) was built specifically to bridge the gap between simulation and real flight: by replaying genuine aerial footage through the identical detection pipeline, the team could validate detection performance under real lighting, texture, and altitude conditions without requiring drone access.
+
+% =====================================================================
+\subsection{Bridging the Simulation-to-Reality Gap}\label{sec:sim-real-gap-strategy}
+
+Simulation-first development carries an inherent risk: the simulation may not be faithful enough, causing validated software to fail on real hardware.
+Four specific sim-to-real gaps were identified and addressed:
+
+\begin{enumerate}
+  \item \textbf{GPS noise.}
+    SITL provides near-perfect GPS with sub-metre accuracy.
+    Real consumer GNSS receivers exhibit 2--3\,m CEP and 100--200\,ms timing lag.
+    \emph{Mitigation:} the interactive simulator includes configurable Ornstein--Uhlenbeck GPS drift (up to \SI{5}{\metre} $\sigma$) and the Kalman filter estimator was validated against these injected errors. DJI video replay confirmed a CEP50 of \SI{2.3}{\metre} under real conditions.
+
+  \item \textbf{Detection under real conditions.}
+    Synthetic training data and simulated camera views cannot reproduce real-world lighting variation, partial occlusion, or terrain texture.
+    \emph{Mitigation:} the model was retrained on a mixed dataset (300~synthetic + 16~real aerial photos + 50~negatives) and validated via DJI video replay, which confirmed 87\% detection rate on frames where the target exceeded $20 \times 20$\,px.
+
+  \item \textbf{Motion blur and vibration.}
+    SITL camera views are static screenshots; real aerial imagery exhibits motion blur proportional to speed and altitude.
+    \emph{Mitigation:} the interactive simulator includes configurable camera shake (0--15\,px), and the IMX296 global shutter eliminates rolling-shutter distortion. The speed schedule (\SI{8}{\metre\per\second} at \SI{35}{\metre}) limits inter-frame ground displacement to \SI{1.67}{\metre}, well within the \SI{32}{\metre} footprint width.
+
+  \item \textbf{Wind disturbance.}
+    No simulation level models wind effects on flight stability or lane tracking accuracy.
+    \emph{Mitigation:} the 20\% swath overlap provides \SI{6.4}{\metre} of lateral margin against the \SI{4.6}{\metre} RSS displacement budget (GPS error + crosswind + roll coupling), and the NFZ waypoint buffer (\SI{30}{\metre}) provides a $2.2\times$ safety factor above the \SI{23}{\metre} RSS requirement.
+\end{enumerate}
+
+Each gap was treated as a quantified risk with a specific mitigation, rather than an unacknowledged limitation.
+The mitigations are conservative by design: if real conditions prove worse than assumed, the system degrades gracefully (slower search, wider margins, more conservative detection threshold) rather than failing catastrophically.
+
+% =====================================================================
+\subsection{Team Organisation and Workstream Structure}\label{sec:team-strategy}
+
+The five-member team was organised into parallel workstreams to maximise development velocity while maintaining integration discipline:
+
+\begin{itemize}[nosep]
+  \item \textbf{Software and CV} (Dmytro): autonomous software stack, detection pipeline, simulation environment, training data pipeline, and progressive testing framework.
+  \item \textbf{Flight Dynamics and Testing} (Robin): state machine testing, flight parameter tuning, simulation validation, and Cube flight-mode configuration.
+  \item \textbf{RC and Pilot Operations} (Teammate~3): transmitter configuration, kill-switch setup, manual override procedures, and designated pilot for all flight tests.
+  \item \textbf{Hardware Integration} (Teammate~4): airframe assembly, wiring, camera and GPS mounting, compass calibration, and payload CG verification.
+  \item \textbf{Project Management} (Teammate~5): scheduling, flight-slot booking, risk assessments, report compilation, and deliverable tracking.
+\end{itemize}
+
+This structure was chosen over two alternatives.
+A \emph{full-stack} model (every member works on everything) would have created merge conflicts and knowledge fragmentation across a 10,000+~line codebase.
+A \emph{pair-programming} model would have doubled the person-hours on each task without proportional quality improvement, given the team's heterogeneous skill profiles (software engineering, aerodynamics, mechanical assembly, project management).
+
+The workstream model's key risk---integration failures at stream boundaries---was mitigated by narrow, well-defined interfaces.
+The CV stream delivers \texttt{(found, x, y, conf)}.
+The path planner delivers a waypoint list.
+The hardware stream delivers a working serial link.
+Integration testing (bench tests, passive flights) was conducted jointly, ensuring that no subsystem was developed in isolation from the system it would connect to.
+
+% =====================================================================
+\subsection{Parameter Derivation Chain}\label{sec:param-derivation-chain}
+
+The preceding strategic choices---simulation-first development, progressive testing, single-codebase architecture---created the infrastructure within which every operating parameter could be derived from evidence rather than assumed.
 The operating parameters in Table~\ref{tab:pareto-final} were not selected independently.
 Each decision constrains the next, forming a directed dependency chain from the physical target through to the final mission plan.
-This section traces that chain step by step, showing how each parameter was derived from evidence rather than assumed.
+The remainder of this appendix traces that chain step by step.
 
 % =====================================================================
 \subsection{Step 1: Maximum Detection Altitude}\label{sec:step-max-alt}

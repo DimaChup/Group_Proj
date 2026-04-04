@@ -112,7 +112,7 @@ A central design goal is that the transition from simulation to real hardware re
 \begin{enumerate}
     \item \textbf{Configuration auto-detection.} At import time, \texttt{config.py} probes for a serial connection to the Cube flight controller. If found, the system operates in real mode; otherwise, it connects to SITL via UDP. The \texttt{DRONE\_MODE} environment variable provides an explicit override. Camera selection follows the same pattern: picamera2 on the Pi, OpenCV \texttt{VideoCapture} on the laptop.
 
-    \item \textbf{Identical state machine.} The mission orchestrator (\texttt{main.py}) contains no conditional branches distinguishing simulation from real flight. The 19-state finite state machine---arming, takeoff, search pattern execution, detection-triggered transitions, operator verification, and landing---runs the same logic in both environments. Only the camera frame source and MAVLink endpoint differ.
+    \item \textbf{Identical state machine.} The mission orchestrator (\texttt{main.py}) contains no conditional branches distinguishing simulation from real flight. The 20-state finite state machine---arming, takeoff, search pattern execution, detection-triggered transitions, operator verification, and landing---runs the same logic in both environments. Only the camera frame source and MAVLink endpoint differ.
 
     \item \textbf{Same model weights.} All platforms load the same \texttt{best.tflite} model file with input shape $[1, 640, 640, 3]$ and output shape $[1, 5, 8400]$. The vision module applies identical preprocessing (resize, normalise, optional lens undistortion) regardless of frame origin.
 \end{enumerate}

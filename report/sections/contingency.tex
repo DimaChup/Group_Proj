@@ -39,7 +39,7 @@ The target deliverable is the system described throughout this report: a fully a
     \textbf{Capability} & \textbf{Description} & \textbf{Req.} \\
     \midrule
     Autonomous search pattern & Boustrophedon waypoints generated at runtime and executed in \texttt{GUIDED} mode with B\'{e}zier-smoothed turns. & R01, R03, R04, R05 \\
-    Four-layer geofence & Plan-time waypoint filter, speed scalar field, repulsive vector field, and hard boundary cutoff enforce SSSI exclusion in software, backed by firmware geofence. & R01, R02 \\
+    Five-layer geofence & Plan-time waypoint filter, speed scalar field, repulsive vector field, hard boundary cutoff, and firmware backup enforce SSSI exclusion. & R01, R02 \\
     Onboard AI detection & YOLOv8n TFLite inference at ${\sim}$5\,FPS triggers automatic transition to \textsc{Centering} state. Detection queue with spatial clustering filters duplicates. & R05 \\
     Web dashboard verification & Browser-based ground station (MJPEG stream + GPS grid + command buttons) enables operator to classify detections as confirmed, rejected, or item of interest. & R08, R10 \\
     \SI{7.5}{\metre} offset landing & After operator confirmation, the system averages GPS for 10\,s, selects an operator-chosen cardinal offset, approaches at low altitude, and lands. & R07 \\
@@ -105,7 +105,7 @@ The key insight is that each tier is independently valuable.  The MVD produces d
 % ─────────────────────────────────────────────────────────────────────
 \subsection{Contingency Plans}\label{sec:contingencies}
 
-Table~\ref{tab:contingency} defines the primary failure scenarios, their detection criteria, and the pre-planned response. Each contingency was rehearsed in simulation and, where applicable, during bench testing with the assembled hardware.
+Table~\ref{tab:contingency} defines the primary failure scenarios, their detection criteria, and the pre-planned response.  Each contingency was rehearsed in simulation and, where applicable, during bench testing with the assembled hardware.  Critically, every response listed below is \emph{already implemented in code}---these are not aspirational plans but executable fallback paths that activate automatically or with a single command.
 
 \begin{table}[htbp]
   \centering\small
@@ -115,16 +115,100 @@ Table~\ref{tab:contingency} defines the primary failure scenarios, their detecti
     \textbf{Scenario} & \textbf{Detection} & \textbf{Response} \\
     \midrule
     No GPS lock & Satellites $<$ 6 or fix type $<$ 3D after 120\,s & Fall back to Mission Planner AUTO mode with pre-uploaded waypoints. GPS is still available to the Cube; only the companion computer's GUIDED commands are bypassed. \\
-    CV fails in field (no detections) & Zero detections after full search pass & Swap to COCO person detector (\texttt{models/human.tflite}, 80-class YOLOv8n, \SI{13}{\mega\byte}). If still no detections, reduce confidence threshold from 0.2 to 0.1 and repeat. \\
+    CV fails in field (no detections) & Zero detections after full search pass & Swap to COCO person detector (\texttt{models/human.tflite}, 80-class YOLOv8n, \SI{13}{\mega\byte}). If still no detections, reduce confidence threshold from 0.4 to 0.2 via \texttt{config.py} and repeat. \\
     Pi crashes mid-flight & MAVLink heartbeat loss & ArduCopter GCS failsafe triggers RTL after heartbeat timeout (\texttt{FS\_GCS\_ENABLE}). Pilot monitors via RC telemetry. On the ground, restart script and resume from saved state. \\
     Detection altitude too low & Detections only below \SI{20}{\metre} during passive flight test & Reduce \texttt{TARGET\_ALT} from \SI{35}{\metre} to \SI{20}{\metre} in \texttt{config.py}. Accept the doubled scan-line count and reduced coverage rate. \\
     Wind exceeds limits & Sustained $>$\SI{8}{\metre\per\second} at altitude & Abort mission; command RTL. Wait for calmer conditions. ArduPilot \texttt{LOITER} mode holds position in moderate gusts. \\
     Battery low mid-search & ArduCopter voltage threshold & Automatic RTL via battery failsafe (\texttt{FS\_BATT\_ENABLE}). Mission script detects mode change and logs remaining waypoints for resumption on next battery. \\
+    Camera failure mid-flight & \texttt{get\_frame()} returns \texttt{None} & Black frame with ``CAMERA LOST'' overlay substituted; search pattern continues safely.  Operator sees the warning on the MJPEG stream and can abort or continue pattern-only. \\
     Model swapped but wrong format & TFLite interpreter fails to load & \texttt{preflight.py} catches model load errors before takeoff. Revert to known-good \texttt{best.tflite} (3.2\,MB baseline). \\
+    Cube autopilot unresponsive & No heartbeat after 10\,s & Pilot retains full RC authority; switches to \texttt{STABILIZE} and lands manually.  Pi cannot prevent this because the RC receiver connects directly to the Cube, bypassing all software. \\
+    State machine hangs & Single state exceeds watchdog limit & 120\,s verify timeout auto-rejects; 90\,s landing timeout force-disarms.  Operator can press \texttt{M} (manual override) at any time to halt autonomy. \\
     Geofence misconfigured & KML parse returns wrong vertex count & \texttt{config.py} validates loaded zone vertex counts against hardcoded fallbacks. Mismatch triggers a warning and uses fallback coordinates. \\
     \bottomrule
   \end{tabularx}
 \end{table}
+
+The remainder of this section expands on the most consequential failure categories---hardware, software, and environmental---with specific detail on the mechanisms that make each response possible.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsubsection{Hardware Failure Contingencies}\label{sec:hw-contingencies}
+
+\paragraph{Camera failure.}
+If the Pi camera stops producing frames (cable vibrated loose, driver crash, sensor overheat), the \texttt{get\_frame()} call in the main loop returns \texttt{None}. The code handles this explicitly: a black frame with a red ``CAMERA LOST'' text overlay is substituted, a per-frame counter tracks consecutive failures, and a warning is printed every 5\,s (lines 718--737 of \texttt{main.py}).  The search pattern continues uninterrupted---the aircraft simply flies the remaining waypoints without detection capability.  If the camera recovers mid-flight, the counter resets and a ``Camera recovered'' message confirms the transition.  The system does \emph{not} land on camera loss because the aircraft can still safely navigate on GPS and the operator may choose to continue the survey for coverage mapping alone.
+
+\paragraph{GPS degradation.}
+The GPS handler monitors every \texttt{GPS\_RAW\_INT} MAVLink message (fix type, satellite count, HDOP) every iteration of the main loop.  If fix type drops below 3D or satellites fall below 6, a degradation timer starts.  The operator sees real-time warnings every iteration with a countdown: ``GPS DEGRADED --- fix=2, sats=4, degraded for 3.2\,s (RTL in 1.8\,s)''.  After 5\,s of sustained degradation, \texttt{\_emergency\_rtl()} fires a \texttt{MAV\_CMD\_DO\_SET\_MODE} command (mode 6 = RTL).  If the RTL command itself fails (corrupted link), ArduCopter's independent \texttt{FS\_GCS\_ENABLE} failsafe triggers RTL when heartbeats cease---a firmware-level backstop that the companion computer cannot override.  If GPS recovers within the 5\,s window, the timer resets and the mission continues without intervention.
+
+\paragraph{Cube autopilot failure.}
+If the Cube Orange itself becomes unresponsive (firmware crash, power brownout), all MAVLink communication ceases.  The script's \texttt{recv\_match()} call raises an exception, caught by the top-level handler which calls \texttt{\_emergency\_rtl()}.  Even if this command cannot reach the Cube, the pilot always has direct RC authority: the RC receiver connects to the Cube via a dedicated SBUS link that bypasses the companion computer entirely.  Switching the RC transmitter to \texttt{STABILIZE} or \texttt{LOITER} immediately returns manual control, regardless of the software state.
+
+\paragraph{Raspberry Pi failure.}
+If the Pi crashes, freezes, or loses power, the only externally visible symptom is the cessation of MAVLink heartbeat messages to the Cube.  ArduCopter's GCS failsafe (\texttt{FS\_GCS\_ENABLE = 1}) detects this within 5\,s and triggers automatic RTL.  The aircraft returns home and lands without any companion-computer involvement.  After landing, the Pi can be rebooted and \texttt{preflight.py} verifies all subsystems (camera, model, MAVLink link) before any new mission.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsubsection{Software Failure Contingencies}\label{sec:sw-contingencies}
+
+\paragraph{Detection model produces no results.}
+Three pre-deployed alternative models are available on the Pi's SD card with no internet required:
+
+\begin{enumerate}
+  \item \textbf{Retrained v2 model} (\texttt{cv\_models/sar\_v2\_1088/best.tflite}, 11.7\,MB) --- trained on 300 synthetic + 16 real + 50 negative images at native 1456$\times$1088 resolution (mAP50 = 0.995).  This is the primary model.
+  \item \textbf{COCO person detector} (\texttt{models/human.tflite}, 13\,MB) --- a standard YOLOv8n trained on the 80-class COCO dataset.  Detects ``person'' as a class and works without retraining.  Tested on Pi at 2.3\,FPS.
+  \item \textbf{Original baseline} (\texttt{best.tflite}, 3.2\,MB) --- the first custom-trained model, kept as a known-good fallback.
+\end{enumerate}
+
+Swapping is a single command: \texttt{cp cv\_models/sar\_v2\_1088/best.tflite best.tflite}, then restart the script.  The \texttt{--model <path>} CLI flag also allows loading any model without overwriting the default.  If \emph{all} models fail to detect, the confidence threshold (\texttt{CONFIDENCE\_THRESHOLD} in \texttt{config.py}, default 0.4) can be lowered to 0.2 or 0.1 on-site to increase sensitivity at the cost of more false positives---a trade-off that the operator-in-the-loop verification stage makes safe.
+
+\paragraph{State machine hangs or enters unexpected state.}
+Two hard-coded timeouts prevent indefinite hovering.  The \textsc{Verify} state auto-rejects any detection after 120\,s of operator inactivity, with countdown warnings at 60\,s, 90\,s, and every 10\,s thereafter.  The landing sequence has a 90\,s absolute timeout with forced disarm if neither accelerometer-based nor altimeter-based touchdown detection triggers.  At any point, the operator can press \texttt{M} (keyboard or browser button) to transition to \textsc{Manual} state, which suspends all autonomous commands and returns RC authority to the pilot.
+
+\paragraph{MAVLink connection lost mid-flight.}
+All MAVLink calls in \texttt{main.py} are wrapped in a top-level \texttt{try/except} block.  Any communication exception triggers \texttt{\_emergency\_rtl()}, which sends a best-effort RTL command and prints a prominent banner directing the pilot to use the RC kill switch.  The \texttt{\_emergency\_rtl()} function (lines 1205--1223) is deliberately minimal---a single \texttt{MAV\_CMD\_DO\_SET\_MODE} call---because a degraded link may only reliably deliver one packet.  If even this fails, the ArduCopter GCS failsafe provides an independent RTL trigger.
+
+\paragraph{RC override guard.}
+If the pilot switches the RC transmitter away from \texttt{GUIDED} or \texttt{LAND} mode at any time, the software's RC override guard (checked \emph{before} every state dispatch iteration) immediately suspends all autonomous commands, keyboard inputs, and geofence corrections.  The guard checks ArduCopter's reported flight mode against a whitelist of \texttt{(4, 6, 9)} (\texttt{GUIDED}, \texttt{RTL}, \texttt{LAND}); any other mode means the pilot has taken over, and the software must not fight the pilot.  Resuming autonomy after manual override requires passing safety checks (GPS fix valid, position outside NFZ) before the state machine re-engages.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsubsection{Environmental Contingencies}\label{sec:env-contingencies}
+
+\paragraph{Poor lighting or low contrast.}
+The retrained v2 model's training pipeline includes brightness and contrast augmentation (random factors 0.6--1.4), Gaussian blur, and noise injection, providing tolerance to overcast conditions, shadows, and sun glare.  If field lighting proves problematic, the COCO person detector (\texttt{human.tflite}) provides an independent detection pathway trained on a vastly larger and more diverse dataset (328\,k images with varied lighting conditions).
+
+\paragraph{GPS multipath or urban canyon effects.}
+The survey site is an open field with minimal structures, so severe multipath is unlikely.  Nonetheless, the GPS estimation pipeline uses inverse-variance-weighted spatial clustering across multiple detection frames to average out per-sample GPS noise.  The \texttt{--center-verify} flag enables 10\,s of GPS averaging after centering, reducing single-sample error from a measured CEP50 of ${\sim}$2.3\,m to below 1\,m.  If GPS noise exceeds expectations, the \texttt{--smart-detect} flag requires multiple consecutive confirmed frames before triggering investigation, filtering out noise-induced phantom detections.
+
+\paragraph{Wind and turbulence.}
+ArduCopter's position controller actively corrects for wind in \texttt{GUIDED} and \texttt{LOITER} modes.  The \texttt{cube\_monitor.py} diagnostic dashboard displays real-time wind estimates and ground speed, allowing the pilot to assess conditions before committing to autonomous flight.  In sustained wind above \SI{8}{\metre\per\second}, the protocol is to abort and RTL.  In moderate gusts (4--8\,m/s), the search speed (\texttt{SEARCH\_SPEED\_MPS}) can be reduced from 5\,m/s to 3\,m/s on-site to maintain detection quality, since camera motion blur scales with ground speed.
+
+\paragraph{Rain.}
+The Pi and camera assembly are not weather-sealed.  Light drizzle is acceptable with the camera's downward-facing orientation, but sustained rain requires mission abort.  The MVD tier (Section~\ref{sec:mvd}) remains available for a shorter duration flight if conditions deteriorate mid-session---the Mission Planner AUTO waypoints can be configured for a reduced-area survey that completes in under 5 minutes.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsubsection{Graceful Degradation Hierarchy}\label{sec:graceful-deg}
+
+The system is designed so that each failure reduces capability without compromising safety.  Table~\ref{tab:degradation} shows the cascade.
+
+\begin{table}[htbp]
+  \centering\small
+  \caption{Graceful degradation: capability loss versus safety preservation.}\label{tab:degradation}
+  \begin{tabularx}{\linewidth}{@{}p{3.2cm}p{4.2cm}X@{}}
+    \toprule
+    \textbf{Component Lost} & \textbf{Capability Impact} & \textbf{Safety Impact} \\
+    \midrule
+    Camera & No detection; search pattern completes, aircraft returns home & None --- GPS navigation unaffected \\
+    AI model & Same as camera loss (no detections) & None --- pattern still flies safely \\
+    Companion computer (Pi) & No autonomous decisions; ArduCopter flies RTL via GCS failsafe & None --- firmware failsafe is independent \\
+    GPS (companion) & Cannot send GUIDED waypoints; pilot flies manually & Reduced --- pilot must navigate by sight and RC \\
+    GPS (Cube) & ArduCopter cannot hold position; pilot uses attitude mode & Reduced --- manual flight only \\
+    MAVLink link & Pilot has direct RC; ArduCopter GCS failsafe triggers RTL & None --- RC link is independent of MAVLink \\
+    RC link & ArduCopter RC failsafe triggers RTL independently & None --- firmware failsafe activates \\
+    All software + links & RC failsafe RTL remains; pilot can still cut throttle on RC & Minimal --- last-resort hardware kill \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+The key architectural principle is that \emph{no single software failure can prevent the aircraft from returning home}.  The RC receiver connects directly to the Cube via SBUS, the Cube's firmware failsafes (GCS, battery, RC) operate independently of the companion computer, and the pilot's kill switch works even if every line of Python code has crashed.  Safety is layered from hardware (RC kill switch) through firmware (ArduCopter failsafes) to software (state machine timeouts, GPS degradation handler, geofence), and each layer is independently sufficient to prevent the most dangerous outcome: an uncontrolled aircraft.
 
 % ─────────────────────────────────────────────────────────────────────
 \subsection{Test Script Mapping}\label{sec:test-mapping}

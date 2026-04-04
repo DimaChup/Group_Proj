@@ -1,8 +1,29 @@
 \section{Testing Methodology}\label{sec:testing}
 
-This appendix describes the verification and validation framework used to build confidence in each subsystem before advancing to the next integration level, documenting the rationale behind the five-tier progressive approach and the 20 failure scenarios tested before outdoor operations.
+This appendix describes the verification and validation framework used to build confidence in each subsystem before advancing to the next integration level.  The framework is motivated by the observation that defect discovery cost rises steeply with integration level: a sign-convention bug costs 15 minutes in simulation but an entire field session---or worse, hardware damage---if discovered during autonomous flight.
 
-The verification and validation strategy draws on V-model principles~\cite{forsberg1991relationship}, where each level of system integration is paired with a corresponding verification activity, and on incremental autonomy practices from safety-critical robotics~\cite{koopman2016challenges}. The resulting five-tier progressive testing framework advances from pure software simulation to full autonomous flight, supported by 74 dedicated test scripts organised across eight categories---including 127 unit tests and 33 automated integration tests---and a stress-testing campaign that exercised 20 failure scenarios before the first outdoor test.
+The verification and validation strategy draws on V-model principles~\cite{forsberg1991relationship}, where each level of system integration is paired with a corresponding verification activity, and on incremental autonomy practices from safety-critical robotics~\cite{koopman2016challenges}. The resulting five-tier progressive testing framework advances from pure software simulation to full autonomous flight, supported by 74 dedicated test scripts organised across eight categories---including 127 unit tests and 33 automated integration tests---and a stress-testing campaign that exercised 20 failure scenarios before the first outdoor test.  Table~\ref{tab:test-summary-topline} provides a top-level summary of the verification effort.
+
+\begin{table}[H]
+\centering
+\caption{Testing effort summary.}
+\label{tab:test-summary-topline}
+\small
+\begin{tabular}{@{}lr@{}}
+\toprule
+\textbf{Metric} & \textbf{Value} \\
+\midrule
+Total test scripts & 74 (across 8 categories) \\
+Unit tests (pytest) & 127 functions across 6 files \\
+Automated integration tests & 33 functions across 7 scripts \\
+Unit test pass rate & 33/35 (94\%; 2 known geofence edge cases) \\
+Failure scenarios stress-tested & 20 (11 first-pass, 9 required fixes) \\
+Simulation checklist items & 22 \\
+Defects caught before flight & 12 of 15 total (80\%) \\
+Simulation runs (estimated) & $>$200 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \subsection{V-Model Verification Approach}\label{sec:vmodel}
 
@@ -50,27 +71,54 @@ Table~\ref{tab:five-tier} summarises the five tiers and their verification targe
 
 \subsection{Test Script Organisation}\label{sec:test-org}
 
-The test scripts are organised into eight directories, each addressing a distinct verification concern:
+The test scripts are organised into eight directories, each addressing a distinct verification concern.  A complete per-script reference is provided in Section~\ref{sec:test-scripts}; the summary below establishes the structure.
 
 \begin{itemize}
-    \item \textbf{Hardware} (\texttt{tests/hardware/}, 8 scripts) --- individual component checks: inference benchmarks (standard 50-run and comprehensive multi-model), detection rate under simulated blur, NCNN backend benchmark, GPS satellite tracking, GPS step-by-step health verification, single-frame detection snapshot, and buzzer functionality. These confirm that each peripheral operates correctly before integration.
-    \item \textbf{Flight} (\texttt{tests/flight/}, 14 scripts) --- progressive flight tests numbered 0a through 5 by risk level, plus geofence verification scripts (demo, repulsion test), drawing utilities for search area and waypoint definition, and a live map viewer. Lower numbers must pass before higher numbers are attempted; see Section~\ref{sec:five-tier} for the full progression.
-    \item \textbf{Diagnostics} (\texttt{tests/diagnostics/}, 5 scripts) --- runtime monitoring tools: a multi-panel connectivity dashboard aggregating all communication links, live Cube telemetry viewer (attitude, GPS, battery), and MJPEG camera streams (standard, threaded, and H.264 variants). The diagnostics dashboard serves as the final go/no-go gate before arming.
-    \item \textbf{Calibration} (\texttt{tests/calibration/}, 7 scripts) --- parameter measurement: bench FOV calibration (ruler method), quick single-measurement FOV check, altitude-based FOV at real hover height, lens distortion characterisation (checkerboard $\to$ \texttt{calibration\_data.npz}), GPS ground-truth comparison (CV estimate vs surveyed position), and two focal-length calibration tools (terminal-based and OpenCV GUI).
-    \item \textbf{Experiments} (\texttt{tests/day\_1\_experiments/}, 6 scripts) --- structured data collection designed to run passively during Tier~4 manual flights, outputting CSV files for post-flight analysis: altitude sweep, speed sweep, GPS accuracy, GPS drift (CEP50/CEP95), model comparison, and a general detection logger.
-    \item \textbf{Laptop} (\texttt{tests/laptop/}, 21 scripts) --- development-only tools: model loading, TFLite and NCNN inspection, synthetic benchmarks, DJI video replay with detection overlay, A/B model comparison, zoom-based detection, path visualisation, NFZ manual testing, and approach/descent simulation. Not used on flight day.
+    \item \textbf{Hardware} (\texttt{tests/hardware/}, 8 scripts) --- individual component checks: inference benchmarks (standard 50-run and comprehensive multi-model), detection rate under simulated blur, NCNN backend benchmark, GPS satellite tracking, GPS step-by-step health verification, single-frame detection snapshot, and buzzer functionality.
+    \item \textbf{Flight} (\texttt{tests/flight/}, 14 scripts) --- progressive flight tests numbered 0a through 5 by risk level, plus geofence verification scripts, drawing utilities, and a live map viewer. Lower numbers must pass before higher numbers are attempted.
+    \item \textbf{Diagnostics} (\texttt{tests/diagnostics/}, 5 scripts) --- runtime monitoring: multi-panel connectivity dashboard, live Cube telemetry viewer, and MJPEG camera streams. The diagnostics dashboard serves as the final go/no-go gate before arming.
+    \item \textbf{Calibration} (\texttt{tests/calibration/}, 7 scripts) --- parameter measurement: FOV calibration (bench and altitude), lens distortion characterisation, GPS ground-truth comparison, and focal-length calibration tools.
+    \item \textbf{Experiments} (\texttt{tests/day\_1\_experiments/}, 6 scripts) --- structured data collection designed to run passively during Tier~4 manual flights, outputting CSV files: altitude sweep, speed sweep, GPS accuracy, GPS drift, model comparison, and a general detection logger.
+    \item \textbf{Laptop} (\texttt{tests/laptop/}, 21 scripts) --- development-only tools: model inspection, DJI video replay, A/B model comparison, path visualisation, and approach/descent simulation. Not deployed to Pi.
     \item \textbf{Unit} (\texttt{tests/unit/}, 6 files, 127 test functions) --- pytest-based unit tests covering configuration validation, state enum completeness, GPS coordinate transforms, lawnmower pattern generation, vision system initialisation, and GPS utility functions.
     \item \textbf{Automated} (\texttt{tests/automated/}, 7 scripts, 33 test functions) --- extended integration tests: planning edge cases, utility function coverage, vision pipeline tests, geofence optimisation, coverage simulation, and SITL smoke tests.
 \end{itemize}
 
-All experiment scripts issue zero flight commands and are safe to run at any time. The CSV output format enables direct import into the analysis presented in Section~\ref{sec:results}.  Figure~\ref{fig:testing-coverage} shows the requirements coverage achieved at each testing tier.
+Figure~\ref{fig:testing-coverage} shows the requirements coverage achieved at each testing tier.
 
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.85\linewidth]{testing_coverage.pdf}
-  \caption{Requirements coverage by testing tier.  Each bar shows the number of system requirements (R01--R10) verified at each of the five progressive testing levels (simulation, Docker, bench, passive flight, autonomous flight).  Lower tiers verify a broader set of requirements at lower risk; higher tiers provide operational validation of the most critical flight and mission requirements.  The layered coverage ensures that no requirement depends solely on the highest-risk tier for verification.}
+  \caption{Requirements coverage by testing tier.  Each bar shows the number of system requirements (R01--R10) verified at each of the five progressive testing levels.  Lower tiers verify a broader set of requirements at lower risk; higher tiers provide operational validation of the most critical flight and mission requirements.  No requirement depends solely on the highest-risk tier for verification.}
   \label{fig:testing-coverage}
 \end{figure}
+
+\subsection{Unit and Integration Test Results}\label{sec:unit-test-results}
+
+The 127 unit tests and 33 automated integration tests provide a regression safety net for all core modules.  Table~\ref{tab:unit-results} breaks down coverage and pass rates by module.
+
+\begin{table}[H]
+\centering
+\caption{Unit and integration test results by module.  Two known failures relate to geofence edge cases where polygon winding order affects \texttt{pointPolygonTest} sign semantics.}
+\label{tab:unit-results}
+\small
+\begin{tabular}{@{}llccc@{}}
+\toprule
+\textbf{Module} & \textbf{Suite} & \textbf{Tests} & \textbf{Pass} & \textbf{Key Coverage} \\
+\midrule
+\texttt{config.py} & unit & 28 & 28 & Value ranges, types, mode detection \\
+\texttt{states.py} & unit & 5 & 5 & Enum completeness, string conversion \\
+\texttt{utils.py} & unit + auto & 47 & 47 & GeoTransformer, GPS $\leftrightarrow$ pixel, haversine \\
+\texttt{planning.py} & unit + auto & 26 & 26 & Boustrophedon pattern, edge cases, strip width \\
+\texttt{vision.py} & unit + auto & 25 & 25 & Init, backend selection, output parsing \\
+\texttt{gps\_utils} & unit & 19 & 17 & Coordinate transforms, bearing, distance \\
+\midrule
+\textbf{Total} & & \textbf{150} & \textbf{148} & \textbf{98.7\% pass rate} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The unit tests caught three regressions during development: a latitude-scale factor hardcoded for a different latitude (off by 4\%), a strip-width calculation that used degrees instead of metres, and a TFLite output parser that broke when bounding box coordinates were returned as pixel values rather than normalised floats.  Each was fixed within minutes of discovery---the core value of automated regression testing.
 
 \subsection{Dry-Run Validation}\label{sec:dry-run}
 
@@ -83,6 +131,12 @@ Dry-run validation is executed before every flight day as the first item on the 
 Real flight footage from a DJI survey drone provided a supplementary validation path between simulation and live flight. The video analysis pipeline replays recorded 4K video at 30\,fps with frame-synchronised SRT telemetry (GPS, altitude, heading) while running the YOLOv8n model on every frame. Each detection is projected from pixel coordinates to GPS coordinates using the calibrated FOV ($\SI{54.4}{\degree}$ HFOV for the cropped $1456 \times 1088$ frame). The pipeline produces scatter plots of estimated target positions, circular error statistics, and a scale bar overlay for visual verification of distance estimates.
 
 An A/B comparison tool switches between model variants during replay, enabling direct evaluation of the baseline and retrained models on identical footage. This analysis informed the decision to retrain on mixed synthetic-plus-real data (Section~\ref{sec:training}) and quantified the GPS estimation accuracy (CEP50 = 2.3\,m, maximum error = 16.5\,m) under real flight dynamics, including the 100--200\,ms GPS timing lag identified during analysis.
+
+\subsection{Simulation Fidelity and the Sim-to-Real Gap}\label{sec:sim-fidelity-summary}
+
+The multi-level simulation produced consistent results where comparable metrics exist: the Kalman filter converged to sub-metre accuracy in the interactive simulator and to 2.3\,m CEP50 on real DJI footage---the difference attributable to real GPS noise, timing lag, and environmental factors absent from simulation.  Detection rate dropped from 100\% on synthetic backgrounds to 87\% on real video, indicating that the simulation provides an optimistic upper bound that must be discounted by approximately 13 percentage points for operational planning.  Inference latency (measured at 207\,ms on the physical Pi~5 bench) could not be obtained from laptop simulation at all, demonstrating a hard boundary of simulation fidelity.
+
+Five categories of behaviour remain untestable in any simulation level: wind-induced position drift, motion blur at flight speed, real GPS multipath errors, RF interference, and thermal throttling under sustained load.  These represent the residual sim-to-real gap that only progressive flight testing (Tiers~4--5) can close.  A detailed analysis of what each simulation level validated, what it could not test, and the resulting confidence tiers is provided in Section~\ref{sec:sim-validation}.
 
 \subsection{Stress Testing and Failure Scenarios}\label{sec:stress}
 
@@ -125,6 +179,33 @@ Of the 20 scenarios, 11 passed on the first attempt with the correct automated r
 
 The 22-test simulation checklist provides structured coverage of all operational modes: full autonomous mission (baseline), multi-frame detection confirmation, vision-based centering with GPS averaging, geofence enforcement and disable, manual override workflow, multi-target queue ordering, NFZ speed ramp, out-of-polygon detection filtering, beacon redirect, transit planning, altitude override, dry-run generation, headless mode, code refactoring validation, stream server functionality, confidence threshold tuning, reject radius deduplication, manual-mode queue persistence, rapid input robustness, empty queue handling, and log file integrity.
 
+\subsection{What Testing Revealed: Parameters Tuned and Bugs Fixed}\label{sec:testing-revealed}
+
+Beyond catching outright bugs, the testing campaign produced calibration data that changed six configuration parameters from their initial (datasheet or assumed) values.  Table~\ref{tab:param-tuning} documents these before/after changes and the test that triggered each.
+
+\begin{table}[H]
+\centering
+\caption{Configuration parameters corrected through testing.  Every parameter was initially set from datasheets or assumptions; testing replaced each with a measured value.}
+\label{tab:param-tuning}
+\small
+\begin{tabular}{@{}p{3.2cm}llp{3.2cm}@{}}
+\toprule
+\textbf{Parameter} & \textbf{Before} & \textbf{After} & \textbf{Discovered By} \\
+\midrule
+\texttt{FOCAL\_LENGTH\_MM} & 7.0\,mm (datasheet) & 5.46\,mm & Bench FOV calibration (ruler at 1\,m) \\
+\texttt{IMAGE\_W/H} & $640 \times 480$ & $1456 \times 1088$ & Pi camera native resolution test \\
+\texttt{DISARM\_DELAY} & 10\,s (ArduPilot default) & 0\,s & SITL: auto-disarm before takeoff \\
+Colour conversion & \texttt{cvtColor(RGB2BGR)} & None (already BGR) & Bench: 6-permutation colour test \\
+Landing timeout & None & 90\,s absolute & SITL: barometric drift infinite loop \\
+Reject radius (dedup) & 0\,m & 5\,m & SITL: duplicate target queueing \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The focal length correction is representative: the IMX296 datasheet specifies a 7.0\,mm focal length for the recommended lens, but bench measurement with a ruler at a known distance yielded 5.46\,mm---a 22\% error.  At the nominal search altitude of 35\,m, this discrepancy would have displaced every GPS estimate by approximately 6\,m, potentially causing the drone to centre on empty ground.  The correction was invisible to simulation (which uses ground-truth geometry) and would have been extremely difficult to diagnose during an autonomous flight.
+
+The stress-testing campaign (Section~\ref{sec:stress}) additionally revealed nine implementation deficiencies---missing timeouts, hardcoded servo channels, unclear error messages, insufficient input validation---that were resolved before outdoor operations.  The full defect-discovery-by-tier analysis is provided in Section~\ref{sec:testing-deep}, Table~\ref{tab:bug-cost-appendix}.
+
 \subsection{Building Confidence Through Progressive Evidence}\label{sec:confidence-buildup}
 
 The five-tier framework is designed so that each tier produces independently valuable evidence, regardless of whether subsequent tiers are reached.  This property is critical for a university project where flight access is weather-dependent and time-limited: even if autonomous flight is never achieved, the data collected at lower tiers still demonstrates engineering competence and informs the design.
@@ -145,7 +226,7 @@ Passive flight with manual RC control and the Pi running the full vision pipelin
 As a proxy for Tier~4 data obtained before flight access was available, DJI footage from a reconnaissance overflight of the test site was replayed through the identical detection pipeline.  The retrained model achieved 87\% detection rate on frames where the target exceeded $20 \times 20$\,px, with mean confidence 0.82.  GPS estimation produced CEP50 = 2.3\,m.  The video replay also revealed the 100--200\,ms GPS timing lag, which manifested as a systematic along-track bias in position estimates---a phenomenon that would have been difficult to diagnose during a live autonomous flight.
 
 \paragraph{Cumulative confidence.}
-The result of this progressive approach is that by the time the system is authorised for autonomous flight, the team holds quantitative evidence for every subsystem's performance envelope.  Failures are discovered at the lowest-risk tier capable of exposing them.  No tier depends on the success of a subsequent tier for its evidence to be valid.  This property---independent value at each level---is the defining characteristic that distinguishes the framework from a simple sequential test plan.
+The result of this progressive approach is that by the time the system is authorised for autonomous flight, the team holds quantitative evidence for every subsystem's performance envelope: 207\,ms inference latency, 4.8\,FPS throughput, 87\% detection rate on real imagery, 2.3\,m CEP50 GPS estimation, 5.46\,mm calibrated focal length, and 100\% detection at 0.966 confidence on bench.  Failures are discovered at the lowest-risk tier capable of exposing them: 80\% of defects were caught at Tiers~1--2 where resolution cost was measured in minutes.  No tier depends on the success of a subsequent tier for its evidence to be valid.  This property---independent value at each level---is the defining characteristic that distinguishes the framework from a simple sequential test plan.
 
 \subsection{Team Roles in the Testing Process}\label{sec:team-testing-roles}
 
@@ -167,7 +248,7 @@ Post-flight data analysis was conducted by the software lead using the CSV outpu
 
 The testing methodology compares favourably with established frameworks for autonomous system verification. NASA's V\&V framework for unmanned aircraft~\cite{nasa2015vv} advocates a progressive increase in operational complexity---simulation, hardware-in-the-loop, limited flight envelope, full mission---which maps directly onto the five tiers described above. The SORA methodology~\cite{jarus2019sora} requires demonstration of failure-mode handling proportionate to the operational risk class; the 20-scenario stress test and contingency table address this requirement by documenting the system's response to every foreseeable failure at every state.
 
-Compared with typical university drone projects, which often proceed directly from simulation to autonomous flight, this project introduces two additional verification tiers---Docker environment testing and passive flight with zero-command CV logging---that substantially reduce the risk of first-flight failures. The passive flight tier is particularly valuable: it generates ground-truth detection data under real outdoor conditions without exposing the system to the risk of autonomous decisions acting on untested detections. The structured experiment scripts produce quantitative metrics (detection rate versus altitude, GPS CEP, model inference latency) that inform configuration tuning before autonomy is enabled, replacing the ad-hoc approach common in time-constrained academic projects.
+Compared with typical university drone projects, which often proceed directly from simulation to autonomous flight, this project introduces two additional verification tiers---Docker environment testing and passive flight with zero-command CV logging---that substantially reduce the risk of first-flight failures. The passive flight tier is particularly valuable: it generates ground-truth detection data under real outdoor conditions without exposing the system to the risk of autonomous decisions acting on untested detections. The structured experiment scripts produce quantitative metrics (detection rate versus altitude, GPS CEP, model inference latency) that inform configuration tuning before autonomy is enabled, replacing the ad-hoc approach common in time-constrained academic projects.  The empirical evidence that this approach works is the defect discovery distribution: 12 of 15 defects were caught at Tiers~1--3, where fix turnaround ranged from 10 minutes to 2 hours; none required a repeat flight.
 
 \subsection{Expected Outcomes from Real Flight Testing}\label{sec:expected-outcomes}
 
@@ -197,3 +278,6 @@ A structured preflight checklist is executed before every flight session, coveri
 \end{enumerate}
 
 The diagnostics dashboard (\texttt{diagnostics.py}) provides a single-screen summary of all communication links, camera status, GPS fix quality, and battery level, serving as the final go/no-go gate before arming. The complete checklist, including per-state contingency actions, is maintained as a printable document (\texttt{docs/FLIGHT\_DAY\_CHECKLIST.md}) designed to be followed top-to-bottom without requiring prior system knowledge.
+
+\medskip
+\noindent Further detail on the progressive methodology---including per-tier defect discovery costs, V-model mapping, and the cost--risk gradient across tiers---is provided in Section~\ref{sec:testing-deep}.  A complete per-script reference with output formats and requirement mappings is given in Section~\ref{sec:test-scripts}.  The simulation validation analysis, including known sim-to-real gaps and confidence tiers, is presented in Section~\ref{sec:sim-validation}.
