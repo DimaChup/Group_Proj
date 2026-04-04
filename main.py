@@ -547,6 +547,21 @@ class VisualFlightMission(StateHandlersMixin):
         # Use actual frame dimensions if available, fall back to config
         fw = getattr(self, '_frame_w', config.IMAGE_W)
         fh = getattr(self, '_frame_h', config.IMAGE_H)
+
+        # Tilt compensation: when camera is tilted, the nadir point (straight down)
+        # is NOT at frame center. Shift detection coords to account for this.
+        # The camera view has shifted by alt*tan(pitch) forward and alt*tan(roll) sideways
+        # in ground coords. In pixels: shift = alt*tan(angle) / GSD
+        if SIM_TILT and self.alt > 1.0 and (abs(self.pitch) > 0.02 or abs(self.roll) > 0.02):
+            gsd = (config.SENSOR_WIDTH_MM * self.alt) / (config.FOCAL_LENGTH_MM * fw)
+            # Pitch shifts view forward → nadir point moves DOWN in frame
+            pitch_shift_px = self.alt * math.tan(-self.pitch) / gsd  # neg pitch = nose down = forward
+            # Roll shifts view right → nadir point moves LEFT in frame
+            roll_shift_px = self.alt * math.tan(self.roll) / gsd
+            # Adjust detection pixel to be relative to TRUE nadir, not frame center
+            u = u - roll_shift_px
+            v = v - pitch_shift_px
+
         self.target_lat, self.target_lon = calculate_target_from_pixels(
             u, v, self.alt, self.yaw, self.lat, self.lon,
             fw, fh, config.SENSOR_WIDTH_MM, config.FOCAL_LENGTH_MM,
