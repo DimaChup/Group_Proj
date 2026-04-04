@@ -164,7 +164,7 @@ The total of 8400 anchor-free candidates are each scored with a single confidenc
 
 \subsection{Single-Class Design Rationale}
 
-Training a single-class detector rather than repurposing a multi-class model (e.g., COCO's 80-class ``person'' detector) was a deliberate choice. The single-class model learns to discriminate ``mannequin on grass'' from ``everything else'', producing a far more favourable precision--recall balance than a generic person detector. Testing confirmed this: the custom model achieved 100\% detection rate at 0.966 mean confidence, versus 86\% at 0.724 for the COCO person detector on identical bench-test frames. The COCO model is retained as a backup (\texttt{models/human.tflite}, 13\,MB, 80 classes) for scenarios where the target is a standing human rather than a prone mannequin.
+Training a single-class detector rather than repurposing a multi-class model (e.g., COCO's 80-class ``person'' detector) was a deliberate choice. The single-class model learns to discriminate ``mannequin on grass'' from ``everything else'', producing a more favourable precision--recall balance than a generic person detector. Testing confirmed this: the custom model achieved 100\% detection rate at 0.966 mean confidence, versus 86\% at 0.724 for the COCO person detector on identical bench-test frames. The COCO model is retained as a backup (\texttt{models/human.tflite}, 13\,MB, 80 classes) for scenarios where the target is a standing human rather than a prone mannequin.
 
 \begin{table}[ht]
   \centering
@@ -212,7 +212,7 @@ The model was trained iteratively across three generations, each informed by fai
 
 \textbf{v2} (\texttt{sar\_1280}) was an attempt to address the detection-at-altitude problem by increasing training resolution to $1280 \times 1280$, allowing the network to learn finer spatial features during training. This yielded a marginal mAP improvement (${\sim}$0.95 to ${\sim}$0.96) and slightly better detection at higher altitudes where the target subtends fewer pixels. However, the training data remained purely synthetic from the same single satellite background, so the false-positive problem persisted entirely. The key lesson from v2 was decisive: \emph{resolution alone cannot compensate for limited data diversity}. A model trained at higher resolution on the same narrow data distribution simply overfits to the same artefacts with greater precision.
 
-\textbf{v3} (\texttt{sar\_v2\_1088}) addressed both limitations simultaneously, informed by the failures of v1 and v2. Three changes were made in concert. First, the training resolution was set to $1088 \times 1088$, matching the native camera sensor height, so the network learns features at the pixel scale actually present in real frames. Second, the synthetic backgrounds were diversified: instead of a single satellite image, random crops from real DJI flight video provided terrain textures with authentic lighting, shadow patterns, and ground clutter. Third---and most impactful---the dataset was restructured with three complementary sources: 300 synthetic composites, 16 manually labelled real aerial frames to anchor the model to authentic appearance, and 50 negative frames (terrain without any mannequin) to explicitly teach false-positive suppression. This combination produced mAP$_{50}$ = 0.995 and, critically, \emph{zero} false positives during video replay analysis across the full 15--50\,m altitude range---a qualitative transformation from v1's frequent hallucinations.
+\textbf{v3} (\texttt{sar\_v2\_1088}) addressed both limitations simultaneously, informed by the failures of v1 and v2. Three changes were made in concert. First, the training resolution was set to $1088 \times 1088$, matching the native camera sensor height, so the network learns features at the pixel scale actually present in real frames. Second, the synthetic backgrounds were diversified: instead of a single satellite image, random crops from real DJI flight video provided terrain textures with authentic lighting, shadow patterns, and ground clutter. Third---and most impactful---the dataset was restructured with three complementary sources: 300 synthetic composites, 16 manually labelled real aerial frames to anchor the model to authentic appearance, and 50 negative frames (terrain without any mannequin) to explicitly teach false-positive suppression. This combination produced mAP$_{50}$ = 0.995 and, critically, \emph{zero} false positives during video replay analysis across the full 15--50\,m altitude range---a substantial improvement over v1's frequent false activations.
 
 \subsection{Final Dataset Composition}
 
@@ -371,7 +371,7 @@ The \texttt{VisionSystem} class implements a three-tier backend selection strate
     \item \textbf{NCNN} --- checked via \texttt{import ncnn}. Provides the fastest ARM inference through hand-tuned NEON assembly kernels, selectable via the \texttt{-{}-backend ncnn} flag or programmatic \texttt{backend="ncnn"} parameter.
 \end{enumerate}
 
-All three backends consume the same model file and produce output through the identical \texttt{detect\_in\_image(frame)} $\to$ \texttt{(found, cx, cy, confidence)} interface. The calling code---state machine, GPS estimation, ground station, all 58 test scripts---is entirely backend-agnostic. This architecture provides three concrete benefits: (1)~development--production parity, where detections in laptop simulation match Pi behaviour; (2)~graceful degradation, where a missing backend triggers automatic fallback rather than a crash; and (3)~A/B testing capability, where backends can be compared on identical input frames via a single flag.
+All three backends consume the same model file and produce output through the identical \texttt{detect\_in\_image(frame)} $\to$ \texttt{(found, cx, cy, confidence)} interface. The calling code---state machine, GPS estimation, ground station, and all 58 test scripts---is backend-agnostic. This architecture provides three concrete benefits: (1)~development--production parity, where detections in laptop simulation match Pi behaviour; (2)~graceful degradation, where a missing backend triggers automatic fallback rather than a crash; and (3)~A/B testing capability, where backends can be compared on identical input frames via a single flag.
 
 \subsection{Backend Comparison}
 
@@ -379,13 +379,13 @@ Three inference backends were evaluated:
 
 \begin{table}[ht]
   \centering
-  \caption{Inference backend comparison for YOLOv8n ($640 \times 640$ input) on Raspberry Pi~5.}\label{tab:backend-comparison}
+  \caption{Inference backend comparison for YOLOv8n ($640 \times 640$ input) on Raspberry Pi~5. Projected values are marked with $\dagger$.}\label{tab:backend-comparison}
   \begin{tabular}{@{}l c c c c@{}}
     \toprule
     \textbf{Backend} & \textbf{Latency} & \textbf{Throughput} & \textbf{Model size} & \textbf{Dependencies} \\
     \midrule
     TFLite + XNNPACK    & 206.5\,ms & 4.8\,FPS  & 3.2\,MB  & \texttt{ai-edge-litert} only \\
-    NCNN (projected)    & ${\sim}$68\,ms  & ${\sim}$15\,FPS & 3.1\,MB  & \texttt{ncnn} (C++ + Python) \\
+    NCNN$^\dagger$      & ${\sim}$68\,ms  & ${\sim}$15\,FPS & 3.1\,MB  & \texttt{ncnn} (C++ + Python) \\
     Ultralytics/PyTorch & $>$1200\,ms & $<$0.8\,FPS & 6.2\,MB  & PyTorch ($>$800\,MB) \\
     \bottomrule
   \end{tabular}
@@ -445,14 +445,14 @@ Published inference benchmarks report raw inference latency, but the operational
 
 \begin{table}[ht]
   \centering
-  \caption{Raw inference vs effective pipeline throughput on Raspberry Pi~5.}\label{tab:pipeline-fps}
+  \caption{Raw inference vs effective pipeline throughput on Raspberry Pi~5. \emph{Italic} rows indicate projected values.}\label{tab:pipeline-fps}
   \begin{tabular}{@{}l c c c c l@{}}
     \toprule
     \textbf{Backend} & \textbf{Raw latency} & \textbf{Raw FPS} & \textbf{Overhead} & \textbf{Eff. FPS} & \textbf{Status} \\
     \midrule
     TFLite FP32 (XNNPACK) & 196\,ms & 5.1 & +12\,ms & 4.8 & Deployed \\
-    TFLite FP16 (XNNPACK) & ${\sim}$100\,ms & ${\sim}$10 & +12\,ms & ${\sim}$8.9 & Projected \\
-    NCNN FP32              & ${\sim}$77\,ms  & ${\sim}$13 & +15\,ms & ${\sim}$10.9 & Benchmarked \\
+    \textit{TFLite FP16 (XNNPACK)} & \textit{${\sim}$100\,ms} & \textit{${\sim}$10} & \textit{+12\,ms} & \textit{${\sim}$8.9} & \textit{Projected} \\
+    \textit{NCNN FP32}              & \textit{${\sim}$77\,ms}  & \textit{${\sim}$13} & \textit{+15\,ms} & \textit{${\sim}$10.9} & \textit{Benchmarked} \\
     Ultralytics/PyTorch    & ${\sim}$1200\,ms & ${\sim}$0.8 & +5\,ms & ${\sim}$0.8 & Laptop only \\
     \bottomrule
   \end{tabular}
@@ -464,7 +464,7 @@ This overhead fraction shifts qualitatively as inference speed improves: at TFLi
 
 \subsection{COCO Person Detector as Fallback}\label{sec:inference:coco}
 
-A pre-trained YOLOv8n model exported from the standard COCO dataset~\cite{lin2014coco} was retained as a flight-day backup (\texttt{models/human.tflite}, 13\,MB, 80 classes). This model detects people without any SAR-specific training, providing a zero-effort deployment option if the custom model proved unreliable in field conditions.
+A pre-trained YOLOv8n model exported from the standard COCO dataset~\cite{lin2014coco} was retained as a flight-day backup (\texttt{models/human.tflite}, 13\,MB, 80 classes). This model detects people without any SAR-specific training, providing a low-effort fallback if the custom model proved unreliable in field conditions.
 
 Testing revealed two trade-offs. On the positive side, the COCO detector reliably detected people in aerial video at altitudes up to 30\,m, confirming that transfer from ground-level training data generalises to moderate aerial perspectives. On the negative side, the 80-class output space produced substantially more false positives: backpacks, shadows, and terrain features were flagged as detections, and the detection rate dropped to 86\% with 0.724 mean confidence versus 100\% and 0.966 for the custom model. The COCO model was designated as a backup: if the custom model failed catastrophically in the field, the operator could swap to it in under 30 seconds via a single copy command, accepting the higher false-positive rate as preferable to zero detection capability.
 
@@ -650,7 +650,7 @@ The probability of detecting a target during a single flyover is:
   \end{tabular}
 \end{table}
 
-Even in the worst operational case (50\,m at 15\,m/s with conservative 70\% single-frame detection), the cumulative detection probability exceeds 99.8\%. At nominal conditions (35\,m, 8\,m/s), the system achieves effectively certain detection ($P > 99.99\%$) with 14.5 frames per target. The lawnmower pattern provides additional redundancy: adjacent passes overlap by 20\%, so the probability of missing a target across two overlapping passes is $(1 - 0.9997)^2 \approx 10^{-7}$.
+Even in the worst operational case (50\,m at 15\,m/s with conservative 70\% single-frame detection), the cumulative detection probability exceeds 99.8\%. At nominal conditions (35\,m, 8\,m/s), the calculated detection probability exceeds 99.99\% with 14.5 frames per target. The lawnmower pattern provides additional redundancy: adjacent passes overlap by 20\%, so the probability of missing a target across two overlapping passes is $(1 - 0.9997)^2 \approx 10^{-7}$.
 
 \subsection{Coverage Efficiency}\label{sec:perf:coverage}
 
