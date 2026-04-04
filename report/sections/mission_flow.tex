@@ -72,7 +72,7 @@ The drone enters \textsc{Search} and executes the boustrophedon search pattern. 
 
 The drone flies the lawnmower waypoints in sequence.  Speed follows an altitude-dependent schedule: \SI{6}{\metre\per\second} at \SI{20}{\metre}, linearly interpolating to \SI{10}{\metre\per\second} at \SI{50}{\metre}, yielding approximately \SI{8}{\metre\per\second} at the nominal \SI{35}{\metre} search altitude.  Each waypoint is considered reached when the drone is within \SI{2}{\metre} horizontally, at which point the waypoint index advances.
 
-Before the first waypoint is flown, the drone optionally aligns its yaw to the scan-line direction (plus a configurable diagonal offset for optimal ground coverage).  This yaw alignment takes 2--5\,s and ensures the camera footprint is oriented to match the strip pattern.
+Before the first waypoint is flown, the drone optionally aligns its yaw to the scan-line direction (plus a configurable diagonal offset for optimal ground coverage).  This yaw alignment takes 2--5\,s and ensures the camera footprint is oriented to match the strip pattern.  When the \texttt{-{}-lock-yaw} flag is active, the drone maintains this heading throughout the sweep---including during turns between scan lines---so that the footprint orientation remains consistent and the GPS estimation geometry does not change between passes.
 
 \subsubsection{Computer Vision Pipeline}
 
@@ -252,7 +252,7 @@ The same state machine code runs in both simulation and real flight; the \texttt
   \item \textbf{Disarm recovery.}  An unexpected disarm during takeoff in simulation triggers a retry (re-enters \textsc{Arming}), because SITL's DISARM\_DELAY parameter can cause nuisance disarms.  On real hardware, the same event terminates the mission in \textsc{Done}, because an unexpected disarm during climb indicates a genuine fault.
 \end{enumerate}
 
-\noindent All state transition logic, detection filtering, operator interaction, geofence enforcement, and safety guards are identical.  This means a mission rehearsed in simulation exercises the exact code path that will run on the real drone, with the exception of sensor noise, wind, and GPS multipath---the environmental factors that no ground-based test can replicate.
+\noindent All state transition logic, detection filtering, operator interaction, geofence enforcement, and safety guards are identical.  This means a mission rehearsed in simulation exercises the exact code path that will run on the real drone, with the exception of sensor noise, wind, and GPS multipath---the environmental factors that no ground-based test can replicate.  One timing difference is the main loop rate: in simulation the loop runs at 20--50\,Hz (limited by map rendering), whereas on the Pi it runs at ${\sim}$5\,Hz (limited by TFLite inference at \SI{207}{\milli\second}/frame), meaning each state handler executes less frequently on real hardware.
 
 Additionally, simulation supports optional GPS noise injection (\texttt{--noise} flag), which adds Gaussian perturbations to latitude, longitude, altitude, and attitude at magnitudes calibrated to match real GPS behaviour (CEP~$\approx$\SI{2.8}{\metre}).  This allows the operator to rehearse target estimation accuracy under realistic conditions.
 
