@@ -4,7 +4,71 @@
 
 ---
 
-## 1. Day Before
+## 1. CRITICAL: FOV / Focal Length Calibration
+
+**This is the ONE thing that must be right. Everything else works automatically.**
+
+### What is focal length and why does it matter?
+
+**Focal length** determines how much ground the camera sees at a given altitude. It controls the **Field of View (FOV)** -- the angle the camera covers.
+
+```
+                    Camera
+                   /  |  \
+                  /   |   \        FOV angle = 2 × atan(sensor_width / (2 × focal_length))
+                 /    |    \       
+                /     |     \      Our camera: FOV = 2 × atan(5.02 / (2 × 5.46)) = 49.3°
+               /      |      \
+              /       | alt    \
+             /        |         \
+            /         |          \
+           ──────────────────────── Ground
+           |← visible width (m) →|
+```
+
+**The relationship:**
+```
+visible_width = (sensor_width_mm × altitude) / focal_length_mm
+
+At 35m altitude: visible_width = (5.02 × 35) / 5.46 = 32.2m on ground
+```
+
+**Why it's critical:** When we detect a target at a pixel position, we use focal length to convert pixels → meters → GPS coordinates. If focal length is wrong:
+- 10% error in focal length → 10% error in EVERY position estimate
+- At 35m with 16m offset from center → 1.6m GPS error just from bad calibration
+- This error is **systematic** (always wrong in same direction, doesn't average out)
+
+### How to calibrate (2 minutes)
+
+1. Point camera **straight down** at EXACTLY **1 metre** height above a ruler/tape measure
+2. Measure the **visible width** in the camera frame (edge to edge of what you can see)
+3. Calculate: `FOCAL_LENGTH_MM = (5.02 × 1000) / visible_width_mm`
+
+**Expected:** ~920mm visible → FOCAL_LENGTH_MM = 5.46
+
+```bash
+python tests/calibration/fov_calibrate.py          # interactive (with display)
+python tests/calibration/fov_test_simple.py         # quick single measurement
+```
+
+| Visible width at 1m | Focal length | FOV | Ground width at 35m |
+|---------------------|-------------|-----|---------------------|
+| 85 cm | 5.91 mm | 46.1° | 29.8 m |
+| 90 cm | 5.58 mm | 48.5° | 31.5 m |
+| **92 cm** | **5.46 mm** | **49.3°** | **32.2 m** |
+| 95 cm | 5.28 mm | 50.8° | 33.3 m |
+| 100 cm | 5.02 mm | 53.1° | 35.0 m |
+
+- [ ] Measured visible width at 1m: ______ cm
+- [ ] Computed FOCAL_LENGTH_MM: ______ (current: 5.46)
+- [ ] Updated config.py if changed
+- [ ] Repeat at 50cm and 150cm -- values should agree within 0.3mm
+
+**Note:** If you're using visual centering (Level 3 estimation), focal length errors matter LESS because when the target is at frame center, the pixel offset is zero and focal length isn't used. But it still matters for the initial SEARCH detection that tells the drone where to start centering.
+
+---
+
+## 2. Day Before
 
 ```
 [ ] Push latest code:  git add -A && git commit -m "flight day" && git push
@@ -12,30 +76,8 @@
 [ ] Copy best model to root:  cp cv_models/sar_v2_1088/best.tflite best.tflite
 [ ] Pack: laptop, RC, phone (hotspot), measuring tape, printed dummy
 [ ] Verify dry-run on laptop:  python main.py --dry-run
+[ ] FOV calibration done (Section 1 above)
 ```
-
-### Bench Calibration (do at home if possible)
-
-Place camera pointing **straight down** at EXACTLY 1m above a ruler/tape.
-Measure visible width in frame (expected ~92cm with FOCAL_LENGTH_MM = 5.46).
-
-```bash
-python tests/calibration/fov_calibrate.py          # interactive (with display)
-python tests/calibration/fov_test_simple.py         # quick single measurement
-```
-
-If visible width differs from 92cm:
-```
-FOCAL_LENGTH_MM = (SENSOR_WIDTH_MM * height_mm) / visible_width_mm
-                = (5.02 * 1000) / visible_width_mm
-
-Example: see 85cm -> FOCAL_LENGTH_MM = 5020 / 850 = 5.91
-```
-
-- [ ] Measured visible width at 1m: ______ cm
-- [ ] Computed FOCAL_LENGTH_MM: ______ (current: 5.46)
-- [ ] Updated config.py if changed
-- [ ] Repeat at 50cm and 150cm -- values should agree within 0.3mm
 
 ---
 
