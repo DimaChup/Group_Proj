@@ -589,40 +589,23 @@ class VisualFlightMission(StateHandlersMixin):
         # Get frame
         if config.MODE == "SIMULATION":
             px, py = self.geo.gps_to_pixels(self.lat, self.lon)
-            # --sim-tilt: use ACTUAL roll/pitch from SITL telemetry to shift camera view
-            # ArduCopter ATTITUDE message gives real roll, pitch, yaw (radians)
-            # Camera view offset = altitude × tan(angle) for each axis
             spd = math.sqrt(self.vx**2 + self.vy**2)
-            roll_deg = 0.0
 
+            # --sim-tilt / --sim-pitch: pass actual SITL pitch/roll to
+            # get_drone_view() for ray-traced perspective warp (no black edges).
+            _sim_pitch = 0.0
+            _sim_roll = 0.0
             if (SIM_TILT or SIM_PITCH) and self.alt > 1.0:
-                # Pitch shifts camera forward/backward: offset = alt × tan(pitch)
-                # ArduPilot pitch > 0 = nose UP = camera looks BEHIND drone
-                # Negate so nose-down (pitch < 0, forward flight) gives +forward offset
-                pitch_offset_m = -self.alt * math.tan(self.pitch)
-                # Roll shifts camera left/right: offset = alt × tan(roll)
-                roll_offset_m = self.alt * math.tan(self.roll)
-                roll_deg = math.degrees(self.roll)
+                _sim_pitch = self.pitch
+                _sim_roll = self.roll
 
-                # Convert to map pixels
-                pitch_px = pitch_offset_m * self.geo.pix_per_m
-                roll_px = roll_offset_m * self.geo.pix_per_m
+            frame, self.view_w_px, self.view_h_px = self.sim.get_drone_view(
+                int(px), int(py), self.alt, self.yaw,
+                pitch=_sim_pitch, roll=_sim_roll)
 
-                # Apply in body frame rotated by yaw
-                px += pitch_px * math.sin(self.yaw) + roll_px * math.cos(self.yaw)
-                py += -pitch_px * math.cos(self.yaw) + roll_px * math.sin(self.yaw)
-
-            frame, self.view_w_px, self.view_h_px = self.sim.get_drone_view(int(px), int(py), self.alt, self.yaw)
-
-            # --sim-roll OR --sim-tilt: apply frame rotation from roll angle
-            _apply_roll = False
+            # --sim-roll: random roll oscillation (cosmetic frame rotation only)
             if SIM_ROLL_DEG > 0:
-                _apply_roll = True
                 roll_angle = random.uniform(-SIM_ROLL_DEG, SIM_ROLL_DEG)
-            elif SIM_TILT:
-                _apply_roll = True
-                roll_angle = math.degrees(self.roll)  # actual SITL roll
-            if _apply_roll:
                 h, w = frame.shape[:2]
                 M_roll = cv2.getRotationMatrix2D((w // 2, h // 2), roll_angle, 1.0)
                 frame = cv2.warpAffine(frame, M_roll, (w, h))

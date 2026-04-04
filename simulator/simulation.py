@@ -332,41 +332,62 @@ class SimulationEnvironment:
         self.sim_target_px = targets[0] if targets else None
         return targets, "dummy", search_polygon, transit_wps, focus_polygon
 
-    def get_drone_view(self, cx, cy, alt, yaw):
+    def get_drone_view(self, cx, cy, alt, yaw, pitch=0.0, roll=0.0):
         fov = 2 * math.atan(config.SENSOR_WIDTH_MM / (2 * config.FOCAL_LENGTH_MM))
         safe_alt = max(1.0, alt)
         ground_w = 2 * safe_alt * math.tan(fov / 2)
         view_w_px = int(ground_w * self.geo.pix_per_m)
         view_h_px = int(view_w_px * (config.IMAGE_H / config.IMAGE_W))
-        
+
+        # --- Perspective warp path (pitch/roll != 0) ---
+        if abs(pitch) > 0.001 or abs(roll) > 0.001:
+            return self._get_perspective_view(cx, cy, safe_alt, yaw, pitch, roll,
+                                              view_w_px, view_h_px, ground_w)
+
+        # --- Nadir (straight-down) path — original behaviour ---
+        return self._get_nadir_view(cx, cy, safe_alt, yaw,
+                                    view_w_px, view_h_px, ground_w)
+
+    # ------------------------------------------------------------------
+    # Nadir (straight-down) view — original implementation
+    # ------------------------------------------------------------------
+    def _get_nadir_view(self, cx, cy, alt, yaw, view_w_px, view_h_px, ground_w):
         diag = int(math.sqrt(view_w_px**2 + view_h_px**2))
         x1 = cx - diag // 2; y1 = cy - diag // 2
         x2 = x1 + diag; y2 = y1 + diag
-        
+
         pad_l = max(0, -x1); pad_t = max(0, -y1)
         pad_r = max(0, x2 - self.map_w); pad_b = max(0, y2 - self.map_h)
-        
+
         sx1 = x1 + pad_l; sy1 = y1 + pad_t
         sx2 = x2 - pad_r; sy2 = y2 - pad_b
-        
+
         if sx2 > sx1 and sy2 > sy1:
             raw_crop = self.full_map[sy1:sy2, sx1:sx2]
             if pad_l > 0 or pad_t > 0 or pad_r > 0 or pad_b > 0:
                 raw_crop = cv2.copyMakeBorder(raw_crop, pad_t, pad_b, pad_l, pad_r, cv2.BORDER_CONSTANT, value=(0,0,0))
         else:
             raw_crop = np.zeros((diag, diag, 3), dtype=np.uint8)
-            
+
         center = (diag // 2, diag // 2)
         M = cv2.getRotationMatrix2D(center, math.degrees(yaw), 1.0)
         rotated_patch = cv2.warpAffine(raw_crop, M, (diag, diag))
-        
+
         start_x = (diag - view_w_px) // 2
         start_y = (diag - view_h_px) // 2
         crop = rotated_patch[start_y:start_y+view_h_px, start_x:start_x+view_w_px]
-        
+
         final_view = cv2.resize(crop, (config.IMAGE_W, config.IMAGE_H))
-            
+
         # Render ALL targets in camera view
+        self._render_targets_nadir(final_view, cx, cy, yaw, view_w_px, ground_w)
+
+        return final_view, view_w_px, view_h_px
+
+    # ------------------------------------------------------------------
+    # Target rendering for nadir view (unchanged logic, extracted)
+    # ------------------------------------------------------------------
+    def _render_targets_nadir(self, final_view, cx, cy, yaw, view_w_px, ground_w):
         angle_rad = -yaw
         scale = config.IMAGE_W / max(1, view_w_px)
         px_per_m_screen = config.IMAGE_W / ground_w
@@ -391,7 +412,136 @@ class SimulationEnvironment:
                 dot_rad_screen = int(config.TARGET_REAL_RADIUS_M * px_per_m_screen)
                 cv2.circle(final_view, (screen_x, screen_y), max(3, dot_rad_screen), (0, 0, 255), -1)
 
-        return final_view, view_w_px, view_h_px
+    # ------------------------------------------------------------------
+    # Ray-traced perspective view (pitch/roll from SITL telemetry)
+    # ------------------------------------------------------------------
+    def _get_perspective_view(self, cx, cy, alt, yaw, pitch, roll,
+                              view_w_px, view_h_px, ground_w):
+        """Render camera view with proper perspective distortion.
+
+        Uses ray-tracing: for each output pixel corner, cast a ray from the
+        camera through the image plane onto the ground (z=0), find the
+        corresponding map pixel, then warp the map ROI into the output frame.
+
+        Targets are composited onto the map ROI *before* the warp so they
+        get the same perspective distortion as the ground.
+        """
+        # Camera intrinsics (focal length in pixels for output image)
+        fx = config.FOCAL_LENGTH_MM / config.SENSOR_WIDTH_MM * config.IMAGE_W
+        fy = fx  # square pixels
+        cx_img = config.IMAGE_W / 2.0
+        cy_img = config.IMAGE_H / 2.0
+
+        # Rotation matrices ------------------------------------------------
+        def _Rx(a):
+            c, s = math.cos(a), math.sin(a)
+            return np.array([[1, 0, 0], [0, c, -s], [0, s, c]], dtype=np.float64)
+
+        def _Ry(a):
+            c, s = math.cos(a), math.sin(a)
+            return np.array([[c, 0, s], [0, 1, 0], [-s, 0, c]], dtype=np.float64)
+
+        def _Rz(a):
+            c, s = math.cos(a), math.sin(a)
+            return np.array([[c, -s, 0], [s, c, 0], [0, 0, 1]], dtype=np.float64)
+
+        # Camera-to-world rotation (NED: X=North, Y=East, Z=Down)
+        # Yaw rotates around Z (down), pitch around Y (east), roll around X (north)
+        R = _Rz(yaw) @ _Rx(pitch) @ _Ry(roll)
+
+        # Ray-trace 4 image corners onto ground plane (z = 0, drone at z = alt)
+        corners_uv = [
+            (0, 0),
+            (config.IMAGE_W, 0),
+            (config.IMAGE_W, config.IMAGE_H),
+            (0, config.IMAGE_H),
+        ]
+        ground_pts = []
+
+        for u, v in corners_uv:
+            # Ray direction in camera frame (camera looks along +Z)
+            ray_cam = np.array([(u - cx_img) / fx,
+                                (v - cy_img) / fy,
+                                1.0])
+            ray_world = R @ ray_cam
+
+            # Ray must point downward (positive Z in NED = toward ground)
+            if ray_world[2] <= 0:
+                # A corner ray points upward — fall back to nadir view
+                return self._get_nadir_view(cx, cy, alt, yaw,
+                                            view_w_px, view_h_px, ground_w)
+
+            # Intersect with ground plane at z = alt below drone
+            t = alt / ray_world[2]
+            north_m = t * ray_world[0]
+            east_m = t * ray_world[1]
+
+            # Convert metres to map pixels (map Y increases downward)
+            map_x = cx + east_m * self.geo.pix_per_m
+            map_y = cy - north_m * self.geo.pix_per_m
+            ground_pts.append([map_x, map_y])
+
+        src_pts = np.array(ground_pts, dtype=np.float32)
+        dst_pts = np.array([
+            [0, 0],
+            [config.IMAGE_W, 0],
+            [config.IMAGE_W, config.IMAGE_H],
+            [0, config.IMAGE_H],
+        ], dtype=np.float32)
+
+        # Extract ROI from map (bounding box of ground trapezoid + margin)
+        margin = 50
+        min_x = max(0, int(src_pts[:, 0].min()) - margin)
+        min_y = max(0, int(src_pts[:, 1].min()) - margin)
+        max_x = min(self.map_w, int(src_pts[:, 0].max()) + margin)
+        max_y = min(self.map_h, int(src_pts[:, 1].max()) + margin)
+
+        roi_w = max_x - min_x
+        roi_h = max_y - min_y
+        if roi_w < 2 or roi_h < 2:
+            return self._get_nadir_view(cx, cy, alt, yaw,
+                                        view_w_px, view_h_px, ground_w)
+
+        roi = self.full_map[min_y:max_y, min_x:max_x].copy()
+
+        # Render targets onto ROI BEFORE the warp so they get
+        # the same perspective distortion as the ground texture.
+        px_per_m_map = self.geo.pix_per_m  # map-pixel scale
+        for ti, tgt in enumerate(self.sim_targets):
+            ttype = self.sim_target_types[ti] if ti < len(self.sim_target_types) else "dummy"
+            height_map = {
+                "dummy": config.DUMMY_HEIGHT_M, "cone": config.CONE_HEIGHT_M,
+                "pants": config.PANTS_HEIGHT_M, "tshirt": config.TSHIRT_HEIGHT_M,
+                "backpack": config.BACKPACK_HEIGHT_M,
+            }
+            img_map = {
+                "dummy": self.dummy_img, "cone": self.cone_img,
+                "pants": self.pants_img, "tshirt": self.tshirt_img,
+                "backpack": self.backpack_img,
+            }
+            t_img = img_map.get(ttype)
+            # Target position in ROI coordinates
+            tx_roi = int(tgt[0] - min_x)
+            ty_roi = int(tgt[1] - min_y)
+            if t_img is not None:
+                t_h = int(height_map.get(ttype, 1.0) * px_per_m_map)
+                overlay_image_alpha(roi, t_img, tx_roi, ty_roi, 0, t_h)
+            else:
+                dot_rad = max(2, int(config.TARGET_REAL_RADIUS_M * px_per_m_map))
+                cv2.circle(roi, (tx_roi, ty_roi), dot_rad, (0, 0, 255), -1)
+
+        # Adjust source points to ROI coordinates
+        src_pts_roi = src_pts.copy()
+        src_pts_roi[:, 0] -= min_x
+        src_pts_roi[:, 1] -= min_y
+
+        # Perspective warp from ground trapezoid to rectangular output
+        M = cv2.getPerspectiveTransform(src_pts_roi, dst_pts)
+        frame = cv2.warpPerspective(roi, M, (config.IMAGE_W, config.IMAGE_H),
+                                    flags=cv2.INTER_LINEAR,
+                                    borderMode=cv2.BORDER_REPLICATE)
+
+        return frame, view_w_px, view_h_px
 
     def get_god_view(self, cx, cy, yaw, view_w_px, view_h_px, zoom_level, virtual_poly, search_poly, target_gps, landing_gps, geo_tool, logged_items=None, detection_clusters=None, active_cluster_idx=None, search_wps=None, search_wp_index=0, transit_wps_gps=None, transit_wp_index=0, current_state=None, rescan_pass=0, items_of_interest=None, rejected_targets=None, nfz_buffer_m=0, nfz_repulsion_vec=None, nfz_arrows=False):
         # Use pre-scaled map (~4MB) instead of full_map (~63MB) for speed.
