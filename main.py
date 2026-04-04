@@ -612,7 +612,7 @@ class VisualFlightMission(StateHandlersMixin):
                 px += pitch_px * math.sin(self.yaw) + roll_px * math.cos(self.yaw)
                 py += -pitch_px * math.cos(self.yaw) + roll_px * math.sin(self.yaw)
 
-            frame, self.view_w_px, self.view_h_px = self.sim.get_drone_view(px, py, self.alt, self.yaw)
+            frame, self.view_w_px, self.view_h_px = self.sim.get_drone_view(int(px), int(py), self.alt, self.yaw)
 
             # --sim-roll OR --sim-tilt: apply frame rotation from roll angle
             _apply_roll = False
