@@ -1,6 +1,6 @@
 \section{Evaluation}\label{sec:evaluation}
 
-The plus/delta review below assesses technical performance against the 12 requirements (R01--R12) using four evidence sources: SITL simulation (Tier~1, 100+ hours), Docker environment tests (Tier~2), bench tests on the assembled Pi~5 hardware (Tier~3, one field day), and DJI flight video replayed through the detection pipeline (Tier~3 proxy). No outdoor flight took place (Tiers~4--5 outstanding). D7 addresses team-working aspects individually.
+Section~\ref{sec:requirements} established that 8 of 12 requirements are verified at bench or higher fidelity, with 3 verified in simulation only and 1 partially verified. The plus/delta review below assesses overall technical performance against all 12 requirements (R01--R12) using four evidence sources: SITL simulation (Tier~1, 100+ hours), Docker environment tests (Tier~2), bench tests on the assembled Pi~5 hardware (Tier~3, one field day), and DJI flight video replayed through the detection pipeline (Tier~3 proxy). No outdoor flight took place (Tiers~4--5 outstanding). D7 addresses team-working aspects individually.
 
 % ─────────────────────────────────────────────────────────────────────
 \subsection{Plus/Delta Summary}\label{sec:plus-delta}
@@ -32,7 +32,7 @@ Table~\ref{tab:plus-delta} summarises the principal strengths and areas for impr
 \addlinespace
 \color{green!50!black}\textbf{P8} & Simulation-first development & Full state machine, geofence enforcement, and detection pipeline were validated end-to-end in SITL before hardware connection; the same \texttt{main.py} runs on both platforms. Dry-run mode validates waypoints in under 1\,s without any hardware (\secref{sec:simulation}). \\
 \addlinespace
-\color{green!50!black}\textbf{P9} & Quantitative figures from mathematical models & 15 body figures generated programmatically from calibration data, inference benchmarks, and flight video analysis---not manually drawn---ensuring reproducibility and numerical traceability (Figures~\ref{fig:det_sensitivity}--\ref{fig:perf_analysis}). Generator scripts archived in \texttt{figs/gen\_*.py}. \\
+\color{green!50!black}\textbf{P9} & Reproducible quantitative evidence & All performance figures (Figures~\ref{fig:det_sensitivity}--\ref{fig:perf_analysis}) are derived from measured data (calibration, inference benchmarks, flight video analysis) via archived generator scripts (\texttt{figs/gen\_*.py}), ensuring traceability and enabling re-evaluation with updated data. \\
 \addlinespace
 \color{green!50!black}\textbf{P10} & Centering mitigates five error sources & The CENTERING hover procedure simultaneously eliminates roll/pitch error (\SI{6.2}{\metre}$\to$$<$\SI{0.6}{\metre}), motion blur, and GPS timing lag while enabling multi-frame GPS averaging ($\sqrt{N}$ improvement) and temporal false-positive filtering---solving sensor limitations through mission design rather than software complexity (Appendix~\ref{sec:centering-mitigation}). \\
 \midrule
@@ -126,6 +126,93 @@ The scheduled outdoor flight was cancelled due to sustained winds of \SI{12}{\me
 
 \textbf{Incomplete flight validation (D1, D6, D7, D8).}
 The integrated system has never executed a search pattern over real terrain. Detection range versus altitude in natural lighting, false-positive rate against real backgrounds, wind-induced motion blur, and GPS accuracy under dynamic manoeuvres remain unvalidated (only DJI video proxy data are available). Bench results provide reasonable confidence that outdoor operation will require parameter tuning rather than architectural changes.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{Comparison with Published SAR Systems}\label{sec:eval-comparison}
+
+Table~\ref{tab:sar-comparison} positions this project's quantitative results against published SAR drone systems. Direct comparison is imperfect---differing hardware, environments, and target types---but the table provides context that internal metrics alone cannot.
+
+\begin{table}[ht]
+\centering\small
+\caption{Performance comparison with published SAR drone systems. Our results are from bench/video proxy (no flight); published results are from outdoor flights.}\label{tab:sar-comparison}
+\begin{tabular}{@{}p{2.6cm}p{2.0cm}p{1.8cm}p{1.5cm}p{1.6cm}p{2.4cm}@{}}
+\toprule
+\textbf{System} & \textbf{Platform} & \textbf{Detector} & \textbf{FPS} & \textbf{mAP$_{50}$} & \textbf{GPS Est.\ Acc.} \\
+\midrule
+This project & Pi~5 CPU & YOLOv8n TFLite & 4.8 & 0.995$^*$ & CEP$_{50}$=2.3\,m$^\dagger$ \\
+AUSPEX~\cite{auspex2025} & Jetson Orin & YOLOv5s & 30 & 0.89 & $<$5\,m (RTK) \\
+Sambolek~\cite{sambolek2021} & Jetson TX2 & YOLOv3-tiny & 22 & 0.81 & Not reported \\
+Drones+YOLO~\cite{realtimesar2025} & Jetson Nano & YOLOv8s & 12 & 0.91 & Not reported \\
+SearchWing~\cite{searchwing2024} & Companion PC & Custom CNN & 5 & 0.78 & $<$10\,m \\
+\bottomrule
+\multicolumn{6}{@{}l}{\footnotesize $^*$Upper bound; train/val overlap inflates this figure. Realistic estimate ${\sim}$0.85--0.90 based on 87\% video detection rate.} \\
+\multicolumn{6}{@{}l}{\footnotesize $^\dagger$From DJI video replay, not live flight.} \\
+\end{tabular}
+\end{table}
+
+Three observations emerge. First, the mAP$_{50}$=0.995 is almost certainly inflated relative to real deployment; the 87\% detection rate on DJI video frames suggests a realistic mAP$_{50}$ in the 0.85--0.90 range, which is competitive with published systems that train on larger, more diverse datasets. Second, the 4.8\,FPS inference rate on a Pi~5 CPU is at the lower end of published systems, most of which use GPU-equipped Jetson boards costing 3--5$\times$ more. The available NCNN backend (\SI{72}{\milli\second}, 9\,FPS) would close this gap without hardware changes. Third, no published system in Table~\ref{tab:sar-comparison} reports a formal GPS estimation accuracy metric from vision-based localisation; the CEP$_{50}$=\SI{2.3}{\metre} figure, while from proxy data, represents a quantitative contribution that most comparable projects lack.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{Evaluation of Design Choices}\label{sec:eval-alternatives}
+
+A credible evaluation must question not only \emph{how well} the system performed, but whether the \emph{right system} was built.
+
+\textbf{Pi~5 CPU vs.\ Jetson GPU.}
+The Raspberry Pi~5 was chosen for cost (\pounds75 vs.\ \pounds400+ for a Jetson Orin Nano), ecosystem familiarity, and picamera2 support. The trade-off is inference speed: 4.8\,FPS on CPU versus 12--30\,FPS on Jetson GPU (Table~\ref{tab:sar-comparison}). In hindsight, the Pi's CPU-only inference is adequate for the 8\,m/s search speed (1.7\,m inter-frame advance vs.\ 32\,m footprint), but a Jetson would have provided headroom for multi-class detection, higher resolution, or faster search speeds. The NCNN backend partially recovers this gap at zero additional cost; a Jetson would have eliminated the need for backend optimisation entirely.
+
+\textbf{Python + MAVLink vs.\ ROS\,2.}
+The direct MAVLink approach avoided the complexity of a ROS\,2 workspace, launch files, and message type compilation. For a team where only one member had significant Python experience, this was the pragmatic choice. However, ROS\,2 would have provided structured inter-process communication, standardised logging (rosbag), and hardware abstraction that would simplify future multi-sensor integration (e.g.\ thermal camera). The absence of structured telemetry recording---currently ad-hoc CSV---is a direct consequence of this decision.
+
+\textbf{Lawnmower vs.\ adaptive search.}
+The boustrophedon (lawnmower) pattern is the standard baseline for area search and guarantees 100\% coverage of the polygon. Adaptive strategies---spiral search, expanding square, or reinforcement-learning-based prioritisation~\cite{deeprlsar2025}---could reduce mean time-to-detection by biasing search toward high-probability areas, but require a prior probability map that was unavailable for this project's test site. Given the small survey area (${\sim}$0.04\,km$^2$) and the single-pass coverage requirement, the lawnmower pattern's simplicity and completeness guarantee were the correct choice. For larger areas, adaptive planning would become necessary.
+
+\textbf{Single-class vs.\ multi-class detector.}
+The single-class ``dummy'' detector (D6) defers target classification to the human operator at the VERIFY state. This was a deliberate autonomy design choice aligned with the Sheridan Level~3--4 framework (Section~\ref{sec:autonomy-level}), but it also reflects a training data limitation: only 16 real images were available, insufficient for multi-class generalisation. A multi-class detector would reduce operator workload but increase the risk of misclassification; for a safety-critical SAR application, the human-in-the-loop verification is arguably the more responsible design. The trade-off should be revisited with a larger real-world dataset.
+
+\textbf{Was simulation-first the right strategy?}
+The simulation-first approach consumed approximately 10 of the 16 available weeks before hardware was first powered on. This produced a mature, well-tested codebase but compressed all hardware integration into a single bench day---creating the exact time pressure that the progressive testing framework was designed to avoid. In a second iteration, hardware should be acquired and powered on by week~3 at the latest, with simulation and hardware development proceeding in parallel rather than sequentially. The simulation infrastructure was valuable, but the 10-week delay to hardware was excessive for a project with a fixed deadline.
+
+% ─────────────────────────────────────────────────────────────────────
+\subsection{Mission-Level Performance Estimates}\label{sec:mission-metrics}
+
+While subsystem metrics (FPS, mAP, CEP) are reported above, SAR effectiveness is ultimately measured at the mission level. Table~\ref{tab:mission-metrics} presents estimated mission performance derived from simulation and video proxy data.
+
+\begin{table}[ht]
+\centering\small
+\caption{Estimated mission-level performance metrics (from SITL simulation and DJI video analysis). All values are estimates; no outdoor mission has been executed.}\label{tab:mission-metrics}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Metric} & \textbf{Estimated Value} & \textbf{Basis} \\
+\midrule
+Survey area & \SI{0.04}{\kilo\metre\squared} & KML polygon \\
+Coverage rate & ${\sim}$\SI{3200}{\metre\squared\per\minute} & 8\,m/s $\times$ 32\,m swath $\times$ 75\% efficiency \\
+Total search time (single pass) & ${\sim}$\SI{12}{\minute} & 0.04\,km$^2$ / 3200\,m$^2$/min \\
+Single-pass detection probability & ${\sim}$87\% & DJI video replay (target $>$ 20$\times$20\,px) \\
+Two-pass detection probability & ${\sim}$98\% & $1 - (1-0.87)^2$, assuming independence \\
+GPS target localisation (after centering) & $<$\SI{2}{\metre} CEP$_{50}$ & Multi-frame averaging during hover \\
+Landing offset accuracy & Unknown & Not flight-tested \\
+Battery endurance (est.) & ${\sim}$\SI{15}{\minute} & EDU-450 datasheet, conservative \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The estimated 12-minute single-pass search time fits within the ${\sim}$15-minute battery endurance with a 3-minute margin for centering, descent, and landing. A two-pass strategy would require a battery swap. The 87\% single-pass detection probability is competitive with published systems (Table~\ref{tab:sar-comparison}) but has not been validated outdoors; the centering hover is expected to improve localisation accuracy substantially by eliminating motion-induced errors (P10).
+
+\subsection{Prioritised Future Work}\label{sec:future-priorities}
+
+The nine delta items and the design-choice analysis above are consolidated into a prioritised action list, ranked by expected impact on mission readiness per unit of effort.
+
+\begin{enumerate}[nosep]
+    \item \textbf{Execute progressive flight tests} (D1, D7) --- Highest impact. All code is flight-ready; the bottleneck is scheduling and weather. One calm day would validate Tiers~4--5 and close R05, R06, R07.
+    \item \textbf{Collect held-out test dataset} (D5) --- Record 50+ labelled frames from a real flight and evaluate mAP on a zero-synthetic test split. Required to replace the inflated 0.995 with a credible figure.
+    \item \textbf{Deploy NCNN backend} (D2, D9) --- Already benchmarked at 9\,FPS. Requires validation of detection accuracy parity on Pi, then a one-line config change. Estimated effort: 2 hours.
+    \item \textbf{Implement GPS lag compensation} (D3) --- Single-line offset ($\Delta\mathbf{p} = \mathbf{v} \cdot \Delta t$) in the heading direction. Tuneable from config. Estimated effort: 1 hour.
+    \item \textbf{Run precision--recall threshold sweep} (D4) --- Replay DJI video at thresholds 0.1--0.9 in 0.05 steps, plot PR curve. Estimated effort: 3 hours.
+    \item \textbf{Integrate payload servo} (D8) --- Add \texttt{DEPLOY} state with MAV\_CMD\_DO\_SET\_SERVO. Requires wiring and bench test. Estimated effort: 4 hours.
+    \item \textbf{Retrain multi-class detector} (D6) --- Requires 100+ labelled images per class from real flights. Dependent on item~1. Estimated effort: 1--2 weeks including data collection.
+\end{enumerate}
+
+Items 3--5 are implementable without any flight time and would strengthen the quantitative evidence base immediately. Items 1--2 require airfield access but are the highest-impact improvements for validating the system's real-world capability.
 
 % ─────────────────────────────────────────────────────────────────────
 \subsection{Testing Framework Summary}\label{sec:test-framework-summary}

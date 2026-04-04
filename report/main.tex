@@ -254,19 +254,18 @@ U  & Raw inference vs.\ effective pipeline throughput --- FPS breakdown analysis
 V  & Flight path optimisation --- strategy comparison and trade-offs. \\
 W  & Payload release mechanism --- servo hardware, low-hover rationale, actuation sequence. \\
 X  & Model comparison and future vision improvements --- three generations, tiling, COCO fallback. \\
-Y  & Multi-objective search optimisation --- energy, rotation, coverage trade-offs. \\
-Z  & Focus area redirect and repulsive field --- PLB beacon integration, NFZ avoidance. \\
-AA & Search path optimisation --- six candidate strategies, energy model, parametric sweep. \\
-AB & Search parameter optimisation --- 216-configuration physics simulation, Pareto front, sensitivity. \\
-AC & Formal multi-objective optimisation --- mathematical problem statement and constraints. \\
-AD & Design strategy: parameter derivation chain --- logical dependency reasoning. \\
-AE & Vision performance analysis --- altitude vs.\ pixel size, motion blur, detection envelope (real data). \\
-AF & Decision flow --- executive narrative of how search parameters were selected. \\
+Y  & Focus area redirect and repulsive field --- PLB beacon integration, NFZ avoidance. \\
+Z  & Search path optimisation --- six candidate strategies, energy model, parametric sweep. \\
+AA & Search parameter optimisation --- 216-configuration physics simulation, Pareto front, sensitivity. \\
+AB & Formal multi-objective optimisation --- mathematical problem statement and constraints. \\
+AC & Design strategy: parameter derivation chain --- logical dependency reasoning. \\
+AD & Vision performance analysis --- altitude vs.\ pixel size, motion blur, detection envelope (real data). \\
+AE & Decision flow --- executive narrative of how search parameters were selected. \\
 \addlinespace
 \multicolumn{2}{@{}l}{\textit{Extended body sections}} \\
-AG & Requirements verification detail --- R01--R12 evidence narratives. \\
-AH & Evaluation detail --- defect register, lessons learned, second iteration changes. \\
-AI & Development methodology --- simulation-first philosophy, 10-phase timeline, progressive testing, ambition levels, lessons for future teams. \\
+AF & Requirements verification detail --- R01--R12 evidence narratives. \\
+AG & Evaluation detail --- defect register, lessons learned, second iteration changes. \\
+AH & Development methodology --- simulation-first philosophy, 10-phase timeline, progressive testing, ambition levels, lessons for future teams. \\
 \bottomrule
 \end{tabularx}
 
@@ -344,37 +343,37 @@ AI & Development methodology --- simulation-first philosophy, 10-phase timeline,
 % Appendix X: Model comparison and future CV
 \input{sections/model_comparison}
 
-% Appendix Y: Multi-objective search optimisation
-\input{sections/search_optimization}
+% (Removed) search_optimization.tex was superseded by path_optimization_definitive.tex
+% \input{sections/search_optimization}
 
-% Appendix Z: Focus area + repulsive field
+% Appendix Y: Focus area + repulsive field
 \input{sections/focus_and_repulsive}
 
-% Appendix AA: Definitive path optimisation (real 216-config data)
+% Appendix Z: Definitive path optimisation (real 216-config data)
 \input{sections/path_optimization_definitive}
 
-% Appendix AB: Master optimisation (physics sim, top 3, sensitivity, Pareto)
+% Appendix AA: Master optimisation (physics sim, top 3, sensitivity, Pareto)
 \input{sections/optimization_master}
 
-% Appendix AC: Formal multi-objective optimisation
+% Appendix AB: Formal multi-objective optimisation
 \input{sections/optimization_formal}
 
-% Appendix AD: Design strategy reasoning chain
+% Appendix AC: Design strategy reasoning chain
 \input{sections/design_strategy}
 
-% Appendix AE: Vision performance analysis (real data)
+% Appendix AD: Vision performance analysis (real data)
 \input{sections/vision_performance}
 
-% Appendix AF: Decision flow (executive search parameter narrative)
+% Appendix AE: Decision flow (executive search parameter narrative)
 \input{sections/decision_flow}
 
-% Appendix AG: Requirements verification detail (R01--R12 evidence)
+% Appendix AF: Requirements verification detail (R01--R12 evidence)
 \input{sections/requirements_detail}
 
-% Appendix AH: Evaluation detail (defect register, lessons learned, second iteration)
+% Appendix AG: Evaluation detail (defect register, lessons learned, second iteration)
 \input{sections/evaluation_detail}
 
-% Appendix AI: Development methodology (simulation-first, progressive trust, timeline)
+% Appendix AH: Development methodology (simulation-first, progressive trust, timeline)
 \input{sections/development_methodology}
 
 % (Removed) Alternative text versions — draft working material, not for submission

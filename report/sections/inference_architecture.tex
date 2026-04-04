@@ -79,7 +79,7 @@ The Pi serves an MJPEG stream on port~8090 via Python's built-in \texttt{http.se
 \paragraph{Alternatives considered.}
 H.264 over HLS was prototyped (\texttt{camera\_stream\_h264.py}) but introduced 2--4 seconds of latency due to the segment-based delivery model, which is unacceptable for real-time operator verification.  H.264 over RTP/RTSP would achieve lower latency but requires a dedicated player (e.g.\ GStreamer, VLC) on the ground station, violating the browser-compatibility requirement.  WebRTC would satisfy both latency and browser requirements but introduces significant implementation complexity (STUN/TURN negotiation, DTLS-SRTP, SDP exchange) disproportionate to a single-stream, same-network use case.
 
-The MJPEG approach achieves sub-\SI{200}{\milli\second} glass-to-glass latency on the local Wi-Fi network, which is adequate for the operator's binary confirm/reject decision during the VERIFY state.
+The MJPEG approach achieves sub-\SI{200}{\milli\second} glass-to-glass latency on the local Wi-Fi network, which is adequate for the operator's binary confirm/reject decision during the VERIFY state.  For a comprehensive treatment of the streaming protocol evaluation, threading model, and ground station design, see Appendix~\ref{sec:streaming-arch}.
 
 \subsection{Benchmark Methodology}\label{sec:cv:inference:method}
 

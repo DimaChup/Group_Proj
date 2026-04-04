@@ -3,7 +3,7 @@
 
 \section{Design Rationale}\label{sec:rationale}
 
-Every major design decision was evaluated against the seven STEEPLE dimensions (Social, Technological, Economic, Environmental, Political, Legal, Ethical). Technical trade studies then addressed hardware, software architecture, detection, path planning, and mission control.
+The mission scenario and requirements (Section~\ref{sec:intro-d6}) demand a low-cost, fully autonomous SAR platform that searches a constrained area, detects a casualty, and lands nearby---all without a continuous data link. This section justifies the design decisions that translate those requirements into an implementable system, beginning with a stakeholder-level STEEPLE assessment and then presenting the trade studies that determined operating parameters, hardware platform, software architecture, and mission control strategy.
 
 \subsection{STEEPLE Analysis}\label{sec:steeple}
 
@@ -16,7 +16,7 @@ Every major design decision was evaluated against the seven STEEPLE dimensions (
     \midrule
     Social & Reduces volunteer foot-search time from hours to minutes for missing-person cases; open-source MIT licence (R12) enables volunteer SAR teams to replicate the platform without proprietary dependencies~\cite{murphy2014}. \\
     Technological & Pi~5 with TFLite (4 packages vs 90+); IMX296 global shutter eliminates rolling-shutter distortion at \SI{8}{\metre\per\second}; fully on-device inference---no cloud link required during mission~\cite{edgeai, tflite}. \\
-    Economic & \pounds150 compute stack ($<$10\% of DJI Matrice 30T); free-tier Colab training on 366-image dataset; zero per-mission cloud cost, viable for resource-constrained organisations. \\
+    Economic & \pounds150 compute stack ($<$10\% of DJI Matrice 30T at \pounds1\,700+~\cite{dji_m30t}); free-tier Colab training on 366-image dataset; zero per-mission cloud cost, viable for resource-constrained organisations. \\
     Environmental & Five-layer geofence with graduated speed reduction protects adjacent SSSI nesting habitat; \SI{30}{\metre} waypoint buffer; electric propulsion limits acoustic disturbance; \SI{3}{\kilo\gram} AUW minimises rotor wash on ground fauna~\cite{wca1981}. \\
     Political & UK CAA Open Category A3 compliant~\cite{caa2024uas}; VLOS only (BVLOS requires SORA~\cite{jarus2019sora}); aligns with CAA Innovation Hub policy encouraging civilian drone SAR trials; public GitHub repo ensures full auditability. \\
     Legal & On-device inference---no imagery transmitted over any network; detection logs record bounding-box coordinates only (no facial features), minimising UK GDPR risk; SSSI compliance auditable via logged boundary distances at every loop iteration~\cite{wca1981}. \\
@@ -25,13 +25,13 @@ Every major design decision was evaluated against the seven STEEPLE dimensions (
   \end{tabularx}
 \end{table}
 
-\noindent With the STEEPLE framework confirming project viability across all seven dimensions, the following subsections detail the technical trade studies that determined the system's operating parameters, hardware platform, software architecture, and mission control strategy.
+\noindent The STEEPLE assessment confirms viability across all seven dimensions. The following subsections detail the trade studies that determined operating parameters, hardware platform, software architecture, and mission control strategy.
 
 \subsection{Search Parameter Optimisation}\label{sec:search-param-opt}
 
-The search pattern is governed by three coupled decision variables---altitude~$h$, scan angle~$\theta$, and speed~$v$---that jointly determine five competing objectives: coverage completeness, detection probability, mission time, energy consumption, and NFZ safety margin.
+Three coupled decision variables---altitude~$h$, scan angle~$\theta$, and speed~$v$---govern the search pattern and jointly determine five competing objectives: coverage completeness, detection probability, mission time, energy consumption, and NFZ safety margin.
 
-These objectives cannot be optimised independently. Lowering altitude improves detection confidence but narrows the camera footprint and increases the number of scan lines. Increasing speed reduces mission time but shortens target dwell time and therefore detection probability.
+These objectives cannot be optimised independently. Lowering altitude improves detection confidence but narrows the camera footprint and increases scan lines. Increasing speed reduces mission time but shortens target dwell time and lowers detection probability.
 
 \begin{figure}[H]
   \centering
@@ -147,13 +147,17 @@ Three architectures for companion-to-autopilot communication were compared (Tabl
 
 \subsection{Software Architecture Rationale}\label{sec:arch-rationale}
 
-Four principles govern the architecture:
+Two architectures were considered: (1)~a monolithic script with platform-specific branches, typical of rapid prototypes, and (2)~a modular pipeline with narrow interfaces between independent modules. The monolithic approach was rejected because adding platform support (laptop~$\rightarrow$~Pi) or swapping inference backends would require editing detection, navigation, and mission logic in a single file---a maintenance burden that grows quadratically with the number of platform$\times$feature combinations.
+
+\noindent The selected modular architecture enforces four principles:
 \begin{enumerate}[nosep]
-  \item \textbf{Modular separation}---each concern hides behind a narrow interface (e.g.\ \texttt{detect\_in\_image(frame)} $\to$ \texttt{(found, x, y, conf)}).
-  \item \textbf{Platform-agnostic code}---a \texttt{MODE} flag selects the camera source; auto-detection selects the flight controller. No conditional branches distinguish platforms.
-  \item \textbf{Configuration-driven tuning}---all parameters reside in \texttt{config.py}, so transitioning to real hardware requires only parameter adjustment.
-  \item \textbf{Dual inference backend}---the system auto-detects Ultralytics (laptop) or TFLite (Pi) at import time, both producing identical $[1, 5, 8400]$ tensors.
+  \item \textbf{Modular separation}---each concern hides behind a narrow interface (e.g.\ \texttt{detect\_in\_image(frame)} $\to$ \texttt{(found, x, y, conf)}). Swapping the detection model requires zero changes to the 754-line mission orchestrator.
+  \item \textbf{Platform-agnostic code}---a \texttt{MODE} flag selects the camera source; auto-detection selects the flight controller. The same \texttt{main.py} runs on laptop (SITL + webcam) and Pi (Cube + CSI camera) without conditional branches.
+  \item \textbf{Configuration-driven tuning}---all 23~tunable parameters reside in \texttt{config.py}, so transitioning to real hardware requires only parameter adjustment, not code changes.
+  \item \textbf{Dual inference backend}---the system auto-detects Ultralytics (laptop) or TFLite/NCNN (Pi) at import time, both producing identical $[1, 5, 8400]$ output tensors. This was validated by running the same 50-frame benchmark on both backends and confirming identical detection outputs (bounding box coordinates match to $<$0.01\,px).
 \end{enumerate}
+
+\noindent The resulting six-module decomposition (vision, planning, navigation, state machine, configuration, utilities) achieves a modularity score of 3.8/5.0 (Appendix~\ref{sec:evaluation}), with the vision module scoring 4.5/5.0 due to its single-function interface and complete backend encapsulation.
 
 \subsection{Detection Model Selection}\label{sec:model-rationale}
 
@@ -213,9 +217,9 @@ Four candidate search patterns were evaluated (Table~\ref{tab:mcda-search}), pri
 
 A deterministic finite state machine (FSM) with 20~states and 32~transitions was chosen over behaviour trees and reactive architectures for its verifiability, traceability, and ease of runtime monitoring~\cite{wagner2006fsm}.
 
-\paragraph{Why not behaviour trees?} Behaviour trees offer superior composability for complex agent behaviours and are widely used in game AI and multi-robot systems. However, they introduce implicit priority ordering through selector/sequence nodes that is harder to audit than an explicit transition table, debugging requires tree-visualisation tooling, and the SAR mission's strictly sequential phase structure (search $\rightarrow$ detect $\rightarrow$ verify $\rightarrow$ land) does not benefit from the parallel subtree execution that behaviour trees enable. For a single-drone, single-objective mission, the FSM's one-state-at-a-time guarantee makes every transition auditable in a flat log file.
+\paragraph{Why not behaviour trees?} Behaviour trees offer superior composability for complex agent behaviours and are widely used in game AI and multi-robot systems~\cite{colosseum2017bt}. However, they introduce implicit priority ordering through selector/sequence nodes that is harder to audit than an explicit transition table, debugging requires tree-visualisation tooling not available on a headless Pi, and the SAR mission's strictly sequential phase structure (search $\rightarrow$ detect $\rightarrow$ verify $\rightarrow$ land) does not benefit from the parallel subtree execution that behaviour trees enable. Quantitatively, the mission graph contains zero concurrent branches---every state has exactly one active successor---so the $O(n\log n)$ tick traversal of a behaviour tree reduces to the FSM's $O(1)$ dictionary dispatch with no functional benefit. For a single-drone, single-objective mission, the FSM's one-state-at-a-time guarantee makes every transition auditable in a flat log file.
 
-\paragraph{Why not reactive/subsumption architectures?} Reactive architectures (e.g.\ Brooks' subsumption) excel at low-latency obstacle avoidance but lack the persistent state memory required for multi-phase missions: the system must remember which search legs have been completed, which targets have been classified, and how long the current hover has lasted. Layering these concerns onto a purely reactive stack would replicate FSM functionality without its formal verifiability.
+\paragraph{Why not reactive/subsumption architectures?} Reactive architectures (e.g.\ Brooks' subsumption~\cite{brooks1986subsumption}) excel at low-latency obstacle avoidance but lack the persistent state memory required for multi-phase missions: the system must remember which of the 5--9 search legs have been completed, which of potentially multiple targets have been classified (Y/N/I/X), and how long the current hover has lasted (for the \SI{120}{\second} timeout). Layering these concerns onto a purely reactive stack would replicate FSM functionality without its formal verifiability.
 
 \noindent Each state maps to a single handler function via a dictionary-based dispatch table ($O(1)$ lookup), eliminating fall-through errors. Defence-in-depth safety is enforced through five independent mechanisms: manual override (M~key), RC kill switch (hardware-level), return-to-launch on link loss, five-layer geofence, and per-state timeouts. Every blocking state carries a wall-clock timeout to prevent indefinite hangs. The complete transition table is provided in Appendix~\ref{app:states}.
 
@@ -292,4 +296,4 @@ The scheduled flight test (2026-03-11) was cancelled due to sustained winds exce
 \paragraph{Decision flow narrative.} Appendix~\ref{app:decision-flow} presents the six-step reasoning chain---from detection ceiling through altitude, speed, scan angle, NFZ margin, and coverage acceptance---as a self-contained executive narrative. It includes the 216-configuration sweep results, top-three configuration comparison, Pareto optimality analysis, and non-quantifiable design choices.
 
 \medskip
-\noindent\textbf{Section summary.} Every design decision in this project traces to a quantified rationale---physical measurement, parametric sweep, weighted trade study, or energy budget analysis---and seven decisions were revised when empirical evidence contradicted initial assumptions. Three of those corrections (BGR colour inversion, geofence sign error, bounding box coordinate mismatch) would have caused mission-critical failures in flight, yet all were caught and resolved at low-cost tiers through the progressive testing framework, demonstrating the evidence-driven engineering process that underpins the system.
+\noindent\textbf{Section summary.} Every design decision in this project traces to a quantified rationale---physical measurement, parametric sweep, weighted trade study, or energy budget analysis---and seven decisions were revised when empirical evidence contradicted initial assumptions. Three of those corrections (BGR colour inversion, geofence sign error, bounding box coordinate mismatch) would have caused mission-critical failures in flight, yet all were caught and resolved at low-cost tiers through the progressive testing framework, demonstrating the evidence-driven engineering process that underpins the system. Section~\ref{sec:sysdesc} now describes how these design choices were realised in the final integrated system.

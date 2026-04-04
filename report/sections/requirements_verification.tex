@@ -1,6 +1,6 @@
 \section{Requirements Verification}\label{sec:requirements}
 
-Table~\ref{tab:req-verification} maps each requirement from the AENGM0074 project brief (Release~2.1) to its verification method, supporting evidence, and current verification status.
+The system described in Section~\ref{sec:sysdesc} was designed to satisfy twelve requirements defined in the AENGM0074 project brief. Table~\ref{tab:req-verification} maps each requirement from the AENGM0074 project brief (Release~2.1) to its verification method, supporting evidence, and current verification status.
 
 \begin{table}[htbp]
 \centering
@@ -12,14 +12,14 @@ Table~\ref{tab:req-verification} maps each requirement from the AENGM0074 projec
 \textbf{Req} & \textbf{Requirement} & \textbf{Method} & \textbf{Evidence} & \textbf{Verification Status} \\
 \midrule
 R01 & Fly within Flight Area & KML polygon load + waypoint clipping + runtime \texttt{pointPolygonTest} $\to$ emergency RTL & SITL telemetry, geofence unit test, \texttt{\_enforce\_geofence()} at ${\sim}$20--50\,Hz & Verified (SITL) \\
-R02 & No SSSI overfly & Four-layer NFZ (plan-time filter, speed ramp, repulsive field, hard cutoff) + firmware fence & SITL multi-angle approach, geofence diagram & Verified (SITL) \\
+R02 & No SSSI overfly & Five-layer NFZ (plan-time filter, speed ramp, repulsive field, hard cutoff, firmware fence) & SITL multi-angle approach, geofence diagram & Verified (SITL) \\
 R03 & Take off within 5\,m of TOL & KML point placemark, vertical takeoff + arming-time distance check & SITL telemetry ($<$1\,m error), runtime $>$5\,m warning & Verified (SITL) \\
 R04 & Max 50\,m altitude & \texttt{TARGET\_ALT}=35\,m + \texttt{send\_global\_target()} 50\,m cap + firmware \texttt{FENCE\_ALT\_MAX} & Config validation, navigation cap, 28 unit tests & Verified (SITL) \\
-R05 & Search + identify items & Lawnmower + YOLOv8n (mAP$_{50}$=0.995, 4.8\,FPS) & End-to-end sim, bench test, DJI video proxy & Verified (simulation + video) \\
+R05 & Search area + identify items of interest & Lawnmower + YOLOv8n (mAP$_{50}$=0.995, 4.8\,FPS); full-body detection by design (Section~\ref{app:req-detail}) & End-to-end sim, bench test, DJI video proxy & Verified (simulation + video) \\
 R06 & PLB Focus Area & \texttt{B} key / \texttt{-{}-beacon-delay} mid-flight injection & SITL diversion + resume, flight log, 6 unit tests & Verified (SITL) \\
-R07 & Land 5--10\,m from casualty & 7.5\,m offset via \texttt{landing\_offset\_7\_5m()} + post-landing distance printout & Probability analysis (CEP$_{50}$=2.3\,m), 5 unit tests, SITL smoke test, runtime R07 check & Verified (SITL + analysis) \\
+R07 & Land 5--10\,m from casualty, deploy first aid kit, return to TOL & 7.5\,m offset + servo payload deploy + return transit & Probability analysis (CEP$_{50}$=2.3\,m), 5 unit tests, SITL smoke test, servo bench test & Verified (SITL + analysis) \\
 R08 & Autonomy justified & L7--8 search / L3--4 landing, operator verify gate & Design rationale, Sheridan framework & Verified (design) \\
-R09 & RTH + Motor Cutoff & RC kill, software \texttt{M}, auto RTL failsafes & SITL: 3 independent override tests & Verified (SITL) \\
+R09 & RTH + Motor Cutoff & RC kill switch (mode $\to$ STABILIZE), software \texttt{M} override, auto RTL failsafes; motor cutoff via RC disarm + \texttt{MAV\_CMD\_COMPONENT\_ARM\_DISARM} & SITL: 3 independent override tests; RC override on hardware (field day) & Verified (SITL + bench) \\
 R10 & Report lat/lon + images & GPS projection, web dashboard, \texttt{mission\_detections/} (JPEG + JSON per event) & Detection images + JSON metadata saved on every operator decision (Y/N/I/X) & Verified (SITL + bench) \\
 R11 & Company Pilot designated & 12-item checklist + RC override test & Team plan, field-day bench test, checklist & Verified (procedural + bench) \\
 R12 & Public GitHub, MIT licence & \texttt{github.com/DimaChup/Group\_Proj} + \texttt{LICENSE} file & Repository live, public, MIT \texttt{LICENSE} in root & Verified (inspection) \\
@@ -27,8 +27,8 @@ R12 & Public GitHub, MIT licence & \texttt{github.com/DimaChup/Group\_Proj} + \t
 \end{tabular}
 \end{table}
 
-Of the 12 requirements, 8 are fully verified at bench or higher fidelity (R01--R04, R09--R12), 3 are verified in simulation only (R05--R07), and 1 has a partial gap (R06 not field-tested with a live PLB).
+Of the 12 requirements, all are verified at SITL or higher fidelity. R09 and R11 include partial hardware verification from the field-day bench test (RC override on real airframe). The brief's footnote~1 requires automatic geofences for R01--R05; four software layers plus the ArduCopter firmware fence satisfy this. No outdoor flight data is available for any requirement due to weather cancellation.
 
 Recent code improvements closed several evidence gaps. R01 now includes a runtime Flight Area geofence with emergency RTL (not just plan-time clipping). R03 checks take-off location distance at arming. R04 enforces a 50\,m hard cap in the navigation module. R07 prints the actual casualty distance at landing. R10 saves structured detection images and JSON metadata to \texttt{mission\_detections/}, and R12 has an explicit MIT \texttt{LICENSE} file.
 
-The highest-risk requirements---R01 (flight area), R02 (SSSI), and R09 (override)---are each protected by multiple independent mechanisms verified at both simulation and hardware tiers. The most significant verification gap is the absence of outdoor flight data for R05 (search and detection) and R07 (landing accuracy). Both are verified quantitatively in simulation and through DJI video proxy analysis but remain unvalidated under real flight conditions due to weather cancellation. Appendix~\ref{app:req-detail} provides full evidence narratives for each requirement.
+The highest-risk requirements---R01 (flight area), R02 (SSSI), and R09 (override)---are each protected by multiple independent mechanisms verified at both simulation and hardware tiers. The most significant verification gap is the absence of outdoor flight data for R05 (search and detection) and R07 (landing accuracy). Both are verified quantitatively in simulation and through DJI video proxy analysis but remain unvalidated under real flight conditions due to weather cancellation. Appendix~\ref{app:req-detail} provides full evidence narratives for each requirement. Section~\ref{sec:evaluation} evaluates the system's overall technical performance, examining both the strengths that these verification results demonstrate and the gaps that remain.
