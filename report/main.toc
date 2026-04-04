@@ -1,799 +1,799 @@
-\contentsline {section}{Executive Summary}{3}{Doc-Start}%
-\contentsline {paragraph}{Mission.}{3}{paragraph*.1}%
-\contentsline {paragraph}{Architecture.}{3}{paragraph*.2}%
-\contentsline {paragraph}{Key results.}{3}{paragraph*.3}%
-\contentsline {paragraph}{Field integration.}{3}{paragraph*.4}%
-\contentsline {paragraph}{Status.}{3}{paragraph*.5}%
-\contentsline {section}{Introduction}{4}{paragraph*.5}%
-\contentsline {section}{\numberline {1}Design Rationale}{7}{section.1}%
-\contentsline {subsection}{\numberline {1.1}STEEPLE Analysis}{7}{subsection.1.1}%
-\contentsline {subsection}{\numberline {1.2}Search Parameter Optimisation}{7}{subsection.1.2}%
-\contentsline {subsection}{\numberline {1.3}Parameter Derivation Chain}{9}{subsection.1.3}%
-\contentsline {subsection}{\numberline {1.4}Hardware Platform Selection}{9}{subsection.1.4}%
-\contentsline {subsubsection}{\numberline {1.4.1}Companion Computer Trade Study}{10}{subsubsection.1.4.1}%
-\contentsline {subsubsection}{\numberline {1.4.2}Communication Architecture Trade Study}{11}{subsubsection.1.4.2}%
-\contentsline {subsection}{\numberline {1.5}Software Architecture Rationale}{12}{subsection.1.5}%
-\contentsline {subsection}{\numberline {1.6}Detection Model Selection}{12}{subsection.1.6}%
-\contentsline {paragraph}{Why TFLite over other inference runtimes?}{12}{paragraph*.15}%
-\contentsline {subsection}{\numberline {1.7}Coverage Path Planning}{13}{subsection.1.7}%
-\contentsline {subsection}{\numberline {1.8}State Machine Design}{13}{subsection.1.8}%
-\contentsline {paragraph}{Why not behaviour trees?}{13}{paragraph*.17}%
-\contentsline {paragraph}{Why not reactive/subsumption architectures?}{13}{paragraph*.18}%
-\contentsline {subsection}{\numberline {1.9}Autonomy Level Justification}{13}{subsection.1.9}%
-\contentsline {subsection}{\numberline {1.10}Decisions That Changed: Evidence-Based Corrections}{14}{subsection.1.10}%
-\contentsline {paragraph}{1. Focal length: \SI {7.0}{\milli \metre } $\rightarrow $ \SI {5.46}{\milli \metre }.}{14}{paragraph*.19}%
-\contentsline {paragraph}{2. Camera colour space: RGB assumed $\rightarrow $ BGR confirmed.}{14}{paragraph*.20}%
-\contentsline {paragraph}{3. Camera resolution: $640 \times 480$ $\rightarrow $ $1456 \times 1088$.}{14}{paragraph*.21}%
-\contentsline {paragraph}{4. TFLite bounding box interpretation: normalised $\rightarrow $ pixel coordinates.}{14}{paragraph*.22}%
-\contentsline {paragraph}{5. Geofence repulsive force: sign inversion corrected.}{14}{paragraph*.23}%
-\contentsline {paragraph}{6. TFLite runtime: \texttt {tflite-runtime} $\rightarrow $ \texttt {ai-edge-litert}.}{15}{paragraph*.24}%
-\contentsline {paragraph}{7. Serial communication: pyserial $\rightarrow $ MAVProxy UDP bridge.}{15}{paragraph*.25}%
-\contentsline {subsection}{\numberline {1.11}Why Not ROS}{15}{subsection.1.11}%
-\contentsline {subsection}{\numberline {1.12}Camera Selection: Global vs Rolling Shutter}{15}{subsection.1.12}%
-\contentsline {subsection}{\numberline {1.13}Field Day Adaptation Under Uncertainty}{15}{subsection.1.13}%
-\contentsline {paragraph}{Decision flow narrative.}{15}{paragraph*.26}%
-\contentsline {section}{\numberline {2}System Description}{16}{section.2}%
-\contentsline {subsection}{\numberline {2.1}Hardware Platform}{16}{subsection.2.1}%
-\contentsline {subsection}{\numberline {2.2}Software Architecture}{17}{subsection.2.2}%
-\contentsline {paragraph}{Geofence enforcement.}{18}{paragraph*.32}%
-\contentsline {subsection}{\numberline {2.3}Computer Vision Pipeline}{19}{subsection.2.3}%
-\contentsline {paragraph}{Preprocessing.}{19}{paragraph*.34}%
-\contentsline {paragraph}{Inference.}{19}{paragraph*.35}%
-\contentsline {paragraph}{Three backends.}{20}{paragraph*.36}%
-\contentsline {paragraph}{Smart detection mode.}{20}{paragraph*.38}%
-\contentsline {paragraph}{Performance.}{20}{paragraph*.39}%
-\contentsline {subsection}{\numberline {2.4}Search Pattern Generation}{20}{subsection.2.4}%
-\contentsline {paragraph}{Coverage guarantee.}{20}{paragraph*.40}%
-\contentsline {subsection}{\numberline {2.5}Mission State Machine}{22}{subsection.2.5}%
-\contentsline {paragraph}{Safety mechanisms.}{24}{paragraph*.45}%
-\contentsline {subsection}{\numberline {2.6}Target Localisation}{24}{subsection.2.6}%
-\contentsline {subsection}{\numberline {2.7}Ground Station}{25}{subsection.2.7}%
-\contentsline {subsection}{\numberline {2.8}Simulation Framework}{25}{subsection.2.8}%
-\contentsline {section}{\numberline {3}Requirements Verification}{25}{section.3}%
-\contentsline {section}{\numberline {4}Evaluation}{26}{section.4}%
-\contentsline {subsection}{\numberline {4.1}Plus/Delta Summary}{26}{subsection.4.1}%
-\contentsline {subsection}{\numberline {4.2}Discussion of Key Findings}{29}{subsection.4.2}%
-\contentsline {subsection}{\numberline {4.3}Comparison with Published SAR Systems}{30}{subsection.4.3}%
-\contentsline {subsection}{\numberline {4.4}Evaluation of Design Choices}{31}{subsection.4.4}%
-\contentsline {subsection}{\numberline {4.5}Mission-Level Performance Estimates}{32}{subsection.4.5}%
-\contentsline {subsection}{\numberline {4.6}Prioritised Future Work}{32}{subsection.4.6}%
-\contentsline {subsection}{\numberline {4.7}Testing Framework Summary}{32}{subsection.4.7}%
-\contentsline {paragraph}{Closing Assessment.}{33}{paragraph*.58}%
-\contentsline {section}{References}{34}{paragraph*.58}%
-\contentsline {section}{Appendix Guide}{35}{paragraph*.58}%
-\contentsline {section}{\numberline {A}State Transition Table}{36}{appendix.A}%
-\contentsline {section}{\numberline {B}Configuration Parameters}{38}{appendix.B}%
-\contentsline {section}{\numberline {C}Model Training and Dataset}{39}{appendix.C}%
-\contentsline {subsection}{\numberline {C.1}Training Data Strategy}{39}{subsection.C.1}%
-\contentsline {subsection}{\numberline {C.2}Domain Randomisation}{39}{subsection.C.2}%
-\contentsline {subsection}{\numberline {C.3}Augmentation Pipeline}{40}{subsection.C.3}%
-\contentsline {subsection}{\numberline {C.4}Synthetic Data Generation Pipeline}{40}{subsection.C.4}%
-\contentsline {subsection}{\numberline {C.5}Real Data Labelling}{40}{subsection.C.5}%
-\contentsline {subsection}{\numberline {C.6}Negative Mining}{40}{subsection.C.6}%
-\contentsline {subsection}{\numberline {C.7}Data Composition Analysis}{41}{subsection.C.7}%
-\contentsline {subsection}{\numberline {C.8}Training Pipeline and Convergence}{41}{subsection.C.8}%
-\contentsline {subsection}{\numberline {C.9}Results}{41}{subsection.C.9}%
-\contentsline {subsection}{\numberline {C.10}Model Export Pipeline}{42}{subsection.C.10}%
-\contentsline {subsection}{\numberline {C.11}Deployment}{42}{subsection.C.11}%
-\contentsline {subsection}{\numberline {C.12}Limitations}{43}{subsection.C.12}%
-\contentsline {section}{\numberline {D}Safety and Risk Management}{43}{appendix.D}%
-\contentsline {subsection}{\numberline {D.1}Risk Assessment Matrix}{44}{subsection.D.1}%
-\contentsline {subsection}{\numberline {D.2}Geofence Implementation}{44}{subsection.D.2}%
-\contentsline {subsection}{\numberline {D.3}Failure Mode Analysis}{45}{subsection.D.3}%
-\contentsline {subsection}{\numberline {D.4}Operator-in-the-Loop}{45}{subsection.D.4}%
-\contentsline {subsection}{\numberline {D.5}Emergency Procedures}{46}{subsection.D.5}%
-\contentsline {subsection}{\numberline {D.6}Pre-Flight and In-Flight Procedures}{46}{subsection.D.6}%
-\contentsline {subsection}{\numberline {D.7}Lessons Learned from Testing}{46}{subsection.D.7}%
-\contentsline {subsection}{\numberline {D.8}Regulatory Compliance}{46}{subsection.D.8}%
-\contentsline {paragraph}{SSSI protection.}{47}{paragraph*.73}%
-\contentsline {paragraph}{Data protection.}{47}{paragraph*.74}%
-\contentsline {paragraph}{Future BVLOS pathway.}{47}{paragraph*.75}%
-\contentsline {section}{\numberline {E}Testing Methodology}{47}{appendix.E}%
-\contentsline {subsection}{\numberline {E.1}V-Model Verification Approach}{47}{subsection.E.1}%
-\contentsline {subsection}{\numberline {E.2}Five-Tier Progressive Testing}{48}{subsection.E.2}%
-\contentsline {subsection}{\numberline {E.3}Test Script Organisation}{48}{subsection.E.3}%
-\contentsline {subsection}{\numberline {E.4}Unit and Integration Test Results}{49}{subsection.E.4}%
-\contentsline {subsection}{\numberline {E.5}Dry-Run Validation}{50}{subsection.E.5}%
-\contentsline {subsection}{\numberline {E.6}DJI Video Analysis}{50}{subsection.E.6}%
-\contentsline {subsection}{\numberline {E.7}Simulation Fidelity and the Sim-to-Real Gap}{50}{subsection.E.7}%
-\contentsline {subsection}{\numberline {E.8}Stress Testing and Failure Scenarios}{50}{subsection.E.8}%
-\contentsline {subsection}{\numberline {E.9}What Testing Revealed: Parameters Tuned and Bugs Fixed}{51}{subsection.E.9}%
-\contentsline {subsection}{\numberline {E.10}Building Confidence Through Progressive Evidence}{52}{subsection.E.10}%
-\contentsline {paragraph}{Evidence from Tier~1 (simulation).}{52}{paragraph*.82}%
-\contentsline {paragraph}{Evidence from Tier~2 (Docker).}{52}{paragraph*.83}%
-\contentsline {paragraph}{Evidence from Tier~3 (bench).}{52}{paragraph*.84}%
-\contentsline {paragraph}{Evidence from Tier~4 (passive flight).}{52}{paragraph*.85}%
-\contentsline {paragraph}{Evidence from DJI video replay.}{53}{paragraph*.86}%
-\contentsline {paragraph}{Cumulative confidence.}{53}{paragraph*.87}%
-\contentsline {subsection}{\numberline {E.11}Team Roles in the Testing Process}{53}{subsection.E.11}%
-\contentsline {paragraph}{Software development and simulation (Tiers~1--2).}{53}{paragraph*.88}%
-\contentsline {paragraph}{Hardware integration and bench testing (Tier~3).}{53}{paragraph*.89}%
-\contentsline {paragraph}{Flight operations (Tiers~4--5).}{53}{paragraph*.90}%
-\contentsline {paragraph}{Data analysis.}{53}{paragraph*.91}%
-\contentsline {subsection}{\numberline {E.12}Comparison with Industry Testing Standards}{53}{subsection.E.12}%
-\contentsline {subsection}{\numberline {E.13}Expected Outcomes from Real Flight Testing}{54}{subsection.E.13}%
-\contentsline {paragraph}{Detection performance.}{54}{paragraph*.92}%
-\contentsline {paragraph}{GPS estimation accuracy.}{54}{paragraph*.93}%
-\contentsline {paragraph}{Mission duration.}{54}{paragraph*.94}%
-\contentsline {paragraph}{Inference under thermal load.}{54}{paragraph*.95}%
-\contentsline {subsection}{\numberline {E.14}Preflight Checklist}{54}{subsection.E.14}%
-\contentsline {section}{\numberline {F}Field Testing and Results}{55}{appendix.F}%
-\contentsline {subsection}{\numberline {F.1}Bench Testing Results}{55}{subsection.F.1}%
-\contentsline {subsection}{\numberline {F.2}FOV Calibration}{55}{subsection.F.2}%
-\contentsline {subsection}{\numberline {F.3}Lens Distortion Calibration}{55}{subsection.F.3}%
-\contentsline {subsection}{\numberline {F.4}Inference Benchmarks}{55}{subsection.F.4}%
-\contentsline {subsection}{\numberline {F.5}Post-Hoc Video Analysis}{56}{subsection.F.5}%
-\contentsline {subsubsection}{\numberline {F.5.1}Detection Performance}{56}{subsubsection.F.5.1}%
-\contentsline {subsubsection}{\numberline {F.5.2}GPS Estimation Accuracy}{56}{subsubsection.F.5.2}%
-\contentsline {subsection}{\numberline {F.6}Dry-Run Validation}{56}{subsection.F.6}%
-\contentsline {subsection}{\numberline {F.7}Discussion}{57}{subsection.F.7}%
-\contentsline {paragraph}{Detection pipeline confidence.}{57}{paragraph*.97}%
-\contentsline {paragraph}{GPS estimation accuracy.}{57}{paragraph*.98}%
-\contentsline {paragraph}{Inference throughput.}{57}{paragraph*.99}%
-\contentsline {paragraph}{Remaining unknowns.}{57}{paragraph*.100}%
-\contentsline {section}{\numberline {G}Future Work}{57}{appendix.G}%
-\contentsline {subsection}{\numberline {G.1}Inference Acceleration}{57}{subsection.G.1}%
-\contentsline {subsection}{\numberline {G.2}Detection Improvements}{58}{subsection.G.2}%
-\contentsline {subsection}{\numberline {G.3}Multi-Target Support}{58}{subsection.G.3}%
-\contentsline {subsection}{\numberline {G.4}Thermal Imaging}{58}{subsection.G.4}%
-\contentsline {subsection}{\numberline {G.5}Communication}{59}{subsection.G.5}%
-\contentsline {subsection}{\numberline {G.6}Swarm Operations}{59}{subsection.G.6}%
-\contentsline {section}{\numberline {H}Edge Inference Architecture}{59}{appendix.H}%
-\contentsline {subsection}{\numberline {H.1}Compute Platform Constraints}{59}{subsection.H.1}%
-\contentsline {subsection}{\numberline {H.2}Backend Selection}{59}{subsection.H.2}%
-\contentsline {paragraph}{TFLite with XNNPACK delegate.}{60}{paragraph*.102}%
-\contentsline {paragraph}{NCNN.}{60}{paragraph*.103}%
-\contentsline {paragraph}{Ultralytics/PyTorch.}{60}{paragraph*.104}%
-\contentsline {subsection}{\numberline {H.3}Quantisation Trade-offs}{60}{subsection.H.3}%
-\contentsline {subsection}{\numberline {H.4}Pipeline Architecture}{60}{subsection.H.4}%
-\contentsline {subsection}{\numberline {H.5}Video Streaming Architecture}{61}{subsection.H.5}%
-\contentsline {paragraph}{MJPEG over HTTP (selected).}{61}{paragraph*.105}%
-\contentsline {paragraph}{Alternatives considered.}{61}{paragraph*.106}%
-\contentsline {subsection}{\numberline {H.6}Benchmark Methodology}{61}{subsection.H.6}%
-\contentsline {subsection}{\numberline {H.7}Results and Projected Improvements}{61}{subsection.H.7}%
-\contentsline {section}{\numberline {I}Computer Vision: Extended Analysis}{62}{appendix.I}%
-\contentsline {subsection}{\numberline {I.1}Detection Pipeline: Step-by-Step Timing}{62}{subsection.I.1}%
-\contentsline {subsubsection}{\numberline {I.1.1}Stage 1: Camera Capture}{62}{subsubsection.I.1.1}%
-\contentsline {subsubsection}{\numberline {I.1.2}Stage 2: Lens Undistortion}{62}{subsubsection.I.1.2}%
-\contentsline {subsubsection}{\numberline {I.1.3}Stage 3: Preprocessing}{63}{subsubsection.I.1.3}%
-\contentsline {subsubsection}{\numberline {I.1.4}Stage 4: TFLite Inference}{63}{subsubsection.I.1.4}%
-\contentsline {subsubsection}{\numberline {I.1.5}Stage 5: Postprocessing}{63}{subsubsection.I.1.5}%
-\contentsline {subsubsection}{\numberline {I.1.6}Stage 6: Visualisation}{63}{subsubsection.I.1.6}%
-\contentsline {subsection}{\numberline {I.2}Comprehensive Benchmark Results}{64}{subsection.I.2}%
-\contentsline {paragraph}{Inference time is model-size-independent.}{64}{paragraph*.112}%
-\contentsline {paragraph}{Undistortion overhead is negligible.}{64}{paragraph*.113}%
-\contentsline {paragraph}{Custom model vastly outperforms generic COCO.}{64}{paragraph*.114}%
-\contentsline {paragraph}{Timing stability.}{64}{paragraph*.115}%
-\contentsline {subsection}{\numberline {I.3}Mission Runtime Analysis}{64}{subsection.I.3}%
-\contentsline {subsubsection}{\numberline {I.3.1}Ground Footprint Geometry}{65}{subsubsection.I.3.1}%
-\contentsline {subsubsection}{\numberline {I.3.2}Frames per Flyover}{65}{subsubsection.I.3.2}%
-\contentsline {paragraph}{Key finding.}{65}{paragraph*.118}%
-\contentsline {subsubsection}{\numberline {I.3.3}Frame Overlap Analysis}{65}{subsubsection.I.3.3}%
-\contentsline {subsection}{\numberline {I.4}Detection Performance vs Altitude}{65}{subsection.I.4}%
-\contentsline {subsubsection}{\numberline {I.4.1}Pixel Size Model}{66}{subsubsection.I.4.1}%
-\contentsline {subsubsection}{\numberline {I.4.2}Altitude Performance Table}{66}{subsubsection.I.4.2}%
-\contentsline {paragraph}{Operational envelope.}{66}{paragraph*.122}%
-\contentsline {paragraph}{Confidence versus pixel size relationship.}{66}{paragraph*.123}%
-\contentsline {paragraph}{Combined detection envelope.}{67}{paragraph*.125}%
-\contentsline {subsection}{\numberline {I.5}Model Training Results}{67}{subsection.I.5}%
-\contentsline {paragraph}{Confusion matrix analysis.}{67}{paragraph*.128}%
-\contentsline {paragraph}{Blur-robustness through data augmentation.}{67}{paragraph*.129}%
-\contentsline {paragraph}{Comparison with v1.}{67}{paragraph*.130}%
-\contentsline {paragraph}{Export and deployment.}{68}{paragraph*.131}%
-\contentsline {subsection}{\numberline {I.6}Dual Backend Architecture}{68}{subsection.I.6}%
-\contentsline {subsubsection}{\numberline {I.6.1}Backend Selection Logic}{68}{subsubsection.I.6.1}%
-\contentsline {subsubsection}{\numberline {I.6.2}Backend Abstraction Benefits}{68}{subsubsection.I.6.2}%
-\contentsline {subsection}{\numberline {I.7}Model Swapping and Field Deployment}{69}{subsection.I.7}%
-\contentsline {paragraph}{File-copy swap.}{69}{paragraph*.132}%
-\contentsline {paragraph}{CLI flag swap.}{69}{paragraph*.134}%
-\contentsline {paragraph}{Zero-code-change guarantee.}{69}{paragraph*.135}%
-\contentsline {subsection}{\numberline {I.8}Detection Speed vs Drone Speed}{69}{subsection.I.8}%
-\contentsline {paragraph}{Frames per flyover.}{69}{paragraph*.136}%
-\contentsline {paragraph}{Motion blur.}{69}{paragraph*.137}%
-\contentsline {paragraph}{Altitude-dependent speed scheduling.}{69}{paragraph*.140}%
-\contentsline {subsection}{\numberline {I.9}Inference Latency Breakdown}{69}{subsection.I.9}%
-\contentsline {section}{\numberline {J}Video Streaming and Ground Station Architecture}{70}{appendix.J}%
-\contentsline {subsection}{\numberline {J.1}Streaming Protocol Selection}{71}{subsection.J.1}%
-\contentsline {subsection}{\numberline {J.2}Threading Model and Frame Buffering}{72}{subsection.J.2}%
-\contentsline {subsection}{\numberline {J.3}Headless Operation}{72}{subsection.J.3}%
-\contentsline {subsection}{\numberline {J.4}Port Allocation and Service Separation}{72}{subsection.J.4}%
-\contentsline {subsection}{\numberline {J.5}Bandwidth Estimation}{73}{subsection.J.5}%
-\contentsline {subsection}{\numberline {J.6}Ground Station Alternatives Considered}{73}{subsection.J.6}%
-\contentsline {section}{\numberline {K}GPS Target Estimation: A Deep Dive}{73}{appendix.K}%
-\contentsline {paragraph}{Appendix roadmap.}{74}{paragraph*.143}%
-\contentsline {subsection}{\numberline {K.1}Strategy Roadmap}{74}{subsection.K.1}%
-\contentsline {subsection}{\numberline {K.2}Problem Statement}{74}{subsection.K.2}%
-\contentsline {subsection}{\numberline {K.3}Detection-to-GPS Pipeline Overview}{75}{subsection.K.3}%
-\contentsline {subsection}{\numberline {K.4}Pixel-to-GPS Mathematics}{76}{subsection.K.4}%
-\contentsline {subsubsection}{\numberline {K.4.1}Ground Sampling Distance}{77}{subsubsection.K.4.1}%
-\contentsline {subsubsection}{\numberline {K.4.2}Body-Frame Projection}{77}{subsubsection.K.4.2}%
-\contentsline {subsubsection}{\numberline {K.4.3}Heading Rotation}{77}{subsubsection.K.4.3}%
-\contentsline {subsubsection}{\numberline {K.4.4}WGS\,84 Conversion}{77}{subsubsection.K.4.4}%
-\contentsline {paragraph}{Centre-snap optimisation.}{77}{paragraph*.147}%
-\contentsline {paragraph}{Lens undistortion.}{77}{paragraph*.148}%
-\contentsline {subsection}{\numberline {K.5}Image Resize Pipeline and Coordinate Mapping}{77}{subsection.K.5}%
-\contentsline {paragraph}{Coordinate origin.}{78}{paragraph*.149}%
-\contentsline {subsection}{\numberline {K.6}Error Budget}{78}{subsection.K.6}%
-\contentsline {paragraph}{GPS receiver noise}{78}{paragraph*.152}%
-\contentsline {paragraph}{GPS timing lag}{78}{paragraph*.153}%
-\contentsline {paragraph}{Barometric altitude error}{79}{paragraph*.154}%
-\contentsline {paragraph}{Heading uncertainty}{79}{paragraph*.155}%
-\contentsline {paragraph}{FOV calibration error}{79}{paragraph*.156}%
-\contentsline {paragraph}{Lens distortion}{79}{paragraph*.157}%
-\contentsline {paragraph}{Camera vibration (shakiness).}{79}{paragraph*.158}%
-\contentsline {paragraph}{Image resize mapping}{79}{paragraph*.159}%
-\contentsline {subsection}{\numberline {K.7}Roll/Pitch Attitude Error}{79}{subsection.K.7}%
-\contentsline {subsubsection}{\numberline {K.7.1}Magnitude of the Error}{79}{subsubsection.K.7.1}%
-\contentsline {subsubsection}{\numberline {K.7.2}Why the System Tolerates This Error}{80}{subsubsection.K.7.2}%
-\contentsline {subsubsection}{\numberline {K.7.3}Attitude-Compensated Estimation (Implemented)}{80}{subsubsection.K.7.3}%
-\contentsline {paragraph}{Principle.}{80}{paragraph*.162}%
-\contentsline {paragraph}{Step~1: Focal length and ray construction.}{81}{paragraph*.163}%
-\contentsline {paragraph}{Step~2: Full rotation matrix from telemetry.}{81}{paragraph*.164}%
-\contentsline {paragraph}{Step~3: Ground-plane intersection.}{81}{paragraph*.165}%
-\contentsline {paragraph}{Step~4: GPS conversion.}{81}{paragraph*.166}%
-\contentsline {paragraph}{Why this is an exact inverse of the camera simulation.}{81}{paragraph*.167}%
-\contentsline {paragraph}{Verification: 1440-test sweep.}{81}{paragraph*.169}%
-\contentsline {paragraph}{Activation threshold.}{82}{paragraph*.170}%
-\contentsline {paragraph}{Error from telemetry noise.}{82}{paragraph*.171}%
-\contentsline {paragraph}{Operating modes.}{82}{paragraph*.174}%
-\contentsline {subsubsection}{\numberline {K.7.4}Comparison with Published Approaches}{83}{subsubsection.K.7.4}%
-\contentsline {paragraph}{Deliberate simplifications and their justification.}{83}{paragraph*.176}%
-\contentsline {paragraph}{Impact on the three-level architecture.}{83}{paragraph*.177}%
-\contentsline {paragraph}{Implementation.}{83}{paragraph*.178}%
-\contentsline {subsection}{\numberline {K.8}Centering as Multi-Error Mitigation}{83}{subsection.K.8}%
-\contentsline {subsection}{\numberline {K.9}Three-Level Estimation Architecture}{84}{subsection.K.9}%
-\contentsline {subsubsection}{\numberline {K.9.1}Level~1: Fully Passive Estimation (No Drone Response)}{84}{subsubsection.K.9.1}%
-\contentsline {paragraph}{How it works.}{84}{paragraph*.180}%
-\contentsline {paragraph}{Advantages.}{84}{paragraph*.181}%
-\contentsline {paragraph}{Disadvantages.}{84}{paragraph*.182}%
-\contentsline {paragraph}{Accuracy.}{84}{paragraph*.183}%
-\contentsline {paragraph}{Verdict.}{85}{paragraph*.184}%
-\contentsline {subsubsection}{\numberline {K.9.2}Level~2: Stop-and-Look (Hover Without Centering)}{85}{subsubsection.K.9.2}%
-\contentsline {paragraph}{How it works.}{85}{paragraph*.185}%
-\contentsline {paragraph}{Advantages.}{85}{paragraph*.186}%
-\contentsline {paragraph}{Disadvantages.}{85}{paragraph*.187}%
-\contentsline {paragraph}{Accuracy.}{85}{paragraph*.188}%
-\contentsline {paragraph}{Verdict.}{85}{paragraph*.189}%
-\contentsline {subsubsection}{\numberline {K.9.3}Level~3: Visual Centering (Implemented)}{85}{subsubsection.K.9.3}%
-\contentsline {paragraph}{How it works.}{85}{paragraph*.190}%
-\contentsline {paragraph}{The zero-offset proof.}{85}{paragraph*.191}%
-\contentsline {paragraph}{Advantages.}{86}{paragraph*.192}%
-\contentsline {paragraph}{Disadvantages.}{86}{paragraph*.193}%
-\contentsline {paragraph}{Accuracy.}{86}{paragraph*.194}%
-\contentsline {paragraph}{Verdict.}{86}{paragraph*.195}%
-\contentsline {subsubsection}{\numberline {K.9.4}Comparative Evaluation}{86}{subsubsection.K.9.4}%
-\contentsline {paragraph}{Design rationale.}{87}{paragraph*.199}%
-\contentsline {subsection}{\numberline {K.10}Altitude Effect on Estimation Accuracy}{87}{subsection.K.10}%
-\contentsline {subsection}{\numberline {K.11}Accuracy Progression Through Mission Phases}{88}{subsection.K.11}%
-\contentsline {subsection}{\numberline {K.12}GPS Averaging Duration Analysis}{88}{subsection.K.12}%
-\contentsline {subsubsection}{\numberline {K.12.1}GPS Noise Characteristics}{88}{subsubsection.K.12.1}%
-\contentsline {subsubsection}{\numberline {K.12.2}Averaging Improvement Model}{89}{subsubsection.K.12.2}%
-\contentsline {subsubsection}{\numberline {K.12.3}Why 10 Seconds}{89}{subsubsection.K.12.3}%
-\contentsline {subsection}{\numberline {K.13}Fusion Strategies}{90}{subsection.K.13}%
-\contentsline {subsubsection}{\numberline {K.13.1}Rolling Weighted Average (Window = 50)}{90}{subsubsection.K.13.1}%
-\contentsline {subsubsection}{\numberline {K.13.2}Cumulative Weighted Average (All Time)}{90}{subsubsection.K.13.2}%
-\contentsline {subsubsection}{\numberline {K.13.3}Kalman Filter (Static Target)}{90}{subsubsection.K.13.3}%
-\contentsline {subsubsection}{\numberline {K.13.4}Inverse-Variance Weighting}{91}{subsubsection.K.13.4}%
-\contentsline {subsection}{\numberline {K.14}Spatial Clustering}{91}{subsection.K.14}%
-\contentsline {subsection}{\numberline {K.15}Comparison of Methods}{92}{subsection.K.15}%
-\contentsline {subsection}{\numberline {K.16}Empirical Validation}{92}{subsection.K.16}%
-\contentsline {subsubsection}{\numberline {K.16.1}DJI Video Replay (The ``Bullseye Test'')}{92}{subsubsection.K.16.1}%
-\contentsline {paragraph}{Methodology.}{92}{paragraph*.204}%
-\contentsline {paragraph}{Aggregate results.}{92}{paragraph*.205}%
-\contentsline {paragraph}{Extended evaluation.}{92}{paragraph*.207}%
-\contentsline {paragraph}{Directional bias and GPS timing lag.}{92}{paragraph*.208}%
-\contentsline {paragraph}{Detection performance across altitude.}{92}{paragraph*.209}%
-\contentsline {paragraph}{Validation of the theoretical CEP model.}{93}{paragraph*.210}%
-\contentsline {paragraph}{The \SI {16.5}{\metre } outlier.}{93}{paragraph*.211}%
-\contentsline {subsubsection}{\numberline {K.16.2}Simulator Validation}{93}{subsubsection.K.16.2}%
-\contentsline {subsection}{\numberline {K.17}Detailed Per-State Accuracy Analysis}{93}{subsection.K.17}%
-\contentsline {subsection}{\numberline {K.18}Four-Phase Detection-to-Landing Flow}{95}{subsection.K.18}%
-\contentsline {subsubsection}{\numberline {K.18.1}Phase~1: Initial Detection During Search (Tilted Camera)}{95}{subsubsection.K.18.1}%
-\contentsline {subsubsection}{\numberline {K.18.2}Phase~2: Approach and Continuous Refinement}{95}{subsubsection.K.18.2}%
-\contentsline {subsubsection}{\numberline {K.18.3}Phase~3: Hover Lock (Nadir Confirmation)}{96}{subsubsection.K.18.3}%
-\contentsline {subsubsection}{\numberline {K.18.4}Phase~4: Operator Verification and Landing Decision}{96}{subsubsection.K.18.4}%
-\contentsline {subsubsection}{\numberline {K.18.5}Why Four Phases Are Necessary}{96}{subsubsection.K.18.5}%
-\contentsline {subsubsection}{\numberline {K.18.6}The Progressive Refinement Trajectory}{96}{subsubsection.K.18.6}%
-\contentsline {subsubsection}{\numberline {K.18.7}Design Insight}{97}{subsubsection.K.18.7}%
-\contentsline {subsubsection}{\numberline {K.18.8}False Positive Handling}{97}{subsubsection.K.18.8}%
-\contentsline {paragraph}{Cost of a false positive.}{98}{paragraph*.217}%
-\contentsline {paragraph}{False positive mitigation.}{98}{paragraph*.218}%
-\contentsline {subsection}{\numberline {K.19}Cooperative Vision-Flight Architecture}{98}{subsection.K.19}%
-\contentsline {subsubsection}{\numberline {K.19.1}Three Mechanisms of Flight-Aided Improvement}{99}{subsubsection.K.19.1}%
-\contentsline {subsubsection}{\numberline {K.19.2}Static Camera vs.\ Cooperative System}{99}{subsubsection.K.19.2}%
-\contentsline {subsection}{\numberline {K.20}Why Inverse-Variance Weighting Won}{100}{subsection.K.20}%
-\contentsline {subsection}{\numberline {K.21}Empirical Method Comparison Against Ground Truth}{100}{subsection.K.21}%
-\contentsline {subsubsection}{\numberline {K.21.1}Ground Truth Setup}{100}{subsubsection.K.21.1}%
-\contentsline {subsubsection}{\numberline {K.21.2}Methods Tested}{100}{subsubsection.K.21.2}%
-\contentsline {subsubsection}{\numberline {K.21.3}Why Centering + GPS Averaging Won}{101}{subsubsection.K.21.3}%
-\contentsline {subsubsection}{\numberline {K.21.4}CEP$_{50}$ Comparison}{101}{subsubsection.K.21.4}%
-\contentsline {subsubsection}{\numberline {K.21.5}Convergence Behaviour}{101}{subsubsection.K.21.5}%
-\contentsline {subsection}{\numberline {K.22}Offset Landing Application}{102}{subsection.K.22}%
-\contentsline {subsection}{\numberline {K.23}Multi-Pass Observation and Heading Diversity}{102}{subsection.K.23}%
-\contentsline {subsubsection}{\numberline {K.23.1}The Lawnmower Pattern Advantage}{102}{subsubsection.K.23.1}%
-\contentsline {subsubsection}{\numberline {K.23.2}How Many Passes Are Enough?}{103}{subsubsection.K.23.2}%
-\contentsline {subsubsection}{\numberline {K.23.3}Strip Spacing and Target Visibility}{103}{subsubsection.K.23.3}%
-\contentsline {subsubsection}{\numberline {K.23.4}Multi-Pass Averaging vs.\ Centering}{104}{subsubsection.K.23.4}%
-\contentsline {subsection}{\numberline {K.24}Passive Estimation: Level~1 GPS Without Drone Response}{104}{subsection.K.24}%
-\contentsline {subsubsection}{\numberline {K.24.1}Passive Estimation Toolkit}{104}{subsubsection.K.24.1}%
-\contentsline {subsubsection}{\numberline {K.24.2}Why IVW Suits Passive Mode}{105}{subsubsection.K.24.2}%
-\contentsline {subsubsection}{\numberline {K.24.3}Convergence Behaviour in Passive Mode}{105}{subsubsection.K.24.3}%
-\contentsline {subsubsection}{\numberline {K.24.4}Passive vs.\ Active Estimation: When Each Mode Excels}{105}{subsubsection.K.24.4}%
-\contentsline {subsubsection}{\numberline {K.24.5}Implementation in \texttt {passive\_watch.py}}{106}{subsubsection.K.24.5}%
-\contentsline {section}{\numberline {L}Progressive Testing Methodology}{106}{appendix.L}%
-\contentsline {subsection}{\numberline {L.1}Philosophy: Never Skip a Tier}{106}{subsection.L.1}%
-\contentsline {subsection}{\numberline {L.2}The Five Tiers in Detail}{106}{subsection.L.2}%
-\contentsline {subsubsection}{\numberline {L.2.1}Tier 1: SITL Simulation (Zero Hardware Risk)}{107}{subsubsection.L.2.1}%
-\contentsline {paragraph}{Defects caught.}{107}{paragraph*.229}%
-\contentsline {subsubsection}{\numberline {L.2.2}Tier 2: Bench Test (Pi + Cube + Camera, No Props)}{107}{subsubsection.L.2.2}%
-\contentsline {paragraph}{Defects caught.}{107}{paragraph*.230}%
-\contentsline {subsubsection}{\numberline {L.2.3}Tier 3: Passive Flight (Pilot Flies, Pi Watches, Zero Commands)}{107}{subsubsection.L.2.3}%
-\contentsline {subsubsection}{\numberline {L.2.4}Tier 4: Autonomous Search with Log-Only Detection}{108}{subsubsection.L.2.4}%
-\contentsline {subsubsection}{\numberline {L.2.5}Tier 5: Full Autonomous Mission}{108}{subsubsection.L.2.5}%
-\contentsline {subsection}{\numberline {L.3}Test Script Organisation}{108}{subsection.L.3}%
-\contentsline {subsection}{\numberline {L.4}Experiment Scripts for Quantitative Validation}{108}{subsection.L.4}%
-\contentsline {subsection}{\numberline {L.5}Defect Discovery by Tier}{109}{subsection.L.5}%
-\contentsline {subsection}{\numberline {L.6}V-Model Mapping}{109}{subsection.L.6}%
-\contentsline {subsection}{\numberline {L.7}Cost--Risk Gradient}{110}{subsection.L.7}%
-\contentsline {subsection}{\numberline {L.8}Summary}{110}{subsection.L.8}%
-\contentsline {section}{\numberline {M}Field Day: Adaptation Under Uncertainty}{110}{appendix.M}%
-\contentsline {subsection}{\numberline {M.1}Field Day 1: 11~March~2026}{111}{subsection.M.1}%
-\contentsline {subsubsection}{\numberline {M.1.1}Setup: Three Terminals, One Aircraft}{111}{subsubsection.M.1.1}%
-\contentsline {subsubsection}{\numberline {M.1.2}FOV Calibration: Catching a 22\% Error}{111}{subsubsection.M.1.2}%
-\contentsline {subsubsection}{\numberline {M.1.3}Camera Colour Discovery}{112}{subsubsection.M.1.3}%
-\contentsline {subsubsection}{\numberline {M.1.4}Lens Calibration}{112}{subsubsection.M.1.4}%
-\contentsline {subsubsection}{\numberline {M.1.5}Inference Benchmark}{112}{subsubsection.M.1.5}%
-\contentsline {subsubsection}{\numberline {M.1.6}Weather Cancellation}{112}{subsubsection.M.1.6}%
-\contentsline {subsection}{\numberline {M.2}Field Day 2: 31~March~2026}{112}{subsection.M.2}%
-\contentsline {subsubsection}{\numberline {M.2.1}Corrupt Calibration File}{113}{subsubsection.M.2.1}%
-\contentsline {subsubsection}{\numberline {M.2.2}TFLite Bounding Box Coordinate Bug}{113}{subsubsection.M.2.2}%
-\contentsline {subsubsection}{\numberline {M.2.3}GPS Estimation Double-Scaling}{113}{subsubsection.M.2.3}%
-\contentsline {subsubsection}{\numberline {M.2.4}NCNN Backend Benchmark}{113}{subsubsection.M.2.4}%
-\contentsline {subsubsection}{\numberline {M.2.5}Additional Findings}{113}{subsubsection.M.2.5}%
-\contentsline {subsection}{\numberline {M.3}DJI Video Analysis: A Flight-Data Proxy}{114}{subsection.M.3}%
-\contentsline {subsection}{\numberline {M.4}Cumulative Impact: What Changed After Field Testing}{114}{subsection.M.4}%
-\contentsline {subsection}{\numberline {M.5}What Did Not Work}{115}{subsection.M.5}%
-\contentsline {subsection}{\numberline {M.6}Team Coordination Under Field Conditions}{115}{subsection.M.6}%
-\contentsline {paragraph}{Role distribution.}{115}{paragraph*.239}%
-\contentsline {paragraph}{Communication protocol.}{115}{paragraph*.240}%
-\contentsline {paragraph}{Go/no-go discipline.}{115}{paragraph*.241}%
-\contentsline {subsection}{\numberline {M.7}Lessons Carried Forward}{115}{subsection.M.7}%
-\contentsline {section}{\numberline {N}Contingency Planning and Deliverable Tiers}{116}{appendix.N}%
-\contentsline {subsection}{\numberline {N.1}Minimum Viable Deliverable}{116}{subsection.N.1}%
-\contentsline {subsection}{\numberline {N.2}Target Deliverable}{116}{subsection.N.2}%
-\contentsline {subsection}{\numberline {N.3}Stretch Goals}{116}{subsection.N.3}%
-\contentsline {subsection}{\numberline {N.4}How the Tier Structure Evolved}{117}{subsection.N.4}%
-\contentsline {paragraph}{Initial ambition (weeks 1--4).}{117}{paragraph*.244}%
-\contentsline {paragraph}{Realism check after simulation (weeks 5--8).}{117}{paragraph*.245}%
-\contentsline {paragraph}{Hardware integration reality (weeks 9--12).}{117}{paragraph*.246}%
-\contentsline {paragraph}{The resulting structure.}{117}{paragraph*.247}%
-\contentsline {subsection}{\numberline {N.5}Contingency Plans}{117}{subsection.N.5}%
-\contentsline {subsubsection}{\numberline {N.5.1}Hardware Failure Contingencies}{117}{subsubsection.N.5.1}%
-\contentsline {paragraph}{Camera failure.}{117}{paragraph*.250}%
-\contentsline {paragraph}{GPS degradation.}{118}{paragraph*.251}%
-\contentsline {paragraph}{Cube autopilot failure.}{118}{paragraph*.252}%
-\contentsline {paragraph}{Raspberry Pi failure.}{118}{paragraph*.253}%
-\contentsline {subsubsection}{\numberline {N.5.2}Software Failure Contingencies}{118}{subsubsection.N.5.2}%
-\contentsline {paragraph}{Detection model produces no results.}{118}{paragraph*.254}%
-\contentsline {paragraph}{State machine hangs or enters unexpected state.}{118}{paragraph*.255}%
-\contentsline {paragraph}{MAVLink connection lost mid-flight.}{118}{paragraph*.256}%
-\contentsline {paragraph}{RC override guard.}{118}{paragraph*.257}%
-\contentsline {subsubsection}{\numberline {N.5.3}Environmental Contingencies}{119}{subsubsection.N.5.3}%
-\contentsline {paragraph}{Poor lighting or low contrast.}{119}{paragraph*.258}%
-\contentsline {paragraph}{GPS multipath or urban canyon effects.}{119}{paragraph*.259}%
-\contentsline {paragraph}{Wind and turbulence.}{119}{paragraph*.260}%
-\contentsline {paragraph}{Rain.}{119}{paragraph*.261}%
-\contentsline {subsubsection}{\numberline {N.5.4}Graceful Degradation Hierarchy}{119}{subsubsection.N.5.4}%
-\contentsline {subsection}{\numberline {N.6}Test Script Mapping}{119}{subsection.N.6}%
-\contentsline {section}{\numberline {O}Test Script Reference}{119}{appendix.O}%
-\contentsline {subsection}{\numberline {O.1}Organisation by Category}{119}{subsection.O.1}%
-\contentsline {subsection}{\numberline {O.2}Flight Test Progression}{120}{subsection.O.2}%
-\contentsline {subsection}{\numberline {O.3}Hardware Tests}{121}{subsection.O.3}%
-\contentsline {subsection}{\numberline {O.4}Calibration Tests}{122}{subsection.O.4}%
-\contentsline {subsection}{\numberline {O.5}Experiment Scripts}{123}{subsection.O.5}%
-\contentsline {subsection}{\numberline {O.6}Diagnostics}{123}{subsection.O.6}%
-\contentsline {subsection}{\numberline {O.7}Script-to-Requirement Mapping}{123}{subsection.O.7}%
-\contentsline {subsection}{\numberline {O.8}What Was Tested on Real Hardware}{124}{subsection.O.8}%
-\contentsline {subsection}{\numberline {O.9}Remaining Test Gaps}{124}{subsection.O.9}%
-\contentsline {section}{\numberline {P}Sensor Calibration}{125}{appendix.P}%
-\contentsline {subsection}{\numberline {P.1}Field-of-View Calibration}{125}{subsection.P.1}%
-\contentsline {subsection}{\numberline {P.2}Lens Distortion Calibration}{125}{subsection.P.2}%
-\contentsline {subsection}{\numberline {P.3}Camera Colour-Space Discovery}{126}{subsection.P.3}%
-\contentsline {subsection}{\numberline {P.4}DJI Video FOV Calibration}{126}{subsection.P.4}%
-\contentsline {subsection}{\numberline {P.5}Calibration Impact Summary}{127}{subsection.P.5}%
-\contentsline {subsection}{\numberline {P.6}Pre-Flight Calibration Checklist}{127}{subsection.P.6}%
-\contentsline {subsection}{\numberline {P.7}GPS Error Measurement Procedure}{127}{subsection.P.7}%
-\contentsline {paragraph}{Equipment.}{127}{paragraph*.272}%
-\contentsline {paragraph}{Procedure.}{127}{paragraph*.273}%
-\contentsline {paragraph}{Acceptance criteria.}{127}{paragraph*.274}%
-\contentsline {paragraph}{Impact.}{127}{paragraph*.275}%
-\contentsline {subsection}{\numberline {P.8}Altitude Error Measurement Procedure}{127}{subsection.P.8}%
-\contentsline {paragraph}{Procedure.}{128}{paragraph*.276}%
-\contentsline {paragraph}{Quantified impact.}{128}{paragraph*.277}%
-\contentsline {paragraph}{Acceptance criterion.}{128}{paragraph*.279}%
-\contentsline {subsection}{\numberline {P.9}Error Budget Cross-Reference}{128}{subsection.P.9}%
-\contentsline {section}{\numberline {Q}Simulation Validation and Sim-to-Real Gap}{128}{appendix.Q}%
-\contentsline {subsection}{\numberline {Q.1}Three Simulation Levels and What Each Validated}{128}{subsection.Q.1}%
-\contentsline {subsection}{\numberline {Q.2}Error Injection as a Validation Tool}{129}{subsection.Q.2}%
-\contentsline {subsection}{\numberline {Q.3}DJI Video Replay as a Sim-to-Real Proxy}{129}{subsection.Q.3}%
-\contentsline {subsection}{\numberline {Q.4}Validation Results Summary}{129}{subsection.Q.4}%
-\contentsline {subsection}{\numberline {Q.5}Progressive Build-Up: From Pure Software to Real Hardware}{129}{subsection.Q.5}%
-\contentsline {paragraph}{Phase 1: Software-only development (weeks 1--4).}{130}{paragraph*.283}%
-\contentsline {paragraph}{Phase 2: SITL integration (weeks 3--6).}{130}{paragraph*.284}%
-\contentsline {paragraph}{Phase 3: Docker Pi environment (week 7).}{130}{paragraph*.285}%
-\contentsline {paragraph}{Phase 4: Bench hardware integration (weeks 8--10).}{130}{paragraph*.286}%
-\contentsline {paragraph}{Phase 5: DJI video replay (weeks 10--12).}{130}{paragraph*.287}%
-\contentsline {paragraph}{What this progression demonstrates.}{130}{paragraph*.288}%
-\contentsline {subsection}{\numberline {Q.6}Known Sim-to-Real Gaps}{130}{subsection.Q.6}%
-\contentsline {subsection}{\numberline {Q.7}Confidence Assessment}{131}{subsection.Q.7}%
-\contentsline {subsection}{\numberline {Q.8}Lessons from the Sim-to-Real Transfer}{131}{subsection.Q.8}%
-\contentsline {paragraph}{Simulation catches logic errors; hardware catches calibration errors.}{131}{paragraph*.289}%
-\contentsline {paragraph}{Video replay is the highest-value offline test.}{131}{paragraph*.290}%
-\contentsline {paragraph}{Configuration defaults from datasheets are unreliable.}{131}{paragraph*.291}%
-\contentsline {paragraph}{The sim-to-real gap is not a single gap; it is many small gaps.}{132}{paragraph*.292}%
-\contentsline {section}{\numberline {R}Mission Flow}{132}{appendix.R}%
-\contentsline {subsection}{\numberline {R.1}Pre-Flight}{132}{subsection.R.1}%
-\contentsline {subsection}{\numberline {R.2}Connection and Arming}{132}{subsection.R.2}%
-\contentsline {paragraph}{Failure handling.}{132}{paragraph*.293}%
-\contentsline {subsection}{\numberline {R.3}Takeoff}{132}{subsection.R.3}%
-\contentsline {paragraph}{Transition trigger.}{132}{paragraph*.294}%
-\contentsline {paragraph}{Failure handling.}{133}{paragraph*.295}%
-\contentsline {paragraph}{Typical duration.}{133}{paragraph*.296}%
-\contentsline {subsection}{\numberline {R.4}Transit to Search Area}{133}{subsection.R.4}%
-\contentsline {paragraph}{Typical duration.}{133}{paragraph*.297}%
-\contentsline {subsection}{\numberline {R.5}Search}{133}{subsection.R.5}%
-\contentsline {subsubsection}{\numberline {R.5.1}Flight Behaviour}{133}{subsubsection.R.5.1}%
-\contentsline {subsubsection}{\numberline {R.5.2}Computer Vision Pipeline}{133}{subsubsection.R.5.2}%
-\contentsline {subsubsection}{\numberline {R.5.3}Detection Filtering and Queuing}{133}{subsubsection.R.5.3}%
-\contentsline {subsubsection}{\numberline {R.5.4}Dashboard View During Search}{134}{subsubsection.R.5.4}%
-\contentsline {subsubsection}{\numberline {R.5.5}Rescan Passes}{134}{subsubsection.R.5.5}%
-\contentsline {paragraph}{Typical duration.}{134}{paragraph*.298}%
-\contentsline {subsection}{\numberline {R.6}PLB Focus Area Redirect}{134}{subsection.R.6}%
-\contentsline {subsection}{\numberline {R.7}Investigation}{134}{subsection.R.7}%
-\contentsline {paragraph}{Why operator-in-the-loop?}{134}{paragraph*.299}%
-\contentsline {subsection}{\numberline {R.8}Centering}{134}{subsection.R.8}%
-\contentsline {paragraph}{Transition trigger.}{134}{paragraph*.300}%
-\contentsline {paragraph}{Tilt compensation (optional).}{135}{paragraph*.301}%
-\contentsline {paragraph}{Failure handling.}{135}{paragraph*.302}%
-\contentsline {paragraph}{Typical duration.}{135}{paragraph*.303}%
-\contentsline {subsection}{\numberline {R.9}Verification}{135}{subsection.R.9}%
-\contentsline {paragraph}{Countdown and timeout.}{135}{paragraph*.304}%
-\contentsline {paragraph}{Queue draining.}{135}{paragraph*.305}%
-\contentsline {subsection}{\numberline {R.10}Approach and Payload Delivery}{135}{subsection.R.10}%
-\contentsline {paragraph}{Payload deployment sequence (15\,s total).}{135}{paragraph*.306}%
-\contentsline {paragraph}{Design rationale: offset landing over visual servoing.}{136}{paragraph*.307}%
-\contentsline {subsection}{\numberline {R.11}Return to Launch}{136}{subsection.R.11}%
-\contentsline {paragraph}{Landing.}{136}{paragraph*.308}%
-\contentsline {paragraph}{GPS safety guard.}{136}{paragraph*.309}%
-\contentsline {paragraph}{Typical duration.}{136}{paragraph*.310}%
-\contentsline {subsection}{\numberline {R.12}Safety Layers During Flight}{136}{subsection.R.12}%
-\contentsline {paragraph}{NFZ Geofence (R01, R02).}{136}{paragraph*.311}%
-\contentsline {paragraph}{Manual Override (R09).}{136}{paragraph*.312}%
-\contentsline {paragraph}{RC Override Guard.}{137}{paragraph*.313}%
-\contentsline {paragraph}{RC Kill Switch (R09).}{137}{paragraph*.314}%
-\contentsline {paragraph}{Link Loss.}{137}{paragraph*.315}%
-\contentsline {subsection}{\numberline {R.13}Simulation vs.\ Real Mission Flow}{137}{subsection.R.13}%
-\contentsline {subsection}{\numberline {R.14}Mission Timeline Summary}{137}{subsection.R.14}%
-\contentsline {subsection}{\numberline {R.15}How the Mission Was Built Up Incrementally}{137}{subsection.R.15}%
-\contentsline {paragraph}{Stage 1: Search pattern in isolation.}{137}{paragraph*.317}%
-\contentsline {paragraph}{Stage 2: Detection pipeline in isolation.}{138}{paragraph*.318}%
-\contentsline {paragraph}{Stage 3: MAVLink commands in SITL.}{138}{paragraph*.319}%
-\contentsline {paragraph}{Stage 4: Operator interface development.}{138}{paragraph*.320}%
-\contentsline {paragraph}{Stage 5: Integration on hardware.}{138}{paragraph*.321}%
-\contentsline {section}{\numberline {S}Centering vs.\ Direct Offset Landing}{138}{appendix.S}%
-\contentsline {subsection}{\numberline {S.1}The Centering Option}{138}{subsection.S.1}%
-\contentsline {subsection}{\numberline {S.2}Why Direct Offset Landing Is Sufficient}{139}{subsection.S.2}%
-\contentsline {subsection}{\numberline {S.3}Probability Analysis}{139}{subsection.S.3}%
-\contentsline {subsection}{\numberline {S.4}Simulation Comparison}{139}{subsection.S.4}%
-\contentsline {subsection}{\numberline {S.5}Design Decision}{140}{subsection.S.5}%
-\contentsline {subsection}{\numberline {S.6}Safety Considerations of Hovering Above the Casualty}{140}{subsection.S.6}%
-\contentsline {subsubsection}{\numberline {S.6.1}Risk Identification}{140}{subsubsection.S.6.1}%
-\contentsline {subsubsection}{\numberline {S.6.2}Quantitative Analysis}{140}{subsubsection.S.6.2}%
-\contentsline {paragraph}{Rotor downwash at ground level.}{140}{paragraph*.323}%
-\contentsline {paragraph}{Crash probability.}{140}{paragraph*.324}%
-\contentsline {paragraph}{Noise exposure.}{141}{paragraph*.325}%
-\contentsline {subsubsection}{\numberline {S.6.3}Comparison of Centering Strategies}{141}{subsubsection.S.6.3}%
-\contentsline {subsubsection}{\numberline {S.6.4}Industry Practice}{141}{subsubsection.S.6.4}%
-\contentsline {subsubsection}{\numberline {S.6.5}Accepted Tradeoff}{141}{subsubsection.S.6.5}%
-\contentsline {section}{\numberline {T}MAVLink Communication Architecture}{141}{appendix.T}%
-\contentsline {subsection}{\numberline {T.1}The Python 3.13 Serial Problem}{141}{subsection.T.1}%
-\contentsline {subsection}{\numberline {T.2}MAVProxy Bridge Architecture}{142}{subsection.T.2}%
-\contentsline {subsection}{\numberline {T.3}Connection Auto-Detection}{142}{subsection.T.3}%
-\contentsline {subsection}{\numberline {T.4}MAVLink Message Protocol}{142}{subsection.T.4}%
-\contentsline {subsection}{\numberline {T.5}Link Loss Detection and Recovery}{142}{subsection.T.5}%
-\contentsline {paragraph}{Heartbeat timeout.}{143}{paragraph*.329}%
-\contentsline {paragraph}{GPS degradation monitor.}{143}{paragraph*.330}%
-\contentsline {subsection}{\numberline {T.6}Latency Characteristics}{143}{subsection.T.6}%
-\contentsline {section}{\numberline {U}Raw Inference vs.\ Effective Pipeline Throughput}{143}{appendix.U}%
-\contentsline {subsection}{\numberline {U.1}Pipeline Stages and Overhead Budget}{143}{subsection.U.1}%
-\contentsline {subsection}{\numberline {U.2}Measured and Projected Results}{143}{subsection.U.2}%
-\contentsline {paragraph}{TFLite FP32 (deployed baseline).}{143}{paragraph*.332}%
-\contentsline {paragraph}{NCNN FP32 (benchmarked, not deployed).}{144}{paragraph*.333}%
-\contentsline {paragraph}{TFLite FP16 (projected).}{144}{paragraph*.334}%
-\contentsline {paragraph}{Ultralytics/PyTorch (laptop reference).}{144}{paragraph*.335}%
-\contentsline {subsection}{\numberline {U.3}Bottleneck Transition}{144}{subsection.U.3}%
-\contentsline {subsection}{\numberline {U.4}Operational Implications}{144}{subsection.U.4}%
-\contentsline {section}{\numberline {V}Flight Path Optimisation}{145}{appendix.V}%
-\contentsline {subsection}{\numberline {V.1}Diagonal vs Axis-Aligned Scanning}{145}{subsection.V.1}%
-\contentsline {subsection}{\numberline {V.2}Lane Width vs Altitude Trade-Off}{145}{subsection.V.2}%
-\contentsline {subsection}{\numberline {V.3}Altitude-Dependent Speed Schedule}{145}{subsection.V.3}%
-\contentsline {subsection}{\numberline {V.4}Turn Strategy}{146}{subsection.V.4}%
-\contentsline {subsection}{\numberline {V.5}Overlap Margin Analysis}{146}{subsection.V.5}%
-\contentsline {subsection}{\numberline {V.6}Start Corner Optimisation}{146}{subsection.V.6}%
-\contentsline {subsection}{\numberline {V.7}PLB Focus Area Redirect}{146}{subsection.V.7}%
-\contentsline {section}{\numberline {W}Payload Release Mechanism}{147}{appendix.W}%
-\contentsline {subsection}{\numberline {W.1}Tarot Double-Throw Release Mechanism}{147}{subsection.W.1}%
-\contentsline {subsection}{\numberline {W.2}Why Release from Altitude, Not Land}{147}{subsection.W.2}%
-\contentsline {subsection}{\numberline {W.3}The \SI {7.5}{\metre } Offset}{147}{subsection.W.3}%
-\contentsline {subsection}{\numberline {W.4}Servo Actuation Sequence}{147}{subsection.W.4}%
-\contentsline {subsection}{\numberline {W.5}Why Visual Servo Centering Was Not Required}{148}{subsection.W.5}%
-\contentsline {subsection}{\numberline {W.6}Future Work: Precision Drop}{148}{subsection.W.6}%
-\contentsline {section}{\numberline {X}Model Comparison and Future Vision Improvements}{148}{appendix.X}%
-\contentsline {subsection}{\numberline {X.1}Model Generations}{148}{subsection.X.1}%
-\contentsline {subsection}{\numberline {X.2}COCO Person Detector as Fallback}{149}{subsection.X.2}%
-\contentsline {subsection}{\numberline {X.3}Overfitting Risk in Single-Class Detection}{149}{subsection.X.3}%
-\contentsline {subsection}{\numberline {X.4}Tiling vs.\ Full-Frame Detection}{149}{subsection.X.4}%
-\contentsline {subsection}{\numberline {X.5}Future Vision Improvements}{149}{subsection.X.5}%
-\contentsline {section}{\numberline {Y}Focus Area Redirect and Repulsive Field Implementation}{150}{appendix.Y}%
-\contentsline {subsection}{\numberline {Y.1}PLB Focus Area Logic (R06)}{150}{subsection.Y.1}%
-\contentsline {paragraph}{Activation.}{150}{paragraph*.339}%
-\contentsline {paragraph}{Focus area definition.}{150}{paragraph*.340}%
-\contentsline {paragraph}{Pattern regeneration.}{151}{paragraph*.341}%
-\contentsline {paragraph}{State preservation.}{151}{paragraph*.342}%
-\contentsline {subsection}{\numberline {Y.2}Repulsive Vector Field}{151}{subsection.Y.2}%
-\contentsline {paragraph}{Nearest-point computation.}{151}{paragraph*.343}%
-\contentsline {paragraph}{Degenerate case.}{151}{paragraph*.344}%
-\contentsline {paragraph}{Repulsion magnitude.}{151}{paragraph*.345}%
-\contentsline {paragraph}{Velocity application.}{152}{paragraph*.346}%
-\contentsline {subsection}{\numberline {Y.3}Four-Layer Protection Architecture}{152}{subsection.Y.3}%
-\contentsline {paragraph}{Layer interaction.}{152}{paragraph*.348}%
-\contentsline {paragraph}{Distance rationale.}{152}{paragraph*.349}%
-\contentsline {paragraph}{Sign convention.}{152}{paragraph*.350}%
-\contentsline {paragraph}{Directional scalar field.}{152}{paragraph*.351}%
-\contentsline {paragraph}{Firmware backup.}{152}{paragraph*.352}%
-\contentsline {section}{\numberline {Z}Search Path Optimisation}{152}{appendix.Z}%
-\contentsline {subsection}{\numberline {Z.1}The Multi-Objective Optimisation Problem}{153}{subsection.Z.1}%
-\contentsline {subsection}{\numberline {Z.2}Energy Model}{153}{subsection.Z.2}%
-\contentsline {subsection}{\numberline {Z.3}The 216-Configuration Parametric Sweep}{154}{subsection.Z.3}%
-\contentsline {subsection}{\numberline {Z.4}Search Strategy Comparison}{155}{subsection.Z.4}%
-\contentsline {subsection}{\numberline {Z.5}NFZ Interaction and Speed Scalar Field}{156}{subsection.Z.5}%
-\contentsline {subsection}{\numberline {Z.6}Detection Probability Integration}{156}{subsection.Z.6}%
-\contentsline {subsection}{\numberline {Z.7}Selected Configuration and Justification}{157}{subsection.Z.7}%
-\contentsline {section}{\numberline {AA}Search Parameter Optimisation}{158}{appendix.Alph27}%
-\contentsline {subsection}{\numberline {AA.1}Problem Statement}{159}{subsection.Alph27.1}%
-\contentsline {subsection}{\numberline {AA.2}Physics-Based Simulation}{159}{subsection.Alph27.2}%
-\contentsline {subsubsection}{\numberline {AA.2.1}Energy Model}{159}{subsubsection.Alph27.2.1}%
-\contentsline {subsubsection}{\numberline {AA.2.2}Detection Model}{160}{subsubsection.Alph27.2.2}%
-\contentsline {subsubsection}{\numberline {AA.2.3}Parametric Sweep}{160}{subsubsection.Alph27.2.3}%
-\contentsline {subsection}{\numberline {AA.3}Top Three Configurations}{160}{subsection.Alph27.3}%
-\contentsline {subsection}{\numberline {AA.4}Altitude and Speed Selection Logic}{161}{subsection.Alph27.4}%
-\contentsline {subsection}{\numberline {AA.5}Sensitivity Analysis}{161}{subsection.Alph27.5}%
-\contentsline {subsection}{\numberline {AA.6}Variable Coupling Structure}{181}{subsection.Alph27.6}%
-\contentsline {subsection}{\numberline {AA.7}Pareto Frontier}{181}{subsection.Alph27.7}%
-\contentsline {paragraph}{Alternative projections of the five-dimensional objective space.}{183}{paragraph*.373}%
-\contentsline {subsection}{\numberline {AA.8}Summary of Selected Parameters}{183}{subsection.Alph27.8}%
-\contentsline {subsection}{\numberline {AA.9}Alternative Strategies Considered}{183}{subsection.Alph27.9}%
-\contentsline {paragraph}{Wind-aligned scanning.}{183}{paragraph*.380}%
-\contentsline {paragraph}{Adaptive speed near detection clusters.}{184}{paragraph*.381}%
-\contentsline {paragraph}{Two-pass altitude strategy.}{184}{paragraph*.382}%
-\contentsline {section}{\numberline {AB}Multi-Objective Search Optimisation}{184}{appendix.Alph28}%
-\contentsline {subsection}{\numberline {AB.1}Problem Formulation}{185}{subsection.Alph28.1}%
-\contentsline {subsection}{\numberline {AB.2}Objective Functions}{186}{subsection.Alph28.2}%
-\contentsline {subsubsection}{\numberline {AB.2.1}Coverage Completeness}{186}{subsubsection.Alph28.2.1}%
-\contentsline {subsubsection}{\numberline {AB.2.2}Detection Probability}{187}{subsubsection.Alph28.2.2}%
-\contentsline {subsubsection}{\numberline {AB.2.3}Mission Time}{188}{subsubsection.Alph28.2.3}%
-\contentsline {subsubsection}{\numberline {AB.2.4}Energy Consumption}{188}{subsubsection.Alph28.2.4}%
-\contentsline {subsubsection}{\numberline {AB.2.5}NFZ Safety Margin}{188}{subsubsection.Alph28.2.5}%
-\contentsline {subsection}{\numberline {AB.3}Constraints}{189}{subsection.Alph28.3}%
-\contentsline {subsection}{\numberline {AB.4}Variable Coupling Analysis}{189}{subsection.Alph28.4}%
-\contentsline {subsection}{\numberline {AB.5}Solution Approach}{189}{subsection.Alph28.5}%
-\contentsline {section}{\numberline {AC}Design Strategy}{190}{appendix.Alph29}%
-\contentsline {subsection}{\numberline {AC.1}Design Philosophy: Simulation-First Development}{190}{subsection.Alph29.1}%
-\contentsline {paragraph}{Principle 1: Prove it in software before touching hardware.}{190}{paragraph*.387}%
-\contentsline {paragraph}{Principle 2: One codebase, every platform.}{190}{paragraph*.388}%
-\contentsline {paragraph}{Principle 3: Isolate one variable per test step.}{191}{paragraph*.389}%
-\contentsline {subsection}{\numberline {AC.2}Why This Approach Over Alternatives}{191}{subsection.Alph29.2}%
-\contentsline {subsection}{\numberline {AC.3}Progressive Testing as Risk Management}{191}{subsection.Alph29.3}%
-\contentsline {subsection}{\numberline {AC.4}Adapting When Hardware Was Unavailable}{192}{subsection.Alph29.4}%
-\contentsline {subsection}{\numberline {AC.5}Bridging the Simulation-to-Reality Gap}{192}{subsection.Alph29.5}%
-\contentsline {subsection}{\numberline {AC.6}Team Organisation and Workstream Structure}{193}{subsection.Alph29.6}%
-\contentsline {subsection}{\numberline {AC.7}Parameter Derivation Chain}{193}{subsection.Alph29.7}%
-\contentsline {subsection}{\numberline {AC.8}Step 1: Maximum Detection Altitude}{193}{subsection.Alph29.8}%
-\contentsline {subsection}{\numberline {AC.9}Step 2: Maximum Speed at Chosen Altitude}{194}{subsection.Alph29.9}%
-\contentsline {subsection}{\numberline {AC.10}Step 3: Minimise Energy via Scan Angle}{194}{subsection.Alph29.10}%
-\contentsline {subsection}{\numberline {AC.11}Step 4: NFZ Safety Margins}{195}{subsection.Alph29.11}%
-\contentsline {subsection}{\numberline {AC.12}Step 5: Swath Overlap}{195}{subsection.Alph29.12}%
-\contentsline {subsection}{\numberline {AC.13}Step 6: Diagonal vs Aligned Scanning}{196}{subsection.Alph29.13}%
-\contentsline {subsection}{\numberline {AC.14}The Dependency Chain}{196}{subsection.Alph29.14}%
-\contentsline {section}{\numberline {AD}Vision Performance Analysis}{203}{appendix.Alph30}%
-\contentsline {subsection}{\numberline {AD.1}Altitude vs.\ Target Pixel Size}{203}{subsection.Alph30.1}%
-\contentsline {subsection}{\numberline {AD.2}Speed vs.\ Motion Blur}{204}{subsection.Alph30.2}%
-\contentsline {subsection}{\numberline {AD.3}Speed vs.\ Frames on Target}{205}{subsection.Alph30.3}%
-\contentsline {subsection}{\numberline {AD.4}Coverage Efficiency}{206}{subsection.Alph30.4}%
-\contentsline {subsection}{\numberline {AD.5}Combined Detection Envelope}{207}{subsection.Alph30.5}%
-\contentsline {subsection}{\numberline {AD.6}Summary of Limiting Factors}{208}{subsection.Alph30.6}%
-\contentsline {section}{\numberline {AE}Decision Flow: How We Chose Our Search Parameters}{208}{appendix.Alph31}%
-\contentsline {subsection}{\numberline {AE.1}The Problem}{208}{subsection.Alph31.1}%
-\contentsline {subsection}{\numberline {AE.2}The Variables We Control}{209}{subsection.Alph31.2}%
-\contentsline {subsection}{\numberline {AE.3}Our Strategy: Safety-First, Detection-Optimised}{209}{subsection.Alph31.3}%
-\contentsline {paragraph}{1. Start from detection: how high can we fly and still see the target?}{209}{paragraph*.412}%
-\contentsline {paragraph}{2. Add a safety margin.}{209}{paragraph*.413}%
-\contentsline {paragraph}{3. At 35\,m, how fast can we fly?}{209}{paragraph*.414}%
-\contentsline {paragraph}{4. What scan angle minimises energy?}{210}{paragraph*.415}%
-\contentsline {paragraph}{5. How much NFZ margin do we need?}{210}{paragraph*.416}%
-\contentsline {paragraph}{6. How much lane overlap is needed?}{210}{paragraph*.417}%
-\contentsline {paragraph}{7. Is 96\% coverage acceptable?}{210}{paragraph*.418}%
-\contentsline {subsection}{\numberline {AE.4}What We Evaluated}{210}{subsection.Alph31.4}%
-\contentsline {paragraph}{A note on correlation.}{210}{paragraph*.420}%
-\contentsline {subsection}{\numberline {AE.5}The Result}{210}{subsection.Alph31.5}%
-\contentsline {subsection}{\numberline {AE.6}Sequential Measurement: Settling Each Variable Before the Next}{211}{subsection.Alph31.6}%
-\contentsline {paragraph}{Step~1: Train a reliable vision model.}{211}{paragraph*.422}%
-\contentsline {paragraph}{Step~2: Map the detection envelope.}{211}{paragraph*.423}%
-\contentsline {paragraph}{Step~3: Determine speed limits at the chosen altitude.}{212}{paragraph*.425}%
-\contentsline {paragraph}{Step~4: Energy-efficient path search.}{212}{paragraph*.427}%
-\contentsline {subsection}{\numberline {AE.7}Decomposition Into Independent Sub-Problems}{212}{subsection.Alph31.7}%
-\contentsline {subsection}{\numberline {AE.8}Search Pattern Quantification}{212}{subsection.Alph31.8}%
-\contentsline {subsection}{\numberline {AE.9}Robustness to Runtime Edge Cases}{212}{subsection.Alph31.9}%
-\contentsline {subsection}{\numberline {AE.10}Pareto Optimality of the Selected Point}{213}{subsection.Alph31.10}%
-\contentsline {subsection}{\numberline {AE.11}Non-Quantifiable Design Choices}{213}{subsection.Alph31.11}%
-\contentsline {subsection}{\numberline {AE.12}Summary}{213}{subsection.Alph31.12}%
-\contentsline {section}{\numberline {AF}Approaches to Aerial Target Geolocation}{214}{appendix.Alph32}%
-\contentsline {subsection}{\numberline {AF.1}Approach 1: Direct Georeferencing}{216}{subsection.Alph32.1}%
-\contentsline {paragraph}{Description.}{216}{paragraph*.429}%
-\contentsline {paragraph}{Mathematical basis.}{216}{paragraph*.430}%
-\contentsline {paragraph}{Pros.}{216}{paragraph*.431}%
-\contentsline {paragraph}{Cons.}{216}{paragraph*.432}%
-\contentsline {paragraph}{Accuracy.}{216}{paragraph*.433}%
-\contentsline {paragraph}{Computational cost.}{216}{paragraph*.434}%
-\contentsline {paragraph}{Suitability.}{216}{paragraph*.435}%
-\contentsline {subsection}{\numberline {AF.2}Approach 2: Multi-Frame Triangulation}{216}{subsection.Alph32.2}%
-\contentsline {paragraph}{Description.}{216}{paragraph*.436}%
-\contentsline {paragraph}{Mathematical basis.}{216}{paragraph*.437}%
-\contentsline {paragraph}{Pros.}{216}{paragraph*.438}%
-\contentsline {paragraph}{Cons.}{216}{paragraph*.439}%
-\contentsline {paragraph}{Accuracy.}{217}{paragraph*.440}%
-\contentsline {paragraph}{Computational cost.}{217}{paragraph*.441}%
-\contentsline {paragraph}{Suitability.}{217}{paragraph*.442}%
-\contentsline {subsection}{\numberline {AF.3}Approach 3: Kalman Filter Tracking}{217}{subsection.Alph32.3}%
-\contentsline {paragraph}{Description.}{217}{paragraph*.443}%
-\contentsline {paragraph}{Mathematical basis.}{217}{paragraph*.444}%
-\contentsline {paragraph}{Pros.}{217}{paragraph*.445}%
-\contentsline {paragraph}{Cons.}{217}{paragraph*.446}%
-\contentsline {paragraph}{Accuracy.}{217}{paragraph*.447}%
-\contentsline {paragraph}{Computational cost.}{217}{paragraph*.448}%
-\contentsline {paragraph}{Suitability.}{217}{paragraph*.449}%
-\contentsline {subsection}{\numberline {AF.4}Approach 4: Visual Odometry and SLAM}{217}{subsection.Alph32.4}%
-\contentsline {paragraph}{Description.}{217}{paragraph*.450}%
-\contentsline {paragraph}{Mathematical basis.}{217}{paragraph*.451}%
-\contentsline {paragraph}{Pros.}{217}{paragraph*.452}%
-\contentsline {paragraph}{Cons.}{218}{paragraph*.453}%
-\contentsline {paragraph}{Accuracy.}{218}{paragraph*.454}%
-\contentsline {paragraph}{Computational cost.}{218}{paragraph*.455}%
-\contentsline {paragraph}{Suitability.}{218}{paragraph*.456}%
-\contentsline {subsection}{\numberline {AF.5}Approach 5: Photogrammetric Bundle Adjustment}{218}{subsection.Alph32.5}%
-\contentsline {paragraph}{Description.}{218}{paragraph*.457}%
-\contentsline {paragraph}{Mathematical basis.}{218}{paragraph*.458}%
-\contentsline {paragraph}{Pros.}{218}{paragraph*.459}%
-\contentsline {paragraph}{Cons.}{218}{paragraph*.460}%
-\contentsline {paragraph}{Accuracy.}{218}{paragraph*.461}%
-\contentsline {paragraph}{Computational cost.}{218}{paragraph*.462}%
-\contentsline {paragraph}{Suitability.}{218}{paragraph*.463}%
-\contentsline {subsection}{\numberline {AF.6}Approach 6: Template Matching and Tracking}{218}{subsection.Alph32.6}%
-\contentsline {paragraph}{Description.}{218}{paragraph*.464}%
-\contentsline {paragraph}{Mathematical basis.}{218}{paragraph*.465}%
-\contentsline {paragraph}{Pros.}{218}{paragraph*.466}%
-\contentsline {paragraph}{Cons.}{219}{paragraph*.467}%
-\contentsline {paragraph}{Accuracy.}{219}{paragraph*.468}%
-\contentsline {paragraph}{Computational cost.}{219}{paragraph*.469}%
-\contentsline {paragraph}{Suitability.}{219}{paragraph*.470}%
-\contentsline {subsection}{\numberline {AF.7}Approach 7: Centroid Clustering with Inverse-Variance Weighting}{219}{subsection.Alph32.7}%
-\contentsline {paragraph}{Description.}{219}{paragraph*.471}%
-\contentsline {paragraph}{Mathematical basis.}{219}{paragraph*.472}%
-\contentsline {paragraph}{Pros.}{219}{paragraph*.473}%
-\contentsline {paragraph}{Cons.}{219}{paragraph*.474}%
-\contentsline {paragraph}{Accuracy.}{219}{paragraph*.475}%
-\contentsline {paragraph}{Computational cost.}{219}{paragraph*.476}%
-\contentsline {paragraph}{Suitability.}{219}{paragraph*.477}%
-\contentsline {subsection}{\numberline {AF.8}Approach 8: Multi-Pass Averaging}{219}{subsection.Alph32.8}%
-\contentsline {paragraph}{Description.}{219}{paragraph*.478}%
-\contentsline {paragraph}{Mathematical basis.}{220}{paragraph*.479}%
-\contentsline {paragraph}{Pros.}{220}{paragraph*.480}%
-\contentsline {paragraph}{Cons.}{220}{paragraph*.481}%
-\contentsline {paragraph}{Accuracy.}{220}{paragraph*.482}%
-\contentsline {paragraph}{Computational cost.}{220}{paragraph*.483}%
-\contentsline {paragraph}{Suitability.}{220}{paragraph*.484}%
-\contentsline {subsection}{\numberline {AF.9}Approach 9: Hover-and-Lock (Visual Centering)}{220}{subsection.Alph32.9}%
-\contentsline {paragraph}{Description.}{220}{paragraph*.485}%
-\contentsline {paragraph}{Mathematical basis.}{220}{paragraph*.486}%
-\contentsline {paragraph}{Pros.}{220}{paragraph*.487}%
-\contentsline {paragraph}{Cons.}{220}{paragraph*.488}%
-\contentsline {paragraph}{Accuracy.}{220}{paragraph*.489}%
-\contentsline {paragraph}{Computational cost.}{220}{paragraph*.490}%
-\contentsline {paragraph}{Suitability.}{221}{paragraph*.491}%
-\contentsline {subsection}{\numberline {AF.10}Approach 10: Bayesian Position Estimation}{221}{subsection.Alph32.10}%
-\contentsline {paragraph}{Description.}{221}{paragraph*.492}%
-\contentsline {paragraph}{Mathematical basis.}{221}{paragraph*.493}%
-\contentsline {paragraph}{Pros.}{221}{paragraph*.494}%
-\contentsline {paragraph}{Cons.}{221}{paragraph*.495}%
-\contentsline {paragraph}{Accuracy.}{221}{paragraph*.496}%
-\contentsline {paragraph}{Computational cost.}{221}{paragraph*.497}%
-\contentsline {paragraph}{Suitability.}{221}{paragraph*.498}%
-\contentsline {subsection}{\numberline {AF.11}Comparison Summary}{221}{subsection.Alph32.11}%
-\contentsline {subsection}{\numberline {AF.12}Justification of Our Approach}{222}{subsection.Alph32.12}%
-\contentsline {paragraph}{1. Computational budget.}{222}{paragraph*.500}%
-\contentsline {paragraph}{2. Frame rate reality.}{222}{paragraph*.501}%
-\contentsline {paragraph}{3. Sensor limitations.}{222}{paragraph*.502}%
-\contentsline {paragraph}{4. Multi-target capability.}{222}{paragraph*.503}%
-\contentsline {paragraph}{5. Transparency and debuggability.}{222}{paragraph*.504}%
-\contentsline {paragraph}{Progressive refinement architecture.}{222}{paragraph*.505}%
-\contentsline {subsection}{\numberline {AF.13}Frame Rate Sufficiency Analysis}{223}{subsection.Alph32.13}%
-\contentsline {paragraph}{Observation geometry.}{223}{paragraph*.506}%
-\contentsline {paragraph}{Detection probability per pass.}{223}{paragraph*.507}%
-\contentsline {paragraph}{Position estimation quality.}{223}{paragraph*.508}%
-\contentsline {paragraph}{Comparison with higher frame rates.}{223}{paragraph*.509}%
-\contentsline {paragraph}{Sufficient for SMART detection.}{223}{paragraph*.510}%
-\contentsline {paragraph}{Conclusion.}{223}{paragraph*.511}%
-\contentsline {section}{\numberline {AG}Evaluating GPS Estimation Against Ground Truth}{224}{appendix.Alph33}%
-\contentsline {subsection}{\numberline {AG.1}Evaluation Methodology}{224}{subsection.Alph33.1}%
-\contentsline {subsubsection}{\numberline {AG.1.1}The Ground-Truth Problem}{224}{subsubsection.Alph33.1.1}%
-\contentsline {subsubsection}{\numberline {AG.1.2}SMART Detection as Convergence Criterion}{224}{subsubsection.Alph33.1.2}%
-\contentsline {subsubsection}{\numberline {AG.1.3}Evaluation Metrics}{224}{subsubsection.Alph33.1.3}%
-\contentsline {subsection}{\numberline {AG.2}Bullseye Visualization}{224}{subsection.Alph33.2}%
-\contentsline {paragraph}{Heading bias.}{225}{paragraph*.512}%
-\contentsline {paragraph}{Altitude dependence.}{225}{paragraph*.513}%
-\contentsline {paragraph}{Systematic bias.}{225}{paragraph*.514}%
-\contentsline {subsection}{\numberline {AG.3}When Is Enough Data Enough?}{227}{subsection.Alph33.3}%
-\contentsline {subsubsection}{\numberline {AG.3.1}Frame Budget Analysis}{227}{subsubsection.Alph33.3.1}%
-\contentsline {subsubsection}{\numberline {AG.3.2}Clustering Threshold Comparison}{227}{subsubsection.Alph33.3.2}%
-\contentsline {paragraph}{Single frame.}{228}{paragraph*.521}%
-\contentsline {paragraph}{Quick cluster (3 samples, 5\,m spread).}{228}{paragraph*.522}%
-\contentsline {paragraph}{SMART default (5 samples, 2\,m spread).}{228}{paragraph*.523}%
-\contentsline {paragraph}{Conservative (10 samples, 1\,m spread).}{228}{paragraph*.524}%
-\contentsline {paragraph}{Multi-pass (5+5 from different headings, 1\,m spread).}{228}{paragraph*.525}%
-\contentsline {subsection}{\numberline {AG.4}Error Sources and Their Relative Contribution}{229}{subsection.Alph33.4}%
-\contentsline {paragraph}{Interpretation.}{230}{paragraph*.529}%
-\contentsline {subsection}{\numberline {AG.5}Comparison with Ground Truth}{230}{subsection.Alph33.5}%
-\contentsline {subsubsection}{\numberline {AG.5.1}DJI Video Replay Results}{230}{subsubsection.Alph33.5.1}%
-\contentsline {subsubsection}{\numberline {AG.5.2}Convergence Behaviour}{231}{subsubsection.Alph33.5.2}%
-\contentsline {subsection}{\numberline {AG.6}Directional Error Analysis}{232}{subsection.Alph33.6}%
-\contentsline {subsection}{\numberline {AG.7}Operational Recommendations}{233}{subsection.Alph33.7}%
-\contentsline {paragraph}{Key insight.}{233}{paragraph*.539}%
-\contentsline {paragraph}{Comparison with published systems.}{233}{paragraph*.540}%
-\contentsline {section}{\numberline {AH}Requirements Verification Detail}{233}{appendix.Alph34}%
-\contentsline {subsection}{\numberline {AH.1}R01 --- Fly Within the Flight Area}{234}{subsection.Alph34.1}%
-\contentsline {subsection}{\numberline {AH.2}R02 --- No SSSI Overfly}{234}{subsection.Alph34.2}%
-\contentsline {subsection}{\numberline {AH.3}R03 --- Take Off Within 5\,m of TOL}{234}{subsection.Alph34.3}%
-\contentsline {subsection}{\numberline {AH.4}R04 --- Maximum 50\,m Altitude}{235}{subsection.Alph34.4}%
-\contentsline {subsection}{\numberline {AH.5}R05 --- Search Area and Identify Items of Interest}{235}{subsection.Alph34.5}%
-\contentsline {paragraph}{Coverage guarantee.}{235}{paragraph*.541}%
-\contentsline {paragraph}{Detection capability.}{235}{paragraph*.542}%
-\contentsline {paragraph}{Per-flyover detection probability.}{235}{paragraph*.543}%
-\contentsline {paragraph}{Verification evidence.}{235}{paragraph*.544}%
-\contentsline {subsection}{\numberline {AH.6}R06 --- PLB Focus Area}{236}{subsection.Alph34.6}%
-\contentsline {subsection}{\numberline {AH.7}R07 --- Land 5--10\,m from Casualty}{236}{subsection.Alph34.7}%
-\contentsline {paragraph}{Probability analysis.}{236}{paragraph*.545}%
-\contentsline {paragraph}{Unit and integration tests.}{236}{paragraph*.546}%
-\contentsline {paragraph}{Runtime distance verification.}{237}{paragraph*.547}%
-\contentsline {paragraph}{Payload deployment.}{237}{paragraph*.548}%
-\contentsline {subsection}{\numberline {AH.8}R08 --- Autonomy Level Justified}{237}{subsection.Alph34.8}%
-\contentsline {subsection}{\numberline {AH.9}R09 --- RTH and Motor Cutoff}{237}{subsection.Alph34.9}%
-\contentsline {subsection}{\numberline {AH.10}R10 --- Report Lat/Lon and Images}{237}{subsection.Alph34.10}%
-\contentsline {paragraph}{GPS estimation pipeline.}{238}{paragraph*.549}%
-\contentsline {paragraph}{Detection snapshots and metadata.}{238}{paragraph*.550}%
-\contentsline {paragraph}{Flight log.}{238}{paragraph*.551}%
-\contentsline {subsection}{\numberline {AH.11}R11 --- Company Pilot Designated}{238}{subsection.Alph34.11}%
-\contentsline {subsection}{\numberline {AH.12}R12 --- Public GitHub Repository with MIT Licence}{238}{subsection.Alph34.12}%
-\contentsline {section}{\numberline {AI}Evaluation Detail}{238}{appendix.Alph35}%
-\contentsline {subsection}{\numberline {AI.1}Defect Discovery Register}{238}{subsection.Alph35.1}%
-\contentsline {subsection}{\numberline {AI.2}What Would Change in a Second Iteration}{239}{subsection.Alph35.2}%
-\contentsline {subsection}{\numberline {AI.3}Lessons Learned}{240}{subsection.Alph35.3}%
-\contentsline {section}{\numberline {AJ}Development Methodology}{240}{appendix.Alph36}%
-\contentsline {subsection}{\numberline {AJ.1}Development Philosophy}{240}{subsection.Alph36.1}%
-\contentsline {subsection}{\numberline {AJ.2}Ten-Phase Development Timeline}{241}{subsection.Alph36.2}%
-\contentsline {subsection}{\numberline {AJ.3}Simulation Stage (Weeks 12--15)}{241}{subsection.Alph36.3}%
-\contentsline {subsection}{\numberline {AJ.4}Pi Deployment (Weeks 16--18)}{242}{subsection.Alph36.4}%
-\contentsline {subsection}{\numberline {AJ.5}Field Integration (Weeks 19--20)}{242}{subsection.Alph36.5}%
-\contentsline {subsection}{\numberline {AJ.6}Ambition Levels}{242}{subsection.Alph36.6}%
-\contentsline {subsection}{\numberline {AJ.7}Progressive Testing Ladder}{242}{subsection.Alph36.7}%
-\contentsline {subsection}{\numberline {AJ.8}Achievement Summary}{243}{subsection.Alph36.8}%
-\contentsline {subsection}{\numberline {AJ.9}Lessons for Future Teams}{243}{subsection.Alph36.9}%
+\contentsline {section}{Executive Summary}{12}{Doc-Start}%
+\contentsline {paragraph}{Mission.}{12}{paragraph*.1}%
+\contentsline {paragraph}{Architecture.}{12}{paragraph*.2}%
+\contentsline {paragraph}{Key results.}{12}{paragraph*.3}%
+\contentsline {paragraph}{Field integration.}{12}{paragraph*.4}%
+\contentsline {paragraph}{Status.}{12}{paragraph*.5}%
+\contentsline {section}{Introduction}{13}{paragraph*.5}%
+\contentsline {section}{\numberline {1}Design Rationale}{16}{section.1}%
+\contentsline {subsection}{\numberline {1.1}STEEPLE Analysis}{16}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}Search Parameter Optimisation}{16}{subsection.1.2}%
+\contentsline {subsection}{\numberline {1.3}Parameter Derivation Chain}{18}{subsection.1.3}%
+\contentsline {subsection}{\numberline {1.4}Hardware Platform Selection}{18}{subsection.1.4}%
+\contentsline {subsubsection}{\numberline {1.4.1}Companion Computer Trade Study}{19}{subsubsection.1.4.1}%
+\contentsline {subsubsection}{\numberline {1.4.2}Communication Architecture Trade Study}{20}{subsubsection.1.4.2}%
+\contentsline {subsection}{\numberline {1.5}Software Architecture Rationale}{21}{subsection.1.5}%
+\contentsline {subsection}{\numberline {1.6}Detection Model Selection}{21}{subsection.1.6}%
+\contentsline {paragraph}{Why TFLite over other inference runtimes?}{21}{paragraph*.15}%
+\contentsline {subsection}{\numberline {1.7}Coverage Path Planning}{22}{subsection.1.7}%
+\contentsline {subsection}{\numberline {1.8}State Machine Design}{22}{subsection.1.8}%
+\contentsline {paragraph}{Why not behaviour trees?}{22}{paragraph*.17}%
+\contentsline {paragraph}{Why not reactive/subsumption architectures?}{22}{paragraph*.18}%
+\contentsline {subsection}{\numberline {1.9}Autonomy Level Justification}{22}{subsection.1.9}%
+\contentsline {subsection}{\numberline {1.10}Decisions That Changed: Evidence-Based Corrections}{23}{subsection.1.10}%
+\contentsline {paragraph}{1. Focal length: \SI {7.0}{\milli \metre } $\rightarrow $ \SI {5.46}{\milli \metre }.}{23}{paragraph*.19}%
+\contentsline {paragraph}{2. Camera colour space: RGB assumed $\rightarrow $ BGR confirmed.}{23}{paragraph*.20}%
+\contentsline {paragraph}{3. Camera resolution: $640 \times 480$ $\rightarrow $ $1456 \times 1088$.}{23}{paragraph*.21}%
+\contentsline {paragraph}{4. TFLite bounding box interpretation: normalised $\rightarrow $ pixel coordinates.}{23}{paragraph*.22}%
+\contentsline {paragraph}{5. Geofence repulsive force: sign inversion corrected.}{23}{paragraph*.23}%
+\contentsline {paragraph}{6. TFLite runtime: \texttt {tflite-runtime} $\rightarrow $ \texttt {ai-edge-litert}.}{24}{paragraph*.24}%
+\contentsline {paragraph}{7. Serial communication: pyserial $\rightarrow $ MAVProxy UDP bridge.}{24}{paragraph*.25}%
+\contentsline {subsection}{\numberline {1.11}Why Not ROS}{24}{subsection.1.11}%
+\contentsline {subsection}{\numberline {1.12}Camera Selection: Global vs Rolling Shutter}{24}{subsection.1.12}%
+\contentsline {subsection}{\numberline {1.13}Field Day Adaptation Under Uncertainty}{24}{subsection.1.13}%
+\contentsline {paragraph}{Decision flow narrative.}{24}{paragraph*.26}%
+\contentsline {section}{\numberline {2}System Description}{25}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Hardware Platform}{25}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}Software Architecture}{26}{subsection.2.2}%
+\contentsline {paragraph}{Geofence enforcement.}{27}{paragraph*.32}%
+\contentsline {subsection}{\numberline {2.3}Computer Vision Pipeline}{28}{subsection.2.3}%
+\contentsline {paragraph}{Preprocessing.}{28}{paragraph*.34}%
+\contentsline {paragraph}{Inference.}{28}{paragraph*.35}%
+\contentsline {paragraph}{Three backends.}{29}{paragraph*.36}%
+\contentsline {paragraph}{Smart detection mode.}{29}{paragraph*.38}%
+\contentsline {paragraph}{Performance.}{29}{paragraph*.39}%
+\contentsline {subsection}{\numberline {2.4}Search Pattern Generation}{29}{subsection.2.4}%
+\contentsline {paragraph}{Coverage guarantee.}{29}{paragraph*.40}%
+\contentsline {subsection}{\numberline {2.5}Mission State Machine}{31}{subsection.2.5}%
+\contentsline {paragraph}{Safety mechanisms.}{33}{paragraph*.45}%
+\contentsline {subsection}{\numberline {2.6}Target Localisation}{33}{subsection.2.6}%
+\contentsline {subsection}{\numberline {2.7}Ground Station}{34}{subsection.2.7}%
+\contentsline {subsection}{\numberline {2.8}Simulation Framework}{34}{subsection.2.8}%
+\contentsline {section}{\numberline {3}Requirements Verification}{34}{section.3}%
+\contentsline {section}{\numberline {4}Evaluation}{35}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Plus/Delta Summary}{35}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Discussion of Key Findings}{36}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}Comparison with Published SAR Systems}{40}{subsection.4.3}%
+\contentsline {subsection}{\numberline {4.4}Evaluation of Design Choices}{42}{subsection.4.4}%
+\contentsline {subsection}{\numberline {4.5}Mission-Level Performance Estimates}{42}{subsection.4.5}%
+\contentsline {subsection}{\numberline {4.6}Prioritised Future Work}{42}{subsection.4.6}%
+\contentsline {subsection}{\numberline {4.7}Testing Framework Summary}{43}{subsection.4.7}%
+\contentsline {paragraph}{Closing Assessment.}{43}{paragraph*.58}%
+\contentsline {section}{References}{45}{paragraph*.58}%
+\contentsline {section}{Appendix Guide}{47}{paragraph*.58}%
+\contentsline {section}{\numberline {A}State Transition Table}{48}{appendix.A}%
+\contentsline {section}{\numberline {B}Configuration Parameters}{50}{appendix.B}%
+\contentsline {section}{\numberline {C}Model Training and Dataset}{51}{appendix.C}%
+\contentsline {subsection}{\numberline {C.1}Training Data Strategy}{51}{subsection.C.1}%
+\contentsline {subsection}{\numberline {C.2}Domain Randomisation}{52}{subsection.C.2}%
+\contentsline {subsection}{\numberline {C.3}Augmentation Pipeline}{52}{subsection.C.3}%
+\contentsline {subsection}{\numberline {C.4}Synthetic Data Generation Pipeline}{53}{subsection.C.4}%
+\contentsline {subsection}{\numberline {C.5}Real Data Labelling}{53}{subsection.C.5}%
+\contentsline {subsection}{\numberline {C.6}Negative Mining}{53}{subsection.C.6}%
+\contentsline {subsection}{\numberline {C.7}Data Composition Analysis}{53}{subsection.C.7}%
+\contentsline {subsection}{\numberline {C.8}Training Pipeline and Convergence}{54}{subsection.C.8}%
+\contentsline {subsection}{\numberline {C.9}Results}{54}{subsection.C.9}%
+\contentsline {subsection}{\numberline {C.10}Model Export Pipeline}{55}{subsection.C.10}%
+\contentsline {subsection}{\numberline {C.11}Deployment}{55}{subsection.C.11}%
+\contentsline {subsection}{\numberline {C.12}Limitations}{56}{subsection.C.12}%
+\contentsline {section}{\numberline {D}Safety and Risk Management}{57}{appendix.D}%
+\contentsline {subsection}{\numberline {D.1}Risk Assessment Matrix}{57}{subsection.D.1}%
+\contentsline {subsection}{\numberline {D.2}Geofence Implementation}{57}{subsection.D.2}%
+\contentsline {subsection}{\numberline {D.3}Failure Mode Analysis}{59}{subsection.D.3}%
+\contentsline {subsection}{\numberline {D.4}Operator-in-the-Loop}{59}{subsection.D.4}%
+\contentsline {subsection}{\numberline {D.5}Emergency Procedures}{60}{subsection.D.5}%
+\contentsline {subsection}{\numberline {D.6}Pre-Flight and In-Flight Procedures}{61}{subsection.D.6}%
+\contentsline {subsection}{\numberline {D.7}Lessons Learned from Testing}{61}{subsection.D.7}%
+\contentsline {subsection}{\numberline {D.8}Regulatory Compliance}{62}{subsection.D.8}%
+\contentsline {paragraph}{SSSI protection.}{62}{paragraph*.73}%
+\contentsline {paragraph}{Data protection.}{62}{paragraph*.74}%
+\contentsline {paragraph}{Future BVLOS pathway.}{62}{paragraph*.75}%
+\contentsline {section}{\numberline {E}Testing Methodology}{62}{appendix.E}%
+\contentsline {subsection}{\numberline {E.1}V-Model Verification Approach}{63}{subsection.E.1}%
+\contentsline {subsection}{\numberline {E.2}Five-Tier Progressive Testing}{63}{subsection.E.2}%
+\contentsline {subsection}{\numberline {E.3}Test Script Organisation}{64}{subsection.E.3}%
+\contentsline {subsection}{\numberline {E.4}Unit and Integration Test Results}{64}{subsection.E.4}%
+\contentsline {subsection}{\numberline {E.5}Dry-Run Validation}{65}{subsection.E.5}%
+\contentsline {subsection}{\numberline {E.6}DJI Video Analysis}{65}{subsection.E.6}%
+\contentsline {subsection}{\numberline {E.7}Simulation Fidelity and the Sim-to-Real Gap}{65}{subsection.E.7}%
+\contentsline {subsection}{\numberline {E.8}Stress Testing and Failure Scenarios}{65}{subsection.E.8}%
+\contentsline {subsection}{\numberline {E.9}What Testing Revealed: Parameters Tuned and Bugs Fixed}{66}{subsection.E.9}%
+\contentsline {subsection}{\numberline {E.10}Building Confidence Through Progressive Evidence}{67}{subsection.E.10}%
+\contentsline {paragraph}{Evidence from Tier~1 (simulation).}{67}{paragraph*.82}%
+\contentsline {paragraph}{Evidence from Tier~2 (Docker).}{67}{paragraph*.83}%
+\contentsline {paragraph}{Evidence from Tier~3 (bench).}{67}{paragraph*.84}%
+\contentsline {paragraph}{Evidence from Tier~4 (passive flight).}{67}{paragraph*.85}%
+\contentsline {paragraph}{Evidence from DJI video replay.}{68}{paragraph*.86}%
+\contentsline {paragraph}{Cumulative confidence.}{68}{paragraph*.87}%
+\contentsline {subsection}{\numberline {E.11}Team Roles in the Testing Process}{68}{subsection.E.11}%
+\contentsline {paragraph}{Software development and simulation (Tiers~1--2).}{68}{paragraph*.88}%
+\contentsline {paragraph}{Hardware integration and bench testing (Tier~3).}{68}{paragraph*.89}%
+\contentsline {paragraph}{Flight operations (Tiers~4--5).}{68}{paragraph*.90}%
+\contentsline {paragraph}{Data analysis.}{68}{paragraph*.91}%
+\contentsline {subsection}{\numberline {E.12}Comparison with Industry Testing Standards}{68}{subsection.E.12}%
+\contentsline {subsection}{\numberline {E.13}Expected Outcomes from Real Flight Testing}{69}{subsection.E.13}%
+\contentsline {paragraph}{Detection performance.}{69}{paragraph*.92}%
+\contentsline {paragraph}{GPS estimation accuracy.}{69}{paragraph*.93}%
+\contentsline {paragraph}{Mission duration.}{69}{paragraph*.94}%
+\contentsline {paragraph}{Inference under thermal load.}{69}{paragraph*.95}%
+\contentsline {subsection}{\numberline {E.14}Preflight Checklist}{69}{subsection.E.14}%
+\contentsline {section}{\numberline {F}Field Testing and Results}{70}{appendix.F}%
+\contentsline {subsection}{\numberline {F.1}Bench Testing Results}{70}{subsection.F.1}%
+\contentsline {subsection}{\numberline {F.2}FOV Calibration}{70}{subsection.F.2}%
+\contentsline {subsection}{\numberline {F.3}Lens Distortion Calibration}{70}{subsection.F.3}%
+\contentsline {subsection}{\numberline {F.4}Inference Benchmarks}{70}{subsection.F.4}%
+\contentsline {subsection}{\numberline {F.5}Post-Hoc Video Analysis}{71}{subsection.F.5}%
+\contentsline {subsubsection}{\numberline {F.5.1}Detection Performance}{71}{subsubsection.F.5.1}%
+\contentsline {subsubsection}{\numberline {F.5.2}GPS Estimation Accuracy}{71}{subsubsection.F.5.2}%
+\contentsline {subsection}{\numberline {F.6}Dry-Run Validation}{71}{subsection.F.6}%
+\contentsline {subsection}{\numberline {F.7}Discussion}{72}{subsection.F.7}%
+\contentsline {paragraph}{Detection pipeline confidence.}{72}{paragraph*.97}%
+\contentsline {paragraph}{GPS estimation accuracy.}{72}{paragraph*.98}%
+\contentsline {paragraph}{Inference throughput.}{72}{paragraph*.99}%
+\contentsline {paragraph}{Remaining unknowns.}{72}{paragraph*.100}%
+\contentsline {section}{\numberline {G}Future Work}{72}{appendix.G}%
+\contentsline {subsection}{\numberline {G.1}Inference Acceleration}{72}{subsection.G.1}%
+\contentsline {subsection}{\numberline {G.2}Detection Improvements}{73}{subsection.G.2}%
+\contentsline {subsection}{\numberline {G.3}Multi-Target Support}{73}{subsection.G.3}%
+\contentsline {subsection}{\numberline {G.4}Thermal Imaging}{73}{subsection.G.4}%
+\contentsline {subsection}{\numberline {G.5}Communication}{74}{subsection.G.5}%
+\contentsline {subsection}{\numberline {G.6}Swarm Operations}{74}{subsection.G.6}%
+\contentsline {section}{\numberline {H}Edge Inference Architecture}{74}{appendix.H}%
+\contentsline {subsection}{\numberline {H.1}Compute Platform Constraints}{74}{subsection.H.1}%
+\contentsline {subsection}{\numberline {H.2}Backend Selection}{74}{subsection.H.2}%
+\contentsline {paragraph}{TFLite with XNNPACK delegate.}{74}{paragraph*.102}%
+\contentsline {paragraph}{NCNN.}{75}{paragraph*.103}%
+\contentsline {paragraph}{Ultralytics/PyTorch.}{75}{paragraph*.104}%
+\contentsline {subsection}{\numberline {H.3}Quantisation Trade-offs}{75}{subsection.H.3}%
+\contentsline {subsection}{\numberline {H.4}Pipeline Architecture}{76}{subsection.H.4}%
+\contentsline {subsection}{\numberline {H.5}Video Streaming Architecture}{76}{subsection.H.5}%
+\contentsline {paragraph}{MJPEG over HTTP (selected).}{76}{paragraph*.105}%
+\contentsline {paragraph}{Alternatives considered.}{76}{paragraph*.106}%
+\contentsline {subsection}{\numberline {H.6}Benchmark Methodology}{76}{subsection.H.6}%
+\contentsline {subsection}{\numberline {H.7}Results and Projected Improvements}{77}{subsection.H.7}%
+\contentsline {section}{\numberline {I}Computer Vision: Extended Analysis}{77}{appendix.I}%
+\contentsline {subsection}{\numberline {I.1}Detection Pipeline: Step-by-Step Timing}{77}{subsection.I.1}%
+\contentsline {subsubsection}{\numberline {I.1.1}Stage 1: Camera Capture}{78}{subsubsection.I.1.1}%
+\contentsline {subsubsection}{\numberline {I.1.2}Stage 2: Lens Undistortion}{78}{subsubsection.I.1.2}%
+\contentsline {subsubsection}{\numberline {I.1.3}Stage 3: Preprocessing}{78}{subsubsection.I.1.3}%
+\contentsline {subsubsection}{\numberline {I.1.4}Stage 4: TFLite Inference}{78}{subsubsection.I.1.4}%
+\contentsline {subsubsection}{\numberline {I.1.5}Stage 5: Postprocessing}{79}{subsubsection.I.1.5}%
+\contentsline {subsubsection}{\numberline {I.1.6}Stage 6: Visualisation}{79}{subsubsection.I.1.6}%
+\contentsline {subsection}{\numberline {I.2}Comprehensive Benchmark Results}{79}{subsection.I.2}%
+\contentsline {paragraph}{Inference time is model-size-independent.}{79}{paragraph*.112}%
+\contentsline {paragraph}{Undistortion overhead is negligible.}{80}{paragraph*.113}%
+\contentsline {paragraph}{Custom model vastly outperforms generic COCO.}{80}{paragraph*.114}%
+\contentsline {paragraph}{Timing stability.}{80}{paragraph*.115}%
+\contentsline {subsection}{\numberline {I.3}Mission Runtime Analysis}{80}{subsection.I.3}%
+\contentsline {subsubsection}{\numberline {I.3.1}Ground Footprint Geometry}{80}{subsubsection.I.3.1}%
+\contentsline {subsubsection}{\numberline {I.3.2}Frames per Flyover}{80}{subsubsection.I.3.2}%
+\contentsline {paragraph}{Key finding.}{81}{paragraph*.118}%
+\contentsline {subsubsection}{\numberline {I.3.3}Frame Overlap Analysis}{81}{subsubsection.I.3.3}%
+\contentsline {subsection}{\numberline {I.4}Detection Performance vs Altitude}{81}{subsection.I.4}%
+\contentsline {subsubsection}{\numberline {I.4.1}Pixel Size Model}{82}{subsubsection.I.4.1}%
+\contentsline {subsubsection}{\numberline {I.4.2}Altitude Performance Table}{82}{subsubsection.I.4.2}%
+\contentsline {paragraph}{Operational envelope.}{82}{paragraph*.122}%
+\contentsline {paragraph}{Confidence versus pixel size relationship.}{83}{paragraph*.123}%
+\contentsline {paragraph}{Combined detection envelope.}{83}{paragraph*.125}%
+\contentsline {subsection}{\numberline {I.5}Model Training Results}{83}{subsection.I.5}%
+\contentsline {paragraph}{Confusion matrix analysis.}{84}{paragraph*.128}%
+\contentsline {paragraph}{Blur-robustness through data augmentation.}{84}{paragraph*.129}%
+\contentsline {paragraph}{Comparison with v1.}{84}{paragraph*.130}%
+\contentsline {paragraph}{Export and deployment.}{84}{paragraph*.131}%
+\contentsline {subsection}{\numberline {I.6}Dual Backend Architecture}{84}{subsection.I.6}%
+\contentsline {subsubsection}{\numberline {I.6.1}Backend Selection Logic}{85}{subsubsection.I.6.1}%
+\contentsline {subsubsection}{\numberline {I.6.2}Backend Abstraction Benefits}{85}{subsubsection.I.6.2}%
+\contentsline {subsection}{\numberline {I.7}Model Swapping and Field Deployment}{85}{subsection.I.7}%
+\contentsline {paragraph}{File-copy swap.}{85}{paragraph*.132}%
+\contentsline {paragraph}{CLI flag swap.}{85}{paragraph*.134}%
+\contentsline {paragraph}{Zero-code-change guarantee.}{85}{paragraph*.135}%
+\contentsline {subsection}{\numberline {I.8}Detection Speed vs Drone Speed}{86}{subsection.I.8}%
+\contentsline {paragraph}{Frames per flyover.}{86}{paragraph*.136}%
+\contentsline {paragraph}{Motion blur.}{86}{paragraph*.137}%
+\contentsline {paragraph}{Altitude-dependent speed scheduling.}{86}{paragraph*.140}%
+\contentsline {subsection}{\numberline {I.9}Inference Latency Breakdown}{86}{subsection.I.9}%
+\contentsline {section}{\numberline {J}Video Streaming and Ground Station Architecture}{86}{appendix.J}%
+\contentsline {subsection}{\numberline {J.1}Streaming Protocol Selection}{87}{subsection.J.1}%
+\contentsline {subsection}{\numberline {J.2}Threading Model and Frame Buffering}{88}{subsection.J.2}%
+\contentsline {subsection}{\numberline {J.3}Headless Operation}{89}{subsection.J.3}%
+\contentsline {subsection}{\numberline {J.4}Port Allocation and Service Separation}{89}{subsection.J.4}%
+\contentsline {subsection}{\numberline {J.5}Bandwidth Estimation}{89}{subsection.J.5}%
+\contentsline {subsection}{\numberline {J.6}Ground Station Alternatives Considered}{90}{subsection.J.6}%
+\contentsline {section}{\numberline {K}GPS Target Estimation: A Deep Dive}{90}{appendix.K}%
+\contentsline {paragraph}{Appendix roadmap.}{90}{paragraph*.143}%
+\contentsline {subsection}{\numberline {K.1}Strategy Roadmap}{91}{subsection.K.1}%
+\contentsline {subsection}{\numberline {K.2}Problem Statement}{91}{subsection.K.2}%
+\contentsline {subsection}{\numberline {K.3}Detection-to-GPS Pipeline Overview}{91}{subsection.K.3}%
+\contentsline {subsection}{\numberline {K.4}Pixel-to-GPS Mathematics}{92}{subsection.K.4}%
+\contentsline {subsubsection}{\numberline {K.4.1}Ground Sampling Distance}{93}{subsubsection.K.4.1}%
+\contentsline {subsubsection}{\numberline {K.4.2}Body-Frame Projection}{93}{subsubsection.K.4.2}%
+\contentsline {subsubsection}{\numberline {K.4.3}Heading Rotation}{93}{subsubsection.K.4.3}%
+\contentsline {subsubsection}{\numberline {K.4.4}WGS\,84 Conversion}{93}{subsubsection.K.4.4}%
+\contentsline {paragraph}{Centre-snap optimisation.}{93}{paragraph*.147}%
+\contentsline {paragraph}{Lens undistortion.}{93}{paragraph*.148}%
+\contentsline {subsection}{\numberline {K.5}Image Resize Pipeline and Coordinate Mapping}{94}{subsection.K.5}%
+\contentsline {paragraph}{Coordinate origin.}{94}{paragraph*.149}%
+\contentsline {subsection}{\numberline {K.6}Error Budget}{94}{subsection.K.6}%
+\contentsline {paragraph}{GPS receiver noise}{95}{paragraph*.152}%
+\contentsline {paragraph}{GPS timing lag}{95}{paragraph*.153}%
+\contentsline {paragraph}{Barometric altitude error}{95}{paragraph*.154}%
+\contentsline {paragraph}{Heading uncertainty}{95}{paragraph*.155}%
+\contentsline {paragraph}{FOV calibration error}{95}{paragraph*.156}%
+\contentsline {paragraph}{Lens distortion}{95}{paragraph*.157}%
+\contentsline {paragraph}{Camera vibration (shakiness).}{95}{paragraph*.158}%
+\contentsline {paragraph}{Image resize mapping}{96}{paragraph*.159}%
+\contentsline {subsection}{\numberline {K.7}Roll/Pitch Attitude Error}{96}{subsection.K.7}%
+\contentsline {subsubsection}{\numberline {K.7.1}Magnitude of the Error}{96}{subsubsection.K.7.1}%
+\contentsline {subsubsection}{\numberline {K.7.2}Why the System Tolerates This Error}{97}{subsubsection.K.7.2}%
+\contentsline {subsubsection}{\numberline {K.7.3}Attitude-Compensated Estimation (Implemented)}{97}{subsubsection.K.7.3}%
+\contentsline {paragraph}{Principle.}{97}{paragraph*.162}%
+\contentsline {paragraph}{Step~1: Focal length and ray construction.}{97}{paragraph*.163}%
+\contentsline {paragraph}{Step~2: Full rotation matrix from telemetry.}{97}{paragraph*.164}%
+\contentsline {paragraph}{Step~3: Ground-plane intersection.}{98}{paragraph*.165}%
+\contentsline {paragraph}{Step~4: GPS conversion.}{98}{paragraph*.166}%
+\contentsline {paragraph}{Why this is an exact inverse of the camera simulation.}{98}{paragraph*.167}%
+\contentsline {paragraph}{Verification: 1440-test sweep.}{98}{paragraph*.169}%
+\contentsline {paragraph}{Activation threshold.}{99}{paragraph*.170}%
+\contentsline {paragraph}{Error from telemetry noise.}{99}{paragraph*.171}%
+\contentsline {paragraph}{Operating modes.}{99}{paragraph*.174}%
+\contentsline {subsubsection}{\numberline {K.7.4}Comparison with Published Approaches}{100}{subsubsection.K.7.4}%
+\contentsline {paragraph}{Deliberate simplifications and their justification.}{100}{paragraph*.176}%
+\contentsline {paragraph}{Impact on the three-level architecture.}{100}{paragraph*.177}%
+\contentsline {paragraph}{Implementation.}{100}{paragraph*.178}%
+\contentsline {subsection}{\numberline {K.8}Centering as Multi-Error Mitigation}{101}{subsection.K.8}%
+\contentsline {subsection}{\numberline {K.9}Three-Level Estimation Architecture}{101}{subsection.K.9}%
+\contentsline {subsubsection}{\numberline {K.9.1}Level~1: Fully Passive Estimation (No Drone Response)}{101}{subsubsection.K.9.1}%
+\contentsline {paragraph}{How it works.}{101}{paragraph*.180}%
+\contentsline {paragraph}{Advantages.}{102}{paragraph*.181}%
+\contentsline {paragraph}{Disadvantages.}{102}{paragraph*.182}%
+\contentsline {paragraph}{Accuracy.}{102}{paragraph*.183}%
+\contentsline {paragraph}{Verdict.}{102}{paragraph*.184}%
+\contentsline {subsubsection}{\numberline {K.9.2}Level~2: Stop-and-Look (Hover Without Centering)}{102}{subsubsection.K.9.2}%
+\contentsline {paragraph}{How it works.}{102}{paragraph*.185}%
+\contentsline {paragraph}{Advantages.}{102}{paragraph*.186}%
+\contentsline {paragraph}{Disadvantages.}{102}{paragraph*.187}%
+\contentsline {paragraph}{Accuracy.}{102}{paragraph*.188}%
+\contentsline {paragraph}{Verdict.}{102}{paragraph*.189}%
+\contentsline {subsubsection}{\numberline {K.9.3}Level~3: Visual Centering (Implemented)}{102}{subsubsection.K.9.3}%
+\contentsline {paragraph}{How it works.}{103}{paragraph*.190}%
+\contentsline {paragraph}{The zero-offset proof.}{103}{paragraph*.191}%
+\contentsline {paragraph}{Advantages.}{103}{paragraph*.192}%
+\contentsline {paragraph}{Disadvantages.}{103}{paragraph*.193}%
+\contentsline {paragraph}{Accuracy.}{103}{paragraph*.194}%
+\contentsline {paragraph}{Verdict.}{103}{paragraph*.195}%
+\contentsline {subsubsection}{\numberline {K.9.4}Comparative Evaluation}{103}{subsubsection.K.9.4}%
+\contentsline {paragraph}{Design rationale.}{104}{paragraph*.199}%
+\contentsline {subsection}{\numberline {K.10}Altitude Effect on Estimation Accuracy}{105}{subsection.K.10}%
+\contentsline {subsection}{\numberline {K.11}Accuracy Progression Through Mission Phases}{105}{subsection.K.11}%
+\contentsline {subsection}{\numberline {K.12}GPS Averaging Duration Analysis}{106}{subsection.K.12}%
+\contentsline {subsubsection}{\numberline {K.12.1}GPS Noise Characteristics}{106}{subsubsection.K.12.1}%
+\contentsline {subsubsection}{\numberline {K.12.2}Averaging Improvement Model}{106}{subsubsection.K.12.2}%
+\contentsline {subsubsection}{\numberline {K.12.3}Why 10 Seconds}{107}{subsubsection.K.12.3}%
+\contentsline {subsection}{\numberline {K.13}Fusion Strategies}{107}{subsection.K.13}%
+\contentsline {subsubsection}{\numberline {K.13.1}Rolling Weighted Average (Window = 50)}{107}{subsubsection.K.13.1}%
+\contentsline {subsubsection}{\numberline {K.13.2}Cumulative Weighted Average (All Time)}{108}{subsubsection.K.13.2}%
+\contentsline {subsubsection}{\numberline {K.13.3}Kalman Filter (Static Target)}{108}{subsubsection.K.13.3}%
+\contentsline {subsubsection}{\numberline {K.13.4}Inverse-Variance Weighting}{108}{subsubsection.K.13.4}%
+\contentsline {subsection}{\numberline {K.14}Spatial Clustering}{109}{subsection.K.14}%
+\contentsline {subsection}{\numberline {K.15}Comparison of Methods}{109}{subsection.K.15}%
+\contentsline {subsection}{\numberline {K.16}Empirical Validation}{109}{subsection.K.16}%
+\contentsline {subsubsection}{\numberline {K.16.1}DJI Video Replay (The ``Bullseye Test'')}{109}{subsubsection.K.16.1}%
+\contentsline {paragraph}{Methodology.}{109}{paragraph*.204}%
+\contentsline {paragraph}{Aggregate results.}{110}{paragraph*.205}%
+\contentsline {paragraph}{Extended evaluation.}{110}{paragraph*.207}%
+\contentsline {paragraph}{Directional bias and GPS timing lag.}{110}{paragraph*.208}%
+\contentsline {paragraph}{Detection performance across altitude.}{110}{paragraph*.209}%
+\contentsline {paragraph}{Validation of the theoretical CEP model.}{110}{paragraph*.210}%
+\contentsline {paragraph}{The \SI {16.5}{\metre } outlier.}{111}{paragraph*.211}%
+\contentsline {subsubsection}{\numberline {K.16.2}Simulator Validation}{111}{subsubsection.K.16.2}%
+\contentsline {subsection}{\numberline {K.17}Detailed Per-State Accuracy Analysis}{111}{subsection.K.17}%
+\contentsline {subsection}{\numberline {K.18}Four-Phase Detection-to-Landing Flow}{113}{subsection.K.18}%
+\contentsline {subsubsection}{\numberline {K.18.1}Phase~1: Initial Detection During Search (Tilted Camera)}{113}{subsubsection.K.18.1}%
+\contentsline {subsubsection}{\numberline {K.18.2}Phase~2: Approach and Continuous Refinement}{113}{subsubsection.K.18.2}%
+\contentsline {subsubsection}{\numberline {K.18.3}Phase~3: Hover Lock (Nadir Confirmation)}{114}{subsubsection.K.18.3}%
+\contentsline {subsubsection}{\numberline {K.18.4}Phase~4: Operator Verification and Landing Decision}{114}{subsubsection.K.18.4}%
+\contentsline {subsubsection}{\numberline {K.18.5}Why Four Phases Are Necessary}{114}{subsubsection.K.18.5}%
+\contentsline {subsubsection}{\numberline {K.18.6}The Progressive Refinement Trajectory}{115}{subsubsection.K.18.6}%
+\contentsline {subsubsection}{\numberline {K.18.7}Design Insight}{115}{subsubsection.K.18.7}%
+\contentsline {subsubsection}{\numberline {K.18.8}False Positive Handling}{115}{subsubsection.K.18.8}%
+\contentsline {paragraph}{Cost of a false positive.}{116}{paragraph*.217}%
+\contentsline {paragraph}{False positive mitigation.}{116}{paragraph*.218}%
+\contentsline {subsection}{\numberline {K.19}Cooperative Vision-Flight Architecture}{116}{subsection.K.19}%
+\contentsline {subsubsection}{\numberline {K.19.1}Three Mechanisms of Flight-Aided Improvement}{117}{subsubsection.K.19.1}%
+\contentsline {subsubsection}{\numberline {K.19.2}Static Camera vs.\ Cooperative System}{117}{subsubsection.K.19.2}%
+\contentsline {subsection}{\numberline {K.20}Why Inverse-Variance Weighting Won}{118}{subsection.K.20}%
+\contentsline {subsection}{\numberline {K.21}Empirical Method Comparison Against Ground Truth}{118}{subsection.K.21}%
+\contentsline {subsubsection}{\numberline {K.21.1}Ground Truth Setup}{118}{subsubsection.K.21.1}%
+\contentsline {subsubsection}{\numberline {K.21.2}Methods Tested}{118}{subsubsection.K.21.2}%
+\contentsline {subsubsection}{\numberline {K.21.3}Why Centering + GPS Averaging Won}{119}{subsubsection.K.21.3}%
+\contentsline {subsubsection}{\numberline {K.21.4}CEP$_{50}$ Comparison}{119}{subsubsection.K.21.4}%
+\contentsline {subsubsection}{\numberline {K.21.5}Convergence Behaviour}{119}{subsubsection.K.21.5}%
+\contentsline {subsection}{\numberline {K.22}Offset Landing Application}{120}{subsection.K.22}%
+\contentsline {subsection}{\numberline {K.23}Multi-Pass Observation and Heading Diversity}{120}{subsection.K.23}%
+\contentsline {subsubsection}{\numberline {K.23.1}The Lawnmower Pattern Advantage}{120}{subsubsection.K.23.1}%
+\contentsline {subsubsection}{\numberline {K.23.2}How Many Passes Are Enough?}{121}{subsubsection.K.23.2}%
+\contentsline {subsubsection}{\numberline {K.23.3}Strip Spacing and Target Visibility}{121}{subsubsection.K.23.3}%
+\contentsline {subsubsection}{\numberline {K.23.4}Multi-Pass Averaging vs.\ Centering}{122}{subsubsection.K.23.4}%
+\contentsline {subsection}{\numberline {K.24}Passive Estimation: Level~1 GPS Without Drone Response}{122}{subsection.K.24}%
+\contentsline {subsubsection}{\numberline {K.24.1}Passive Estimation Toolkit}{122}{subsubsection.K.24.1}%
+\contentsline {subsubsection}{\numberline {K.24.2}Why IVW Suits Passive Mode}{123}{subsubsection.K.24.2}%
+\contentsline {subsubsection}{\numberline {K.24.3}Convergence Behaviour in Passive Mode}{123}{subsubsection.K.24.3}%
+\contentsline {subsubsection}{\numberline {K.24.4}Passive vs.\ Active Estimation: When Each Mode Excels}{123}{subsubsection.K.24.4}%
+\contentsline {subsubsection}{\numberline {K.24.5}Implementation in \texttt {passive\_watch.py}}{124}{subsubsection.K.24.5}%
+\contentsline {section}{\numberline {L}Progressive Testing Methodology}{124}{appendix.L}%
+\contentsline {subsection}{\numberline {L.1}Philosophy: Never Skip a Tier}{124}{subsection.L.1}%
+\contentsline {subsection}{\numberline {L.2}The Five Tiers in Detail}{125}{subsection.L.2}%
+\contentsline {subsubsection}{\numberline {L.2.1}Tier 1: SITL Simulation (Zero Hardware Risk)}{125}{subsubsection.L.2.1}%
+\contentsline {paragraph}{Defects caught.}{125}{paragraph*.229}%
+\contentsline {subsubsection}{\numberline {L.2.2}Tier 2: Bench Test (Pi + Cube + Camera, No Props)}{125}{subsubsection.L.2.2}%
+\contentsline {paragraph}{Defects caught.}{125}{paragraph*.230}%
+\contentsline {subsubsection}{\numberline {L.2.3}Tier 3: Passive Flight (Pilot Flies, Pi Watches, Zero Commands)}{126}{subsubsection.L.2.3}%
+\contentsline {subsubsection}{\numberline {L.2.4}Tier 4: Autonomous Search with Log-Only Detection}{126}{subsubsection.L.2.4}%
+\contentsline {subsubsection}{\numberline {L.2.5}Tier 5: Full Autonomous Mission}{126}{subsubsection.L.2.5}%
+\contentsline {subsection}{\numberline {L.3}Test Script Organisation}{126}{subsection.L.3}%
+\contentsline {subsection}{\numberline {L.4}Experiment Scripts for Quantitative Validation}{127}{subsection.L.4}%
+\contentsline {subsection}{\numberline {L.5}Defect Discovery by Tier}{127}{subsection.L.5}%
+\contentsline {subsection}{\numberline {L.6}V-Model Mapping}{128}{subsection.L.6}%
+\contentsline {subsection}{\numberline {L.7}Cost--Risk Gradient}{129}{subsection.L.7}%
+\contentsline {subsection}{\numberline {L.8}Summary}{129}{subsection.L.8}%
+\contentsline {section}{\numberline {M}Field Day: Adaptation Under Uncertainty}{129}{appendix.M}%
+\contentsline {subsection}{\numberline {M.1}Field Day 1: 11~March~2026}{129}{subsection.M.1}%
+\contentsline {subsubsection}{\numberline {M.1.1}Setup: Three Terminals, One Aircraft}{129}{subsubsection.M.1.1}%
+\contentsline {subsubsection}{\numberline {M.1.2}FOV Calibration: Catching a 22\% Error}{130}{subsubsection.M.1.2}%
+\contentsline {subsubsection}{\numberline {M.1.3}Camera Colour Discovery}{130}{subsubsection.M.1.3}%
+\contentsline {subsubsection}{\numberline {M.1.4}Lens Calibration}{130}{subsubsection.M.1.4}%
+\contentsline {subsubsection}{\numberline {M.1.5}Inference Benchmark}{131}{subsubsection.M.1.5}%
+\contentsline {subsubsection}{\numberline {M.1.6}Weather Cancellation}{131}{subsubsection.M.1.6}%
+\contentsline {subsection}{\numberline {M.2}Field Day 2: 31~March~2026}{131}{subsection.M.2}%
+\contentsline {subsubsection}{\numberline {M.2.1}Corrupt Calibration File}{131}{subsubsection.M.2.1}%
+\contentsline {subsubsection}{\numberline {M.2.2}TFLite Bounding Box Coordinate Bug}{131}{subsubsection.M.2.2}%
+\contentsline {subsubsection}{\numberline {M.2.3}GPS Estimation Double-Scaling}{132}{subsubsection.M.2.3}%
+\contentsline {subsubsection}{\numberline {M.2.4}NCNN Backend Benchmark}{132}{subsubsection.M.2.4}%
+\contentsline {subsubsection}{\numberline {M.2.5}Additional Findings}{132}{subsubsection.M.2.5}%
+\contentsline {subsection}{\numberline {M.3}DJI Video Analysis: A Flight-Data Proxy}{132}{subsection.M.3}%
+\contentsline {subsection}{\numberline {M.4}Cumulative Impact: What Changed After Field Testing}{133}{subsection.M.4}%
+\contentsline {subsection}{\numberline {M.5}What Did Not Work}{133}{subsection.M.5}%
+\contentsline {subsection}{\numberline {M.6}Team Coordination Under Field Conditions}{134}{subsection.M.6}%
+\contentsline {paragraph}{Role distribution.}{134}{paragraph*.239}%
+\contentsline {paragraph}{Communication protocol.}{134}{paragraph*.240}%
+\contentsline {paragraph}{Go/no-go discipline.}{134}{paragraph*.241}%
+\contentsline {subsection}{\numberline {M.7}Lessons Carried Forward}{134}{subsection.M.7}%
+\contentsline {section}{\numberline {N}Contingency Planning and Deliverable Tiers}{134}{appendix.N}%
+\contentsline {subsection}{\numberline {N.1}Minimum Viable Deliverable}{135}{subsection.N.1}%
+\contentsline {subsection}{\numberline {N.2}Target Deliverable}{135}{subsection.N.2}%
+\contentsline {subsection}{\numberline {N.3}Stretch Goals}{136}{subsection.N.3}%
+\contentsline {subsection}{\numberline {N.4}How the Tier Structure Evolved}{136}{subsection.N.4}%
+\contentsline {paragraph}{Initial ambition (weeks 1--4).}{136}{paragraph*.244}%
+\contentsline {paragraph}{Realism check after simulation (weeks 5--8).}{136}{paragraph*.245}%
+\contentsline {paragraph}{Hardware integration reality (weeks 9--12).}{136}{paragraph*.246}%
+\contentsline {paragraph}{The resulting structure.}{136}{paragraph*.247}%
+\contentsline {subsection}{\numberline {N.5}Contingency Plans}{137}{subsection.N.5}%
+\contentsline {subsubsection}{\numberline {N.5.1}Hardware Failure Contingencies}{137}{subsubsection.N.5.1}%
+\contentsline {paragraph}{Camera failure.}{137}{paragraph*.250}%
+\contentsline {paragraph}{GPS degradation.}{137}{paragraph*.251}%
+\contentsline {paragraph}{Cube autopilot failure.}{138}{paragraph*.252}%
+\contentsline {paragraph}{Raspberry Pi failure.}{138}{paragraph*.253}%
+\contentsline {subsubsection}{\numberline {N.5.2}Software Failure Contingencies}{138}{subsubsection.N.5.2}%
+\contentsline {paragraph}{Detection model produces no results.}{138}{paragraph*.254}%
+\contentsline {paragraph}{State machine hangs or enters unexpected state.}{138}{paragraph*.255}%
+\contentsline {paragraph}{MAVLink connection lost mid-flight.}{138}{paragraph*.256}%
+\contentsline {paragraph}{RC override guard.}{138}{paragraph*.257}%
+\contentsline {subsubsection}{\numberline {N.5.3}Environmental Contingencies}{138}{subsubsection.N.5.3}%
+\contentsline {paragraph}{Poor lighting or low contrast.}{138}{paragraph*.258}%
+\contentsline {paragraph}{GPS multipath or urban canyon effects.}{139}{paragraph*.259}%
+\contentsline {paragraph}{Wind and turbulence.}{139}{paragraph*.260}%
+\contentsline {paragraph}{Rain.}{139}{paragraph*.261}%
+\contentsline {subsubsection}{\numberline {N.5.4}Graceful Degradation Hierarchy}{139}{subsubsection.N.5.4}%
+\contentsline {subsection}{\numberline {N.6}Test Script Mapping}{139}{subsection.N.6}%
+\contentsline {section}{\numberline {O}Test Script Reference}{140}{appendix.O}%
+\contentsline {subsection}{\numberline {O.1}Organisation by Category}{140}{subsection.O.1}%
+\contentsline {subsection}{\numberline {O.2}Flight Test Progression}{140}{subsection.O.2}%
+\contentsline {subsection}{\numberline {O.3}Hardware Tests}{141}{subsection.O.3}%
+\contentsline {subsection}{\numberline {O.4}Calibration Tests}{142}{subsection.O.4}%
+\contentsline {subsection}{\numberline {O.5}Experiment Scripts}{143}{subsection.O.5}%
+\contentsline {subsection}{\numberline {O.6}Diagnostics}{143}{subsection.O.6}%
+\contentsline {subsection}{\numberline {O.7}Script-to-Requirement Mapping}{143}{subsection.O.7}%
+\contentsline {subsection}{\numberline {O.8}What Was Tested on Real Hardware}{144}{subsection.O.8}%
+\contentsline {subsection}{\numberline {O.9}Remaining Test Gaps}{144}{subsection.O.9}%
+\contentsline {section}{\numberline {P}Sensor Calibration}{145}{appendix.P}%
+\contentsline {subsection}{\numberline {P.1}Field-of-View Calibration}{145}{subsection.P.1}%
+\contentsline {subsection}{\numberline {P.2}Lens Distortion Calibration}{145}{subsection.P.2}%
+\contentsline {subsection}{\numberline {P.3}Camera Colour-Space Discovery}{146}{subsection.P.3}%
+\contentsline {subsection}{\numberline {P.4}DJI Video FOV Calibration}{146}{subsection.P.4}%
+\contentsline {subsection}{\numberline {P.5}Calibration Impact Summary}{147}{subsection.P.5}%
+\contentsline {subsection}{\numberline {P.6}Pre-Flight Calibration Checklist}{147}{subsection.P.6}%
+\contentsline {subsection}{\numberline {P.7}GPS Error Measurement Procedure}{148}{subsection.P.7}%
+\contentsline {paragraph}{Equipment.}{148}{paragraph*.272}%
+\contentsline {paragraph}{Procedure.}{148}{paragraph*.273}%
+\contentsline {paragraph}{Acceptance criteria.}{148}{paragraph*.274}%
+\contentsline {paragraph}{Impact.}{148}{paragraph*.275}%
+\contentsline {subsection}{\numberline {P.8}Altitude Error Measurement Procedure}{148}{subsection.P.8}%
+\contentsline {paragraph}{Procedure.}{148}{paragraph*.276}%
+\contentsline {paragraph}{Quantified impact.}{148}{paragraph*.277}%
+\contentsline {paragraph}{Acceptance criterion.}{148}{paragraph*.279}%
+\contentsline {subsection}{\numberline {P.9}Error Budget Cross-Reference}{149}{subsection.P.9}%
+\contentsline {section}{\numberline {Q}Simulation Validation and Sim-to-Real Gap}{149}{appendix.Q}%
+\contentsline {subsection}{\numberline {Q.1}Three Simulation Levels and What Each Validated}{149}{subsection.Q.1}%
+\contentsline {subsection}{\numberline {Q.2}Error Injection as a Validation Tool}{150}{subsection.Q.2}%
+\contentsline {subsection}{\numberline {Q.3}DJI Video Replay as a Sim-to-Real Proxy}{150}{subsection.Q.3}%
+\contentsline {subsection}{\numberline {Q.4}Validation Results Summary}{151}{subsection.Q.4}%
+\contentsline {subsection}{\numberline {Q.5}Progressive Build-Up: From Pure Software to Real Hardware}{151}{subsection.Q.5}%
+\contentsline {paragraph}{Phase 1: Software-only development (weeks 1--4).}{151}{paragraph*.283}%
+\contentsline {paragraph}{Phase 2: SITL integration (weeks 3--6).}{151}{paragraph*.284}%
+\contentsline {paragraph}{Phase 3: Docker Pi environment (week 7).}{151}{paragraph*.285}%
+\contentsline {paragraph}{Phase 4: Bench hardware integration (weeks 8--10).}{151}{paragraph*.286}%
+\contentsline {paragraph}{Phase 5: DJI video replay (weeks 10--12).}{152}{paragraph*.287}%
+\contentsline {paragraph}{What this progression demonstrates.}{152}{paragraph*.288}%
+\contentsline {subsection}{\numberline {Q.6}Known Sim-to-Real Gaps}{152}{subsection.Q.6}%
+\contentsline {subsection}{\numberline {Q.7}Confidence Assessment}{152}{subsection.Q.7}%
+\contentsline {subsection}{\numberline {Q.8}Lessons from the Sim-to-Real Transfer}{152}{subsection.Q.8}%
+\contentsline {paragraph}{Simulation catches logic errors; hardware catches calibration errors.}{153}{paragraph*.289}%
+\contentsline {paragraph}{Video replay is the highest-value offline test.}{153}{paragraph*.290}%
+\contentsline {paragraph}{Configuration defaults from datasheets are unreliable.}{153}{paragraph*.291}%
+\contentsline {paragraph}{The sim-to-real gap is not a single gap; it is many small gaps.}{153}{paragraph*.292}%
+\contentsline {section}{\numberline {R}Mission Flow}{153}{appendix.R}%
+\contentsline {subsection}{\numberline {R.1}Pre-Flight}{153}{subsection.R.1}%
+\contentsline {subsection}{\numberline {R.2}Connection and Arming}{154}{subsection.R.2}%
+\contentsline {paragraph}{Failure handling.}{154}{paragraph*.293}%
+\contentsline {subsection}{\numberline {R.3}Takeoff}{154}{subsection.R.3}%
+\contentsline {paragraph}{Transition trigger.}{154}{paragraph*.294}%
+\contentsline {paragraph}{Failure handling.}{154}{paragraph*.295}%
+\contentsline {paragraph}{Typical duration.}{154}{paragraph*.296}%
+\contentsline {subsection}{\numberline {R.4}Transit to Search Area}{154}{subsection.R.4}%
+\contentsline {paragraph}{Typical duration.}{154}{paragraph*.297}%
+\contentsline {subsection}{\numberline {R.5}Search}{154}{subsection.R.5}%
+\contentsline {subsubsection}{\numberline {R.5.1}Flight Behaviour}{155}{subsubsection.R.5.1}%
+\contentsline {subsubsection}{\numberline {R.5.2}Computer Vision Pipeline}{155}{subsubsection.R.5.2}%
+\contentsline {subsubsection}{\numberline {R.5.3}Detection Filtering and Queuing}{155}{subsubsection.R.5.3}%
+\contentsline {subsubsection}{\numberline {R.5.4}Dashboard View During Search}{155}{subsubsection.R.5.4}%
+\contentsline {subsubsection}{\numberline {R.5.5}Rescan Passes}{155}{subsubsection.R.5.5}%
+\contentsline {paragraph}{Typical duration.}{155}{paragraph*.298}%
+\contentsline {subsection}{\numberline {R.6}PLB Focus Area Redirect}{155}{subsection.R.6}%
+\contentsline {subsection}{\numberline {R.7}Investigation}{156}{subsection.R.7}%
+\contentsline {paragraph}{Why operator-in-the-loop?}{156}{paragraph*.299}%
+\contentsline {subsection}{\numberline {R.8}Centering}{156}{subsection.R.8}%
+\contentsline {paragraph}{Transition trigger.}{156}{paragraph*.300}%
+\contentsline {paragraph}{Tilt compensation (optional).}{156}{paragraph*.301}%
+\contentsline {paragraph}{Failure handling.}{156}{paragraph*.302}%
+\contentsline {paragraph}{Typical duration.}{156}{paragraph*.303}%
+\contentsline {subsection}{\numberline {R.9}Verification}{156}{subsection.R.9}%
+\contentsline {paragraph}{Countdown and timeout.}{157}{paragraph*.304}%
+\contentsline {paragraph}{Queue draining.}{157}{paragraph*.305}%
+\contentsline {subsection}{\numberline {R.10}Approach and Payload Delivery}{157}{subsection.R.10}%
+\contentsline {paragraph}{Payload deployment sequence (15\,s total).}{157}{paragraph*.306}%
+\contentsline {paragraph}{Design rationale: offset landing over visual servoing.}{157}{paragraph*.307}%
+\contentsline {subsection}{\numberline {R.11}Return to Launch}{157}{subsection.R.11}%
+\contentsline {paragraph}{Landing.}{157}{paragraph*.308}%
+\contentsline {paragraph}{GPS safety guard.}{158}{paragraph*.309}%
+\contentsline {paragraph}{Typical duration.}{158}{paragraph*.310}%
+\contentsline {subsection}{\numberline {R.12}Safety Layers During Flight}{158}{subsection.R.12}%
+\contentsline {paragraph}{NFZ Geofence (R01, R02).}{158}{paragraph*.311}%
+\contentsline {paragraph}{Manual Override (R09).}{158}{paragraph*.312}%
+\contentsline {paragraph}{RC Override Guard.}{158}{paragraph*.313}%
+\contentsline {paragraph}{RC Kill Switch (R09).}{158}{paragraph*.314}%
+\contentsline {paragraph}{Link Loss.}{158}{paragraph*.315}%
+\contentsline {subsection}{\numberline {R.13}Simulation vs.\ Real Mission Flow}{158}{subsection.R.13}%
+\contentsline {subsection}{\numberline {R.14}Mission Timeline Summary}{159}{subsection.R.14}%
+\contentsline {subsection}{\numberline {R.15}How the Mission Was Built Up Incrementally}{159}{subsection.R.15}%
+\contentsline {paragraph}{Stage 1: Search pattern in isolation.}{159}{paragraph*.317}%
+\contentsline {paragraph}{Stage 2: Detection pipeline in isolation.}{159}{paragraph*.318}%
+\contentsline {paragraph}{Stage 3: MAVLink commands in SITL.}{159}{paragraph*.319}%
+\contentsline {paragraph}{Stage 4: Operator interface development.}{159}{paragraph*.320}%
+\contentsline {paragraph}{Stage 5: Integration on hardware.}{160}{paragraph*.321}%
+\contentsline {section}{\numberline {S}Centering vs.\ Direct Offset Landing}{160}{appendix.S}%
+\contentsline {subsection}{\numberline {S.1}The Centering Option}{160}{subsection.S.1}%
+\contentsline {subsection}{\numberline {S.2}Why Direct Offset Landing Is Sufficient}{160}{subsection.S.2}%
+\contentsline {subsection}{\numberline {S.3}Probability Analysis}{161}{subsection.S.3}%
+\contentsline {subsection}{\numberline {S.4}Simulation Comparison}{161}{subsection.S.4}%
+\contentsline {subsection}{\numberline {S.5}Design Decision}{161}{subsection.S.5}%
+\contentsline {subsection}{\numberline {S.6}Safety Considerations of Hovering Above the Casualty}{162}{subsection.S.6}%
+\contentsline {subsubsection}{\numberline {S.6.1}Risk Identification}{162}{subsubsection.S.6.1}%
+\contentsline {subsubsection}{\numberline {S.6.2}Quantitative Analysis}{162}{subsubsection.S.6.2}%
+\contentsline {paragraph}{Rotor downwash at ground level.}{162}{paragraph*.323}%
+\contentsline {paragraph}{Crash probability.}{162}{paragraph*.324}%
+\contentsline {paragraph}{Noise exposure.}{163}{paragraph*.325}%
+\contentsline {subsubsection}{\numberline {S.6.3}Comparison of Centering Strategies}{163}{subsubsection.S.6.3}%
+\contentsline {subsubsection}{\numberline {S.6.4}Industry Practice}{163}{subsubsection.S.6.4}%
+\contentsline {subsubsection}{\numberline {S.6.5}Accepted Tradeoff}{163}{subsubsection.S.6.5}%
+\contentsline {section}{\numberline {T}MAVLink Communication Architecture}{163}{appendix.T}%
+\contentsline {subsection}{\numberline {T.1}The Python 3.13 Serial Problem}{163}{subsection.T.1}%
+\contentsline {subsection}{\numberline {T.2}MAVProxy Bridge Architecture}{164}{subsection.T.2}%
+\contentsline {subsection}{\numberline {T.3}Connection Auto-Detection}{164}{subsection.T.3}%
+\contentsline {subsection}{\numberline {T.4}MAVLink Message Protocol}{164}{subsection.T.4}%
+\contentsline {subsection}{\numberline {T.5}Link Loss Detection and Recovery}{164}{subsection.T.5}%
+\contentsline {paragraph}{Heartbeat timeout.}{165}{paragraph*.329}%
+\contentsline {paragraph}{GPS degradation monitor.}{165}{paragraph*.330}%
+\contentsline {subsection}{\numberline {T.6}Latency Characteristics}{165}{subsection.T.6}%
+\contentsline {section}{\numberline {U}Raw Inference vs.\ Effective Pipeline Throughput}{165}{appendix.U}%
+\contentsline {subsection}{\numberline {U.1}Pipeline Stages and Overhead Budget}{165}{subsection.U.1}%
+\contentsline {subsection}{\numberline {U.2}Measured and Projected Results}{166}{subsection.U.2}%
+\contentsline {paragraph}{TFLite FP32 (deployed baseline).}{166}{paragraph*.332}%
+\contentsline {paragraph}{NCNN FP32 (benchmarked, not deployed).}{166}{paragraph*.333}%
+\contentsline {paragraph}{TFLite FP16 (projected).}{166}{paragraph*.334}%
+\contentsline {paragraph}{Ultralytics/PyTorch (laptop reference).}{166}{paragraph*.335}%
+\contentsline {subsection}{\numberline {U.3}Bottleneck Transition}{166}{subsection.U.3}%
+\contentsline {subsection}{\numberline {U.4}Operational Implications}{167}{subsection.U.4}%
+\contentsline {section}{\numberline {V}Flight Path Optimisation}{167}{appendix.V}%
+\contentsline {subsection}{\numberline {V.1}Diagonal vs Axis-Aligned Scanning}{167}{subsection.V.1}%
+\contentsline {subsection}{\numberline {V.2}Lane Width vs Altitude Trade-Off}{168}{subsection.V.2}%
+\contentsline {subsection}{\numberline {V.3}Altitude-Dependent Speed Schedule}{168}{subsection.V.3}%
+\contentsline {subsection}{\numberline {V.4}Turn Strategy}{168}{subsection.V.4}%
+\contentsline {subsection}{\numberline {V.5}Overlap Margin Analysis}{169}{subsection.V.5}%
+\contentsline {subsection}{\numberline {V.6}Start Corner Optimisation}{169}{subsection.V.6}%
+\contentsline {subsection}{\numberline {V.7}PLB Focus Area Redirect}{169}{subsection.V.7}%
+\contentsline {section}{\numberline {W}Payload Release Mechanism}{169}{appendix.W}%
+\contentsline {subsection}{\numberline {W.1}Tarot Double-Throw Release Mechanism}{169}{subsection.W.1}%
+\contentsline {subsection}{\numberline {W.2}Why Release from Altitude, Not Land}{170}{subsection.W.2}%
+\contentsline {subsection}{\numberline {W.3}The \SI {7.5}{\metre } Offset}{170}{subsection.W.3}%
+\contentsline {subsection}{\numberline {W.4}Servo Actuation Sequence}{170}{subsection.W.4}%
+\contentsline {subsection}{\numberline {W.5}Why Visual Servo Centering Was Not Required}{170}{subsection.W.5}%
+\contentsline {subsection}{\numberline {W.6}Future Work: Precision Drop}{171}{subsection.W.6}%
+\contentsline {section}{\numberline {X}Model Comparison and Future Vision Improvements}{171}{appendix.X}%
+\contentsline {subsection}{\numberline {X.1}Model Generations}{171}{subsection.X.1}%
+\contentsline {subsection}{\numberline {X.2}COCO Person Detector as Fallback}{171}{subsection.X.2}%
+\contentsline {subsection}{\numberline {X.3}Overfitting Risk in Single-Class Detection}{172}{subsection.X.3}%
+\contentsline {subsection}{\numberline {X.4}Tiling vs.\ Full-Frame Detection}{172}{subsection.X.4}%
+\contentsline {subsection}{\numberline {X.5}Future Vision Improvements}{172}{subsection.X.5}%
+\contentsline {section}{\numberline {Y}Focus Area Redirect and Repulsive Field Implementation}{173}{appendix.Y}%
+\contentsline {subsection}{\numberline {Y.1}PLB Focus Area Logic (R06)}{173}{subsection.Y.1}%
+\contentsline {paragraph}{Activation.}{173}{paragraph*.339}%
+\contentsline {paragraph}{Focus area definition.}{173}{paragraph*.340}%
+\contentsline {paragraph}{Pattern regeneration.}{173}{paragraph*.341}%
+\contentsline {paragraph}{State preservation.}{173}{paragraph*.342}%
+\contentsline {subsection}{\numberline {Y.2}Repulsive Vector Field}{174}{subsection.Y.2}%
+\contentsline {paragraph}{Nearest-point computation.}{174}{paragraph*.343}%
+\contentsline {paragraph}{Degenerate case.}{174}{paragraph*.344}%
+\contentsline {paragraph}{Repulsion magnitude.}{174}{paragraph*.345}%
+\contentsline {paragraph}{Velocity application.}{174}{paragraph*.346}%
+\contentsline {subsection}{\numberline {Y.3}Four-Layer Protection Architecture}{175}{subsection.Y.3}%
+\contentsline {paragraph}{Layer interaction.}{175}{paragraph*.348}%
+\contentsline {paragraph}{Distance rationale.}{175}{paragraph*.349}%
+\contentsline {paragraph}{Sign convention.}{175}{paragraph*.350}%
+\contentsline {paragraph}{Directional scalar field.}{175}{paragraph*.351}%
+\contentsline {paragraph}{Firmware backup.}{175}{paragraph*.352}%
+\contentsline {section}{\numberline {Z}Search Path Optimisation}{176}{appendix.Z}%
+\contentsline {subsection}{\numberline {Z.1}The Multi-Objective Optimisation Problem}{176}{subsection.Z.1}%
+\contentsline {subsection}{\numberline {Z.2}Energy Model}{176}{subsection.Z.2}%
+\contentsline {subsection}{\numberline {Z.3}The 216-Configuration Parametric Sweep}{177}{subsection.Z.3}%
+\contentsline {subsection}{\numberline {Z.4}Search Strategy Comparison}{178}{subsection.Z.4}%
+\contentsline {subsection}{\numberline {Z.5}NFZ Interaction and Speed Scalar Field}{180}{subsection.Z.5}%
+\contentsline {subsection}{\numberline {Z.6}Detection Probability Integration}{181}{subsection.Z.6}%
+\contentsline {subsection}{\numberline {Z.7}Selected Configuration and Justification}{181}{subsection.Z.7}%
+\contentsline {section}{\numberline {AA}Search Parameter Optimisation}{182}{appendix.Alph27}%
+\contentsline {subsection}{\numberline {AA.1}Problem Statement}{183}{subsection.Alph27.1}%
+\contentsline {subsection}{\numberline {AA.2}Physics-Based Simulation}{183}{subsection.Alph27.2}%
+\contentsline {subsubsection}{\numberline {AA.2.1}Energy Model}{184}{subsubsection.Alph27.2.1}%
+\contentsline {subsubsection}{\numberline {AA.2.2}Detection Model}{184}{subsubsection.Alph27.2.2}%
+\contentsline {subsubsection}{\numberline {AA.2.3}Parametric Sweep}{185}{subsubsection.Alph27.2.3}%
+\contentsline {subsection}{\numberline {AA.3}Top Three Configurations}{185}{subsection.Alph27.3}%
+\contentsline {subsection}{\numberline {AA.4}Altitude and Speed Selection Logic}{185}{subsection.Alph27.4}%
+\contentsline {subsection}{\numberline {AA.5}Sensitivity Analysis}{186}{subsection.Alph27.5}%
+\contentsline {subsection}{\numberline {AA.6}Variable Coupling Structure}{188}{subsection.Alph27.6}%
+\contentsline {subsection}{\numberline {AA.7}Pareto Frontier}{188}{subsection.Alph27.7}%
+\contentsline {paragraph}{Alternative projections of the five-dimensional objective space.}{191}{paragraph*.373}%
+\contentsline {subsection}{\numberline {AA.8}Summary of Selected Parameters}{191}{subsection.Alph27.8}%
+\contentsline {subsection}{\numberline {AA.9}Alternative Strategies Considered}{191}{subsection.Alph27.9}%
+\contentsline {paragraph}{Wind-aligned scanning.}{191}{paragraph*.380}%
+\contentsline {paragraph}{Adaptive speed near detection clusters.}{192}{paragraph*.381}%
+\contentsline {paragraph}{Two-pass altitude strategy.}{192}{paragraph*.382}%
+\contentsline {section}{\numberline {AB}Multi-Objective Search Optimisation}{192}{appendix.Alph28}%
+\contentsline {subsection}{\numberline {AB.1}Problem Formulation}{193}{subsection.Alph28.1}%
+\contentsline {subsection}{\numberline {AB.2}Objective Functions}{194}{subsection.Alph28.2}%
+\contentsline {subsubsection}{\numberline {AB.2.1}Coverage Completeness}{194}{subsubsection.Alph28.2.1}%
+\contentsline {subsubsection}{\numberline {AB.2.2}Detection Probability}{195}{subsubsection.Alph28.2.2}%
+\contentsline {subsubsection}{\numberline {AB.2.3}Mission Time}{196}{subsubsection.Alph28.2.3}%
+\contentsline {subsubsection}{\numberline {AB.2.4}Energy Consumption}{196}{subsubsection.Alph28.2.4}%
+\contentsline {subsubsection}{\numberline {AB.2.5}NFZ Safety Margin}{196}{subsubsection.Alph28.2.5}%
+\contentsline {subsection}{\numberline {AB.3}Constraints}{197}{subsection.Alph28.3}%
+\contentsline {subsection}{\numberline {AB.4}Variable Coupling Analysis}{197}{subsection.Alph28.4}%
+\contentsline {subsection}{\numberline {AB.5}Solution Approach}{197}{subsection.Alph28.5}%
+\contentsline {section}{\numberline {AC}Design Strategy}{198}{appendix.Alph29}%
+\contentsline {subsection}{\numberline {AC.1}Design Philosophy: Simulation-First Development}{198}{subsection.Alph29.1}%
+\contentsline {paragraph}{Principle 1: Prove it in software before touching hardware.}{198}{paragraph*.387}%
+\contentsline {paragraph}{Principle 2: One codebase, every platform.}{198}{paragraph*.388}%
+\contentsline {paragraph}{Principle 3: Isolate one variable per test step.}{199}{paragraph*.389}%
+\contentsline {subsection}{\numberline {AC.2}Why This Approach Over Alternatives}{199}{subsection.Alph29.2}%
+\contentsline {subsection}{\numberline {AC.3}Progressive Testing as Risk Management}{199}{subsection.Alph29.3}%
+\contentsline {subsection}{\numberline {AC.4}Adapting When Hardware Was Unavailable}{200}{subsection.Alph29.4}%
+\contentsline {subsection}{\numberline {AC.5}Bridging the Simulation-to-Reality Gap}{200}{subsection.Alph29.5}%
+\contentsline {subsection}{\numberline {AC.6}Team Organisation and Workstream Structure}{201}{subsection.Alph29.6}%
+\contentsline {subsection}{\numberline {AC.7}Parameter Derivation Chain}{201}{subsection.Alph29.7}%
+\contentsline {subsection}{\numberline {AC.8}Step 1: Maximum Detection Altitude}{201}{subsection.Alph29.8}%
+\contentsline {subsection}{\numberline {AC.9}Step 2: Maximum Speed at Chosen Altitude}{202}{subsection.Alph29.9}%
+\contentsline {subsection}{\numberline {AC.10}Step 3: Minimise Energy via Scan Angle}{202}{subsection.Alph29.10}%
+\contentsline {subsection}{\numberline {AC.11}Step 4: NFZ Safety Margins}{203}{subsection.Alph29.11}%
+\contentsline {subsection}{\numberline {AC.12}Step 5: Swath Overlap}{203}{subsection.Alph29.12}%
+\contentsline {subsection}{\numberline {AC.13}Step 6: Diagonal vs Aligned Scanning}{204}{subsection.Alph29.13}%
+\contentsline {subsection}{\numberline {AC.14}The Dependency Chain}{204}{subsection.Alph29.14}%
+\contentsline {section}{\numberline {AD}Vision Performance Analysis}{211}{appendix.Alph30}%
+\contentsline {subsection}{\numberline {AD.1}Altitude vs.\ Target Pixel Size}{211}{subsection.Alph30.1}%
+\contentsline {subsection}{\numberline {AD.2}Speed vs.\ Motion Blur}{212}{subsection.Alph30.2}%
+\contentsline {subsection}{\numberline {AD.3}Speed vs.\ Frames on Target}{213}{subsection.Alph30.3}%
+\contentsline {subsection}{\numberline {AD.4}Coverage Efficiency}{214}{subsection.Alph30.4}%
+\contentsline {subsection}{\numberline {AD.5}Combined Detection Envelope}{215}{subsection.Alph30.5}%
+\contentsline {subsection}{\numberline {AD.6}Summary of Limiting Factors}{216}{subsection.Alph30.6}%
+\contentsline {section}{\numberline {AE}Decision Flow: How We Chose Our Search Parameters}{216}{appendix.Alph31}%
+\contentsline {subsection}{\numberline {AE.1}The Problem}{216}{subsection.Alph31.1}%
+\contentsline {subsection}{\numberline {AE.2}The Variables We Control}{217}{subsection.Alph31.2}%
+\contentsline {subsection}{\numberline {AE.3}Our Strategy: Safety-First, Detection-Optimised}{217}{subsection.Alph31.3}%
+\contentsline {paragraph}{1. Start from detection: how high can we fly and still see the target?}{217}{paragraph*.412}%
+\contentsline {paragraph}{2. Add a safety margin.}{217}{paragraph*.413}%
+\contentsline {paragraph}{3. At 35\,m, how fast can we fly?}{217}{paragraph*.414}%
+\contentsline {paragraph}{4. What scan angle minimises energy?}{218}{paragraph*.415}%
+\contentsline {paragraph}{5. How much NFZ margin do we need?}{218}{paragraph*.416}%
+\contentsline {paragraph}{6. How much lane overlap is needed?}{218}{paragraph*.417}%
+\contentsline {paragraph}{7. Is 96\% coverage acceptable?}{218}{paragraph*.418}%
+\contentsline {subsection}{\numberline {AE.4}What We Evaluated}{218}{subsection.Alph31.4}%
+\contentsline {paragraph}{A note on correlation.}{218}{paragraph*.420}%
+\contentsline {subsection}{\numberline {AE.5}The Result}{218}{subsection.Alph31.5}%
+\contentsline {subsection}{\numberline {AE.6}Sequential Measurement: Settling Each Variable Before the Next}{219}{subsection.Alph31.6}%
+\contentsline {paragraph}{Step~1: Train a reliable vision model.}{219}{paragraph*.422}%
+\contentsline {paragraph}{Step~2: Map the detection envelope.}{219}{paragraph*.423}%
+\contentsline {paragraph}{Step~3: Determine speed limits at the chosen altitude.}{220}{paragraph*.425}%
+\contentsline {paragraph}{Step~4: Energy-efficient path search.}{220}{paragraph*.427}%
+\contentsline {subsection}{\numberline {AE.7}Decomposition Into Independent Sub-Problems}{220}{subsection.Alph31.7}%
+\contentsline {subsection}{\numberline {AE.8}Search Pattern Quantification}{220}{subsection.Alph31.8}%
+\contentsline {subsection}{\numberline {AE.9}Robustness to Runtime Edge Cases}{220}{subsection.Alph31.9}%
+\contentsline {subsection}{\numberline {AE.10}Pareto Optimality of the Selected Point}{221}{subsection.Alph31.10}%
+\contentsline {subsection}{\numberline {AE.11}Non-Quantifiable Design Choices}{221}{subsection.Alph31.11}%
+\contentsline {subsection}{\numberline {AE.12}Summary}{221}{subsection.Alph31.12}%
+\contentsline {section}{\numberline {AF}Approaches to Aerial Target Geolocation}{222}{appendix.Alph32}%
+\contentsline {subsection}{\numberline {AF.1}Approach 1: Direct Georeferencing}{224}{subsection.Alph32.1}%
+\contentsline {paragraph}{Description.}{224}{paragraph*.429}%
+\contentsline {paragraph}{Mathematical basis.}{224}{paragraph*.430}%
+\contentsline {paragraph}{Pros.}{224}{paragraph*.431}%
+\contentsline {paragraph}{Cons.}{224}{paragraph*.432}%
+\contentsline {paragraph}{Accuracy.}{224}{paragraph*.433}%
+\contentsline {paragraph}{Computational cost.}{224}{paragraph*.434}%
+\contentsline {paragraph}{Suitability.}{224}{paragraph*.435}%
+\contentsline {subsection}{\numberline {AF.2}Approach 2: Multi-Frame Triangulation}{224}{subsection.Alph32.2}%
+\contentsline {paragraph}{Description.}{224}{paragraph*.436}%
+\contentsline {paragraph}{Mathematical basis.}{224}{paragraph*.437}%
+\contentsline {paragraph}{Pros.}{224}{paragraph*.438}%
+\contentsline {paragraph}{Cons.}{224}{paragraph*.439}%
+\contentsline {paragraph}{Accuracy.}{225}{paragraph*.440}%
+\contentsline {paragraph}{Computational cost.}{225}{paragraph*.441}%
+\contentsline {paragraph}{Suitability.}{225}{paragraph*.442}%
+\contentsline {subsection}{\numberline {AF.3}Approach 3: Kalman Filter Tracking}{225}{subsection.Alph32.3}%
+\contentsline {paragraph}{Description.}{225}{paragraph*.443}%
+\contentsline {paragraph}{Mathematical basis.}{225}{paragraph*.444}%
+\contentsline {paragraph}{Pros.}{225}{paragraph*.445}%
+\contentsline {paragraph}{Cons.}{225}{paragraph*.446}%
+\contentsline {paragraph}{Accuracy.}{225}{paragraph*.447}%
+\contentsline {paragraph}{Computational cost.}{225}{paragraph*.448}%
+\contentsline {paragraph}{Suitability.}{225}{paragraph*.449}%
+\contentsline {subsection}{\numberline {AF.4}Approach 4: Visual Odometry and SLAM}{225}{subsection.Alph32.4}%
+\contentsline {paragraph}{Description.}{225}{paragraph*.450}%
+\contentsline {paragraph}{Mathematical basis.}{225}{paragraph*.451}%
+\contentsline {paragraph}{Pros.}{225}{paragraph*.452}%
+\contentsline {paragraph}{Cons.}{226}{paragraph*.453}%
+\contentsline {paragraph}{Accuracy.}{226}{paragraph*.454}%
+\contentsline {paragraph}{Computational cost.}{226}{paragraph*.455}%
+\contentsline {paragraph}{Suitability.}{226}{paragraph*.456}%
+\contentsline {subsection}{\numberline {AF.5}Approach 5: Photogrammetric Bundle Adjustment}{226}{subsection.Alph32.5}%
+\contentsline {paragraph}{Description.}{226}{paragraph*.457}%
+\contentsline {paragraph}{Mathematical basis.}{226}{paragraph*.458}%
+\contentsline {paragraph}{Pros.}{226}{paragraph*.459}%
+\contentsline {paragraph}{Cons.}{226}{paragraph*.460}%
+\contentsline {paragraph}{Accuracy.}{226}{paragraph*.461}%
+\contentsline {paragraph}{Computational cost.}{226}{paragraph*.462}%
+\contentsline {paragraph}{Suitability.}{226}{paragraph*.463}%
+\contentsline {subsection}{\numberline {AF.6}Approach 6: Template Matching and Tracking}{226}{subsection.Alph32.6}%
+\contentsline {paragraph}{Description.}{226}{paragraph*.464}%
+\contentsline {paragraph}{Mathematical basis.}{226}{paragraph*.465}%
+\contentsline {paragraph}{Pros.}{226}{paragraph*.466}%
+\contentsline {paragraph}{Cons.}{227}{paragraph*.467}%
+\contentsline {paragraph}{Accuracy.}{227}{paragraph*.468}%
+\contentsline {paragraph}{Computational cost.}{227}{paragraph*.469}%
+\contentsline {paragraph}{Suitability.}{227}{paragraph*.470}%
+\contentsline {subsection}{\numberline {AF.7}Approach 7: Centroid Clustering with Inverse-Variance Weighting}{227}{subsection.Alph32.7}%
+\contentsline {paragraph}{Description.}{227}{paragraph*.471}%
+\contentsline {paragraph}{Mathematical basis.}{227}{paragraph*.472}%
+\contentsline {paragraph}{Pros.}{227}{paragraph*.473}%
+\contentsline {paragraph}{Cons.}{227}{paragraph*.474}%
+\contentsline {paragraph}{Accuracy.}{227}{paragraph*.475}%
+\contentsline {paragraph}{Computational cost.}{227}{paragraph*.476}%
+\contentsline {paragraph}{Suitability.}{227}{paragraph*.477}%
+\contentsline {subsection}{\numberline {AF.8}Approach 8: Multi-Pass Averaging}{227}{subsection.Alph32.8}%
+\contentsline {paragraph}{Description.}{227}{paragraph*.478}%
+\contentsline {paragraph}{Mathematical basis.}{228}{paragraph*.479}%
+\contentsline {paragraph}{Pros.}{228}{paragraph*.480}%
+\contentsline {paragraph}{Cons.}{228}{paragraph*.481}%
+\contentsline {paragraph}{Accuracy.}{228}{paragraph*.482}%
+\contentsline {paragraph}{Computational cost.}{228}{paragraph*.483}%
+\contentsline {paragraph}{Suitability.}{228}{paragraph*.484}%
+\contentsline {subsection}{\numberline {AF.9}Approach 9: Hover-and-Lock (Visual Centering)}{228}{subsection.Alph32.9}%
+\contentsline {paragraph}{Description.}{228}{paragraph*.485}%
+\contentsline {paragraph}{Mathematical basis.}{228}{paragraph*.486}%
+\contentsline {paragraph}{Pros.}{228}{paragraph*.487}%
+\contentsline {paragraph}{Cons.}{228}{paragraph*.488}%
+\contentsline {paragraph}{Accuracy.}{228}{paragraph*.489}%
+\contentsline {paragraph}{Computational cost.}{228}{paragraph*.490}%
+\contentsline {paragraph}{Suitability.}{229}{paragraph*.491}%
+\contentsline {subsection}{\numberline {AF.10}Approach 10: Bayesian Position Estimation}{229}{subsection.Alph32.10}%
+\contentsline {paragraph}{Description.}{229}{paragraph*.492}%
+\contentsline {paragraph}{Mathematical basis.}{229}{paragraph*.493}%
+\contentsline {paragraph}{Pros.}{229}{paragraph*.494}%
+\contentsline {paragraph}{Cons.}{229}{paragraph*.495}%
+\contentsline {paragraph}{Accuracy.}{229}{paragraph*.496}%
+\contentsline {paragraph}{Computational cost.}{229}{paragraph*.497}%
+\contentsline {paragraph}{Suitability.}{229}{paragraph*.498}%
+\contentsline {subsection}{\numberline {AF.11}Comparison Summary}{229}{subsection.Alph32.11}%
+\contentsline {subsection}{\numberline {AF.12}Justification of Our Approach}{230}{subsection.Alph32.12}%
+\contentsline {paragraph}{1. Computational budget.}{230}{paragraph*.500}%
+\contentsline {paragraph}{2. Frame rate reality.}{230}{paragraph*.501}%
+\contentsline {paragraph}{3. Sensor limitations.}{230}{paragraph*.502}%
+\contentsline {paragraph}{4. Multi-target capability.}{230}{paragraph*.503}%
+\contentsline {paragraph}{5. Transparency and debuggability.}{230}{paragraph*.504}%
+\contentsline {paragraph}{Progressive refinement architecture.}{230}{paragraph*.505}%
+\contentsline {subsection}{\numberline {AF.13}Frame Rate Sufficiency Analysis}{231}{subsection.Alph32.13}%
+\contentsline {paragraph}{Observation geometry.}{231}{paragraph*.506}%
+\contentsline {paragraph}{Detection probability per pass.}{231}{paragraph*.507}%
+\contentsline {paragraph}{Position estimation quality.}{231}{paragraph*.508}%
+\contentsline {paragraph}{Comparison with higher frame rates.}{231}{paragraph*.509}%
+\contentsline {paragraph}{Sufficient for SMART detection.}{231}{paragraph*.510}%
+\contentsline {paragraph}{Conclusion.}{231}{paragraph*.511}%
+\contentsline {section}{\numberline {AG}Evaluating GPS Estimation Against Ground Truth}{232}{appendix.Alph33}%
+\contentsline {subsection}{\numberline {AG.1}Evaluation Methodology}{232}{subsection.Alph33.1}%
+\contentsline {subsubsection}{\numberline {AG.1.1}The Ground-Truth Problem}{232}{subsubsection.Alph33.1.1}%
+\contentsline {subsubsection}{\numberline {AG.1.2}SMART Detection as Convergence Criterion}{232}{subsubsection.Alph33.1.2}%
+\contentsline {subsubsection}{\numberline {AG.1.3}Evaluation Metrics}{232}{subsubsection.Alph33.1.3}%
+\contentsline {subsection}{\numberline {AG.2}Bullseye Visualization}{232}{subsection.Alph33.2}%
+\contentsline {paragraph}{Heading bias.}{233}{paragraph*.512}%
+\contentsline {paragraph}{Altitude dependence.}{233}{paragraph*.513}%
+\contentsline {paragraph}{Systematic bias.}{233}{paragraph*.514}%
+\contentsline {subsection}{\numberline {AG.3}When Is Enough Data Enough?}{235}{subsection.Alph33.3}%
+\contentsline {subsubsection}{\numberline {AG.3.1}Frame Budget Analysis}{235}{subsubsection.Alph33.3.1}%
+\contentsline {subsubsection}{\numberline {AG.3.2}Clustering Threshold Comparison}{235}{subsubsection.Alph33.3.2}%
+\contentsline {paragraph}{Single frame.}{236}{paragraph*.521}%
+\contentsline {paragraph}{Quick cluster (3 samples, 5\,m spread).}{236}{paragraph*.522}%
+\contentsline {paragraph}{SMART default (5 samples, 2\,m spread).}{236}{paragraph*.523}%
+\contentsline {paragraph}{Conservative (10 samples, 1\,m spread).}{236}{paragraph*.524}%
+\contentsline {paragraph}{Multi-pass (5+5 from different headings, 1\,m spread).}{236}{paragraph*.525}%
+\contentsline {subsection}{\numberline {AG.4}Error Sources and Their Relative Contribution}{237}{subsection.Alph33.4}%
+\contentsline {paragraph}{Interpretation.}{237}{paragraph*.529}%
+\contentsline {subsection}{\numberline {AG.5}Comparison with Ground Truth}{238}{subsection.Alph33.5}%
+\contentsline {subsubsection}{\numberline {AG.5.1}DJI Video Replay Results}{238}{subsubsection.Alph33.5.1}%
+\contentsline {subsubsection}{\numberline {AG.5.2}Convergence Behaviour}{239}{subsubsection.Alph33.5.2}%
+\contentsline {subsection}{\numberline {AG.6}Directional Error Analysis}{240}{subsection.Alph33.6}%
+\contentsline {subsection}{\numberline {AG.7}Operational Recommendations}{241}{subsection.Alph33.7}%
+\contentsline {paragraph}{Key insight.}{241}{paragraph*.539}%
+\contentsline {paragraph}{Comparison with published systems.}{241}{paragraph*.540}%
+\contentsline {section}{\numberline {AH}Requirements Verification Detail}{241}{appendix.Alph34}%
+\contentsline {subsection}{\numberline {AH.1}R01 --- Fly Within the Flight Area}{242}{subsection.Alph34.1}%
+\contentsline {subsection}{\numberline {AH.2}R02 --- No SSSI Overfly}{242}{subsection.Alph34.2}%
+\contentsline {subsection}{\numberline {AH.3}R03 --- Take Off Within 5\,m of TOL}{242}{subsection.Alph34.3}%
+\contentsline {subsection}{\numberline {AH.4}R04 --- Maximum 50\,m Altitude}{243}{subsection.Alph34.4}%
+\contentsline {subsection}{\numberline {AH.5}R05 --- Search Area and Identify Items of Interest}{243}{subsection.Alph34.5}%
+\contentsline {paragraph}{Coverage guarantee.}{243}{paragraph*.541}%
+\contentsline {paragraph}{Detection capability.}{243}{paragraph*.542}%
+\contentsline {paragraph}{Per-flyover detection probability.}{243}{paragraph*.543}%
+\contentsline {paragraph}{Verification evidence.}{243}{paragraph*.544}%
+\contentsline {subsection}{\numberline {AH.6}R06 --- PLB Focus Area}{244}{subsection.Alph34.6}%
+\contentsline {subsection}{\numberline {AH.7}R07 --- Land 5--10\,m from Casualty}{244}{subsection.Alph34.7}%
+\contentsline {paragraph}{Probability analysis.}{244}{paragraph*.545}%
+\contentsline {paragraph}{Unit and integration tests.}{244}{paragraph*.546}%
+\contentsline {paragraph}{Runtime distance verification.}{245}{paragraph*.547}%
+\contentsline {paragraph}{Payload deployment.}{245}{paragraph*.548}%
+\contentsline {subsection}{\numberline {AH.8}R08 --- Autonomy Level Justified}{245}{subsection.Alph34.8}%
+\contentsline {subsection}{\numberline {AH.9}R09 --- RTH and Motor Cutoff}{245}{subsection.Alph34.9}%
+\contentsline {subsection}{\numberline {AH.10}R10 --- Report Lat/Lon and Images}{245}{subsection.Alph34.10}%
+\contentsline {paragraph}{GPS estimation pipeline.}{246}{paragraph*.549}%
+\contentsline {paragraph}{Detection snapshots and metadata.}{246}{paragraph*.550}%
+\contentsline {paragraph}{Flight log.}{246}{paragraph*.551}%
+\contentsline {subsection}{\numberline {AH.11}R11 --- Company Pilot Designated}{246}{subsection.Alph34.11}%
+\contentsline {subsection}{\numberline {AH.12}R12 --- Public GitHub Repository with MIT Licence}{246}{subsection.Alph34.12}%
+\contentsline {section}{\numberline {AI}Evaluation Detail}{246}{appendix.Alph35}%
+\contentsline {subsection}{\numberline {AI.1}Defect Discovery Register}{246}{subsection.Alph35.1}%
+\contentsline {subsection}{\numberline {AI.2}What Would Change in a Second Iteration}{247}{subsection.Alph35.2}%
+\contentsline {subsection}{\numberline {AI.3}Lessons Learned}{248}{subsection.Alph35.3}%
+\contentsline {section}{\numberline {AJ}Development Methodology}{248}{appendix.Alph36}%
+\contentsline {subsection}{\numberline {AJ.1}Development Philosophy}{248}{subsection.Alph36.1}%
+\contentsline {subsection}{\numberline {AJ.2}Ten-Phase Development Timeline}{249}{subsection.Alph36.2}%
+\contentsline {subsection}{\numberline {AJ.3}Simulation Stage (Weeks 12--15)}{249}{subsection.Alph36.3}%
+\contentsline {subsection}{\numberline {AJ.4}Pi Deployment (Weeks 16--18)}{250}{subsection.Alph36.4}%
+\contentsline {subsection}{\numberline {AJ.5}Field Integration (Weeks 19--20)}{250}{subsection.Alph36.5}%
+\contentsline {subsection}{\numberline {AJ.6}Ambition Levels}{250}{subsection.Alph36.6}%
+\contentsline {subsection}{\numberline {AJ.7}Progressive Testing Ladder}{250}{subsection.Alph36.7}%
+\contentsline {subsection}{\numberline {AJ.8}Achievement Summary}{251}{subsection.Alph36.8}%
+\contentsline {subsection}{\numberline {AJ.9}Lessons for Future Teams}{251}{subsection.Alph36.9}%

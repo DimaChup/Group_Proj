@@ -8,7 +8,7 @@ The central question is: \emph{how close is the system to reliably finding a cas
 Table~\ref{tab:plus-delta} summarises the principal strengths and areas for improvement. Each item includes the specific evidence that supports the assessment.
 
 \FloatBarrier
-\begin{table}[ht]
+\begin{table}[htbp]
 \centering\compactTable
 \caption{Plus/delta review --- strengths.}\label{tab:plus-delta}
 \begin{tabularx}{\linewidth}{@{}c p{5.2cm} X@{}}
@@ -38,7 +38,7 @@ Table~\ref{tab:plus-delta} summarises the principal strengths and areas for impr
 \end{tabularx}
 \end{table}
 
-\begin{table}[ht]
+\begin{table}[htbp]
 \centering\compactTable
 \caption{Plus/delta review --- areas for improvement.}\label{tab:delta}
 \begin{tabularx}{\linewidth}{@{}c p{5.2cm} X@{}}
@@ -70,7 +70,7 @@ Table~\ref{tab:plus-delta} summarises the principal strengths and areas for impr
 % ─────────────────────────────────────────────────────────────────────
 \subsection{Discussion of Key Findings}\label{sec:eval-discussion}
 
-\begin{figure}[ht]
+\begin{figure}[htbp]
 \centering
 \begin{subfigure}[t]{0.48\textwidth}
   \centering
@@ -89,7 +89,7 @@ Table~\ref{tab:plus-delta} summarises the principal strengths and areas for impr
 \label{fig:det_sensitivity}
 \end{figure}
 
-\begin{figure}[ht]
+\begin{figure}[htbp]
 \centering
 \begin{subfigure}[t]{0.48\textwidth}
   \centering
@@ -108,12 +108,14 @@ Table~\ref{tab:plus-delta} summarises the principal strengths and areas for impr
 \label{fig:perf_analysis}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
 \centering
 \includegraphics[width=\linewidth]{detection_montage}
 \caption{Detection montage from DJI flight video replay at varying altitudes and viewing angles. Green bounding boxes show YOLOv8n detections with confidence scores. The target (rescue mannequin) is reliably detected from \SI{15}{\metre} to \SI{40}{\metre} altitude under real outdoor lighting conditions.}
 \label{fig:detection_montage}
 \end{figure}
+
+\FloatBarrier
 
 \textbf{Architecture resilience (P1, P2, P5, P8).}
 The single-interface vision module (\texttt{detect\_in\_image}) enabled three model retrains (640, 1280, 1088\,px datasets) with zero changes to the orchestrator or ground station. Adding lens undistortion---not anticipated during initial design---required modifying one file and added only \SI{1.5}{\milli\second} per frame.
@@ -142,12 +144,13 @@ The outdoor flight was cancelled due to sustained winds of \SI{12}{\metre\per\se
 \textbf{Incomplete flight validation (D1, D6, D7, D8).}
 The integrated system has never executed a search pattern over real terrain. Detection range versus altitude in natural lighting, false-positive rate against real backgrounds, wind-induced motion blur, and GPS accuracy under dynamic manoeuvres all remain unvalidated---only DJI video proxy data are available. Bench results suggest outdoor operation will require parameter tuning rather than architectural changes.
 
+\FloatBarrier
 % ─────────────────────────────────────────────────────────────────────
 \subsection{Comparison with Published SAR Systems}\label{sec:eval-comparison}
 
 Table~\ref{tab:sar-comparison} positions this project's quantitative results against published SAR drone systems. Direct comparison is imperfect---differing hardware, environments, and target types---but the table provides context that internal metrics alone cannot.
 
-\begin{table}[ht]
+\begin{table}[htbp]
 \centering\small
 \caption{Performance comparison with published SAR drone systems. Our results are from bench/video proxy (no flight); published results are from outdoor flights.}\label{tab:sar-comparison}
 \begin{tabular}{@{}p{2.6cm}p{2.0cm}p{1.8cm}p{1.5cm}p{1.6cm}p{2.4cm}@{}}
@@ -165,9 +168,11 @@ SearchWing~\cite{searchwing2024} & Companion PC & Custom CNN & 5 & 0.78 & $<$10\
 \end{tabular}
 \end{table}
 
+\FloatBarrier
+
 Figure~\ref{fig:radar_comparison} presents a radar chart comparing the system's capabilities against published SAR platforms across six key dimensions.
 
-\begin{figure}[H]
+\begin{figure}[htbp]
 \centering
 \includegraphics[width=0.7\linewidth]{radar_comparison}
 \caption{Multi-dimensional comparison of this project against published SAR drone systems (Table~\ref{tab:sar-comparison}). Axes: inference speed, detection accuracy, GPS estimation accuracy, cost-effectiveness, autonomy level, and test coverage. This project scores highest on cost-effectiveness and test coverage but lowest on inference speed due to CPU-only deployment.}
@@ -201,7 +206,7 @@ Simulation-first consumed approximately 10 of 16 available weeks before hardware
 
 SAR effectiveness is ultimately measured at the mission level, not subsystem metrics. Table~\ref{tab:mission-metrics} presents estimated mission performance derived from simulation and video proxy data.
 
-\begin{table}[ht]
+\begin{table}[htbp]
 \centering\small
 \caption{Estimated mission-level performance metrics (from SITL simulation and DJI video analysis). All values are estimates; no outdoor mission has been executed.}\label{tab:mission-metrics}
 \begin{tabular}{@{}lll@{}}
@@ -243,7 +248,7 @@ Items 3--5 are implementable without any flight time and would strengthen the qu
 
 The five-tier progressive testing framework (Table~\ref{tab:five-tier-summary}) advances from pure software to full autonomy, with each tier gating the next. This structure caught 12 defects at low-cost tiers (Appendix~\ref{app:bug-cost}) and is the primary reason no architectural faults remained when hardware was assembled.
 
-\begin{table}[ht]
+\begin{table}[htbp]
 \centering\small
 \caption{Five-tier progressive testing framework (condensed from Appendix~\ref{sec:five-tier}).}\label{tab:five-tier-summary}
 \begin{tabular}{@{}clp{7.5cm}@{}}

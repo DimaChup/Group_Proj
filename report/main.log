@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.3.27)  4 APR 2026 15:27
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.3.27)  4 APR 2026 15:45
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1555,18 +1555,6 @@ LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 1
 File: ot1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 (main.aux)
-Runaway argument?
-{\contentsline {subsection 
-! File ended while scanning use of \@writefile.
-<inserted text> 
-                \par 
-l.133 \begin{document}
-                      
-I suspect you have forgotten a `}', causing me
-to read past where you wanted me to stop.
-I'll try to recover; but if the error is serious,
-you'd better type `E' or `X' now and fix your file.
-
 \openout1 = `main.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 133.
@@ -1587,6 +1575,7 @@ LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 133.
 LaTeX Font Info:    ... okay on input line 133.
 LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 133.
 LaTeX Font Info:    ... okay on input line 133.
+
 *geometry* driver: auto-detecting
 *geometry* detected driver: pdftex
 *geometry* verbose mode - [ preamble ] result:
@@ -1714,74 +1703,44 @@ Package biblatex Info: Automatic encoding selection.
 \openout4 = `main.bcf'.
 
 Package biblatex Info: Trying to load bibliographic data...
-Package biblatex Info: ... file 'main.bbl' not found.
-
-No file main.bbl.
+Package biblatex Info: ... file 'main.bbl' found.
+ (main.bbl)
 Package biblatex Info: Reference section=0 on input line 133.
 Package biblatex Info: Reference segment=0 on input line 133.
 Package hyperref Info: Link coloring ON on input line 133.
-(main.out)
-Runaway argument?
-{\376\377\000C\000o\000m\000p\000u\000t\000e\000r\000\040\000V\000i\0\ETC.
-! File ended while scanning use of \@@BOOKMARK.
-<inserted text> 
-                \par 
-l.133 \begin{document}
-                      
-I suspect you have forgotten a `}', causing me
-to read past where you wanted me to stop.
-I'll try to recover; but if the error is serious,
-you'd better type `E' or `X' now and fix your file.
-
-(main.out)
-Runaway argument?
-{\376\377\000C\000o\000m\000p\000u\000t\000e\000r\000\040\000V\000i\0\ETC.
-! File ended while scanning use of \@@BOOKMARK.
-<inserted text> 
-                \par 
-l.133 \begin{document}
-                      
-I suspect you have forgotten a `}', causing me
-to read past where you wanted me to stop.
-I'll try to recover; but if the error is serious,
-you'd better type `E' or `X' now and fix your file.
-
+ (main.out) (main.out)
 \@outlinefile=\write5
 \openout5 = `main.out'.
 
-[1
+ [1
 
 {C:/Users/Bristol/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map}{C:/Users/Br
-istol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-rm.enc}] (main.toc)
-\tf@toc=\write6
-\openout6 = `main.toc'.
-
-[2] (sections/exec_summary.tex
-LaTeX Font Info:    Trying to load font information for OML+lmm on input line 3
+istol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-rm.enc}] (main.toc
+LaTeX Font Info:    Trying to load font information for OML+lmm on input line 9
 .
 
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/lm\omllmm.fd
 File: omllmm.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    Trying to load font information for OMS+lmsy on input line 
-3.
+9.
 
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/lm\omslmsy.fd
 File: omslmsy.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    Trying to load font information for OMX+lmex on input line 
-3.
+9.
 
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/lm\omxlmex.fd
 File: omxlmex.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <10> on input line 3.
+(Font)              <10> on input line 9.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <7> on input line 3.
+(Font)              <7> on input line 9.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <5> on input line 3.
-LaTeX Font Info:    Trying to load font information for U+msa on input line 3.
+(Font)              <5> on input line 9.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 9.
 
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
@@ -1789,48 +1748,16 @@ File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/microtype\mt-msa.cfg
 File: mt-msa.cfg 2006/02/04 v1.1 microtype config. file: AMS symbols (a) (RS)
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 3.
+LaTeX Font Info:    Trying to load font information for U+msb on input line 9.
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/microtype\mt-msb.cfg
 File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
-)
-LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 1
-5.
-(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/lm\ts1lmr.fd
-File: ts1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
-))
-[3{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-ts1.enc
-}{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathsy.e
-nc}] (sections/intro_d6.tex
-
-LaTeX Warning: Citation 'mra2023' on page 4 undefined on input line 9.
-
-
-LaTeX Warning: Citation 'goodrich2008' on page 4 undefined on input line 9.
-
-
-LaTeX Warning: Citation 'goodrich2008' on page 4 undefined on input line 9.
-
-
-LaTeX Warning: Citation 'murphy2014' on page 4 undefined on input line 9.
-
-
-LaTeX Warning: Citation 'yolohistory' on page 4 undefined on input line 9.
-
-
-LaTeX Warning: Citation 'yolov8' on page 4 undefined on input line 9.
-
-
-LaTeX Warning: Citation 'edgeai' on page 4 undefined on input line 9.
-
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <8> on input line 27.
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <6> on input line 27.
+) [2] [3] [4] [5]
 LaTeX Font Info:    Trying to load font information for OT1+lmtt on input line 
-27.
+322.
+
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/lm\ot1lmtt.fd
 File: ot1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
@@ -1839,817 +1766,436 @@ Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             For optimal results, create family-specific settings.
 (microtype)             See the microtype manual for details.
 
-[4{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathit.
-enc}{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-rmtt.
+[6{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-rmtt.en
+c}] [7] [8]
+Overfull \hbox (2.388pt too wide) detected at line 562
+\OT1/lmr/bx/n/10 AA 
+ []
+
+
+Overfull \hbox (1.87448pt too wide) detected at line 579
+\OT1/lmr/bx/n/10 AB 
+ []
+
+[9{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathit.
 enc}]
+Overfull \hbox (1.68054pt too wide) detected at line 590
+\OT1/lmr/bx/n/10 AC 
+ []
+
+
+Overfull \hbox (4.22194pt too wide) detected at line 603
+\OT1/lmr/m/n/10 AC.10 
+ []
+
+
+Overfull \hbox (4.22194pt too wide) detected at line 604
+\OT1/lmr/m/n/10 AC.11 
+ []
+
+
+Overfull \hbox (4.22194pt too wide) detected at line 605
+\OT1/lmr/m/n/10 AC.12 
+ []
+
+
+Overfull \hbox (4.22194pt too wide) detected at line 606
+\OT1/lmr/m/n/10 AC.13 
+ []
+
+
+Overfull \hbox (4.22194pt too wide) detected at line 607
+\OT1/lmr/m/n/10 AC.14 
+ []
+
+
+Overfull \hbox (2.51299pt too wide) detected at line 608
+\OT1/lmr/bx/n/10 AD 
+ []
+
+
+Overfull \hbox (1.24948pt too wide) detected at line 615
+\OT1/lmr/bx/n/10 AE 
+ []
+
+
+Overfull \hbox (4.08322pt too wide) detected at line 637
+\OT1/lmr/m/n/10 AE.10 
+ []
+
+
+Overfull \hbox (4.08322pt too wide) detected at line 638
+\OT1/lmr/m/n/10 AE.11 
+ []
+
+
+Overfull \hbox (4.08322pt too wide) detected at line 639
+\OT1/lmr/m/n/10 AE.12 
+ []
+
+
+Overfull \hbox (0.93pt too wide) detected at line 640
+\OT1/lmr/bx/n/10 AF 
+ []
+
+
+Overfull \hbox (3.80571pt too wide) detected at line 713
+\OT1/lmr/m/n/10 AF.10 
+ []
+
+
+Overfull \hbox (3.80571pt too wide) detected at line 721
+\OT1/lmr/m/n/10 AF.11 
+ []
+
+
+Overfull \hbox (3.80571pt too wide) detected at line 722
+\OT1/lmr/m/n/10 AF.12 
+ []
+
+
+Overfull \hbox (3.80571pt too wide) detected at line 729
+\OT1/lmr/m/n/10 AF.13 
+ []
+
+[10]
+Overfull \hbox (2.41655pt too wide) detected at line 736
+\OT1/lmr/bx/n/10 AG 
+ []
+
+
+Overfull \hbox (2.69398pt too wide) detected at line 762
+\OT1/lmr/bx/n/10 AH 
+ []
+
+
+Overfull \hbox (4.77773pt too wide) detected at line 780
+\OT1/lmr/m/n/10 AH.10 
+ []
+
+
+Overfull \hbox (4.77773pt too wide) detected at line 784
+\OT1/lmr/m/n/10 AH.11 
+ []
+
+
+Overfull \hbox (4.77773pt too wide) detected at line 785
+\OT1/lmr/m/n/10 AH.12 
+ []
+
+)
+\tf@toc=\write6
+\openout6 = `main.toc'.
+
+ [11] (sections/exec_summary.tex
+LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 1
+5.
+
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/lm\ts1lmr.fd
+File: ts1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
+))
+[12{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-ts1.en
+c}{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathsy.
+enc}] (sections/intro_d6.tex
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <8> on input line 27.
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <6> on input line 27.
+ [13]
 LaTeX Font Info:    External font `lmex10' loaded for size
 (Font)              <9> on input line 57.
-
-
-LaTeX Warning: Reference `sec:groundstation' on page 5 undefined on input line 
-94.
-
-
-LaTeX Warning: Reference `sec:testing' on page 5 undefined on input line 94.
-
-
-LaTeX Warning: Reference `sec:requirements' on page 5 undefined on input line 9
-4.
-
-
-LaTeX Warning: Reference `sec:evaluation' on page 5 undefined on input line 94.
-
-
-) [5] [6] (sections/design_rationale.tex
+) [14] [15] (sections/design_rationale.tex
 
 Package hyperref Warning: Suppressing empty link on input line 6.
 
-
-LaTeX Warning: Citation 'murphy2014' on page 7 undefined on input line 25.
-
-
-LaTeX Warning: Citation 'edgeai' on page 7 undefined on input line 25.
-
-
-LaTeX Warning: Citation 'tflite' on page 7 undefined on input line 25.
-
-
-LaTeX Warning: Citation 'dji_m30t' on page 7 undefined on input line 25.
-
-
-LaTeX Warning: Citation 'wca1981' on page 7 undefined on input line 25.
-
-
-LaTeX Warning: Citation 'caa2024uas' on page 7 undefined on input line 25.
-
-
-LaTeX Warning: Citation 'jarus2019sora' on page 7 undefined on input line 25.
-
-
-LaTeX Warning: Citation 'wca1981' on page 7 undefined on input line 25.
-
-<figs/coupling_matrix.pdf, id=147, 515.08058pt x 516.9182pt>
+<figs/coupling_matrix.pdf, id=2489, 515.08058pt x 516.9182pt>
 File: figs/coupling_matrix.pdf Graphic file (type pdf)
 <use figs/coupling_matrix.pdf>
 Package pdftex.def Info: figs/coupling_matrix.pdf  used on input line 38.
 (pdftex.def)             Requested size: 399.47607pt x 400.90718pt.
-[7{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-rmsc.en
-c}]
-
-LaTeX Warning: Reference `sec:path-opt' on page 8 undefined on input line 43.
-
-<figs/altitude_speed_tradeoff.pdf, id=160, 491.61806pt x 400.5803pt>
+[16{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-rmsc.e
+nc}]
+<figs/altitude_speed_tradeoff.pdf, id=2507, 491.61806pt x 400.5803pt>
 File: figs/altitude_speed_tradeoff.pdf Graphic file (type pdf)
 <use figs/altitude_speed_tradeoff.pdf>
 Package pdftex.def Info: figs/altitude_speed_tradeoff.pdf  used on input line 5
 4.
 (pdftex.def)             Requested size: 399.47607pt x 325.51347pt.
-[8 <./figs/coupling_matrix.pdf>]
-
-LaTeX Warning: Reference `app:req-detail' on page 9 undefined on input line 59.
-
-
-
-LaTeX Warning: Reference `sec:path-opt' on page 9 undefined on input line 59.
-
-
-LaTeX Warning: Reference `sec:design-strategy' on page 9 undefined on input lin
-e 59.
-
-
-LaTeX Warning: Reference `sec:path-opt' on page 9 undefined on input line 63.
-
-
-LaTeX Warning: Reference `app:decision-flow' on page 9 undefined on input line 
-63.
-
-
-LaTeX Warning: Citation 'galceran2013survey' on page 9 undefined on input line 
-81.
-
-
-LaTeX Warning: Citation 'choset2001coverage' on page 9 undefined on input line 
-81.
-
-
-Underfull \hbox (badness 1796) in paragraph at lines 81--81
-[]|$\OT1/lmr/m/n/9 (+20) 32\OML/lmm/m/it/9 :\OT1/lmr/m/n/9 (+20) 2$$m$ foot-pri
-nt $\OMS/lmsy/m/n/9 ^^B$ \OT1/lmr/m/n/9 (+20) 0.80; 20% over-lap gives $1\OML/l
-mm/m/it/9 :\OT1/lmr/m/n/9 (+20) 4\OMS/lmsy/m/n/9 ^^B$ \OT1/lmr/m/n/9 (+20) mar-
-gin over $4\OML/lmm/m/it/9 :\OT1/lmr/m/n/9 (+20) 5$$m$ RSS er-
- []
-
-
-LaTeX Warning: Citation 'wca1981' on page 9 undefined on input line 81.
-
-[9 <./figs/altitude_speed_tradeoff.pdf>]
-
-LaTeX Warning: Citation 'caa2024uas' on page 10 undefined on input line 90.
-
-
-LaTeX Warning: Citation 'thermal_sar' on page 10 undefined on input line 90.
-
-
-LaTeX Warning: Citation 'mavproxy' on page 10 undefined on input line 92.
-
-<figs/mcda_heatmap.pdf, id=392, 740.55418pt x 684.92888pt>
+ [17 <./figs/coupling_matrix.pdf>] [18 <./figs/altitude_speed_tradeoff.pdf>]
+<figs/mcda_heatmap.pdf, id=2755, 740.55418pt x 684.92888pt>
 File: figs/mcda_heatmap.pdf Graphic file (type pdf)
 <use figs/mcda_heatmap.pdf>
 Package pdftex.def Info: figs/mcda_heatmap.pdf  used on input line 125.
 (pdftex.def)             Requested size: 435.3303pt x 402.64137pt.
-[10] [11 <./figs/mcda_heatmap.pdf>]
-
-LaTeX Warning: Reference `sec:evaluation' on page 12 undefined on input line 16
-7.
-
-
-LaTeX Warning: Citation 'yolov8' on page 12 undefined on input line 171.
-
-
-LaTeX Warning: Citation 'lin2014coco' on page 12 undefined on input line 192.
-
-
-LaTeX Warning: Citation 'edgeai' on page 12 undefined on input line 192.
-
-
-LaTeX Warning: Citation 'domainrand' on page 12 undefined on input line 194.
-
-
-LaTeX Warning: Citation 'yolov8' on page 12 undefined on input line 194.
-
-
-LaTeX Warning: Reference `sec:training' on page 12 undefined on input line 194.
-
-
-
-LaTeX Warning: Reference `sec:model_comparison' on page 12 undefined on input l
-ine 194.
-
-[12]
-
-LaTeX Warning: Citation 'choset2001coverage' on page 13 undefined on input line
- 221.
-
-
-LaTeX Warning: Citation 'galceran2013survey' on page 13 undefined on input line
- 221.
-
-
-LaTeX Warning: Reference `sec:path-tradeoffs' on page 13 undefined on input lin
-e 221.
-
-
-LaTeX Warning: Reference `sec:optimisation' on page 13 undefined on input line 
-221.
-
-
-LaTeX Warning: Reference `sec:formal-opt' on page 13 undefined on input line 22
-1.
-
-
-LaTeX Warning: Citation 'wagner2006fsm' on page 13 undefined on input line 225.
-
-
-
-LaTeX Warning: Citation 'colosseum2017bt' on page 13 undefined on input line 22
-7.
-
-
-LaTeX Warning: Citation 'brooks1986subsumption' on page 13 undefined on input l
-ine 229.
-
-
-Overfull \hbox (58.15848pt too wide) in paragraph at lines 229--230
-[] []\OT1/lmr/bx/n/10 (-20) Why not re-ac-tive/subsumption ar-chi-tec-tures?[] 
-\OT1/lmr/m/n/10 (-20) Re-ac-tive ar-chi-tec-tures (e.g. Brooks' sub-sump-tion [
-[]])
- []
-
-
-LaTeX Warning: Reference `app:states' on page 13 undefined on input line 231.
-
-
-LaTeX Warning: Reference `sec:centering-mitigation' on page 13 undefined on inp
-ut line 233.
-
-
+ [19] [20 <./figs/mcda_heatmap.pdf>] [21]
 Overfull \hbox (0.58871pt too wide) in paragraph at lines 233--234
 []\OT1/lmr/m/n/10 (-20) The CEN-TER-ING state---hovering sta-tion-ary above a d
 e-tected tar-get be-fore es-ti-mat-ing its GPS position---simultaneously
  []
 
-
-LaTeX Warning: Citation 'sheridan2002humans' on page 13 undefined on input line
- 237.
-
-
-LaTeX Warning: Citation 'endsley1999loa' on page 13 undefined on input line 237
-.
-
-
-LaTeX Warning: Citation 'cummings2014man_uav' on page 13 undefined on input lin
-e 237.
-
-
-Overfull \hbox (10.4307pt too wide) in paragraph at lines 237--238
-\OT1/lmr/m/n/10 (-20) The sys-tem op-er-ates at Sheri-dan Level 7--8 (``com-put
-er ex-e-cutes au-tonomously, hu-man mon-i-tors'') [[]]
- []
-
-[13]
-
-LaTeX Warning: Citation 'goodrich2007human' on page 14 undefined on input line 
-243.
-
-
-LaTeX Warning: Citation 'murphy2014' on page 14 undefined on input line 243.
-
-
-LaTeX Warning: Citation 'lyu2023uav_sar_survey' on page 14 undefined on input l
-ine 243.
-
-
-LaTeX Warning: Citation 'goodrich2008' on page 14 undefined on input line 243.
-
-
-LaTeX Warning: Citation 'wca1981' on page 14 undefined on input line 277.
-
-[14]
+[22] [23]
 LaTeX Font Info:    Font shape `OT1/lmtt/bx/n' in size <10> not available
 (Font)              Font shape `OT1/lmtt/b/n' tried instead on input line 279.
-
-
-LaTeX Warning: Citation 'quigley2009ros' on page 15 undefined on input line 293
-.
-
-
-LaTeX Warning: Citation 'imx296' on page 15 undefined on input line 297.
-
-
-LaTeX Warning: Citation 'sukhatme2012rolling_global' on page 15 undefined on in
-put line 297.
-
-
-LaTeX Warning: Citation 'caa2024uas' on page 15 undefined on input line 297.
-
-
-LaTeX Warning: Reference `sec:evaluation' on page 15 undefined on input line 30
-1.
-
-
-LaTeX Warning: Reference `sec:field-day' on page 15 undefined on input line 301
-.
-
-
-LaTeX Warning: Reference `app:decision-flow' on page 15 undefined on input line
- 303.
-
-
-LaTeX Warning: Reference `app:req-detail' on page 15 undefined on input line 30
-6.
-
-) (sections/system_description.tex
-
-LaTeX Warning: Reference `sec:localisation' on page 15 undefined on input line 
-8.
-
-
-LaTeX Warning: Reference `sec:groundstation' on page 15 undefined on input line
- 8.
-
-[15]
-<figs/mission_overview.pdf, id=601, 488.03644pt x 464.76385pt>
+) (sections/system_description.tex [24]
+<figs/mission_overview.pdf, id=3015, 488.03644pt x 464.76385pt>
 File: figs/mission_overview.pdf Graphic file (type pdf)
 <use figs/mission_overview.pdf>
 Package pdftex.def Info: figs/mission_overview.pdf  used on input line 12.
 (pdftex.def)             Requested size: 512.14963pt x 487.76114pt.
-
-
-LaTeX Warning: Reference `sec:cv:inference' on page 16 undefined on input line 
-20.
-
-
-LaTeX Warning: Reference `sec:streaming-arch' on page 16 undefined on input lin
-e 41.
-
-
-LaTeX Warning: Reference `sec:calibration' on page 16 undefined on input line 4
-1.
-
-
-LaTeX Warning: Reference `sec:comms' on page 16 undefined on input line 41.
-
-[16 <./figs/mission_overview.pdf>]
-
-LaTeX Warning: Reference `sec:test-scripts' on page 17 undefined on input line 
-46.
-
-<figs/architecture.pdf, id=701, 654.40488pt x 570.93298pt>
+ [25 <./figs/mission_overview.pdf>]
+<figs/architecture.pdf, id=3118, 654.40488pt x 570.93298pt>
 File: figs/architecture.pdf Graphic file (type pdf)
 <use figs/architecture.pdf>
 Package pdftex.def Info: figs/architecture.pdf  used on input line 50.
 (pdftex.def)             Requested size: 435.3303pt x 379.81377pt.
-<figs/pi_system.pdf, id=702, 873.46724pt x 681.93645pt>
+<figs/pi_system.pdf, id=3119, 873.46724pt x 681.93645pt>
 File: figs/pi_system.pdf Graphic file (type pdf)
 <use figs/pi_system.pdf>
 Package pdftex.def Info: figs/pi_system.pdf  used on input line 57.
 (pdftex.def)             Requested size: 384.11221pt x 299.88647pt.
-[17 <./figs/architecture.pdf>]
-
-LaTeX Warning: Reference `app:config' on page 18 undefined on input line 63.
-
-
-LaTeX Warning: Reference `sec:localisation' on page 18 undefined on input line 
-87.
-
-
-LaTeX Warning: Reference `sec:repulsive-field' on page 18 undefined on input li
-ne 90.
-
-
-LaTeX Warning: Reference `sec:nfz-interaction' on page 18 undefined on input li
-ne 90.
-
-[18 <./figs/pi_system.pdf>]
-<figs/geofence_diagram.pdf, id=1035, 974.55922pt x 699.68274pt>
+ [26 <./figs/architecture.pdf>] [27 <./figs/pi_system.pdf>]
+<figs/geofence_diagram.pdf, id=3456, 974.55922pt x 699.68274pt>
 File: figs/geofence_diagram.pdf Graphic file (type pdf)
 <use figs/geofence_diagram.pdf>
 Package pdftex.def Info: figs/geofence_diagram.pdf  used on input line 94.
 (pdftex.def)             Requested size: 512.14963pt x 367.71262pt.
- [19 <./figs/geofence_diagram.pdf>]
-
-LaTeX Warning: Citation 'yolov8' on page 20 undefined on input line 108.
-
-
-LaTeX Warning: Citation 'tflite' on page 20 undefined on input line 108.
-
-
-LaTeX Warning: Citation 'ncnn' on page 20 undefined on input line 108.
-
-
-LaTeX Warning: Reference `app:cv-extended' on page 20 undefined on input line 1
-08.
-
-<figs/cv_pipeline.pdf, id=1194, 797.37903pt x 195.129pt>
+ [28 <./figs/geofence_diagram.pdf>]
+<figs/cv_pipeline.pdf, id=3618, 797.37903pt x 195.129pt>
 File: figs/cv_pipeline.pdf Graphic file (type pdf)
 <use figs/cv_pipeline.pdf>
 Package pdftex.def Info: figs/cv_pipeline.pdf  used on input line 112.
 (pdftex.def)             Requested size: 435.3303pt x 106.52927pt.
-
-LaTeX Warning: Reference `app:cv:benchmarks' on page 20 undefined on input line
- 119.
-
-
-LaTeX Warning: Reference `app:cv:training' on page 20 undefined on input line 1
-19.
-
-
-LaTeX Warning: Reference `app:cv:speed' on page 20 undefined on input line 119.
-
-
-
-LaTeX Warning: Reference `sec:cv:pipeline-fps' on page 20 undefined on input li
-ne 119.
-
-
-LaTeX Warning: Reference `sec:vision-perf' on page 20 undefined on input line 1
-19.
-
-
-LaTeX Warning: Citation 'choset2001coverage' on page 20 undefined on input line
- 124.
-
-
-LaTeX Warning: Reference `sec:path-opt' on page 20 undefined on input line 127.
-
-
-<figs/coverage_vs_time.pdf, id=1197, 425.99664pt x 256.37357pt>
+<figs/coverage_vs_time.pdf, id=3628, 425.99664pt x 256.37357pt>
 File: figs/coverage_vs_time.pdf Graphic file (type pdf)
 <use figs/coverage_vs_time.pdf>
 Package pdftex.def Info: figs/coverage_vs_time.pdf  used on input line 131.
 (pdftex.def)             Requested size: 409.72125pt x 246.59306pt.
-<figs/search_pattern.pdf, id=1198, 568.93272pt x 535.50877pt>
+<figs/search_pattern.pdf, id=3629, 568.93272pt x 535.50877pt>
 File: figs/search_pattern.pdf Graphic file (type pdf)
 <use figs/search_pattern.pdf>
 Package pdftex.def Info: figs/search_pattern.pdf  used on input line 138.
 (pdftex.def)             Requested size: 435.3303pt x 409.7691pt.
-[20 <./figs/cv_pipeline.pdf>]
-
-LaTeX Warning: Reference `app:states' on page 21 undefined on input line 146.
-
-<figs/state_machine.pdf, id=1291, 547.08388pt x 498.663pt>
+ [29 <./figs/cv_pipeline.pdf>]
+<figs/state_machine.pdf, id=3724, 547.08388pt x 498.663pt>
 File: figs/state_machine.pdf Graphic file (type pdf)
 <use figs/state_machine.pdf>
 Package pdftex.def Info: figs/state_machine.pdf  used on input line 150.
 (pdftex.def)             Requested size: 486.54057pt x 443.48909pt.
-[21 <./figs/coverage_vs_time.pdf> <./figs/search_pattern.pdf>]
-<figs/state_machine_generated.pdf, id=1459, 518.53723pt x 754.82625pt>
+ [30 <./figs/coverage_vs_time.pdf> <./figs/search_pattern.pdf>]
+<figs/state_machine_generated.pdf, id=3892, 518.53723pt x 754.82625pt>
 File: figs/state_machine_generated.pdf Graphic file (type pdf)
 <use figs/state_machine_generated.pdf>
 Package pdftex.def Info: figs/state_machine_generated.pdf  used on input line 1
 57.
 (pdftex.def)             Requested size: 512.14963pt x 745.57568pt.
- [22 <./figs/state_machine.pdf>]
+ [31 <./figs/state_machine.pdf>]
 Overfull \vbox (28.57568pt too high) has occurred while \output is active []
 
 
-[23 <./figs/state_machine_generated.pdf>]
-
-LaTeX Warning: Reference `app:states' on page 24 undefined on input line 183.
-
-
-LaTeX Warning: Reference `sec:safety' on page 24 undefined on input line 183.
-
-
-LaTeX Warning: Reference `sec:mission-flow' on page 24 undefined on input line 
-183.
-
-
-LaTeX Warning: Reference `sec:gps-deep' on page 24 undefined on input line 194.
-
-
-
-LaTeX Warning: Reference `fig:pipeline-flow' on page 24 undefined on input line
- 194.
-
-
-LaTeX Warning: Reference `sec:gps-deep' on page 24 undefined on input line 202.
-
-
-
-LaTeX Warning: Reference `sec:estimation-eval' on page 24 undefined on input li
-ne 202.
-
-
-LaTeX Warning: Reference `sec:loc-approaches' on page 24 undefined on input lin
-e 202.
-
-
-LaTeX Warning: Reference `sec:centering-analysis' on page 24 undefined on input
- line 202.
-
-[24]
-<figs/gps_bullseye.pdf, id=1681, 415.84798pt x 426.3403pt>
+[32 <./figs/state_machine_generated.pdf>] [33]
+<figs/gps_bullseye.pdf, id=4124, 415.84798pt x 426.3403pt>
 File: figs/gps_bullseye.pdf Graphic file (type pdf)
 <use figs/gps_bullseye.pdf>
 Package pdftex.def Info: figs/gps_bullseye.pdf  used on input line 208.
 (pdftex.def)             Requested size: 245.82962pt x 252.033pt.
-<figs/gps_error_direction.pdf, id=1682, 743.24844pt x 354.82443pt>
+<figs/gps_error_direction.pdf, id=4125, 743.24844pt x 354.82443pt>
 File: figs/gps_error_direction.pdf Graphic file (type pdf)
 <use figs/gps_error_direction.pdf>
 Package pdftex.def Info: figs/gps_error_direction.pdf  used on input line 215.
 (pdftex.def)             Requested size: 245.82962pt x 117.35771pt.
-
-
-LaTeX Warning: Reference `sec:streaming-arch' on page 25 undefined on input lin
-e 226.
-
-
-LaTeX Warning: Reference `sec:sim-validation' on page 25 undefined on input lin
-e 231.
-
-<figs/mission_timeline.pdf, id=1683, 723.18619pt x 291.45325pt>
+<figs/mission_timeline.pdf, id=4128, 723.18619pt x 291.45325pt>
 File: figs/mission_timeline.pdf Graphic file (type pdf)
 <use figs/mission_timeline.pdf>
 Package pdftex.def Info: figs/mission_timeline.pdf  used on input line 235.
 (pdftex.def)             Requested size: 460.93153pt x 185.7645pt.
-
-LaTeX Warning: Reference `sec:requirements' on page 25 undefined on input line 
-240.
-
-) (sections/requirements_verification.tex
-
-LaTeX Warning: Reference `tab:req-verification' on page 25 undefined on input l
-ine 3.
-
-
-Overfull \hbox (2.64287pt too wide) in paragraph at lines 12--12
-[]|\OT1/lmr/bx/n/9 (-20) Req| 
+)
+(sections/requirements_verification.tex
+Underfull \hbox (badness 1776) in paragraph at lines 12--13
+[]|\OT1/lmr/bx/n/7 (+20) Verification Sta-
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 14--14
-[]|\OT1/lmr/m/n/9 (+20) KML poly-gon
+[]|\OT1/lmr/m/n/7 (+20) Fly within
  []
 
 
-Underfull \hbox (badness 5345) in paragraph at lines 14--14
-\OT1/lmr/m/n/9 (+20) load + way-point
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 14--14
-\OT1/lmtt/m/n/9 pointPolygonTest
+Underfull \hbox (badness 2261) in paragraph at lines 14--14
+[]|\OT1/lmr/m/n/7 (+20) KML poly-gon load +
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 14--14
-[]|\OT1/lmr/m/n/9 (+20) SITL teleme-try, ge-
+\OT1/lmr/m/n/7 (+20) time \OT1/lmtt/m/n/7 pointPolygonTest
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 14--14
-\OT1/lmr/m/n/9 (+20) ofence unit test,
+Underfull \hbox (badness 3826) in paragraph at lines 15--15
+[]|\OT1/lmr/m/n/7 (+20) Five-layer NFZ (plan-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 14--14
-[]\OT1/lmtt/m/n/9 enforce[]geofence()
+Underfull \hbox (badness 10000) in paragraph at lines 17--17
+[]|\OT1/lmtt/m/n/7 TARGET[]ALT\OT1/lmr/m/n/7 (+20) =35m +
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 15--15
-[]|\OT1/lmr/m/n/9 (+20) Five-layer NFZ
+Underfull \hbox (badness 10000) in paragraph at lines 17--17
+\OT1/lmtt/m/n/7 send[]global[]target()
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 15--15
-\OT1/lmr/m/n/9 (+20) (plan-time fil-ter,
+Underfull \hbox (badness 2875) in paragraph at lines 17--17
+\OT1/lmr/m/n/7 (+20) 50m cap + firmware
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 15--15
-\OT1/lmr/m/n/9 (+20) speed ramp, re-
+Underfull \hbox (badness 1072) in paragraph at lines 18--18
+[]|\OT1/lmr/m/n/7 (+20) Search area +
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 15--15
-\OT1/lmr/m/n/9 (+20) cut-off, firmware
- []
-
-
-Underfull \hbox (badness 4859) in paragraph at lines 15--15
-[]|\OT1/lmr/m/n/9 (+20) SITL multi-angle ap-
- []
-
-
-Underfull \hbox (badness 4013) in paragraph at lines 15--15
-\OT1/lmr/m/n/9 (+20) proach, ge-ofence di-a-
- []
-
-
-Underfull \hbox (badness 1472) in paragraph at lines 16--16
-[]|\OT1/lmr/m/n/9 (+20) KML point place-
- []
-
-
-Underfull \hbox (badness 2941) in paragraph at lines 16--16
-\OT1/lmr/m/n/9 (+20) er-ror), run-time $\OML/lmm/m/it/9 >$\OT1/lmr/m/n/9 (+20) 
-5m
- []
-
-
-Underfull \hbox (badness 3118) in paragraph at lines 17--17
-[]|\OT1/lmr/m/n/9 (+20) Max 50m al-ti-
- []
-
-
-Overfull \hbox (11.24103pt too wide) in paragraph at lines 17--17
-\OT1/lmtt/m/n/9 send[]global[]target()
- []
-
-
-Underfull \hbox (badness 6220) in paragraph at lines 18--18
-[]|\OT1/lmr/m/n/9 (+20) Search area +
- []
-
-
-LaTeX Warning: Reference `app:req-detail' on page 25 undefined on input line 18
-.
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 18--18
-[]|\OT1/lmr/m/n/9 (+20) Lawnmower
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 18--18
-\OT1/lmr/m/n/9 (+20) + YOLOv8n
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 18--18
-\OT1/lmr/m/n/9 (+20) (mAP$[]$=0.995,
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 18--19
-[]|\OT1/lmr/m/n/9 (+20) Verified (sim-u-la-
+Underfull \hbox (badness 6775) in paragraph at lines 18--18
+\OT1/lmr/m/n/7 (+20) iden-tify items
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 19--19
-[]|\OT1/lmtt/m/n/9 B \OT1/lmr/m/n/9 (+20) key /
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 19--19
-\OT1/lmtt/m/n/9 --beacon-delay
- []
-
-
-Underfull \hbox (badness 1983) in paragraph at lines 19--19
-[]|\OT1/lmr/m/n/9 (+20) SITL di-ver-sion + re-
+[]|\OT1/lmr/m/n/7 (+20) PLB Fo-cus
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 20--20
-[]|\OT1/lmr/m/n/9 (+20) Land 5--10m
+[]|\OT1/lmr/m/n/7 (+20) Land 5--10m
+ []
+
+
+Underfull \hbox (badness 6859) in paragraph at lines 20--20
+\OT1/lmr/m/n/7 (+20) from ca-su-alty,
+ []
+
+
+Underfull \hbox (badness 1472) in paragraph at lines 20--20
+\OT1/lmr/m/n/7 (+20) kit, re-turn to
+ []
+
+
+Underfull \hbox (badness 2150) in paragraph at lines 20--20
+\OT1/lmr/m/n/7 (+20) load de-ploy + re-turn
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 20--20
-\OT1/lmr/m/n/9 (+20) from ca-su-alty,
- []
-
-
-Underfull \hbox (badness 6725) in paragraph at lines 20--20
-\OT1/lmr/m/n/9 (+20) kit, re-turn to
- []
-
-
-LaTeX Warning: Reference `sec:estimation-eval' on page 25 undefined on input li
-ne 20.
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 20--20
-[]|\OT1/lmr/m/n/9 (+20) Probability anal-y-sis
+[]|\OT1/lmr/m/n/7 (+20) Probability anal-y-sis
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 20--20
-\OT1/lmr/m/n/9 (+20) (CEP$[]$=2.3m, Sec-
+\OT1/lmr/m/n/7 (+20) (CEP$[]$=2.3m, Sec-tion [][]AG[][]),
  []
 
 
-Underfull \hbox (badness 2884) in paragraph at lines 22--22
-[]|\OT1/lmr/m/n/9 (+20) RTH + Mo-tor
+Underfull \hbox (badness 4846) in paragraph at lines 20--21
+[]|\OT1/lmr/m/n/7 (+20) Verified (SITL +
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 22--22
-[]|\OT1/lmr/m/n/9 (+20) RC kill switch
+Underfull \hbox (badness 1596) in paragraph at lines 22--22
+[]|\OT1/lmr/m/n/7 (+20) RC kill switch (mode
  []
 
 
-Underfull \hbox (badness 2772) in paragraph at lines 22--22
-\OT1/lmr/m/n/9 (+20) (mode $\OMS/lmsy/m/n/9 !$ \OT1/lmr/m/n/9 (+20) STA-BI-
+Underfull \hbox (badness 4686) in paragraph at lines 22--22
+\OMS/lmsy/m/n/7 !$ \OT1/lmr/m/n/7 (+20) STA-BI-LIZE), soft-
  []
 
 
-Underfull \hbox (badness 1221) in paragraph at lines 22--22
-\OT1/lmr/m/n/9 (+20) LIZE), soft-ware \OT1/lmtt/m/n/9 M
+Underfull \hbox (badness 1728) in paragraph at lines 22--22
+\OT1/lmr/m/n/7 (+20) ware \OT1/lmtt/m/n/7 M \OT1/lmr/m/n/7 (+20) over-ride, aut
+o
  []
 
 
-Overfull \hbox (47.33995pt too wide) in paragraph at lines 22--22
-\OT1/lmtt/m/n/9 MAV[]CMD[]COMPONENT[]ARM[]DISARM| 
+Underfull \hbox (badness 5893) in paragraph at lines 22--22
+\OT1/lmr/m/n/7 (+20) RTL fail-safes; mo-tor
  []
 
 
-Underfull \hbox (badness 5592) in paragraph at lines 22--22
-[]|\OT1/lmr/m/n/9 (+20) SITL: 3 in-de-pen-dent
+Overfull \hbox (14.6017pt too wide) in paragraph at lines 22--22
+\OT1/lmtt/m/n/7 MAV[]CMD[]COMPONENT[]ARM[]DISARM| 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 23--23
-[]|\OT1/lmr/m/n/9 (+20) GPS pro-jec-tion,
+Underfull \hbox (badness 1365) in paragraph at lines 22--22
+[]|\OT1/lmr/m/n/7 (+20) SITL: 3 in-de-pen-dent over-ride
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 23--23
-\OT1/lmr/m/n/9 (+20) web dash-board,
- []
-
-
-Overfull \hbox (7.83904pt too wide) in paragraph at lines 23--23
-\OT1/lmtt/m/n/9 mission[]detections/
- []
-
-
-LaTeX Warning: Reference `sec:estimation-eval' on page 25 undefined on input li
-ne 23.
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 23--23
-[]|\OT1/lmr/m/n/9 (+20) Detection im-ages +
- []
-
-
-Underfull \hbox (badness 1845) in paragraph at lines 23--23
-\OT1/lmr/m/n/9 (+20) ci-sion; GPS ac-cu-racy
+Underfull \hbox (badness 4846) in paragraph at lines 22--23
+[]|\OT1/lmr/m/n/7 (+20) Verified (SITL +
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 23--23
-\OT1/lmr/m/n/9 (+20) CEP$[]$=2.3m (Sec-
+[]|\OT1/lmr/m/n/7 (+20) GPS pro-jec-tion,
  []
 
 
-Underfull \hbox (badness 6141) in paragraph at lines 24--24
-[]|\OT1/lmr/m/n/9 (+20) Company Pi-lot
+Underfull \hbox (badness 10000) in paragraph at lines 23--23
+\OT1/lmr/m/n/7 (+20) web dash-board,
  []
 
 
-Underfull \hbox (badness 4699) in paragraph at lines 24--24
-[]|\OT1/lmr/m/n/9 (+20) Team plan, field-day
+Underfull \hbox (badness 10000) in paragraph at lines 23--23
+\OT1/lmtt/m/n/7 mission[]detections/
  []
 
 
-Underfull \hbox (badness 6741) in paragraph at lines 25--25
-[]|\OT1/lmr/m/n/9 (+20) Public GitHub,
+Underfull \hbox (badness 5802) in paragraph at lines 23--23
+\OT1/lmr/m/n/7 (+20) (JPEG + JSON per
  []
 
 
-Overfull \hbox (60.75893pt too wide) in paragraph at lines 25--25
-[]|\OT1/lmtt/m/n/9 github.com/DimaChup/Group[]Proj
+Underfull \hbox (badness 5359) in paragraph at lines 23--23
+\OT1/lmr/m/n/7 (+20) data saved on ev-ery op-er-a-
+ []
+
+
+Underfull \hbox (badness 6110) in paragraph at lines 23--23
+\OT1/lmr/m/n/7 (+20) tor de-ci-sion; GPS ac-cu-racy
+ []
+
+
+Underfull \hbox (badness 4846) in paragraph at lines 23--24
+[]|\OT1/lmr/m/n/7 (+20) Verified (SITL +
+ []
+
+
+Overfull \hbox (25.16298pt too wide) in paragraph at lines 25--25
+[]|\OT1/lmtt/m/n/7 github.com/DimaChup/Group[]Proj
+ []
+
+
+Underfull \hbox (badness 2165) in paragraph at lines 25--25
+[]|\OT1/lmr/m/n/7 (+20) Repository live, pub-lic, MIT
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 25--26
-[]|\OT1/lmr/m/n/9 (+20) Verified (in-spec-
+[]|\OT1/lmr/m/n/7 (+20) Verified (in-spec-
  []
 
-[25 <./figs/gps_bullseye.pdf> <./figs/gps_error_direction.pdf>]
-
-LaTeX Warning: Reference `sec:estimation-eval' on page 26 undefined on input li
-ne 34.
-
-
-LaTeX Warning: Reference `app:req-detail' on page 26 undefined on input line 34
-.
-
-
-LaTeX Warning: Reference `sec:evaluation' on page 26 undefined on input line 34
-.
-
-) (sections/evaluation.tex
-
-LaTeX Warning: Reference `sec:requirements' on page 26 undefined on input line 
-3.
-
-
-LaTeX Warning: Reference `tab:plus-delta' on page 26 undefined on input line 8.
-
-
-[26 <./figs/mission_timeline.pdf>] [27]
-
-LaTeX Warning: Reference `tab:bug-cost' on page 28 undefined on input line 38.
-
-
-LaTeX Warning: Reference `sec:bug-discovery' on page 28 undefined on input line
- 38.
-
-
+[34 <./figs/gps_bullseye.pdf> <./figs/gps_error_direction.pdf>])
+(sections/evaluation.tex [35 <./figs/mission_timeline.pdf>]
 Underfull \hbox (badness 2856) in paragraph at lines 38--38
 []|\OT1/lmtt/m/n/9 vision.py \OT1/lmr/m/n/9 (+20) is the sole file that touches
  CV/AI; all other mod-ules call
  []
 
 
-LaTeX Warning: Reference `sec:groundstation' on page 28 undefined on input line
- 38.
-
-
-LaTeX Warning: Reference `sec:test-org-detail' on page 28 undefined on input li
-ne 38.
-
-
-LaTeX Warning: Reference `sec:simulation' on page 28 undefined on input line 38
-.
-
-
-LaTeX Warning: Reference `fig:det_sensitivity' on page 28 undefined on input li
-ne 38.
-
-
-LaTeX Warning: Reference `fig:perf_analysis' on page 28 undefined on input line
- 38.
-
-
-LaTeX Warning: Reference `sec:centering-mitigation' on page 28 undefined on inp
-ut line 38.
-
-
 Underfull \hbox (badness 6125) in paragraph at lines 67--67
 []|\OT1/lmr/m/n/9 (+20) Inference rate lim-its high-speed
  []
-
-
-LaTeX Warning: Reference `app:cv:benchmarks' on page 28 undefined on input line
- 67.
-
-
-LaTeX Warning: Reference `fig:gps_bullseye' on page 28 undefined on input line 
-67.
-
-
-LaTeX Warning: Reference `fig:gps_error_direction' on page 28 undefined on inpu
-t line 67.
-
-
-LaTeX Warning: Reference `app:cv:training' on page 28 undefined on input line 6
-7.
 
 
 Underfull \hbox (badness 1337) in paragraph at lines 67--67
@@ -2661,253 +2207,73 @@ Underfull \hbox (badness 10000) in paragraph at lines 67--67
 []|\OT1/lmr/m/n/9 (+20) Payload re-lease not software-
  []
 
-
-LaTeX Warning: Reference `app:cv:latency' on page 28 undefined on input line 67
-.
-
-<figs/conf_vs_alt.pdf, id=1964, 359.22015pt x 256.37357pt>
+<figs/conf_vs_alt.pdf, id=4462, 359.22015pt x 256.37357pt>
 File: figs/conf_vs_alt.pdf Graphic file (type pdf)
 <use figs/conf_vs_alt.pdf>
 Package pdftex.def Info: figs/conf_vs_alt.pdf  used on input line 77.
 (pdftex.def)             Requested size: 245.82962pt x 175.44661pt.
-<figs/det_vs_speed.pdf, id=1965, 362.40393pt x 256.37357pt>
+<figs/det_vs_speed.pdf, id=4463, 362.40393pt x 256.37357pt>
 File: figs/det_vs_speed.pdf Graphic file (type pdf)
 <use figs/det_vs_speed.pdf>
 Package pdftex.def Info: figs/det_vs_speed.pdf  used on input line 84.
 (pdftex.def)             Requested size: 245.82962pt x 173.90921pt.
-<figs/latency_breakdown.pdf, id=1966, 362.54507pt x 254.02415pt>
+<figs/latency_breakdown.pdf, id=4464, 362.54507pt x 254.02415pt>
 File: figs/latency_breakdown.pdf Graphic file (type pdf)
 <use figs/latency_breakdown.pdf>
 Package pdftex.def Info: figs/latency_breakdown.pdf  used on input line 96.
 (pdftex.def)             Requested size: 245.82962pt x 172.24962pt.
-<figs/detection_heatmap.pdf, id=1967, 550.9432pt x 380.144pt>
+<figs/detection_heatmap.pdf, id=4465, 550.9432pt x 380.144pt>
 File: figs/detection_heatmap.pdf Graphic file (type pdf)
 <use figs/detection_heatmap.pdf>
 Package pdftex.def Info: figs/detection_heatmap.pdf  used on input line 103.
 (pdftex.def)             Requested size: 245.82962pt x 169.61888pt.
-<figs/detection_montage.pdf, id=1968, 875.67152pt x 658.00113pt>
+<figs/detection_montage.pdf, id=4466, 875.67152pt x 658.00113pt>
 File: figs/detection_montage.pdf Graphic file (type pdf)
 <use figs/detection_montage.pdf>
 Package pdftex.def Info: figs/detection_montage.pdf  used on input line 113.
 (pdftex.def)             Requested size: 512.14963pt x 384.8538pt.
-[28
 
-]
-Overfull \vbox (180.25003pt too high) has occurred while \output is active []
+Overfull \vbox (260.49901pt too high) has occurred while \output is active []
 
 
-[29 <./figs/conf_vs_alt.pdf> <./figs/det_vs_speed.pdf> <./figs/latency_breakdow
-n.pdf> <./figs/detection_heatmap.pdf> <./figs/detection_montage.pdf>]
-
-LaTeX Warning: Reference `fig:conf_vs_alt' on page 30 undefined on input line 1
-22.
-
-
-LaTeX Warning: Reference `fig:detection_montage' on page 30 undefined on input 
-line 122.
-
-
-LaTeX Warning: Reference `fig:latency_breakdown' on page 30 undefined on input 
-line 122.
-
-
-LaTeX Warning: Reference `fig:gps_bullseye' on page 30 undefined on input line 
-125.
-
-
-LaTeX Warning: Reference `fig:gps_error_direction' on page 30 undefined on inpu
-t line 125.
-
-
-LaTeX Warning: Reference `sec:estimation-eval' on page 30 undefined on input li
-ne 125.
-
-
-LaTeX Warning: Reference `fig:estimation-heatmap-all' on page 30 undefined on i
-nput line 125.
-
-
-LaTeX Warning: Reference `app:bug-cost' on page 30 undefined on input line 128.
-
-
-
-LaTeX Warning: Reference `fig:conf_vs_alt' on page 30 undefined on input line 1
-37.
-
-
-LaTeX Warning: Reference `fig:det_vs_speed' on page 30 undefined on input line 
-137.
-
-
-LaTeX Warning: Reference `fig:gps_bullseye' on page 30 undefined on input line 
-137.
-
-
-LaTeX Warning: Reference `sec:field-day' on page 30 undefined on input line 140
-.
-
-
-LaTeX Warning: Reference `sec:results' on page 30 undefined on input line 140.
-
-
-LaTeX Warning: Reference `tab:sar-comparison' on page 30 undefined on input lin
-e 148.
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 157--157
+[36] [37 <./figs/conf_vs_alt.pdf> <./figs/det_vs_speed.pdf> <./figs/latency_bre
+akdown.pdf> <./figs/detection_heatmap.pdf>] [38] [39 <./figs/detection_montage.
+pdf>]
+Underfull \hbox (badness 10000) in paragraph at lines 160--160
 []|\OT1/lmr/m/n/9 (+20) YOLOv8n
  []
 
 
-LaTeX Warning: Citation 'auspex2025' on page 30 undefined on input line 158.
-
-
-Overfull \hbox (23.93715pt too wide) in paragraph at lines 158--158
-[]|\OT1/lmr/m/n/9 (-20) AUSPEX [[]]| 
- []
-
-
-LaTeX Warning: Citation 'sambolek2021' on page 30 undefined on input line 159.
-
-
-Overfull \hbox (35.4007pt too wide) in paragraph at lines 159--159
-[]|\OT1/lmr/m/n/9 (-20) Sambolek [[]]| 
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 159--159
+Underfull \hbox (badness 10000) in paragraph at lines 162--162
 []|\OT1/lmr/m/n/9 (+20) YOLOv3-
  []
 
 
-LaTeX Warning: Citation 'realtimesar2025' on page 30 undefined on input line 16
-0.
-
-
-Overfull \hbox (67.72209pt too wide) in paragraph at lines 160--160
-[]|\OT1/lmr/m/n/9 (-20) Drones+YOLO [[]]| 
+Overfull \hbox (3.4393pt too wide) in paragraph at lines 163--163
+[]|\OT1/lmr/m/n/9 (-20) Drones+YOLO [[][]32[][]]| 
  []
 
 
-LaTeX Warning: Citation 'searchwing2024' on page 30 undefined on input line 161
-.
-
-
-Overfull \hbox (51.6069pt too wide) in paragraph at lines 161--161
-[]|\OT1/lmr/m/n/9 (-20) SearchWing [[]]| 
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 161--161
+Underfull \hbox (badness 10000) in paragraph at lines 164--164
 []|\OT1/lmr/m/n/9 (+20) Companion
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 161--161
+Underfull \hbox (badness 10000) in paragraph at lines 164--164
 []|\OT1/lmr/m/n/9 (+20) Custom
  []
 
+[40
 
-LaTeX Warning: Reference `fig:radar_comparison' on page 30 undefined on input l
-ine 168.
-
-<figs/radar_comparison.pdf, id=2238, 488.07156pt x 455.84062pt>
+]
+<figs/radar_comparison.pdf, id=4778, 488.07156pt x 455.84062pt>
 File: figs/radar_comparison.pdf Graphic file (type pdf)
 <use figs/radar_comparison.pdf>
-Package pdftex.def Info: figs/radar_comparison.pdf  used on input line 172.
+Package pdftex.def Info: figs/radar_comparison.pdf  used on input line 177.
 (pdftex.def)             Requested size: 358.50317pt x 334.83365pt.
-
-LaTeX Warning: Reference `tab:sar-comparison' on page 30 undefined on input lin
-e 173.
-
-
-LaTeX Warning: Reference `tab:sar-comparison' on page 30 undefined on input lin
-e 173.
-
-[30]
-
-LaTeX Warning: Reference `tab:sar-comparison' on page 31 undefined on input lin
-e 177.
-
-
-LaTeX Warning: Reference `tab:sar-comparison' on page 31 undefined on input lin
-e 185.
-
-
-LaTeX Warning: Citation 'deeprlsar2025' on page 31 undefined on input line 191.
-
-
-[31 <./figs/radar_comparison.pdf>]
-
-LaTeX Warning: Reference `app:dev-methodology' on page 32 undefined on input li
-ne 197.
-
-
-LaTeX Warning: Reference `tab:mission-metrics' on page 32 undefined on input li
-ne 202.
-
-
-LaTeX Warning: Reference `tab:sar-comparison' on page 32 undefined on input lin
-e 223.
-
-
-LaTeX Warning: Reference `sec:future' on page 32 undefined on input line 239.
-
-
-LaTeX Warning: Reference `sec:contingency' on page 32 undefined on input line 2
-39.
-
-
-LaTeX Warning: Reference `sec:payload-release' on page 32 undefined on input li
-ne 239.
-
-
-LaTeX Warning: Reference `tab:five-tier-summary' on page 32 undefined on input 
-line 244.
-
-
-LaTeX Warning: Reference `app:bug-cost' on page 32 undefined on input line 244.
-
-
-
-LaTeX Warning: Reference `sec:five-tier' on page 32 undefined on input line 248
-.
-
-
-LaTeX Warning: Reference `sec:five-tier' on page 32 undefined on input line 248
-.
-
-
-LaTeX Warning: Reference `app:bug-cost' on page 32 undefined on input line 262.
-
-
-
-LaTeX Warning: Reference `sec:five-tier' on page 32 undefined on input line 262
-.
-
-
-LaTeX Warning: Reference `tab:sar-comparison' on page 32 undefined on input lin
-e 265.
-
-[32]
-
-LaTeX Warning: Reference `app:lessons-learned' on page 33 undefined on input li
-ne 271.
-
-) [33]
-
-LaTeX Warning: Empty bibliography on input line 204.
-
-[34] [35] (sections/A1_state_table.tex
-
-LaTeX Warning: Reference `fig:state_machine_full' on page 36 undefined on input
- line 7.
-
-
-LaTeX Warning: Reference `tab:state-transitions' on page 36 undefined on input 
-line 7.
-
-<figs/state_machine_full.pdf, id=2371, 973.76273pt x 863.3819pt>
+ [41 <./figs/radar_comparison.pdf>] [42] [43]) [44] [45] [46] [47]
+(sections/A1_state_table.tex
+<figs/state_machine_full.pdf, id=5011, 973.76273pt x 863.3819pt>
 File: figs/state_machine_full.pdf Graphic file (type pdf)
 <use figs/state_machine_full.pdf>
 Package pdftex.def Info: figs/state_machine_full.pdf  used on input line 14.
@@ -3221,159 +2587,34 @@ Underfull \hbox (badness 10000) in paragraph at lines 228--228
 []|\OT1/lmr/m/n/9 (+20) Mission com-plete,
  []
 
-ignored error: Infinite glue shrinkage found in box being split [36 <./figs/sta
+ignored error: Infinite glue shrinkage found in box being split [48 <./figs/sta
 te_machine_full.pdf>]
-ignored error: Infinite glue shrinkage found in box being split [37])
-(sections/A2_config_params.tex [38]
-
-LaTeX Warning: Reference `tab:config-params' on page 39 undefined on input line
- 6.
-
-
-Overfull \hbox (66.20595pt too wide) in paragraph at lines 14--82
+ignored error: Infinite glue shrinkage found in box being split [49])
+(sections/A2_config_params.tex [50]
+Overfull \hbox (45.18626pt too wide) in paragraph at lines 14--82
  [][] 
  []
 
-) (sections/12_model_training.tex
-
-LaTeX Warning: Citation 'domainrand' on page 39 undefined on input line 17.
-
-
-LaTeX Warning: Citation 'yolov8' on page 39 undefined on input line 17.
-
-
-LaTeX Warning: Citation 'domainrand' on page 39 undefined on input line 21.
-
-
-LaTeX Warning: Reference `sec:training:augmentation' on page 39 undefined on in
-put line 30.
-
-
-LaTeX Warning: Citation 'synthdata' on page 39 undefined on input line 33.
-
-
-LaTeX Warning: Reference `tab:augmentation' on page 39 undefined on input line 
-37.
-
-[39]
-
-LaTeX Warning: Citation 'bochkovskiy2020yolov4' on page 40 undefined on input l
-ine 66.
-
-
-LaTeX Warning: Reference `sec:training:domainrand' on page 40 undefined on inpu
-t line 74.
-
-
-LaTeX Warning: Reference `tab:augmentation' on page 40 undefined on input line 
-76.
-
-
-LaTeX Warning: Citation 'synthdata' on page 40 undefined on input line 80.
-
-
-LaTeX Warning: Citation 'shrivastava2016training' on page 40 undefined on input
- line 90.
-
-
-LaTeX Warning: Citation 'shrivastava2016training' on page 40 undefined on input
- line 94.
-
-[40]
-
-LaTeX Warning: Reference `tab:data_composition' on page 41 undefined on input l
-ine 98.
-
-
-LaTeX Warning: Citation 'domainrand' on page 41 undefined on input line 117.
-
-
-LaTeX Warning: Citation 'lin2014coco' on page 41 undefined on input line 121.
-
-
-LaTeX Warning: Citation 'yolov8' on page 41 undefined on input line 121.
-
-
-LaTeX Warning: Reference `tab:training_config' on page 41 undefined on input li
-ne 121.
-
-<figs/training_curves.pdf, id=2545, 569.997pt x 316.75526pt>
+) (sections/12_model_training.tex [51] [52] [53]
+<figs/training_curves.pdf, id=5203, 569.997pt x 316.75526pt>
 File: figs/training_curves.pdf Graphic file (type pdf)
 <use figs/training_curves.pdf>
 Package pdftex.def Info: figs/training_curves.pdf  used on input line 151.
 (pdftex.def)             Requested size: 435.3303pt x 241.93031pt.
-
-LaTeX Warning: Reference `tab:training_results' on page 41 undefined on input l
-ine 158.
-
-<figs/confusion_matrix.pdf, id=2546, 471.25906pt x 351.91475pt>
+<figs/confusion_matrix.pdf, id=5205, 471.25906pt x 351.91475pt>
 File: figs/confusion_matrix.pdf Graphic file (type pdf)
 <use figs/confusion_matrix.pdf>
 Package pdftex.def Info: figs/confusion_matrix.pdf  used on input line 176.
 (pdftex.def)             Requested size: 435.3303pt x 325.08646pt.
-
-LaTeX Warning: Reference `sec:evaluation' on page 41 undefined on input line 18
-1.
-
-
-LaTeX Warning: Reference `sec:training:export' on page 41 undefined on input li
-ne 181.
-
-
-LaTeX Warning: Reference `sec:training:deployment' on page 41 undefined on inpu
-t line 181.
-
-[41 <./figs/training_curves.pdf>] [42 <./figs/confusion_matrix.pdf>]
-
-LaTeX Warning: Citation 'domainrand' on page 43 undefined on input line 211.
-
-
-LaTeX Warning: Reference `sec:evaluation' on page 43 undefined on input line 22
-4.
-
-) (sections/13_safety_risk.tex
-
-LaTeX Warning: Citation 'jarus2019sora' on page 43 undefined on input line 5.
-
-
-LaTeX Warning: Citation 'caa2024uas' on page 43 undefined on input line 5.
-
-
-LaTeX Warning: Reference `tab:risk-matrix' on page 43 undefined on input line 9
-.
-
-
-LaTeX Warning: Citation 'jarus2019sora' on page 43 undefined on input line 9.
-
-
-LaTeX Warning: Reference `tab:risk-register' on page 43 undefined on input line
- 9.
-
-[43]
-
-LaTeX Warning: Reference `tab:risk-register' on page 44 undefined on input line
- 13.
-
-
-LaTeX Warning: Reference `tab:risk-register' on page 44 undefined on input line
- 13.
-
-
-LaTeX Warning: Reference `tab:risk-register' on page 44 undefined on input line
- 30.
-
-
+ [54] [55 <./figs/training_curves.pdf>] [56 <./figs/confusion_matrix.pdf>]) (se
+ctions/13_safety_risk.tex
 Underfull \hbox (badness 3679) in paragraph at lines 41--41
 []|\OT1/lmr/m/n/9 (+20) Pre-flight in-spec-tion; RC kill
  []
 
 
-LaTeX Warning: Reference `sec:geofencing' on page 44 undefined on input line 42
-.
-
-
-Underfull \hbox (badness 5374) in paragraph at lines 42--42
-[]|\OT1/lmr/m/n/9 (+20) Five-layer ge-ofence (Sec. []):
+Underfull \hbox (badness 2205) in paragraph at lines 42--42
+[]|\OT1/lmr/m/n/9 (+20) Five-layer ge-ofence (Sec. [][]D.2[][]):
  []
 
 
@@ -3427,28 +2668,13 @@ File: omslmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 LaTeX Font Info:    Font shape `OMS/lmr/m/n' in size <9> not available
 (Font)              Font shape `OMS/lmsy/m/n' tried instead on input line 51.
 
-
-LaTeX Warning: Reference `sec:lessons' on page 44 undefined on input line 56.
-
-
-LaTeX Warning: Reference `fig:geofence_layers' on page 44 undefined on input li
-ne 60.
-
-<figs/geofence_layers.pdf, id=2747, 606.87292pt x 569.4632pt>
+[57]
+<figs/geofence_layers.pdf, id=5425, 606.87292pt x 569.4632pt>
 File: figs/geofence_layers.pdf Graphic file (type pdf)
 <use figs/geofence_layers.pdf>
 Package pdftex.def Info: figs/geofence_layers.pdf  used on input line 80.
 (pdftex.def)             Requested size: 435.3303pt x 408.50993pt.
-[44]
-
-LaTeX Warning: Reference `tab:failure-modes' on page 45 undefined on input line
- 91.
-
-
-LaTeX Warning: Citation 'ardupilot_failsafe' on page 45 undefined on input line
- 91.
-
-
+ [58]
 Underfull \hbox (badness 1168) in paragraph at lines 102--102
 []|\OT1/lmr/m/n/9 (+20) Search com-pletes with-out de-tec-
  []
@@ -3534,12 +2760,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 112--112
 []|\OT1/lmtt/m/n/9 custom[]mode $\OMS/lmsy/m/n/9 6\OT1/lmr/m/n/9 (+20) =$
  []
 
-[45 <./figs/geofence_layers.pdf>]
-
-LaTeX Warning: Reference `tab:preflight' on page 46 undefined on input line 149
-.
-
-
+[59 <./figs/geofence_layers.pdf>] [60]
 Underfull \hbox (badness 10000) in paragraph at lines 160--161
 \OT1/lmr/m/n/9 (+20) auto-disarm be-
  []
@@ -3568,9 +2789,6 @@ Underfull \hbox (badness 2088) in paragraph at lines 167--168
 Underfull \hbox (badness 1394) in paragraph at lines 169--170
 []|\OT1/lmr/m/n/9 (+20) R5: third-party
  []
-
-
-LaTeX Warning: Reference `tab:lessons' on page 46 undefined on input line 178.
 
 
 Underfull \hbox (badness 1281) in paragraph at lines 189--189
@@ -3658,411 +2876,64 @@ Underfull \hbox (badness 10000) in paragraph at lines 192--193
 []|\OT1/lmtt/m/n/9 DISARM[]DELAY = 0 \OT1/lmr/m/n/9 (+20) in
  []
 
-
-LaTeX Warning: Citation 'caa2024uas' on page 46 undefined on input line 202.
-
-[46]
-
-LaTeX Warning: Citation 'wca1981' on page 47 undefined on input line 212.
-
-
-LaTeX Warning: Reference `sec:geofencing' on page 47 undefined on input line 21
-2.
-
-
-LaTeX Warning: Citation 'jarus2019sora' on page 47 undefined on input line 218.
-
-
-) (sections/10_testing.tex
-
-LaTeX Warning: Citation 'forsberg1991relationship' on page 47 undefined on inpu
-t line 5.
-
-
-LaTeX Warning: Citation 'koopman2016challenges' on page 47 undefined on input l
-ine 5.
-
-
-LaTeX Warning: Reference `tab:test-summary-topline' on page 47 undefined on inp
-ut line 5.
-
-[47]
-
-LaTeX Warning: Reference `tab:five-tier' on page 48 undefined on input line 38.
-
-
-
-LaTeX Warning: Citation 'ardupilot2024' on page 48 undefined on input line 62.
-
-
-LaTeX Warning: Reference `sec:stress' on page 48 undefined on input line 62.
-
-
-LaTeX Warning: Reference `sec:test-scripts' on page 48 undefined on input line 
-74.
-
-[48]
-
-LaTeX Warning: Reference `fig:testing-coverage' on page 49 undefined on input l
-ine 87.
-
-<figs/testing_coverage.pdf, id=2880, 640.37743pt x 351.00548pt>
+[61]) (sections/10_testing.tex [62] [63]
+<figs/testing_coverage.pdf, id=5568, 640.37743pt x 351.00548pt>
 File: figs/testing_coverage.pdf Graphic file (type pdf)
 <use figs/testing_coverage.pdf>
 Package pdftex.def Info: figs/testing_coverage.pdf  used on input line 91.
 (pdftex.def)             Requested size: 435.3303pt x 238.61093pt.
-
-LaTeX Warning: Reference `tab:unit-results' on page 49 undefined on input line 
-98.
-
-[49 <./figs/testing_coverage.pdf>]
-
-LaTeX Warning: Reference `sec:training' on page 50 undefined on input line 133.
-
-
-
-LaTeX Warning: Reference `sec:sim-validation' on page 50 undefined on input lin
-e 139.
-
-
-LaTeX Warning: Reference `tab:stress-results' on page 50 undefined on input lin
-e 143.
-
-[50]
-
-LaTeX Warning: Reference `tab:param-tuning' on page 51 undefined on input line 
-184.
-
-[51]
-
-LaTeX Warning: Reference `sec:stress' on page 52 undefined on input line 207.
-
-
-LaTeX Warning: Reference `sec:testing-deep' on page 52 undefined on input line 
-207.
-
-
-LaTeX Warning: Reference `tab:bug-cost-appendix' on page 52 undefined on input 
-line 207.
-
-[52]
-
-LaTeX Warning: Citation 'nasa2015vv' on page 53 undefined on input line 249.
-
-
-LaTeX Warning: Citation 'jarus2019sora' on page 53 undefined on input line 249.
-
-
-[53] [54]
-
-LaTeX Warning: Reference `sec:testing-deep' on page 55 undefined on input line 
-283.
-
-
-LaTeX Warning: Reference `sec:test-scripts' on page 55 undefined on input line 
-283.
-
-
-LaTeX Warning: Reference `sec:sim-validation' on page 55 undefined on input lin
-e 283.
-
-) (sections/11_field_results.tex
-
-LaTeX Warning: Citation 'mavproxy' on page 55 undefined on input line 12.
-
-
-LaTeX Warning: Citation 'lens_calibration' on page 55 undefined on input line 2
-1.
-
-
-LaTeX Warning: Citation 'imx296' on page 55 undefined on input line 30.
-
-
-LaTeX Warning: Citation 'lens_calibration' on page 55 undefined on input line 3
-4.
-
-
-LaTeX Warning: Citation 'opencv' on page 55 undefined on input line 34.
-
-
-LaTeX Warning: Citation 'tflite' on page 55 undefined on input line 40.
-
-
-LaTeX Warning: Reference `tab:benchmark-results' on page 55 undefined on input 
-line 40.
-
-
-LaTeX Warning: Citation 'xnnpack' on page 55 undefined on input line 44.
-
-
-LaTeX Warning: Citation 'xnnpack' on page 55 undefined on input line 44.
-
-[55]
-
-LaTeX Warning: Citation 'ncnn' on page 56 undefined on input line 59.
-
-
-LaTeX Warning: Citation 'edgeai' on page 56 undefined on input line 59.
-
-
-LaTeX Warning: Reference `sec:gps-math' on page 56 undefined on input line 73.
-
-
-LaTeX Warning: Citation 'misra2006global' on page 56 undefined on input line 80
-.
-
-[56]
-
-LaTeX Warning: Citation 'wca1981' on page 57 undefined on input line 95.
-
-
-LaTeX Warning: Citation 'imx296' on page 57 undefined on input line 101.
-
-
-LaTeX Warning: Citation 'kalman1960' on page 57 undefined on input line 103.
-
-
-LaTeX Warning: Reference `sec:testing' on page 57 undefined on input line 107.
-
-
-LaTeX Warning: Citation 'koopman2016challenges' on page 57 undefined on input l
-ine 107.
-
-) (sections/14_future_work.tex
-
-LaTeX Warning: Citation 'david2021tensorflow' on page 57 undefined on input lin
-e 12.
-
-[57]
-
-LaTeX Warning: Citation 'ncnn' on page 58 undefined on input line 14.
-
-
-LaTeX Warning: Citation 'hailo2023datasheet' on page 58 undefined on input line
- 15.
-
-
-LaTeX Warning: Citation 'tremblay2018training' on page 58 undefined on input li
-ne 28.
-
-
-LaTeX Warning: Citation 'rudol2008human' on page 58 undefined on input line 37.
-
-
-
-LaTeX Warning: Citation 'thermal_sar' on page 58 undefined on input line 37.
-
-[58]
-
-LaTeX Warning: Citation 'cap722' on page 59 undefined on input line 48.
-
-
-LaTeX Warning: Citation 'waharte2010supporting' on page 59 undefined on input l
-ine 52.
-
-
-LaTeX Warning: Citation 'multiuav' on page 59 undefined on input line 52.
-
-) (sections/inference_architecture.tex
-
-LaTeX Warning: Citation 'raspberrypi5' on page 59 undefined on input line 10.
-
-
-LaTeX Warning: Reference `tab:backend_comparison' on page 59 undefined on input
- line 16.
-
-
-LaTeX Warning: Citation 'tflite' on page 59 undefined on input line 34.
-
-
-LaTeX Warning: Citation 'xnnpack' on page 59 undefined on input line 34.
-
-[59]
-
-LaTeX Warning: Citation 'ncnn' on page 60 undefined on input line 39.
-
-
-LaTeX Warning: Citation 'yolov8' on page 60 undefined on input line 39.
-
-
-LaTeX Warning: Reference `app:cv:benchmarks' on page 60 undefined on input line
- 41.
-
-
-LaTeX Warning: Citation 'yolov8' on page 60 undefined on input line 44.
-
-
-LaTeX Warning: Reference `tab:cv_benchmarks' on page 60 undefined on input line
- 51.
-
-
-LaTeX Warning: Citation 'arm_a76' on page 60 undefined on input line 53.
-
-
-Overfull \hbox (55.41069pt too wide) in paragraph at lines 53--54
-\OT1/lmr/m/n/10 (-20) XN-NPACK del-e-gate sup-ports trans-par-ent FP16 ex-e-cu-
-tion of FP32 mod-els via the \OT1/lmtt/m/n/10 TFLITE[]XNNPACK[]DELEGATE[]FLAG[]
-FORCE[]FP16
- []
-
-
-LaTeX Warning: Citation 'tflite' on page 60 undefined on input line 55.
-
-
-LaTeX Warning: Citation 'ncnn' on page 60 undefined on input line 55.
-
-[60]
-
-LaTeX Warning: Reference `sec:localisation' on page 61 undefined on input line 
-70.
-
-
-LaTeX Warning: Reference `sec:streaming-arch' on page 61 undefined on input lin
-e 82.
-
-
-LaTeX Warning: Reference `tab:inference_roadmap' on page 61 undefined on input 
-line 100.
-
-
-LaTeX Warning: Citation 'yolov8' on page 61 undefined on input line 111.
-
-<figs/benchmark_comparison.pdf, id=3104, 715.4611pt x 388.22917pt>
+ [64 <./figs/testing_coverage.pdf>]
+[65] [66] [67] [68] [69]) (sections/11_field_results.tex [70] [71])
+(sections/14_future_work.tex [72] [73]) (sections/inference_architecture.tex
+[74] [75] [76]
+<figs/benchmark_comparison.pdf, id=5829, 715.4611pt x 388.22917pt>
 File: figs/benchmark_comparison.pdf Graphic file (type pdf)
 <use figs/benchmark_comparison.pdf>
 Package pdftex.def Info: figs/benchmark_comparison.pdf  used on input line 122.
 
 (pdftex.def)             Requested size: 435.3303pt x 236.22705pt.
-) [61] (sections/cv_extended.tex
-
-LaTeX Warning: Reference `tab:pipeline_timing' on page 62 undefined on input li
-ne 11.
-
-[62 <./figs/benchmark_comparison.pdf>]
-<figs/vision_pipeline.pdf, id=3223, 814.3197pt x 354.12299pt>
+) (sections/cv_extended.tex [77 <./figs/benchmark_comparison.pdf>] [78]
+<figs/vision_pipeline.pdf, id=5936, 814.3197pt x 354.12299pt>
 File: figs/vision_pipeline.pdf Graphic file (type pdf)
 <use figs/vision_pipeline.pdf>
 Package pdftex.def Info: figs/vision_pipeline.pdf  used on input line 75.
 (pdftex.def)             Requested size: 512.14963pt x 222.715pt.
-
-
-LaTeX Warning: Reference `tab:pipeline_timing' on page 63 undefined on input li
-ne 76.
-
-
-LaTeX Warning: Reference `tab:pipeline_timing' on page 63 undefined on input li
-ne 76.
-
-[63]
-
-LaTeX Warning: Reference `tab:cv_benchmarks' on page 64 undefined on input line
- 83.
-
-
-LaTeX Warning: Reference `sec:cv:inference:method' on page 64 undefined on inpu
-t line 83.
-
-
-LaTeX Warning: Reference `sec:training' on page 64 undefined on input line 109.
-
-
-[64 <./figs/vision_pipeline.pdf>]
-
-LaTeX Warning: Reference `tab:footprint' on page 65 undefined on input line 128
-.
-
-
-LaTeX Warning: Reference `tab:frames_flyover' on page 65 undefined on input lin
-e 159.
-
-
-LaTeX Warning: Reference `fig:gsd_altitude' on page 65 undefined on input line 
-197.
-
-<figs/gsd_altitude.pdf, id=3390, 855.78558pt x 364.70203pt>
+ [79 <./figs/vision_pipeline.pdf>] [80{C:/Users/Bristol/AppData/Local/Programs/
+MiKTeX/fonts/enc/dvips/lm/lm-mathex.enc}]
+<figs/gsd_altitude.pdf, id=6110, 855.78558pt x 364.70203pt>
 File: figs/gsd_altitude.pdf Graphic file (type pdf)
 <use figs/gsd_altitude.pdf>
 Package pdftex.def Info: figs/gsd_altitude.pdf  used on input line 201.
 (pdftex.def)             Requested size: 409.72125pt x 174.60423pt.
-[65{C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathex
-.enc}]
-
-LaTeX Warning: Reference `tab:altitude_performance' on page 66 undefined on inp
-ut line 217.
-
-
-LaTeX Warning: Reference `sec:localisation' on page 66 undefined on input line 
-217.
-
-
-Overfull \hbox (36.0381pt too wide) in paragraph at lines 222--239
- [][] 
+ [81 <./figs/gsd_altitude.pdf>]
+Underfull \hbox (badness 3965) in paragraph at lines 235--236
+[]|\OT1/lmr/m/n/10 (+20) Unreliable --- ap-proach-ing
  []
 
-<figs/altitude_detection_table.pdf, id=3404, 783.79636pt x 334.37234pt>
+<figs/altitude_detection_table.pdf, id=6254, 783.79636pt x 334.37234pt>
 File: figs/altitude_detection_table.pdf Graphic file (type pdf)
 <use figs/altitude_detection_table.pdf>
 Package pdftex.def Info: figs/altitude_detection_table.pdf  used on input line 
 243.
 (pdftex.def)             Requested size: 435.3303pt x 185.7166pt.
-
-LaTeX Warning: Reference `fig:conf_vs_alt_ext' on page 66 undefined on input li
-ne 252.
-
-[66 <./figs/gsd_altitude.pdf> <./figs/altitude_detection_table.pdf>]
+[82 <./figs/altitude_detection_table.pdf>]
 File: figs/conf_vs_alt.pdf Graphic file (type pdf)
 <use figs/conf_vs_alt.pdf>
 Package pdftex.def Info: figs/conf_vs_alt.pdf  used on input line 256.
 (pdftex.def)             Requested size: 384.11221pt x 274.13704pt.
-
-
-LaTeX Warning: Reference `fig:detection_envelope' on page 67 undefined on input
- line 262.
-
-<figs/detection_envelope.pdf, id=3634, 571.09987pt x 354.0703pt>
+<figs/detection_envelope.pdf, id=6350, 571.09987pt x 354.0703pt>
 File: figs/detection_envelope.pdf Graphic file (type pdf)
 <use figs/detection_envelope.pdf>
 Package pdftex.def Info: figs/detection_envelope.pdf  used on input line 266.
 (pdftex.def)             Requested size: 435.3303pt x 269.89581pt.
-
-LaTeX Warning: Reference `sec:training' on page 67 undefined on input line 274.
-
-
-
-LaTeX Warning: Reference `tab:training_results_extended' on page 67 undefined o
-n input line 274.
-
-
-LaTeX Warning: Reference `tab:augmentation' on page 67 undefined on input line 
-300.
-
-
-LaTeX Warning: Reference `sec:vp:blur' on page 67 undefined on input line 300.
-
-[67] [68 <./figs/detection_envelope.pdf>]
+ [83] [84 <./figs/detection_envelope.pdf>]
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/listings\lstlang1.sty
 File: lstlang1.sty 2025/11/14 1.11b listings language file
 )
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/listings\lstlang1.sty
 File: lstlang1.sty 2025/11/14 1.11b listings language file
-)
-
-LaTeX Warning: Reference `tab:model_variants' on page 69 undefined on input lin
-e 345.
-
-
-LaTeX Warning: Reference `eq:frames_per_flyover' on page 69 undefined on input 
-line 377.
-
-
-LaTeX Warning: Reference `tab:frames_flyover' on page 69 undefined on input lin
-e 377.
-
-
-LaTeX Warning: Reference `fig:blur_vs_altitude' on page 69 undefined on input l
-ine 382.
-
-<figs/blur_vs_altitude.pdf, id=3765, 788.11186pt x 357.6005pt>
+) [85]
+<figs/blur_vs_altitude.pdf, id=6499, 788.11186pt x 357.6005pt>
 File: figs/blur_vs_altitude.pdf Graphic file (type pdf)
 <use figs/blur_vs_altitude.pdf>
 Package pdftex.def Info: figs/blur_vs_altitude.pdf  used on input line 386.
@@ -4071,153 +2942,12 @@ File: figs/det_vs_speed.pdf Graphic file (type pdf)
 <use figs/det_vs_speed.pdf>
 Package pdftex.def Info: figs/det_vs_speed.pdf  used on input line 393.
 (pdftex.def)             Requested size: 384.11221pt x 271.75075pt.
-
-LaTeX Warning: Reference `fig:latency_breakdown_ext' on page 69 undefined on in
-put line 404.
-
 File: figs/latency_breakdown.pdf Graphic file (type pdf)
 <use figs/latency_breakdown.pdf>
 Package pdftex.def Info: figs/latency_breakdown.pdf  used on input line 408.
 (pdftex.def)             Requested size: 332.89412pt x 233.25542pt.
-
-LaTeX Warning: Reference `sec:cv:inference:pipeline' on page 69 undefined on in
-put line 415.
-
-[69]) (sections/streaming_architecture.tex
-
-LaTeX Warning: Reference `tab:stream-protocols' on page 70 undefined on input l
-ine 11.
-
-[70 <./figs/blur_vs_altitude.pdf>]
-
-LaTeX Warning: Citation 'munoz2016mjpeg' on page 71 undefined on input line 45.
-
-
-
-LaTeX Warning: Citation 'apple_hls' on page 71 undefined on input line 66.
-
-[71]
-
-LaTeX Warning: Citation 'gamma1994design' on page 72 undefined on input line 11
-7.
-
-
-LaTeX Warning: Citation 'goodrich2007human' on page 72 undefined on input line 
-166.
-
-[72]
-
-LaTeX Warning: Citation 'wiegand2003h264' on page 73 undefined on input line 21
-6.
-
-
-LaTeX Warning: Reference `sec:stream-protocol' on page 73 undefined on input li
-ne 218.
-
-
-LaTeX Warning: Citation 'qgroundcontrol2020' on page 73 undefined on input line
- 228.
-
-) (sections/gps_estimation_deep.tex [73]
-
-LaTeX Warning: Reference `sec:pipeline-overview' on page 74 undefined on input 
-line 15.
-
-
-LaTeX Warning: Reference `sec:resize-pipeline' on page 74 undefined on input li
-ne 15.
-
-
-LaTeX Warning: Reference `sec:gps-math' on page 74 undefined on input line 18.
-
-
-LaTeX Warning: Reference `sec:error-budget' on page 74 undefined on input line 
-21.
-
-
-LaTeX Warning: Reference `sec:roll-pitch-analysis' on page 74 undefined on inpu
-t line 21.
-
-
-LaTeX Warning: Reference `sec:tilt-compensation' on page 74 undefined on input 
-line 24.
-
-
-LaTeX Warning: Reference `sec:level-1-passive' on page 74 undefined on input li
-ne 27.
-
-
-LaTeX Warning: Reference `sec:hover-in-place' on page 74 undefined on input lin
-e 28.
-
-
-LaTeX Warning: Reference `sec:level-3-centering' on page 74 undefined on input 
-line 29.
-
-
-LaTeX Warning: Reference `sec:two-approaches' on page 74 undefined on input lin
-e 30.
-
-
-LaTeX Warning: Reference `sec:centering-mitigation' on page 74 undefined on inp
-ut line 31.
-
-
-LaTeX Warning: Reference `sec:false-positive-handling' on page 74 undefined on 
-input line 38.
-
-
-LaTeX Warning: Reference `sec:two-step' on page 74 undefined on input line 39.
-
-
-LaTeX Warning: Reference `sec:cooperative-arch' on page 74 undefined on input l
-ine 40.
-
-
-LaTeX Warning: Reference `sec:dji-validation' on page 74 undefined on input lin
-e 43.
-
-
-LaTeX Warning: Reference `sec:empirical-comparison' on page 74 undefined on inp
-ut line 43.
-
-
-LaTeX Warning: Reference `sec:gps-averaging' on page 74 undefined on input line
- 43.
-
-
-LaTeX Warning: Reference `sec:fusion-strategies' on page 74 undefined on input 
-line 43.
-
-
-LaTeX Warning: Reference `sec:why-ivw' on page 74 undefined on input line 43.
-
-
-LaTeX Warning: Reference `sec:multi-pass' on page 74 undefined on input line 43
-.
-
-
-LaTeX Warning: Reference `sec:passive-estimation' on page 74 undefined on input
- line 43.
-
-
-LaTeX Warning: Reference `sec:three-strategies' on page 74 undefined on input l
-ine 50.
-
-
-Overfull \hbox (20.7526pt too wide) in paragraph at lines 56--66
- [][] 
- []
-
-
-LaTeX Warning: Reference `sec:two-approaches' on page 74 undefined on input lin
-e 68.
-
-
-LaTeX Warning: Reference `sec:false-positive-handling' on page 74 undefined on 
-input line 68.
-
-
+) (sections/streaming_architecture.tex [86 <./figs/blur_vs_altitude.pdf>] [87] 
+[88] [89]) (sections/gps_estimation_deep.tex [90]
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendlayer/t
 ikz/libraries\tikzlibraryshapes.geometric.code.tex
 File: tikzlibraryshapes.geometric.code.tex 2025-08-29 v3.1.11a (3.1.11a)
@@ -4253,814 +2983,110 @@ File: tikzlibrarycalc.code.tex 2025-08-29 v3.1.11a (3.1.11a)
 (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendlayer/t
 ikz/libraries\tikzlibraryfit.code.tex
 File: tikzlibraryfit.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-)
-
-LaTeX Warning: Reference `fig:pipeline-flow' on page 74 undefined on input line
- 90.
-
-[74] [75] [76]
-
-LaTeX Warning: Reference `eq:gsd-deep' on page 77 undefined on input line 192.
-
-
-LaTeX Warning: Reference `sec:loc-approaches' on page 77 undefined on input lin
-e 192.
-
-
-LaTeX Warning: Reference `sec:approach-direct' on page 77 undefined on input li
-ne 192.
-
-
-LaTeX Warning: Reference `tab:gsd-altitude' on page 77 undefined on input line 
-192.
-
+) [91] [92]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `\leavevmode@ifvmode' on input line 234.
+(hyperref)                removing `\leavevmode@ifvmode' on input line 235.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
 (hyperref)                \kern 1.66702pt
-(hyperref)                removed on input line 234.
+(hyperref)                removed on input line 235.
 
-
-LaTeX Warning: Reference `sec:cal:lens' on page 77 undefined on input line 248.
-
-
-
-LaTeX Warning: Reference `eq:resize' on page 77 undefined on input line 259.
-
-[77]
-
-LaTeX Warning: Reference `eq:body-deep' on page 78 undefined on input line 269.
-
-
-
-LaTeX Warning: Reference `fig:error-waterfall-deep' on page 78 undefined on inp
-ut line 274.
-
-
-LaTeX Warning: Reference `sec:tilt-compensation' on page 78 undefined on input 
-line 300.
-
-<figs/error_waterfall.pdf, id=3953, 715.03262pt x 390.46742pt>
+[93]
+<figs/error_waterfall.pdf, id=6700, 715.03262pt x 390.46742pt>
 File: figs/error_waterfall.pdf Graphic file (type pdf)
 <use figs/error_waterfall.pdf>
-Package pdftex.def Info: figs/error_waterfall.pdf  used on input line 305.
+Package pdftex.def Info: figs/error_waterfall.pdf  used on input line 306.
 (pdftex.def)             Requested size: 435.3303pt x 237.73196pt.
-
-LaTeX Warning: Reference `fig:error-budget-breakdown' on page 78 undefined on i
-nput line 310.
-
-
-LaTeX Warning: Reference `sec:estimation-eval' on page 78 undefined on input li
-ne 310.
-
-
-LaTeX Warning: Citation 'kaplan2017understanding' on page 78 undefined on input
- line 312.
-
-
-LaTeX Warning: Citation 'misra2006global' on page 78 undefined on input line 31
-2.
-
-[78 <./figs/error_waterfall.pdf>]
-
-LaTeX Warning: Reference `eq:rotation-deep' on page 79 undefined on input line 
-318.
-
-
-LaTeX Warning: Reference `sec:cal:fov' on page 79 undefined on input line 320.
-
-
-LaTeX Warning: Reference `sec:gps:strip-visibility' on page 79 undefined on inp
-ut line 324.
-
-
-LaTeX Warning: Reference `tab:error-budget' on page 79 undefined on input line 
-324.
-
-
-LaTeX Warning: Reference `eq:unscale' on page 79 undefined on input line 326.
-
-
-LaTeX Warning: Reference `eq:body-deep' on page 79 undefined on input line 331.
-
-
-
-LaTeX Warning: Reference `eq:wgs84-deep' on page 79 undefined on input line 331
-.
-
-
-LaTeX Warning: Reference `sec:tilt-compensation' on page 79 undefined on input 
-line 331.
-
-
-LaTeX Warning: Reference `eq:tilt-offset' on page 79 undefined on input line 34
-1.
-
-
-LaTeX Warning: Reference `fig:nadir-geometry' on page 79 undefined on input lin
-e 341.
-
-[79]
-
-LaTeX Warning: Reference `tab:tilt-error' on page 80 undefined on input line 36
-8.
-
-
-LaTeX Warning: Reference `sec:tilt-compensation' on page 80 undefined on input 
-line 385.
-
-
-LaTeX Warning: Reference `eq:alt-weight' on page 80 undefined on input line 398
-.
-
-
-LaTeX Warning: Reference `sec:accuracy-progression' on page 80 undefined on inp
-ut line 398.
-
-
-LaTeX Warning: Reference `sec:roll-pitch-analysis' on page 80 undefined on inpu
-t line 403.
-
-[80]
-
-LaTeX Warning: Reference `eq:focal-px' on page 81 undefined on input line 415.
-
-
-LaTeX Warning: Reference `fig:tilt-before-after' on page 81 undefined on input 
-line 458.
-
-[81]
-
-LaTeX Warning: Reference `tab:tilt-compensation-effect' on page 82 undefined on
- input line 606.
-
-
-LaTeX Warning: Reference `fig:attitude-compensation-scatter' on page 82 undefin
-ed on input line 631.
-
-<figs/attitude_compensation.pdf, id=4114, 702.20938pt x 356.91718pt>
+ [94] [95 <./figs/error_waterfall.pdf>] [96] [97] [98]
+<figs/attitude_compensation.pdf, id=6895, 702.20938pt x 356.91718pt>
 File: figs/attitude_compensation.pdf Graphic file (type pdf)
 <use figs/attitude_compensation.pdf>
-Package pdftex.def Info: figs/attitude_compensation.pdf  used on input line 635
+Package pdftex.def Info: figs/attitude_compensation.pdf  used on input line 636
 .
 (pdftex.def)             Requested size: 435.3303pt x 221.27002pt.
-
-LaTeX Warning: Reference `eq:full-rotation' on page 82 undefined on input line 
-648.
-
-
-LaTeX Warning: Reference `eq:ray-cam' on page 82 undefined on input line 648.
-
-
-LaTeX Warning: Reference `eq:tilt-gps' on page 82 undefined on input line 648.
-
-[82 <./figs/attitude_compensation.pdf>]
-
-LaTeX Warning: Reference `eq:full-rotation' on page 83 undefined on input line 
-652.
-
-
-LaTeX Warning: Citation 'beard2012small' on page 83 undefined on input line 652
-.
-
-
-LaTeX Warning: Citation 'barber2006vision' on page 83 undefined on input line 6
-52.
-
-
-LaTeX Warning: Reference `eq:ray-cam' on page 83 undefined on input line 652.
-
-
-LaTeX Warning: Reference `eq:tilt-rotation' on page 83 undefined on input line 
-652.
-
-
-LaTeX Warning: Reference `eq:ground-intersect' on page 83 undefined on input li
-ne 652.
-
-
-LaTeX Warning: Citation 'beard2012small' on page 83 undefined on input line 652
-.
-
-
-LaTeX Warning: Citation 'barber2006vision' on page 83 undefined on input line 6
-52.
-
-
-LaTeX Warning: Reference `tab:literature-comparison' on page 83 undefined on in
-put line 654.
-
-
-LaTeX Warning: Reference `sec:centering-mitigation' on page 83 undefined on inp
-ut line 658.
-
-
-LaTeX Warning: Reference `sec:centering-mitigation' on page 83 undefined on inp
-ut line 658.
-
-
-LaTeX Warning: Citation 'barber2006vision' on page 83 undefined on input line 6
-66.
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 666--666
-[]|\OT1/lmr/m/n/10 (+20) Barber et al.
- []
-
-
-Overfull \hbox (11.16238pt too wide) in paragraph at lines 666--666
-\OT1/lmr/m/n/10 (-20) (2006) [[]]| 
- []
-
-
-LaTeX Warning: Citation 'barber2006vision' on page 83 undefined on input line 6
-77.
-
-
-LaTeX Warning: Citation 'beard2012small' on page 83 undefined on input line 677
-.
-
-
-LaTeX Warning: Citation 'barber2006vision' on page 83 undefined on input line 6
-84.
-
-
-LaTeX Warning: Reference `eq:full-rotation' on page 83 undefined on input line 
-696.
-
-
-LaTeX Warning: Reference `eq:ray-cam' on page 83 undefined on input line 696.
-
-
-LaTeX Warning: Reference `eq:ground-intersect' on page 83 undefined on input li
-ne 696.
-
-
-LaTeX Warning: Reference `eq:tilt-gps' on page 83 undefined on input line 696.
-
-
-LaTeX Warning: Reference `tab:centering-reduction' on page 83 undefined on inpu
-t line 701.
-
-
-LaTeX Warning: Reference `sec:roll-pitch-analysis' on page 83 undefined on inpu
-t line 723.
-
-[83]
-
-LaTeX Warning: Reference `sec:error-budget' on page 84 undefined on input line 
-727.
-
-
-LaTeX Warning: Reference `eq:full-rotation' on page 84 undefined on input line 
-734.
-
-
-LaTeX Warning: Reference `sec:loc-approaches' on page 84 undefined on input lin
-e 739.
-
-
-LaTeX Warning: Reference `eq:body-deep' on page 84 undefined on input line 746.
-
-
-
-LaTeX Warning: Reference `eq:wgs84-deep' on page 84 undefined on input line 746
-.
-
-
-LaTeX Warning: Reference `tab:error-budget' on page 84 undefined on input line 
-746.
-
-
-LaTeX Warning: Reference `sec:roll-pitch-analysis' on page 84 undefined on inpu
-t line 758.
-
-[84]
-
-LaTeX Warning: Reference `eq:unscale' on page 85 undefined on input line 774.
-
-
-LaTeX Warning: Reference `eq:body-deep' on page 85 undefined on input line 774.
-
-
-
-LaTeX Warning: Reference `eq:zero-offset' on page 85 undefined on input line 80
-8.
-
-
-LaTeX Warning: Reference `eq:body-deep' on page 85 undefined on input line 808.
-
-
-
-LaTeX Warning: Reference `eq:body-deep' on page 85 undefined on input line 816.
-
-
-
-LaTeX Warning: Reference `eq:wgs84-deep' on page 85 undefined on input line 816
-.
-
-
-LaTeX Warning: Reference `eq:full-projection' on page 85 undefined on input lin
-e 825.
-
-[85]
-
-LaTeX Warning: Reference `sec:centering-analysis' on page 86 undefined on input
- line 839.
-
-
-LaTeX Warning: Reference `sec:altitude-effect' on page 86 undefined on input li
-ne 848.
-
-
-LaTeX Warning: Reference `tab:hover-vs-centering' on page 86 undefined on input
- line 853.
-
-
-LaTeX Warning: Reference `tab:level-comparison-ops' on page 86 undefined on inp
-ut line 853.
-
-
-LaTeX Warning: Reference `sec:tilt-compensation' on page 86 undefined on input 
-line 877.
-
-[86]
-
-LaTeX Warning: Reference `sec:centering-analysis' on page 87 undefined on input
- line 992.
-
-
-LaTeX Warning: Reference `tab:gsd-altitude' on page 87 undefined on input line 
-1000.
-
-[87]
-
-LaTeX Warning: Reference `eq:alt-weight' on page 88 undefined on input line 100
-7.
-
-
-LaTeX Warning: Reference `sec:two-approaches' on page 88 undefined on input lin
-e 1007.
-
-
-LaTeX Warning: Reference `tab:accuracy-journey' on page 88 undefined on input l
-ine 1012.
-
-
-LaTeX Warning: Reference `tab:accuracy-progression' on page 88 undefined on inp
-ut line 1012.
-
-
-LaTeX Warning: Reference `tab:state-accuracy' on page 88 undefined on input lin
-e 1012.
-
-[88]
-
-LaTeX Warning: Reference `tab:gps-averaging' on page 89 undefined on input line
- 1061.
-
-
-LaTeX Warning: Reference `eq:cep-averaging' on page 89 undefined on input line 
-1061.
-
-
-LaTeX Warning: Reference `fig:cep-vs-time' on page 89 undefined on input line 1
-082.
-
-[89]
-
-LaTeX Warning: Reference `eq:rolling' on page 90 undefined on input line 1156.
-
-
-LaTeX Warning: Reference `eq:cumulative' on page 90 undefined on input line 117
-1.
-
-
-LaTeX Warning: Citation 'kalman1960' on page 90 undefined on input line 1176.
-
-
-LaTeX Warning: Reference `eq:kalman-R-deep' on page 90 undefined on input line 
-1184.
-
-[90]
-
-LaTeX Warning: Reference `sec:accuracy-progression' on page 91 undefined on inp
-ut line 1198.
-
-
-LaTeX Warning: Reference `fig:centrality-weighting' on page 91 undefined on inp
-ut line 1219.
-
-
-LaTeX Warning: Reference `sec:estimation-eval' on page 91 undefined on input li
-ne 1219.
-
-
-LaTeX Warning: Reference `eq:haversine' on page 91 undefined on input line 1238
-.
-
-
-LaTeX Warning: Reference `tab:clustering-tradeoffs' on page 91 undefined on inp
-ut line 1247.
-
-
-LaTeX Warning: Reference `sec:estimation-eval' on page 91 undefined on input li
-ne 1247.
-
-
-LaTeX Warning: Reference `tab:method-compare' on page 91 undefined on input lin
-e 1252.
-
-[91]
-
-LaTeX Warning: Reference `sec:pipeline-overview' on page 92 undefined on input 
-line 1280.
-
-
-LaTeX Warning: Reference `tab:dji-results' on page 92 undefined on input line 1
-285.
-
-
-LaTeX Warning: Reference `fig:bullseye-comparison' on page 92 undefined on inpu
-t line 1307.
-
-
-LaTeX Warning: Reference `fig:convergence-plot-eval' on page 92 undefined on in
-put line 1307.
-
-
-LaTeX Warning: Reference `sec:estimation-eval' on page 92 undefined on input li
-ne 1307.
-
-
-LaTeX Warning: Reference `fig:gps_bullseye' on page 92 undefined on input line 
-1310.
-
-
-LaTeX Warning: Reference `fig:gps_error_direction' on page 92 undefined on inpu
-t line 1310.
-
-[92]
-
-LaTeX Warning: Reference `tab:error-budget' on page 93 undefined on input line 
-1326.
-
-
-LaTeX Warning: Reference `sec:roll-pitch-analysis' on page 93 undefined on inpu
-t line 1329.
-
-
-LaTeX Warning: Reference `fig:estimator-comparison' on page 93 undefined on inp
-ut line 1334.
-
-
-LaTeX Warning: Reference `sec:estimation-eval' on page 93 undefined on input li
-ne 1334.
-
-
-LaTeX Warning: Reference `sec:ground-truth-comparison' on page 93 undefined on 
-input line 1334.
-
-
-LaTeX Warning: Reference `sec:accuracy-progression' on page 93 undefined on inp
-ut line 1343.
-
-
-LaTeX Warning: Reference `tab:state-accuracy' on page 93 undefined on input lin
-e 1348.
-
-
-LaTeX Warning: Reference `tab:accuracy-progression' on page 93 undefined on inp
-ut line 1348.
-
-
-LaTeX Warning: Reference `tab:accuracy-journey' on page 93 undefined on input l
-ine 1348.
-
-
-Underfull \hbox (badness 1931) in paragraph at lines 1358--1358
+ [99 <./figs/attitude_compensation.pdf>] [100] [101] [102] [103] [104] [105] [1
+06] [107] [108]
+[109] [110]
+Underfull \hbox (badness 1931) in paragraph at lines 1359--1359
 []|\OT1/lmr/m/n/10 (+20) Moving at $5$$m s[]$,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1358--1358
+Underfull \hbox (badness 10000) in paragraph at lines 1359--1359
 \OT1/lmr/m/n/10 (+20) 5$--$10[]$ pitch, tilt-
  []
 
 
-Underfull \hbox (badness 1163) in paragraph at lines 1358--1359
+Underfull \hbox (badness 1163) in paragraph at lines 1359--1360
 []|\OT1/lmr/m/n/10 (+20) Tilt com-pen-sa-tion ray-
  []
 
 
-Underfull \hbox (badness 3826) in paragraph at lines 1358--1359
+Underfull \hbox (badness 3826) in paragraph at lines 1359--1360
 \OT1/lmr/m/n/10 (+20) traces through known
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1360--1360
+Underfull \hbox (badness 10000) in paragraph at lines 1361--1361
 []|\OT1/lmr/m/n/10 (+20) Decelerating to
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1360--1360
+Underfull \hbox (badness 10000) in paragraph at lines 1361--1361
 \OT1/lmr/m/n/10 (+20) hover, con-tin-u-ous
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1362--1362
+Underfull \hbox (badness 10000) in paragraph at lines 1363--1363
 []|\OT1/lmr/m/n/10 (+20) Stationary hover,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1364--1364
+Underfull \hbox (badness 10000) in paragraph at lines 1365--1365
 []|\OT1/lmr/m/n/10 (+20) Operator con-firms
  []
 
 
-Underfull \hbox (badness 2293) in paragraph at lines 1364--1364
+Underfull \hbox (badness 2293) in paragraph at lines 1365--1365
 \OT1/lmr/m/n/10 (+20) via ground sta-tion
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1364--1365
+Underfull \hbox (badness 10000) in paragraph at lines 1365--1366
 []|\OT1/lmr/m/n/10 (+20) Estimate frozen at
  []
 
 
-Overfull \hbox (12.80084pt too wide) in paragraph at lines 1354--1369
+Overfull \hbox (12.80084pt too wide) in paragraph at lines 1355--1370
  [][] 
  []
 
-[93]
-
-LaTeX Warning: Reference `eq:zero-projection' on page 94 undefined on input lin
-e 1484.
-
-
-LaTeX Warning: Reference `tab:gsd-altitude' on page 94 undefined on input line 
-1488.
-
-
-LaTeX Warning: Reference `fig:progressive-accuracy-bars' on page 94 undefined o
-n input line 1488.
-
-<figs/progressive_accuracy.pdf, id=4351, 570.86462pt x 296.07526pt>
+[111] [112]
+<figs/progressive_accuracy.pdf, id=7207, 570.86462pt x 296.07526pt>
 File: figs/progressive_accuracy.pdf Graphic file (type pdf)
 <use figs/progressive_accuracy.pdf>
-Package pdftex.def Info: figs/progressive_accuracy.pdf  used on input line 1492
+Package pdftex.def Info: figs/progressive_accuracy.pdf  used on input line 1493
 .
 (pdftex.def)             Requested size: 435.3303pt x 225.78754pt.
-[94]
+ [113 <./figs/progressive_accuracy.pdf>] [114] [115] [116] [117]
+[118]
 
-LaTeX Warning: Reference `sec:pipeline-overview' on page 95 undefined on input 
-line 1504.
-
-
-LaTeX Warning: Reference `eq:ray-cam' on page 95 undefined on input line 1506.
-
-
-LaTeX Warning: Reference `eq:tilt-gps' on page 95 undefined on input line 1506.
-
-
-
-LaTeX Warning: Reference `sec:roll-pitch-analysis' on page 95 undefined on inpu
-t line 1506.
-
-[95 <./figs/progressive_accuracy.pdf>]
-
-LaTeX Warning: Reference `eq:body-deep' on page 96 undefined on input line 1530
-.
-
-
-LaTeX Warning: Reference `sec:centering-mitigation' on page 96 undefined on inp
-ut line 1530.
-
-
-LaTeX Warning: Reference `sec:false-positive-handling' on page 96 undefined on 
-input line 1533.
-
-
-LaTeX Warning: Reference `tab:two-step-comparison' on page 96 undefined on inpu
-t line 1550.
-
-
-LaTeX Warning: Reference `tab:gsd-altitude' on page 96 undefined on input line 
-1567.
-
-
-LaTeX Warning: Reference `fig:creep-up' on page 96 undefined on input line 1571
-.
-
-[96]
-
-LaTeX Warning: Reference `sec:false-positive-handling' on page 97 undefined on 
-input line 1658.
-
-
-LaTeX Warning: Reference `sec:tilt-compensation' on page 97 undefined on input 
-line 1665.
-
-[97] [98]
-
-LaTeX Warning: Reference `sec:gps-math' on page 99 undefined on input line 1809
-.
-
-
-LaTeX Warning: Reference `sec:roll-pitch-analysis' on page 99 undefined on inpu
-t line 1812.
-
-
-LaTeX Warning: Reference `sec:centering-mitigation' on page 99 undefined on inp
-ut line 1815.
-
-
-LaTeX Warning: Reference `tab:static-vs-cooperative' on page 99 undefined on in
-put line 1820.
-
-
-LaTeX Warning: Reference `sec:three-strategies' on page 99 undefined on input l
-ine 1841.
-
-
-LaTeX Warning: Reference `sec:two-step' on page 99 undefined on input line 1841
-.
-
-[99]
-
-LaTeX Warning: Reference `tab:empirical-methods' on page 100 undefined on input
- line 1870.
-
-
-LaTeX Warning: Reference `tab:error-budget' on page 100 undefined on input line
- 1893.
-
-
-LaTeX Warning: Reference `tab:hover-vs-centering' on page 100 undefined on inpu
-t line 1893.
-
-[100]
-
-LaTeX Warning: Reference `eq:zero-projection' on page 101 undefined on input li
-ne 1907.
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 1917.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 1916.
+(hyperref)                removing `subscript' on input line 1917.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `subscript' on input line 1916.
+(hyperref)                removing `math shift' on input line 1917.
 
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 1916.
-
-
-LaTeX Warning: Reference `fig:cep-comparison' on page 101 undefined on input li
-ne 1918.
-
-Package pgfplots info on input line 1944: Using 'lua backend=false' for axis: x
+Package pgfplots info on input line 1945: Using 'lua backend=false' for axis: x
  coord trafo unsupported.
-
-LaTeX Warning: Reference `fig:convergence-plot' on page 101 undefined on input 
-line 1962.
-
-
-LaTeX Warning: Reference `fig:convergence-plot-eval' on page 101 undefined on i
-nput line 1962.
-
-
-LaTeX Warning: Reference `sec:estimation-eval' on page 101 undefined on input l
-ine 1962.
-
-[101]
-
-LaTeX Warning: Reference `sec:error-budget' on page 102 undefined on input line
- 2024.
-
-
-LaTeX Warning: Reference `sec:roll-pitch-analysis' on page 102 undefined on inp
-ut line 2024.
-
-
-LaTeX Warning: Reference `fig:heading-bias' on page 102 undefined on input line
- 2029.
-
-
-LaTeX Warning: Reference `sec:estimation-eval' on page 102 undefined on input l
-ine 2029.
-
-
-LaTeX Warning: Reference `sec:error-budget' on page 102 undefined on input line
- 2029.
-
-
-LaTeX Warning: Reference `sec:roll-pitch-analysis' on page 102 undefined on inp
-ut line 2029.
-
-
-LaTeX Warning: Reference `fig:multi-pass-bias' on page 102 undefined on input l
-ine 2039.
-
-[102]
-
-LaTeX Warning: Reference `eq:multi-pass-cep' on page 103 undefined on input lin
-e 2101.
-
-
-LaTeX Warning: Reference `tab:pass-accuracy' on page 103 undefined on input lin
-e 2101.
-
-
-LaTeX Warning: Reference `tab:gsd-altitude' on page 103 undefined on input line
- 2127.
-
-[103]
-
-LaTeX Warning: Reference `sec:two-approaches' on page 104 undefined on input li
-ne 2143.
-
-
-LaTeX Warning: Reference `sec:clustering' on page 104 undefined on input line 2
-145.
-
-
-LaTeX Warning: Reference `tab:pass-accuracy' on page 104 undefined on input lin
-e 2148.
-
-
-LaTeX Warning: Reference `sec:ivw' on page 104 undefined on input line 2157.
-
-
-LaTeX Warning: Reference `sec:gps-math' on page 104 undefined on input line 216
-0.
-
-
-LaTeX Warning: Reference `eq:weight-deep' on page 104 undefined on input line 2
-161.
-
-
-LaTeX Warning: Reference `eq:alt-weight' on page 104 undefined on input line 21
-61.
-
-
-LaTeX Warning: Reference `sec:clustering' on page 104 undefined on input line 2
-163.
-
-
-LaTeX Warning: Reference `sec:fusion-strategies' on page 104 undefined on input
- line 2170.
-
-
-LaTeX Warning: Reference `sec:why-ivw' on page 104 undefined on input line 2170
-.
-
-[104]
-
-LaTeX Warning: Reference `sec:multi-pass' on page 105 undefined on input line 2
-186.
-
-
-LaTeX Warning: Reference `sec:two-approaches' on page 105 undefined on input li
-ne 2190.
-
-
-LaTeX Warning: Reference `tab:passive-vs-active' on page 105 undefined on input
- line 2194.
-
-
-LaTeX Warning: Reference `sec:clustering' on page 105 undefined on input line 2
-220.
-
-[105]
-
-LaTeX Warning: Reference `sec:flight-progression' on page 106 undefined on inpu
-t line 2238.
-
-) (sections/testing_deep.tex
-
-LaTeX Warning: Reference `tab:bug-cost-appendix' on page 106 undefined on input
- line 10.
-
-[106] [107]
-
-LaTeX Warning: Reference `sec:experiment-scripts' on page 108 undefined on inpu
-t line 71.
-
-
-LaTeX Warning: Reference `tab:test-categories' on page 108 undefined on input l
-ine 86.
-
-[108]
-
-LaTeX Warning: Reference `tab:bug-cost-appendix' on page 109 undefined on input
- line 130.
-
-
+[119] [120] [121] [122] [123]) (sections/testing_deep.tex [124] [125] [126]
 Underfull \hbox (badness 1721) in paragraph at lines 141--141
 []|\OT1/lmr/m/n/9 (+20) Geofence sign con-ven-tion in-
  []
@@ -5090,207 +3116,102 @@ Underfull \hbox (badness 3219) in paragraph at lines 163--164
 []|\OT1/lmr/m/n/9 (+20) Crash on first de-tec-tion in
  []
 
-
-LaTeX Warning: Citation 'forsberg1991relationship' on page 109 undefined on inp
-ut line 174.
-
-
-LaTeX Warning: Reference `tab:vmodel-map' on page 109 undefined on input line 1
-74.
-
-[109]
-
-LaTeX Warning: Reference `tab:cost-gradient' on page 110 undefined on input lin
-e 203.
-
-
-LaTeX Warning: Reference `tab:test-categories' on page 110 undefined on input l
-ine 227.
-
-) (sections/field_day_narrative.tex
-
-LaTeX Warning: Reference `sec:five-tier' on page 110 undefined on input line 3.
-
-
-
-LaTeX Warning: Reference `sec:testing-deep' on page 110 undefined on input line
- 9.
-
-[110]
-
-LaTeX Warning: Reference `tab:fov-impact' on page 111 undefined on input line 3
-6.
-
-[111]
-
-LaTeX Warning: Reference `tab:bench-results' on page 112 undefined on input lin
-e 71.
-
-[112]
-
-LaTeX Warning: Reference `tab:ncnn-bench' on page 113 undefined on input line 1
-23.
-
-[113]
-
-LaTeX Warning: Reference `tab:field-outputs' on page 114 undefined on input lin
-e 170.
-
-
+[127] [128]) (sections/field_day_narrative.tex [129] [130] [131] [132]
 Underfull \hbox (badness 2512) in paragraph at lines 194--194
 []|\OT1/lmr/m/n/9 (+20) Three-terminal work-
  []
 
-[114] [115]) (sections/contingency.tex
-
-LaTeX Warning: Reference `tab:mvd' on page 116 undefined on input line 8.
-
-
-LaTeX Warning: Reference `tab:target' on page 116 undefined on input line 32.
-
-
-LaTeX Warning: Reference `sec:plb-redirect' on page 116 undefined on input line
- 53.
-
-
-Overfull \hbox (60.4425pt too wide) in paragraph at lines 64--65
-[]\OT1/lmr/bx/n/10 (-20) NCNN in-fer-ence back-end. \OT1/lmr/m/n/10 (-20) The N
-CNN ex-port of the re-trained YOLOv8n model is avail-able in \OT1/lmtt/m/n/10 c
-v[]models/sar[]v2[]1088/ncnn/
- []
-
-[116]
-
-LaTeX Warning: Reference `sec:five-tier' on page 117 undefined on input line 84
-.
-
-
-LaTeX Warning: Reference `tab:tier-evolution-summary' on page 117 undefined on 
-input line 87.
-
-
-LaTeX Warning: Reference `tab:contingency' on page 117 undefined on input line 
-108.
-
-
-Underfull \hbox (badness 5832) in paragraph at lines 129--129
+[133]) (sections/contingency.tex [134] [135] [136]
+Underfull \hbox (badness 5832) in paragraph at lines 130--130
 []|\OT1/lmr/m/n/9 (+20) Pi crashes mid-
  []
 
 
-Underfull \hbox (badness 7667) in paragraph at lines 129--129
+Underfull \hbox (badness 7667) in paragraph at lines 130--130
 []|\OT1/lmr/m/n/9 (+20) Sustained $\OML/lmm/m/it/9 >$$\OT1/lmr/m/n/9 (+20) 8$$m
  s[]$
  []
 
 
-Underfull \hbox (badness 1009) in paragraph at lines 129--129
+Underfull \hbox (badness 1009) in paragraph at lines 130--130
 []|\OT1/lmr/m/n/9 (+20) ArduCopter volt-age
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 129--129
+Underfull \hbox (badness 10000) in paragraph at lines 130--130
 []|\OT1/lmr/m/n/9 (+20) Camera fail-ure
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 129--129
+Underfull \hbox (badness 10000) in paragraph at lines 130--130
 []|\OT1/lmr/m/n/9 (+20) Model swapped
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 129--129
+Underfull \hbox (badness 10000) in paragraph at lines 130--130
 []|\OT1/lmr/m/n/9 (+20) TFLite in-ter-preter
  []
 
 
-Underfull \hbox (badness 2343) in paragraph at lines 129--129
+Underfull \hbox (badness 2343) in paragraph at lines 130--130
 []|\OT1/lmr/m/n/9 (+20) No heart-beat af-ter
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 129--129
+Underfull \hbox (badness 10000) in paragraph at lines 130--130
 []|\OT1/lmr/m/n/9 (+20) State ma-chine
  []
 
 
-Underfull \hbox (badness 1622) in paragraph at lines 129--129
+Underfull \hbox (badness 1622) in paragraph at lines 130--130
 []|\OT1/lmr/m/n/9 (+20) Geofence mis-con-
  []
 
-[117] [118]
 
-LaTeX Warning: Reference `sec:mvd' on page 119 undefined on input line 185.
-
-
-LaTeX Warning: Reference `tab:degradation' on page 119 undefined on input line 
-190.
+Overfull \vbox (176.30612pt too high) has occurred while \output is active []
 
 
-Underfull \hbox (badness 2894) in paragraph at lines 208--208
+[137] [138]
+Underfull \hbox (badness 2894) in paragraph at lines 209--209
 \OT1/lmr/m/n/9 (+20) com-pletes, air-craft re-turns
  []
 
 
-Underfull \hbox (badness 4132) in paragraph at lines 208--208
+Underfull \hbox (badness 4132) in paragraph at lines 209--209
 []|\OT1/lmr/m/n/9 (+20) Pilot has di-rect RC; Ar-
  []
 
 
-LaTeX Warning: Reference `tab:test-scripts' on page 119 undefined on input line
- 216.
-
-
-Overfull \hbox (22.8562pt too wide) in paragraph at lines 233--233
-[]|\OT1/lmtt/m/n/9 tests/hardware/gps[]health.py| 
+Underfull \hbox (badness 10000) in paragraph at lines 234--234
+[]|\OT1/lmr/m/n/9 (+20) Altitude too
  []
 
 
-Overfull \hbox (19.45421pt too wide) in paragraph at lines 233--233
-[]|\OT1/lmtt/m/n/9 tests/hardware/benchmark.py| 
+Underfull \hbox (badness 10000) in paragraph at lines 234--234
+[]|\OT1/lmtt/m/n/9 1[]passive[]
  []
 
 
-Overfull \hbox (40.43317pt too wide) in paragraph at lines 233--233
-[]|\OT1/lmtt/m/n/9 tests/flight/1[]passive[]flight.py| 
+Underfull \hbox (badness 10000) in paragraph at lines 234--234
+[]|\OT1/lmr/m/n/9 (+20) Wind as-sess-
  []
 
 
-Overfull \hbox (46.48116pt too wide) in paragraph at lines 233--233
-[]|\OT1/lmtt/m/n/9 tests/diagnostics/cube[]monitor.py| 
+Underfull \hbox (badness 10000) in paragraph at lines 234--234
+[]|\OT1/lmtt/m/n/9 detection[]
  []
 
 
-Overfull \hbox (82.95808pt too wide) in paragraph at lines 233--233
-[]|\OT1/lmtt/m/n/9 tests/hardware/detection[]snapshot[]test.py| 
+Underfull \hbox (badness 10000) in paragraph at lines 234--234
+[]|\OT1/lmr/m/n/9 (+20) Mission Plan-
  []
 
 
-LaTeX Warning: Reference `sec:testing' on page 119 undefined on input line 236.
+Underfull \hbox (badness 10000) in paragraph at lines 234--234
+\OT1/lmr/m/n/9 (+20) ner AUTO +
+ []
 
-
-
-LaTeX Warning: Citation 'rtca_do178c' on page 119 undefined on input line 236.
-
-) (sections/test_scripts_guide.tex
-
-LaTeX Warning: Reference `sec:test-org' on page 119 undefined on input line 6.
-
-
-LaTeX Warning: Reference `sec:five-tier' on page 119 undefined on input line 6.
-
-
-[119]
-
-LaTeX Warning: Reference `tab:flight-scripts' on page 120 undefined on input li
-ne 27.
-
-[120]
-
-LaTeX Warning: Reference `tab:hw-tests' on page 121 undefined on input line 60.
-
-
-
+) (sections/test_scripts_guide.tex [139] [140]
 Underfull \hbox (badness 10000) in paragraph at lines 75--75
 []|\OT1/lmr/m/n/9 (+20) GPS di-ag-nos-tics: satel-lite count, fix type
  []
@@ -5300,33 +3221,12 @@ Underfull \hbox (badness 3118) in paragraph at lines 75--75
 \OT1/lmr/m/n/9 (+20) (2D/3D/DGPS), HDOP, po-si-tion, and time-to-
  []
 
-[121]
-
-LaTeX Warning: Reference `tab:cal-tests' on page 122 undefined on input line 93
-.
-
-
-LaTeX Warning: Reference `sec:localisation' on page 122 undefined on input line
- 93.
-
-
-LaTeX Warning: Reference `tab:error-budget-relative' on page 122 undefined on i
-nput line 97.
-
-
-LaTeX Warning: Reference `tab:error-budget-relative' on page 122 undefined on i
-nput line 97.
-
-
+[141]
 Underfull \hbox (badness 10000) in paragraph at lines 110--111
 []|\OT1/lmtt/m/n/9 calibration[]data.npz
  []
 
-
-LaTeX Warning: Reference `tab:experiment-scripts' on page 122 undefined on inpu
-t line 120.
-
-[122]
+[142]
 Underfull \hbox (badness 1596) in paragraph at lines 137--137
 \OT1/lmr/m/n/9 (+20) hov-ers sta-tion-ary, com-put-ing
  []
@@ -5345,10 +3245,6 @@ Underfull \hbox (badness 4569) in paragraph at lines 139--139
 Underfull \hbox (badness 1226) in paragraph at lines 141--141
 []|\OT1/lmr/m/n/9 (+20) General-purpose flight log-ger:
  []
-
-
-LaTeX Warning: Reference `tab:script-req-map' on page 123 undefined on input li
-ne 162.
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 175--176
@@ -5395,54 +3291,12 @@ Underfull \hbox (badness 10000) in paragraph at lines 189--190
 []|\OT1/lmr/m/n/9 (+20) video[]test,
  []
 
-[123]
-
-LaTeX Warning: Reference `tab:stress-results' on page 124 undefined on input li
-ne 202.
-
-
-LaTeX Warning: Reference `tab:test-gaps' on page 124 undefined on input line 20
-8.
-
-
+[143]
 Underfull \hbox (badness 10000) in paragraph at lines 223--223
 []|\OT1/lmr/m/n/9 (+20) AUTO pat-tern + AI-triggered
  []
 
-) [124] (sections/calibration_deep.tex
-
-LaTeX Warning: Reference `eq:footprint-calib' on page 125 undefined on input li
-ne 22.
-
-
-LaTeX Warning: Citation 'brown1966decentering' on page 125 undefined on input l
-ine 37.
-
-
-Overfull \hbox (20.67361pt too wide) in paragraph at lines 37--38
-\OT1/lmr/m/n/10 (-20) tre by sev-eral pix-els, de-grad-ing the pixel-to-GPS con
--ver-sion. The stan-dard Brown--Conrady model [[]]
- []
-
-
-Overfull \hbox (53.51639pt too wide) in paragraph at lines 43--44
-\OT1/lmr/m/n/10 (-20) 13 \OMS/lmsy/m/n/10 ^^B \OT1/lmr/m/n/10 (-20) 8$ in-ner c
-or-ners). Ap-prox-i-mately 20 im-ages were cap-tured at vary-ing ori-en-ta-tion
-s us-ing \OT1/lmtt/m/n/10 tests/calibration/lens[]calibrate.py\OT1/lmr/m/n/10 (
--20) ,
- []
-
-[125]
-
-LaTeX Warning: Reference `sec:fov-results' on page 126 undefined on input line 
-89.
-
-[126]
-
-LaTeX Warning: Reference `tab:calibration' on page 127 undefined on input line 
-96.
-
-
+) [144] (sections/calibration_deep.tex [145] [146]
 Underfull \hbox (badness 10000) in paragraph at lines 107--107
 []|\OT1/lmr/m/n/10 (+20) Focal length
  []
@@ -5458,182 +3312,30 @@ Underfull \hbox (badness 2245) in paragraph at lines 109--110
 \OT1/lmr/m/n/10 (+20) colour-dependent fea-tures
  []
 
-
-LaTeX Warning: Reference `tab:preflight-cal' on page 127 undefined on input lin
-e 120.
-
-
+[147]
 Overfull \hbox (1.80772pt too wide) in paragraph at lines 147--148
 [] []\OT1/lmr/bx/n/10 (-20) Equip-ment.[] \OT1/lmr/m/n/10 (-20) Drone with GPS 
 an-tenna, known ref-er-ence po-si-tion (e.g. the des-ig-nated Take-Off Lo-ca-ti
 on at 51.423406\TS1/lmr/m/n/10 (-20) °\OT1/lmr/m/n/10 (-20) N,
  []
 
-
-LaTeX Warning: Reference `tab:error-budget' on page 127 undefined on input line
- 168.
-
-
-LaTeX Warning: Reference `sec:error-budget' on page 127 undefined on input line
- 168.
-
-[127]
-
-LaTeX Warning: Reference `tab:alt-error-impact' on page 128 undefined on input 
-line 187.
-
-
-LaTeX Warning: Reference `tab:error-budget' on page 128 undefined on input line
- 214.
-
-
-LaTeX Warning: Reference `sec:error-budget' on page 128 undefined on input line
- 214.
-
-
-LaTeX Warning: Reference `tab:cal-vs-budget' on page 128 undefined on input lin
-e 214.
-
-
-LaTeX Warning: Reference `tab:error-budget' on page 128 undefined on input line
- 218.
-
-
-LaTeX Warning: Reference `tab:error-budget' on page 128 undefined on input line
- 218.
-
-
-LaTeX Warning: Reference `sec:cal:fov' on page 128 undefined on input line 225.
-
-
-
-LaTeX Warning: Reference `sec:cal:lens' on page 128 undefined on input line 226
-.
-
-
-LaTeX Warning: Reference `sec:cal:colour' on page 128 undefined on input line 2
-27.
-
-
-LaTeX Warning: Reference `sec:cal:gps-error' on page 128 undefined on input lin
-e 228.
-
-
-LaTeX Warning: Reference `sec:cal:alt-error' on page 128 undefined on input lin
-e 229.
-
-
-LaTeX Warning: Reference `sec:cal:dji' on page 128 undefined on input line 237.
-
-
-) (sections/simulation_validation.tex
-
-LaTeX Warning: Reference `sec:simulation' on page 128 undefined on input line 3
-.
-
-
-LaTeX Warning: Reference `tab:sim-val-matrix' on page 128 undefined on input li
-ne 8.
-
-
-Overfull \hbox (44.07791pt too wide) in paragraph at lines 15--33
- [][] 
+[148]) (sections/simulation_validation.tex
+Underfull \hbox (badness 2035) in paragraph at lines 20--20
+[]|\OT1/lmr/m/n/8 (+20) MAVLink com-mand in-ter-face
  []
 
-[128]
 
-LaTeX Warning: Reference `sec:fov-results' on page 129 undefined on input line 
-49.
+Underfull \hbox (badness 10000) in paragraph at lines 27--27
+[]|\OT1/lmr/m/n/8 (+20) Detection un-der real light-
+ []
 
-
-LaTeX Warning: Reference `tab:sim-val-results' on page 129 undefined on input l
-ine 70.
-
-[129]
-
-LaTeX Warning: Reference `sec:stress' on page 130 undefined on input line 101.
-
-
-LaTeX Warning: Reference `sec:field-fov' on page 130 undefined on input line 10
-7.
-
-
-LaTeX Warning: Reference `sec:vmodel' on page 130 undefined on input line 113.
-
-[130]
-
-LaTeX Warning: Reference `sec:five-tier' on page 131 undefined on input line 14
-1.
-
-
-LaTeX Warning: Reference `sec:stress' on page 131 undefined on input line 149.
-
-) [131] (sections/mission_flow.tex
-
-LaTeX Warning: Reference `fig:mission_timeline' on page 132 undefined on input 
-line 3.
-
-
-LaTeX Warning: Reference `tab:opt-final' on page 132 undefined on input line 3.
-
-
-
-LaTeX Warning: Reference `sec:groundstation' on page 132 undefined on input lin
-e 14.
-
-[132]
-
-LaTeX Warning: Reference `sec:mf-nfz' on page 133 undefined on input line 62.
-
-
-LaTeX Warning: Reference `sec:localisation' on page 133 undefined on input line
- 91.
-
-[133] [134] [135]
-
-LaTeX Warning: Reference `sec:geofencing' on page 136 undefined on input line 2
-20.
-
-[136]
-
-LaTeX Warning: Reference `tab:mission-timeline' on page 137 undefined on input 
-line 262.
-
-[137]
-
-LaTeX Warning: Reference `sec:five-tier' on page 138 undefined on input line 30
-8.
-
-) (sections/centering_analysis.tex
-
-LaTeX Warning: Reference `sec:localisation' on page 138 undefined on input line
- 6.
-
-[138]
-
-LaTeX Warning: Reference `sec:localisation' on page 139 undefined on input line
- 34.
-
-
-LaTeX Warning: Reference `tab:centering-comparison' on page 139 undefined on in
-put line 57.
-
-
+[149] [150] [151] [152]) (sections/mission_flow.tex [153] [154] [155] [156]
+[157] [158] [159]) (sections/centering_analysis.tex [160]
 Overfull \hbox (1.19728pt too wide) in paragraph at lines 63--71
  [][] 
  []
 
-[139]
-
-LaTeX Warning: Citation 'johnson2013helicopter' on page 140 undefined on input 
-line 105.
-
-[140]
-
-LaTeX Warning: Reference `tab:hover-safety' on page 141 undefined on input line
- 145.
-
-
+[161] [162]
 Underfull \hbox (badness 10000) in paragraph at lines 159--160
 []|\OT1/lmr/m/n/10 (+20) Re-introduces GSD,
  []
@@ -5643,338 +3345,103 @@ Underfull \hbox (badness 4279) in paragraph at lines 159--160
 \OT1/lmr/m/n/10 (+20) focal-length, and yaw
  []
 
-
-LaTeX Warning: Reference `sec:prob-analysis' on page 141 undefined on input lin
-e 162.
-
-
-LaTeX Warning: Citation 'murphy2016disaster' on page 141 undefined on input lin
-e 171.
-
-) (sections/comms_architecture.tex
-
-LaTeX Warning: Citation 'mavproxy' on page 141 undefined on input line 13.
-
-[141]
-
-LaTeX Warning: Reference `fig:comms-topology' on page 142 undefined on input li
-ne 23.
-
-
-LaTeX Warning: Citation 'mavlink2' on page 142 undefined on input line 64.
-
-
-LaTeX Warning: Reference `tab:mavlink-messages' on page 142 undefined on input 
-line 64.
-
-[142]) (sections/pipeline_fps.tex
-
-LaTeX Warning: Reference `tab:pipeline_fps' on page 143 undefined on input line
- 26.
-
-[143]
-
-LaTeX Warning: Reference `sec:future' on page 144 undefined on input line 51.
-
-
-LaTeX Warning: Reference `fig:bottleneck_shift' on page 144 undefined on input 
-line 61.
-
+) (sections/comms_architecture.tex [163] [164]) (sections/pipeline_fps.tex
+[165]
 Package pgfplots info on input line 79: Using 'lua backend=false' for axis: sta
 cked plots unsupported (yet).
 Package pgfplots info on input line 79: Using 'lua backend=false' for axis: x c
 oord trafo unsupported.
-) (sections/path_tradeoffs.tex [144]
-
-LaTeX Warning: Reference `tab:opt-final' on page 145 undefined on input line 5.
-
-
-
-LaTeX Warning: Reference `sec:overlap-margin' on page 145 undefined on input li
-ne 14.
-
-
-LaTeX Warning: Reference `eq:footprint_w' on page 145 undefined on input line 1
-9.
-
-
-LaTeX Warning: Reference `tab:alt-tradeoff' on page 145 undefined on input line
- 19.
-
-[145]) [146] (sections/payload_release.tex
-
-LaTeX Warning: Reference `sec:localisation' on page 147 undefined on input line
- 20.
-
+ [166]) (sections/path_tradeoffs.tex [167] [168])
+(sections/payload_release.tex [169]
 LaTeX Font Info:    External font `lmex10' loaded for size
 (Font)              <12> on input line 28.
-
-LaTeX Warning: Reference `sec:centering-analysis' on page 147 undefined on inpu
-t line 30.
-
-[147]
-
-LaTeX Warning: Reference `sec:centering-analysis' on page 148 undefined on inpu
-t line 54.
-
-
-LaTeX Warning: Reference `sec:centering-analysis' on page 148 undefined on inpu
-t line 54.
-
-
-LaTeX Warning: Reference `sec:centering-analysis' on page 148 undefined on inpu
-t line 58.
-
-) (sections/model_comparison.tex
-
-LaTeX Warning: Reference `tab:model_generations' on page 148 undefined on input
- line 7.
-
-
-LaTeX Warning: Reference `sec:training' on page 148 undefined on input line 28.
-
-
-[148]
-
-LaTeX Warning: Citation 'lin2014coco' on page 149 undefined on input line 34.
-
-
-LaTeX Warning: Citation 'yolov8' on page 149 undefined on input line 50.
-
-[149]
-
-LaTeX Warning: Citation 'yolov8' on page 150 undefined on input line 72.
-
-
-LaTeX Warning: Citation 'rudol2008human' on page 150 undefined on input line 74
-.
-
-
-LaTeX Warning: Citation 'settles2009active' on page 150 undefined on input line
- 76.
-
-) (sections/focus_and_repulsive.tex
-
-LaTeX Warning: Reference `sec:plb-redirect' on page 150 undefined on input line
- 4.
-
-
-LaTeX Warning: Reference `sec:geofencing' on page 150 undefined on input line 4
-.
-
+ [170]) (sections/model_comparison.tex
+[171] [172]) (sections/focus_and_repulsive.tex
 LaTeX Font Info:    Trying to load font information for OMS+lmtt on input line 
 18.
 LaTeX Font Info:    No file OMSlmtt.fd. on input line 18.
+
 
 LaTeX Font Warning: Font shape `OMS/lmtt/m/n' undefined
 (Font)              using `OMS/cmsy/m/n' instead
 (Font)              for symbol `textbraceleft' on input line 18.
 
-
-LaTeX Warning: Reference `alg:beacon-redirect' on page 150 undefined on input l
-ine 26.
-
-[150]
 Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on in
 put line 29.
-
-
-LaTeX Warning: Reference `sec:nfz-layers' on page 151 undefined on input line 4
-6.
-
-
-LaTeX Warning: Reference `sec:nfz-layers' on page 151 undefined on input line 5
-1.
-
-
-LaTeX Warning: Reference `sec:sign-convention' on page 151 undefined on input l
-ine 78.
-
-[151]
-
-LaTeX Warning: Reference `tab:nfz-layers' on page 152 undefined on input line 9
-3.
-
-
-Overfull \hbox (28.2121pt too wide) in paragraph at lines 127--128
+[173] [174]
+Overfull \hbox (19.60863pt too wide) in paragraph at lines 127--128
 [] []\OT1/lmr/bx/n/10 (-20) Di-rec-tional scalar field.[] \OT1/lmr/m/n/10 (-20)
  An al-ter-na-tive scalar field im-ple-men-ta-tion was also de-vel-oped (en-abl
-ed via the \OT1/lmtt/m/n/10 --nfz-directional
+ed via a \OT1/lmtt/m/n/10 --nfz-directional
  []
 
-) (sections/path_optimization_definitive.tex [152]
-
-LaTeX Warning: Citation 'golden2006hypothermia' on page 153 undefined on input 
-line 25.
-
-[153]
-
-LaTeX Warning: Reference `eq:total-energy' on page 154 undefined on input line 
-91.
-
-<figs/real_energy_heatmap.png, id=5203, 867.24pt x 578.16pt>
+) (sections/path_optimization_definitive.tex [175] [176]
+<figs/real_energy_heatmap.png, id=8088, 867.24pt x 578.16pt>
 File: figs/real_energy_heatmap.png Graphic file (type png)
 <use figs/real_energy_heatmap.png>
 Package pdftex.def Info: figs/real_energy_heatmap.png  used on input line 96.
 (pdftex.def)             Requested size: 450.69417pt x 300.46849pt.
-
-LaTeX Warning: Reference `fig:energy-heatmap' on page 154 undefined on input li
-ne 101.
-
-
-LaTeX Warning: Reference `tab:energy-top-bottom' on page 154 undefined on input
- line 112.
-
-<figs/real_energy_vs_altitude.png, id=5205, 722.7pt x 505.89pt>
+<figs/real_energy_vs_altitude.png, id=8092, 722.7pt x 505.89pt>
 File: figs/real_energy_vs_altitude.png Graphic file (type png)
 <use figs/real_energy_vs_altitude.png>
 Package pdftex.def Info: figs/real_energy_vs_altitude.png  used on input line 1
 42.
 (pdftex.def)             Requested size: 450.69417pt x 315.48573pt.
-
-LaTeX Warning: Reference `fig:energy-vs-altitude' on page 154 undefined on inpu
-t line 147.
-
-[154 <./figs/real_energy_heatmap.png>]
-
-LaTeX Warning: Citation 'choset2001coverage' on page 155 undefined on input lin
-e 158.
-
-
-Overfull \hbox (12.9832pt too wide) in paragraph at lines 157--160
-\OT1/lmr/m/n/10 (-20) tees com-plete cov-er-age by con-struc-tion [[]]. The sca
-n an-gle is auto-selected via \OT1/lmtt/m/n/10 cv2.minAreaRect\OT1/lmr/m/n/10 (
--20) . 
- []
-
-
-LaTeX Warning: Reference `tab:strategy-compare' on page 155 undefined on input 
-line 179.
-
-<figs/real_path_patterns.png, id=5218, 1582.713pt x 738.1176pt>
+ [177 <./figs/real_energy_heatmap.png>] [178 <./figs/real_energy_vs_altitude.pn
+g>]
+<figs/real_path_patterns.png, id=8117, 1582.713pt x 738.1176pt>
 File: figs/real_path_patterns.png Graphic file (type png)
 <use figs/real_path_patterns.png>
 Package pdftex.def Info: figs/real_path_patterns.png  used on input line 200.
 (pdftex.def)             Requested size: 486.54057pt x 226.89941pt.
-<figs/top3_paths.pdf, id=5219, 1111.90283pt x 425.66428pt>
+<figs/top3_paths.pdf, id=8118, 1111.90283pt x 425.66428pt>
 File: figs/top3_paths.pdf Graphic file (type pdf)
 <use figs/top3_paths.pdf>
 Package pdftex.def Info: figs/top3_paths.pdf  used on input line 207.
 (pdftex.def)             Requested size: 486.54057pt x 186.26013pt.
-
-Overfull \vbox (360.6764pt too high) has occurred while \output is active []
-
-
-[155 <./figs/real_energy_vs_altitude.png> <./figs/real_path_patterns.png>]
-
-LaTeX Warning: Citation 'galceran2013survey' on page 156 undefined on input lin
-e 228.
-
-
-LaTeX Warning: Reference `sec:plb-redirect' on page 156 undefined on input line
- 231.
-
-
-LaTeX Warning: Reference `sec:nfz-layers' on page 156 undefined on input line 2
-38.
-
-[156 <./figs/top3_paths.pdf>]
-
-LaTeX Warning: Reference `tab:detect-chain' on page 157 undefined on input line
- 279.
-
-<figs/real_optimal_pattern.png, id=5368, 1156.32pt x 578.16pt>
+ [179 <./figs/real_path_patterns.png>] [180 <./figs/top3_paths.pdf>]
+<figs/real_optimal_pattern.png, id=8265, 1156.32pt x 578.16pt>
 File: figs/real_optimal_pattern.png Graphic file (type png)
 <use figs/real_optimal_pattern.png>
 Package pdftex.def Info: figs/real_optimal_pattern.png  used on input line 327.
 
 (pdftex.def)             Requested size: 450.69417pt x 225.34033pt.
-<figs/pareto_2d_composite.pdf, id=5369, 568.41425pt x 437.38728pt>
+<figs/pareto_2d_composite.pdf, id=8266, 568.41425pt x 437.38728pt>
 File: figs/pareto_2d_composite.pdf Graphic file (type pdf)
 <use figs/pareto_2d_composite.pdf>
 Package pdftex.def Info: figs/pareto_2d_composite.pdf  used on input line 350.
 (pdftex.def)             Requested size: 450.69417pt x 346.8069pt.
-<figs/altitude_tradeoff_dual.pdf, id=5370, 837.92926pt x 361.55928pt>
+<figs/altitude_tradeoff_dual.pdf, id=8267, 837.92926pt x 361.55928pt>
 File: figs/altitude_tradeoff_dual.pdf Graphic file (type pdf)
 <use figs/altitude_tradeoff_dual.pdf>
 Package pdftex.def Info: figs/altitude_tradeoff_dual.pdf  used on input line 35
 7.
 (pdftex.def)             Requested size: 450.69417pt x 194.47223pt.
-[157 <./figs/real_optimal_pattern.png>]
-
-LaTeX Warning: Reference `sec:detect-prob' on page 158 undefined on input line 
-370.
-
-) (sections/optimization_master.tex
-
-LaTeX Warning: Citation 'golden2006hypothermia' on page 158 undefined on input 
-line 13.
-
-[158 <./figs/pareto_2d_composite.pdf>] [159 <./figs/altitude_tradeoff_dual.pdf>
+ [181])
+(sections/optimization_master.tex [182 <./figs/real_optimal_pattern.png>]
+[183 <./figs/pareto_2d_composite.pdf>] [184 <./figs/altitude_tradeoff_dual.pdf>
 ]
-
-LaTeX Warning: Reference `sec:cv:inference:pipeline' on page 160 undefined on i
-nput line 84.
-
-
-LaTeX Warning: Reference `fig:top3-paths-app' on page 160 undefined on input li
-ne 115.
-
-
-LaTeX Warning: Reference `tab:opt-top3' on page 160 undefined on input line 116
-.
-
 File: figs/top3_paths.pdf Graphic file (type pdf)
 <use figs/top3_paths.pdf>
 Package pdftex.def Info: figs/top3_paths.pdf  used on input line 134.
 (pdftex.def)             Requested size: 486.54057pt x 186.26013pt.
-[160]
-
-LaTeX Warning: Reference `fig:alt-speed-body-app' on page 161 undefined on inpu
-t line 169.
-
+ [185]
 File: figs/altitude_speed_tradeoff.pdf Graphic file (type pdf)
 <use figs/altitude_speed_tradeoff.pdf>
 Package pdftex.def Info: figs/altitude_speed_tradeoff.pdf  used on input line 1
 74.
 (pdftex.def)             Requested size: 435.3303pt x 354.73053pt.
-
-LaTeX Warning: Reference `fig:energy-heatmap-app' on page 161 undefined on inpu
-t line 179.
-
 File: figs/real_energy_heatmap.png Graphic file (type png)
 <use figs/real_energy_heatmap.png>
 Package pdftex.def Info: figs/real_energy_heatmap.png  used on input line 183.
 (pdftex.def)             Requested size: 435.3303pt x 290.22615pt.
-
-LaTeX Warning: Reference `tab:opt-sensitivity' on page 161 undefined on input l
-ine 191.
-
-
-LaTeX Warning: Reference `fig:tornado-sensitivity-app' on page 161 undefined on
- input line 191.
-
-<figs/tornado_sensitivity.pdf, id=5654, 571.04657pt x 285.1285pt>
+<figs/tornado_sensitivity.pdf, id=8564, 571.04657pt x 285.1285pt>
 File: figs/tornado_sensitivity.pdf Graphic file (type pdf)
 <use figs/tornado_sensitivity.pdf>
 Package pdftex.def Info: figs/tornado_sensitivity.pdf  used on input line 209.
 (pdftex.def)             Requested size: 384.11221pt x 191.79211pt.
-
-LaTeX Warning: Reference `fig:energy-heatmap-app' on page 161 undefined on inpu
-t line 219.
-
-[161] [162] [163] [164 <./figs/tornado_sensitivity.pdf>] [165] [166] [167]
-[168] [169] [170] [171] [172] [173] [174] [175] [176] [177] [178] [179]
-[180]
-
-LaTeX Warning: Reference `fig:n2-diagram-app' on page 181 undefined on input li
-ne 231.
-
-
-LaTeX Warning: Reference `fig:coupling-matrix-app' on page 181 undefined on inp
-ut line 231.
-
-<figs/n2_diagram.pdf, id=5944, 629.07869pt x 979.9812pt>
+ [186] [187]
+<figs/n2_diagram.pdf, id=8589, 629.07869pt x 979.9812pt>
 File: figs/n2_diagram.pdf Graphic file (type pdf)
 <use figs/n2_diagram.pdf>
 Package pdftex.def Info: figs/n2_diagram.pdf  used on input line 236.
@@ -5983,196 +3450,72 @@ File: figs/coupling_matrix.pdf Graphic file (type pdf)
 <use figs/coupling_matrix.pdf>
 Package pdftex.def Info: figs/coupling_matrix.pdf  used on input line 240.
 (pdftex.def)             Requested size: 245.82962pt x 246.70604pt.
-
-LaTeX Warning: Reference `fig:sensitivity-matrix-app' on page 181 undefined on 
-input line 260.
-
-
-LaTeX Warning: Reference `fig:sensitivity-spider-app' on page 181 undefined on 
-input line 260.
-
-<figs/sensitivity_matrix.pdf, id=5945, 680.28354pt x 390.66585pt>
+<figs/sensitivity_matrix.pdf, id=8592, 680.28354pt x 390.66585pt>
 File: figs/sensitivity_matrix.pdf Graphic file (type pdf)
 <use figs/sensitivity_matrix.pdf>
 Package pdftex.def Info: figs/sensitivity_matrix.pdf  used on input line 265.
 (pdftex.def)             Requested size: 245.82962pt x 141.17012pt.
-<figs/sensitivity_spider.pdf, id=5946, 462.53987pt x 427.51283pt>
+<figs/sensitivity_spider.pdf, id=8593, 462.53987pt x 427.51283pt>
 File: figs/sensitivity_spider.pdf Graphic file (type pdf)
 <use figs/sensitivity_spider.pdf>
 Package pdftex.def Info: figs/sensitivity_spider.pdf  used on input line 269.
 (pdftex.def)             Requested size: 245.82962pt x 227.21347pt.
-
-LaTeX Warning: Reference `fig:pareto-2d-app' on page 181 undefined on input lin
-e 279.
-
 File: figs/pareto_2d_composite.pdf Graphic file (type pdf)
 <use figs/pareto_2d_composite.pdf>
 Package pdftex.def Info: figs/pareto_2d_composite.pdf  used on input line 283.
 (pdftex.def)             Requested size: 435.3303pt x 334.98059pt.
-[181
-
- <./figs/n2_diagram.pdf>] [182 <./figs/sensitivity_matrix.pdf> <./figs/sensitiv
-ity_spider.pdf>]
-<figs/pareto_curve.pdf, id=6314, 488.32996pt x 367.88191pt>
+ [188 <./figs/tornado_sensitivity.pdf>] [189 <./figs/n2_diagram.pdf> <./figs/se
+nsitivity_matrix.pdf> <./figs/sensitivity_spider.pdf>]
+[190]
+<figs/pareto_curve.pdf, id=9076, 488.32996pt x 367.88191pt>
 File: figs/pareto_curve.pdf Graphic file (type pdf)
 <use figs/pareto_curve.pdf>
 Package pdftex.def Info: figs/pareto_curve.pdf  used on input line 293.
 (pdftex.def)             Requested size: 435.3303pt x 327.96397pt.
-<figs/pareto_3d.pdf, id=6315, 536.01518pt x 451.00998pt>
+<figs/pareto_3d.pdf, id=9077, 536.01518pt x 451.00998pt>
 File: figs/pareto_3d.pdf Graphic file (type pdf)
 <use figs/pareto_3d.pdf>
 Package pdftex.def Info: figs/pareto_3d.pdf  used on input line 300.
 (pdftex.def)             Requested size: 435.3303pt x 366.30017pt.
-<figs/pareto_parallel.pdf, id=6316, 611.26181pt x 379.18648pt>
+<figs/pareto_parallel.pdf, id=9078, 611.26181pt x 379.18648pt>
 File: figs/pareto_parallel.pdf Graphic file (type pdf)
 <use figs/pareto_parallel.pdf>
 Package pdftex.def Info: figs/pareto_parallel.pdf  used on input line 307.
 (pdftex.def)             Requested size: 486.54057pt x 301.82211pt.
-<figs/pareto_tradeoff_simple.pdf, id=6317, 500.21567pt x 369.24638pt>
+<figs/pareto_tradeoff_simple.pdf, id=9079, 500.21567pt x 369.24638pt>
 File: figs/pareto_tradeoff_simple.pdf Graphic file (type pdf)
 <use figs/pareto_tradeoff_simple.pdf>
 Package pdftex.def Info: figs/pareto_tradeoff_simple.pdf  used on input line 31
 4.
 (pdftex.def)             Requested size: 435.3303pt x 321.3657pt.
-
-
-LaTeX Warning: Reference `fig:pareto-curve' on page 183 undefined on input line
- 319.
-
-
-LaTeX Warning: Reference `fig:pareto-3d' on page 183 undefined on input line 31
-9.
-
-
-LaTeX Warning: Reference `fig:pareto-parallel' on page 183 undefined on input l
-ine 319.
-
-
-LaTeX Warning: Reference `fig:pareto-simple' on page 183 undefined on input lin
-e 319.
-
-
-LaTeX Warning: Reference `fig:energy-efficiency' on page 183 undefined on input
- line 325.
-
-<figs/energy_efficiency.pdf, id=6318, 546.09808pt x 390.17519pt>
+<figs/energy_efficiency.pdf, id=9085, 546.09808pt x 390.17519pt>
 File: figs/energy_efficiency.pdf Graphic file (type pdf)
 <use figs/energy_efficiency.pdf>
 Package pdftex.def Info: figs/energy_efficiency.pdf  used on input line 329.
 (pdftex.def)             Requested size: 384.11221pt x 274.43651pt.
+ [191
 
-LaTeX Warning: Reference `eq:opt-modelpx' on page 183 undefined on input line 3
-57.
-
-
-LaTeX Warning: Reference `eq:opt-pdetect' on page 183 undefined on input line 3
-57.
-
-
-LaTeX Warning: Reference `fig:energy-heatmap-app' on page 183 undefined on inpu
-t line 357.
-
-
-LaTeX Warning: Reference `sec:overlap-margin' on page 183 undefined on input li
-ne 369.
-
-[183
-
- <./figs/pareto_curve.pdf>]) (sections/optimization_formal.tex [184 <./figs/par
-eto_3d.pdf>] [185 <./figs/pareto_parallel.pdf>] [186 <./figs/pareto_tradeoff_si
-mple.pdf>] [187 <./figs/energy_efficiency.pdf>]
-
-LaTeX Warning: Reference `eq:speed-ramp-obj' on page 188 undefined on input lin
-e 115.
-
-
-LaTeX Warning: Reference `tab:constraints' on page 188 undefined on input line 
-152.
-
-[188]
-
-LaTeX Warning: Reference `tab:coupling-matrix' on page 189 undefined on input l
-ine 176.
-
+ <./figs/pareto_curve.pdf>]) (sections/optimization_formal.tex
+[192 <./figs/pareto_3d.pdf>] [193 <./figs/pareto_parallel.pdf>] [194 <./figs/pa
+reto_tradeoff_simple.pdf>] [195 <./figs/energy_efficiency.pdf>] [196]
 File: figs/n2_diagram.pdf Graphic file (type pdf)
 <use figs/n2_diagram.pdf>
 Package pdftex.def Info: figs/n2_diagram.pdf  used on input line 196.
 (pdftex.def)             Requested size: 450.69417pt x 702.1018pt.
-<figs/objective_conflict.pdf, id=6847, 736.75905pt x 587.34618pt>
+<figs/objective_conflict.pdf, id=9613, 736.75905pt x 587.34618pt>
 File: figs/objective_conflict.pdf Graphic file (type pdf)
 <use figs/objective_conflict.pdf>
 Package pdftex.def Info: figs/objective_conflict.pdf  used on input line 203.
 (pdftex.def)             Requested size: 450.69417pt x 359.29337pt.
-[189]
-
-LaTeX Warning: Reference `eq:p-single' on page 190 undefined on input line 234.
-
-
-
-LaTeX Warning: Reference `fig:energy-heatmap' on page 190 undefined on input li
-ne 238.
-
-) (sections/design_strategy.tex [190]
-
-LaTeX Warning: Reference `tab:dev-strategy-comparison' on page 191 undefined on
- input line 44.
-
-
-LaTeX Warning: Reference `sec:progressive-ladder-strategy' on page 191 undefine
-d on input line 66.
-
-
-LaTeX Warning: Reference `sec:testing' on page 191 undefined on input line 74.
-
-
-LaTeX Warning: Reference `fig:development_timeline' on page 191 undefined on in
-put line 85.
-
-<figs/development_timeline.pdf, id=6878, 872.53732pt x 504.03271pt>
+ [197])
+(sections/design_strategy.tex [198]
+<figs/development_timeline.pdf, id=9645, 872.53732pt x 504.03271pt>
 File: figs/development_timeline.pdf Graphic file (type pdf)
 <use figs/development_timeline.pdf>
 Package pdftex.def Info: figs/development_timeline.pdf  used on input line 89.
 (pdftex.def)             Requested size: 512.14963pt x 295.8616pt.
-[191]
-
-LaTeX Warning: Reference `sec:dji-proxy' on page 192 undefined on input line 11
-0.
-
-[192 <./figs/development_timeline.pdf>]
-
-LaTeX Warning: Reference `tab:pareto-final' on page 193 undefined on input line
- 167.
-
-
-LaTeX Warning: Reference `tab:px-vs-alt' on page 193 undefined on input line 18
-9.
-
-[193]
-
-LaTeX Warning: Reference `sec:cv:inference:pipeline' on page 194 undefined on i
-nput line 228.
-
-
-LaTeX Warning: Reference `sec:moo' on page 194 undefined on input line 246.
-
-[194]
-
-LaTeX Warning: Reference `sec:sweep' on page 195 undefined on input line 263.
-
-
-LaTeX Warning: Reference `fig:energy-heatmap' on page 195 undefined on input li
-ne 269.
-
-
-LaTeX Warning: Reference `sec:geofencing' on page 195 undefined on input line 3
-03.
-
-[195]
-
-LaTeX Warning: Citation 'galceran2013survey' on page 196 undefined on input lin
-e 354.
-
-<figs/optimization_network.pdf, id=7066, 1149.09305pt x 758.835pt>
+ [199] [200 <./figs/development_timeline.pdf>] [201] [202] [203]
+<figs/optimization_network.pdf, id=9831, 1149.09305pt x 758.835pt>
 File: figs/optimization_network.pdf Graphic file (type pdf)
 <use figs/optimization_network.pdf>
 Package pdftex.def Info: figs/optimization_network.pdf  used on input line 399.
@@ -6186,8 +3529,8 @@ File: figs/sensitivity_spider.pdf Graphic file (type pdf)
 <use figs/sensitivity_spider.pdf>
 Package pdftex.def Info: figs/sensitivity_spider.pdf  used on input line 413.
 (pdftex.def)             Requested size: 435.3303pt x 402.36441pt.
-[196] [197] [198 <./figs/objective_conflict.pdf>] [199 <./figs/optimization_net
-work.pdf>] [200]
+ [204] [205] [206 <./figs/objective_conflict.pdf>] [207 <./figs/optimization_ne
+twork.pdf>] [208]
 File: figs/coupling_matrix.pdf Graphic file (type pdf)
 <use figs/coupling_matrix.pdf>
 Package pdftex.def Info: figs/coupling_matrix.pdf  used on input line 422.
@@ -6197,422 +3540,109 @@ File: figs/altitude_speed_tradeoff.pdf Graphic file (type pdf)
 Package pdftex.def Info: figs/altitude_speed_tradeoff.pdf  used on input line 4
 29.
 (pdftex.def)             Requested size: 435.3303pt x 354.73053pt.
-<figs/function_chain.pdf, id=7317, 798.58348pt x 537.06151pt>
+<figs/function_chain.pdf, id=10080, 798.58348pt x 537.06151pt>
 File: figs/function_chain.pdf Graphic file (type pdf)
 <use figs/function_chain.pdf>
 Package pdftex.def Info: figs/function_chain.pdf  used on input line 436.
 (pdftex.def)             Requested size: 450.69417pt x 303.10431pt.
- [201
+ [209
 
-] [202 <./figs/function_chain.pdf>]
+] [210 <./figs/function_chain.pdf>]
 File: figs/tornado_sensitivity.pdf Graphic file (type pdf)
 <use figs/tornado_sensitivity.pdf>
 Package pdftex.def Info: figs/tornado_sensitivity.pdf  used on input line 445.
 (pdftex.def)             Requested size: 450.69417pt x 225.0402pt.
-
-
-LaTeX Warning: Reference `fig:sensitivity-matrix' on page 203 undefined on inpu
-t line 450.
-
-
-LaTeX Warning: Reference `fig:sensitivity-spider' on page 203 undefined on inpu
-t line 450.
-
-
-LaTeX Warning: Reference `fig:coupling-matrix' on page 203 undefined on input l
-ine 450.
-
-
-LaTeX Warning: Reference `fig:alt-speed-tradeoff' on page 203 undefined on inpu
-t line 450.
-
-
-LaTeX Warning: Reference `fig:optimization-network' on page 203 undefined on in
-put line 450.
-
-) (sections/vision_performance.tex
-
-LaTeX Warning: Reference `tab:vision-params' on page 203 undefined on input lin
-e 11.
-
-[203
+)
+(sections/vision_performance.tex [211
 
 ]
-
-LaTeX Warning: Reference `tab:px-by-alt' on page 204 undefined on input line 56
-.
-
-
-LaTeX Warning: Reference `fig:alt-vs-px' on page 204 undefined on input line 78
-.
-
-
-LaTeX Warning: Reference `sec:detect-prob' on page 204 undefined on input line 
-84.
-
-<figs/real_altitude_vs_px.png, id=7438, 505.89pt x 325.215pt>
+<figs/real_altitude_vs_px.png, id=10209, 505.89pt x 325.215pt>
 File: figs/real_altitude_vs_px.png Graphic file (type png)
 <use figs/real_altitude_vs_px.png>
 Package pdftex.def Info: figs/real_altitude_vs_px.png  used on input line 88.
 (pdftex.def)             Requested size: 435.3303pt x 279.8581pt.
-
-LaTeX Warning: Reference `tab:blur' on page 204 undefined on input line 105.
-
-
-LaTeX Warning: Reference `fig:speed-blur' on page 204 undefined on input line 1
-27.
-
-<figs/real_speed_vs_blur.png, id=7439, 505.89pt x 325.215pt>
+<figs/real_speed_vs_blur.png, id=10212, 505.89pt x 325.215pt>
 File: figs/real_speed_vs_blur.png Graphic file (type png)
 <use figs/real_speed_vs_blur.png>
 Package pdftex.def Info: figs/real_speed_vs_blur.png  used on input line 136.
 (pdftex.def)             Requested size: 435.3303pt x 279.8581pt.
-[204 <./figs/real_altitude_vs_px.png>]
-
-LaTeX Warning: Reference `tab:frames' on page 205 undefined on input line 157.
-
-<figs/real_speed_vs_frames.png, id=7450, 505.89pt x 325.215pt>
+ [212 <./figs/real_altitude_vs_px.png>]
+<figs/real_speed_vs_frames.png, id=10225, 505.89pt x 325.215pt>
 File: figs/real_speed_vs_frames.png Graphic file (type png)
 <use figs/real_speed_vs_frames.png>
 Package pdftex.def Info: figs/real_speed_vs_frames.png  used on input line 187.
 
 (pdftex.def)             Requested size: 435.3303pt x 279.8581pt.
-[205 <./figs/real_speed_vs_blur.png>]
-<figs/real_coverage.png, id=7463, 505.89pt x 325.215pt>
+
+[213 <./figs/real_speed_vs_blur.png>]
+<figs/real_coverage.png, id=10234, 505.89pt x 325.215pt>
 File: figs/real_coverage.png Graphic file (type png)
 <use figs/real_coverage.png>
 Package pdftex.def Info: figs/real_coverage.png  used on input line 221.
 (pdftex.def)             Requested size: 435.3303pt x 279.8581pt.
- [206 <./figs/real_speed_vs_frames.png>]
-
-LaTeX Warning: Reference `fig:envelope' on page 207 undefined on input line 251
-.
-
-<figs/real_detection_envelope.png, id=7473, 542.025pt x 361.35pt>
+ [214 <./figs/real_speed_vs_frames.png>]
+<figs/real_detection_envelope.png, id=10244, 542.025pt x 361.35pt>
 File: figs/real_detection_envelope.png Graphic file (type png)
 <use figs/real_detection_envelope.png>
 Package pdftex.def Info: figs/real_detection_envelope.png  used on input line 2
 61.
 (pdftex.def)             Requested size: 450.69417pt x 300.4718pt.
-[207 <./figs/real_coverage.png>]
 
-LaTeX Warning: Reference `tab:limits' on page 208 undefined on input line 272.
-
-
-LaTeX Warning: Reference `sec:validation' on page 208 undefined on input line 2
-98.
-
-) (sections/decision_flow.tex
-
-LaTeX Warning: Reference `sec:mission-flow' on page 208 undefined on input line
- 6.
-
-[208 <./figs/real_detection_envelope.png>]
-
-LaTeX Warning: Reference `fig:decision-flow' on page 209 undefined on input lin
-e 22.
-
-<figs/decision_flow.pdf, id=7497, 622.72653pt x 947.94153pt>
+[215 <./figs/real_coverage.png>]) (sections/decision_flow.tex [216 <./figs/real
+_detection_envelope.png>]
+<figs/decision_flow.pdf, id=10268, 622.72653pt x 947.94153pt>
 File: figs/decision_flow.pdf Graphic file (type pdf)
 <use figs/decision_flow.pdf>
 Package pdftex.def Info: figs/decision_flow.pdf  used on input line 26.
 (pdftex.def)             Requested size: 399.47607pt x 608.09802pt.
-
-LaTeX Warning: Reference `tab:df-variables' on page 209 undefined on input line
- 34.
-
-
-LaTeX Warning: Reference `fig:sensitivity-matrix' on page 209 undefined on inpu
-t line 52.
-
-
-LaTeX Warning: Reference `app:req-detail' on page 209 undefined on input line 6
-6.
-
-
-LaTeX Warning: Reference `fig:energy-heatmap' on page 209 undefined on input li
-ne 71.
-
-[209]
-
-LaTeX Warning: Reference `tab:df-top3' on page 210 undefined on input line 87.
-
-
-LaTeX Warning: Reference `app:req-detail' on page 210 undefined on input line 1
-03.
-
-
-LaTeX Warning: Reference `app:req-detail' on page 210 undefined on input line 1
-06.
-
-
-LaTeX Warning: Reference `fig:pareto-parallel' on page 210 undefined on input l
-ine 109.
-
-
-LaTeX Warning: Reference `fig:top3-paths' on page 210 undefined on input line 1
-11.
-
-
-LaTeX Warning: Reference `tab:df-final' on page 210 undefined on input line 116
-.
-
-[210]
-
-LaTeX Warning: Reference `fig:tornado-sensitivity' on page 211 undefined on inp
-ut line 140.
-
-
-LaTeX Warning: Reference `fig:sensitivity-spider' on page 211 undefined on inpu
-t line 142.
-
-
-LaTeX Warning: Reference `tab:df-detection-envelope' on page 211 undefined on i
-nput line 153.
-
-
-LaTeX Warning: Reference `sec:mf-buildup' on page 211 undefined on input line 1
-53.
-
-
-LaTeX Warning: Reference `tab:df-speed-envelope' on page 211 undefined on input
- line 172.
-
-[211]
-
-LaTeX Warning: Reference `sec:df-evaluation' on page 212 undefined on input lin
-e 191.
-
-
-LaTeX Warning: Reference `sec:df-evaluation' on page 212 undefined on input lin
-e 201.
-
-
-LaTeX Warning: Reference `sec:df-pattern-type' on page 212 undefined on input l
-ine 203.
-
-
-LaTeX Warning: Reference `tab:df-robustness' on page 212 undefined on input lin
-e 218.
-
-
-LaTeX Warning: Reference `sec:mf-detection' on page 212 undefined on input line
- 238.
-
-
-LaTeX Warning: Reference `sec:mf-investigation' on page 212 undefined on input 
-line 238.
-
-
-LaTeX Warning: Reference `sec:mf-preflight' on page 212 undefined on input line
- 238.
-
-
-LaTeX Warning: Reference `tab:df-final' on page 212 undefined on input line 238
-.
-
-[212]
-
-LaTeX Warning: Reference `sec:df-sequential' on page 213 undefined on input lin
-e 241.
-
-
-LaTeX Warning: Reference `fig:pareto-parallel' on page 213 undefined on input l
-ine 246.
-
-
-LaTeX Warning: Reference `sec:mission-flow' on page 213 undefined on input line
- 265.
-
-) [213] (sections/localization_approaches.tex [214] [215 <./figs/decision_flow.
-pdf>]
-
-LaTeX Warning: Reference `sec:gps-math' on page 216 undefined on input line 16.
-
-
-
-LaTeX Warning: Citation 'barber2006vision' on page 216 undefined on input line 
-16.
-
-
-LaTeX Warning: Citation 'sun2016sar' on page 216 undefined on input line 16.
-
-
-LaTeX Warning: Reference `sec:tilt-compensation' on page 216 undefined on input
- line 28.
-
-[216
-
-] [217] [218]
-
-LaTeX Warning: Reference `sec:dji-validation' on page 219 undefined on input li
-ne 195.
-
-[219] [220]
-
-LaTeX Warning: Reference `tab:approach-comparison' on page 221 undefined on inp
-ut line 292.
-
-[221] [222]
-
-LaTeX Warning: Reference `sec:dji-validation' on page 223 undefined on input li
-ne 368.
-
-) (sections/estimation_evaluation.tex
-
-LaTeX Warning: Reference `sec:gps-deep' on page 223 undefined on input line 7.
-
-
-LaTeX Warning: Reference `sec:loc-approaches' on page 223 undefined on input li
-ne 7.
-
-[223]
-
-LaTeX Warning: Reference `sec:smart-estimator' on page 224 undefined on input l
-ine 26.
-
-
-LaTeX Warning: Citation 'barber2006vision' on page 224 undefined on input line 
-33.
-
-
-LaTeX Warning: Citation 'sambolek2025person' on page 224 undefined on input lin
-e 33.
-
-
-LaTeX Warning: Reference `fig:gps-bullseye' on page 224 undefined on input line
- 43.
-
-
-LaTeX Warning: Reference `sec:gps-timing-lag' on page 224 undefined on input li
-ne 52.
-
-[224]
+ [217] [218] [219] [220]) [221]
+(sections/localization_approaches.tex [222] [223 <./figs/decision_flow.pdf>]
+[224
+
+] [225] [226] [227] [228] [229] [230]) (sections/estimation_evaluation.tex
+[231] [232]
 File: figs/gps_bullseye.pdf Graphic file (type pdf)
 <use figs/gps_bullseye.pdf>
 Package pdftex.def Info: figs/gps_bullseye.pdf  used on input line 60.
 (pdftex.def)             Requested size: 281.68385pt x 288.78862pt.
-
-
-LaTeX Warning: Reference `fig:bullseye-comparison' on page 225 undefined on inp
-ut line 65.
-
-<figs/bullseye_comparison.pdf, id=7896, 696.14105pt x 711.04016pt>
+<figs/bullseye_comparison.pdf, id=10690, 696.14105pt x 711.04016pt>
 File: figs/bullseye_comparison.pdf Graphic file (type pdf)
 <use figs/bullseye_comparison.pdf>
 Package pdftex.def Info: figs/bullseye_comparison.pdf  used on input line 69.
 (pdftex.def)             Requested size: 435.3303pt x 444.64854pt.
-[225]
-
-LaTeX Warning: Reference `fig:estimation-heatmap-all' on page 226 undefined on 
-input line 74.
-
-
-LaTeX Warning: Reference `fig:centrality-weighting' on page 226 undefined on in
-put line 74.
-
-<figs/estimation_heatmap_all.pdf, id=7905, 464.32896pt x 401.51483pt>
+ [233]
+<figs/estimation_heatmap_all.pdf, id=10700, 464.32896pt x 401.51483pt>
 File: figs/estimation_heatmap_all.pdf Graphic file (type pdf)
 <use figs/estimation_heatmap_all.pdf>
 Package pdftex.def Info: figs/estimation_heatmap_all.pdf  used on input line 78
 .
 (pdftex.def)             Requested size: 307.2929pt x 265.72966pt.
-[226 <./figs/bullseye_comparison.pdf>]
-
-LaTeX Warning: Reference `tab:clustering-tradeoffs' on page 227 undefined on in
-put line 86.
-
-
-LaTeX Warning: Reference `sec:cal:fov' on page 227 undefined on input line 90.
-
-
-LaTeX Warning: Reference `tab:frame-budget' on page 227 undefined on input line
- 94.
-
-
-LaTeX Warning: Reference `fig:estimation-error-vs-detections' on page 227 undef
-ined on input line 131.
-
-
-LaTeX Warning: Reference `tab:clustering-tradeoffs' on page 227 undefined on in
-put line 131.
-
-<figs/estimation_error_vs_detections.pdf, id=8030, 572.63454pt x 391.85646pt>
+ [234 <./figs/bullseye_comparison.pdf>]
+<figs/estimation_error_vs_detections.pdf, id=10829, 572.63454pt x 391.85646pt>
 File: figs/estimation_error_vs_detections.pdf Graphic file (type pdf)
 <use figs/estimation_error_vs_detections.pdf>
 Package pdftex.def Info: figs/estimation_error_vs_detections.pdf  used on input
  line 135.
 (pdftex.def)             Requested size: 332.89412pt x 227.80307pt.
-[227 <./figs/estimation_heatmap_all.pdf>]
-
-LaTeX Warning: Citation 'sun2016sar' on page 228 undefined on input line 140.
-
-
-LaTeX Warning: Citation 'sambolek2025person' on page 228 undefined on input lin
-e 140.
-
-
-LaTeX Warning: Reference `sec:gps-averaging' on page 228 undefined on input lin
-e 148.
-
-[228 <./figs/estimation_error_vs_detections.pdf>]
-
-LaTeX Warning: Reference `tab:error-budget-relative' on page 229 undefined on i
-nput line 153.
-
-
-LaTeX Warning: Reference `fig:error-waterfall' on page 229 undefined on input l
-ine 153.
-
-
-LaTeX Warning: Reference `sec:error-budget' on page 229 undefined on input line
- 157.
-
-
-LaTeX Warning: Reference `sec:error-budget' on page 229 undefined on input line
- 157.
-
+ [235 <./figs/estimation_heatmap_all.pdf>] [236 <./figs/estimation_error_vs_det
+ections.pdf>]
 File: figs/error_waterfall.pdf Graphic file (type pdf)
 <use figs/error_waterfall.pdf>
 Package pdftex.def Info: figs/error_waterfall.pdf  used on input line 175.
 (pdftex.def)             Requested size: 332.89412pt x 181.79187pt.
-
-LaTeX Warning: Reference `fig:error-budget-breakdown' on page 229 undefined on 
-input line 180.
-
-<figs/error_budget_breakdown.pdf, id=8249, 702.99155pt x 341.59119pt>
+<figs/error_budget_breakdown.pdf, id=11052, 702.99155pt x 341.59119pt>
 File: figs/error_budget_breakdown.pdf Graphic file (type pdf)
 <use figs/error_budget_breakdown.pdf>
 Package pdftex.def Info: figs/error_budget_breakdown.pdf  used on input line 18
 4.
 (pdftex.def)             Requested size: 358.50317pt x 174.20398pt.
-[229 <./figs/error_budget_breakdown.pdf>]
-
-LaTeX Warning: Citation 'gautam2018error' on page 230 undefined on input line 1
-92.
-
-
-LaTeX Warning: Reference `fig:centrality-weighting' on page 230 undefined on in
-put line 195.
-
-
-LaTeX Warning: Reference `sec:gps-deep' on page 230 undefined on input line 195
-.
-
-
-LaTeX Warning: Reference `eq:weight-deep' on page 230 undefined on input line 1
-95.
-
-<figs/centrality_weighting.pdf, id=8367, 936.53593pt x 379.23206pt>
+ [237 <./figs/error_budget_breakdown.pdf>]
+<figs/centrality_weighting.pdf, id=11171, 936.53593pt x 379.23206pt>
 File: figs/centrality_weighting.pdf Graphic file (type pdf)
 <use figs/centrality_weighting.pdf>
 Package pdftex.def Info: figs/centrality_weighting.pdf  used on input line 199.
 
 (pdftex.def)             Requested size: 281.68385pt x 114.05981pt.
-
-LaTeX Warning: Reference `tab:ground-truth-results' on page 230 undefined on in
-put line 209.
-
 
 Overfull \hbox (19.29958pt too wide) in paragraph at lines 209--210
 \OT1/lmr/m/n/10 (-20) dummy at a known GPS po-si-tion. The video was re-played 
@@ -6620,77 +3650,40 @@ through the full de-tec-tion pipeline (\OT1/lmtt/m/n/10 tests/laptop/video[]tes
 t.py\OT1/lmr/m/n/10 (-20) )
  []
 
-
-LaTeX Warning: Reference `fig:estimator-comparison' on page 230 undefined on in
-put line 233.
-
-
-LaTeX Warning: Reference `sec:gps-averaging' on page 230 undefined on input lin
-e 235.
-
-<figs/estimator_comparison.pdf, id=8368, 499.19498pt x 316.54886pt>
+<figs/estimator_comparison.pdf, id=11175, 499.19498pt x 316.54886pt>
 File: figs/estimator_comparison.pdf Graphic file (type pdf)
 <use figs/estimator_comparison.pdf>
 Package pdftex.def Info: figs/estimator_comparison.pdf  used on input line 242.
 
 (pdftex.def)             Requested size: 307.2929pt x 194.86235pt.
-
-LaTeX Warning: Reference `fig:estimation-averaging' on page 230 undefined on in
-put line 249.
-
-[230 <./figs/centrality_weighting.pdf>]
-<figs/estimation_averaging.pdf, id=8525, 862.07195pt x 430.54663pt>
+[238 <./figs/centrality_weighting.pdf>]
+<figs/estimation_averaging.pdf, id=11329, 862.07195pt x 430.54663pt>
 File: figs/estimation_averaging.pdf Graphic file (type pdf)
 <use figs/estimation_averaging.pdf>
 Package pdftex.def Info: figs/estimation_averaging.pdf  used on input line 253.
 
 (pdftex.def)             Requested size: 332.89412pt x 166.25696pt.
-
-
-LaTeX Warning: Reference `fig:gps-convergence' on page 231 undefined on input l
-ine 258.
-
-<figs/gps_convergence.pdf, id=8526, 403.13737pt x 260.18466pt>
+<figs/gps_convergence.pdf, id=11331, 403.13737pt x 260.18466pt>
 File: figs/gps_convergence.pdf Graphic file (type pdf)
 <use figs/gps_convergence.pdf>
 Package pdftex.def Info: figs/gps_convergence.pdf  used on input line 262.
 (pdftex.def)             Requested size: 281.68385pt x 181.80246pt.
-
-LaTeX Warning: Reference `fig:convergence-plot-eval' on page 231 undefined on i
-nput line 267.
-
-<figs/convergence_plot.pdf, id=8527, 717.54886pt x 298.37158pt>
+<figs/convergence_plot.pdf, id=11333, 717.54886pt x 298.37158pt>
 File: figs/convergence_plot.pdf Graphic file (type pdf)
 <use figs/convergence_plot.pdf>
 Package pdftex.def Info: figs/convergence_plot.pdf  used on input line 271.
 (pdftex.def)             Requested size: 332.89412pt x 138.4272pt.
-[231 <./figs/estimator_comparison.pdf> <./figs/estimation_averaging.pdf>]
-
-LaTeX Warning: Reference `fig:gps-bullseye' on page 232 undefined on input line
- 279.
-
-
-LaTeX Warning: Reference `fig:gps-error-direction' on page 232 undefined on inp
-ut line 279.
-
-
-LaTeX Warning: Reference `sec:tilt-compensation' on page 232 undefined on input
- line 284.
-
+ [239 <./figs/estimator_comparison.pdf> <./figs/estimation_averaging.pdf>]
 File: figs/gps_error_direction.pdf Graphic file (type pdf)
 <use figs/gps_error_direction.pdf>
 Package pdftex.def Info: figs/gps_error_direction.pdf  used on input line 289.
 (pdftex.def)             Requested size: 256.07481pt x 122.25214pt.
-
-LaTeX Warning: Reference `fig:heading-bias' on page 232 undefined on input line
- 294.
-
-<figs/heading_bias.pdf, id=8694, 822.99536pt x 389.76126pt>
+<figs/heading_bias.pdf, id=11503, 822.99536pt x 389.76126pt>
 File: figs/heading_bias.pdf Graphic file (type pdf)
 <use figs/heading_bias.pdf>
 Package pdftex.def Info: figs/heading_bias.pdf  used on input line 298.
 (pdftex.def)             Requested size: 307.2929pt x 145.5297pt.
-[232 <./figs/gps_convergence.pdf> <./figs/convergence_plot.pdf>]
+ [240 <./figs/gps_convergence.pdf> <./figs/convergence_plot.pdf>]
 Underfull \hbox (badness 10000) in paragraph at lines 316--316
 \OT1/lmr/m/n/10 (+20) (\OT1/lmtt/m/n/10 passive[]watch.py\OT1/lmr/m/n/10 (+20) 
 ,
@@ -6717,39 +3710,7 @@ Underfull \hbox (badness 2753) in paragraph at lines 320--320
 []|\OT1/lmr/bx/n/10 (+20) Time-critical SAR
  []
 
-
-LaTeX Warning: Reference `sec:two-step' on page 233 undefined on input line 325
-.
-
-
-LaTeX Warning: Reference `tab:accuracy-progression' on page 233 undefined on in
-put line 325.
-
-
-LaTeX Warning: Reference `sec:cooperative-arch' on page 233 undefined on input 
-line 325.
-
-
-LaTeX Warning: Citation 'sun2016sar' on page 233 undefined on input line 327.
-
-
-LaTeX Warning: Citation 'sambolek2025person' on page 233 undefined on input lin
-e 327.
-
-
-LaTeX Warning: Citation 'barber2006vision' on page 233 undefined on input line 
-327.
-
-
-LaTeX Warning: Reference `sec:why-ivw' on page 233 undefined on input line 327.
-
-
 ) (sections/requirements_detail.tex
-
-LaTeX Warning: Reference `tab:req-verification' on page 233 undefined on input 
-line 7.
-
-
 Overfull \hbox (7.87587pt too wide) in paragraph at lines 11--12
 \OT1/lmr/m/n/10 (-20) The four-vertex Flight Area poly-gon is loaded at startup
  by \OT1/lmtt/m/n/10 load[]kml[]zones() \OT1/lmr/m/n/10 (-20) in \OT1/lmtt/m/n/
@@ -6757,7 +3718,7 @@ Overfull \hbox (7.87587pt too wide) in paragraph at lines 11--12
 
  []
 
-[233 <./figs/heading_bias.pdf>]
+[241 <./figs/heading_bias.pdf>]
 Overfull \hbox (2.93497pt too wide) in paragraph at lines 13--14
 \OT1/lmtt/m/n/10 NFZ[]WAYPOINT[]BUFFER[]M \OT1/lmr/m/n/10 (-20) = 30m of the SS
 SI bound-ary, which lies in-side the flight area. At run-time, []\OT1/lmtt/m/n/
@@ -6787,7 +3748,7 @@ Package hyperref Warning: Token not allowed in a PDF string (Unicode):
 (hyperref)                \kern 1.66702pt
 (hyperref)                removed on input line 35.
 
-[234]
+[242]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
 (hyperref)                removing `\leavevmode@ifvmode' on input line 41.
@@ -6797,11 +3758,7 @@ Package hyperref Warning: Token not allowed in a PDF string (Unicode):
 (hyperref)                \kern 1.66702pt
 (hyperref)                removed on input line 41.
 
-
-LaTeX Warning: Reference `app:decision-flow' on page 235 undefined on input lin
-e 57.
-
-[235]
+[243]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
 (hyperref)                removing `\leavevmode@ifvmode' on input line 78.
@@ -6819,16 +3776,7 @@ Overfull \hbox (0.58803pt too wide) in paragraph at lines 80--81
 offset[]7[]5m()
  []
 
-
-LaTeX Warning: Reference `sec:centering-analysis' on page 236 undefined on inpu
-t line 86.
-
-[236]
-
-LaTeX Warning: Citation 'sheridan2002humans' on page 237 undefined on input lin
-e 98.
-
-
+[244]
 Overfull \hbox (4.91562pt too wide) in paragraph at lines 109--110
 \OT1/lmtt/m/n/10 MAV[]CMD[]NAV[]RETURN[]TO[]LAUNCH \OT1/lmr/m/n/10 (-20) di-rec
 tly to the Cube. Mo-tor cut-off is avail-able via \OT1/lmtt/m/n/10 MAV[]CMD[]CO
@@ -6842,15 +3790,11 @@ gra-da-tion be-yond 5s trig-gers emer-gency RTL. GCS heart-beat loss (\OT1/lmtt
 /m/n/10 FS[]GCS[]ENABLE\OT1/lmr/m/n/10 (-20) )
  []
 
-[237]
+[245]
 
 Package hyperref Warning: Suppressing empty link on input line 139.
 
 ) (sections/evaluation_detail.tex
-
-LaTeX Warning: Reference `tab:bug-cost' on page 238 undefined on input line 8.
-
-
 Underfull \hbox (badness 10000) in paragraph at lines 19--19
 []|\OT1/lmr/m/n/9 (+20) Geofence sign in-verted
  []
@@ -6876,44 +3820,8 @@ Overfull \hbox (17.77492pt too wide) in paragraph at lines 15--49
  [][] 
  []
 
-[238]
-
-LaTeX Warning: Reference `tab:bug-cost' on page 239 undefined on input line 56.
-
-
-
-LaTeX Warning: Reference `sec:sim-lessons' on page 239 undefined on input line 
-56.
-
-[239]
-
-LaTeX Warning: Reference `fig:conf_vs_alt' on page 240 undefined on input line 
-78.
-
-
-LaTeX Warning: Reference `fig:perf_analysis' on page 240 undefined on input lin
-e 78.
-
-) (sections/development_methodology.tex [240]
-
-LaTeX Warning: Reference `tab:dev-phases' on page 241 undefined on input line 4
-2.
-
-[241]
-
-LaTeX Warning: Reference `tab:ambition-levels' on page 242 undefined on input l
-ine 217.
-
-
-LaTeX Warning: Reference `tab:test-ladder' on page 242 undefined on input line 
-254.
-
-[242]
-
-LaTeX Warning: Reference `tab:sim-vs-real' on page 243 undefined on input line 
-297.
-
-[243]) [244] (main.aux)
+[246] [247]) (sections/development_methodology.tex [248] [249] [250] [251])
+[252] (main.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-01-19>
@@ -6922,35 +3830,18 @@ L3 programming layer <2026-01-19>
 
 LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 
-
-LaTeX Warning: There were undefined references.
-
-
-LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
-
-
-Package rerunfilecheck Warning: File `main.out' has changed.
-(rerunfilecheck)                Rerun to get outlines right
-(rerunfilecheck)                or use package `bookmark'.
-
-Package rerunfilecheck Info: Checksums for `main.out':
-(rerunfilecheck)             Before: DA5171A8DD7FB3FF05BDE299D91433DB;4096
-(rerunfilecheck)             After:  9FF512BFE6347EF8C00FFA0DFB2B53A9;97807.
-
-Package biblatex Warning: Please (re)run Biber on the file:
-(biblatex)                main
-(biblatex)                and rerun LaTeX afterwards.
-
+Package rerunfilecheck Info: File `main.out' has not changed.
+(rerunfilecheck)             Checksum: 9FF512BFE6347EF8C00FFA0DFB2B53A9;97807.
 Package logreq Info: Writing requests to 'main.run.xml'.
 \openout1 = `main.run.xml'.
 
  ) 
 Here is how much of TeX's memory you used:
- 58108 strings out of 467866
- 1300393 string characters out of 5417351
- 2327116 words of memory out of 5000000
- 83663 multiletter control sequences out of 15000+600000
- 754530 words of font info for 418 fonts, out of 8000000 for 9000
+ 58965 strings out of 467866
+ 1322562 string characters out of 5417351
+ 2241717 words of memory out of 5000000
+ 84367 multiletter control sequences out of 15000+600000
+ 757877 words of font info for 452 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  99i,21n,118p,1544b,2541s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/c
@@ -7000,64 +3891,9 @@ ristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtti10.pfb><C:/User
 s/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/symbols/msa
 m10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsf
 onts/symbols/msbm10.pfb>
-Output written on main.pdf (244 pages, 10519223 bytes).
+Output written on main.pdf (252 pages, 11012937 bytes).
 PDF statistics:
- 9759 PDF objects out of 10688 (max. 8388607)
- 1808 named destinations out of 2073 (max. 500000)
- 72216 words of extra memory for PDF output out of 74296 (max. 10000000)
-
-henation exceptions out of 8191
- 99i,21n,118p,1544b,2541s stack positions out of 10000i,1000n,20000p,200000b,200000s
-<C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/c
-m/cmsy10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public
-/lm/lmbsy10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/pub
-lic/lm/lmbsy7.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/p
-ublic/lm/lmbx10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1
-/public/lm/lmbx12.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/typ
-e1/public/lm/lmbx6.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/ty
-pe1/public/lm/lmbx7.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/t
-ype1/public/lm/lmbx8.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/
-type1/public/lm/lmbx9.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts
-/type1/public/lm/lmbxi10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fo
-nts/type1/public/lm/lmcsc10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX
-/fonts/type1/public/lm/lmex10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKT
-eX/fonts/type1/public/lm/lmmi10.pfb><C:/Users/Bristol/AppData/Local/Programs/Mi
-KTeX/fonts/type1/public/lm/lmmi12.pfb><C:/Users/Bristol/AppData/Local/Programs/
-MiKTeX/fonts/type1/public/lm/lmmi5.pfb><C:/Users/Bristol/AppData/Local/Programs
-/MiKTeX/fonts/type1/public/lm/lmmi6.pfb><C:/Users/Bristol/AppData/Local/Program
-s/MiKTeX/fonts/type1/public/lm/lmmi7.pfb><C:/Users/Bristol/AppData/Local/Progra
-ms/MiKTeX/fonts/type1/public/lm/lmmi8.pfb><C:/Users/Bristol/AppData/Local/Progr
-ams/MiKTeX/fonts/type1/public/lm/lmmi9.pfb><C:/Users/Bristol/AppData/Local/Prog
-rams/MiKTeX/fonts/type1/public/lm/lmmib10.pfb><C:/Users/Bristol/AppData/Local/P
-rograms/MiKTeX/fonts/type1/public/lm/lmr10.pfb><C:/Users/Bristol/AppData/Local/
-Programs/MiKTeX/fonts/type1/public/lm/lmr12.pfb><C:/Users/Bristol/AppData/Local
-/Programs/MiKTeX/fonts/type1/public/lm/lmr5.pfb><C:/Users/Bristol/AppData/Local
-/Programs/MiKTeX/fonts/type1/public/lm/lmr6.pfb><C:/Users/Bristol/AppData/Local
-/Programs/MiKTeX/fonts/type1/public/lm/lmr7.pfb><C:/Users/Bristol/AppData/Local
-/Programs/MiKTeX/fonts/type1/public/lm/lmr8.pfb><C:/Users/Bristol/AppData/Local
-/Programs/MiKTeX/fonts/type1/public/lm/lmr9.pfb><C:/Users/Bristol/AppData/Local
-/Programs/MiKTeX/fonts/type1/public/lm/lmri10.pfb><C:/Users/Bristol/AppData/Loc
-al/Programs/MiKTeX/fonts/type1/public/lm/lmri12.pfb><C:/Users/Bristol/AppData/L
-ocal/Programs/MiKTeX/fonts/type1/public/lm/lmri7.pfb><C:/Users/Bristol/AppData/
-Local/Programs/MiKTeX/fonts/type1/public/lm/lmri8.pfb><C:/Users/Bristol/AppData
-/Local/Programs/MiKTeX/fonts/type1/public/lm/lmri9.pfb><C:/Users/Bristol/AppDat
-a/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy10.pfb><C:/Users/Bristol/AppD
-ata/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy5.pfb><C:/Users/Bristol/App
-Data/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy6.pfb><C:/Users/Bristol/Ap
-pData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy7.pfb><C:/Users/Bristol/A
-ppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy8.pfb><C:/Users/Bristol/
-AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy9.pfb><C:/Users/Bristol
-/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtk10.pfb><C:/Users/Brist
-ol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtt10.pfb><C:/Users/Bri
-stol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtt8.pfb><C:/Users/Br
-istol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtt9.pfb><C:/Users/B
-ristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtti10.pfb><C:/User
-s/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/symbols/msa
-m10.pfb><C:/Users/Bristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsf
-onts/symbols/msbm10.pfb>
-Output written on main.pdf (244 pages, 10497831 bytes).
-PDF statistics:
- 9618 PDF objects out of 10688 (max. 8388607)
- 1808 named destinations out of 2073 (max. 500000)
- 72048 words of extra memory for PDF output out of 74296 (max. 10000000)
+ 12572 PDF objects out of 12825 (max. 8388607)
+ 1890 named destinations out of 2073 (max. 500000)
+ 73744 words of extra memory for PDF output out of 74296 (max. 10000000)
 

@@ -11,10 +11,10 @@ Each simulation level targets a different subset of the system. Table~\ref{tab:s
 \centering
 \caption{Validation coverage by simulation level. \checkmark = validated, $\sim$ = partially validated, --- = not testable.}
 \label{tab:sim-val-matrix}
-\small
-\begin{tabular}{@{}lcccc@{}}
+\footnotesize
+\begin{tabular}{@{}p{4.2cm}cccc@{}}
 \toprule
-\textbf{System Property} & \textbf{Interactive} & \textbf{SITL + Sim Cam} & \textbf{SITL + Webcam} & \textbf{Video Replay} \\
+\textbf{System Property} & \textbf{Interactive} & \textbf{SITL + Sim} & \textbf{SITL + Webcam} & \textbf{Video Replay} \\
 \midrule
 State machine logic (20 states, 32 transitions) & \checkmark & \checkmark & \checkmark & --- \\
 MAVLink command interface (arm, takeoff, guided, land) & --- & \checkmark & \checkmark & --- \\

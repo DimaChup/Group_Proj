@@ -7,7 +7,7 @@ This appendix defines the project's risk management strategy for flight day: a t
 
 The minimum viable deliverable (MVD) satisfies the core brief requirements using the simplest operational mode: the human pilot retains manual control of the aircraft while the onboard system provides passive computer vision and telemetry logging. Table~\ref{tab:mvd} summarises the MVD components and their requirement coverage.
 
-\begin{table}[ht]
+\begin{table}[htbp]
   \centering\small
   \caption{Minimum viable deliverable: components and requirement coverage.  This baseline was achieved; it satisfies R01--R10 through bench and simulation testing without requiring outdoor flight.}\label{tab:mvd}
   \begin{tabularx}{\linewidth}{@{}p{4.2cm}X c@{}}
@@ -31,7 +31,7 @@ The MVD does not satisfy R06 (PLB focus area redirect) or R07 (payload delivery 
 
 The target deliverable is the system described throughout this report: a fully autonomous mission orchestrated by the Python state machine on the Raspberry Pi companion computer. Table~\ref{tab:target} maps each capability to its requirement.
 
-\begin{table}[ht]
+\begin{table}[htbp]
   \centering\small
   \caption{Target deliverable: full autonomous mission.  Each capability adds one layer of outdoor validation; weather cancellation prevented progression beyond Level~1.}\label{tab:target}
   \begin{tabularx}{\linewidth}{@{}p{4.2cm}X c@{}}
@@ -61,7 +61,7 @@ If the target deliverable is achieved with margin, several enhancements would ex
   \item \textbf{Multi-target detection and classification.} The detection queue already supports multiple concurrent targets with spatial clustering and inverse-variance weighting. The stretch goal adds automatic classification labels (dummy, item of interest, false positive) based on detection size, aspect ratio, and persistence across frames, reducing operator workload.
   \item \textbf{Live PLB focus area redirect (R06).} Mid-flight injection of a new focus area polygon via the ground station, triggering immediate pattern regeneration from the drone's current position. The \texttt{focus\_area.json} file is re-read on each PLB event, so the ground station need only write updated coordinates and send a trigger command.
   \item \textbf{Payload release mechanism (R07).} Full integration of the Tarot double-throw servo for first aid kit delivery, including a two-stage release sequence (partial open at \SI{1300}{\micro\second} PWM, full release at \SI{1100}{\micro\second}) with altitude and position guards to prevent premature deployment.
-  \item \textbf{NCNN inference backend.} The NCNN export of the retrained YOLOv8n model is available in \texttt{cv\_models/sar\_v2\_1088/ncnn/} and is expected to achieve ${\sim}$15\,FPS on the Pi~5 CPU, tripling the current TFLite throughput of 4.8\,FPS and enabling detection during faster transit legs.
+  \item \textbf{NCNN inference backend.} The NCNN export of the retrained YOLOv8n model is available in \texttt{cv\_models/\allowbreak{}sar\_v2\_1088/\allowbreak{}ncnn/} and is expected to achieve ${\sim}$15\,FPS on the Pi~5 CPU, tripling the current TFLite throughput of 4.8\,FPS and enabling detection during faster transit legs.
   \item \textbf{Real-time GPS estimation on dashboard.} Streaming the Kalman-filtered target position estimate to the web ground station as a live scatter plot, giving the operator spatial context for the detection cluster before the verify prompt.
 \end{itemize}
 
@@ -86,7 +86,7 @@ This experience formalised the target deliverable as a distinct tier above the M
 \paragraph{The resulting structure.}
 Table~\ref{tab:tier-evolution-summary} summarises the relationship between the tiers, the verification evidence required for each, and the fallback path if that evidence is not available.
 
-\begin{table}[ht]
+\begin{table}[htbp]
   \centering\small
   \caption{Tier structure and verification gates.  Each tier defines a pass/fail gate; failure triggers a graceful fallback to the previous tier rather than mission abort.}\label{tab:tier-evolution-summary}
   \begin{tabularx}{\linewidth}{@{}p{2.0cm}p{4.5cm}X@{}}
@@ -102,6 +102,7 @@ Table~\ref{tab:tier-evolution-summary} summarises the relationship between the t
 
 The key insight is that each tier is independently valuable.  The MVD produces detection logs, GPS-tagged imagery, and a verification report that satisfy the brief's core competency requirements.  The target adds autonomous decision-making and payload delivery.  The stretch adds operational efficiency and reduced operator workload.  At no point does a failure at a higher tier invalidate the evidence collected at lower tiers---the progressive structure ensures that the team always has demonstrable results, regardless of how far up the ladder conditions allow them to climb.
 
+\FloatBarrier
 % ─────────────────────────────────────────────────────────────────────
 \subsection{Contingency Plans}\label{sec:contingencies}
 
@@ -218,17 +219,17 @@ Each contingency scenario has a corresponding test script that can be executed o
 \begin{table}[htbp]
   \centering\small
   \caption{Contingency-to-test-script mapping.  Each failure scenario can be verified on-site before flight using the listed script; no scenario relies solely on in-flight discovery.}\label{tab:test-scripts}
-  \begin{tabularx}{\linewidth}{@{}p{2.4cm}p{3.8cm}X@{}}
+  \begin{tabularx}{\linewidth}{@{}p{2.2cm}p{3.2cm}X@{}}
     \toprule
     \textbf{Scenario} & \textbf{Script} & \textbf{What it proves} \\
     \midrule
-    GPS lock failure & \texttt{tests/hardware/gps\_health.py} & Step-by-step GPS verification: satellite count, fix type, HDOP. Confirms whether GPS is usable before takeoff. \\
-    CV fails in field & \texttt{tests/hardware/benchmark.py} & Runs 50 inference cycles on a static image; reports detection rate and confidence. Use with each candidate model to find one that works. \\
-    Pi crash recovery & \texttt{preflight.py} & Full connectivity check: camera, Cube link, model load, GPS. Run after restart to confirm all subsystems are online. \\
-    Altitude too low & \texttt{tests/flight/1\_passive\_flight.py} & Passive detection during manual RC flight at multiple altitudes. Review log to determine minimum detection altitude. \\
-    Wind assessment & \texttt{tests/diagnostics/cube\_monitor.py} & Live telemetry dashboard showing wind estimate, ground speed, and attitude. Pilot can assess conditions before committing. \\
-    Model swap & \texttt{tests/hardware/detection\_snapshot\_test.py} & Single-frame detection on a static image with any \texttt{.tflite} model. Confirms the replacement model loads and detects correctly. \\
-    Full fallback to MVD & Mission Planner AUTO + \texttt{passive\_watch.py} & Pre-uploaded waypoints in AUTO mode; Pi runs passive CV with zero commands. The MVD configuration requires no custom flight code. \\
+    GPS lock failure & \texttt{gps\_health.py} & Step-by-step GPS verification: satellite count, fix type, HDOP. Confirms GPS is usable before takeoff. \\
+    CV fails in field & \texttt{benchmark.py} & Runs 50 inference cycles on a static image; reports detection rate and confidence. \\
+    Pi crash recovery & \texttt{preflight.py} & Full connectivity check: camera, Cube link, model load, GPS. Run after restart to confirm all subsystems online. \\
+    Altitude too low & \texttt{1\_passive\_ flight.py} & Passive detection during manual RC flight at multiple altitudes. Review log for minimum detection altitude. \\
+    Wind assessment & \texttt{cube\_monitor.py} & Live telemetry: wind estimate, ground speed, attitude. Pilot assesses conditions before committing. \\
+    Model swap & \texttt{detection\_ snapshot\_test.py} & Single-frame detection on a static image with any \texttt{.tflite} model. Confirms replacement model works. \\
+    Full fallback & Mission Planner AUTO + \texttt{passive\_watch.py} & Pre-uploaded waypoints in AUTO; Pi runs passive CV with zero commands. No custom flight code needed. \\
     \bottomrule
   \end{tabularx}
 \end{table}
