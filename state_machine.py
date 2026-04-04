@@ -514,8 +514,8 @@ class StateHandlersMixin:
         import __main__ as _main
         center_verify = getattr(_main, 'CENTER_VERIFY', False)
 
-        if time.time() - self.state_start_time > 60 and not self._centering_timeout_warned:
-            print(f"[WARN] CENTERING TIMEOUT (60s) — dist {self.get_dist_to_target():.1f}m. Resuming search.")
+        if time.time() - self.state_start_time > 15 and not self._centering_timeout_warned:
+            print(f"[WARN] CENTERING TIMEOUT (15s) — dist {self.get_dist_to_target():.1f}m. Resuming search.")
             self._centering_timeout_warned = True
             self._set_state(State.SEARCH)
             return
