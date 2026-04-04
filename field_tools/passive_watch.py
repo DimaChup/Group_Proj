@@ -2682,7 +2682,8 @@ def inference_worker(args_ref, csv_writer_ref, csv_file_ref):
     global _best_center_dist, _best_detection_gps, _smart_result_saved, _survey_result_saved, _smart_image_counter
     global _result_banner
 
-    _auto_clear_at = None  # timestamp when auto-clear should fire
+    _auto_clear_at = None    # timestamp when auto-clear should fire
+    _auto_clear_done = False  # True after first auto-clear (only fires once)
 
     # last_det is set on the module so display thread can read it
     _mod = sys.modules.get('field_tools.passive_watch') or sys.modules.get('__main__')
@@ -2837,13 +2838,14 @@ def inference_worker(args_ref, csv_writer_ref, csv_file_ref):
                     print(f"  Coordinate: {s_lat:.7f}, {s_lon:.7f}  Spread: {s_spread:.2f}m")
                     print(f"{'='*60}\n", flush=True)
 
-                    # Auto-clear: schedule a clear after delay so next target gets its own lock
-                    if args_ref.auto_clear > 0:
+                    # Auto-clear: fire ONCE after first lock, so second lock is independent
+                    if args_ref.auto_clear > 0 and not _auto_clear_done:
                         _auto_clear_at = time.time() + args_ref.auto_clear
 
-            # ── Auto-clear timer ──
-            if args_ref.auto_clear > 0 and _auto_clear_at is not None and time.time() >= _auto_clear_at:
+            # ── Auto-clear timer (fires once only) ──
+            if _auto_clear_at is not None and time.time() >= _auto_clear_at:
                 _auto_clear_at = None
+                _auto_clear_done = True  # never fires again
                 _all_gps_estimates.clear()
                 dummy_estimator.reset()
                 if smart_estimator:
@@ -2865,7 +2867,7 @@ def inference_worker(args_ref, csv_writer_ref, csv_file_ref):
                 _g['_survey_result_saved'] = False
                 stats["detections"] = 0
                 stats["saved"] = 0
-                print(f"\n  [AUTO-CLEAR] Reset after {args_ref.auto_clear}s. Ready for next target.\n")
+                print(f"\n  [AUTO-CLEAR] Reset after {args_ref.auto_clear}s. Collecting second lock...\n")
 
             # Flag snapshot requests for display thread
             # Build GPS info dicts here so display thread has everything it needs
