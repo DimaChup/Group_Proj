@@ -22,6 +22,7 @@ Options:
     --save-dir detections   Where to save snapshots (default: detections/)
     --no-save           Don't save snapshots, stream only
     --no-mavlink        Don't connect to mavproxy (no GPS overlay)
+    --compensate-tilt   Compensate for drone pitch/roll when estimating target GPS
 """
 import sys
 import os
@@ -153,6 +154,7 @@ parser.add_argument('--fake', action='store_true', help='Replay DJI video + SRT 
 parser.add_argument('--fake-video', default='RealVideo/DJI_0001_1456x1088_cropped_30fps.mp4')
 parser.add_argument('--fake-srt', default='RealVideo/DJI_20260311172332_0001_V.SRT')
 parser.add_argument('--no-stream', action='store_true', help='Disable HTTP stream server')
+parser.add_argument('--compensate-tilt', action='store_true', help='Compensate for drone pitch/roll when estimating target GPS')
 args = parser.parse_args()
 
 # ── Model definitions for browser switcher ──
@@ -1027,18 +1029,62 @@ class DummyEstimator:
         self.weighted_lon = 0.0
         self.count = 0
 
-    def add_observation(self, drone_lat, drone_lon, alt_m, yaw_deg, det_x, det_y):
+    def add_observation(self, drone_lat, drone_lon, alt_m, yaw_deg, det_x, det_y,
+                        pitch_deg=0.0, roll_deg=0.0, compensate_tilt=False):
         """Estimate dummy GPS from one detection.
 
         det_x, det_y: normalised detection coords (0-1, center of detection).
+        pitch_deg, roll_deg: drone attitude in degrees (from ATTITUDE message).
+        compensate_tilt: if True, apply ray-trace correction for drone tilt.
         Returns (est_lat, est_lon) or None if can't estimate.
         """
         if alt_m < 0.3:
             alt_m = 0.3  # clamp to min 30cm to avoid division issues
 
-        # Pixel offset from frame centre
-        dx_px = (det_x - 0.5) * FOV["img_w"]
-        dy_px = (det_y - 0.5) * FOV["img_h"]
+        fw = FOV["img_w"]
+        fh = FOV["img_h"]
+
+        if compensate_tilt and (abs(pitch_deg) > 0.5 or abs(roll_deg) > 0.5):
+            # ── Tilt-compensated ray-trace projection ──
+            # Build a ray from pixel coords, rotate by pitch/roll, intersect ground plane
+            focal_px = config.FOCAL_LENGTH_MM / config.SENSOR_WIDTH_MM * fw
+            u = det_x * fw  # pixel x
+            v = det_y * fh  # pixel y
+            ray_x = (u - fw / 2) / focal_px
+            ray_y = (v - fh / 2) / focal_px
+            ray_z = 1.0
+
+            pitch_rad = math.radians(pitch_deg)
+            roll_rad = math.radians(roll_deg)
+            cp, sp = math.cos(pitch_rad), math.sin(pitch_rad)
+            cr, sr = math.cos(roll_rad), math.sin(roll_rad)
+
+            # Apply roll rotation then pitch rotation
+            ry = ray_x * cr + ray_z * sr
+            rz = -ray_x * sr + ray_z * cr
+            rx = ray_y
+
+            ry2 = ry
+            rz2 = rx * sp + rz * cp
+            rx2 = rx * cp - rz * sp
+
+            if rz2 > 0.01:
+                t = alt_m / rz2
+                ground_x = ry2 * t   # right in body frame (metres)
+                ground_y = rx2 * t   # forward in body frame (metres)
+
+                # Reproject to corrected pixel coords for the GSD-based offset below
+                gsd = (config.SENSOR_WIDTH_MM * alt_m) / (config.FOCAL_LENGTH_MM * fw)
+                dx_px = ground_x / gsd - 0.0  # already relative to centre
+                dy_px = -(ground_y / gsd)      # forward = negative dy in image
+            else:
+                # Ray nearly horizontal — fall back to flat-earth
+                dx_px = (det_x - 0.5) * fw
+                dy_px = (det_y - 0.5) * fh
+        else:
+            # ── Original flat-earth projection (no tilt compensation) ──
+            dx_px = (det_x - 0.5) * fw
+            dy_px = (det_y - 0.5) * fh
 
         # Metres on ground
         dx_m = dx_px * alt_m / FOV["f_px"]
@@ -1047,7 +1093,7 @@ class DummyEstimator:
         # Rotate by yaw (yaw=0 means North, positive clockwise)
         # Camera: top of image = drone forward
         # dx_px positive = target right of centre → East when yaw=0
-        # dy_px positive = target below centre → South when yaw=0 (camera down, +y = forward away = South... no)
+        # dy_px positive = target below centre → South when yaw=0
         # Actually: camera facing down, top of image = drone forward
         # dy_px negative = target above centre = further forward = more North
         # dy_px positive = target below centre = behind drone = more South
@@ -2705,7 +2751,9 @@ def inference_worker(args_ref, csv_writer_ref, csv_file_ref):
                 norm_x = x / w if w > 0 else 0.5
                 norm_y = y / h if h > 0 else 0.5
                 est_result = dummy_estimator.add_observation(
-                    d_lat, d_lon, d_alt, d_yaw, norm_x, norm_y
+                    d_lat, d_lon, d_alt, d_yaw, norm_x, norm_y,
+                    pitch_deg=d_pitch, roll_deg=d_roll,
+                    compensate_tilt=args_ref.compensate_tilt
                 )
 
                 if est_result:
