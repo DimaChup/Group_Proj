@@ -1233,7 +1233,7 @@ To handle this, each new GPS estimate is compared against existing detection clu
   a = \sin^2\!\frac{\Delta\phi}{2} + \cos\phi_1\cos\phi_2\,\sin^2\!\frac{\Delta\lambda}{2}
 \end{equation}
 
-\noindent If the nearest cluster centroid is within a configurable threshold (default \SI{30}{\metre}), the observation is added to that cluster; otherwise a new cluster is spawned.  Each cluster maintains:
+\noindent The Haversine formula (Equation~\ref{eq:haversine}) provides the great-circle distance on the WGS\,84 ellipsoid.  If the nearest cluster centroid is within a configurable threshold (default \SI{30}{\metre}), the observation is added to that cluster; otherwise a new cluster is spawned.  Each cluster maintains:
 
 \begin{itemize}
   \item A rolling window of the last 50 weighted observations (for the rolling average).

@@ -129,7 +129,7 @@ The outdoor flight was cancelled due to sustained winds of \SI{12}{\metre\per\se
     \item \textbf{DJI video analysis pipeline} (built post-cancellation) --- yielded the confidence-vs-altitude curve (Figure~\ref{fig:conf_vs_alt}), detection-vs-speed analysis (Figure~\ref{fig:det_vs_speed}), and GPS accuracy characterisation (CEP$_{50}{=}\SI{2.3}{\metre}$, Figure~\ref{fig:gps_bullseye}).
 \end{enumerate}
 
-\noindent These four data products form the quantitative backbone of this evaluation. The project lacks \emph{system-level} flight validation but possesses \emph{subsystem-level} quantitative data exceeding what a single flight sortie would typically yield (Appendix~\ref{sec:field-day}).
+\noindent These four data products form the quantitative backbone of this evaluation. The project lacks \emph{system-level} flight validation but possesses \emph{subsystem-level} quantitative data exceeding what a single flight sortie would typically yield (Appendix~\ref{sec:field-day}; Appendix~\ref{sec:results} tabulates the full bench-test and calibration results).
 
 \textbf{Incomplete flight validation (D1, D6, D7, D8).}
 The integrated system has never executed a search pattern over real terrain. Detection range versus altitude in natural lighting, false-positive rate against real backgrounds, wind-induced motion blur, and GPS accuracy under dynamic manoeuvres all remain unvalidated---only DJI video proxy data are available. Bench results suggest outdoor operation will require parameter tuning rather than architectural changes.
@@ -162,7 +162,7 @@ Figure~\ref{fig:radar_comparison} presents a radar chart comparing the system's 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.7\linewidth]{radar_comparison}
-\caption{Multi-dimensional comparison of this project against published SAR drone systems (Table~\ref{tab:sar-comparison}). Axes: inference speed, detection accuracy, GPS estimation accuracy, cost-effectiveness, autonomy level, and test coverage. This project excels in cost-effectiveness and test coverage but lags in inference speed due to CPU-only deployment.}
+\caption{Multi-dimensional comparison of this project against published SAR drone systems (Table~\ref{tab:sar-comparison}). Axes: inference speed, detection accuracy, GPS estimation accuracy, cost-effectiveness, autonomy level, and test coverage. This project scores highest on cost-effectiveness and test coverage but lowest on inference speed due to CPU-only deployment.}
 \label{fig:radar_comparison}
 \end{figure}
 
