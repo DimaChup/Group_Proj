@@ -167,7 +167,8 @@ class StreamHandler(BaseHTTPRequestHandler):
                 self.wfile.write(f'Content-Length: {len(data)}\r\n\r\n'.encode())
                 self.wfile.write(data)
                 self.wfile.write(b'\r\n')
-            except (BrokenPipeError, ConnectionResetError):
+                self.wfile.flush()
+            except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
                 break
 
             time.sleep(1.0 / _cfg_stream_fps)

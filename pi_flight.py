@@ -334,7 +334,8 @@ class WebHandler(BaseHTTPRequestHandler):
                 jpeg = self.flight.get_stream_jpeg()
                 if jpeg:
                     self.wfile.write(b'--frame\r\n')
-                    self.wfile.write(b'Content-Type: image/jpeg\r\n\r\n')
+                    self.wfile.write(b'Content-Type: image/jpeg\r\n')
+                    self.wfile.write(f'Content-Length: {len(jpeg)}\r\n\r\n'.encode())
                     self.wfile.write(jpeg)
                     self.wfile.write(b'\r\n')
                     self.wfile.flush()
