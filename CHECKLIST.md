@@ -27,16 +27,23 @@ sudo /opt/mavlink/mavlink-venv/bin/mavproxy.py \
   --out=tcpin:0.0.0.0:5762
 ```
 
-### Step 2: Robin's passive_watch (Terminal 2 on Pi)
+### Step 2: passive_watch -- OUR JOB (Terminal 2 on Pi)
+
+**Our role: detect targets + provide precise GPS coordinates to Robin's state machine.**
+
 ```bash
 cd ~/dima/Group_Proj && source pienv/bin/activate
-python passive_watch.py --port 8091 --conf 0.3 \
+python passive_watch.py --conf 0.3 \
   --smart-estimate --smart-min 5 --smart-radius 2.0 \
   --smart-dir robin_detections --model best.tflite
-# Browser: http://PI_IP:8091
+# Browser: http://PI_IP:8090
 ```
 
-### Step 3: Our mission (Terminal 3 on Pi) -- AFTER Ctrl+C passive_watch
+**Output:** Detection images + JSON with GPS coordinates saved to `robin_detections/`.
+Robin's state machine reads from this directory to get target positions.
+
+### Step 3 (optional): Full autonomous mission with main.py
+Only if testing our own state machine independently:
 ```bash
 python main.py --headless --clean
 # Browser: http://PI_IP:8090
