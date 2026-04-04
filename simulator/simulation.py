@@ -446,8 +446,10 @@ class SimulationEnvironment:
             return np.array([[c, -s, 0], [s, c, 0], [0, 0, 1]], dtype=np.float64)
 
         # Camera-to-world rotation (NED: X=North, Y=East, Z=Down)
-        # Yaw rotates around Z (down), pitch around Y (east), roll around X (north)
-        R = _Rz(yaw) @ _Rx(pitch) @ _Ry(roll)
+        # Yaw around Z (down), pitch around Y (east), roll around X (north).
+        # Signs: ArduPilot pitch<0 = nose down (camera tilts forward) → negate
+        #        for Ry; ArduPilot roll>0 = right-wing down → negate for Rx.
+        R = _Rz(yaw) @ _Ry(-pitch) @ _Rx(-roll)
 
         # Ray-trace 4 image corners onto ground plane (z = 0, drone at z = alt)
         corners_uv = [
