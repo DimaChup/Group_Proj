@@ -9,7 +9,7 @@ The minimum viable deliverable (MVD) satisfies the core brief requirements using
 
 \begin{table}[ht]
   \centering\small
-  \caption{Minimum viable deliverable: components and requirement coverage.}\label{tab:mvd}
+  \caption{Minimum viable deliverable: components and requirement coverage.  This baseline was achieved; it satisfies R01--R10 through bench and simulation testing without requiring outdoor flight.}\label{tab:mvd}
   \begin{tabularx}{\linewidth}{@{}p{4.2cm}X c@{}}
     \toprule
     \textbf{Component} & \textbf{Description} & \textbf{Req.} \\
@@ -33,14 +33,14 @@ The target deliverable is the system described throughout this report: a fully a
 
 \begin{table}[ht]
   \centering\small
-  \caption{Target deliverable: full autonomous mission.}\label{tab:target}
+  \caption{Target deliverable: full autonomous mission.  Each capability adds one layer of outdoor validation; weather cancellation prevented progression beyond Level~1.}\label{tab:target}
   \begin{tabularx}{\linewidth}{@{}p{4.2cm}X c@{}}
     \toprule
     \textbf{Capability} & \textbf{Description} & \textbf{Req.} \\
     \midrule
     Autonomous search pattern & Boustrophedon waypoints generated at runtime and executed in \texttt{GUIDED} mode with B\'{e}zier-smoothed turns. & R01, R03, R04, R05 \\
     Five-layer geofence & Plan-time waypoint filter, speed scalar field, repulsive vector field, hard boundary cutoff, and firmware backup enforce SSSI exclusion. & R01, R02 \\
-    Onboard AI detection & YOLOv8n TFLite inference at ${\sim}$5\,FPS triggers automatic transition to \textsc{Centering} state. Detection queue with spatial clustering filters duplicates. & R05 \\
+    Onboard AI detection & YOLOv8n TFLite inference at 4.8\,FPS triggers automatic transition to \textsc{Centering} state. Detection queue with spatial clustering filters duplicates. & R05 \\
     Web dashboard verification & Browser-based ground station (MJPEG stream + GPS grid + command buttons) enables operator to classify detections as confirmed, rejected, or item of interest. & R08, R10 \\
     \SI{7.5}{\metre} offset landing & After operator confirmation, the system averages GPS for 10\,s, selects an operator-chosen cardinal offset, approaches at low altitude, and lands. & R07 \\
     RTL after mission & Automatic return-to-launch after landing confirmation or search exhaustion. & R03, R09 \\
@@ -61,7 +61,7 @@ If the target deliverable is achieved with margin, several enhancements would ex
   \item \textbf{Multi-target detection and classification.} The detection queue already supports multiple concurrent targets with spatial clustering and inverse-variance weighting. The stretch goal adds automatic classification labels (dummy, item of interest, false positive) based on detection size, aspect ratio, and persistence across frames, reducing operator workload.
   \item \textbf{Live PLB focus area redirect (R06).} Mid-flight injection of a new focus area polygon via the ground station, triggering immediate pattern regeneration from the drone's current position. The \texttt{focus\_area.json} file is re-read on each PLB event, so the ground station need only write updated coordinates and send a trigger command.
   \item \textbf{Payload release mechanism (R07).} Full integration of the Tarot double-throw servo for first aid kit delivery, including a two-stage release sequence (partial open at \SI{1300}{\micro\second} PWM, full release at \SI{1100}{\micro\second}) with altitude and position guards to prevent premature deployment.
-  \item \textbf{NCNN inference backend.} The NCNN export of the retrained YOLOv8n model is available in \texttt{cv\_models/sar\_v2\_1088/ncnn/} and is expected to achieve ${\sim}$15\,FPS on the Pi~5 CPU, tripling the current TFLite throughput of ${\sim}$5\,FPS and enabling detection during faster transit legs.
+  \item \textbf{NCNN inference backend.} The NCNN export of the retrained YOLOv8n model is available in \texttt{cv\_models/sar\_v2\_1088/ncnn/} and is expected to achieve ${\sim}$15\,FPS on the Pi~5 CPU, tripling the current TFLite throughput of 4.8\,FPS and enabling detection during faster transit legs.
   \item \textbf{Real-time GPS estimation on dashboard.} Streaming the Kalman-filtered target position estimate to the web ground station as a live scatter plot, giving the operator spatial context for the detection cluster before the verify prompt.
 \end{itemize}
 
@@ -88,7 +88,7 @@ Table~\ref{tab:tier-evolution-summary} summarises the relationship between the t
 
 \begin{table}[ht]
   \centering\small
-  \caption{Tier structure and verification gates.}\label{tab:tier-evolution-summary}
+  \caption{Tier structure and verification gates.  Each tier defines a pass/fail gate; failure triggers a graceful fallback to the previous tier rather than mission abort.}\label{tab:tier-evolution-summary}
   \begin{tabularx}{\linewidth}{@{}p{2.0cm}p{4.5cm}X@{}}
     \toprule
     \textbf{Tier} & \textbf{Verification Gate} & \textbf{Fallback If Gate Fails} \\
@@ -115,7 +115,7 @@ Table~\ref{tab:contingency} defines the primary failure scenarios, their detecti
     \textbf{Scenario} & \textbf{Detection} & \textbf{Response} \\
     \midrule
     No GPS lock & Satellites $<$ 6 or fix type $<$ 3D after 120\,s & Fall back to Mission Planner AUTO mode with pre-uploaded waypoints. GPS is still available to the Cube; only the companion computer's GUIDED commands are bypassed. \\
-    CV fails in field (no detections) & Zero detections after full search pass & Swap to COCO person detector (\texttt{models/human.tflite}, 80-class YOLOv8n, \SI{13}{\mega\byte}). If still no detections, reduce confidence threshold from 0.4 to 0.2 via \texttt{config.py} and repeat. \\
+    CV fails in field (no detections) & Zero detections after full search pass & Swap to COCO person detector (\texttt{models/human.tflite}, 80-class YOLOv8n, \SI{13}{\mega\byte}). If still no detections, reduce confidence threshold from 0.2 to 0.1 via \texttt{config.py} and repeat. \\
     Pi crashes mid-flight & MAVLink heartbeat loss & ArduCopter GCS failsafe triggers RTL after heartbeat timeout (\texttt{FS\_GCS\_ENABLE}). Pilot monitors via RC telemetry. On the ground, restart script and resume from saved state. \\
     Detection altitude too low & Detections only below \SI{20}{\metre} during passive flight test & Reduce \texttt{TARGET\_ALT} from \SI{35}{\metre} to \SI{20}{\metre} in \texttt{config.py}. Accept the doubled scan-line count and reduced coverage rate. \\
     Wind exceeds limits & Sustained $>$\SI{8}{\metre\per\second} at altitude & Abort mission; command RTL. Wait for calmer conditions. ArduPilot \texttt{LOITER} mode holds position in moderate gusts. \\
@@ -217,7 +217,7 @@ Each contingency scenario has a corresponding test script that can be executed o
 
 \begin{table}[htbp]
   \centering\small
-  \caption{Contingency-to-test-script mapping.}\label{tab:test-scripts}
+  \caption{Contingency-to-test-script mapping.  Each failure scenario can be verified on-site before flight using the listed script; no scenario relies solely on in-flight discovery.}\label{tab:test-scripts}
   \begin{tabularx}{\linewidth}{@{}p{2.4cm}p{3.8cm}X@{}}
     \toprule
     \textbf{Scenario} & \textbf{Script} & \textbf{What it proves} \\

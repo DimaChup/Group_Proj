@@ -21,7 +21,7 @@ Evaluating GPS estimation accuracy for a SAR drone presents a bootstrapping chal
   \item \textbf{Unit-test verification.}  The \texttt{tests/unit/test\_utils.py} suite (36 tests) and \texttt{tests/unit/test\_gps\_utils.py} suite (19 tests) verify the pixel-to-GPS projection against analytically computed ground truth for controlled inputs (known altitude, heading, pixel position).
 \end{enumerate}
 
-\subsubsection{SMART Detection as Convergence Criterion}
+\subsubsection{SMART Detection as Convergence Criterion}\label{sec:smart-estimator}
 
 The SmartEstimator (Section~\ref{sec:smart-estimator}) serves a dual role: it is both the position fusion algorithm and the convergence criterion.  A SMART \emph{lock} occurs when a cluster of at least \texttt{min\_samples} GPS estimates has a maximum pairwise spread below \texttt{max\_spread}.  The lock event answers two questions simultaneously: \emph{where is the target?} (the cluster's component-wise median) and \emph{do we have enough data?} (yes, because the spread criterion is met).  This self-certifying property is critical for autonomous operation: the system does not need an external oracle to decide when to act.
 
@@ -78,7 +78,7 @@ The choice of clustering threshold---how many detections at what spatial agreeme
 
 \subsubsection{Frame Budget Analysis}\label{sec:frame-budget}
 
-At 35\,m altitude, the camera's ground footprint is 32.2\,m $\times$ 24.1\,m (Section~\ref{sec:fov-calibration}).  A target at the strip centreline is visible for:
+At 35\,m altitude, the camera's ground footprint is 32.2\,m $\times$ 24.1\,m (Section~\ref{sec:cal:fov}).  A target at the strip centreline is visible for:
 \begin{equation}
   t_\mathrm{visible} = \frac{\text{footprint height}}{\text{ground speed}} = \frac{24.1\,\text{m}}{v}
 \end{equation}
@@ -86,15 +86,15 @@ At inference rate $f_\mathrm{AI}$, the number of detection opportunities is $N =
 
 \begin{table}[htbp]
   \centering
-  \caption{Frame budget: number of detection opportunities per single flyover at 35\,m altitude, 3.9\,FPS inference rate (Pi~5 TFLite), detection probability $p_d = 0.78$.}
+  \caption{Frame budget: number of detection opportunities per single flyover at 35\,m altitude, 4.8\,FPS inference rate (Pi~5 TFLite), detection probability $p_d = 0.78$.}
   \label{tab:frame-budget}
   \begin{tabular}{lccccc}
     \toprule
     \textbf{Speed} & $t_\mathrm{vis}$ (s) & \textbf{Frames} & \textbf{Expected det.} & $P(\geq 5\;\text{det})$ & $P(\geq 10\;\text{det})$ \\
     \midrule
-    10\,m/s (transit)   & 2.4  & 9.4  & 7.3  & 0.87 & 0.12 \\
-    5\,m/s (search)     & 4.8  & 18.7 & 14.6 & $>$0.99 & 0.97 \\
-    2.5\,m/s (focus)    & 9.6  & 37.5 & 29.3 & $>$0.99 & $>$0.99 \\
+    10\,m/s (transit)   & 2.4  & 11.5 & 9.0  & 0.96 & 0.31 \\
+    5\,m/s (search)     & 4.8  & 23.0 & 18.0 & $>$0.99 & $>$0.99 \\
+    2.5\,m/s (focus)    & 9.6  & 46.1 & 36.0 & $>$0.99 & $>$0.99 \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -103,7 +103,7 @@ At inference rate $f_\mathrm{AI}$, the number of detection opportunities is $N =
 
 \begin{table}[htbp]
   \centering
-  \caption{Comparison of five clustering threshold configurations.  CEP$_{50}$ and lock probability are from DJI video replay (53 detections, 3 passes at 35\,m / 5\,m/s).  Response time assumes 3.9\,FPS inference and $p_d = 0.78$.}
+  \caption{Comparison of five clustering threshold configurations.  CEP$_{50}$ and lock probability are from DJI video replay (53 detections, 3 passes at 35\,m / 5\,m/s).  Response time assumes 4.8\,FPS inference and $p_d = 0.78$.}
   \label{tab:clustering-tradeoffs}
   \small
   \begin{tabular}{@{}llccccc@{}}

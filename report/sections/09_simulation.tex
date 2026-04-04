@@ -42,7 +42,7 @@ A critical feature of the simulator is its ability to inject realistic sensor no
 
     \item \textbf{Camera shake} (\texttt{-{}-shake $N$}): introduces altitude-dependent angular camera jitter simulating motor vibration. The HUD displays the ground-plane equivalent (e.g., ``SHAKE: 5\,px = 20\,cm on ground'') so the operator can assess real-world impact on detection confidence.
 
-    \item \textbf{Inference throttle} (\texttt{-{}-fps $N$}): limits CV inference to $N$~frames per second, matching the Raspberry~Pi's measured 4\,FPS throughput. This reveals whether the detection rate is sufficient to catch a target during a flyover at 3--5\,m/s.
+    \item \textbf{Inference throttle} (\texttt{-{}-fps $N$}): limits CV inference to $N$~frames per second, matching the Raspberry~Pi's measured 4.8\,FPS throughput. This reveals whether the detection rate is sufficient to catch a target during a flyover at 3--5\,m/s.
 
     \item \textbf{Additional noise sources}: altitude noise (\texttt{-{}-alt-noise}), yaw compass jitter (\texttt{-{}-yaw-noise}), and systematic FOV calibration error (\texttt{-{}-fov-error}) can be combined to stress-test the estimation pipeline under worst-case conditions.
 \end{itemize}

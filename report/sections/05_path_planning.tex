@@ -138,7 +138,7 @@ Table~\ref{tab:cpp-comparison} compares the implemented boustrophedon approach a
 
 \begin{table}[ht]
   \centering\compactTable
-  \caption{Comparison of coverage path planning algorithms.}\label{tab:cpp-comparison}
+  \caption{Comparison of coverage path planning algorithms.  Boustrophedon was selected for its $O(n)$ turn count, complete coverage guarantee, and ease of visual verification---critical when debugging search patterns in simulation.}\label{tab:cpp-comparison}
   \begin{tabularx}{\linewidth}{@{}l c c X@{}}
     \toprule
     \textbf{Algorithm} & \textbf{Coverage} & \textbf{Turns} & \textbf{Notes} \\
@@ -161,7 +161,7 @@ Table~\ref{tab:flight-params} summarises the key parameters governing the search
 
 \begin{table}[ht]
   \centering\compactTable
-  \caption{Search flight parameters.}\label{tab:flight-params}
+  \caption{Search flight parameters derived from the decision flow analysis (Appendix~\ref{sec:decision-flow}).  Each value balances detection probability, coverage time, and energy consumption.}\label{tab:flight-params}
   \begin{tabularx}{\linewidth}{@{}l l X@{}}
     \toprule
     \textbf{Parameter} & \textbf{Value} & \textbf{Rationale} \\

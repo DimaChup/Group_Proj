@@ -38,12 +38,12 @@ Table~\ref{tab:hw-bom} lists the bill of materials. All hardware was provided by
   \end{tabularx}
 \end{table}
 
-The Pi communicates with the Cube via UART at 921\,600\,baud through a MAVProxy bridge, which republishes MAVLink traffic on two outputs: UDP port~14550 (Python mission code) and TCP port~5762 (Mission Planner via Wi-Fi). This decouples the flight controller from the companion computer---any component can restart independently, and the same MAVLink stream serves both monitoring and commanding without message contention (Appendix~\ref{sec:streaming-arch}). The camera captures $1456 \times 1088$ global-shutter frames via CSI-2 at up to 30\,fps (throttled by inference to ${\sim}$4.8\,fps); lens distortion is corrected using precomputed \texttt{cv2.remap} matrices (calibrated RMS = 0.399\,px, $+$1.5\,ms overhead; Appendix~\ref{sec:calibration}). The calibrated focal length is \SI{5.46}{\milli\metre}, yielding a HFOV of ${\approx}\,49.3^{\circ}$. The global shutter eliminates rolling-shutter distortion during flight, preserving accurate bounding-box geometry for GPS estimation.
+The Pi communicates with the Cube via UART at 921\,600\,baud through a MAVProxy bridge, which republishes MAVLink traffic on two outputs: UDP port~14550 (Python mission code) and TCP port~5762 (Mission Planner via Wi-Fi). This decouples the flight controller from the companion computer---any component can restart independently, and the same MAVLink stream serves both monitoring and commanding without message contention (Appendix~\ref{sec:streaming-arch}). The camera captures $1456 \times 1088$ global-shutter frames via CSI-2 at up to 30\,fps (throttled by inference to ${\sim}$4.8\,fps); lens distortion is corrected using precomputed \texttt{cv2.remap} matrices (calibrated RMS = 0.399\,px, $+$1.5\,ms overhead; Appendix~\ref{sec:calibration}). The calibrated focal length is \SI{5.46}{\milli\metre}, yielding a HFOV of ${\approx}\,49.3^{\circ}$. The global shutter eliminates rolling-shutter distortion during flight, preserving accurate bounding-box geometry for GPS estimation. Appendix~\ref{sec:comms} details the full MAVLink topology and failsafe mechanisms.
 
 % ═══════════════════════════════════════════════════════════════
 \subsection{Software Architecture}\label{sec:sw-arch}
 
-Eleven Python modules totalling approximately 4\,400 lines of production code are organised in four layers (Figure~\ref{fig:architecture}). An additional 74 test and calibration scripts (Appendix~\ref{sec:test-scripts}), including 127 unit tests, validate each module in isolation before integration:
+Eleven Python modules totalling approximately 5\,700 lines of production code are organised in four layers (Figure~\ref{fig:architecture}). An additional 83 test and calibration scripts (Appendix~\ref{sec:test-scripts}), including 127 unit tests, validate each module in isolation before integration:
 
 \begin{figure}[ht]
 \centering
@@ -60,7 +60,7 @@ Eleven Python modules totalling approximately 4\,400 lines of production code ar
 \end{figure}
 
 \begin{itemize}
-    \item \textbf{Configuration layer:} \texttt{config.py} centralises all 40+ tuneable parameters with auto-detection of connection strings and platform (Appendix~\ref{app:config}); \texttt{states.py} defines the 20-state enumeration.
+    \item \textbf{Configuration layer:} \texttt{config.py} centralises all 70+ tuneable parameters with auto-detection of connection strings and platform (Appendix~\ref{app:config}); \texttt{states.py} defines the 20-state enumeration.
     \item \textbf{Independent modules:} \texttt{vision.py} exposes a single function \texttt{detect\_in\_image(frame)} $\to$ \texttt{(found, cx, cy, conf)}, encapsulating camera setup, backend selection, and all preprocessing. \texttt{planning.py} takes a GPS polygon and returns an ordered list of waypoints. \texttt{gps\_utils.py} provides bidirectional GPS$\leftrightarrow$pixel coordinate transforms via \texttt{GeoTransformer}. \texttt{geofence.py} enforces NFZ boundaries. These four modules import only \texttt{config.py} and standard libraries---no mutual dependencies---enabling isolated unit testing (127 tests) and single-file replacement.
     \item \textbf{Domain modules:} \texttt{navigation.py} wraps MAVLink commands (Table~\ref{tab:mavlink-commands}) with altitude clamping and ACK handling; \texttt{stream\_server.py} serves the MJPEG ground station.
     \item \textbf{Orchestration layer:} \texttt{state\_machine.py} implements all 20 state handlers as a mixin class consumed by \texttt{main.py}, which composes the modules and runs the main loop at ${\sim}$20--50\,Hz (limited by inference when CV is active).
@@ -80,7 +80,7 @@ Eleven Python modules totalling approximately 4\,400 lines of production code ar
 \texttt{land()} & \texttt{MAV\_CMD\_NAV\_LAND} & Land at position \\
 \bottomrule
 \end{tabular}
-\caption{MAVLink commands used by the navigation module.}
+\caption{MAVLink commands used by the navigation module.  All altitude commands enforce a hard 50\,m cap (R04); velocity commands are additionally clamped by the geofence speed scalar field near the SSSI boundary.}
 \label{tab:mavlink-commands}
 \end{table}
 
@@ -143,7 +143,7 @@ Strip spacing derives from the thin-lens footprint: $W_g = w_s \cdot h / f$, lan
 % ═══════════════════════════════════════════════════════════════
 \subsection{Mission State Machine}\label{sec:state-machine}
 
-The 20-state FSM (Figures~\ref{fig:state_machine} and~\ref{fig:state_machine_generated}, Appendix~\ref{app:states}) orchestrates the mission through four phases:
+The 20-state FSM (Figures~\ref{fig:state_machine} and~\ref{fig:state_machine_generated}, Appendix~\ref{app:states}) orchestrates the mission through four primary phases, plus override and error-handling paths:
 
 \begin{figure}[htbp]
 \centering
@@ -163,8 +163,9 @@ The 20-state FSM (Figures~\ref{fig:state_machine} and~\ref{fig:state_machine_gen
     \item \textbf{Startup:} INIT $\to$ CONNECTING $\to$ ARMING (GPS fix $\geq$3D, $\geq$6 sats) $\to$ TAKEOFF.
     \item \textbf{Search:} PRE\_WAYPOINTS $\to$ TRANSIT\_TO\_SEARCH $\to$ SEARCH (lawnmower pattern with CV detection; PLB beacon redirect if timer expires).
     \item \textbf{Engagement:} CENTERING (fly to GPS estimate) $\to$ DESCENDING (reduce altitude for close-up view) $\to$ VERIFY (operator Y/N/I with 120\,s timeout; auto-reject resumes search) $\to$ APPROACH (7.5\,m offset) $\to$ HOVER\_TARGET (servo payload release). If the operator rejects or the timeout expires, RETURN\_TO\_SEARCH climbs back to search altitude and resumes the lawnmower pattern from the next unvisited waypoint.
-    \item \textbf{Recovery:} RETURN\_TRANSIT $\to$ RETURN\_HOME $\to$ LANDING (triple touchdown detection) $\to$ DONE.
-    \item \textbf{Override:} MANUAL mode is reachable from any active state via the M~key, RC switch, or geofence hard-cutoff. All autonomous commands cease; the pilot assumes full control. Re-entering autonomous mode requires an explicit resume command.
+    \item \textbf{Recovery:} RETURN\_TRANSIT $\to$ RETURN\_HOME $\to$ LANDING (five-tick altimeter confirmation or ArduPilot auto-disarm) $\to$ DONE.
+    \item \textbf{Override:} MANUAL mode is reachable from any active state via the M~key, RC switch, or geofence hard-cutoff. All autonomous commands cease; the pilot assumes full control. RETURN\_FROM\_MANUAL validates GPS fix and NFZ clearance before resuming the pre-override state.
+    \item \textbf{Error fallback:} HOVER is entered if the search area yields no valid waypoints (e.g.\ polygon parsing failure). It holds position for 60\,s while the operator diagnoses the issue.
 \end{itemize}
 
 A detection queue with spatial deduplication (5\,m reject radius against all rejected targets and items of interest), bounded capacity (20 entries, oldest-first eviction), and lazy validation manages multiple targets without revisiting previously-investigated locations.
@@ -179,7 +180,7 @@ Six independent layers provide defence-in-depth:
     \item \textbf{Five-layer SSSI geofence} --- plan-time filtering, speed ramp, repulsive field, and hard cutoff (\S\ref{sec:sw-arch}).
     \item \textbf{Per-state timeouts} --- each state has a configurable maximum duration (e.g.\ VERIFY: 120\,s); expiry triggers the fallback transition (typically RETURN\_TO\_SEARCH). ArduCopter's own GCS failsafe (\texttt{FS\_GCS\_ENABLE}) provides a hardware-level backstop if the companion computer link is lost entirely.
 \end{enumerate}
-Appendix~\ref{app:states} lists all 20~states with their entry conditions, exit transitions, and timeout values.
+Appendix~\ref{app:states} lists all 20~states with their entry conditions, exit transitions, and timeout values. Appendix~\ref{sec:safety} provides the full risk register, failure-mode analysis, and regulatory compliance assessment. Appendix~\ref{sec:mission-flow} presents the end-to-end mission narrative from power-on to return-to-launch.
 
 % ═══════════════════════════════════════════════════════════════
 \subsection{Target Localisation}\label{sec:localisation}
@@ -198,7 +199,7 @@ where $w_s = \SI{5.02}{\milli\metre}$ is the sensor width, $f = \SI{5.46}{\milli
     \item \textbf{Kalman filter} on the $[\phi, \lambda]$ state vector with measurement noise scaled by inverse observation weight, converging within 5--10 observations.
 \end{itemize}
 
-Video replay analysis (DJI flight footage, $1456 \times 1088$ at 30\,fps) yielded CEP$_{50}$ = 2.3\,m and a maximum error of 16.5\,m (high-speed outlier). The directional elongation stems from GPS receiver latency (100--200\,ms), which multi-pass averaging partially mitigates. Six independent error sources contribute to a single-observation RSS uncertainty of \SI{2.9}{\metre} at \SI{35}{\metre} altitude, dominated by GPS receiver noise (\SI{2.3}{\metre}) and timing lag (\SI{1.5}{\metre}). After inverse-variance fusion of 15+ multi-altitude observations, the fused estimate converges to sub-metre accuracy, exceeding the 5--10\,m landing requirement (R07) with $>$99\% probability. Appendix~\ref{sec:gps-deep} provides the full error budget, convergence plots, and fusion strategy comparison.
+Video replay analysis (DJI flight footage, $1456 \times 1088$ at 30\,fps) yielded CEP$_{50}$ = 2.3\,m and a maximum error of 16.5\,m (high-speed outlier). The directional elongation stems from GPS receiver latency (100--200\,ms), which multi-pass averaging partially mitigates. Six independent error sources contribute to a single-observation RSS uncertainty of \SI{2.9}{\metre} at \SI{35}{\metre} altitude, dominated by GPS receiver noise (\SI{2.3}{\metre}) and timing lag (\SI{1.5}{\metre}). After inverse-variance fusion of 15+ multi-altitude observations, the fused estimate converges to sub-metre accuracy, exceeding the 5--10\,m landing requirement (R07) with $>$99\% probability. Appendix~\ref{sec:gps-deep} provides the full error budget, convergence plots, and fusion strategy comparison; Appendix~\ref{sec:estimation-eval} presents the ground-truth evaluation methodology and bullseye diagnostics; Appendix~\ref{sec:loc-approaches} surveys ten alternative localisation approaches that informed the design; and Appendix~\ref{sec:centering-analysis} quantifies the centering vs.\ direct offset landing trade-off.
 
 \begin{figure}[ht]
 \centering

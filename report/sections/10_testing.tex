@@ -140,11 +140,11 @@ Five categories of behaviour remain untestable in any simulation level: wind-ind
 
 \subsection{Stress Testing and Failure Scenarios}\label{sec:stress}
 
-A systematic stress-testing campaign exercised the system's response to 20 failure and edge-case scenarios in SITL simulation prior to outdoor testing. The scenarios were derived from a contingency table---a state-by-failure matrix covering all 15 states against six failure categories (timeout, manual override, GPS loss, camera failure, connection drop, and operator error)---and from the 22-test simulation checklist described below. Table~\ref{tab:stress-results} summarises the results.
+A systematic stress-testing campaign exercised the system's response to 20 failure and edge-case scenarios in SITL simulation prior to outdoor testing. The scenarios were derived from a contingency table---a state-by-failure matrix covering all 20 states against six failure categories (timeout, manual override, GPS loss, camera failure, connection drop, and operator error)---and from the 22-test simulation checklist described below. Table~\ref{tab:stress-results} summarises the results.
 
 \begin{table}[H]
 \centering
-\caption{Stress test results: 20 failure scenarios tested in SITL.}
+\caption{Stress test results: 20~failure scenarios injected in SITL.  Eleven passed on first attempt; nine required code fixes before passing, validating the simulation-first strategy.}
 \label{tab:stress-results}
 \small
 \begin{tabular}{@{}p{5.5cm}lp{5.5cm}@{}}

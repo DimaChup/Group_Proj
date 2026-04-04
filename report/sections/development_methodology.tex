@@ -45,14 +45,14 @@ scope, test outcomes, and calendar dates.
 \begin{table}[H]
 \centering
 \compactTable
-\caption{Ten-phase development history with outcomes.}
+\caption{Ten-phase development history with outcomes.  The majority of integration defects were discovered in phases~5--7 (bench and field testing), validating the progressive approach.}
 \label{tab:dev-phases}
 \begin{tabularx}{\linewidth}{@{}c l X l@{}}
 \toprule
 \textbf{\#} & \textbf{Phase} & \textbf{Scope and Outcomes} & \textbf{Dates} \\
 \midrule
 1 & Simulation on Laptop &
-    State machine (11~states, 32~transitions), lawnmower search pattern,
+    State machine (initial 11~states, later expanded to 20), lawnmower search pattern,
     simulated drone camera from \texttt{map.jpg}, Ultralytics YOLOv8n
     detection, GPS estimation, operator Y/N confirmation, SITL
     integration.  Full mission completed end-to-end in simulation. &
@@ -134,7 +134,7 @@ hardware was procured.  The simulation environment consisted of:
   \item \textbf{Simulated camera} (\texttt{simulation.py}): a
         satellite image (\texttt{map.jpg}) with a virtual drone viewport
         that moves according to SITL telemetry.
-  \item \textbf{State machine} (\texttt{main.py}): 11~states from
+  \item \textbf{State machine} (\texttt{main.py}): 20~states from
         \texttt{INIT} through \texttt{DONE}, with 32~transitions
         handling detection, centering, descent, verification, and
         landing.
@@ -219,7 +219,7 @@ The project defined three deliverable tiers to manage scope risk (Table~\ref{tab
 \begin{table}[H]
 \centering
 \compactTable
-\caption{Three product levels with autonomy and demonstration scope.}
+\caption{Three product levels with autonomy and demonstration scope.  The Minimum Viable Deliverable (Level~1) was achieved; Levels~2 and~3 remain contingent on successful flight testing.}
 \label{tab:ambition-levels}
 \begin{tabularx}{\linewidth}{@{}c l l X@{}}
 \toprule
@@ -257,7 +257,7 @@ one new risk factor; no step may be skipped.
 \begin{table}[H]
 \centering
 \compactTable
-\caption{Progressive flight testing ladder with scripts and risk isolation.}
+\caption{Progressive flight testing ladder with scripts and risk isolation.  Each step introduces exactly one new risk factor; failures must be resolved before advancing.}
 \label{tab:test-ladder}
 \begin{tabularx}{\linewidth}{@{}c X l l@{}}
 \toprule
@@ -300,7 +300,7 @@ for each requirement across both simulation and real hardware.
 \begin{table}[H]
 \centering
 \compactTable
-\caption{Simulation vs.\ real hardware readiness (0--10 scale).}
+\caption{Simulation vs.\ real hardware readiness (0--10 scale).  Simulation scores average 7.7/10; real hardware averages 2.1/10, reflecting the absence of outdoor flight testing.}
 \label{tab:sim-vs-real}
 \begin{tabular}{@{}l c c@{}}
 \toprule

@@ -266,7 +266,7 @@ aerial SAR detection.
 
 \begin{table}[htbp]
 \centering
-\caption{Data augmentation techniques ranked by impact for aerial SAR.}
+\caption{Data augmentation techniques ranked by impact for aerial SAR detection.  Motion blur and brightness jitter address the two dominant real-world failure modes; lower-ranked augmentations provide diminishing returns.}
 \label{tab:augmentations}
 \begin{tabular}{clp{6.5cm}}
 \hline
@@ -321,7 +321,7 @@ Several techniques reduce the gap between synthetic composites and real camera i
 
 \begin{table}[htbp]
 \centering
-\caption{Recommended dataset composition for single-class aerial detection.}
+\caption{Recommended dataset composition for single-class aerial detection.  Real labelled frames contribute the most per image; negatives and hard negatives are essential for suppressing false positives in cluttered terrain.}
 \label{tab:dataset-composition}
 \begin{tabular}{lll}
 \hline

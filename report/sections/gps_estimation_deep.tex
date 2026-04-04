@@ -189,7 +189,7 @@ Under the thin-lens (pinhole) approximation, the ground sampling distance at alt
   \qquad [\text{m\,px}^{-1}]
 \end{equation}
 
-\noindent where $w_s = \SI{5.02}{\milli\metre}$ (IMX296 sensor width), $f = \SI{5.46}{\milli\metre}$ (calibrated focal length), and $W = 1456$\,px (native image width).  Table~\ref{tab:gsd-altitude} lists the resulting GSD and ground footprint at the three operational altitudes.
+\noindent where $w_s = \SI{5.02}{\milli\metre}$ (IMX296 sensor width), $f = \SI{5.46}{\milli\metre}$ (calibrated focal length), and $W = 1456$\,px (native image width).  Equation~\ref{eq:gsd-deep} is the foundational formula for the entire projection pipeline; it appears again in the direct georeferencing approach (Appendix~\ref{sec:loc-approaches}, Section~\ref{sec:approach-direct}).  Table~\ref{tab:gsd-altitude} lists the resulting GSD and ground footprint at the three operational altitudes.
 
 \begin{table}[ht]
   \centering
@@ -256,7 +256,7 @@ A critical step in the detection-to-GPS chain is the mapping between the sensor'
   (u_{640}, v_{640}) = \left(\frac{u \cdot 640}{1456},\; \frac{v \cdot 640}{1088}\right)
 \end{equation}
 
-\noindent The model produces detections with bounding-box centres $(u_\mathrm{det}, v_\mathrm{det})$ in the $640 \times 640$ coordinate space.  These are mapped back to the original sensor resolution by inverting the resize:
+\noindent The forward mapping (Equation~\ref{eq:resize}) is a non-uniform squish (the horizontal and vertical scale factors differ because the 4:3 frame is mapped to 1:1).  The model produces detections with bounding-box centres $(u_\mathrm{det}, v_\mathrm{det})$ in the $640 \times 640$ coordinate space.  These are mapped back to the original sensor resolution by inverting the resize:
 
 \begin{equation}\label{eq:unscale}
   u_\mathrm{sensor} = u_\mathrm{det} \cdot \frac{1456}{640},
@@ -271,7 +271,7 @@ A critical step in the detection-to-GPS chain is the mapping between the sensor'
 % =====================================================================
 \subsection{Error Budget}\label{sec:error-budget}
 
-Nine independent error sources contribute to the total position uncertainty.  Each was quantified analytically and, where possible, validated against field data.  The budget now includes two sources---roll/pitch attitude and image resize---that were omitted from earlier analyses.  Figure~\ref{fig:error-waterfall} visualises the cumulative contribution of each source as a waterfall chart.
+Nine independent error sources contribute to the total position uncertainty.  Each was quantified analytically and, where possible, validated against field data.  The budget now includes two sources---roll/pitch attitude and image resize---that were omitted from earlier analyses.  Figure~\ref{fig:error-waterfall-deep} visualises the cumulative contribution of each source as a waterfall chart.
 
 \begin{table}[ht]
   \centering
@@ -304,12 +304,14 @@ Nine independent error sources contribute to the total position uncertainty.  Ea
   \centering
   \includegraphics[width=0.85\linewidth]{error_waterfall.pdf}
   \caption{Error budget waterfall showing the cumulative contribution of each noise source to the single-observation GPS estimate error at \SI{35}{\metre} altitude.  The stacked bars illustrate how individual terms (GPS receiver, timing lag, roll/pitch, heading, barometric drift, FOV calibration, lens distortion, detection pixel, vibration) combine via root sum of squares to produce the total CEP during flight ($\sim$\SI{7}{\metre} uncompensated, $\sim$\SI{3.5}{\metre} with tilt compensation) and during hover ($\sim$\SI{2.5}{\metre}).}
-  \label{fig:error-waterfall}
+  \label{fig:error-waterfall-deep}
 \end{figure}
+
+\noindent An altitude-stratified breakdown of these error contributions---showing how each source scales at 20\,m, 35\,m, and 50\,m, and how multi-frame averaging reduces the GPS component---is presented in Figure~\ref{fig:error-budget-breakdown} (Appendix~\ref{sec:estimation-eval}).
 
 \paragraph{GPS receiver noise} is the dominant term at all altitudes.  Field measurements with the Cube Orange GNSS module (single-frequency L1) yielded a CEP50 of \SI{1.5}{\metre} and a CEP95 of \SI{2.3}{\metre} while stationary, consistent with published specifications for consumer-grade receivers~\cite{kaplan2017understanding,misra2006global}.  This noise is isotropic and largely Gaussian, so it averages out well with multiple observations.
 
-\paragraph{GPS timing lag} is the dominant \emph{systematic} error.  The receiver reports positions with \SIrange{100}{200}{\milli\second} latency relative to the image timestamp.  At the nominal search speed of \SI{8}{\metre\per\second} (altitude-dependent schedule at 35\,m), the drone has moved \SIrange{0.8}{1.6}{\metre} since the reported GPS fix was valid, biasing every estimate in the direction of travel.  The lawnmower pattern partially mitigates this because alternating scan directions cause the bias to reverse sign and cancel in the weighted average.  An explicit velocity correction ($\Delta\mathbf{p} = \mathbf{v}_\mathrm{gnd}\cdot\Delta t$) can reduce the residual to approximately \SI{0.3}{\metre}.
+\paragraph{GPS timing lag}\label{sec:gps-timing-lag} is the dominant \emph{systematic} error.  The receiver reports positions with \SIrange{100}{200}{\milli\second} latency relative to the image timestamp.  At the nominal search speed of \SI{8}{\metre\per\second} (altitude-dependent schedule at 35\,m), the drone has moved \SIrange{0.8}{1.6}{\metre} since the reported GPS fix was valid, biasing every estimate in the direction of travel.  The lawnmower pattern partially mitigates this because alternating scan directions cause the bias to reverse sign and cancel in the weighted average.  An explicit velocity correction ($\Delta\mathbf{p} = \mathbf{v}_\mathrm{gnd}\cdot\Delta t$) can reduce the residual to approximately \SI{0.3}{\metre}.
 
 \paragraph{Barometric altitude error} enters through the GSD.  A $+\SI{0.5}{\metre}$ bias at \SI{35}{\metre} increases the GSD by 1.4\%, shifting edge-of-frame projections by up to \SI{0.5}{\metre}.  Near the image centre, the effect is negligible.
 
@@ -336,7 +338,7 @@ For a camera tilted at angle $\theta$ from nadir at altitude $h$, the ground-pla
   \Delta_\mathrm{tilt} = h \cdot \tan(\theta)
 \end{equation}
 
-\noindent Figure~\ref{fig:nadir-geometry} illustrates this geometry.  The nadir assumption places the camera footprint directly below the drone, but a pitched drone projects the optical axis forward, shifting the apparent target position by $\Delta_\mathrm{tilt}$.
+\noindent Equation~\ref{eq:tilt-offset} and Figure~\ref{fig:nadir-geometry} illustrate this geometry.  The nadir assumption places the camera footprint directly below the drone, but a pitched drone projects the optical axis forward, shifting the apparent target position by $\Delta_\mathrm{tilt}$.
 
 \begin{figure}[H]
   \centering
@@ -734,7 +736,7 @@ The preceding error analysis reveals that several dominant error sources---roll/
 % =====================================================================
 \subsection{Three-Level Estimation Architecture}\label{sec:three-strategies}
 
-The preceding error analysis reveals that different operational modes---flying, hovering, and visually centering---expose fundamentally different subsets of the error budget.  This section presents the three estimation levels as a structured design decision, comparing accuracy, mission cost, calibration dependency, and compliance with requirement R07 (land within \SIrange{5}{10}{\metre} of the casualty).  The architecture was designed so that each level builds on the previous one, and the system can fall back to a lower level if detection is lost during centering.
+The preceding error analysis reveals that different operational modes---flying, hovering, and visually centering---expose fundamentally different subsets of the error budget.  This section presents the three estimation levels as a structured design decision, comparing accuracy, mission cost, calibration dependency, and compliance with requirement R07 (land within \SIrange{5}{10}{\metre} of the casualty).  The architecture was designed so that each level builds on the previous one, and the system can fall back to a lower level if detection is lost during centering.  A broader survey of ten localization approaches---including multi-frame triangulation, SLAM, photogrammetric bundle adjustment, and Bayesian estimation---and the engineering justification for selecting this three-level architecture over more complex alternatives, is provided in Appendix~\ref{sec:loc-approaches}.
 
 % ------ Level 1 ------
 \subsubsection{Level~1: Fully Passive Estimation (No Drone Response)}\label{sec:level-1-passive}
@@ -1242,7 +1244,7 @@ To handle this, each new GPS estimate is compared against existing detection clu
   \item A detection count and a human-assigned classification (dummy / interest / false positive).
 \end{itemize}
 
-\noindent The 50-observation cap per cluster prevents memory growth during long loiter periods while retaining enough history for the rolling average to be statistically meaningful.  In simulation testing with two dummy targets placed \SI{80}{\metre} apart, the system correctly maintained two separate clusters from the first flyover, with no cross-contamination of observations.
+\noindent The 50-observation cap per cluster prevents memory growth during long loiter periods while retaining enough history for the rolling average to be statistically meaningful.  In simulation testing with two dummy targets placed \SI{80}{\metre} apart, the system correctly maintained two separate clusters from the first flyover, with no cross-contamination of observations.  A systematic comparison of five clustering threshold configurations---from single-frame to multi-pass---with their trade-offs between response speed and position accuracy is presented in Table~\ref{tab:clustering-tradeoffs} (Appendix~\ref{sec:estimation-eval}).
 
 % =====================================================================
 \subsection{Comparison of Methods}\label{sec:method-comparison}
@@ -1301,6 +1303,9 @@ Over the six-minute flight, the detector produced 50+ independent GPS estimates 
   \end{tabular}
 \end{table}
 
+\paragraph{Extended evaluation.}
+A comprehensive evaluation of these results---including the bullseye visualization methodology, side-by-side strategy comparison (Figure~\ref{fig:bullseye-comparison}), frame-budget analysis, convergence behaviour (Figure~\ref{fig:convergence-plot-eval}), and operational recommendations---is presented in Appendix~\ref{sec:estimation-eval}.
+
 \paragraph{Directional bias and GPS timing lag.}
 The scatter plot of individual estimation errors (Figure~\ref{fig:gps_bullseye}) reveals that observations do not form a symmetric cluster around the true position.  Instead, the error distribution is elongated along the flight heading direction (Figure~\ref{fig:gps_error_direction}).  This anisotropy is a direct consequence of the \SIrange{100}{200}{\milli\second} GPS receiver latency: by the time the receiver reports its position, the drone has travelled $v \cdot \Delta t$ further along its heading.  At \SI{5}{\metre\per\second} with \SI{150}{\milli\second} lag, this produces a systematic along-track displacement of $\sim$\SI{0.75}{\metre} per observation.
 
@@ -1326,7 +1331,7 @@ The theoretical RSS error budget (Table~\ref{tab:error-budget}) predicts a CEP o
   \item \textbf{Detections near frame centre.}  Many detections occurred when the drone was nearly overhead, placing the mannequin near the image centre where GSD-scaled pixel offsets are small.  The RSS budget assumes a worst-case off-centre detection.
 \end{enumerate}
 
-\noindent This comparison underscores a key design insight: the measured CEP$_{50}$ is dominated by GPS receiver noise (\SI{2.3}{\metre}), not by the projection pipeline.  Any improvement beyond this floor requires either RTK GPS or longer averaging, not better image processing.
+\noindent This comparison underscores a key design insight: the measured CEP$_{50}$ is dominated by GPS receiver noise (\SI{2.3}{\metre}), not by the projection pipeline.  Any improvement beyond this floor requires either RTK GPS or longer averaging, not better image processing.  A detailed ground-truth comparison of all seven estimation strategies, including the DJI replay results presented here alongside SITL simulation results and the estimator comparison (Figure~\ref{fig:estimator-comparison}), is provided in Appendix~\ref{sec:estimation-eval}, Section~\ref{sec:ground-truth-comparison}.
 
 \paragraph{The \SI{16.5}{\metre} outlier.}
 The single worst-case estimate (\SI{16.5}{\metre} error) occurred during a high-speed pass ($\sim$\SI{8}{\metre\per\second}) at \SI{50}{\metre} altitude.  At this altitude, the GSD is large (\SI{0.032}{\metre\per pixel}), so even a small bounding-box centroid error translates into a large ground offset.  Simultaneously, the GPS timing lag displacement reached $\sim$\SI{1.2}{\metre}, and the detection was near the frame edge where lens distortion residuals are largest.  This outlier demonstrates why the system requires multiple observations and robust fusion (inverse-variance weighting naturally down-weights this high-altitude, off-centre observation) rather than relying on any single detection.
@@ -1954,7 +1959,7 @@ Figure~\ref{fig:cep-comparison} shows the CEP$_{50}$ for each estimation strateg
 
 \subsubsection{Convergence Behaviour}
 
-Figure~\ref{fig:convergence-plot} shows how the position error evolves over time for the three best-performing strategies.  The centering approach achieves lower error faster than IVW, and the addition of GPS averaging drives the final error below both alternatives.
+Figure~\ref{fig:convergence-plot} shows how the position error evolves over time for the three best-performing strategies.  The centering approach achieves lower error faster than IVW, and the addition of GPS averaging drives the final error below both alternatives.  An alternative convergence view comparing these strategies on a common time axis with the IVW convergence curve from DJI replay data is presented in Figure~\ref{fig:convergence-plot-eval} (Appendix~\ref{sec:estimation-eval}).
 
 \begin{figure}[H]
   \centering
@@ -2093,7 +2098,7 @@ For $N$ passes with varying heading configurations, the expected CEP$_{50}$ is:
   \mathrm{CEP}_{50} \approx \sqrt{\left(\frac{\bar{b}}{N}\right)^2 + \frac{\sigma_\mathrm{GPS}^2}{N}}
 \end{equation}
 
-\noindent where $\bar{b}$ is the mean residual bias after heading cancellation.  For perfectly opposing headings, $\bar{b} = 0$; for random headings, $\bar{b}$ decreases as $1/\sqrt{N}$.  Table~\ref{tab:pass-accuracy} shows the expected accuracy for different numbers of passes.
+\noindent The multi-pass CEP model (Equation~\ref{eq:multi-pass-cep}) combines two components: $\bar{b}$ is the mean residual bias after heading cancellation (for perfectly opposing headings, $\bar{b} = 0$; for random headings, $\bar{b}$ decreases as $1/\sqrt{N}$), and $\sigma_\mathrm{GPS}$ is the per-observation GPS noise.  Table~\ref{tab:pass-accuracy} shows the expected accuracy for different numbers of passes.
 
 \begin{table}[ht]
   \centering

@@ -40,7 +40,7 @@ The hardware platform integrates a quadcopter airframe, an open-source flight co
 % ── Specs table ───────────────────────────────────────────────────────
 \begin{table}[ht]
   \centering\compactTable
-  \caption{Key hardware specifications.}\label{tab:hw-specs}
+  \caption{Key hardware specifications.  The IMX296 global shutter eliminates rolling-shutter artefacts during flight; the 921600\,baud serial link sustains the 20\,Hz telemetry rate required by the state machine.}\label{tab:hw-specs}
   \begin{tabularx}{\linewidth}{@{}l l X@{}}
     \toprule
     \textbf{Component} & \textbf{Parameter} & \textbf{Value} \\
@@ -125,7 +125,7 @@ where $W_{\mathrm{px}} = 1456$ is the image width in pixels. At the nominal sear
 Three communication links connect the subsystems (\figref{fig:hw-block}):
 
 \begin{enumerate}[leftmargin=1.4em]
-  \item \textbf{Camera\,$\rightarrow$\,Pi (CSI).} A short ribbon cable carries raw frames from the IMX296 to the Pi's CSI-2 port at up to 60\,fps (the pipeline is inference-bound at ${\sim}\,5$\,fps).
+  \item \textbf{Camera\,$\rightarrow$\,Pi (CSI).} A short ribbon cable carries raw frames from the IMX296 to the Pi's CSI-2 port at up to 60\,fps (the pipeline is inference-bound at 4.8\,fps).
 
   \item \textbf{Pi\,$\rightarrow$\,Cube (UART).} GPIO~14 (TX) and GPIO~15 (RX) connect to the Cube's TELEM2 port at \SI{921600}{baud}. As noted in \secref{sec:hw-pi}, \texttt{mavproxy} bridges the physical UART to a UDP socket (\texttt{udpout:127.0.0.1:14550}), from which all Python scripts consume telemetry and send commands. A second \texttt{mavproxy} output (\texttt{tcpin:0.0.0.0:5762}) allows Mission Planner on a ground-station laptop to connect over Wi-Fi for real-time monitoring.
 

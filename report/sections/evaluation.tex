@@ -7,7 +7,8 @@ The central question is: \emph{how close is the system to reliably finding a cas
 
 Table~\ref{tab:plus-delta} summarises the principal strengths and areas for improvement. Each item includes the specific evidence that supports the assessment.
 
-\begin{table}[ht!]
+\FloatBarrier
+\begin{table}[p]
 \centering\compactTable
 \caption{Plus/delta review of system technical performance.}\label{tab:plus-delta}
 \begin{tabularx}{\linewidth}{@{}c p{5.2cm} X@{}}
@@ -86,17 +87,17 @@ Table~\ref{tab:plus-delta} summarises the principal strengths and areas for impr
 \begin{subfigure}[t]{0.48\textwidth}
   \centering
   \includegraphics[width=\linewidth]{latency_breakdown}
-  \caption{Per-frame latency breakdown: capture, undistortion, resize, inference, and postprocessing.}
+  \caption{Per-frame latency breakdown.  Model inference accounts for 94\% of the 208\,ms pipeline; all other stages (capture, undistortion, resize, postprocessing) are negligible.}
   \label{fig:latency_breakdown}
 \end{subfigure}
 \hfill
 \begin{subfigure}[t]{0.48\textwidth}
   \centering
   \includegraphics[width=\linewidth]{detection_heatmap}
-  \caption{Spatial detection heatmap showing detection density across the survey area during simulated search.}
+  \caption{Spatial detection heatmap during simulated search.  Higher density near the target confirms the SMART clustering algorithm concentrates detections; sparse regions indicate single-pass coverage.}
   \label{fig:detection_heatmap}
 \end{subfigure}
-\caption{System performance: inference latency budget and spatial detection distribution.}
+\caption{System performance analysis.  (a)~Inference dominates the per-frame latency at 94\% of total; (b)~the detection heatmap confirms uniform survey coverage with clustering near the target location.}
 \label{fig:perf_analysis}
 \end{figure}
 
@@ -183,10 +184,10 @@ Direct MAVLink avoided the complexity of a ROS\,2 workspace, launch files, and m
 The boustrophedon (lawnmower) pattern is the standard baseline for area search and guarantees 100\% coverage of the polygon. Adaptive strategies---spiral search, expanding square, or reinforcement-learning-based prioritisation~\cite{deeprlsar2025}---could reduce mean time-to-detection by biasing search toward high-probability areas, but require a prior probability map that was unavailable for this project's test site. Given the small survey area (${\sim}$0.04\,km$^2$) and the single-pass coverage requirement, the lawnmower pattern's simplicity and completeness guarantee were the correct choice. For larger areas, adaptive planning would become necessary.
 
 \textbf{Single-class vs.\ multi-class detector.}
-The single-class ``dummy'' detector (D6) defers classification to the human operator at the VERIFY state. This aligns with the Sheridan Level~3--4 framework (Section~\ref{sec:autonomy-level}) but also reflects a data limitation: only 16 real images were available, insufficient for multi-class generalisation. A multi-class detector would reduce operator workload but increase misclassification risk; for a safety-critical SAR application, human-in-the-loop verification is the more responsible design. This trade-off should be revisited with a larger real-world dataset.
+The single-class ``dummy'' detector (D6) defers classification to the human operator at the VERIFY state. This aligns with the Sheridan Level~3--4 framework (Section~\ref{sec:autonomy-rationale}) but also reflects a data limitation: only 16 real images were available, insufficient for multi-class generalisation. A multi-class detector would reduce operator workload but increase misclassification risk; for a safety-critical SAR application, human-in-the-loop verification is the more responsible design. This trade-off should be revisited with a larger real-world dataset.
 
 \textbf{Was simulation-first the right strategy?}
-Simulation-first consumed approximately 10 of 16 available weeks before hardware was powered on. This produced a mature, well-tested codebase but compressed all hardware integration into a single bench day---creating the exact time pressure the progressive testing framework was designed to avoid. The irony is stark: a project that champions progressive testing delayed its own progression for 10 weeks. In a second iteration, hardware should be powered on by week~3 at the latest, with simulation and hardware development proceeding in parallel. The simulation infrastructure was valuable, but the 10-week delay to hardware was excessive for a fixed-deadline project. The 74 test scripts and 127 unit tests, while impressive in quantity, cannot substitute for the one test that matters most: an outdoor flight.
+Simulation-first consumed approximately 10 of 16 available weeks before hardware was powered on. This produced a mature, well-tested codebase but compressed all hardware integration into a single bench day---creating the exact time pressure the progressive testing framework was designed to avoid. The irony is stark: a project that champions progressive testing delayed its own progression for 10 weeks. In a second iteration, hardware should be powered on by week~3 at the latest, with simulation and hardware development proceeding in parallel. The simulation infrastructure was valuable, but the 10-week delay to hardware was excessive for a fixed-deadline project. The 74 test scripts and 127 unit tests, while impressive in quantity, cannot substitute for the one test that matters most: an outdoor flight. Appendix~\ref{app:dev-methodology} documents the full simulation-first philosophy, 10-phase development timeline, and lessons for future teams.
 
 % ─────────────────────────────────────────────────────────────────────
 \subsection{Mission-Level Performance Estimates}\label{sec:mission-metrics}
@@ -228,7 +229,7 @@ The nine delta items and design-choice analysis are consolidated into a prioriti
     \item \textbf{Retrain multi-class detector} (D6) --- Requires 100+ labelled images per class from real flights. Dependent on item~1. Estimated effort: 1--2 weeks including data collection.
 \end{enumerate}
 
-Items 3--5 are implementable without any flight time and would strengthen the quantitative evidence base immediately. Items 1--2 require airfield access but are the highest-impact improvements for validating the system's real-world capability.
+Items 3--5 are implementable without any flight time and would strengthen the quantitative evidence base immediately. Items 1--2 require airfield access but are the highest-impact improvements for validating the system's real-world capability. Appendix~\ref{sec:future} expands on the long-term roadmap (inference acceleration, thermal imaging, swarm operations); Appendix~\ref{sec:contingency} documents the three-tier contingency plan and eight failure scenarios; and Appendix~\ref{sec:payload-release} details the servo payload release mechanism for first-aid deployment (D8).
 
 % ─────────────────────────────────────────────────────────────────────
 \subsection{Testing Framework Summary}\label{sec:test-framework-summary}
