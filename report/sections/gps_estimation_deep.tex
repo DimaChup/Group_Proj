@@ -775,28 +775,27 @@ Table~\ref{tab:accuracy-journey} consolidates the preceding analysis into a sing
 
 \begin{table}[H]
 \centering
-\caption{Target GPS estimate accuracy at each mission phase.  CEP values are root-sum-of-squares of dominant error sources; measured CEP50 from DJI video validates the theoretical model.}
+\caption{Target GPS estimate accuracy at each phase of the four-phase detection-to-landing flow.  CEP values are root-sum-of-squares of dominant error sources; measured CEP50 from DJI video validates the theoretical model.  Tilt compensation is active throughout.}
 \label{tab:accuracy-journey}
 \small
 \begin{tabularx}{\linewidth}{@{}lccX@{}}
 \toprule
 \textbf{Phase} & \textbf{Alt (m)} & \textbf{Est.\ CEP (m)} & \textbf{Why it improves} \\
 \midrule
-SEARCH (single flyover) & 35 & $\sim$7.0\textsuperscript{$\ast$} & Roll/pitch (6.2\,m), GPS lag (1\,m), GPS noise (2--3\,m), calibration errors \\
-SEARCH (after 5 passes) & 35 & $\sim$3.5\textsuperscript{$\ast$} & Multi-pass averaging ($\sqrt{5}$), alternating headings cancel GPS lag bias \\
-CENTERING (approaching) & 35 & $\sim$2.5 & Slowing to hover eliminates roll/pitch; target drifts toward frame centre \\
-CENTERING (centred, hovering) & 35 & $\sim$1.8 & Target at centre $\Rightarrow$ offset $=0$; all geometric errors vanish; GPS averaged $\sim$5\,s \\
-VERIFY hold (10\,s) & 35 & $\sim$1.8 & Stationary at search altitude; \texttt{-{}-center-verify} averages drone GPS over 10\,s (50 samples at 5\,Hz) \\
-APPROACH (fly to offset) & 35 & $\sim$1.8 & Uses best VERIFY estimate; 7.5\,m offset computed from averaged GPS \\
+Phase 1: SEARCH (initial detection) & 35 & $\sim$3.5 & Tilt compensation ray-traces through known pitch/roll; GPS noise (2--3\,m) dominates after compensation \\
+Phase 2: CENTERING (approach) & 35 & $\sim$2.5 & Continuous re-estimation as pitch decreases; tilt compensation becomes no-op; GPS lag shrinks with speed \\
+Phase 3: CENTERING (hover lock) & 35 & $\sim$1.8 & Target at frame centre $\Rightarrow$ offset $=0$; all geometric errors vanish; nadir camera, no motion blur \\
+Phase 4: VERIFY (operator confirms) & 35 & $\sim$1.8 & \texttt{-{}-center-verify} averages drone GPS over 10\,s (50 samples at 5\,Hz); operator Y/N/I decision \\
+APPROACH (fly to offset) & 35 & $\sim$1.8 & Estimate frozen at Phase~3/4 quality; 7.5\,m offset computed from averaged GPS \\
 \midrule
-\textbf{Measured (DJI video)} & \textbf{35} & \textbf{2.3} & \textbf{CEP50 from 50+ detections across 6\,min flight video} \\
+\textbf{Measured (DJI video)} & \textbf{35} & \textbf{2.3} & \textbf{CEP50 from 50+ detections across 6\,min flight video (passive estimation, no hover lock)} \\
 \bottomrule
 \end{tabularx}
 \par\vspace{2pt}
-{\footnotesize $\ast$~With attitude compensation (\texttt{-{}-compensate-tilt}), SEARCH single-flyover CEP reduces to $\sim$\SI{3.5}{\metre} and 5-pass average to $\sim$\SI{2}{\metre} (Section~\ref{sec:tilt-compensation}).}
+{\footnotesize The DJI video CEP50 of \SI{2.3}{\metre} represents passive estimation (Level~1, no hovering or centering).  The full four-phase flow achieves \SI{1.8}{\metre} by eliminating geometric errors through hover lock (Phase~3) and GPS averaging (Phase~4).  False positives are bounded to \SI{15}{\second} through automatic timeout in Phase~3.}
 \end{table}
 
-\noindent The progression demonstrates that the system's accuracy is not a single number but a function of mission phase: the combination of centering (zero-offset), hovering (zero roll/pitch), and temporal averaging ($\sqrt{N}$ GPS improvement) transforms a $\sim$7\,m initial estimate into a $\sim$1.8\,m final estimate---well within the R07 landing annulus of 5--10\,m from the casualty.
+\noindent The progression demonstrates that the system's accuracy is not a single number but a function of mission phase: the combination of tilt compensation (Phase~1), continuous approach refinement (Phase~2), hover lock with nadir camera (Phase~3), and operator-confirmed GPS averaging (Phase~4) transforms a $\sim$3.5\,m initial estimate into a $\sim$1.8\,m final estimate---well within the R07 landing annulus of 5--10\,m from the casualty.  False positives detected during Phase~1 are automatically rejected after \SI{15}{\second} of fruitless hovering in Phase~3, at a cost of less than 1\% of mission time per event.
 
 % =====================================================================
 \subsection{GPS Averaging Duration Analysis}\label{sec:gps-averaging}
@@ -1109,19 +1108,21 @@ The preceding sections have analysed individual error sources, mitigation strate
 
 \begin{table}[ht]
   \centering
-  \caption{Detailed accuracy progression through mission states, showing how each state transition reduces the dominant error sources.  Values assume nominal conditions (single-frequency L1 GPS, IMX296 camera, YOLOv8n detector at 4.8\,FPS).}
+  \caption{Detailed accuracy progression through the four-phase detection-to-landing flow, showing how each phase eliminates specific error sources.  Values assume nominal conditions (single-frequency L1 GPS, IMX296 camera, YOLOv8n detector at 4.8\,FPS, tilt compensation active).}
   \label{tab:state-accuracy}
   \begin{tabular}{lp{3.2cm}cccp{3.8cm}}
     \toprule
-    \textbf{State} & \textbf{Condition} & \textbf{Alt (m)} & \textbf{$N_\mathrm{obs}$} & \textbf{CEP$_{50}$} & \textbf{What improves} \\
+    \textbf{Phase} & \textbf{Condition} & \textbf{Alt (m)} & \textbf{$N_\mathrm{obs}$} & \textbf{CEP$_{50}$} & \textbf{What improves} \\
     \midrule
-    SEARCH & Moving at \SI{8}{\metre\per\second}, $10^{\circ}$ pitch & 35 & 1--5 & $\sim$\SI{7}{\metre} & First detection; all errors present \\
+    1. SEARCH & Moving at \SI{5}{\metre\per\second}, $5$--$10^{\circ}$ pitch, tilt-compensated & 35 & 1--5 & $\sim$\SI{3.5}{\metre} & Tilt compensation ray-traces through known pitch/roll; rough GPS estimate \\
     \addlinespace
-    CENTERING & Decelerating to hover, approaching target & 35 & 5--20 & \SI{3}{\metre}$\to$\SI{2}{\metre} & Roll/pitch $\to$ 0; motion blur $\to$ 0; GPS lag $\to$ 0 \\
+    2. CENTERING (approach) & Decelerating to hover, continuous re-estimation & 35 & 5--20 & \SI{3.5}{\metre}$\to$\SI{2.5}{\metre} & Pitch decreases continuously; tilt compensation becomes no-op; GPS lag shrinks with speed \\
     \addlinespace
-    VERIFY & Stationary hover at search altitude, target at frame centre & 35 & 20--50 & $\sim$\SI{1.8}{\metre} & Zero pixel offset eliminates calibration errors; \texttt{-{}-center-verify} averages drone GPS over $\sim$10\,s \\
+    3. CENTERING (hover lock) & Stationary hover, nadir camera, target at frame centre & 35 & 20--50 & $\sim$\SI{1.8}{\metre} & All geometric errors eliminated; simple nadir math; GPS averaged over $\sim$10\,s \\
     \addlinespace
-    APPROACH & Flying to offset landing point & 35 & 50+ & \SI{1.8}{\metre} (frozen) & Estimate frozen at VERIFY quality; no further updates \\
+    4. VERIFY & Operator confirms via ground station (Y/N/I) & 35 & 50+ & \SI{1.8}{\metre} (frozen) & Estimate frozen at Phase~3 quality; 120\,s auto-reject timeout \\
+    \addlinespace
+    APPROACH & Flying to \SI{7.5}{\metre} offset landing point & 35 & --- & \SI{1.8}{\metre} & No further updates; offset computed from frozen estimate \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -1147,9 +1148,9 @@ The preceding sections have analysed individual error sources, mitigation strate
 \def\colD{12.6}
 
 % --- State boxes (top row) ---
-\node[state] (sSearch)   at (\colA, 0) {SEARCH};
-\node[state] (sCenter)   at (\colB, 0) {CENTERING};
-\node[state] (sVerify)   at (\colC, 0) {VERIFY};
+\node[state] (sSearch)   at (\colA, 0) {Phase 1\\SEARCH};
+\node[state] (sCenter)   at (\colB, 0) {Phase 2--3\\CENTERING};
+\node[state] (sVerify)   at (\colC, 0) {Phase 4\\VERIFY};
 \node[state] (sApproach) at (\colD, 0) {APPROACH};
 
 % --- CEP circles (below states) ---
@@ -1162,10 +1163,10 @@ The preceding sections have analysed individual error sources, mitigation strate
         draw=orange!60!black, inner sep=1.2pt] at (\x, \cepY) {};
 }
 
-% Drone triangles (above target, offset up by ~CEP/2 for SEARCH, centred for later)
+% Drone triangles (above target, offset proportional to CEP for SEARCH, centred for later)
 \node[isosceles triangle, isosceles triangle apex angle=50,
       fill=blue!50, draw=blue!70!black, minimum size=0.35cm,
-      rotate=180, inner sep=0pt] (drA) at (\colA+0.7, \cepY+0.9) {};
+      rotate=180, inner sep=0pt] (drA) at (\colA+0.4, \cepY+0.5) {};
 \node[isosceles triangle, isosceles triangle apex angle=50,
       fill=blue!50, draw=blue!70!black, minimum size=0.35cm,
       rotate=180, inner sep=0pt] (drB) at (\colB+0.15, \cepY+0.4) {};
@@ -1176,9 +1177,9 @@ The preceding sections have analysed individual error sources, mitigation strate
       fill=blue!50, draw=blue!70!black, minimum size=0.35cm,
       rotate=180, inner sep=0pt] (drD) at (\colD, \cepY+0.25) {};
 
-% CEP dashed circles  (radii proportional: 7->1.54, 2.5->0.55, 1.8->0.40)
+% CEP dashed circles  (radii proportional: 3.5->0.77, 2.5->0.55, 1.8->0.40)
 \draw[dashed, red!60!black, thick]
-  (\colA, \cepY) circle [radius=1.54cm];
+  (\colA, \cepY) circle [radius=0.77cm];
 \draw[dashed, red!60!black, thick]
   (\colB, \cepY) circle [radius=0.55cm];
 \draw[dashed, red!60!black, thick]
@@ -1187,38 +1188,38 @@ The preceding sections have analysed individual error sources, mitigation strate
   (\colD, \cepY) circle [radius=0.40cm];
 
 % CEP labels (below circles)
-\node[ceplabel] at (\colA, \cepY-1.85) {CEP\textsubscript{50} $\approx$ 7\,m};
+\node[ceplabel] at (\colA, \cepY-1.1) {CEP\textsubscript{50} $\approx$ 3.5\,m};
 \node[ceplabel] at (\colB, \cepY-0.85) {CEP\textsubscript{50} $\approx$ 2.5\,m};
 \node[ceplabel] at (\colC, \cepY-0.72) {CEP\textsubscript{50} $\approx$ 1.8\,m};
 \node[ceplabel] at (\colD, \cepY-0.72) {CEP\textsubscript{50} = 1.8\,m};
 
 % Condition annotations (below CEP labels)
-\node[annot] at (\colA, \cepY-2.5) {Moving at 8\,m/s\\10\textdegree{} pitch\\1--5 obs};
-\node[annot] at (\colB, \cepY-1.55) {Decelerating\\hover achieved\\5--20 obs};
-\node[annot] at (\colC, \cepY-1.45) {Stationary hover\\target centred\\20--50 obs};
-\node[annot] at (\colD, \cepY-1.45) {Estimate frozen\\flying to offset\\landing point};
+\node[annot] at (\colA, \cepY-1.8) {Phase 1: Detection\\5\,m/s, tilt-compensated\\1--5 obs};
+\node[annot] at (\colB, \cepY-1.55) {Phase 2: Approach\\decelerating\\5--20 obs};
+\node[annot] at (\colC, \cepY-1.45) {Phase 3: Hover lock\\nadir, target centred\\20--50 obs};
+\node[annot] at (\colD, \cepY-1.45) {Phase 4: Verify\\operator confirms\\estimate frozen};
 
 % --- Arrows between states with improvement labels ---
 \draw[->, thick, blue!50!black]
   (sSearch.east) -- (sCenter.west)
   node[arrlab, above, midway, yshift=1pt]
-    {hover $\to$\\pitch/roll = 0\\blur = 0};
+    {tilt comp $\to$\\approach $\to$ hover\\pitch/roll = 0};
 
 \draw[->, thick, blue!50!black]
   (sCenter.east) -- (sVerify.west)
   node[arrlab, above, midway, yshift=1pt]
-    {centre target\\$\to$ offset = 0\\calibration err = 0};
+    {nadir lock\\target centred\\operator confirms};
 
 \draw[->, thick, blue!50!black]
   (sVerify.east) -- (sApproach.west)
   node[arrlab, above, midway, yshift=1pt]
-    {10\,s GPS avg\\$\to$ freeze\\estimate};
+    {Y = confirm\\GPS averaged\\$\to$ offset land};
 
 % --- Improvement arrow spanning full width ---
 \draw[<->, thick, green!50!black]
   (\colA-1.0, \cepY-3.3) -- (\colD+1.0, \cepY-3.3)
   node[midway, below, font=\small\bfseries, text=green!40!black]
-    {$\sim$4$\times$ accuracy improvement through operational procedure alone};
+    {3.5\,m $\to$ 1.8\,m: progressive refinement through four operational phases};
 
 % Legend
 \node[font=\scriptsize, text=black!60, anchor=north west] at (\colA-1.0, -0.6)
@@ -1230,51 +1231,79 @@ The preceding sections have analysed individual error sources, mitigation strate
    \raisebox{0pt}{\tikz\draw[dashed, red!60!black, thick] (0,0) circle [radius=0.2cm];}\;= CEP\textsubscript{50} radius (proportional)};
 
 \end{tikzpicture}
-\caption{Target GPS estimate accuracy progression through mission phases.  Circle radii are proportional to CEP\textsubscript{50} at each state.  The combination of centering (zero pixel offset), hovering (zero roll/pitch), and GPS averaging transforms a $\sim$7\,m initial estimate into a 1.8\,m final estimate---a $\sim$4$\times$ improvement achieved entirely through operational procedure without additional hardware or software complexity.}
+\caption{Target GPS estimate accuracy progression through the four-phase detection-to-landing flow.  Circle radii are proportional to CEP\textsubscript{50} at each phase.  Tilt compensation in Phase~1 reduces the initial estimate from $\sim$7\,m (uncompensated) to $\sim$3.5\,m.  The combination of continuous approach refinement (Phase~2), hover lock with nadir camera (Phase~3), operator verification with GPS averaging (Phase~4), and spatial deduplication of false positives transforms the initial estimate into a $\sim$1.8\,m final position---a $\sim$2$\times$ improvement through operational procedure alone.}
 \label{fig:accuracy-progression}
 \end{figure}
 
-\noindent The progression from \SI{7}{\metre} to \SI{1.8}{\metre} represents a $\sim$4$\times$ improvement achieved entirely through operational procedure (centering + hovering + averaging), without any increase in software complexity or sensor quality.  Each state transition eliminates a specific category of error:
+\noindent The progression from \SI{3.5}{\metre} (tilt-compensated) to \SI{1.8}{\metre} represents a $\sim$2$\times$ improvement achieved through operational procedure (approach, centering, hovering, GPS averaging), without any increase in software complexity or sensor quality.  Without tilt compensation, the improvement would be $\sim$4$\times$ from \SI{7}{\metre}.  Each phase transition eliminates a specific category of error:
 
 \begin{enumerate}
-  \item \textbf{SEARCH $\to$ CENTERING}: eliminates motion-induced errors (roll/pitch, blur, GPS lag).  This single transition removes the largest error source (\SI{6.2}{\metre} from pitch) and reduces the RSS from \SI{7}{\metre} to \SI{3}{\metre}.
-  \item \textbf{CENTERING $\to$ VERIFY}: the target reaches the frame centre while the drone remains at search altitude (the DESCENDING state exists in the code but is currently bypassed; the drone transitions directly from CENTERING to VERIFY at \SI{35}{\metre}).  The zero-offset condition (Equation~\ref{eq:zero-projection}) eliminates all calibration-dependent errors.
-  \item \textbf{VERIFY hold (10\,s)}: the \texttt{-{}-center-verify} flag averages the drone's own GPS position (which equals the target position, since the drone is centred above it) over $\sim$10\,s at 5\,Hz, yielding $N = 50$ samples.  With $N_\mathrm{eff} \approx 20$ (accounting for temporal correlation), this reduces the \SIrange{2}{3}{\metre} single-fix CEP to $\sim$\SI{1.8}{\metre}.
+  \item \textbf{Phase~1 (SEARCH):} tilt compensation ray-traces the detection through the known pitch/roll, reducing the $\sim$\SI{6.2}{\metre} pitch-induced bias to $\sim$\SI{0.3}{\metre}.  The rough estimate (CEP $\approx$ \SI{3.5}{\metre}) is accurate enough to initiate approach.
+  \item \textbf{Phase~2 (CENTERING, approach):} as the drone decelerates, pitch decreases continuously and every frame re-estimates with current attitude.  The tilt compensation naturally becomes a no-op.  GPS timing lag shrinks proportionally with speed.
+  \item \textbf{Phase~3 (CENTERING, hover lock):} the target reaches the frame centre while the drone hovers at search altitude.  The zero-offset condition (Equation~\ref{eq:zero-projection}) eliminates all calibration-dependent errors.  If the target is not visible, a \SI{15}{\second} timeout rejects the location as a false positive ($<$1\% mission time cost).
+  \item \textbf{Phase~4 (VERIFY):} the \texttt{-{}-center-verify} flag averages the drone's own GPS position (which equals the target position, since the drone is centred above it) over $\sim$10\,s at 5\,Hz, yielding $N = 50$ samples.  With $N_\mathrm{eff} \approx 20$ (accounting for temporal correlation), this reduces the \SIrange{2}{3}{\metre} single-fix CEP to $\sim$\SI{1.8}{\metre}.  The operator confirms or rejects, with a \SI{120}{\second} auto-reject timeout.
 \end{enumerate}
 
 \noindent The final \SI{1.8}{\metre} CEP$_{50}$ is dominated by the irreducible GPS receiver noise floor---the theoretical minimum achievable with a single-frequency L1 receiver without differential correction (RTK or DGPS).  Implementing the currently-bypassed DESCENDING state (lowering to \SI{15}{\metre} before VERIFY) would improve this further through reduced GSD (Table~\ref{tab:gsd-values}).  Further improvement beyond that would require either RTK GPS ($\sim$\SI{0.02}{\metre}) or significantly longer averaging times.
 
 % =====================================================================
-\subsection{Two-Step Detection Process}\label{sec:two-step}
+\subsection{Four-Phase Detection-to-Landing Flow}\label{sec:two-step}
 
-The accuracy progression described above is not an accident of the state machine---it is a deliberate two-step detection architecture.  The system treats target localisation as a progressive refinement process rather than a single-shot measurement.  The first step need only be accurate enough to bring the drone within visual range while hovering; the second step then achieves the precision required for safe offset landing.
+The accuracy progression described above is not an accident of the state machine---it is a deliberate four-phase progressive refinement architecture.  The system treats target localisation as a convergent process: each phase eliminates a specific category of error, and the estimate precision improves monotonically from initial detection through to the final landing decision.  Tilt compensation enables reliable initial acquisition even during high-speed flight, and the architecture degrades gracefully---if the compensation is inaccurate, the hover phase eliminates all geometric errors regardless.
 
-\subsubsection{Step~1: Rough Lock (During Flight, Tilted Camera)}
+\subsubsection{Phase~1: Initial Detection During Search (Tilted Camera)}
 
-During the SEARCH state the drone flies the lawnmower pattern at \SI{5}{\metre\per\second}, inducing a forward pitch of approximately $10^{\circ}$ to maintain airspeed.  The camera, rigidly mounted to the airframe, is therefore tilted away from nadir.  When the YOLOv8n detector identifies the mannequin in this tilted frame, the pixel-to-GPS pipeline (Section~\ref{sec:pipeline-overview}) projects the detection through the known pitch and roll angles obtained from the flight controller's attitude quaternion.
+During the SEARCH state the drone flies the lawnmower pattern at \SI{5}{\metre\per\second} and \SI{35}{\metre} altitude, inducing a forward pitch of approximately $5$--$10^{\circ}$ to maintain airspeed.  The camera, rigidly mounted to the airframe, is tilted away from nadir by this pitch angle.  When the YOLOv8n detector identifies the mannequin in this tilted frame, the pixel-to-GPS pipeline (Section~\ref{sec:pipeline-overview}) ray-traces the detection through the known pitch and roll angles obtained from the flight controller's attitude quaternion at \SI{50}{\hertz}.
 
-With tilt compensation active (\texttt{-{}-compensate-tilt}), the rough GPS estimate achieves a CEP$_{50}$ of approximately \SI{3.5}{\metre} (Table~\ref{tab:accuracy-journey}).  Without compensation the geometric projection error from the $10^{\circ}$ pitch alone contributes $\sim$\SI{6.2}{\metre} of forward bias (Section~\ref{sec:roll-pitch-analysis}), inflating the CEP to $\sim$\SI{7}{\metre}.  In either case the estimate is accurate enough to command the drone toward the target and begin decelerating.
+The ray-tracing correction (Equations~\ref{eq:ray-cam}--\ref{eq:virtual-pixel}) constructs a ray from the camera origin through the detected pixel, rotates it by the measured pitch and roll, and intersects it with the ground plane at the known flight altitude.  This produces a rough GPS estimate with CEP$_{50} \approx \SI{3.5}{\metre}$---accurate enough to command the drone toward the target and begin decelerating.  Without tilt compensation, the $10^{\circ}$ pitch alone would contribute $\sim$\SI{6.2}{\metre} of forward bias (Section~\ref{sec:roll-pitch-analysis}), but even this uncompensated estimate would keep the target within the camera's \SI{32}{\metre} ground footprint.  The state machine transitions to CENTERING.
 
-\subsubsection{Step~2: Precise Lock (Hovering, Nadir Camera)}
+\subsubsection{Phase~2: Approach and Continuous Refinement}
 
-As the drone decelerates toward the rough estimate, its pitch progressively decreases: the flight controller pitches the airframe forward to accelerate and backward to brake, so a decelerating drone naturally approaches level flight.  When the drone reaches a hover above the estimated target position, pitch and roll both settle to approximately $0^{\circ}$ and the camera points straight down (nadir).  At this point, several error sources vanish simultaneously:
+The drone flies toward the rough GPS estimate at reduced speed, decelerating as it approaches.  The flight controller pitches the airframe forward to accelerate and backward to brake, so a decelerating drone naturally approaches level flight.  During approach, the system re-detects and re-estimates the target position on \emph{every frame} using the current pitch and roll telemetry:
 
 \begin{itemize}
-  \item \textbf{Roll/pitch projection error} $\to 0$: with the camera at nadir, there is no off-axis projection to compensate, and the \SI{6.2}{\metre} pitch-induced bias disappears entirely.
-  \item \textbf{GPS timing lag} $\to 0$: the drone is stationary, so the 100--200\,ms GPS latency (Section~\ref{sec:error-budget}) introduces zero position error regardless of lag duration.
+  \item As the drone slows from \SI{5}{\metre\per\second} to near-zero, the forward pitch decreases continuously from $\sim$$10^{\circ}$ to $\sim$$3^{\circ}$ and then to $< 1^{\circ}$.
+  \item Each frame's GPS estimate benefits from the reduced tilt: the tilt compensation naturally becomes a no-op as pitch approaches $0^{\circ}$.
+  \item GPS timing lag (\SI{100}{\milli\second} latency $\times$ velocity) shrinks proportionally with speed, eliminating the \SI{1}{\metre} along-track error.
+  \item Motion blur decreases, improving detection confidence and bounding-box precision.
+  \item Additional observations are fused into the estimate, progressively refining it from $\sim$\SI{3.5}{\metre} to $\sim$\SI{2.5}{\metre} CEP.
+\end{itemize}
+
+\noindent The estimate converges toward the true target position without any discrete transition---the refinement is continuous throughout the approach.
+
+\subsubsection{Phase~3: Hover Lock (Nadir Confirmation)}
+
+The drone arrives at the estimated target position and holds a stationary hover.  Pitch and roll both settle to approximately $0^{\circ}$ and the camera points straight down (nadir).  At this point, several error sources vanish simultaneously:
+
+\begin{itemize}
+  \item \textbf{Roll/pitch projection error} $\to 0$: with the camera at nadir, there is no off-axis projection to compensate, and the \SI{6.2}{\metre} pitch-induced bias disappears entirely.  The tilt compensation is a no-op (below the $0.02$\,rad activation threshold).
+  \item \textbf{GPS timing lag} $\to 0$: the drone is stationary, so the 100--200\,ms GPS latency introduces zero position error regardless of lag duration.
   \item \textbf{Motion blur} $\to 0$: no translational velocity means no inter-frame smearing, improving detection confidence and bounding-box precision.
   \item \textbf{Calibration-dependent errors} $\to 0$: when the target is at or near the frame centre, the pixel offset $(u - C_x, v - C_y)$ approaches zero.  Because every geometric error in the projection chain (GSD, focal length, yaw, lens distortion) is \emph{multiplied} by this offset (Equation~\ref{eq:body-deep}), they are all multiplied by zero and vanish (Section~\ref{sec:centering-mitigation}).
 \end{itemize}
 
-\noindent The drone's own GPS position, averaged over $\sim$10\,s of stationary hover (50 samples at 5\,Hz via \texttt{-{}-center-verify}), now \emph{is} the target's GPS position to within the irreducible receiver noise floor.  The result is a precise estimate with CEP$_{50} \approx \SI{1.8}{\metre}$---sufficient for the R07 offset landing requirement of 5--10\,m from the casualty.
+\noindent The detection uses simple nadir math---no tilt correction needed.  If the target is visible and within \SI{1}{\metre} of the frame centre, the state machine transitions to VERIFY.  If the target is \emph{not} visible after \SI{15}{\second}---indicating a false positive---the location is rejected and the drone resumes search (Section~\ref{sec:false-positive-handling}).
 
-\subsubsection{Why Two Steps Are Necessary}
+The drone's own GPS position, averaged over $\sim$10\,s of stationary hover (50 samples at 5\,Hz via \texttt{-{}-center-verify}), now \emph{is} the target's GPS position to within the irreducible receiver noise floor.  The result is a precise estimate with CEP$_{50} \approx \SI{1.8}{\metre}$---sufficient for the R07 offset landing requirement of 5--10\,m from the casualty.
 
-A natural question is whether a single step could achieve the required accuracy.  Table~\ref{tab:two-step-comparison} compares the three possible strategies.
+\subsubsection{Phase~4: Operator Verification and Landing Decision}
+
+With the target confirmed by the autonomous system, the operator makes the final decision via the ground station interface (browser dashboard or terminal):
+
+\begin{itemize}
+  \item \textbf{Y (confirm target)}: the GPS estimate is frozen at Phase~3 quality.  The drone computes a \SI{7.5}{\metre} offset landing point (downwind when wind data is available), flies to the offset position, and deploys the payload before landing.
+  \item \textbf{N (reject target)}: the detection is dismissed and the drone resumes the search pattern from the waypoint where the investigation was triggered.
+  \item \textbf{I (item of interest)}: the GPS position is logged for post-mission review; the drone resumes search.
+  \item \textbf{Timeout (120\,s)}: if the operator does not respond within \SI{120}{\second}, the system auto-rejects and resumes search, preventing the drone from hovering indefinitely.
+\end{itemize}
+
+\subsubsection{Why Four Phases Are Necessary}
+
+A natural question is whether fewer phases could achieve the required accuracy.  Table~\ref{tab:two-step-comparison} compares the possible strategies.
 
 \begin{table}[ht]
   \centering
-  \caption{Comparison of single-step vs.\ two-step detection strategies.  The two-step approach achieves the highest accuracy while retaining the ability to detect at full search speed.}
+  \caption{Comparison of estimation strategies.  The four-phase approach achieves the highest accuracy while retaining full search speed and bounded false-positive cost.}
   \label{tab:two-step-comparison}
   \begin{tabular}{lccl}
     \toprule
@@ -1282,16 +1311,16 @@ A natural question is whether a single step could achieve the required accuracy.
     \midrule
     Single flyover (no compensation) & $\sim$\SI{7}{\metre} & Fastest & Too inaccurate for R07 \\
     Tilt-compensated flyover only    & $\sim$\SI{3.5}{\metre} & Fast & Relies on calibration quality \\
-    \textbf{Two-step (rough + hover lock)} & $\sim$\SI{1.8}{\metre} & +15\,s & \textbf{Calibration-independent} \\
+    \textbf{Four-phase (detect $\to$ approach $\to$ hover $\to$ verify)} & $\sim$\SI{1.8}{\metre} & +15--25\,s & \textbf{Calibration-independent} \\
     \bottomrule
   \end{tabular}
 \end{table}
 
-\noindent The critical insight is that the rough lock only needs to place the drone close enough to the target that the mannequin remains visible in the camera's field of view while hovering.  At \SI{35}{\metre} altitude the camera footprint is $32.2 \times 24.0$\,m (Table~\ref{tab:gsd-altitude}), so even a \SI{7}{\metre} error in the rough estimate keeps the target well within the frame.  The two-step approach therefore decouples detection sensitivity (which determines whether the target is found at all) from localisation precision (which determines where the drone lands).
+\noindent The critical insight is that the rough estimate in Phase~1 only needs to place the drone close enough that the mannequin remains visible in the camera's field of view while hovering.  At \SI{35}{\metre} altitude the camera footprint is $32.2 \times 24.0$\,m (Table~\ref{tab:gsd-altitude}), so even a \SI{7}{\metre} error keeps the target well within the frame.  The four-phase approach therefore decouples detection sensitivity (which determines whether the target is found at all) from localisation precision (which determines where the drone lands), and adds operator oversight as the final safety gate.
 
-\subsubsection{The ``Creep Up'' Trajectory}\label{sec:creep-up}
+\subsubsection{The Progressive Refinement Trajectory}\label{sec:creep-up}
 
-The transition from rough lock to precise lock is not instantaneous---it is a continuous refinement that occurs during the CENTERING state.  Figure~\ref{fig:creep-up} illustrates the three phases of approach.
+The transition from initial detection to precise hover lock is a continuous refinement that occurs during the CENTERING state.  Figure~\ref{fig:creep-up} illustrates all four phases, showing how pitch angle decreases and error circles shrink as the drone approaches the target, with a branch for false positive recovery.
 
 \begin{figure}[H]
   \centering
@@ -1305,82 +1334,98 @@ The transition from rough lock to precise lock is not instantaneous---it is a co
                      fill=orange!80!red, draw=orange!60!black, inner sep=1.8pt},
       cep/.style={dashed, thick},
       phase/.style={font=\small\bfseries, text=blue!60!black},
-      annot/.style={font=\scriptsize, text=black!60, text width=3.0cm, align=center},
+      annot/.style={font=\scriptsize, text=black!60, text width=2.6cm, align=center},
+      fp/.style={font=\scriptsize, text=red!60!black, text width=2.4cm, align=center},
   ]
     % Ground line
-    \fill[ground] (-1,-0.3) rectangle (14.5,0);
-    \draw[thick, green!40!black] (-1,0) -- (14.5,0);
+    \fill[ground] (-1,-0.3) rectangle (16.5,0);
+    \draw[thick, green!40!black] (-1,0) -- (16.5,0);
 
     % Target (ground level)
-    \node[target] (tgt) at (12.5, 0.15) {};
+    \node[target] (tgt) at (10.5, 0.15) {};
     \node[font=\scriptsize, below=2pt of tgt] {Target};
 
     % Phase 1: Fast flight, tilted
-    \node[drone, rotate=200] (d1) at (1.5, 4.0) {};
-    \draw[cep, red!60!black] (1.5, 0.15) circle [x radius=1.6cm, y radius=0.5cm];
+    \node[drone, rotate=200] (d1) at (1.0, 4.0) {};
+    \draw[cep, red!60!black] (1.0, 0.15) circle [x radius=0.8cm, y radius=0.35cm];
     \node[phase, above=3pt of d1] {Phase 1};
-    \node[annot, below=0.1cm of d1] at (1.5, 2.8) {Fast flight\\$10^{\circ}$ pitch\\CEP $\approx$ 7\,m};
+    \node[annot, below=0.1cm of d1] at (1.0, 2.7) {Detection\\$10^{\circ}$ pitch\\CEP $\approx$ 3.5\,m};
     % Camera cone (tilted forward)
     \draw[blue!30, thick, fill=blue!5] (d1.south) -- ++(0.9,-3.6) -- ++(-2.6,0) -- cycle;
     % Velocity arrow
-    \draw[->, thick, red!60!black] (d1.east) -- ++(1.2,0) node[right, font=\scriptsize] {\SI{5}{\metre\per\second}};
+    \draw[->, thick, red!60!black] (d1.east) -- ++(1.0,0) node[right, font=\scriptsize] {\SI{5}{\metre\per\second}};
 
     % Phase 2: Slowing, less tilt
-    \node[drone, rotate=190] (d2) at (6.5, 4.0) {};
-    \draw[cep, red!60!black] (7.0, 0.15) circle [x radius=0.7cm, y radius=0.35cm];
+    \node[drone, rotate=193] (d2) at (4.8, 4.0) {};
+    \draw[cep, red!60!black] (5.2, 0.15) circle [x radius=0.58cm, y radius=0.28cm];
     \node[phase, above=3pt of d2] {Phase 2};
-    \node[annot, below=0.1cm of d2] at (6.5, 2.8) {Decelerating\\$3^{\circ}$ pitch\\CEP $\approx$ 3\,m};
+    \node[annot, below=0.1cm of d2] at (4.8, 2.7) {Approach\\$3^{\circ}$ pitch\\CEP $\approx$ 2.5\,m};
     % Camera cone (slightly tilted)
     \draw[blue!30, thick, fill=blue!5] (d2.south) -- ++(0.5,-3.6) -- ++(-1.6,0) -- cycle;
     % Velocity arrow (shorter)
-    \draw[->, thick, red!60!black] (d2.east) -- ++(0.5,0) node[right, font=\scriptsize] {\SI{2}{\metre\per\second}};
+    \draw[->, thick, red!60!black] (d2.east) -- ++(0.4,0) node[right, font=\scriptsize] {\SI{2}{\metre\per\second}};
 
     % Phase 3: Hovering, nadir
-    \node[drone, rotate=180] (d3) at (12.5, 4.0) {};
-    \draw[cep, red!60!black] (12.5, 0.15) circle [x radius=0.42cm, y radius=0.25cm];
+    \node[drone, rotate=180] (d3) at (10.5, 4.0) {};
+    \draw[cep, red!60!black] (10.5, 0.15) circle [x radius=0.42cm, y radius=0.22cm];
     \node[phase, above=3pt of d3] {Phase 3};
-    \node[annot, below=0.1cm of d3] at (12.5, 2.8) {Hovering\\$0^{\circ}$ pitch\\CEP $\approx$ 1.8\,m};
+    \node[annot, below=0.1cm of d3] at (10.5, 2.7) {Hover lock\\$0^{\circ}$ pitch\\CEP $\approx$ 1.8\,m};
     % Camera cone (straight down)
     \draw[blue!30, thick, fill=blue!5] (d3.south) -- ++(0.6,-3.6) -- ++(-1.2,0) -- cycle;
     % No velocity arrow (stationary)
-    \node[font=\scriptsize, text=red!60!black] at (13.8, 4.0) {$v = 0$};
+    \node[font=\scriptsize, text=red!60!black] at (11.9, 4.0) {$v = 0$};
 
-    % Trajectory arrow
-    \draw[->, thick, dashed, blue!40!black] (d1.east) .. controls (4,4.5) and (5,4.0) .. (d2.west);
-    \draw[->, thick, dashed, blue!40!black] (d2.east) .. controls (9,4.5) and (10,4.0) .. (d3.west);
+    % Phase 4: Verify (operator)
+    \node[drone, rotate=180] (d4) at (14.5, 4.0) {};
+    \node[phase, above=3pt of d4] {Phase 4};
+    \node[annot, below=0.1cm of d4] at (14.5, 2.7) {Operator\\confirms\\Y/N/I};
+    % Camera cone (straight down, green for confirmed)
+    \draw[green!30, thick, fill=green!5] (d4.south) -- ++(0.6,-3.6) -- ++(-1.2,0) -- cycle;
+    % Operator label
+    \node[font=\scriptsize, text=green!50!black] at (15.9, 4.0) {Y $\to$ land};
+
+    % False positive branch from Phase 3
+    \draw[->, thick, dashed, red!50!black] (d3.south) ++(0.8,-1.8) -- ++(1.8,0) node[right, fp] {No target\\15\,s timeout\\$\to$ resume SEARCH};
+
+    % Trajectory arrows
+    \draw[->, thick, dashed, blue!40!black] (d1.east) .. controls (2.8,4.5) and (3.6,4.0) .. (d2.west);
+    \draw[->, thick, dashed, blue!40!black] (d2.east) .. controls (7.2,4.5) and (8.5,4.0) .. (d3.west);
+    \draw[->, thick, dashed, green!40!black] (d3.east) .. controls (12,4.3) and (13.2,4.0) .. (d4.west);
 
     % Altitude label
     \draw[<->, thin, black!40] (-0.5,0) -- (-0.5,4.0) node[midway, left, font=\scriptsize] {\SI{35}{\metre}};
 
   \end{tikzpicture}
-  \caption{The ``creep up'' trajectory showing three phases of the two-step detection process.  Phase~1: fast flight with tilted camera produces a rough GPS estimate (large error ellipse).  Phase~2: the drone decelerates toward the estimate, pitch decreases, and accuracy improves (medium error ellipse).  Phase~3: the drone hovers directly above the target with the camera at nadir, producing the precise lock (small error ellipse).  Camera cones show the field of view at each phase; the blue triangles represent the drone oriented in its direction of travel.}
+  \caption{The four-phase progressive refinement trajectory.  Phase~1: initial detection at full search speed with tilted camera and tilt-compensated GPS estimate (CEP $\approx$ 3.5\,m).  Phase~2: continuous approach and deceleration, pitch decreases, estimate improves (CEP $\approx$ 2.5\,m).  Phase~3: stationary hover with nadir camera, all geometric errors eliminated (CEP $\approx$ 1.8\,m); if no target is visible, a 15\,s timeout triggers resumption (red dashed branch).  Phase~4: operator confirms via ground station; Y triggers offset landing, N resumes search.  Error circles are drawn proportional to CEP at each phase.}
   \label{fig:creep-up}
 \end{figure}
 
-\noindent The three phases correspond to distinct segments of the CENTERING state in the state machine:
+\noindent The four phases map to distinct segments of the state machine:
 
 \begin{enumerate}
-  \item \textbf{Phase~1 (Detection at distance):} The mannequin is first detected during a SEARCH-pattern leg.  The rough GPS estimate (with or without tilt compensation) triggers the transition to CENTERING, and the drone begins flying toward the estimate at reduced speed.
+  \item \textbf{Phase~1 (Initial detection, SEARCH state):} The mannequin is first detected during a SEARCH-pattern leg.  The tilt-compensated GPS estimate triggers the transition to CENTERING, and the drone begins flying toward the estimate at reduced speed.
 
-  \item \textbf{Phase~2 (Approach and deceleration):} As the drone approaches the target, it decelerates.  The forward pitch drops from $\sim$$10^{\circ}$ to $\sim$$3^{\circ}$, improving the projection accuracy.  If the target is visible in the frame during approach, additional observations are fused into the estimate, progressively refining it.
+  \item \textbf{Phase~2 (Approach and deceleration, CENTERING state):} As the drone approaches the target, it decelerates.  The forward pitch drops continuously from $\sim$$10^{\circ}$ to $< 1^{\circ}$, and every frame produces a more accurate GPS estimate.  The tilt compensation naturally becomes a no-op as pitch approaches zero.
 
-  \item \textbf{Phase~3 (Hover and precise lock):} The drone reaches the estimated position and holds a stationary hover.  With pitch and roll at $0^{\circ}$, the camera is at nadir.  The target---now at or near the frame centre---is observed repeatedly.  The \texttt{-{}-center-verify} flag triggers 10\,s of GPS averaging during the subsequent VERIFY state, freezing the final estimate at $\text{CEP}_{50} \approx \SI{1.8}{\metre}$.
+  \item \textbf{Phase~3 (Hover lock, CENTERING $\to$ VERIFY transition):} The drone reaches the estimated position and holds a stationary hover.  With pitch and roll at $0^{\circ}$, the camera is at nadir.  If the target is detected within \SI{1}{\metre} of the frame centre, the state machine transitions to VERIFY.  If the target is \emph{not} visible after \SI{15}{\second}, the location is rejected as a false positive and the drone resumes search (Section~\ref{sec:false-positive-handling}).
+
+  \item \textbf{Phase~4 (Operator verification, VERIFY state):} The \texttt{-{}-center-verify} flag averages the drone's GPS position over $\sim$10\,s (50 samples at 5\,Hz), freezing the final estimate at $\text{CEP}_{50} \approx \SI{1.8}{\metre}$.  The operator confirms or rejects via the ground station (Y/N/I), with a \SI{120}{\second} auto-reject timeout.
 \end{enumerate}
 
 \subsubsection{Design Insight}
 
-The tilt compensation algorithm (Section~\ref{sec:tilt-compensation}) enables the drone to respond to initial detections while acknowledging that the first estimate is inherently approximate.  The system architecture treats detection as a progressive refinement process, not a single-shot measurement.  This philosophy---detect approximately, then refine precisely---is what allows a \SI{2}{\metre}-accuracy consumer GPS receiver to support offset landings within a 5--10\,m annulus.  The two-step approach also provides graceful degradation: even if the tilt compensation is miscalibrated or disabled entirely, the $\sim$\SI{7}{\metre} rough estimate is still sufficient to initiate the approach, because the hover lock in Step~2 eliminates all the errors that the compensation was attempting to correct.
+The tilt compensation algorithm (Section~\ref{sec:tilt-compensation}) enables reliable initial acquisition even during high-speed flight at \SI{5}{\metre\per\second}.  The system architecture treats detection as a progressive refinement process, not a single-shot measurement.  This philosophy---detect approximately, then refine precisely---is what allows a \SI{2}{\metre}-accuracy consumer GPS receiver to support offset landings within a 5--10\,m annulus.  The four-phase approach provides graceful degradation: even if the tilt compensation is miscalibrated or disabled entirely, the $\sim$\SI{7}{\metre} uncompensated rough estimate is still sufficient to initiate the approach, because the hover lock in Phase~3 eliminates all the errors that the compensation was attempting to correct.
 
-\subsubsection{False Positive Handling: What Happens When Step~2 Fails}\label{sec:false-positive-handling}
+\subsubsection{False Positive Handling}\label{sec:false-positive-handling}
 
-The tilt-compensated rough estimate from Step~1 may be incorrect for several reasons: the detection was a false positive (a rock, shadow, or clothing on the ground that resembles the mannequin), the tilt compensation was inaccurate due to an extreme pitch angle, or accumulated GPS drift moved the drone to a position that does not correspond to the detection.  The system is designed to recover gracefully from all of these cases.
+The rough estimate from Phase~1 may direct the drone to a location where no target exists.  This occurs when the detection was a false positive (a rock, shadow, or clothing that resembles the mannequin), the tilt compensation was inaccurate due to an extreme pitch angle, or accumulated GPS drift placed the drone at a position that does not correspond to the detection.  The system handles all of these cases through a bounded-cost automatic recovery mechanism.
 
-When the drone arrives at the rough estimate and hovers but \emph{cannot re-detect} the target, the following sequence occurs:
+When the drone arrives at the estimated position in Phase~3 and hovers but \emph{cannot re-detect} the target, the following sequence executes:
 
 \begin{enumerate}
-  \item \textbf{CENTERING timeout.}  The drone holds position at the rough estimate GPS coordinates for up to \SI{60}{\second}, continuously running the detector on each camera frame.  Without continuous detections, the position cannot be refined.
+  \item \textbf{Hover scan.}  The drone holds position at the estimated GPS coordinates, continuously running the detector on each camera frame.  With the camera at nadir and no motion blur, if a real target exists within the $32.2 \times 24.0$\,m ground footprint, it will be detected.
 
-  \item \textbf{Automatic resumption.}  After the \SI{60}{\second} timeout, the state machine logs \texttt{"CENTERING TIMEOUT --- resuming search"} and transitions back to the SEARCH state.
+  \item \textbf{Automatic timeout.}  After \SI{15}{\second} without a detection, the state machine logs \texttt{"CENTERING TIMEOUT --- resuming search"} and transitions back to the SEARCH state.
 
   \item \textbf{Spatial deduplication.}  The false-positive location is appended to a \texttt{rejected\_targets} list.  Any future detection whose estimated GPS position falls within \SI{5}{\metre} of a rejected location is silently ignored, preventing the drone from investigating the same false alarm twice.
 
@@ -1388,15 +1433,15 @@ When the drone arrives at the rough estimate and hovers but \emph{cannot re-dete
 \end{enumerate}
 
 \paragraph{Cost of a false positive.}
-Each false positive incurs approximately \SI{60}{\second} of mission time (the timeout duration) and the associated battery expenditure---roughly 3\% of a typical \SI{20}{\minute} endurance budget at \SI{35}{\metre} hover.  One rejected-target exclusion zone (\SI{5}{\metre} radius) is created.  No operator intervention is required; the system self-recovers.
+False positives are bounded to \SI{15}{\second} of mission time through the automatic timeout---approximately 1\% of a typical \SI{20}{\minute} endurance budget at \SI{35}{\metre} hover.  The associated battery expenditure is $\sim$\SI{75}{\milli\ampere\hour} ($<$0.3\% of a 3000\,mAh 4S battery).  One rejected-target exclusion zone (\SI{5}{\metre} radius) is created.  No operator intervention is required; the system self-recovers fully autonomously.
 
 \paragraph{False positive mitigation.}
 Four mechanisms reduce the frequency and impact of false positives:
 \begin{itemize}
   \item \textbf{SMART detection} (\texttt{-{}-smart-detect}): requires three consecutive confirmed frames before triggering CENTERING, filtering out transient single-frame false alarms.
-  \item \textbf{Confidence threshold} (\texttt{-{}-conf}): raising the threshold (e.g.\ to 0.5) reduces detections but suppresses low-confidence false positives.
-  \item \textbf{Spatial deduplication}: the \texttt{rejected\_targets} list prevents repeated investigation of the same location, capping the cost of any persistent false-positive source at one timeout event.
-  \item \textbf{Bounded timeout}: the \SI{60}{\second} ceiling limits the worst-case impact of any single false positive to a known, budgeted quantity.
+  \item \textbf{Confidence threshold} (\texttt{-{}-conf}): raising the threshold (e.g.\ to 0.5) suppresses low-confidence false positives at a modest reduction in recall.
+  \item \textbf{Spatial deduplication}: the \texttt{rejected\_targets} list prevents repeated investigation of the same location, capping the cost of any persistent false-positive source at one \SI{15}{\second} timeout event.
+  \item \textbf{Bounded timeout}: the \SI{15}{\second} ceiling limits the worst-case impact of any single false positive to a known, budgeted quantity---less than 1\% of mission time.
 \end{itemize}
 
 \begin{figure}[H]
@@ -1415,50 +1460,53 @@ Four mechanisms reduce the frequency and impact of false positives:
       no/.style={font=\scriptsize\bfseries, text=red!60!black},
   ]
     % Top row: SEARCH -> Detection -> Tilt compensation -> Rough GPS
-    \node[state] (search) at (0, 0) {SEARCH};
+    \node[state] (search) at (0, 0) {SEARCH\\(Phase 1)};
     \node[decision] (detect) at (3.2, 0) {Detection?};
-    \node[action] (tilt) at (6.4, 0) {Tilt compensation\\$\to$ rough GPS};
-    \node[action] (flyto) at (9.6, 0) {Fly to estimate};
+    \node[action] (tilt) at (6.4, 0) {Tilt compensation\\$\to$ rough GPS\\CEP $\approx$ 3.5\,m};
+    \node[action] (flyto) at (9.6, 0) {Approach target\\(Phase 2)};
 
     \draw[arrow] (search) -- (detect);
     \draw[arrow] (detect) -- node[above, yes] {Yes} (tilt);
     \draw[arrow] (tilt) -- (flyto);
     \draw[arrow, dashed, red!40!black] (detect) -- ++(0,-1.0) node[below, font=\scriptsize, text=red!50!black] {No $\to$ continue pattern} -| (search);
 
-    % Middle row: CENTERING
-    \node[state] (center) at (9.6, -2.2) {CENTERING\\(hover)};
-    \node[decision] (redetect) at (6.0, -2.2) {Re-detect\\target?};
+    % Middle row: CENTERING hover (Phase 3)
+    \node[state] (center) at (9.6, -2.2) {CENTERING\\hover (Phase 3)};
+    \node[decision] (redetect) at (6.0, -2.2) {Target\\visible?};
 
     \draw[arrow] (flyto) -- (center);
     \draw[arrow] (center) -- (redetect);
 
     % Left branch: re-detected -> refine -> within 1m? -> VERIFY
-    \node[action] (refine) at (3.2, -2.2) {Refine GPS\\(multi-frame)};
+    \node[action] (refine) at (3.2, -2.2) {Nadir detection\\GPS averaging};
     \node[decision] (converge) at (0, -2.2) {Within\\$\leq$\SI{1}{\metre}?};
-    \node[state] (verify) at (0, -4.4) {VERIFY};
+    \node[state, fill=green!8, draw=green!60!black, text=green!60!black] (verify) at (0, -4.4) {VERIFY\\(Phase 4)};
 
     \draw[arrow] (redetect) -- node[above, yes] {Yes} (refine);
     \draw[arrow] (refine) -- (converge);
     \draw[arrow] (converge) -- node[left, yes] {Yes} (verify);
     \draw[arrow, dashed] (converge.north) -- ++(0,0.6) -| node[near start, above, font=\scriptsize] {No $\to$ keep refining} (refine.north);
 
-    % Right branch: no re-detection -> timeout -> resume SEARCH
-    \node[action] (timeout) at (9.6, -4.4) {\SI{60}{\second} timeout\\no detections};
+    % Right branch: no re-detection -> 15s timeout -> resume SEARCH
+    \node[action] (timeout) at (9.6, -4.4) {\textbf{\SI{15}{\second} timeout}\\no detections};
     \node[action] (reject) at (6.4, -4.4) {Add to\\rejected targets};
 
     \draw[arrow] (redetect.south) -- ++(0,-0.5) -| node[near start, right, no] {No} (timeout.north);
     \draw[arrow] (timeout) -- (reject);
-    \draw[arrow] (reject.south) -- ++(0,-0.5) -| node[below, font=\scriptsize, text=black!60] {Resume pattern} (search.south);
+    \draw[arrow] (reject.south) -- ++(0,-0.5) -| node[below, font=\scriptsize, text=black!60] {Resume pattern ($<$1\% mission time lost)} (search.south);
 
     % VERIFY outcomes
-    \node[state, fill=green!10, draw=green!50!black, text=green!50!black] (approach) at (-2.4, -6.0) {APPROACH};
-    \node[state, fill=red!8, draw=red!50!black, text=red!50!black] (resume) at (2.4, -6.0) {SEARCH};
+    \node[state, fill=green!10, draw=green!50!black, text=green!50!black] (approach) at (-2.4, -6.0) {APPROACH\\offset landing};
+    \node[state, fill=red!8, draw=red!50!black, text=red!50!black] (resume) at (2.4, -6.0) {SEARCH\\(resume)};
 
     \draw[arrow, green!50!black] (verify) -| node[above left, font=\scriptsize, text=green!50!black] {Y = confirm} (approach);
-    \draw[arrow, red!50!black] (verify) -| node[above right, font=\scriptsize, text=red!50!black] {N = reject} (resume);
+    \draw[arrow, red!50!black] (verify) -| node[above right, font=\scriptsize, text=red!50!black] {N / timeout} (resume);
+
+    % Additional VERIFY outcomes
+    \node[font=\scriptsize, text=blue!50!black, text width=2cm, align=center] at (0, -5.5) {I = log GPS\\120\,s auto-reject};
 
   \end{tikzpicture}
-  \caption{Decision flow for the two-step detection process including false positive recovery.  The left branch shows successful refinement leading to VERIFY and operator confirmation.  The right branch shows the false positive path: no re-detection during hover triggers a \SI{60}{\second} timeout, the location is added to the rejected-targets list, and the drone resumes the search pattern.  Rejected locations are spatially deduplicated so the same false alarm is never investigated twice.}
+  \caption{Complete four-phase decision flow including false positive recovery.  The left branch shows successful progression: Phase~1 detection $\to$ Phase~2 approach $\to$ Phase~3 hover lock $\to$ Phase~4 operator verification $\to$ offset landing.  The right branch shows the false positive path: no re-detection during Phase~3 hover triggers a \SI{15}{\second} timeout, the location is added to the rejected-targets list (spatial deduplication prevents reinvestigation), and the drone resumes the search pattern at a cost of $<$1\% of mission time.}
   \label{fig:two-step-decision-flow}
 \end{figure}
 
