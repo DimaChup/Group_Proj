@@ -534,9 +534,12 @@ class VisualFlightMission(StateHandlersMixin):
     # ── GPS math wrappers ─────────────────────────────────────────────
 
     def calculate_target_gps(self, u, v):
+        # Use actual frame dimensions if available, fall back to config
+        fw = getattr(self, '_frame_w', config.IMAGE_W)
+        fh = getattr(self, '_frame_h', config.IMAGE_H)
         self.target_lat, self.target_lon = calculate_target_from_pixels(
             u, v, self.alt, self.yaw, self.lat, self.lon,
-            config.IMAGE_W, config.IMAGE_H, config.SENSOR_WIDTH_MM, config.FOCAL_LENGTH_MM)
+            fw, fh, config.SENSOR_WIDTH_MM, config.FOCAL_LENGTH_MM)
 
     def calculate_landing_spot(self, direction_key):
         self.landing_lat, self.landing_lon = landing_offset_7_5m(
@@ -582,7 +585,9 @@ class VisualFlightMission(StateHandlersMixin):
 
             if (SIM_TILT or SIM_PITCH) and self.alt > 1.0:
                 # Pitch shifts camera forward/backward: offset = alt × tan(pitch)
-                pitch_offset_m = self.alt * math.tan(self.pitch)
+                # ArduPilot pitch > 0 = nose UP = camera looks BEHIND drone
+                # Negate so nose-down (pitch < 0, forward flight) gives +forward offset
+                pitch_offset_m = -self.alt * math.tan(self.pitch)
                 # Roll shifts camera left/right: offset = alt × tan(roll)
                 roll_offset_m = self.alt * math.tan(self.roll)
                 roll_deg = math.degrees(self.roll)
@@ -631,6 +636,9 @@ class VisualFlightMission(StateHandlersMixin):
                             kernel[y, x] = 1.0
                     kernel /= kernel.sum()
                     frame = cv2.filter2D(frame, -1, kernel)
+            # Store actual frame dimensions for GPS estimation
+            self._frame_w = frame.shape[1]
+            self._frame_h = frame.shape[0]
         else:
             frame = self.eyes.get_frame()
             if frame is None:
@@ -653,6 +661,9 @@ class VisualFlightMission(StateHandlersMixin):
                     print(f"[INFO] Camera recovered after "
                           f"{self._camera_none_count} dropped frames")
                 self._camera_none_count = 0
+            # Store actual frame dimensions for GPS estimation
+            self._frame_w = frame.shape[1]
+            self._frame_h = frame.shape[0]
 
         found, u, v, conf = self.eyes.process_frame_manually(frame)
         self.current_conf = conf
