@@ -8,15 +8,13 @@ The central question is: \emph{how close is the system to reliably finding a cas
 Table~\ref{tab:plus-delta} summarises the principal strengths and areas for improvement. Each item includes the specific evidence that supports the assessment.
 
 \FloatBarrier
-\begin{table}[p]
+\begin{table}[ht]
 \centering\compactTable
-\caption{Plus/delta review of system technical performance.}\label{tab:plus-delta}
+\caption{Plus/delta review --- strengths.}\label{tab:plus-delta}
 \begin{tabularx}{\linewidth}{@{}c p{5.2cm} X@{}}
 \toprule
 & \textbf{Item} & \textbf{Evidence / Detail} \\
 \midrule
-\multicolumn{3}{@{}l}{\textbf{Plus --- strengths}} \\
-\addlinespace
 \color{green!50!black}\textbf{P1} & Dual-backend CV architecture & Identical application code runs Ultralytics on the laptop and TFLite on the Pi; model files are drop-in interchangeable. The model was swapped three times (640, 1280, 1088 datasets) with zero changes to application code (\secref{sec:cv}). \\
 \addlinespace
 \color{green!50!black}\textbf{P2} & Configuration auto-detection & Serial-port probing selects real Cube or SITL with zero code changes. Verified by running the same \texttt{main.py} on Windows laptop (SITL), WSL (SITL), and Pi~5 (real Cube) without modification (\secref{sec:sw-arch}). \\
@@ -36,8 +34,17 @@ Table~\ref{tab:plus-delta} summarises the principal strengths and areas for impr
 \color{green!50!black}\textbf{P9} & Reproducible quantitative evidence & All performance figures (Figures~\ref{fig:det_sensitivity}--\ref{fig:perf_analysis}) are derived from measured data (calibration, inference benchmarks, flight video analysis) via archived generator scripts (\texttt{figs/gen\_*.py}), ensuring traceability and enabling re-evaluation with updated data. \\
 \addlinespace
 \color{green!50!black}\textbf{P10} & Centering mitigates five error sources & The CENTERING hover procedure simultaneously eliminates roll/pitch error (\SI{6.2}{\metre}$\to$$<$\SI{0.6}{\metre}), motion blur, and GPS timing lag while enabling multi-frame GPS averaging ($\sqrt{N}$ improvement) and temporal false-positive filtering---solving sensor limitations through mission design rather than software complexity (Appendix~\ref{sec:centering-mitigation}). \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{table}[ht]
+\centering\compactTable
+\caption{Plus/delta review --- areas for improvement.}\label{tab:delta}
+\begin{tabularx}{\linewidth}{@{}c p{5.2cm} X@{}}
+\toprule
+& \textbf{Item} & \textbf{Evidence / Detail} \\
 \midrule
-\multicolumn{3}{@{}l}{\textbf{Delta --- areas for improvement}} \\
 \addlinespace
 \color{red!70!black}\textbf{D1} & No outdoor flight completed & Sustained winds (\SI{12}{\metre\per\second}, gusts to \SI{18}{\metre\per\second}) on the single scheduled flight day exceeded the EDU-450's \SI{10}{\metre\per\second} operational limit. Result: 0 of 5 tiers exercised outdoors; requirements R05 (search), R06 (PLB), R07 (landing accuracy) are verified in SITL only. Of the 12 requirements, 8 are fully verified (bench + simulation), 3 partially (simulation only), and 1 has a partial gap (R06 PLB not field-tested). \emph{Next step:} rebook flight slot; execute Tiers~3--5 of the progressive framework with the identical codebase. \\
 \addlinespace

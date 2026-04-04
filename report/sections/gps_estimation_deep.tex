@@ -193,7 +193,7 @@ Under the thin-lens (pinhole) approximation, the ground sampling distance at alt
 
 \begin{table}[ht]
   \centering
-  \caption{Ground sampling distance and footprint at key mission altitudes.}
+  \caption{Ground sampling distance and footprint at key mission altitudes (IMX296, $f = \SI{5.46}{\milli\metre}$, $1456\!\times\!1088$\,px).  At the 35\,m search altitude the 1.8\,m mannequin subtends ${\sim}$58\,px in the native frame.}
   \label{tab:gsd-altitude}
   \begin{tabular}{rcccc}
     \toprule
@@ -412,7 +412,7 @@ Given a detection at pixel $(u, v)$ in a frame of width $w$ and height $h_\mathr
   f_\mathrm{px} = \frac{f_\mathrm{mm}}{w_\mathrm{sensor}} \cdot w
 \end{equation}
 
-\noindent where $f_\mathrm{mm}$ is the lens focal length and $w_\mathrm{sensor}$ is the sensor width in millimetres (both from \texttt{config.py}).  The detection ray in the camera coordinate frame is
+\noindent where $f_\mathrm{mm}$ is the lens focal length and $w_\mathrm{sensor}$ is the sensor width in millimetres (both from \texttt{config.py}).  The pixel focal length (Equation~\ref{eq:focal-px}) converts the physical lens specification into a scale factor compatible with pixel coordinates.  The detection ray in the camera coordinate frame is
 
 \begin{equation}\label{eq:ray-cam}
   \mathbf{r}_\mathrm{cam} = \begin{pmatrix} (u - c_x) / f_\mathrm{px} \\ (v - c_y) / f_\mathrm{px} \\ 1 \end{pmatrix}
@@ -805,7 +805,7 @@ In Level~3, the drone does not merely stop---it actively flies toward the detect
   \Delta u = u - \tfrac{W}{2} \approx 0, \qquad \Delta v = v - \tfrac{H}{2} \approx 0
 \end{equation}
 
-\noindent The camera-frame offset (Equation~\ref{eq:body-deep}) reduces to:
+\noindent When the zero-offset condition (Equation~\ref{eq:zero-offset}) holds, the camera-frame offset (Equation~\ref{eq:body-deep}) reduces to:
 
 \begin{equation}\label{eq:zero-projection}
   d_\mathrm{fwd} = -\Delta v \cdot \mathrm{GSD} \approx 0, \qquad d_\mathrm{right} = \Delta u \cdot \mathrm{GSD} \approx 0
@@ -822,7 +822,7 @@ In Level~3, the drone does not merely stop---it actively flies toward the detect
   \begin{pmatrix} -(v - C_y) \\ (u - C_x) \end{pmatrix}
 \end{equation}
 
-\noindent When $(u, v) = (C_x, C_y)$, the pixel-offset vector is exactly $\mathbf{0}$, and the entire matrix product vanishes regardless of GSD, heading~$\psi$, or latitude correction.  Concretely: a 10\% focal length error $\times\,0 = 0$; a $5^{\circ}$ compass error $\times\,0 = 0$; a \SI{1}{\metre} barometric drift $\times\,0 = 0$.
+\noindent Equation~\ref{eq:full-projection} makes the zero-offset property explicit: when $(u, v) = (C_x, C_y)$, the pixel-offset vector is exactly $\mathbf{0}$, and the entire matrix product vanishes regardless of GSD, heading~$\psi$, or latitude correction.  Concretely: a 10\% focal length error $\times\,0 = 0$; a $5^{\circ}$ compass error $\times\,0 = 0$; a \SI{1}{\metre} barometric drift $\times\,0 = 0$.
 
 \paragraph{Advantages.}
 \begin{itemize}
@@ -1153,7 +1153,7 @@ The most recent $N = 50$ observations are retained.  The estimate is the inverse
   \hat{\lambda} = \frac{\sum_{i=k-N+1}^{k} w_i \lambda_i}{\sum_{i=k-N+1}^{k} w_i}
 \end{equation}
 
-\noindent This method is responsive to changes---if the drone descends and obtains higher-quality observations, the old high-altitude estimates are quickly flushed from the window---but it is noisier than methods that retain all history.
+\noindent The rolling weighted average (Equation~\ref{eq:rolling}) is responsive to changes---if the drone descends and obtains higher-quality observations, the old high-altitude estimates are quickly flushed from the window---but it is noisier than methods that retain all history.
 
 % ------ Method 2 ------
 \subsubsection{Cumulative Weighted Average (All Time)}
@@ -1168,7 +1168,7 @@ Every observation ever recorded is included:
   W_k = W_{k-1} + w_k
 \end{equation}
 
-\noindent Implemented as a running sum to avoid storing all observations.  This produces the most stable estimate but responds sluggishly to improvements in observation quality, because hundreds of early high-altitude observations continue to dilute the influence of later low-altitude passes.
+\noindent The incremental formulation (Equation~\ref{eq:cumulative}) avoids storing all observations.  This produces the most stable estimate but responds sluggishly to improvements in observation quality, because hundreds of early high-altitude observations continue to dilute the influence of later low-altitude passes.
 
 % ------ Method 3 ------
 \subsubsection{Kalman Filter (Static Target)}\label{sec:kalman-deep}
@@ -1181,7 +1181,7 @@ A two-state linear Kalman filter~\cite{kalman1960} models the target as stationa
   \mathbf{R}_k = \sigma_R^2\,\mathbf{I}_{\deg}
 \end{equation}
 
-\noindent where $\mathbf{I}_{\deg}$ denotes the identity matrix scaled to degree$^2$ units via the conversion factor $(1 / R_\oplus \cdot 180/\pi)^2$.  The standard predict--update cycle follows:
+\noindent where $\mathbf{I}_{\deg}$ denotes the identity matrix scaled to degree$^2$ units via the conversion factor $(1 / R_\oplus \cdot 180/\pi)^2$.  The altitude-dependent noise model (Equation~\ref{eq:kalman-R-deep}) ensures that high-altitude observations are treated as less trustworthy.  The standard predict--update cycle follows:
 
 \begin{align}
   \mathbf{P}_{k|k-1} &= \mathbf{P}_{k-1} + \mathbf{Q} \\

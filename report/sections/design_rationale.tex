@@ -100,7 +100,7 @@ Three candidate companion computers were evaluated (Table~\ref{tab:mcda-companio
 
 \begin{table}[H]
   \centering\compactTable
-  \caption{MCDA: companion computer selection (1--5 scale, 5 = best)}
+  \caption{MCDA: companion computer selection (1--5 scale, 5\,=\,best).  Raspberry Pi~5 scores highest overall due to cost-effectiveness and software ecosystem maturity despite lower inference throughput.}
   \label{tab:mcda-companion}
   \begin{tabularx}{\textwidth}{X c c c c}
     \toprule
@@ -133,7 +133,7 @@ Three architectures for companion-to-autopilot communication were compared (Tabl
 
 \begin{table}[H]
   \centering\compactTable
-  \caption{MCDA: communication architecture (1--5 scale, 5 = best)}
+  \caption{MCDA: communication architecture (1--5 scale, 5\,=\,best).  MAVProxy UDP bridge was selected for its multiplexing capability and proven reliability at 921600\,baud.}
   \label{tab:mcda-comms}
   \begin{tabularx}{\textwidth}{X c c c c}
     \toprule
@@ -172,7 +172,7 @@ YOLOv8n (the nano variant, 3.2~million parameters, 8.7~GFLOPs) was selected afte
 
 \begin{table}[H]
   \centering\compactTable
-  \caption{MCDA: detection model selection (1--5 scale, 5 = best)}
+  \caption{MCDA: detection model selection (1--5 scale, 5\,=\,best).  YOLOv8n achieves the best trade-off between Pi~5 inference speed (4.8\,FPS) and detection accuracy (mAP50\,=\,0.995).}
   \label{tab:mcda-model}
   \begin{tabularx}{\textwidth}{X c c c c c}
     \toprule
@@ -201,7 +201,7 @@ Four candidate search patterns were evaluated (Table~\ref{tab:mcda-search}), pri
 
 \begin{table}[H]
   \centering\compactTable
-  \caption{MCDA: search pattern selection (1--5 scale, 5 = best)}
+  \caption{MCDA: search pattern selection (1--5 scale, 5\,=\,best).  Boustrophedon dominates on coverage guarantee and visual verifiability; spiral and random approaches score lower due to overlap and non-determinism.}
   \label{tab:mcda-search}
   \begin{tabularx}{\textwidth}{X c c c c c}
     \toprule
