@@ -128,6 +128,15 @@ At inference rate $f_\mathrm{AI}$, the number of detection opportunities is $N =
   \end{tabular}
 \end{table}
 
+Figure~\ref{fig:estimation-error-vs-detections} quantifies the trade-off between sample count and estimation error for four fusion methods, showing the diminishing-returns curve that underpins the threshold selections in Table~\ref{tab:clustering-tradeoffs}.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.65\textwidth]{figs/estimation_error_vs_detections}
+  \caption{GPS estimation error (CEP$_{50}$) versus number of accumulated detections for four fusion methods: single-frame, rolling average, Kalman filter, and IVW (SMART).  IVW converges fastest, reaching its asymptotic accuracy of $\sim$2.3\,m after 5 detections.  The dashed horizontal line marks the GPS noise floor ($\sim$1.0\,m).  All curves are computed from DJI replay data using leave-one-out subsampling.}
+  \label{fig:estimation-error-vs-detections}
+\end{figure}
+
 \paragraph{Single frame.}  The baseline: one detection, one estimate, immediate action.  CEP$_{50}$ = 5.1\,m from DJI replay is consistent with the literature for direct georeferencing at 35\,m~\cite{sun2016sar, sambolek2025person}.  Unacceptable for autonomous landing (5.1\,m error on a 7.5\,m offset landing leaves only 2.4\,m margin), but useful for initial target cueing.
 
 \paragraph{Quick cluster (3 samples, 5\,m spread).}  Requires three estimates within 5\,m of each other---easily achieved in a single pass at 5\,m/s (7+ detections expected in 2.4\,s).  Reduces CEP$_{50}$ to 3.4\,m by averaging out the worst outliers.  The 5\,m spread threshold is deliberately loose: it filters only gross outliers (GPS multipath spikes, misdetections) rather than achieving precision.  Suitable for alerting the pilot during passive observation.
@@ -236,6 +245,15 @@ The DJI flight video (\texttt{DJI\_0001\_1456x1088\_cropped\_30fps.mp4}) contain
 \end{figure}
 
 \subsubsection{Convergence Behaviour}
+
+Figure~\ref{fig:estimation-averaging} visualises the running-average convergence in real time, showing the IVW estimate's trajectory as successive detections arrive during a flyover.  The SMART lock event is marked, demonstrating the point at which the clustering spread criterion is satisfied and the system commits to a position.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.65\textwidth]{figs/estimation_averaging}
+  \caption{Running-average convergence of the IVW GPS estimate during DJI video replay.  The upper panel shows the estimated latitude and longitude converging toward the ground-truth position (dashed line) as detections accumulate.  The vertical green line marks the SMART lock event (5 samples within 2.0\,m spread).  The lower panel plots the instantaneous CEP against detection count, showing the $1/\sqrt{N}$ noise reduction characteristic of independent observations.}
+  \label{fig:estimation-averaging}
+\end{figure}
 
 Figure~\ref{fig:gps-convergence} shows how the IVW estimate converges as more detections are accumulated during a single flyover.  After 3 detections ($\sim$0.8\,s), the estimate is within 3.5\,m of truth.  After 5 detections ($\sim$1.3\,s), it stabilises at $\sim$2.3\,m.  Further observations beyond 10 provide diminishing returns, with the estimate asymptotically approaching the GPS noise floor.  This convergence curve validates the SMART default of 5 samples: it captures the steepest part of the accuracy improvement curve while leaving margin before the target exits the FOV.
 

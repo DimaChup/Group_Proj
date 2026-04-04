@@ -395,8 +395,8 @@
       \strng{authornamehash}{8b5b91d47d589c895c4e7eaf4888f225}
       \strng{authorfullhash}{8b5b91d47d589c895c4e7eaf4888f225}
       \strng{authorfullhashraw}{8b5b91d47d589c895c4e7eaf4888f225}
-      \field{sortinit}{3}
-      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
+      \field{sortinit}{4}
+      \field{sortinithash}{9381316451d1b9788675a07e972a12a7}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{journaltitle}{Robotics and Autonomous Systems}
@@ -426,8 +426,8 @@
       \strng{authornamehash}{72811108dcbc25428de5c7e317f511ed}
       \strng{authorfullhash}{72811108dcbc25428de5c7e317f511ed}
       \strng{authorfullhashraw}{72811108dcbc25428de5c7e317f511ed}
-      \field{sortinit}{3}
-      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
+      \field{sortinit}{4}
+      \field{sortinithash}{9381316451d1b9788675a07e972a12a7}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{journaltitle}{Annals of Mathematics and Artificial Intelligence}
@@ -472,8 +472,8 @@
       \strng{authornamehash}{ac3c78d01e76d7b91086573bee757992}
       \strng{authorfullhash}{c94facb8bb475deef7e8d0a61ebba33a}
       \strng{authorfullhashraw}{c94facb8bb475deef7e8d0a61ebba33a}
-      \field{sortinit}{3}
-      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
+      \field{sortinit}{4}
+      \field{sortinithash}{9381316451d1b9788675a07e972a12a7}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{journaltitle}{Drones}
@@ -661,8 +661,8 @@
       \strng{authornamehash}{a24c6b3ae0bf015923746ce2562fd877}
       \strng{authorfullhash}{074d7b0cb9d5dfc05b7fd70fb186c4cc}
       \strng{authorfullhashraw}{074d7b0cb9d5dfc05b7fd70fb186c4cc}
-      \field{sortinit}{4}
-      \field{sortinithash}{9381316451d1b9788675a07e972a12a7}
+      \field{sortinit}{5}
+      \field{sortinithash}{20e9b4b0b173788c5dace24730f47d8c}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{booktitle}{Proceedings of the 44th AIAA Aerospace Sciences Meeting and Exhibit}
@@ -693,8 +693,8 @@
       \strng{authornamehash}{a7ac798c3a7f5340156bccfc5c9a4bdf}
       \strng{authorfullhash}{a7ac798c3a7f5340156bccfc5c9a4bdf}
       \strng{authorfullhashraw}{a7ac798c3a7f5340156bccfc5c9a4bdf}
-      \field{sortinit}{4}
-      \field{sortinithash}{9381316451d1b9788675a07e972a12a7}
+      \field{sortinit}{5}
+      \field{sortinithash}{20e9b4b0b173788c5dace24730f47d8c}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{journaltitle}{IEEE Transactions on Robotics}
@@ -724,8 +724,8 @@
       \strng{authornamehash}{c5572a6f2e05a08f36cab3bae8fdb643}
       \strng{authorfullhash}{c5572a6f2e05a08f36cab3bae8fdb643}
       \strng{authorfullhashraw}{c5572a6f2e05a08f36cab3bae8fdb643}
-      \field{sortinit}{4}
-      \field{sortinithash}{9381316451d1b9788675a07e972a12a7}
+      \field{sortinit}{5}
+      \field{sortinithash}{20e9b4b0b173788c5dace24730f47d8c}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{journaltitle}{IEEE Journal on Robotics and Automation}
@@ -969,8 +969,8 @@
       \strng{authornamehash}{b774a9d43f5be3e4c87661f157618116}
       \strng{authorfullhash}{a91a45c430d95c385cb29e58b6b9fd6e}
       \strng{authorfullhashraw}{a91a45c430d95c385cb29e58b6b9fd6e}
-      \field{sortinit}{5}
-      \field{sortinithash}{20e9b4b0b173788c5dace24730f47d8c}
+      \field{sortinit}{6}
+      \field{sortinithash}{b33bc299efb3c36abec520a4c896a66d}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{booktitle}{ICRA Workshop on Open Source Software}
@@ -995,8 +995,8 @@
       \strng{authornamehash}{14aa18705e1a13ddaf8e9e9a45ef398f}
       \strng{authorfullhash}{14aa18705e1a13ddaf8e9e9a45ef398f}
       \strng{authorfullhashraw}{14aa18705e1a13ddaf8e9e9a45ef398f}
-      \field{sortinit}{5}
-      \field{sortinithash}{20e9b4b0b173788c5dace24730f47d8c}
+      \field{sortinit}{6}
+      \field{sortinithash}{b33bc299efb3c36abec520a4c896a66d}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{howpublished}{\url{https://www.sony-semicon.com/en/products/is/industry/global-shutter.html}}
@@ -1025,8 +1025,8 @@
       \strng{authornamehash}{2d81d4ca02460ee731143f253bcb433c}
       \strng{authorfullhash}{2d81d4ca02460ee731143f253bcb433c}
       \strng{authorfullhashraw}{2d81d4ca02460ee731143f253bcb433c}
-      \field{sortinit}{5}
-      \field{sortinithash}{20e9b4b0b173788c5dace24730f47d8c}
+      \field{sortinit}{6}
+      \field{sortinithash}{b33bc299efb3c36abec520a4c896a66d}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{journaltitle}{IEEE Sensors Journal}
@@ -1129,6 +1129,7 @@
       \strng{authornamehash}{2748ca8a3f7bdf3083de9b4797c31f6d}
       \strng{authorfullhash}{2748ca8a3f7bdf3083de9b4797c31f6d}
       \strng{authorfullhashraw}{2748ca8a3f7bdf3083de9b4797c31f6d}
+      \field{extraname}{1}
       \field{sortinit}{6}
       \field{sortinithash}{b33bc299efb3c36abec520a4c896a66d}
       \field{labelnamesource}{author}
@@ -1196,8 +1197,8 @@
       \strng{authornamehash}{57bef384e326f07e7fbeb02feab4da3d}
       \strng{authorfullhash}{57bef384e326f07e7fbeb02feab4da3d}
       \strng{authorfullhashraw}{57bef384e326f07e7fbeb02feab4da3d}
-      \field{sortinit}{6}
-      \field{sortinithash}{b33bc299efb3c36abec520a4c896a66d}
+      \field{sortinit}{7}
+      \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{howpublished}{\url{https://discuss.ardupilot.org/t/searchwing-sar-missiontools/115139}}
@@ -1226,8 +1227,8 @@
       \strng{authornamehash}{c947401039f8c8f9db8b215c1d07ff1d}
       \strng{authorfullhash}{c947401039f8c8f9db8b215c1d07ff1d}
       \strng{authorfullhashraw}{c947401039f8c8f9db8b215c1d07ff1d}
-      \field{sortinit}{6}
-      \field{sortinithash}{b33bc299efb3c36abec520a4c896a66d}
+      \field{sortinit}{7}
+      \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{journaltitle}{PMC Sensors}
@@ -1430,8 +1431,8 @@
       \strng{authornamehash}{c4962fe4acf382aa2ca76f0808fd457c}
       \strng{authorfullhash}{c4962fe4acf382aa2ca76f0808fd457c}
       \strng{authorfullhashraw}{c4962fe4acf382aa2ca76f0808fd457c}
-      \field{sortinit}{8}
-      \field{sortinithash}{a231b008ebf0ecbe0b4d96dcc159445f}
+      \field{sortinit}{9}
+      \field{sortinithash}{0a5ebc79d83c96b6579069544c73c7d4}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{journaltitle}{Engineering Management Journal}
@@ -1466,8 +1467,8 @@
       \strng{authornamehash}{b5564d3a0915abfcdc63d8f83d3180b8}
       \strng{authorfullhash}{b5564d3a0915abfcdc63d8f83d3180b8}
       \strng{authorfullhashraw}{b5564d3a0915abfcdc63d8f83d3180b8}
-      \field{sortinit}{8}
-      \field{sortinithash}{a231b008ebf0ecbe0b4d96dcc159445f}
+      \field{sortinit}{9}
+      \field{sortinithash}{0a5ebc79d83c96b6579069544c73c7d4}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{booktitle}{SAE International Journal of Transportation Safety}
@@ -1496,8 +1497,8 @@
       \strng{authorfullhash}{002e4a64dbc1404d94eef1845911c190}
       \strng{authorfullhashraw}{002e4a64dbc1404d94eef1845911c190}
       \field{extraname}{3}
-      \field{sortinit}{8}
-      \field{sortinithash}{a231b008ebf0ecbe0b4d96dcc159445f}
+      \field{sortinit}{9}
+      \field{sortinithash}{0a5ebc79d83c96b6579069544c73c7d4}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{howpublished}{\url{https://ardupilot.org/dev/docs/sitl-simulator-software-in-the-loop.html}}
@@ -1604,8 +1605,8 @@
       \strng{authorfullhash}{8b36e9207c24c76e6719268e49201d94}
       \strng{authorfullhashraw}{8b36e9207c24c76e6719268e49201d94}
       \field{extraname}{2}
-      \field{sortinit}{9}
-      \field{sortinithash}{0a5ebc79d83c96b6579069544c73c7d4}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{howpublished}{\url{https://github.com/google/XNNPACK}}
@@ -2543,6 +2544,141 @@
       \field{note}{Hypothermia survival curves}
       \field{title}{Essentials of Sea Survival}
       \field{year}{2002}
+    \endentry
+    \entry{sun2016sar}{article}{}{}
+      \name{author}{4}{}{%
+        {{hash=39329d252aa7dcf2fed68ff89fc9c656}{%
+           family={Sun},
+           familyi={S\bibinitperiod},
+           given={Jingxian},
+           giveni={J\bibinitperiod}}}%
+        {{hash=1023e274e612e693459f729f3e62768f}{%
+           family={Li},
+           familyi={L\bibinitperiod},
+           given={Bowen},
+           giveni={B\bibinitperiod}}}%
+        {{hash=d5940e4d199254b98bb386a04f005d53}{%
+           family={Jiang},
+           familyi={J\bibinitperiod},
+           given={Yifan},
+           giveni={Y\bibinitperiod}}}%
+        {{hash=41a5d36ecb60c657a19f6f1c4f307ddb}{%
+           family={Wen},
+           familyi={W\bibinitperiod},
+           given={Chih-Yung},
+           giveni={C\bibinithyphendelim Y\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {MDPI}%
+      }
+      \strng{namehash}{c1988161bedf5efd14ed4dce76c20c8f}
+      \strng{fullhash}{90d0bc1f990ff42819f9e238847d1962}
+      \strng{fullhashraw}{90d0bc1f990ff42819f9e238847d1962}
+      \strng{bibnamehash}{c1988161bedf5efd14ed4dce76c20c8f}
+      \strng{authorbibnamehash}{c1988161bedf5efd14ed4dce76c20c8f}
+      \strng{authornamehash}{c1988161bedf5efd14ed4dce76c20c8f}
+      \strng{authorfullhash}{90d0bc1f990ff42819f9e238847d1962}
+      \strng{authorfullhashraw}{90d0bc1f990ff42819f9e238847d1962}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Sensors}
+      \field{number}{11}
+      \field{title}{A Camera-Based Target Detection and Positioning {UAV} System for Search and Rescue ({SAR}) Purposes}
+      \field{volume}{16}
+      \field{year}{2016}
+      \field{pages}{1778}
+      \range{pages}{1}
+      \verb{doi}
+      \verb 10.3390/s16111778
+      \endverb
+    \endentry
+    \entry{sambolek2025person}{article}{}{}
+      \name{author}{2}{}{%
+        {{hash=967f29c97d0b80efe56550f6748c417b}{%
+           family={Sambolek},
+           familyi={S\bibinitperiod},
+           given={Sasa},
+           giveni={S\bibinitperiod}}}%
+        {{hash=2eb9f28b5c9f680a06a7d187a5fa1b37}{%
+           family={Ivasic-Kos},
+           familyi={I\bibinithyphendelim K\bibinitperiod},
+           given={Marina},
+           giveni={M\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {Springer}%
+      }
+      \strng{namehash}{c229e20d5e0e06b058b7258008d378a4}
+      \strng{fullhash}{c229e20d5e0e06b058b7258008d378a4}
+      \strng{fullhashraw}{c229e20d5e0e06b058b7258008d378a4}
+      \strng{bibnamehash}{c229e20d5e0e06b058b7258008d378a4}
+      \strng{authorbibnamehash}{c229e20d5e0e06b058b7258008d378a4}
+      \strng{authornamehash}{c229e20d5e0e06b058b7258008d378a4}
+      \strng{authorfullhash}{c229e20d5e0e06b058b7258008d378a4}
+      \strng{authorfullhashraw}{c229e20d5e0e06b058b7258008d378a4}
+      \field{extraname}{2}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{SN Computer Science}
+      \field{title}{Person Detection and Geolocation Estimation in Drone Images}
+      \field{volume}{6}
+      \field{year}{2025}
+      \verb{doi}
+      \verb 10.1007/s42979-024-03553-0
+      \endverb
+    \endentry
+    \entry{gautam2018error}{article}{}{}
+      \name{author}{4}{}{%
+        {{hash=4e0e4b4ebf92f234a41de2d28890715a}{%
+           family={Gautam},
+           familyi={G\bibinitperiod},
+           given={Deepak},
+           giveni={D\bibinitperiod}}}%
+        {{hash=18a139ed3448917e597624057256eb55}{%
+           family={Watson},
+           familyi={W\bibinitperiod},
+           given={Christopher},
+           giveni={C\bibinitperiod}}}%
+        {{hash=1e09552e240fa90b4f88e36bb0f9f02d}{%
+           family={Lucieer},
+           familyi={L\bibinitperiod},
+           given={Arko},
+           giveni={A\bibinitperiod}}}%
+        {{hash=9b41d2b1f3340abbbca44743388cc918}{%
+           family={Malenovsky},
+           familyi={M\bibinitperiod},
+           given={Zbynek},
+           giveni={Z\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {MDPI}%
+      }
+      \strng{namehash}{d93102064649ff818b1d990cd70b2a74}
+      \strng{fullhash}{b1d36dd0055261a0ddd3acd0dba48dbe}
+      \strng{fullhashraw}{b1d36dd0055261a0ddd3acd0dba48dbe}
+      \strng{bibnamehash}{d93102064649ff818b1d990cd70b2a74}
+      \strng{authorbibnamehash}{d93102064649ff818b1d990cd70b2a74}
+      \strng{authornamehash}{d93102064649ff818b1d990cd70b2a74}
+      \strng{authorfullhash}{b1d36dd0055261a0ddd3acd0dba48dbe}
+      \strng{authorfullhashraw}{b1d36dd0055261a0ddd3acd0dba48dbe}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Sensors}
+      \field{number}{10}
+      \field{title}{Error Budget for Geolocation of Spectroradiometer Point Observations from an Unmanned Aircraft System}
+      \field{volume}{18}
+      \field{year}{2018}
+      \field{pages}{3465}
+      \range{pages}{1}
+      \verb{doi}
+      \verb 10.3390/s18103465
+      \endverb
     \endentry
   \enddatalist
 \endrefsection
