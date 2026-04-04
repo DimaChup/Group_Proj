@@ -21,6 +21,7 @@ from state_machine import StateHandlersMixin
 from navigation import NavigationController
 from stream_server import (start_stream_server, set_stream_frame,
                            get_stream_frame, set_telemetry,
+                           add_detection_event,
                            cmd_queue as stream_cmd_queue)
 from gps_utils import calculate_target_from_pixels, landing_offset_7_5m
 
@@ -785,6 +786,13 @@ class VisualFlightMission(StateHandlersMixin):
         if STREAM_ENABLED:
             set_stream_frame(frame)
             spd_val = math.sqrt(self.vx**2 + self.vy**2)
+            _mode_names = {0:'STABILIZE',2:'ALT_HOLD',3:'AUTO',4:'GUIDED',
+                           5:'LOITER',6:'RTL',9:'LAND',16:'POSHOLD'}
+            _geo_status = "OK"
+            if getattr(self, '_fa_rtl_triggered', False):
+                _geo_status = "VIOLATION"
+            elif getattr(self, '_last_repulsion_vec', None):
+                _geo_status = "WARN"
             set_telemetry(
                 state=str(self.state).replace("State.", ""),
                 alt=round(self.alt, 1),
@@ -800,6 +808,13 @@ class VisualFlightMission(StateHandlersMixin):
                 waiting=getattr(self, 'waiting_for_confirmation', False),
                 selecting_side=getattr(self, 'selecting_landing_side', False),
                 verify_timeout=getattr(self, '_verify_remaining', None),
+                heading=round(math.degrees(self.yaw) % 360, 1),
+                mode=_mode_names.get(self._cube_mode, str(self._cube_mode)),
+                det_count=len(getattr(self, 'rejected_targets', [])) + len(getattr(self, 'items_of_interest', [])) + (1 if self.state in (State.VERIFY, State.CENTERING, State.DESCENDING) else 0),
+                mission_elapsed=round(time.time() - self._mission_start_time, 1),
+                rejected=len(getattr(self, 'rejected_targets', [])),
+                interests=len(getattr(self, 'items_of_interest', [])),
+                geofence=_geo_status,
             )
         if not HEADLESS:
             try:

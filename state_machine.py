@@ -8,6 +8,7 @@ import math
 import os
 import json
 from datetime import datetime
+from stream_server import add_detection_event
 
 
 class StateHandlersMixin:
@@ -552,6 +553,9 @@ class StateHandlersMixin:
                 self._gps_avg_samples = None
                 self._confirmed_y = False
             self._set_state(State.VERIFY)
+            add_detection_event({"time": datetime.now().strftime("%H:%M:%S"),
+                "lat": self.target_lat, "lon": self.target_lon,
+                "conf": self.current_conf, "decision": "pending"})
             print(f"  Target: ({self.target_lat:.6f}, {self.target_lon:.6f}) at {self.alt:.0f}m")
             print(f"  ACTION: Y=Confirm  N=Reject  I=Interest (120s timeout)")
 
@@ -1009,6 +1013,9 @@ class StateHandlersMixin:
 
         if key == ord('y') or key == ord('Y'):
             self._save_detection_image("Y", self.target_lat, self.target_lon, self.current_conf)
+            add_detection_event({"time": datetime.now().strftime("%H:%M:%S"),
+                "lat": self.target_lat, "lon": self.target_lon,
+                "conf": self.current_conf, "decision": "Y"})
             if getattr(self, '_gps_avg_start', None):
                 elapsed = time.time() - self._gps_avg_start
                 remaining = max(0, 10.0 - elapsed)
@@ -1020,6 +1027,9 @@ class StateHandlersMixin:
                 self.selecting_landing_side = True
         elif key == ord('i') or key == ord('I'):
             self._save_detection_image("I", self.target_lat, self.target_lon, self.current_conf)
+            add_detection_event({"time": datetime.now().strftime("%H:%M:%S"),
+                "lat": self.target_lat, "lon": self.target_lon,
+                "conf": self.current_conf, "decision": "I"})
             if not hasattr(self, 'items_of_interest'):
                 self.items_of_interest = []
             self.items_of_interest.append({
@@ -1043,6 +1053,9 @@ class StateHandlersMixin:
                 self._set_state(State.SEARCH)
         elif key == ord('n') or key == ord('N'):
             self._save_detection_image("N", self.target_lat, self.target_lon, self.current_conf)
+            add_detection_event({"time": datetime.now().strftime("%H:%M:%S"),
+                "lat": self.target_lat, "lon": self.target_lon,
+                "conf": self.current_conf, "decision": "N"})
             self.rejected_targets.append((self.target_lat, self.target_lon))
             print(f"USER REJECTED TARGET at ({self.target_lat:.6f}, {self.target_lon:.6f}). RESUMING.")
             self.waiting_for_confirmation = False
@@ -1065,6 +1078,9 @@ class StateHandlersMixin:
                 self._set_state(State.SEARCH)
         elif key == ord('x') or key == ord('X'):
             self._save_detection_image("X", self.target_lat, self.target_lon, self.current_conf)
+            add_detection_event({"time": datetime.now().strftime("%H:%M:%S"),
+                "lat": self.target_lat, "lon": self.target_lon,
+                "conf": self.current_conf, "decision": "X"})
             print(f"[VERIFY] FALSE POSITIVE — target rejected as false positive")
             self.rejected_targets.append((self.target_lat, self.target_lon))
             self.waiting_for_confirmation = False
@@ -1090,7 +1106,18 @@ class StateHandlersMixin:
         """Process keyboard/button input per loop iteration."""
         if key == ord('m') or key == ord('M'):
             self._handle_manual_toggle(target_found, px_u, px_v)
+        if key == ord('r') or key == ord('R'):
+            print("[OPERATOR] RTL requested from ground station")
+            self._emergency_rtl(reason="Operator RTL from browser")
         if key == ord('k') or key == ord('K'):
+            print("[OPERATOR] KILL/DISARM requested from ground station")
+            try:
+                if self.master:
+                    self.master.arducopter_disarm()
+                    print("[KILL] Disarm command sent")
+            except Exception as e:
+                print(f"[KILL] Disarm failed: {e}")
+        if key == ord('c') or key == ord('C'):
             n_rej = len(self.rejected_targets)
             n_ioi = len(getattr(self, 'items_of_interest', []))
             self.rejected_targets.clear()
