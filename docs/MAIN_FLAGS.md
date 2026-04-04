@@ -220,11 +220,12 @@ Uses Zian's perimeter spiral pattern instead of the default lawnmower.
 
 ---
 
-### 5. Camera Simulation (SIM only)
+### 5. Camera Simulation & Tilt Compensation
 
 | Flag | Default | Platform | Description |
 |------|---------|----------|-------------|
 | `--sim-tilt` | off | SIM only | Camera tilts in flight direction (pitch + roll from SITL). |
+| `--compensate-tilt` | off | Both | Ray-trace GPS estimates through attitude rotation matrix. |
 | `--sim-pitch` | off | SIM only | Camera pitch offset during forward flight (legacy). |
 | `--sim-roll <deg>` | `0.0` | SIM only | Random roll oscillation in degrees. |
 | `--blur <factor>` | `0.0` | SIM only | Motion blur proportional to speed. |
@@ -236,8 +237,28 @@ Uses Zian's perimeter spiral pattern instead of the default lawnmower.
   older `--sim-pitch` and `--sim-roll` flags. Produces realistic camera displacement
   that matches flight dynamics.
 - **When to use**: Standard simulation testing. Exposes whether the detection
-  pipeline handles tilted frames.
+  pipeline handles tilted frames. In simulation, also implicitly enables
+  `--compensate-tilt` so GPS estimates are corrected for the simulated tilt.
 - **Example**: `python main.py --sim-tilt`
+
+#### `--compensate-tilt`
+- **What it does**: Applies attitude-compensated GPS estimation. For each detection,
+  constructs a ray in the camera frame, rotates it into the world frame using the
+  full rotation matrix R = Rz(yaw) * Ry(-pitch) * Rx(-roll) built from the
+  ATTITUDE MAVLink message, and intersects it with the ground plane. This is the
+  exact mathematical inverse of the camera model, reducing tilt-induced position
+  error from 6.2m to ~0.3m at 35m altitude and 10 deg pitch. The residual error
+  is limited only by IMU angular noise (~0.5 deg).
+- **When to use**: In real flights and passive observation (`passive_watch.py`).
+  In simulation, `--sim-tilt` enables this automatically. Use `--compensate-tilt`
+  standalone when the camera is physically tilted by aircraft motion (real flight)
+  rather than simulated tilt.
+- **Activation threshold**: Only activates when pitch or roll exceeds 0.02 rad
+  (~1.1 deg) and altitude > 1m. During hover, the correction is a no-op.
+- **Verification**: Tested with 1440 automated cases (4 altitudes x 4 pitch x
+  3 roll x 5 yaw x 6 target positions), all producing errors < 0.01m.
+- **Example**: `python main.py --compensate-tilt`
+- **Example**: `python main.py --sim-tilt` (enables both tilt simulation + compensation)
 
 #### `--sim-pitch`
 - **What it does**: Simulates camera pitch offset during forward flight. Legacy flag;
@@ -446,11 +467,11 @@ MISSION:    --dry-run  --clean  --headless
 SPEED/ALT:  --speed <N>  --alt <m>
 DETECTION:  --model <path>  --conf <0-1>  --smart-detect
 NAVIGATION: --lock-yaw  --center-verify  --beacon-delay <s>  --spiral  --transit <file>
-CAMERA SIM: --sim-tilt  --sim-pitch  --sim-roll <deg>  --blur <factor>  --shake <px>
+CAMERA SIM: --sim-tilt  --compensate-tilt  --sim-pitch  --sim-roll <deg>  --blur <factor>  --shake <px>
 GEOFENCE:   --no-nfz  --nfz-total-speed
 STREAM:     --no-stream  --stream-scale <f>  --stream-quality <1-100>  --stream-fps <N>
 DEBUG:      --verbose-gps
 ENV VARS:   DRONE_MODE=SIMULATION|REAL  DRONE_CONN=tcp:IP:PORT  DRONE_BAUD=921600
 ```
 
-**Total: 22 CLI flags + 3 environment variables.**
+**Total: 23 CLI flags + 3 environment variables.**

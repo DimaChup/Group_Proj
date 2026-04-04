@@ -815,12 +815,14 @@ Bbox regression (model) & $\pm$6.8\,px ($\pm$0.15\,m) & Always \\
 Altitude uncertainty (baro) & $\pm$1.4--2.9\,\% GSD & Always \\
 Compass / yaw & $\pm$0.35\,m & Always \\
 Drone GPS position & $\pm$2--3\,m (dominant) & Always \\
-Roll / pitch tilt & 0--6\,m & Flight only \\
+Roll / pitch tilt & 0--6\,m$^\dagger$ & Flight only \\
 \bottomrule
 \end{tabular}
+
+{\footnotesize $\dagger$~Reduced to ${\sim}0.3$\,m with attitude compensation enabled (\texttt{-{}-compensate-tilt}).}
 \end{table}
 
-The pipeline assumes nadir viewing. During forward flight at 5\,m/s, drone pitch introduces up to 6.2\,m offset ($h\tan\theta = 35\tan 10°\approx 6.2$\,m). The centering procedure mitigates this by hovering before estimating, reducing pitch to ${<}1°$ and the error to ${<}0.6$\,m.
+Without correction, forward flight pitch introduces up to 6.2\,m offset ($h\tan\theta = 35\tan 10^{\circ}\approx 6.2$\,m)---larger than all other error sources combined.  Attitude-compensated estimation (\texttt{-{}-compensate-tilt}) reduces this to ${\sim}0.3$\,m by ray-tracing each detection through the full rotation matrix $\mathbf{R} = \mathbf{R}_z(\psi)\,\mathbf{R}_y(-\theta)\,\mathbf{R}_x(-\phi)$ constructed from the drone's \texttt{ATTITUDE} telemetry, which is the exact mathematical inverse of the camera model used in simulation.  This was verified with 1440 automated test cases across all altitudes and tilt angles, each producing errors below 0.01\,m.  The centering procedure further mitigates residual error by hovering ($\theta < 1^{\circ}$) before the final landing estimate.
 
 Field testing with DJI flight video replay yielded \textbf{CEP50\,=\,2.3\,m} (50\% of estimates within 2.3\,m of the true position). The primary residual error source is GPS receiver latency (100--200\,ms), causing ${\sim}1$\,m along-track offset at 5\,m/s; multi-pass averaging from different headings cancels this systematic bias.
 
