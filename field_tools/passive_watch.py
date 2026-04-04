@@ -1029,6 +1029,28 @@ class DummyEstimator:
         self.weighted_lon = 0.0
         self.count = 0
 
+    def _flat_earth_estimate(self, drone_lat, drone_lon, alt_m, yaw_deg,
+                             det_x, det_y, fw, fh):
+        """Flat-earth projection (no tilt compensation). Returns (lat, lon)."""
+        dx_px = (det_x - 0.5) * fw
+        dy_px = (det_y - 0.5) * fh
+
+        # Metres on ground
+        dx_m = dx_px * alt_m / FOV["f_px"]
+        dy_m = dy_px * alt_m / FOV["f_px"]
+
+        # Rotate by yaw (yaw=0 means North, positive clockwise)
+        yaw_rad = math.radians(yaw_deg)
+        forward_m = -dy_m   # negative dy = forward = North
+        right_m = dx_m      # positive dx = right = East
+        north_m = forward_m * math.cos(yaw_rad) - right_m * math.sin(yaw_rad)
+        east_m = forward_m * math.sin(yaw_rad) + right_m * math.cos(yaw_rad)
+
+        lat_m_per_deg = 111320
+        lon_m_per_deg = 111320 * math.cos(math.radians(drone_lat))
+        return (drone_lat + north_m / lat_m_per_deg,
+                drone_lon + east_m / lon_m_per_deg)
+
     def add_observation(self, drone_lat, drone_lon, alt_m, yaw_deg, det_x, det_y,
                         pitch_deg=0.0, roll_deg=0.0, compensate_tilt=False):
         """Estimate dummy GPS from one detection.
@@ -1046,79 +1068,71 @@ class DummyEstimator:
 
         if compensate_tilt and (abs(pitch_deg) > 0.5 or abs(roll_deg) > 0.5):
             # ── Tilt-compensated ray-trace projection ──
-            # Build a ray from pixel coords, rotate by pitch/roll, intersect ground plane
+            # Full rotation matrix R = Rz(yaw) @ Ry(-pitch) @ Rx(-roll)
+            # SAME verified approach as main.py (proven with 1440 tests)
             focal_px = config.FOCAL_LENGTH_MM / config.SENSOR_WIDTH_MM * fw
             u = det_x * fw  # pixel x
             v = det_y * fh  # pixel y
-            ray_x = (u - fw / 2) / focal_px
-            ray_y = (v - fh / 2) / focal_px
-            ray_z = 1.0
 
+            # Ray from detection pixel in camera frame
+            ray_cam = [
+                (u - fw / 2) / focal_px,
+                (v - fh / 2) / focal_px,
+                1.0
+            ]
+
+            yaw_rad = math.radians(yaw_deg)
             pitch_rad = math.radians(pitch_deg)
             roll_rad = math.radians(roll_deg)
-            cp, sp = math.cos(pitch_rad), math.sin(pitch_rad)
-            cr, sr = math.cos(roll_rad), math.sin(roll_rad)
 
-            # Apply roll rotation then pitch rotation
-            ry = ray_x * cr + ray_z * sr
-            rz = -ray_x * sr + ray_z * cr
-            rx = ray_y
+            # R = Rz(yaw) @ Ry(-pitch) @ Rx(-roll)
+            cy, sy = math.cos(yaw_rad), math.sin(yaw_rad)
+            cp, sp = math.cos(-pitch_rad), math.sin(-pitch_rad)
+            cr, sr = math.cos(-roll_rad), math.sin(-roll_rad)
 
-            ry2 = ry
-            rz2 = rx * sp + rz * cp
-            rx2 = rx * cp - rz * sp
+            # Rx(-roll)
+            rx0 = ray_cam[0]
+            rx1 = cr * ray_cam[1] - sr * ray_cam[2]
+            rx2 = sr * ray_cam[1] + cr * ray_cam[2]
 
-            if rz2 > 0.01:
-                t = alt_m / rz2
-                ground_x = ry2 * t   # right in body frame (metres)
-                ground_y = rx2 * t   # forward in body frame (metres)
+            # Ry(-pitch) @ Rx(-roll)
+            ry0 = cp * rx0 + sp * rx2
+            ry1 = rx1
+            ry2 = -sp * rx0 + cp * rx2
 
-                # Reproject to corrected pixel coords for the GSD-based offset below
-                gsd = (config.SENSOR_WIDTH_MM * alt_m) / (config.FOCAL_LENGTH_MM * fw)
-                dx_px = ground_x / gsd - 0.0  # already relative to centre
-                dy_px = -(ground_y / gsd)      # forward = negative dy in image
+            # Rz(yaw) @ Ry(-pitch) @ Rx(-roll)
+            rw0 = cy * ry0 - sy * ry1
+            rw1 = sy * ry0 + cy * ry1
+            rw2 = ry2
+
+            # Intersect with ground plane (NED: X=North, Y=East, Z=Down)
+            if rw2 > 0.01:
+                t = alt_m / rw2
+                north_m = rw0 * t
+                east_m = rw1 * t
+
+                # Convert directly to GPS (matches main.py approach)
+                lat_m_per_deg = 111132.0
+                lon_m_per_deg = 111132.0 * math.cos(math.radians(drone_lat))
+                est_lat = drone_lat + north_m / lat_m_per_deg
+                est_lon = drone_lon + east_m / lon_m_per_deg
             else:
-                # Ray nearly horizontal — fall back to flat-earth
-                dx_px = (det_x - 0.5) * fw
-                dy_px = (det_y - 0.5) * fh
+                # Ray nearly horizontal — fall back to flat-earth (no tilt)
+                est_lat, est_lon = self._flat_earth_estimate(
+                    drone_lat, drone_lon, alt_m, yaw_deg, det_x, det_y, fw, fh)
         else:
             # ── Original flat-earth projection (no tilt compensation) ──
-            dx_px = (det_x - 0.5) * fw
-            dy_px = (det_y - 0.5) * fh
-
-        # Metres on ground
-        dx_m = dx_px * alt_m / FOV["f_px"]
-        dy_m = dy_px * alt_m / FOV["f_px"]
-
-        # Rotate by yaw (yaw=0 means North, positive clockwise)
-        # Camera: top of image = drone forward
-        # dx_px positive = target right of centre → East when yaw=0
-        # dy_px positive = target below centre → South when yaw=0
-        # Actually: camera facing down, top of image = drone forward
-        # dy_px negative = target above centre = further forward = more North
-        # dy_px positive = target below centre = behind drone = more South
-        yaw_rad = math.radians(yaw_deg)
-        # Forward (negative dy) maps to North, Right (positive dx) maps to East at yaw=0
-        forward_m = -dy_m  # negative dy = forward = North
-        right_m = dx_m     # positive dx = right = East
-
-        # Rotate by yaw
-        north_m = forward_m * math.cos(yaw_rad) - right_m * math.sin(yaw_rad)
-        east_m = forward_m * math.sin(yaw_rad) + right_m * math.cos(yaw_rad)
-
-        # Convert metres to GPS offset
-        lat_m_per_deg = 111320
-        lon_m_per_deg = 111320 * math.cos(math.radians(drone_lat))
-
-        est_lat = drone_lat + north_m / lat_m_per_deg
-        est_lon = drone_lon + east_m / lon_m_per_deg
+            est_lat, est_lon = self._flat_earth_estimate(
+                drone_lat, drone_lon, alt_m, yaw_deg, det_x, det_y, fw, fh)
 
         # Weight: inverse altitude squared (10m obs is 9x more valuable than 30m)
         weight = 1.0 / (alt_m * alt_m)
 
         # Bonus: detection near frame centre = less projection error
-        dist_from_centre = math.sqrt(dx_px**2 + dy_px**2)
-        max_dist = math.sqrt((FOV["img_w"]/2)**2 + (FOV["img_h"]/2)**2)
+        dx_norm = det_x - 0.5  # normalised offset from centre (-0.5 to 0.5)
+        dy_norm = det_y - 0.5
+        dist_from_centre = math.sqrt(dx_norm**2 + dy_norm**2)
+        max_dist = math.sqrt(0.5**2 + 0.5**2)  # ~0.707
         centre_factor = 1.0 + 4.0 * max(0, 1.0 - dist_from_centre / (max_dist * 0.3))
         weight *= centre_factor
 
