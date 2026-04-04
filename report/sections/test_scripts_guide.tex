@@ -11,18 +11,20 @@ Systematic verification of a safety-critical autonomous system requires a struct
 Scripts are grouped into six directories, each targeting a distinct verification concern.  The naming convention reflects execution order: lower numbers within the \texttt{flight/} directory carry lower risk and must pass before higher-numbered scripts are attempted.
 
 \begin{description}
-    \item[\texttt{tests/hardware/}] \emph{Component-level checks} (6~scripts).  Each script tests a single peripheral---camera, AI model, GPS receiver, or buzzer---in isolation.  All issue zero flight commands and are safe to run on the bench at any time.
-    \item[\texttt{tests/flight/}] \emph{Progressive flight tests} (7~scripts, numbered 0a--4).  These form the critical path from bench to autonomous flight.  Three bench scripts (0a--0c) validate the command pipeline without propellers; four airborne scripts (1--4) build trust incrementally from manual RC with passive logging through to full autonomous search-and-land.
+    \item[\texttt{tests/hardware/}] \emph{Component-level checks} (8~scripts).  Each script tests a single peripheral---camera, AI model (TFLite and NCNN backends), GPS receiver, or buzzer---in isolation.  All issue zero flight commands and are safe to run on the bench at any time.
+    \item[\texttt{tests/flight/}] \emph{Progressive flight tests} (14~scripts, numbered 0a--5).  These form the critical path from bench to autonomous flight.  Six bench scripts (0a--0f) validate the command pipeline, planning, geofence, and servo without propellers; five airborne scripts (1--5) build trust incrementally from manual RC with passive logging through to full autonomous search-and-land; plus geofence verification and map utilities.
     \item[\texttt{tests/diagnostics/}] \emph{Runtime monitoring} (5~scripts).  Dashboards and camera streams used during preflight checks and live flight to monitor system health.  The multi-panel diagnostics dashboard serves as the final go/no-go gate.
-    \item[\texttt{tests/calibration/}] \emph{Parameter measurement} (5~scripts).  FOV calibration (bench and altitude), lens distortion characterisation, and GPS ground-truth comparison.  Results feed directly into \texttt{config.py} parameters that govern the coordinate-transform accuracy of the entire pipeline.
+    \item[\texttt{tests/calibration/}] \emph{Parameter measurement} (7~scripts).  FOV calibration (bench and altitude), lens distortion characterisation, GPS ground-truth comparison, and two focal-length calibration tools (terminal-based and OpenCV GUI).  Results feed directly into \texttt{config.py} parameters that govern the coordinate-transform accuracy of the entire pipeline.
     \item[\texttt{tests/day\_1\_experiments/}] \emph{Structured data collection} (6~scripts).  All passive (zero commands), all output CSV.  Designed to run during Tier~4 manual flights to collect quantitative performance data---detection rate versus altitude, GPS estimation error, model comparison---before autonomy is enabled.
-    \item[\texttt{tests/laptop/}] \emph{Development-only tools} (10+~scripts).  Model inspection, TFLite debugging, DJI video replay with detection overlay, A/B model comparison, and path visualisation.  Not deployed to the Pi or used on flight day.
+    \item[\texttt{tests/laptop/}] \emph{Development-only tools} (21~scripts).  Model inspection, TFLite and NCNN debugging, DJI video replay with detection overlay, A/B model comparison, path visualisation, NFZ manual testing, and approach/descent simulation.  Not deployed to the Pi or used on flight day.
+    \item[\texttt{tests/unit/}] \emph{Unit tests} (6~files, 127~test functions).  Pytest-based tests covering configuration, states, GPS transforms, planning, vision, and GPS utilities.
+    \item[\texttt{tests/automated/}] \emph{Automated integration tests} (7~scripts, 33~test functions).  Extended coverage of planning, utilities, vision, geofence, and SITL smoke tests.
 \end{description}
 
 % ─────────────────────────────────────────────────────────────────────
 \subsection{Flight Test Progression}\label{sec:flight-progression}
 
-The seven flight scripts implement the incremental trust-building strategy.  Each script is designed so that its failure mode is benign at its tier: bench scripts cannot cause vehicle motion; passive scripts issue zero commands; waypoint scripts operate without CV decision-making.  Table~\ref{tab:flight-scripts} details the progression.
+The flight scripts implement the incremental trust-building strategy.  Each script is designed so that its failure mode is benign at its tier: bench scripts cannot cause vehicle motion; passive scripts issue zero commands; waypoint scripts operate without CV decision-making.  Table~\ref{tab:flight-scripts} details the progression.
 
 \begin{table}[H]
 \centering
@@ -75,6 +77,10 @@ Three laptop-only drawing utilities support the flight scripts without running o
 \texttt{buzzer\_test.py} & Sends MAVLink tune commands to the Cube's buzzer.  Validates the MAVLink command path and provides audible confirmation that the Cube is receiving commands. & Audible tones \\
 \addlinespace
 \texttt{detection\_snapshot\_test.py} & Captures a single camera frame, runs inference, and saves the annotated detection image.  Quick smoke test for the camera$\to$model pipeline. & Saved image \\
+\addlinespace
+\texttt{benchmark\_full.py} & Comprehensive multi-model benchmark: system info, preprocessing timing, all available TFLite/NCNN models, threading overhead, and memory profiling. & Terminal report \\
+\addlinespace
+\texttt{ncnn\_benchmark.py} & NCNN backend inference timing (50 runs).  Benchmarks the faster alternative backend (${\sim}72$\,ms vs 206\,ms TFLite). & Terminal report \\
 \bottomrule
 \end{tabular}
 \end{table}

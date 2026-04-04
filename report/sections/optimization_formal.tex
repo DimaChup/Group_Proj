@@ -79,7 +79,7 @@ Adjacent scan lines are spaced at
 A target of physical width $w_t = \SI{0.5}{\metre}$ (mannequin) subtends
 
 \begin{equation}\label{eq:target-px-app}
-  p_{\mathrm{px}}(h) = \frac{w_t}{\mathrm{GSD}(h)} \cdot \frac{640}{W_{\mathrm{px}}} = \frac{w_t \cdot f \cdot 640}{w_s \cdot h \cdot 1}
+  p_{\mathrm{px}}(h) = \frac{w_t}{\mathrm{GSD}(h)} \cdot \frac{640}{W_{\mathrm{px}}} = \frac{w_t \cdot f \cdot 640}{w_s \cdot h}
 \end{equation}
 
 \noindent pixels in the $640 \times 640$ model input, where $\mathrm{GSD}(h) = w_s h / (f \cdot W_{\mathrm{px}})$ is the ground sample distance and $W_{\mathrm{px}} = 1456$ is the sensor width. The per-frame detection probability $p(h)$ is modelled as a sigmoid function of the target's pixel extent:

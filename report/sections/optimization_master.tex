@@ -67,13 +67,14 @@ The NFZ speed variation along each scan segment is numerically integrated with 5
 
 \subsubsection{Detection Model}
 
-The mannequin (\SI{1.8}{\metre} tall, \SI{0.5}{\metre} wide) projects onto the $640 \times 640$ YOLOv8n model input with a height of:
+The mannequin (\SI{1.8}{\metre} tall, \SI{0.5}{\metre} wide) projects onto the $640 \times 640$ YOLOv8n model input with an extent of:
 
 \begin{equation}\label{eq:opt-modelpx}
-  p_{\mathrm{model}} = \frac{d_{\mathrm{target}} \cdot f_{\mathrm{px}}}{h} \times \frac{640}{1456}
+  p_{\mathrm{model}} = \frac{d_{\mathrm{target}} \cdot f_{\mathrm{px}}}{h} \times \frac{640}{W_{\mathrm{px}}}
 \end{equation}
 
-\noindent where $f_{\mathrm{px}} = f/w_s \times W_{\mathrm{px}} = 5.46/5.02 \times 1456 = 1584$\,px is the focal length in pixel units.
+\noindent where $d_{\mathrm{target}}$ is the relevant target dimension (width \SI{0.5}{\metre} for the binding constraint), $f_{\mathrm{px}} = f/w_s \times W_{\mathrm{px}} = 5.46/5.02 \times 1456 = 1584$\,px is the focal length in pixel units, and $W_{\mathrm{px}} = 1456$ is the sensor width.
+At the critical width dimension, $p_{\mathrm{model}}(\SI{35}{\metre}) = 10$\,px and $p_{\mathrm{model}}(\SI{50}{\metre}) = 7$\,px.
 Per-frame detection probability is modelled as a sigmoid of target pixel extent:
 
 \begin{equation}\label{eq:opt-psingle}

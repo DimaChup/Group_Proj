@@ -103,13 +103,14 @@ After payload deployment, the drone climbs back to search altitude and retraces 
 Four safety mechanisms operate concurrently throughout the mission, independent of the current state.
 
 \paragraph{NFZ Geofence (R01, R02).}\label{sec:mf-nfz}
-The SSSI no-fly zone is enforced by a four-layer geofence (Section~\ref{sec:geofencing}):
+The SSSI no-fly zone is enforced by a five-layer geofence (Section~\ref{sec:geofencing}):
 
 \begin{enumerate}
   \item \textbf{Plan-time filtering} --- waypoints within \SI{30}{\metre} of the SSSI boundary are removed during pattern generation.
   \item \textbf{Speed ramp} --- within \SI{20}{\metre} of the boundary, a linear speed scalar reduces the drone's velocity from \SI{3.0}{\metre\per\second} at the zone edge to \SI{0.3}{\metre\per\second} at the boundary, providing a smooth deceleration that prevents overshoot.
   \item \textbf{Repulsive field} --- within \SI{23}{\metre} of an inner offset polygon, a constant-magnitude (\SI{3.0}{\metre\per\second}) velocity vector pushes the drone away from the boundary.
   \item \textbf{Hard boundary} --- if the drone enters the SSSI polygon, the system immediately transitions to \textsc{Manual} mode and halts all autonomous commands, returning control to the pilot.
+  \item \textbf{Firmware geofence} --- an independent geofence on the Cube Orange autopilot triggers \texttt{LOITER} or \texttt{RTL} if all software layers fail.
 \end{enumerate}
 
 \paragraph{Manual Override.}

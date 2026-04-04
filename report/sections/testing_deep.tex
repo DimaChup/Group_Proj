@@ -95,15 +95,15 @@ Table~\ref{tab:test-categories} maps the six test script directories to the veri
 \textbf{Category} & \textbf{Directory} & \textbf{Scripts} & \textbf{Tiers Served} \\
 \midrule
 Hardware     & \texttt{tests/hardware/}           & 8  & 2 (bench) \\
-Flight       & \texttt{tests/flight/}             & 8  & 2, 3, 4, 5 \\
+Flight       & \texttt{tests/flight/}             & 14 & 2, 3, 4, 5 \\
 Diagnostics  & \texttt{tests/diagnostics/}        & 5  & 2, 3, 4, 5 \\
-Calibration  & \texttt{tests/calibration/}        & 5  & 2, 3 \\
+Calibration  & \texttt{tests/calibration/}        & 7  & 2, 3 \\
 Experiments  & \texttt{tests/day\_1\_experiments/} & 6  & 3, 4 \\
-Laptop       & \texttt{tests/laptop/}             & 16 & 1 (simulation) \\
+Laptop       & \texttt{tests/laptop/}             & 21 & 1 (simulation) \\
 Unit         & \texttt{tests/unit/}               & 6  & 1 \\
-Automated    & \texttt{tests/automated/}          & 4  & 1 \\
+Automated    & \texttt{tests/automated/}          & 7  & 1 \\
 \midrule
-\multicolumn{2}{@{}l}{\textbf{Total}} & \textbf{58} & \\
+\multicolumn{2}{@{}l}{\textbf{Total}} & \textbf{74} & \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -224,4 +224,4 @@ At Tier~1, a developer working alone can execute hundreds of test iterations per
 
 \subsection{Summary}
 
-The progressive methodology treated testing not as a phase that follows development, but as a continuous, tiered process that shapes development decisions. The five-tier gating system, supported by 58 dedicated scripts across eight categories (Table~\ref{tab:test-categories}), ensured that every integration boundary was verified before the system was permitted to cross it. Of the 15 significant defects discovered, 80\% were caught at Tiers~1 and~2 where the fix cost was measured in minutes, not field sessions. The structured experiment scripts prepared for Tier~3 passive flights provide a repeatable, quantitative basis for tuning configuration parameters before autonomy is enabled---replacing the ad-hoc ``fly and see'' approach with a data-driven verification pipeline.
+The progressive methodology treated testing not as a phase that follows development, but as a continuous, tiered process that shapes development decisions. The five-tier gating system, supported by 74 dedicated scripts across eight categories (Table~\ref{tab:test-categories}), including 127 unit tests and 33 automated integration tests, ensured that every integration boundary was verified before the system was permitted to cross it. Of the 15 significant defects discovered, 80\% were caught at Tiers~1 and~2 where the fix cost was measured in minutes, not field sessions. The structured experiment scripts prepared for Tier~3 passive flights provide a repeatable, quantitative basis for tuning configuration parameters before autonomy is enabled---replacing the ad-hoc ``fly and see'' approach with a data-driven verification pipeline.

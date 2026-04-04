@@ -223,41 +223,50 @@ assessed body. Each appendix is self-contained and can be read independently.
 \toprule
 \textbf{App.} & \textbf{Contents} \\
 \midrule
-A  & Full state transition table --- 20 states, 32 transitions. \\
-B  & Configuration parameters --- all tuneable values and their rationale. \\
-C  & Model training pipeline --- dataset construction, augmentation, Colab workflow. \\
-D  & Safety and risk management --- HAZOP, regulatory compliance, mitigations. \\
-E  & Testing methodology --- five-tier framework, stress tests, pass criteria. \\
-F  & Field testing results --- calibration data, benchmark numbers, detection rates. \\
-G  & Future work --- roadmap for post-submission development. \\
-H  & Edge inference architecture --- NCNN vs TFLite, quantisation, Pi~5 constraints. \\
-I  & Computer vision extended analysis --- detection pipeline, altitude, dual backend. \\
-J  & Video streaming and ground station architecture. \\
-K  & GPS target estimation deep dive --- Kalman filter, clustering, error budget. \\
-L  & Progressive testing deep dive --- test ladder, integration strategy. \\
-M  & Field day narrative --- adaptation under weather cancellation. \\
-N  & Contingency planning and deliverable tiers. \\
-O  & Test script reference --- all 41 scripts with usage and dependencies. \\
-P  & Sensor calibration --- FOV, lens distortion, GPS ground truth, pre-flight checklist, error budget cross-reference. \\
-Q  & Simulation validation and sim-to-real gap analysis. \\
-R  & Mission flow --- real flight narrative, operator interaction. \\
-S  & Centering vs direct offset landing analysis. \\
-T  & MAVLink communication architecture. \\
-U  & Raw inference vs effective pipeline throughput (FPS analysis). \\
-V  & Flight path optimisation trade-offs. \\
-W  & Payload release mechanism --- servo hardware and actuation sequence. \\
-X  & Model comparison and future vision improvements. \\
-Y  & Multi-objective search optimisation --- energy, rotation, coverage. \\
-Z  & Focus area redirect and repulsive field implementation. \\
-AA & Search path optimisation --- definitive 216-configuration data. \\
-AB & Search parameter optimisation --- physics sim, Pareto, sensitivity. \\
-AC & Formal multi-objective optimisation. \\
-AD & Design strategy --- parameter derivation reasoning chain. \\
-AE & Vision performance analysis (real flight data). \\
-AF & Decision flow: executive narrative of search parameter selection. \\
+\multicolumn{2}{@{}l}{\textit{Core system detail}} \\
+A  & State transition table --- 20 states, 32 transitions with trigger conditions and actions. \\
+B  & Configuration parameters --- all tuneable values, ranges, and rationale for reproducibility. \\
+C  & Model training and dataset --- dataset construction (synthetic, real, negatives), augmentation, Colab workflow. \\
+D  & Safety and risk management --- failure-mode analysis, regulatory compliance, mitigations. \\
+\addlinespace
+\multicolumn{2}{@{}l}{\textit{Verification and validation}} \\
+E  & Testing methodology --- five-tier progressive framework, 20 failure scenarios, pass criteria. \\
+F  & Field testing and results --- calibration data, inference benchmarks, detection rates. \\
+G  & Future work --- post-submission roadmap organised by feasibility. \\
+\addlinespace
+\multicolumn{2}{@{}l}{\textit{Subsystem deep dives}} \\
+H  & Edge inference architecture --- NCNN vs TFLite decision, quantisation, Pi~5 constraints. \\
+I  & Computer vision: extended analysis --- detection pipeline, altitude dependence, dual backend. \\
+J  & Video streaming and ground station architecture --- MJPEG, browser dashboard, headless operation. \\
+K  & GPS target estimation: a deep dive --- Kalman filter, spatial clustering, error budget. \\
+L  & Progressive testing methodology --- test ladder philosophy, integration strategy. \\
+M  & Field day: adaptation under uncertainty --- bench calibration pivot, concrete outputs. \\
+N  & Contingency planning and deliverable tiers --- three-tier fallback, eight failure scenarios. \\
+O  & Test script reference --- all 58 scripts with usage, dependencies, and tier mapping. \\
+P  & Sensor calibration --- FOV, lens distortion, GPS ground truth, error budget cross-reference. \\
+Q  & Simulation validation --- sim-to-real gap analysis, transfer confidence evidence. \\
+R  & Mission flow --- end-to-end flight narrative from power-on to return-to-launch. \\
+S  & Centering vs.\ direct offset landing --- two-step localisation trade-off analysis. \\
+T  & MAVLink communication architecture --- topology, mavproxy bridge, failsafe mechanisms. \\
+U  & Raw inference vs.\ effective pipeline throughput --- FPS breakdown analysis. \\
+\addlinespace
+\multicolumn{2}{@{}l}{\textit{Search and flight optimisation}} \\
+V  & Flight path optimisation --- strategy comparison and trade-offs. \\
+W  & Payload release mechanism --- servo hardware, low-hover rationale, actuation sequence. \\
+X  & Model comparison and future vision improvements --- three generations, tiling, COCO fallback. \\
+Y  & Multi-objective search optimisation --- energy, rotation, coverage trade-offs. \\
+Z  & Focus area redirect and repulsive field --- PLB beacon integration, NFZ avoidance. \\
+AA & Search path optimisation --- six candidate strategies, energy model, parametric sweep. \\
+AB & Search parameter optimisation --- 216-configuration physics simulation, Pareto front, sensitivity. \\
+AC & Formal multi-objective optimisation --- mathematical problem statement and constraints. \\
+AD & Design strategy: parameter derivation chain --- logical dependency reasoning. \\
+AE & Vision performance analysis --- altitude vs.\ pixel size, motion blur, detection envelope (real data). \\
+AF & Decision flow --- executive narrative of how search parameters were selected. \\
+\addlinespace
+\multicolumn{2}{@{}l}{\textit{Extended body sections}} \\
 AG & Requirements verification detail --- R01--R12 evidence narratives. \\
 AH & Evaluation detail --- defect register, lessons learned, second iteration changes. \\
-AI & Development methodology --- simulation-first philosophy, 10-phase timeline, progressive testing ladder, ambition levels, sim-to-real gap analysis, lessons for future teams. \\
+AI & Development methodology --- simulation-first philosophy, 10-phase timeline, progressive testing, ambition levels, lessons for future teams. \\
 \bottomrule
 \end{tabularx}
 

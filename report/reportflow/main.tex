@@ -32,6 +32,13 @@
 \titleformat{\section}{\normalfont\Large\bfseries\color{headblue}}{\thesection}{0.6em}{}
 \titleformat{\subsection}{\normalfont\large\bfseries\color{headblue}}{\thesubsection}{0.5em}{}
 \titleformat{\subsubsection}{\normalfont\normalsize\bfseries\color{headblue}}{\thesubsubsection}{0.4em}{}
+
+% ── PDF bookmark safety ────────────────────────────────────────────────
+\usepackage{bookmark}
+\pdfstringdefDisableCommands{%
+  \def\textdegree{deg}%
+  \def\textsuperscript#1{(#1)}%
+}
 \titlespacing*{\section}{0pt}{10pt plus 2pt}{4pt plus 1pt}
 \titlespacing*{\subsection}{0pt}{8pt plus 2pt}{3pt plus 1pt}
 
@@ -85,17 +92,17 @@
 % ════════════════════════════════════════════════════════════════════════
 \section*{Executive Summary}\label{sec:exec-summary}
 
-This report presents the design, optimisation, and verification of an autonomous Search and Rescue (SAR) drone system built to locate a casualty within an irregular polygon search area bounded by a protected ecological no-fly zone (SSSI). Drawing on established SAR robotics methodology~\cite{murphy2014} and coverage path planning theory~\cite{galceran2013survey}, the system comprises a Raspberry Pi~5 running a retrained YOLOv8n detector~\cite{yolov8} (mAP50\,=\,0.995, 4.8\,FPS TFLite / 9\,FPS NCNN), a 20-state finite state machine built atop the ArduPilot autopilot~\cite{ardupilot}, and a lawnmower path planner with layered geofencing. A physics-based 216-configuration parameter sweep identified the optimal operating point (35\,m altitude, 8\,m/s, 70\textdegree{} scan angle) yielding $>$99.97\% single-pass detection probability at 10.9\% battery usage. Field testing confirmed GPS target estimation accuracy of CEP50\,=\,2.3\,m. The system was validated through 58 test scripts across six categories, with 12 formal requirements verified against quantitative evidence. A plus/delta evaluation identifies key lessons and remaining gaps before full autonomous flight.
+This report presents the design, optimisation, and verification of an autonomous Search and Rescue (SAR) drone system that locates a casualty within an irregular polygon bounded by a protected ecological no-fly zone (SSSI). Drawing on SAR robotics methodology~\cite{murphy2014} and coverage path planning theory~\cite{galceran2013survey}, the system comprises a Raspberry Pi~5 running a retrained YOLOv8n detector~\cite{yolov8} (mAP50\,=\,0.995, 4.8\,FPS TFLite / 9\,FPS NCNN), a 20-state finite state machine atop the ArduPilot autopilot~\cite{ardupilot}, and a lawnmower path planner with layered geofencing. A physics-based 216-configuration parameter sweep identified the optimal operating point (35\,m altitude, 8\,m/s, 70\textdegree{} scan angle), yielding $>$99.97\% single-pass detection probability at 10.9\% battery usage with a 1.5$\times$ NFZ safety margin. Video-replay field testing confirmed GPS target estimation accuracy of CEP50\,=\,2.3\,m. Twelve formal requirements were verified against quantitative evidence (10~met, 2~partially met), and a plus/delta evaluation identifies the remaining gaps before full autonomous flight.
 
 % ════════════════════════════════════════════════════════════════════════
 \section{Objective}\label{sec:df-objective}
 
-The mission objective is to \textbf{find the casualty as fast as possible}.
+The mission objective is to \textbf{locate a casualty as quickly as possible} within a defined search area, using autonomous aerial search with onboard computer vision.
 
 % ════════════════════════════════════════════════════════════════════════
 \section{Constraints}\label{sec:df-constraints}
 
-This objective is bounded by hard constraints that cannot be relaxed:
+This objective is bounded by hard constraints that cannot be relaxed and that shape every downstream design choice:
 
 \begin{itemize}[nosep]
   \item \textbf{No-Fly Zone (SSSI)} --- a protected ecological site borders the search area; entry is prohibited.
@@ -109,7 +116,7 @@ This objective is bounded by hard constraints that cannot be relaxed:
 % ════════════════════════════════════════════════════════════════════════
 \section{Five Competing Dimensions}\label{sec:df-dimensions}
 
-These constraints give us five competing performance dimensions that must be balanced:
+These constraints produce five competing performance dimensions that must be balanced:
 
 \begin{enumerate}[nosep]
   \item \textbf{Safety} --- the drone must never enter the SSSI no-fly zone.
@@ -123,7 +130,7 @@ No single configuration maximises all five simultaneously. Flying higher covers 
 
 We adopted a clear priority stack: \textbf{safety $>$ detection $>$ time $>$ energy $>$ coverage}. An NFZ violation grounds the project. A missed casualty defeats its purpose. A slow search wastes the critical early hours. High energy use is undesirable but survivable. Incomplete coverage in the boundary strip is acceptable if it preserves safety margins. Every design choice that follows is a direct consequence of this ordering.
 
-Figure~\ref{fig:sensitivity-spider} shows the \emph{desired performance envelope} --- the target shape our selected configuration should fill. The grey dashed polygon represents the theoretical best on each axis; the blue polygon shows what the selected configuration actually achieves. Safety and detection are pushed to the outer edge (these are non-negotiable), while time and energy are allowed to sit lower (these are acceptable trade-offs). The envelope is deliberately \emph{not} circular: hard constraints (safety, detection) define a minimum acceptable radius, while preferential objectives (time, energy, coverage) are optimised within whatever budget remains. The optimisation that follows aims to find the configuration whose profile best fills this envelope.
+Figure~\ref{fig:sensitivity-spider} shows the \emph{desired performance envelope}. The grey dashed polygon represents the theoretical best on each axis; the blue polygon shows what the selected configuration achieves. Safety and detection are pushed to the outer edge (non-negotiable), while time and energy sit lower (acceptable trade-offs). The envelope is deliberately \emph{not} circular: hard constraints define a minimum acceptable radius, while preferential objectives are optimised within whatever budget remains.
 
 \begin{figure}[H]
   \centering
@@ -134,7 +141,7 @@ Figure~\ref{fig:sensitivity-spider} shows the \emph{desired performance envelope
 % ════════════════════════════════════════════════════════════════════════
 \section{STEEPLE Context Analysis}\label{sec:steeple}
 
-The priority ordering established above---safety $>$ detection $>$ time $>$ energy $>$ coverage---did not emerge in a vacuum. It reflects the broader operational context in which the system must function. Table~\ref{tab:steeple} maps each STEEPLE dimension to a concrete design consequence, showing how external factors shaped both the constraint hierarchy and specific technical choices such as operator-in-the-loop verification and single-class detection.
+The priority ordering above did not emerge in a vacuum. Table~\ref{tab:steeple} maps each STEEPLE dimension to a concrete design consequence, showing how external factors shaped both the constraint hierarchy and specific technical choices such as operator-in-the-loop verification and single-class detection.
 
 \begin{table}[H]
   \centering\compactTable
@@ -157,7 +164,7 @@ The priority ordering established above---safety $>$ detection $>$ time $>$ ener
 % ════════════════════════════════════════════════════════════════════════
 \section{MCDA: Inference Backend Trade-off}\label{sec:mcda}
 
-With the operational context established, we turn to a key architectural decision that directly constrains the detection and energy dimensions: the choice of inference backend for the Raspberry Pi~5. Table~\ref{tab:mcda-backend} presents a multi-criteria decision analysis (MCDA) comparing four viable options. Each criterion is scored 1--5 and weighted by importance to the mission.
+With the operational context established, we turn to a key architectural decision: the choice of inference backend for the Raspberry Pi~5. This decision directly constrains the detection and energy dimensions. Table~\ref{tab:mcda-backend} presents a multi-criteria decision analysis (MCDA) comparing four viable options, each scored 1--5 and weighted by importance to the mission.
 
 \begin{table}[H]
   \centering\compactTable
@@ -178,14 +185,14 @@ With the operational context established, we turn to a key architectural decisio
   \end{tabularx}
 \end{table}
 
-NCNN~\cite{ncnn} scored highest (4.4) due to its 4.5$\times$ speed advantage over TFLite~\cite{tflite} (72\,ms vs 327\,ms per frame, benchmarked on Pi~5) with no accuracy loss and minimal deployment overhead. TFLite (4.0) serves as a proven fallback. Ultralytics requires PyTorch (2\,GB+ dependencies, slow on ARM). Hailo-8 offers hardware acceleration but requires a separate NPU board (\textsterling 65+), limited YOLOv8 support, and complex toolchain --- impractical for the project timeline. The dual-backend architecture (NCNN primary, TFLite fallback) was adopted: \texttt{vision.py} accepts a \texttt{backend} parameter, and model files are drop-in replacements with identical input/output shapes \texttt{[1,640,640,3]} / \texttt{[1,5,8400]}.
+NCNN~\cite{ncnn} scored highest (4.4) due to its 4.5$\times$ speed advantage over TFLite~\cite{tflite} (72\,ms vs 327\,ms per frame, benchmarked on Pi~5) with no accuracy loss and minimal deployment overhead. TFLite (4.0) serves as a proven fallback. Ultralytics requires PyTorch (2\,GB+ dependencies, slow on ARM), while Hailo-8 offers hardware acceleration but requires a separate NPU board (\textsterling65+) with limited YOLOv8 support and a complex toolchain --- impractical for the project timeline. A dual-backend architecture was adopted: \texttt{vision.py} accepts a \texttt{backend} parameter, and model files are drop-in replacements with identical input/output tensor shapes (\texttt{[1,640,640,3]} / \texttt{[1,5,8400]}).
 
 \textbf{Sensitivity.} The ranking is robust to reasonable weight perturbations. NCNN retains first place even if inference speed weight is halved (0.15 instead of 0.30) --- its score drops to 3.95, still above TFLite (3.85) and Ultralytics (3.85). NCNN loses to TFLite only if deployment simplicity is weighted above 0.40, which would contradict the mission's time-critical detection requirement. This confirms that the backend choice is not an artefact of the weighting scheme.
 
 % ════════════════════════════════════════════════════════════════════════
 \section{Scoring the Five Dimensions}\label{sec:df-scoring}
 
-With the inference backend selected, the hardware performance ceiling is fixed: 9\,FPS (NCNN) or 4.8\,FPS (TFLite fallback). This ceiling feeds directly into the detection and speed calculations that follow. Each axis of the spider chart (Figure~\ref{fig:sensitivity-spider}) corresponds to a normalised score $S \in [0,1]$, where 1 represents the theoretical best and 0 represents failure. This section defines precisely how each score is computed. Three of the five dimensions --- detection, coverage, and energy --- are scored on a continuous scale and combined into a composite objective for the 216-configuration sweep. The remaining two --- safety and time --- are treated as \emph{pass/fail constraints} rather than continuous scores. The rationale for this asymmetry is explained at the end of this section.
+With the inference backend selected, the hardware performance ceiling is fixed: 9\,FPS (NCNN) or 4.8\,FPS (TFLite fallback). Each axis of the spider chart (Figure~\ref{fig:sensitivity-spider}) corresponds to a normalised score $S \in [0,1]$, where 1 represents the theoretical best and 0 represents failure. Three of the five dimensions --- detection, coverage, and energy --- are scored continuously and combined into a composite objective for the 216-configuration sweep. The remaining two --- safety and time --- are treated as \emph{pass/fail constraints}; the rationale for this asymmetry is explained at the end of this section.
 
 % ── Safety ────────────────────────────────────────────────────────────
 \subsection{Safety ($S_\text{safety}$)}\label{sec:score-safety}

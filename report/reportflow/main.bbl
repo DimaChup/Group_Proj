@@ -1,0 +1,72 @@
+\begin{thebibliography}{9}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[{ArduPilot Dev Team}(2023)]{ardupilot}
+{ArduPilot Dev Team}.
+\newblock {ArduPilot}: Open source autopilot.
+\newblock \url{https://ardupilot.org/}, 2023.
+\newblock Accessed: 2026.
+
+\bibitem[{ArduPilot Dev Team}(2024)]{ardupilot2024}
+{ArduPilot Dev Team}.
+\newblock {ArduPilot SITL Simulator}: Software in the loop simulation.
+\newblock
+  \url{https://ardupilot.org/dev/docs/sitl-simulator-software-in-the-loop.html},
+  2024.
+\newblock Accessed: 2026.
+
+\bibitem[Choset(2001)]{choset2001coverage}
+Howie Choset.
+\newblock Coverage for robotics -- a survey of recent results.
+\newblock \emph{Annals of Mathematics and Artificial Intelligence}, 31\penalty0
+  (1--4):\penalty0 113--126, 2001.
+\newblock \doi{10.1023/A:1016639210559}.
+
+\bibitem[Galceran and Carreras(2013)]{galceran2013survey}
+Enric Galceran and Marc Carreras.
+\newblock A survey on coverage path planning for robotics.
+\newblock \emph{Robotics and Autonomous Systems}, 61\penalty0 (12):\penalty0
+  1258--1276, 2013.
+\newblock \doi{10.1016/j.robot.2013.09.004}.
+
+\bibitem[{Google}(2023)]{tflite}
+{Google}.
+\newblock {TensorFlow Lite}: Deploy machine learning models on mobile and edge
+  devices.
+\newblock \url{https://www.tensorflow.org/lite}, 2023.
+\newblock Accessed: 2026.
+
+\bibitem[Jocher et~al.(2023)Jocher, Chaurasia, and Qiu]{yolov8}
+Glenn Jocher, Ayush Chaurasia, and Jing Qiu.
+\newblock {Ultralytics YOLOv8}.
+\newblock \url{https://github.com/ultralytics/ultralytics}, 2023.
+\newblock Accessed: 2026.
+
+\bibitem[Murphy(2014)]{murphy2014}
+Robin~R. Murphy.
+\newblock \emph{Disaster Robotics}.
+\newblock MIT Press, Cambridge, MA, 2014.
+\newblock ISBN 978-0-262-02735-9.
+
+\bibitem[Ni(2017)]{ncnn}
+Teng Ni.
+\newblock {ncnn}: A high-performance neural network inference computing
+  framework optimised for mobile platforms.
+\newblock \url{https://github.com/Tencent/ncnn}, 2017.
+\newblock Accessed: 2026.
+
+\bibitem[Tremblay et~al.(2018)Tremblay, Prakash, Acuna, Brober, Jampani, Anil,
+  To, Cameracci, Boochoon, and Birchfield]{synthdata}
+Jonathan Tremblay, Aayush Prakash, David Acuna, Mark Brober, Varun Jampani, Cem
+  Anil, Thang To, Eric Cameracci, Shaad Boochoon, and Stan Birchfield.
+\newblock Training deep networks with synthetic data: Bridging the reality gap
+  by domain randomization.
+\newblock In \emph{Proceedings of the IEEE Conference on Computer Vision and
+  Pattern Recognition Workshops (CVPRW)}, pages 969--977, 2018.
+\newblock \doi{10.1109/CVPRW.2018.00143}.
+
+\end{thebibliography}

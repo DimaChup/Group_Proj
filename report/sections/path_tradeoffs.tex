@@ -20,15 +20,15 @@ The lane width is a direct function of search altitude through Eq.~\eqref{eq:foo
 
 \begin{table}[ht]
   \centering\compactTable
-  \caption{Altitude--lane width--detection trade-off for the AENGM0074 survey polygon.  Target pixel extent assumes a \SI{1.8}{\metre} prone mannequin imaged by the IMX296 sensor at 1456$\times$1088 resolution.}\label{tab:alt-tradeoff}
+  \caption{Altitude--lane width--detection trade-off for the AENGM0074 survey polygon.  Target height in the $640\!\times\!640$ model input, assuming a \SI{1.8}{\metre} prone mannequin imaged by the IMX296 sensor at 1456$\times$1088 resolution (scale $= 640/1456 = 0.44$).}\label{tab:alt-tradeoff}
   \begin{tabularx}{\linewidth}{@{}c c c c c X@{}}
     \toprule
-    \textbf{Alt (m)} & \textbf{Footprint (m)} & \textbf{Lane (m)} & \textbf{Passes} & \textbf{Target (px)} & \textbf{Notes} \\
+    \textbf{Alt (m)} & \textbf{Footprint (m)} & \textbf{Lane (m)} & \textbf{Passes} & \textbf{Model (px)} & \textbf{Notes} \\
     \midrule
-    20 & 18.4 & 14.7 & $\sim$2$\times$ & 42 & High confidence, slow coverage \\
-    25 & 23.0 & 18.4 & $\sim$1.5$\times$ & 34 & Good detection, moderate speed \\
-    35 & 32.2 & 25.7 & 1$\times$ (ref) & 24 & Selected: reliable detection, efficient coverage \\
-    50 & 45.9 & 36.7 & $\sim$0.7$\times$ & 17 & Risk of missed detections \\
+    20 & 18.4 & 14.7 & $\sim$2$\times$ & 63 & High confidence, slow coverage \\
+    25 & 23.0 & 18.4 & $\sim$1.5$\times$ & 50 & Good detection, moderate speed \\
+    35 & 32.2 & 25.7 & 1$\times$ (ref) & 36 & Selected: reliable detection, efficient coverage \\
+    50 & 45.9 & 36.7 & $\sim$0.7$\times$ & 25 & Risk of missed detections \\
     \bottomrule
   \end{tabularx}
 \end{table}
