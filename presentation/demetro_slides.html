@@ -5,136 +5,101 @@
 <title>Demetro — FDR Slides</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Segoe UI', Arial, sans-serif; background: #0a0a1a; color: white; }
+  body { font-family: 'Calibri', 'Segoe UI', Arial, sans-serif; background: #fff; color: #222; }
   .slide {
     width: 100vw; height: 100vh;
+    display: flex; flex-direction: column;
+    padding: 36px 55px 30px; position: relative; overflow: hidden;
+    background: #fff;
+  }
+  h1 { font-size: 32px; font-weight: 800; color: #0070C0; margin-bottom: 4px; }
+  h2 { font-size: 15px; color: #666; margin-bottom: 16px; font-weight: 400; }
+  .content { display: flex; gap: 30px; flex: 1; min-height: 0; }
+  .subtitle-red { color: #c0392b; font-size: 13px; font-weight: 600; font-style: italic; }
+
+  /* Pipeline ribbon arrows (Edward-style) */
+  .pipeline { display: flex; align-items: stretch; gap: 0; margin-bottom: 14px; }
+  .pipe-stage {
+    position: relative; padding: 14px 18px 14px 28px; min-width: 140px;
+    clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 50%, calc(100% - 18px) 100%, 0 100%, 18px 50%);
     display: flex; flex-direction: column; justify-content: center;
-    padding: 40px 60px; position: relative; overflow: hidden;
   }
-  .slide-1 { background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); }
-  .slide-1::before { content:''; position:absolute; top:-40%; right:-25%; width:700px; height:700px; background:radial-gradient(circle,rgba(233,69,96,0.12) 0%,transparent 70%); border-radius:50%; }
-  .slide-2 { background: linear-gradient(135deg, #0a192f, #112240, #0a192f); }
-  .slide-2::before { content:''; position:absolute; bottom:-35%; left:-15%; width:600px; height:600px; background:radial-gradient(circle,rgba(0,210,255,0.08) 0%,transparent 70%); border-radius:50%; }
+  .pipe-stage:first-child { clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 50%, calc(100% - 18px) 100%, 0 100%); padding-left: 18px; border-radius: 6px 0 0 6px; }
+  .pipe-stage .pipe-title { font-size: 13px; font-weight: 700; color: #fff; }
+  .pipe-stage .pipe-detail { font-size: 10px; color: rgba(255,255,255,0.85); margin-top: 2px; }
+  .pipe-stage .pipe-detail2 { font-size: 9px; color: rgba(255,255,255,0.65); margin-top: 1px; }
 
-  .tag { display:inline-block; background:#e94560; color:white; font-size:11px; font-weight:700; padding:4px 12px; border-radius:20px; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:8px; }
-  h1 { font-size:40px; font-weight:800; margin-bottom:4px; background:linear-gradient(90deg,#fff,#ddd); -webkit-background-clip:text; -webkit-text-fill-color:transparent; line-height:1.1; }
-  h2 { font-size:17px; color:#8892b0; margin-bottom:20px; font-weight:400; }
-  .content { display:flex; gap:35px; position:relative; z-index:1; }
-  .left { flex:1; } .right { flex:1; }
-  .highlight { color:#00d2ff; font-weight:700; }
-  .highlight-red { color:#e94560; font-weight:700; }
+  .pipe-input { background: #0070C0; }
+  .pipe-mid { background: #2196F3; }
+  .pipe-mid2 { background: #42a5f5; }
+  .pipe-mid3 { background: #66bb6a; }
+  .pipe-output { background: #43a047; clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 50%, calc(100% - 18px) 100%, 0 100%, 18px 50%); border-radius: 0 6px 6px 0; }
 
-  .flow { display:flex; align-items:center; gap:0; margin-bottom:14px; }
-  .flow-step { background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:7px 10px; text-align:center; font-size:11px; color:#ccd6f6; min-width:95px; }
-  .flow-step .icon { font-size:16px; margin-bottom:2px; }
-  .flow-step .step-label { font-size:9px; color:#8892b0; }
-  .flow-arrow { color:#e94560; font-size:16px; padding:0 3px; }
+  /* Phase refinement */
+  .phase-row { display: flex; align-items: center; gap: 8px; background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 6px; padding: 7px 10px; margin-bottom: 3px; }
+  .phase-num { width: 24px; height: 24px; background: #0070C0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; color: #fff; flex-shrink: 0; }
+  .phase-info { flex: 1; }
+  .phase-name { font-size: 12px; font-weight: 700; color: #222; }
+  .phase-desc { font-size: 9px; color: #888; }
+  .phase-cep { font-size: 14px; font-weight: 800; color: #0070C0; flex-shrink: 0; }
+  .phase-arrow { text-align: center; color: #aaa; font-size: 10px; padding: 1px 0; }
 
-  .tilt-compare { display:flex; gap:10px; margin-bottom:12px; }
-  .tilt-card { flex:1; background:rgba(255,255,255,0.03); border-radius:10px; padding:10px; text-align:center; border:1px solid rgba(255,255,255,0.06); }
-  .tilt-card.bad { border-color:rgba(233,69,96,0.3); }
-  .tilt-card.good { border-color:rgba(0,210,255,0.3); }
-  .tilt-card .tilt-icon { font-size:20px; margin-bottom:3px; }
-  .tilt-card .tilt-label { font-size:10px; color:#8892b0; margin-bottom:2px; }
-  .tilt-card .tilt-error { font-size:18px; font-weight:800; }
-  .tilt-card.bad .tilt-error { color:#e94560; }
-  .tilt-card.good .tilt-error { color:#00d2ff; }
+  /* Tilt comparison */
+  .tilt-card { flex: 1; border-radius: 8px; padding: 8px 10px; text-align: center; border: 2px solid; }
+  .tilt-card.bad { border-color: #E97132; background: #fef2f2; }
+  .tilt-card.good { border-color: #27ae60; background: #f0fdf4; }
+  .tilt-label { font-size: 10px; color: #888; margin-bottom: 2px; }
+  .tilt-error-bad { font-size: 22px; font-weight: 800; color: #E97132; }
+  .tilt-error-good { font-size: 22px; font-weight: 800; color: #27ae60; }
 
-  .metric-row { display:flex; gap:8px; margin-top:10px; }
-  .metric { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:12px 8px; text-align:center; flex:1; }
-  .metric .number { font-size:26px; font-weight:800; background:linear-gradient(135deg,#00d2ff,#00ffd5); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
-  .metric .label { font-size:9px; color:#8892b0; margin-top:2px; line-height:1.2; }
+  /* Insight box */
+  .insight-box { background: #f0f7ff; border: 1px solid #b3d4fc; border-radius: 8px; padding: 8px 12px; margin-top: auto; }
+  .insight-box .insight-title { color: #0070C0; font-weight: 700; font-size: 11px; margin-bottom: 2px; }
+  .insight-box p { color: #555; font-size: 11px; line-height: 1.4; }
 
-  .phase-row { display:flex; align-items:center; gap:8px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:8px 10px; margin-bottom:3px; }
-  .phase-num { width:24px; height:24px; background:linear-gradient(135deg,#e94560,#c23152); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; flex-shrink:0; }
-  .phase-info { flex:1; }
-  .phase-name { font-size:12px; font-weight:700; color:#fff; }
-  .phase-desc { font-size:9px; color:#8892b0; }
-  .phase-cep { font-size:14px; font-weight:800; color:#00d2ff; flex-shrink:0; }
-  .phase-arrow { text-align:center; color:#e94560; font-size:11px; padding:1px 0; }
+  .footer { position: absolute; bottom: 14px; right: 40px; font-size: 10px; color: #aaa; }
+  .slide-indicator { position: absolute; bottom: 14px; left: 40px; font-size: 10px; color: #aaa; }
 
-  .insight-box { background:linear-gradient(135deg,rgba(0,210,255,0.08),rgba(0,210,255,0.03)); border:1px solid rgba(0,210,255,0.2); border-radius:10px; padding:10px 14px; margin-top:8px; }
-  .insight-box .insight-title { color:#00d2ff; font-weight:700; font-size:11px; margin-bottom:3px; }
-  .insight-box p { color:#8892b0; font-size:11px; line-height:1.4; }
+  /* Section labels (Edward-style) */
+  .section-label { color: #0070C0; font-size: 13px; font-weight: 700; margin-bottom: 5px; }
+  .section-label-green { color: #27ae60; font-size: 13px; font-weight: 700; margin-bottom: 5px; }
 
-  .video-box {
-    width:100%; height:160px;
-    background:rgba(0,0,0,0.4); border:2px solid rgba(0,210,255,0.2);
-    border-radius:12px; display:flex; align-items:center; justify-content:center;
-    color:#555; font-size:13px; text-align:center; position:relative; margin-top:12px;
-  }
-  .video-box .play-icon { font-size:48px; color:rgba(0,210,255,0.4); position:absolute; }
+  /* Ladder steps (slide 2) */
+  .ladder-step { display: flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 6px; margin-bottom: 2px; }
+  .ladder-step.done { background: #f0f7ff; border: 1px solid #b3d4fc; }
+  .ladder-step.next { background: #fef2f2; border: 1px dashed #E97132; }
+  .ladder-num { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; color: #fff; flex-shrink: 0; }
+  .ladder-num.done { background: #0070C0; }
+  .ladder-num.next { background: #E97132; }
 
-  .ladder-rung {
-    background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
-    border-radius:10px; padding:12px 16px; margin-bottom:5px;
-    display:flex; align-items:flex-start; gap:12px;
-  }
-  .ladder-rung.done { border-left:3px solid #00d2ff; }
-  .ladder-rung.goal { border-left:3px solid #e94560; border-style:dashed; background:rgba(233,69,96,0.05); }
-  .ladder-rung .rung-icon { font-size:20px; flex-shrink:0; }
-  .ladder-rung .rung-content { flex:1; }
-  .ladder-rung .rung-title { font-size:14px; font-weight:700; color:#fff; margin-bottom:2px; }
-  .ladder-rung .rung-desc { font-size:11px; color:#8892b0; margin-bottom:4px; }
-  .ladder-rung .rung-scripts { font-family:'Consolas',monospace; font-size:10px; color:#00d2ff; line-height:1.4; }
-  .rung-status { font-size:11px; font-weight:700; flex-shrink:0; padding:2px 8px; border-radius:10px; }
-  .status-done { background:rgba(0,210,255,0.15); color:#00d2ff; }
-  .status-next { background:rgba(233,69,96,0.15); color:#e94560; }
-  .ladder-connector { width:2px; height:6px; background:rgba(255,255,255,0.08); margin:0 0 0 28px; }
-
-  .why-box { background:linear-gradient(135deg,rgba(233,69,96,0.08),rgba(233,69,96,0.03)); border:1px solid rgba(233,69,96,0.15); border-radius:10px; padding:12px 16px; margin-top:10px; }
-  .why-box .why-title { color:#e94560; font-weight:700; font-size:12px; margin-bottom:4px; }
-  .why-box p { color:#8892b0; font-size:12px; line-height:1.4; }
-
-  .footer { position:absolute; bottom:18px; right:45px; font-size:10px; color:#333; }
-  .slide-indicator { position:absolute; bottom:18px; left:45px; font-size:10px; color:#333; }
+  /* Verified box */
+  .verified-box { background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; padding: 10px 14px; }
 
   /* ---- TELEPROMPTER SIDEBAR ---- */
   .teleprompter {
-    position: fixed;
-    top: 0;
-    right: -420px;
-    width: 400px;
-    height: 100vh;
-    background: rgba(0,0,0,0.95);
-    border-left: 2px solid #e94560;
-    padding: 30px 25px;
-    overflow-y: auto;
-    z-index: 9999;
-    transition: right 0.3s ease;
-    font-size: 15px;
-    line-height: 1.8;
-    color: #ccc;
+    position: fixed; top: 0; right: -420px; width: 400px; height: 100vh;
+    background: rgba(0,0,0,0.95); border-left: 3px solid #0070C0;
+    padding: 30px 25px; overflow-y: auto; z-index: 9999;
+    transition: right 0.3s ease; font-size: 15px; line-height: 1.8; color: #ccc;
   }
   .teleprompter.show { right: 0; }
-  .teleprompter h3 { color: #e94560; font-size: 14px; margin-bottom: 15px; letter-spacing: 1px; text-transform: uppercase; }
-  .teleprompter .cue { color: #e94560; font-size: 12px; font-weight: 700; margin-top: 15px; display: block; }
+  .teleprompter h3 { color: #0070C0; font-size: 14px; margin-bottom: 15px; letter-spacing: 1px; text-transform: uppercase; }
+  .teleprompter .cue { color: #E97132; font-size: 12px; font-weight: 700; margin-top: 15px; display: block; }
   .teleprompter strong { color: #fff; }
   .teleprompter .divider { border-top: 1px solid #333; margin: 20px 0; }
-  .teleprompter .slide-label { background: #e94560; color: white; padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; display: inline-block; margin-bottom: 10px; }
+  .teleprompter .slide-label { background: #0070C0; color: white; padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; display: inline-block; margin-bottom: 10px; }
 
   .prompt-toggle {
-    position: fixed;
-    top: 15px;
-    right: 15px;
-    background: #e94560;
-    color: white;
-    border: none;
-    padding: 8px 14px;
-    border-radius: 8px;
-    font-size: 12px;
-    font-weight: 700;
-    cursor: pointer;
-    z-index: 10000;
-    opacity: 0.3;
-    transition: opacity 0.2s;
+    position: fixed; top: 12px; right: 12px; background: #0070C0; color: white;
+    border: none; padding: 8px 14px; border-radius: 8px; font-size: 12px;
+    font-weight: 700; cursor: pointer; z-index: 10000; opacity: 0.25; transition: opacity 0.2s;
   }
   .prompt-toggle:hover { opacity: 1; }
 </style>
 </head>
 <body>
 
-<!-- Toggle button (faint, top right) -->
+<!-- Toggle button -->
 <button class="prompt-toggle" onclick="toggleTeleprompter()">Ctrl+T: Script</button>
 
 <!-- ==================== TELEPROMPTER SIDEBAR ==================== -->
@@ -142,243 +107,345 @@
 
   <div class="slide-label">SLIDE 1 — VISION (225 words, 1.5 min)</div>
 
-  So Edward showed you how we trained the model. Now let me walk you through what actually happens when it runs on the drone.
+  One of our core requirements was <strong>autonomous target geolocation</strong> — detect a casualty and return a usable GPS position the drone can fly to. Edward showed you how we trained the model. My job: make that work on a Raspberry Pi with <strong>no GPU</strong>.
 
   <span class="cue">[Point to pipeline]</span>
-  The Raspberry Pi 5 captures frames from a global shutter camera and feeds them into our YOLOv8 model every 200 milliseconds. <strong>No GPU, no accelerator</strong> — just the Pi's CPU doing inference on each frame.
+  The Pi 5 captures frames at 1456 by 1088 from a global shutter camera. Each frame goes through YOLOv8 nano using the <strong>NCNN backend</strong> — we benchmarked it against TensorFlow Lite and it runs <strong>2.3 times faster</strong>: 73 milliseconds versus 200.
 
-  When the model spots a target, it gives us a bounding box in pixels. But pixels don't tell us where to fly. We need GPS coordinates. We know the camera's field of view and the drone's altitude from the barometer, so we project pixel offsets into real-world metres and add them to the drone's GPS position.
+  <span class="cue">[Point to bar chart]</span>
+  That's why we chose NCNN — nearly <strong>11 frames per second</strong> effective throughput versus under 5 with TFLite. Same accuracy, same weights, just a faster runtime.
+
+  <span class="cue">[Point to pixel→distance diagram]</span>
+  When the model spots a target, we get a bounding box in pixels. We project that pixel offset into real-world metres — the camera's field of view and altitude give us a ground sample distance of <strong>2.2 centimetres per pixel</strong> at 35 metres.
 
   <span class="cue">[Point to tilt comparison]</span>
-  Simple enough — except the drone is never perfectly level. If you ignore that tilt, your estimate lands <strong>six metres off</strong>. So we read pitch and roll directly from the flight controller and ray-trace through the actual camera angle. That brings the error down to about <strong>thirty centimetres</strong>. Same principle military surveillance drones use.
+  The catch: the drone is never perfectly level. Ignore the tilt and you land <strong>six metres off</strong>. We read pitch and roll from the flight controller and ray-trace through the actual camera angle. Error drops to <strong>thirty centimetres</strong>.
 
-  <span class="cue">[Point to four phases]</span>
-  But we don't rely on a single detection. The system refines progressively — detect from altitude, fly toward the estimate, hover directly above, and lock. At hover, <strong>the drone's own GPS becomes the target's GPS</strong>. Accuracy goes from three and a half metres down to one point eight.
-
-  The operator sees everything through a browser dashboard and confirms with a single button press. And importantly — the exact same code runs in simulation on a laptop and live on the Pi. <strong>One codebase, zero porting.</strong>
+  <span class="cue">[Point to bullseye]</span>
+  The bullseye shows it in action — detections from around a known target. Dots coloured red are near the centre of the frame and more accurate; green ones are at the edges. End result: <strong>CEP50 of 2.2 metres</strong>, on hardware that costs sixty pounds.
 
   <div class="divider"></div>
 
-  <div class="slide-label">SLIDE 2 — SIMULATION (222 words, 1.5 min)</div>
+  <div class="slide-label">SLIDE 2 — SIMULATION (225 words, 1.5 min)</div>
 
   <span class="cue">[Slide appears, video playing on left]</span>
-  Our testing philosophy is simple: <strong>never fly something you haven't proven at every level below it.</strong> This ladder shows how we built confidence systematically.
+  The assignment gave us <strong>twelve specific requirements</strong> the drone must meet. Our testing philosophy: <strong>never fly something you haven't proven at every level below it</strong> — and our evidence that we meet those twelve requirements lives here.
 
-  <span class="cue">[Point to bottom steps]</span>
-  At the base, 127 unit tests validate core logic — GPS math, geofencing, pattern generation. Dry-run mode visualises the full mission without touching hardware. Step two: bench integration on the Pi. Camera, AI model, and flight controller communicating — no propellers, no risk.
-
-  <span class="cue">[Point to middle steps]</span>
-  Over Easter, we went outdoors. Calibrated field-of-view, verified GPS estimation against known positions, confirmed detection at realistic altitudes. Step four: passive flight. A pilot flies manually while the Pi runs detection silently — <strong>zero commands sent</strong>. Real-world CV validation with zero autonomy risk.
-
-  <span class="cue">[Point to top star]</span>
-  Step five is demo day — full autonomous search, detection, and landing.
+  <span class="cue">[Point to simulation foundation]</span>
+  The foundation of everything is our simulation. It's not just running waypoints in SITL — we replicate the <strong>same 1456×1088 camera resolution</strong> as the real drone, camera tilt from pitch and roll, motion blur at flight speed, GPS drift noise, and synthetic targets composited onto real backgrounds at altitude-correct scale. Every one of the <strong>twelve mission requirements</strong> is verified end-to-end here — spiral search, detection, geofence, no-fly zone, PLB beacon redirect, payload drop, RTL failsafes, attitude-compensated GPS, offset landing.
 
   <span class="cue">[Point to video on left]</span>
-  Now, what you're seeing on the left is our simulation running a complete mission. Hardware delays forced us into simulation early — and it became our greatest strength. We verified all twelve requirements: five-layer geofencing with repulsive fields, PLB beacon redirect, payload drop, RTL failsafes, and <strong>attitude-compensated GPS estimation</strong> — meaning we simulate camera tilt during flight and correct for it so target positions stay accurate even when the drone is banking.
+  On the left is a full mission running — takeoff, search, detect, centre, verify, land. Same Python codebase that flies on the Pi. What runs in sim is what flies for real.
 
-  Critically, this is <strong>one Python codebase throughout</strong>. No separate simulation version. What runs in sim is what flies on the Pi.
+  <span class="cue">[Point to ladder, bottom up]</span>
+  Simulation alone isn't enough. The ladder shows how we bridged to reality. On the ground side: 127 unit tests and outdoor calibration. On the flight side: bench integration on the Pi, and passive flight where a pilot flew while the Pi detected silently — <strong>zero commands sent</strong>.
 
-  <span class="cue">[Strong finish]</span>
-  <strong>We're ready. The software is proven. Demo day brings it together.</strong>
+  <span class="cue">[Point to unchecked boxes]</span>
+  Waypoint flight and auto detect-and-hover are next — and above them, <strong>the real mission</strong>.
 
   <span class="cue">[Hand to Herish]</span>
 
 </div>
 
 <!-- ==================== SLIDE 1: VISION ==================== -->
-<div class="slide slide-1">
-  <h1 style="font-size:34px; margin-bottom:2px;">Vision Pipeline</h1>
-  <h2 style="margin-bottom:14px;">Camera pixels → GPS coordinates — running on Pi 5 CPU, no GPU</h2>
+<div class="slide" id="slide-1">
+  <h1>CV to Target Estimate Pipeline</h1>
 
-  <div class="content" style="gap:24px;">
-
-    <!-- LEFT COLUMN: pipeline + tilt + bullseye -->
-    <div class="left" style="flex:1; display:flex; flex-direction:column; gap:10px;">
-
-      <!-- Compact pipeline (single row, narrow) -->
-      <div class="flow" style="margin-bottom:0;">
-        <div class="flow-step" style="min-width:70px; padding:5px 7px;"><div class="icon" style="font-size:14px;">📷</div><span style="font-size:10px;">Camera</span><div class="step-label">1456×1088</div></div>
-        <div class="flow-arrow" style="font-size:14px;">→</div>
-        <div class="flow-step" style="min-width:70px; padding:5px 7px;"><div class="icon" style="font-size:14px;">🧠</div><span style="font-size:10px;">YOLOv8n</span><div class="step-label">~200ms</div></div>
-        <div class="flow-arrow" style="font-size:14px;">→</div>
-        <div class="flow-step" style="min-width:70px; padding:5px 7px;"><div class="icon" style="font-size:14px;">📐</div><span style="font-size:10px;">Pixel→GPS</span><div class="step-label">FOV+alt</div></div>
-        <div class="flow-arrow" style="font-size:14px;">→</div>
-        <div class="flow-step" style="min-width:70px; padding:5px 7px;"><div class="icon" style="font-size:14px;">🔄</div><span style="font-size:10px;">Tilt Fix</span><div class="step-label">pitch+roll</div></div>
-        <div class="flow-arrow" style="font-size:14px;">→</div>
-        <div class="flow-step" style="min-width:70px; padding:5px 7px; border-color:rgba(0,210,255,0.3);"><div class="icon" style="font-size:14px;">🎯</div><span style="font-size:10px;">Target GPS</span><div class="step-label">estimate</div></div>
-      </div>
-
-      <!-- Tilt comparison — prominent but compact -->
-      <div style="font-size:11px; font-weight:700; color:#e94560; margin-top:4px; margin-bottom:2px;">Attitude Compensation</div>
-      <div class="tilt-compare" style="margin-bottom:0; gap:8px;">
-        <div class="tilt-card bad" style="padding:8px;">
-          <div class="tilt-label" style="margin-bottom:1px;">Without compensation</div>
-          <div class="tilt-error" style="font-size:22px;">6.2m</div>
-          <div style="font-size:9px;color:#555;">Assumes straight down</div>
-        </div>
-        <div style="display:flex; align-items:center; font-size:22px; color:#e94560; font-weight:800;">→</div>
-        <div class="tilt-card good" style="padding:8px;">
-          <div class="tilt-label" style="margin-bottom:1px;">With ray-trace correction</div>
-          <div class="tilt-error" style="font-size:22px;">0.3m</div>
-          <div style="font-size:9px;color:#555;">Reads pitch & roll from FC</div>
-        </div>
-      </div>
-
-      <!-- GPS accuracy scatter plot -->
-      <div style="margin-top:6px; display:flex; gap:10px; align-items:stretch;">
-        <div style="flex:1; border:1px solid rgba(0,210,255,0.15); border-radius:8px; overflow:hidden; background:rgba(0,0,0,0.2);">
-          <img src="../report/figs/gps_bullseye.png" style="width:100%; height:100%; object-fit:contain; display:block;" alt="GPS accuracy scatter">
-        </div>
-        <div style="flex:0.7; display:flex; flex-direction:column; justify-content:center; gap:6px;">
-          <div style="font-size:10px; color:#8892b0; line-height:1.3;">Browser dashboard shows detections live. Operator confirms with one button.</div>
-          <div style="background:rgba(0,210,255,0.06); border:1px solid rgba(0,210,255,0.15); border-radius:6px; padding:6px 8px; font-size:10px; color:#00d2ff; font-weight:600; text-align:center;">One codebase<br><span style="font-weight:400; color:#8892b0;">Sim on laptop = live on Pi</span></div>
-        </div>
-      </div>
+  <!-- PIPELINE — full width, prominent, Edward-style chevron ribbon -->
+  <div class="pipeline">
+    <div class="pipe-stage pipe-input" style="min-width:145px;">
+      <div class="pipe-title">Camera Capture</div>
+      <div class="pipe-detail">1456 × 1088 px</div>
+      <div class="pipe-detail2">IMX296 global shutter</div>
     </div>
-
-    <!-- RIGHT COLUMN: four-phase refinement -->
-    <div class="right" style="flex:0.7; display:flex; flex-direction:column;">
-      <div style="font-size:12px;font-weight:700;color:#e94560;margin-bottom:6px;">Four-Phase Refinement</div>
-      <div class="phase-row">
-        <div class="phase-num">1</div>
-        <div class="phase-info"><div class="phase-name">Detect from altitude</div><div class="phase-desc">Tilt-compensated rough estimate</div></div>
-        <div class="phase-cep">~3.5m</div>
-      </div>
-      <div class="phase-arrow">↓ fly toward</div>
-      <div class="phase-row">
-        <div class="phase-num">2</div>
-        <div class="phase-info"><div class="phase-name">Approach & re-detect</div><div class="phase-desc">Tilt decreases, estimate sharpens</div></div>
-        <div class="phase-cep">~2.5m</div>
-      </div>
-      <div class="phase-arrow">↓ hover</div>
-      <div class="phase-row">
-        <div class="phase-num">3</div>
-        <div class="phase-info"><div class="phase-name">Hover lock (nadir)</div><div class="phase-desc">Directly above → drone GPS = target GPS</div></div>
-        <div class="phase-cep">~1.8m</div>
-      </div>
-      <div class="phase-arrow">↓ confirm</div>
-      <div class="phase-row">
-        <div class="phase-num">4</div>
-        <div class="phase-info"><div class="phase-name">Verify & land</div><div class="phase-desc">Operator Y/N → offset landing → deploy</div></div>
-        <div class="phase-cep" style="color:#00c864;">confirmed</div>
-      </div>
-
-      <div class="insight-box" style="margin-top:auto;">
-        <div class="insight-title">Key Insight</div>
-        <p>At hover: pixel offset = 0, so all projection errors multiply by zero. <strong style="color:#fff;">Drone GPS <em>is</em> target GPS.</strong></p>
-      </div>
+    <div class="pipe-stage pipe-mid" style="min-width:155px;">
+      <div class="pipe-title">YOLOv8n Inference</div>
+      <div class="pipe-detail">NCNN backend — 73 ms</div>
+      <div class="pipe-detail2">640×640 input tensor</div>
+    </div>
+    <div class="pipe-stage pipe-mid2" style="min-width:140px;">
+      <div class="pipe-title">Pixel → GPS</div>
+      <div class="pipe-detail">FOV projection + altitude</div>
+      <div class="pipe-detail2">Calibrated focal length</div>
+    </div>
+    <div class="pipe-stage pipe-mid3" style="min-width:150px;">
+      <div class="pipe-title">Attitude Correction</div>
+      <div class="pipe-detail">Pitch + roll ray-trace</div>
+      <div class="pipe-detail2">From flight controller</div>
+    </div>
+    <div class="pipe-stage pipe-output" style="min-width:140px;">
+      <div style="font-size:24px; line-height:1;">🎯</div>
+      <div class="pipe-title">Target GPS</div>
+      <div class="pipe-detail">~9 FPS effective</div>
+      <div class="pipe-detail2">CEP50 = 2.2 m</div>
     </div>
   </div>
-  <div class="slide-indicator">Demetro Chuprynyuk</div>
-  <div class="footer">AENGM0074 D4 Final Design Review</div>
+
+  <div class="content">
+
+    <!-- LEFT: tilt + bar chart + bullseye -->
+    <div style="flex:1; display:flex; flex-direction:column; gap:10px;">
+
+
+      <!-- Bottom row: bullseye (small) + bar chart (tight) + pixel→distance diagram -->
+      <div style="display:flex; gap:8px; flex:1; min-height:0; align-items:stretch;">
+
+        <!-- Bullseye heatmap (half size) -->
+        <div style="flex:0.8; border:1px solid #e0e0e0; border-radius:6px; overflow:hidden; background:#fafafa;">
+          <img src="../report/figs/estimation_heatmap_all.png" style="width:100%; height:100%; object-fit:contain; display:block;" alt="GPS estimates heatmap">
+        </div>
+
+        <!-- NCNN vs TFLite bar chart (tight box) -->
+        <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; background:#f8f9fa; border:1px solid #e0e0e0; border-radius:6px; padding:4px 6px;">
+          <div style="font-size:9px; font-weight:700; color:#0070C0; margin-bottom:2px;">Backend (Pi 5)</div>
+          <svg width="110" height="130" viewBox="0 0 110 130">
+            <text x="5" y="10" fill="#888" font-size="7" font-weight="600">FPS</text>
+            <line x1="22" y1="16" x2="105" y2="16" stroke="#e0e0e0" stroke-width="0.5"/>
+            <text x="19" y="19" fill="#aaa" font-size="6" text-anchor="end">12</text>
+            <line x1="22" y1="36" x2="105" y2="36" stroke="#e0e0e0" stroke-width="0.5"/>
+            <text x="19" y="39" fill="#aaa" font-size="6" text-anchor="end">9</text>
+            <line x1="22" y1="56" x2="105" y2="56" stroke="#e0e0e0" stroke-width="0.5"/>
+            <text x="19" y="59" fill="#aaa" font-size="6" text-anchor="end">6</text>
+            <line x1="22" y1="76" x2="105" y2="76" stroke="#e0e0e0" stroke-width="0.5"/>
+            <text x="19" y="79" fill="#aaa" font-size="6" text-anchor="end">3</text>
+            <line x1="22" y1="96" x2="105" y2="96" stroke="#ccc" stroke-width="1"/>
+            <text x="19" y="99" fill="#aaa" font-size="6" text-anchor="end">0</text>
+            <!-- TFLite bar -->
+            <rect x="32" y="64" width="24" height="32" rx="2" fill="#E97132" opacity="0.8"/>
+            <text x="44" y="60" fill="#E97132" font-size="11" font-weight="800" text-anchor="middle">4.8</text>
+            <text x="44" y="108" fill="#666" font-size="8" text-anchor="middle">TFLite</text>
+            <!-- NCNN bar -->
+            <rect x="68" y="23" width="24" height="73" rx="2" fill="#0070C0" opacity="0.8"/>
+            <text x="80" y="18" fill="#0070C0" font-size="11" font-weight="800" text-anchor="middle">10.9</text>
+            <text x="80" y="108" fill="#666" font-size="8" text-anchor="middle">NCNN</text>
+            <!-- Speed label -->
+            <text x="62" y="124" fill="#27ae60" font-size="9" font-weight="700" text-anchor="middle">2.3× faster</text>
+          </svg>
+        </div>
+
+        <!-- Pixel → Distance triangle diagram -->
+        <div style="flex:0.7; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#f8f9fa; border:1px solid #e0e0e0; border-radius:6px; padding:4px;">
+          <div style="font-size:9px; font-weight:700; color:#0070C0; margin-bottom:2px;">Pixel → Distance</div>
+          <svg width="150" height="170" viewBox="0 0 150 170">
+            <!-- Drone body (grey box) -->
+            <rect x="65" y="8" width="20" height="10" rx="2" fill="#777"/>
+            <!-- Left propeller arm + prop -->
+            <line x1="65" y1="13" x2="52" y2="13" stroke="#777" stroke-width="1.5"/>
+            <rect x="44" y="10" width="16" height="3" rx="1.5" fill="#999"/>
+            <!-- Right propeller arm + prop -->
+            <line x1="85" y1="13" x2="98" y2="13" stroke="#777" stroke-width="1.5"/>
+            <rect x="90" y="10" width="16" height="3" rx="1.5" fill="#999"/>
+            <!-- Camera dot underneath -->
+            <circle cx="75" cy="20" r="2.5" fill="#555"/>
+
+            <!-- Altitude line (vertical dashed) -->
+            <line x1="75" y1="23" x2="75" y2="135" stroke="#0070C0" stroke-width="1" stroke-dasharray="4,3"/>
+            <text x="82" y="82" fill="#0070C0" font-size="8" font-weight="600">h = 35m</text>
+
+            <!-- FOV cone left -->
+            <line x1="75" y1="23" x2="20" y2="135" stroke="#888" stroke-width="0.8"/>
+            <!-- FOV cone right -->
+            <line x1="75" y1="23" x2="130" y2="135" stroke="#888" stroke-width="0.8"/>
+
+            <!-- FOV angle arc (opening downward from drone) -->
+            <path d="M 55,58 A 28,28 0 0,0 95,58" fill="none" stroke="#e67e22" stroke-width="1.2"/>
+            <text x="75" y="74" text-anchor="middle" fill="#e67e22" font-size="8" font-weight="700">54°</text>
+
+            <!-- Ground line -->
+            <line x1="10" y1="135" x2="140" y2="135" stroke="#222" stroke-width="1.5"/>
+
+            <!-- Ground width bracket -->
+            <line x1="20" y1="140" x2="130" y2="140" stroke="#888" stroke-width="0.8"/>
+            <line x1="20" y1="137" x2="20" y2="143" stroke="#888" stroke-width="0.8"/>
+            <line x1="130" y1="137" x2="130" y2="143" stroke="#888" stroke-width="0.8"/>
+            <text x="75" y="150" text-anchor="middle" fill="#888" font-size="7">32m ground width</text>
+
+            <!-- Nadir point -->
+            <circle cx="75" cy="135" r="2" fill="#888"/>
+
+            <!-- Detection point (red dot) -->
+            <circle cx="105" cy="135" r="4" fill="#E97132"/>
+            <text x="105" y="131" text-anchor="middle" fill="#E97132" font-size="7">target</text>
+
+            <!-- Distance bracket (nadir to target) -->
+            <line x1="75" y1="125" x2="105" y2="125" stroke="#27ae60" stroke-width="1.5"/>
+            <line x1="75" y1="122" x2="75" y2="128" stroke="#27ae60" stroke-width="1"/>
+            <line x1="105" y1="122" x2="105" y2="128" stroke="#27ae60" stroke-width="1"/>
+            <text x="90" y="120" text-anchor="middle" fill="#27ae60" font-size="7" font-weight="700">d = px × GSD</text>
+
+            <!-- GSD formula -->
+            <text x="75" y="163" text-anchor="middle" fill="#555" font-size="7">GSD = 0.022 m/px at 35m</text>
+          </svg>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- RIGHT: Camera, FOV, Calibration -->
+    <div style="flex:0.55; display:flex; flex-direction:column; gap:10px;">
+
+      <div class="section-label">Camera & Calibration</div>
+
+      <!-- Camera specs -->
+      <div style="background:#f8f9fa; border:1px solid #e0e0e0; border-radius:6px; padding:10px 12px;">
+        <div style="font-size:12px; font-weight:700; color:#0070C0; margin-bottom:4px;">IMX296 Global Shutter</div>
+        <div style="font-size:11px; color:#555; line-height:1.8;">
+          <div><strong>1456 × 1088 px</strong> native resolution, <strong>30 fps</strong> capture</div>
+          <div><strong>Global shutter</strong> — no rolling-shutter distortion at any speed</div>
+          <div>Sub-pixel motion blur (<0.5 px at 8 m/s) — no gimbal needed</div>
+        </div>
+      </div>
+
+      <!-- FOV & pixel-to-distance -->
+      <div style="background:#f8f9fa; border:1px solid #e0e0e0; border-radius:6px; padding:10px 12px;">
+        <div style="font-size:12px; font-weight:700; color:#0070C0; margin-bottom:4px;">Pixel → Real-World Distance</div>
+        <div style="font-size:11px; color:#555; line-height:1.8;">
+          <div><strong>FOV calibrated</strong> — focal length 5.46mm (22% off datasheet!)</div>
+          <div><strong>GSD</strong> = 0.022 m/px at 35m altitude</div>
+          <div><strong>Ground footprint</strong> = 32 × 24 m at 35m alt</div>
+          <div>Pixel offset × GSD → metre offset → add to drone GPS</div>
+        </div>
+      </div>
+
+      <!-- Lens distortion -->
+      <div style="background:#f8f9fa; border:1px solid #e0e0e0; border-radius:6px; padding:10px 12px;">
+        <div style="font-size:12px; font-weight:700; color:#0070C0; margin-bottom:4px;">Lens Distortion Correction</div>
+        <div style="font-size:11px; color:#555; line-height:1.8;">
+          <div><strong>Checkerboard calibration</strong> — 14×9 board, RMS = 0.4 px</div>
+          <div>Precomputed undistortion maps applied every frame</div>
+          <div>Cost: <strong>+1.5ms</strong> per frame (negligible on 206ms inference)</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
 </div>
 
 <!-- ==================== SLIDE 2: SIMULATION & TESTING ==================== -->
-<div class="slide slide-2">
-  <h1 style="font-size:28px; margin-bottom:2px; padding-top:10px;">Simulation &amp; Testing</h1>
-  <h2 style="margin-bottom:12px; font-size:14px;">Never fly something you haven't proven at every level below it</h2>
+<div class="slide" id="slide-2">
+  <h1 style="font-size:28px;">Simulation and Sim2Real Ladder</h1>
+  <h2>&nbsp;</h2>
 
-  <div class="content" style="align-items:stretch; flex:1; gap:20px;">
+  <div class="content" style="align-items:stretch; flex:1; gap:24px;">
 
     <!-- LEFT: Video (45%) -->
     <div style="flex:0 0 44%; display:flex; flex-direction:column; gap:8px;">
-      <div style="flex:1; background:rgba(0,0,0,0.5); border:2px solid rgba(0,210,255,0.25); border-radius:14px; display:flex; align-items:center; justify-content:center; position:relative; min-height:0;">
-        <div style="font-size:70px; color:rgba(0,210,255,0.3); position:absolute;">▶</div>
-        <div style="z-index:1; text-align:center; color:#556;">
+      <div style="flex:1; background:#f8f9fa; border:2px solid #e0e0e0; border-radius:12px; display:flex; align-items:center; justify-content:center; position:relative; min-height:0;">
+        <div style="font-size:70px; color:#ccc; position:absolute;">▶</div>
+        <div style="z-index:1; text-align:center; color:#aaa;">
           <div style="font-size:14px; margin-bottom:4px;">Simulation Recording</div>
-          <div style="font-size:10px; color:#445;">takeoff → search → detect → centre → verify → land</div>
+          <div style="font-size:10px;">takeoff → search → detect → centre → verify → land</div>
         </div>
       </div>
-      <!-- What the simulation verified -->
-      <div style="background:linear-gradient(135deg,rgba(0,200,100,0.10),rgba(0,200,100,0.03)); border:1px solid rgba(0,200,100,0.25); border-radius:8px; padding:10px 14px;">
-        <div style="font-size:11px; font-weight:700; color:#00c864; margin-bottom:4px;">VERIFIED IN SIMULATION</div>
-        <div style="font-size:10px; color:#8892b0; line-height:1.5; columns:2; column-gap:12px;">
-          <div>Lawnmower search pattern</div>
-          <div>AI detection + centering</div>
-          <div>5-layer geofence + repulsion</div>
-          <div>PLB beacon redirect</div>
-          <div>Attitude-compensated GPS</div>
-          <div>Payload deploy sequence</div>
-          <div>RTL failsafes</div>
-          <div>Offset landing</div>
-        </div>
-        <div style="font-size:10px; color:#00c864; font-weight:600; margin-top:4px;">All 12 requirements verified end-to-end</div>
-      </div>
-      <div style="font-size:10px; color:#556; text-align:center;">One Python codebase — what runs in sim is what flies on the Pi</div>
     </div>
 
-    <!-- RIGHT: Ladder (52%) -->
+    <!-- RIGHT: Sim2Real Ladder -->
     <div style="flex:0 0 52%; display:flex; flex-direction:column; justify-content:space-between;">
 
-      <!-- TOP: Star — Demo Day -->
-      <div style="text-align:center; position:relative; height:70px;">
-        <div style="font-size:90px; color:#e94560; line-height:0.85; text-shadow: 0 0 30px rgba(233,69,96,0.4);">★</div>
-        <div style="position:absolute; top:40%; left:50%; transform:translate(-50%,-50%); font-size:10px; font-weight:800; color:#fff; letter-spacing:1px; line-height:1.2;">DEMO<br><span style="font-size:7px; letter-spacing:0;">DAY</span></div>
+      <!-- Title with subtitle -->
+      <div style="margin-bottom:6px;">
+        <div style="font-size:18px; font-weight:800; color:#0070C0;">Sim2Real Ladder</div>
+        <div style="font-size:11px; color:#888; font-style:italic;">(never fly something you haven't proven at every level below it)</div>
       </div>
 
-      <!-- STEP 5 -->
-      <div style="display:flex; align-items:center; gap:8px; padding:5px 10px; background:rgba(233,69,96,0.06); border:1px solid rgba(233,69,96,0.2); border-radius:7px;">
-        <div style="width:22px; height:22px; background:#e94560; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:800; flex-shrink:0;">5</div>
+      <!-- === TOP: Real Mission goal === -->
+      <div style="display:flex; align-items:center; gap:8px; padding:7px 12px; background:#fef2f2; border:2px solid #E97132; border-radius:6px; margin-bottom:2px;">
+        <div style="font-size:32px; flex-shrink:0; line-height:1;">⭐</div>
         <div style="flex:1;">
-          <div style="font-size:11px; font-weight:700; color:#fff;">Full autonomous mission</div>
-          <div style="font-size:9px; color:#d4a847;">Search, detect, centre, verify, land — real hardware</div>
+          <div style="font-size:14px; font-weight:800; color:#E97132;">Real Mission</div>
+          <div style="font-size:10px; color:#888;">Full autonomous SAR — demo day</div>
         </div>
-        <div style="font-size:8px; color:#e94560; font-weight:700;">NEXT</div>
+        <div style="font-size:11px; color:#E97132; font-weight:700;">GOAL</div>
+      </div>
+      <div style="text-align:center; color:#ccc; font-size:14px; line-height:0.5;">▲</div>
+
+      <!-- === FLIGHT MISSIONS (half width, centered) === -->
+      <div style="width:70%; margin:0 auto;">
+        <div style="border:1px solid #e0e0e0; border-radius:6px; padding:6px 8px; background:#fafafa; margin-bottom:2px;">
+          <div style="font-size:10px; font-weight:700; color:#0070C0; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.5px;">Flight Missions</div>
+          <label style="display:flex; align-items:center; gap:6px; padding:3px 4px; cursor:pointer; border-radius:4px;" onmouseover="this.style.background='#f0f7ff'" onmouseout="this.style.background='transparent'">
+            <input type="checkbox" style="width:15px; height:15px; accent-color:#E97132; cursor:pointer;">
+            <span style="font-size:12px; font-weight:600; color:#222; min-width:28px;">M4</span>
+            <span style="font-size:12px; color:#222;">Auto detect + hover</span>
+          </label>
+          <label style="display:flex; align-items:center; gap:6px; padding:3px 4px; cursor:pointer; border-radius:4px;" onmouseover="this.style.background='#f0f7ff'" onmouseout="this.style.background='transparent'">
+            <input type="checkbox" style="width:15px; height:15px; accent-color:#E97132; cursor:pointer;">
+            <span style="font-size:12px; font-weight:600; color:#222; min-width:28px;">M3</span>
+            <span style="font-size:12px; color:#222;">Waypoint flight</span>
+          </label>
+          <label style="display:flex; align-items:center; gap:6px; padding:3px 4px; cursor:pointer; border-radius:4px;" onmouseover="this.style.background='#f0f7ff'" onmouseout="this.style.background='transparent'">
+            <input type="checkbox" checked style="width:15px; height:15px; accent-color:#0070C0; cursor:pointer;">
+            <span style="font-size:12px; font-weight:600; color:#222; min-width:28px;">M2</span>
+            <span style="font-size:12px; color:#222;">Passive flight</span>
+          </label>
+          <label style="display:flex; align-items:center; gap:6px; padding:3px 4px; cursor:pointer; border-radius:4px;" onmouseover="this.style.background='#f0f7ff'" onmouseout="this.style.background='transparent'">
+            <input type="checkbox" checked style="width:15px; height:15px; accent-color:#0070C0; cursor:pointer;">
+            <span style="font-size:12px; font-weight:600; color:#222; min-width:28px;">M1</span>
+            <span style="font-size:12px; color:#222;">Bench integration</span>
+          </label>
+        </div>
+      </div>
+      <div style="text-align:center; color:#ccc; font-size:14px; line-height:0.5;">▲</div>
+
+      <!-- === GROUND VERIFICATION (half width, centered) === -->
+      <div style="width:70%; margin:0 auto;">
+        <div style="border:1px solid #e0e0e0; border-radius:6px; padding:6px 8px; background:#fafafa; margin-bottom:2px;">
+          <div style="font-size:10px; font-weight:700; color:#0070C0; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.5px;">Ground Verification</div>
+          <label style="display:flex; align-items:center; gap:6px; padding:3px 4px; cursor:pointer; border-radius:4px;" onmouseover="this.style.background='#f0f7ff'" onmouseout="this.style.background='transparent'">
+            <input type="checkbox" checked style="width:15px; height:15px; accent-color:#0070C0; cursor:pointer;">
+            <span style="font-size:12px; font-weight:600; color:#222; min-width:28px;">G2</span>
+            <span style="font-size:12px; color:#222;">Outdoor calibration</span>
+          </label>
+          <label style="display:flex; align-items:center; gap:6px; padding:3px 4px; cursor:pointer; border-radius:4px;" onmouseover="this.style.background='#f0f7ff'" onmouseout="this.style.background='transparent'">
+            <input type="checkbox" checked style="width:15px; height:15px; accent-color:#0070C0; cursor:pointer;">
+            <span style="font-size:12px; font-weight:600; color:#222; min-width:28px;">G1</span>
+            <span style="font-size:12px; color:#222;">Unit tests + dry-run</span>
+          </label>
+        </div>
+      </div>
+      <div style="text-align:center; color:#ccc; font-size:14px; line-height:0.5;">▲</div>
+
+      <!-- === SIMULATION FOUNDATION (tall, prominent) === -->
+      <div style="border:2px solid #27ae60; border-radius:8px; padding:12px 14px; background:#f0fdf4; flex:1; min-height:0; display:flex; flex-direction:column; justify-content:center;">
+        <div style="font-size:14px; font-weight:800; color:#27ae60; margin-bottom:8px;">SIMULATION FOUNDATION</div>
+        <div style="font-size:11px; color:#27ae60; font-weight:600; margin-bottom:6px;">All 12 mission requirements verified end-to-end in SITL</div>
+
+        <div style="display:flex; gap:12px;">
+          <!-- Requirements column 1 -->
+          <div style="flex:1; font-size:11px; color:#555; line-height:1.7;">
+            <div>Spiral search pattern</div>
+            <div>AI detection + centering</div>
+            <div>Geofence + SSSI no-fly zone</div>
+            <div>PLB beacon redirect</div>
+          </div>
+          <!-- Requirements column 2 -->
+          <div style="flex:1; font-size:11px; color:#555; line-height:1.7;">
+            <div>Attitude-compensated GPS</div>
+            <div>Payload deploy sequence</div>
+            <div>RTL failsafes</div>
+            <div>Offset landing</div>
+          </div>
+          <!-- Simulated realism column -->
+          <div style="flex:1.2; border-left:2px solid #86efac; padding-left:10px;">
+            <div style="font-size:11px; color:#27ae60; font-weight:700; margin-bottom:3px;">Simulated Realism</div>
+            <div style="font-size:11px; color:#555; line-height:1.7;">
+              <div>Same 1456×1088 resolution as real camera</div>
+              <div>Camera tilt simulation (pitch/roll)</div>
+              <div>Motion blur at flight speed</div>
+              <div>GPS drift noise (±3m)</div>
+              <div>Altitude-correct target scaling</div>
+              <div>Synthetic targets on real backgrounds</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="font-size:10px; color:#27ae60; font-weight:600; margin-top:8px; font-style:italic;">
+          "Not just waypoints — full state machine with realistic camera, detection, and GPS behavior"
+        </div>
       </div>
 
-      <div style="text-align:center; color:#333; font-size:9px;">▲</div>
-
-      <!-- STEP 4 -->
-      <div style="display:flex; align-items:center; gap:8px; padding:5px 10px; background:rgba(0,210,255,0.04); border:1px solid rgba(0,210,255,0.12); border-radius:7px;">
-        <div style="width:22px; height:22px; background:#00d2ff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:800; color:#000; flex-shrink:0;">4</div>
-        <div style="flex:1;">
-          <div style="font-size:11px; font-weight:700; color:#fff;">Passive flight</div>
-          <div style="font-size:9px; color:#d4a847;">Pilot flies RC, Pi detects silently — zero commands sent</div>
-        </div>
-        <div style="font-size:9px; color:#00d2ff;">done</div>
-      </div>
-
-      <div style="text-align:center; color:#333; font-size:9px;">▲</div>
-
-      <!-- STEP 3 -->
-      <div style="display:flex; align-items:center; gap:8px; padding:5px 10px; background:rgba(0,210,255,0.04); border:1px solid rgba(0,210,255,0.12); border-radius:7px;">
-        <div style="width:22px; height:22px; background:#00d2ff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:800; color:#000; flex-shrink:0;">3</div>
-        <div style="flex:1;">
-          <div style="font-size:11px; font-weight:700; color:#fff;">Outdoor calibration</div>
-          <div style="font-size:9px; color:#d4a847;">FOV, GPS accuracy, detection at real altitudes</div>
-        </div>
-        <div style="font-size:9px; color:#00d2ff;">done</div>
-      </div>
-
-      <div style="text-align:center; color:#333; font-size:9px;">▲</div>
-
-      <!-- STEP 2 -->
-      <div style="display:flex; align-items:center; gap:8px; padding:5px 10px; background:rgba(0,210,255,0.04); border:1px solid rgba(0,210,255,0.12); border-radius:7px;">
-        <div style="width:22px; height:22px; background:#00d2ff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:800; color:#000; flex-shrink:0;">2</div>
-        <div style="flex:1;">
-          <div style="font-size:11px; font-weight:700; color:#fff;">Bench integration</div>
-          <div style="font-size:9px; color:#d4a847;">Pi + Cube + camera communicating — no propellers</div>
-        </div>
-        <div style="font-size:9px; color:#00d2ff;">done</div>
-      </div>
-
-      <div style="text-align:center; color:#333; font-size:9px;">▲</div>
-
-      <!-- STEP 1 -->
-      <div style="display:flex; align-items:center; gap:8px; padding:5px 10px; background:rgba(0,210,255,0.04); border:1px solid rgba(0,210,255,0.12); border-radius:7px;">
-        <div style="width:22px; height:22px; background:#00d2ff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:800; color:#000; flex-shrink:0;">1</div>
-        <div style="flex:1;">
-          <div style="font-size:11px; font-weight:700; color:#fff;">Unit tests + dry-run</div>
-          <div style="font-size:9px; color:#d4a847;">127 tests: GPS math, geofencing, pattern generation</div>
-        </div>
-        <div style="font-size:9px; color:#00d2ff;">done</div>
-      </div>
-
-    </div><!-- end right ladder -->
-
-  </div><!-- end content -->
-  <div class="slide-indicator">Demetro Chuprynyuk</div>
-  <div class="footer">AENGM0074 D4 Final Design Review</div>
+    </div>
+  </div>
 </div>
 
 <script>

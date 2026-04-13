@@ -74,24 +74,18 @@ for r in ring_radii:
     ax.text(0, r + 0.25, f"{r} m", ha="center", va="bottom", fontsize=7.5,
             color=GREY, zorder=5)
 
-# CEP50 circle
-cep_circle = Circle((0, 0), cep50, fill=False, linestyle="-", linewidth=2.0,
-                     edgecolor="#e67e22", zorder=2)
-ax.add_patch(cep_circle)
-ax.text(cep50 + 0.3, -0.5, f"CEP50 = {cep50:.1f} m", fontsize=8,
-        color="#e67e22", fontweight="bold", zorder=5)
 
-# Ground truth crosshair
-ax.plot(0, 0, "+", color=GREEN, markersize=22, markeredgewidth=3, zorder=6)
-ax.text(-0.5, 0.6, "Ground\ntruth", fontsize=7, color=GREEN, va="bottom", ha="center", zorder=5)
+# Ground truth — purple cross
+ax.plot(0, 0, "+", color="#8e44ad", markersize=22, markeredgewidth=3, zorder=6)
+ax.text(-0.5, 0.8, "Ground\ntruth", fontsize=7, color="#8e44ad", va="bottom", ha="center", zorder=5)
 
 # Crosshair lines
 ax.axhline(0, color="#dddddd", linewidth=0.5, zorder=0)
 ax.axvline(0, color="#dddddd", linewidth=0.5, zorder=0)
 
-# Heatmap colormap: blue (edge) -> yellow (mid) -> red (centre)
+# Heatmap colormap: green (edge) -> yellow (mid) -> red (centre)
 cmap = LinearSegmentedColormap.from_list(
-    "centrality", ["#3b4cc0", "#7b68ee", "#ddaa33", "#f0a030", "#e8392a"], N=256
+    "centrality", ["#27ae60", "#6abe45", "#f1c40f", "#e67e22", "#e74c3c"], N=256
 )
 # Invert: low pixel_dist (centre) = hot, high pixel_dist (edge) = cool
 norm_vals = 1.0 - (pixel_dists / 700.0)  # 0=edge, 1=centre
@@ -107,22 +101,7 @@ cbar.set_ticks([0, 0.25, 0.5, 0.75, 1.0])
 cbar.set_ticklabels(["700 (edge)", "525", "350", "175", "0 (centre)"])
 cbar.ax.tick_params(labelsize=7)
 
-# North arrow
-arrow_x, arrow_y = -9.5, 9.5
-ax.annotate("", xy=(arrow_x, arrow_y), xytext=(arrow_x, arrow_y - 2.0),
-            arrowprops=dict(arrowstyle="->", color=TEXT_DARK, lw=1.5), zorder=7)
-ax.text(arrow_x, arrow_y + 0.3, "N", fontsize=10, fontweight="bold",
-        color=TEXT_DARK, ha="center", va="bottom", zorder=7)
 
-# Flight heading arrow (155 deg from north, clockwise)
-arrow_len = 3.5
-hx = arrow_len * np.sin(heading_rad)
-hy = arrow_len * np.cos(heading_rad)
-ax.annotate("", xy=(hx, hy), xytext=(0, 0),
-            arrowprops=dict(arrowstyle="->", color="#e67e22", lw=1.5,
-                            linestyle="-"), zorder=3)
-ax.text(hx * 1.15, hy * 1.15, f"Heading\n{heading_deg}\u00b0",
-        fontsize=7, color="#e67e22", ha="center", va="top", zorder=5)
 
 # ── Formatting ──────────────────────────────────────────────────────────────
 lim = 11
@@ -135,28 +114,12 @@ ax.set_title("GPS Estimates Coloured by Frame Centrality",
              fontsize=13, fontweight="bold", color=TEXT_DARK, pad=12)
 ax.grid(True, alpha=0.15, zorder=0)
 
-# Stats annotation
-centroid_x, centroid_y = np.mean(x_est), np.mean(y_est)
-ax.plot(centroid_x, centroid_y, "*", color="#c0392b", markersize=14,
-        markeredgewidth=0.5, zorder=6)
-ax.annotate(f"Centroid\n({centroid_x:+.1f}, {centroid_y:+.1f}) m",
-            xy=(centroid_x, centroid_y),
-            xytext=(centroid_x + 2.5, centroid_y - 2.5),
-            fontsize=7, color="#c0392b", zorder=5,
-            arrowprops=dict(arrowstyle="-", color="#c0392b", lw=0.5))
-
-# Legend
+# Legend — ground truth star only
 from matplotlib.lines import Line2D
 legend_elements = [
-    Line2D([0], [0], marker="+", color="w", markerfacecolor=GREEN,
-           markeredgecolor=GREEN, markersize=12, markeredgewidth=2.5,
+    Line2D([0], [0], marker="+", color="w", markerfacecolor="#8e44ad",
+           markeredgecolor="#8e44ad", markersize=12, markeredgewidth=2.5,
            label="Ground truth"),
-    Line2D([0], [0], marker="*", color="w", markerfacecolor="#c0392b",
-           markersize=10, label=f"Centroid"),
-    Line2D([0], [0], linestyle="-", color="#e67e22", linewidth=2,
-           label=f"CEP50 = {cep50:.1f} m"),
-    Line2D([0], [0], linestyle="--", color="#bdc3c7", linewidth=0.7,
-           label="Range rings"),
 ]
 ax.legend(handles=legend_elements, loc="upper left", fontsize=8,
           framealpha=0.9, edgecolor="#cccccc")
