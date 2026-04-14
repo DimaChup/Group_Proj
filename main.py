@@ -584,7 +584,35 @@ class VisualFlightMission(StateHandlersMixin):
                 c, s = math.cos(a), math.sin(a)
                 return np.array([[c, -s, 0], [s, c, 0], [0, 0, 1]], dtype=np.float64)
 
-            R = _Rz(self.yaw) @ _Ry(-self.pitch) @ _Rx(-self.roll)
+            # MUST MATCH simulator/simulation.py::_get_perspective_view R matrix.
+            # Variant selected by SIM_TILT_VARIANT env var (default same as sim default).
+            _variant = os.environ.get("SIM_TILT_VARIANT", "1")
+            _R_c2b_ccw = np.array([
+                [ 0.0, -1.0, 0.0],
+                [ 1.0,  0.0, 0.0],
+                [ 0.0,  0.0, 1.0],
+            ], dtype=np.float64)
+            _R_c2b_cw = np.array([
+                [ 0.0,  1.0, 0.0],
+                [-1.0,  0.0, 0.0],
+                [ 0.0,  0.0, 1.0],
+            ], dtype=np.float64)
+            if _variant == "1":
+                R = _Rz(self.yaw) @ _Ry(-self.pitch) @ _Rx(-self.roll) @ _R_c2b_ccw
+            elif _variant == "2":
+                R = _Rz(self.yaw) @ _Ry(self.pitch) @ _Rx(-self.roll) @ _R_c2b_ccw
+            elif _variant == "3":
+                R = _Rz(self.yaw) @ _Ry(-self.pitch) @ _Rx(self.roll) @ _R_c2b_ccw
+            elif _variant == "4":
+                R = _Rz(self.yaw) @ _Ry(self.pitch) @ _Rx(self.roll) @ _R_c2b_ccw
+            elif _variant == "5":
+                R = _Rz(-self.yaw) @ _Ry(-self.pitch) @ _Rx(-self.roll)
+            elif _variant == "6":
+                R = _Rz(-self.yaw) @ _Ry(-self.pitch) @ _Rx(-self.roll) @ _R_c2b_ccw
+            elif _variant == "7":
+                R = _Rz(self.yaw) @ _Ry(-self.pitch) @ _Rx(-self.roll) @ _R_c2b_cw
+            else:
+                R = _Rz(self.yaw) @ _Ry(-self.pitch) @ _Rx(-self.roll)
 
             # Ray from detection pixel in camera frame
             ray_cam = np.array([(u - fw / 2) / focal_px,

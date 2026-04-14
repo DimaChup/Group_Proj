@@ -160,10 +160,11 @@ args = parser.parse_args()
 
 # ── Model definitions for browser switcher ──
 MODEL_TABLE = [
-    {"id": 0, "name": "Original",    "path": "best.tflite",                         "backend": None},
-    {"id": 1, "name": "SAR v2 TFL",  "path": "cv_models/sar_v2_1088/best.tflite",   "backend": None},
-    {"id": 2, "name": "SAR v2 NCNN", "path": "cv_models/sar_v2_1088/best.tflite",   "backend": "ncnn"},
-    {"id": 3, "name": "COCO Person", "path": "cv_models/human.tflite",              "backend": None},
+    {"id": 0, "name": "Original",      "path": "best.tflite",                         "backend": None},
+    {"id": 1, "name": "SAR v2 TFL",    "path": "cv_models/sar_v2_1088/best.tflite",   "backend": None},
+    {"id": 2, "name": "SAR v2 NCNN",   "path": "cv_models/sar_v2_1088/best.tflite",   "backend": "ncnn"},
+    {"id": 3, "name": "COCO Person",   "path": "cv_models/human.tflite",              "backend": None},
+    {"id": 4, "name": "COCO P. NCNN",  "path": "cv_models/human_ncnn",                "backend": "ncnn"},
 ]
 
 # Runtime state (modified by API endpoints, read by main loop)
@@ -275,6 +276,7 @@ HTML_PAGE = """<!DOCTYPE html>
     <option value="1">SAR v2 TFLite</option>
     <option value="2">SAR v2 NCNN</option>
     <option value="3">COCO Person</option>
+    <option value="4">COCO Person NCNN</option>
   </select>
   <span class="model-status" id="model-status"></span>
   <span id="inference-fps" style="margin-left:8px;padding:2px 8px;background:#003;border:1px solid #0af;border-radius:4px;color:#0af;font-weight:bold;font-size:1.1em">-- FPS</span>

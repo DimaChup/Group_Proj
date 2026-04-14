@@ -48,7 +48,7 @@ def set_font(run, size_pt, bold=False, color=BLACK, name=FONT):
 
 
 def add_textbox(slide, x, y, w, h, text, size=12, bold=False, color=BLACK,
-                align=PP_ALIGN.LEFT, anchor=MSO_ANCHOR.TOP):
+                align=PP_ALIGN.LEFT, anchor=MSO_ANCHOR.TOP, name=FONT):
     box = slide.shapes.add_textbox(Inches(x), Inches(y), Inches(w), Inches(h))
     tf = box.text_frame
     tf.word_wrap = True
@@ -59,7 +59,7 @@ def add_textbox(slide, x, y, w, h, text, size=12, bold=False, color=BLACK,
     p.alignment = align
     r = p.add_run()
     r.text = text
-    set_font(r, size, bold=bold, color=color)
+    set_font(r, size, bold=bold, color=color, name=name)
     return box
 
 
@@ -102,37 +102,46 @@ def add_rect(slide, x, y, w, h, fill=WHITE, line=GREY_BORDER, line_w=0.75, radiu
 
 
 def add_chevron(slide, x, y, w, h, fill, title, detail, sub=""):
-    """Pipeline chevron with 3 lines of text inside."""
-    s = slide.shapes.add_shape(MSO_SHAPE.CHEVRON, Inches(x), Inches(y), Inches(w), Inches(h))
+    """Pipeline Pentagon (arrow right, flat left) with text inside.
+
+    PENTAGON is used instead of CHEVRON — CHEVRON has a left notch that eats
+    into the text width, causing wrapping of short words. Pentagon has flat
+    left and right-pointing arrow.
+    """
+    s = slide.shapes.add_shape(MSO_SHAPE.PENTAGON, Inches(x), Inches(y), Inches(w), Inches(h))
     s.fill.solid()
     s.fill.fore_color.rgb = fill
     s.line.fill.background()
     tf = s.text_frame
-    tf.margin_left = Inches(0.25)
-    tf.margin_right = Inches(0.15)
-    tf.margin_top = Inches(0.12)
-    tf.margin_bottom = Inches(0.08)
+    tf.margin_left = Inches(0.18)
+    tf.margin_right = Inches(0.50)  # avoid the arrow point
+    tf.margin_top = Inches(0.15)
+    tf.margin_bottom = Inches(0.10)
     tf.word_wrap = True
     tf.vertical_anchor = MSO_ANCHOR.MIDDLE
 
     p1 = tf.paragraphs[0]
     p1.alignment = PP_ALIGN.LEFT
+    p1.line_spacing = 1.0
     r1 = p1.add_run()
     r1.text = title
-    set_font(r1, 13, bold=True, color=WHITE)
+    set_font(r1, 14, bold=True, color=WHITE)
 
     p2 = tf.add_paragraph()
     p2.alignment = PP_ALIGN.LEFT
+    p2.line_spacing = 1.0
+    p2.space_before = Pt(2)
     r2 = p2.add_run()
     r2.text = detail
-    set_font(r2, 9, color=WHITE)
+    set_font(r2, 10, color=WHITE)
 
     if sub:
         p3 = tf.add_paragraph()
         p3.alignment = PP_ALIGN.LEFT
+        p3.line_spacing = 1.0
         r3 = p3.add_run()
         r3.text = sub
-        set_font(r3, 8, color=RGBColor(0xDD, 0xE6, 0xF0))
+        set_font(r3, 9, color=RGBColor(0xDD, 0xE6, 0xF0))
     return s
 
 
@@ -153,19 +162,19 @@ add_textbox(s1, 0.4, 0.25, 10, 0.65,
             "CV to Target Estimate Pipeline",
             size=32, bold=True, color=BLUE_TITLE)
 
-# --- Pipeline ribbon (5 chevrons) ---
+# --- Pipeline ribbon (5 Pentagon shapes) ---
 pipe_y = 1.0
-pipe_h = 1.1
-pipe_w = 1.95
+pipe_h = 1.25
+pipe_w = 2.6       # wider so text fits
 pipe_x0 = 0.4
-pipe_overlap = 0.18  # chevrons overlap slightly
+pipe_overlap = 0.3  # next shape overlaps prev's arrow
 
 pipeline = [
-    ("Camera Capture",     "1456 x 1088 px",           "IMX296 global shutter",  BLUE_TITLE),
-    ("YOLOv8n Inference",  "NCNN backend - 73 ms",     "640x640 input tensor",   BLUE_MID),
-    ("Pixel -> GPS",       "FOV projection + altitude","Calibrated focal length",BLUE_LIGHT),
-    ("Attitude Correction","Pitch + roll ray-trace",   "From flight controller", GREEN_MID),
-    ("Target GPS",         "~9 FPS effective",         "CEP50 = 2.2 m",          GREEN_DARK),
+    ("Camera",        "1456 x 1088 px",   "Global shutter",     BLUE_TITLE),
+    ("YOLOv8n",       "NCNN, 73 ms",      "640x640 tensor",     BLUE_MID),
+    ("Pixel -> GPS",  "FOV + altitude",   "Ground projection",  BLUE_LIGHT),
+    ("Attitude Fix",  "Pitch + roll",     "Ray-trace from FC",  GREEN_MID),
+    ("Target GPS",    "~9 FPS effective", "CEP50 = 2.2 m",      GREEN_DARK),
 ]
 for i, (title, detail, sub, colour) in enumerate(pipeline):
     x = pipe_x0 + i * (pipe_w - pipe_overlap)
@@ -199,27 +208,32 @@ for val, y_rel in [(12, 0.85), (9, 1.35), (6, 1.85), (3, 2.35), (0, 2.85)]:
     add_textbox(s1, bar_x + 0.2, bar_y + y_rel, 0.4, 0.22,
                 str(val), size=8, color=GREY_LIGHT, align=PP_ALIGN.RIGHT)
 
-# TFLite bar (red) - 4.8 FPS
-tflite_h = (4.8 / 12) * 2.1  # 0.84"
-tflite_y = bar_y + 0.9 + (2.1 - tflite_h)
-tflite_bar = add_rect(s1, bar_x + 0.75, tflite_y, 0.5, tflite_h,
-                      fill=ORANGE, line=ORANGE)
-add_textbox(s1, bar_x + 0.7, tflite_y - 0.35, 0.6, 0.3,
+# Baseline y = 0 on FPS axis
+baseline_y = bar_y + 3.0  # where "0" label is
+bar_max_h = 2.1  # max bar height at FPS=12
+
+# TFLite bar (orange) - 4.8 FPS
+tflite_h = (4.8 / 12) * bar_max_h
+tflite_x = bar_x + 0.75
+tflite_y = baseline_y - tflite_h
+add_rect(s1, tflite_x, tflite_y, 0.5, tflite_h, fill=ORANGE, line=ORANGE)
+add_textbox(s1, tflite_x - 0.05, tflite_y - 0.35, 0.6, 0.3,
             "4.8", size=14, bold=True, color=ORANGE, align=PP_ALIGN.CENTER)
-add_textbox(s1, bar_x + 0.7, bar_y + 3.05, 0.6, 0.25,
+add_textbox(s1, tflite_x - 0.05, baseline_y + 0.08, 0.6, 0.25,
             "TFLite", size=10, color=GREY_TEXT, align=PP_ALIGN.CENTER)
 
 # NCNN bar (blue) - 10.9 FPS
-ncnn_h = (10.9 / 12) * 2.1  # 1.91"
-ncnn_y = bar_y + 0.9 + (2.1 - ncnn_h)
-add_rect(s1, bar_x + 1.45, ncnn_y, 0.5, ncnn_h, fill=BLUE_TITLE, line=BLUE_TITLE)
-add_textbox(s1, bar_x + 1.4, ncnn_y - 0.35, 0.6, 0.3,
+ncnn_h = (10.9 / 12) * bar_max_h
+ncnn_x = bar_x + 1.45
+ncnn_y = baseline_y - ncnn_h
+add_rect(s1, ncnn_x, ncnn_y, 0.5, ncnn_h, fill=BLUE_TITLE, line=BLUE_TITLE)
+add_textbox(s1, ncnn_x - 0.05, ncnn_y - 0.35, 0.6, 0.3,
             "10.9", size=14, bold=True, color=BLUE_TITLE, align=PP_ALIGN.CENTER)
-add_textbox(s1, bar_x + 1.4, bar_y + 3.05, 0.6, 0.25,
+add_textbox(s1, ncnn_x - 0.05, baseline_y + 0.08, 0.6, 0.25,
             "NCNN", size=10, color=GREY_TEXT, align=PP_ALIGN.CENTER)
 
-# Faster label
-add_textbox(s1, bar_x + 0.2, bar_y + 3.5, bar_w - 0.4, 0.3,
+# Faster label (below bar labels)
+add_textbox(s1, bar_x + 0.2, baseline_y + 0.45, bar_w - 0.4, 0.3,
             "2.3x faster", size=12, bold=True, color=GREEN_ACCENT, align=PP_ALIGN.CENTER)
 
 # Pixel -> Distance diagram (native shapes)
@@ -364,23 +378,54 @@ add_textbox(s2, 0.4, 0.25, 10, 0.65,
             "Simulation and Sim2Real Ladder",
             size=28, bold=True, color=BLUE_TITLE)
 
-# --- Left: video placeholder ---
+# --- Left: video placeholder + flags table ---
 vid_x, vid_y = 0.4, 1.1
-vid_w, vid_h = 5.8, 6.2
+vid_w = 5.8
+vid_h = 3.85   # shrunk to make room for flags table below
 add_rect(s2, vid_x, vid_y, vid_w, vid_h, fill=BG_LIGHT, line=GREY_BORDER)
-# Play triangle
-play = s2.shapes.add_shape(MSO_SHAPE.RIGHT_TRIANGLE,
-                            Inches(vid_x + vid_w/2 - 0.5), Inches(vid_y + vid_h/2 - 0.5),
-                            Inches(1.0), Inches(1.0))
-play.rotation = 30
+# Play triangle (isoceles pointing right)
+play = s2.shapes.add_shape(MSO_SHAPE.ISOSCELES_TRIANGLE,
+                            Inches(vid_x + vid_w/2 - 0.55), Inches(vid_y + vid_h/2 - 0.55),
+                            Inches(1.1), Inches(1.1))
+play.rotation = 90
 play.fill.solid()
 play.fill.fore_color.rgb = RGBColor(0xCC, 0xCC, 0xCC)
 play.line.fill.background()
-add_textbox(s2, vid_x, vid_y + vid_h/2 + 0.6, vid_w, 0.3,
+add_textbox(s2, vid_x, vid_y + vid_h/2 + 0.55, vid_w, 0.3,
             "Simulation Recording", size=13, color=GREY_LIGHT, align=PP_ALIGN.CENTER)
-add_textbox(s2, vid_x, vid_y + vid_h/2 + 0.95, vid_w, 0.25,
+add_textbox(s2, vid_x, vid_y + vid_h/2 + 0.85, vid_w, 0.25,
             "takeoff -> search -> detect -> centre -> verify -> land",
             size=10, color=GREY_LIGHT, align=PP_ALIGN.CENTER)
+
+# --- Flags table below the video ---
+flag_y = vid_y + vid_h + 0.15
+flag_h = 2.35
+add_rect(s2, vid_x, flag_y, vid_w, flag_h, fill=BG_LIGHT, line=GREY_BORDER)
+add_textbox(s2, vid_x + 0.15, flag_y + 0.08, vid_w - 0.3, 0.3,
+            "STACKABLE SIMULATION FLAGS", size=11, bold=True, color=BLUE_TITLE)
+
+# Flag rows — (flag, description, color_group)
+FLAG_ROWS = [
+    ("--sim-tilt",     "Camera perspective (pitch/roll)",   BLUE_TITLE),
+    ("--shake N",      "Pixel-level vibration jitter",      BLUE_TITLE),
+    ("--blur F",       "Motion blur proportional to speed", BLUE_TITLE),
+    ("--noise L",      "GPS + attitude Gaussian noise",     BLUE_TITLE),
+    ("--spiral",       "Spiral search (vs lawnmower)",      ORANGE),
+    ("--lock-yaw",     "Maintain heading during sweep",     ORANGE),
+    ("--smart-detect", "Require consecutive confirms",      GREEN_ACCENT),
+    ("--center-verify","Hover GPS average at target",       GREEN_ACCENT),
+]
+
+row_h = 0.24
+row_start_y = flag_y + 0.42
+for i, (flag, desc, col) in enumerate(FLAG_ROWS):
+    y = row_start_y + i * row_h
+    # Flag name in monospace-ish, coloured by group
+    add_textbox(s2, vid_x + 0.15, y, 1.8, row_h,
+                flag, size=10, bold=True, color=col, name="Consolas")
+    # Description
+    add_textbox(s2, vid_x + 2.0, y, vid_w - 2.2, row_h,
+                desc, size=10, color=GREY_TEXT)
 
 # --- Right: Sim2Real Ladder ---
 right_x = 6.5

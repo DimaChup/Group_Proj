@@ -447,9 +447,51 @@ class SimulationEnvironment:
 
         # Camera-to-world rotation (NED: X=North, Y=East, Z=Down)
         # Yaw around Z (down), pitch around Y (east), roll around X (north).
-        # Signs: ArduPilot pitch<0 = nose down (camera tilts forward) → negate
-        #        for Ry; ArduPilot roll>0 = right-wing down → negate for Rx.
-        R = _Rz(yaw) @ _Ry(-pitch) @ _Rx(-roll)
+        #
+        # Sign/convention variants for trial-and-error calibration.
+        # Set SIM_TILT_VARIANT to one of 0..7 to try different sign combinations.
+        # Default (no env var) = variant 0 = original unfixed code.
+        #
+        # Variants:
+        #   0: original (no R_cam_to_body, signs: pitch→-pitch, roll→-roll)
+        #   1: add R_cam_to_body, signs: -pitch, -roll  (my earlier "fix")
+        #   2: add R_cam_to_body, signs: +pitch, -roll
+        #   3: add R_cam_to_body, signs: -pitch, +roll
+        #   4: add R_cam_to_body, signs: +pitch, +roll
+        #   5: original signs but flip yaw (-yaw instead of +yaw)
+        #   6: add R_cam_to_body, flip yaw too  (-yaw, -pitch, -roll)
+        #   7: R_cam_to_body transposed (90° the other way)
+        import os as _os
+        # Default variant — change this number to switch (env var still overrides)
+        _variant = _os.environ.get("SIM_TILT_VARIANT", "1")
+        _R_c2b_ccw = np.array([
+            [ 0.0, -1.0, 0.0],
+            [ 1.0,  0.0, 0.0],
+            [ 0.0,  0.0, 1.0],
+        ], dtype=np.float64)
+        _R_c2b_cw = np.array([
+            [ 0.0,  1.0, 0.0],
+            [-1.0,  0.0, 0.0],
+            [ 0.0,  0.0, 1.0],
+        ], dtype=np.float64)
+
+        if _variant == "1":
+            R = _Rz(yaw) @ _Ry(-pitch) @ _Rx(-roll) @ _R_c2b_ccw
+        elif _variant == "2":
+            R = _Rz(yaw) @ _Ry(pitch) @ _Rx(-roll) @ _R_c2b_ccw
+        elif _variant == "3":
+            R = _Rz(yaw) @ _Ry(-pitch) @ _Rx(roll) @ _R_c2b_ccw
+        elif _variant == "4":
+            R = _Rz(yaw) @ _Ry(pitch) @ _Rx(roll) @ _R_c2b_ccw
+        elif _variant == "5":
+            R = _Rz(-yaw) @ _Ry(-pitch) @ _Rx(-roll)
+        elif _variant == "6":
+            R = _Rz(-yaw) @ _Ry(-pitch) @ _Rx(-roll) @ _R_c2b_ccw
+        elif _variant == "7":
+            R = _Rz(yaw) @ _Ry(-pitch) @ _Rx(-roll) @ _R_c2b_cw
+        else:
+            # variant 0 — original unfixed behaviour
+            R = _Rz(yaw) @ _Ry(-pitch) @ _Rx(-roll)
 
         # Ray-trace 4 image corners onto ground plane (z = 0, drone at z = alt)
         corners_uv = [

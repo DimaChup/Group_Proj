@@ -347,12 +347,27 @@ class VisionSystem:
         print("[VISION] No AI backend available (install ultralytics or tflite-runtime)")
 
     def _try_load_ncnn(self, model_path):
-        """Load NCNN backend if requested via ``--backend ncnn`` CLI flag.
+        """Load NCNN backend if requested via flag, env var, or model path.
+
+        Triggers when any of these is true:
+          - VisionSystem(backend="ncnn") was requested explicitly
+          - --backend ncnn appears in sys.argv
+          - model_path is a directory containing model.ncnn.param
+          - model_path ends in .param (direct NCNN param file)
 
         Returns True if NCNN was loaded successfully.
         """
+        # Auto-detect: if model_path looks like an NCNN folder/file, treat as NCNN
+        path_looks_ncnn = False
+        if os.path.isdir(model_path):
+            if os.path.exists(os.path.join(model_path, "model.ncnn.param")):
+                path_looks_ncnn = True
+        elif model_path.endswith('.param'):
+            path_looks_ncnn = True
+
         ncnn_requested = (self._requested_backend == "ncnn" or
-                          ("--backend" in " ".join(sys.argv) and "ncnn" in " ".join(sys.argv)))
+                          ("--backend" in " ".join(sys.argv) and "ncnn" in " ".join(sys.argv)) or
+                          path_looks_ncnn)
         if not (ncnn_available and ncnn_requested):
             return False
 
@@ -362,6 +377,8 @@ class VisionSystem:
             candidate = os.path.join(os.path.dirname(model_path), "ncnn", "best_ncnn_model")
             if os.path.exists(candidate):
                 ncnn_model_dir = candidate
+        elif model_path.endswith('.param'):
+            ncnn_model_dir = os.path.dirname(model_path)
         elif os.path.isdir(model_path):
             ncnn_model_dir = model_path
 

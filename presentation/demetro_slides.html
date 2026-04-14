@@ -128,20 +128,20 @@
 
   <div class="slide-label">SLIDE 2 — SIMULATION (225 words, 1.5 min)</div>
 
-  <span class="cue">[Slide appears, video playing on left]</span>
-  The assignment gave us <strong>twelve specific requirements</strong> the drone must meet. Our testing philosophy: <strong>never fly something you haven't proven at every level below it</strong> — and our evidence that we meet those twelve requirements lives here.
+  <span class="cue">[Slide appears — simulation video plays on the left throughout]</span>
+  The assignment gave us <strong>twelve specific requirements</strong> the drone must meet. With limited flight time available, we leaned into simulation as the main way to prove our system meets them.
 
-  <span class="cue">[Point to simulation foundation]</span>
-  The foundation of everything is our simulation. It's not just running waypoints in SITL — we replicate the <strong>same 1456×1088 camera resolution</strong> as the real drone, camera tilt from pitch and roll, motion blur at flight speed, GPS drift noise, and synthetic targets composited onto real backgrounds at altitude-correct scale. Every one of the <strong>twelve mission requirements</strong> is verified end-to-end here — spiral search, detection, geofence, no-fly zone, PLB beacon redirect, payload drop, RTL failsafes, attitude-compensated GPS, offset landing.
+  <span class="cue">[Gesture to video]</span>
+  What you're watching on the left is a <strong>full end-to-end mission running in our simulator</strong> — takeoff, spiral search, detection, centring on the target, verification, and landing. Same Python codebase that runs on the real Pi. What flies in sim is what flies for real.
 
-  <span class="cue">[Point to video on left]</span>
-  On the left is a full mission running — takeoff, search, detect, centre, verify, land. Same Python codebase that flies on the Pi. What runs in sim is what flies for real.
+  <span class="cue">[Point to Simulation Foundation block]</span>
+  But this isn't just "we ran waypoints in SITL". We replicate the <strong>same 1456x1088 camera resolution</strong>, simulate camera tilt from pitch and roll, motion blur at speed, GPS drift noise, and synthetic targets composited onto real backgrounds at altitude-correct scale. Every one of the <strong>twelve mission requirements</strong> is verified end-to-end here — spiral search, detection, geofence, SSSI no-fly zone, PLB redirect, payload drop, RTL failsafes, attitude-compensated GPS, offset landing.
 
-  <span class="cue">[Point to ladder, bottom up]</span>
-  Simulation alone isn't enough. The ladder shows how we bridged to reality. On the ground side: 127 unit tests and outdoor calibration. On the flight side: bench integration on the Pi, and passive flight where a pilot flew while the Pi detected silently — <strong>zero commands sent</strong>.
+  <span class="cue">[Point to Sim2Real ladder]</span>
+  Simulation alone isn't enough, though — so we built a <strong>Sim2Real ladder</strong>. Every rung is a real-world check before we trust the system in a full autonomous mission. Unit tests and outdoor calibration on the ground side. Bench integration and passive flight — where a pilot flew while the Pi detected silently, <strong>zero commands sent</strong> — on the flight side.
 
-  <span class="cue">[Point to unchecked boxes]</span>
-  Waypoint flight and auto detect-and-hover are next — and above them, <strong>the real mission</strong>.
+  <span class="cue">[Point to unchecked M3, M4]</span>
+  Waypoint flight and auto-detect-and-hover are still to come. Above them: <strong>the real mission</strong>.
 
   <span class="cue">[Hand to Herish]</span>
 
@@ -328,7 +328,7 @@
 
   <div class="content" style="align-items:stretch; flex:1; gap:24px;">
 
-    <!-- LEFT: Video (45%) -->
+    <!-- LEFT: Video + flags table -->
     <div style="flex:0 0 44%; display:flex; flex-direction:column; gap:8px;">
       <div style="flex:1; background:#f8f9fa; border:2px solid #e0e0e0; border-radius:12px; display:flex; align-items:center; justify-content:center; position:relative; min-height:0;">
         <div style="font-size:70px; color:#ccc; position:absolute;">▶</div>
@@ -336,6 +336,45 @@
           <div style="font-size:14px; margin-bottom:4px;">Simulation Recording</div>
           <div style="font-size:10px;">takeoff → search → detect → centre → verify → land</div>
         </div>
+      </div>
+
+      <!-- CLI flags table — stackable realism modifiers -->
+      <div style="border:1px solid #e0e0e0; border-radius:6px; background:#f8f9fa; padding:8px 10px;">
+        <div style="font-size:10px; font-weight:700; color:#0070C0; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.5px;">Stackable Simulation Flags</div>
+        <table style="width:100%; border-collapse:collapse; font-size:10px; color:#333;">
+          <tr style="border-bottom:1px solid #e0e0e0;">
+            <td style="padding:3px 4px; font-family:Consolas,monospace; color:#0070C0; font-weight:700;">--sim-tilt</td>
+            <td style="padding:3px 4px; color:#555;">Camera perspective (pitch/roll)</td>
+          </tr>
+          <tr style="border-bottom:1px solid #e0e0e0;">
+            <td style="padding:3px 4px; font-family:Consolas,monospace; color:#0070C0; font-weight:700;">--shake N</td>
+            <td style="padding:3px 4px; color:#555;">Pixel-level vibration jitter</td>
+          </tr>
+          <tr style="border-bottom:1px solid #e0e0e0;">
+            <td style="padding:3px 4px; font-family:Consolas,monospace; color:#0070C0; font-weight:700;">--blur F</td>
+            <td style="padding:3px 4px; color:#555;">Motion blur ∝ drone speed</td>
+          </tr>
+          <tr style="border-bottom:1px solid #e0e0e0;">
+            <td style="padding:3px 4px; font-family:Consolas,monospace; color:#0070C0; font-weight:700;">--noise L</td>
+            <td style="padding:3px 4px; color:#555;">GPS + attitude Gaussian noise</td>
+          </tr>
+          <tr style="border-bottom:1px solid #e0e0e0;">
+            <td style="padding:3px 4px; font-family:Consolas,monospace; color:#E97132; font-weight:700;">--spiral</td>
+            <td style="padding:3px 4px; color:#555;">Spiral search (vs lawnmower)</td>
+          </tr>
+          <tr style="border-bottom:1px solid #e0e0e0;">
+            <td style="padding:3px 4px; font-family:Consolas,monospace; color:#E97132; font-weight:700;">--lock-yaw</td>
+            <td style="padding:3px 4px; color:#555;">Maintain heading during sweep</td>
+          </tr>
+          <tr style="border-bottom:1px solid #e0e0e0;">
+            <td style="padding:3px 4px; font-family:Consolas,monospace; color:#196B24; font-weight:700;">--smart-detect</td>
+            <td style="padding:3px 4px; color:#555;">Require consecutive confirms</td>
+          </tr>
+          <tr>
+            <td style="padding:3px 4px; font-family:Consolas,monospace; color:#196B24; font-weight:700;">--center-verify</td>
+            <td style="padding:3px 4px; color:#555;">Hover GPS average at target</td>
+          </tr>
+        </table>
       </div>
     </div>
 
