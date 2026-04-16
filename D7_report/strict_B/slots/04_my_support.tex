@@ -1,54 +1,57 @@
 \section{My support}
 
-\textbf{4a.}~Four people changed how I worked. A generic thank-you list is a Merit-ceiling move, so I'll name the specific mechanism for each.
+\textbf{4a.}~A generic thank-you list caps at Merit. I'll name the specific mechanism --- what each person did that changed how I worked.
 
-\textbf{Edward} is the reason the Cube ever spoke to the Pi. Around wk15 I'd spent a weekend trying to make \texttt{pymavlink} read from \texttt{/dev/ttyAMA0} on Python 3.13. Edward pointed out that \texttt{pyserial} reads are broken on 3.13 and the workaround was a \texttt{mavproxy} UDP bridge. That 40-minute conversation unlocked roughly two weeks of Pi testing. His throwaway remark --- ``just because the test passes on laptop doesn't mean the hardware does'' --- reframed how I thought about simulation fidelity for the rest of the project. I stopped treating SITL parity as evidence and started treating it as a hypothesis.
-
-\textbf{Robin} helped me by refusing to integrate against my first state machine. His wk17 pushback is the reason the \texttt{main.py} refactor happened at all. What I'd framed as a technical disagreement was actually a maintainability one, and I preferred the technical framing because it protected me from noticing I'd built something only I could read. \textbf{Demetro} accepted drafts without turning collaboration into a status contest. \textbf{Sid} delivered the single DJI flight video with SRT telemetry that anchored FOV calibration and the retrained model at mAP50\,=\,0.995.
-
-\textbf{4b.}~Three specific feedback episodes. ``I gave constructive feedback when needed'' is the single most common Merit-ceiling sentence in UK engineering reflection, so I won't write it --- I'll show the evidence instead.
-
-% --- TABLE 4: Feedback given ---
-\vspace{0.3em}
+\vspace{0.2em}
 {\small
-\textbf{Table 4: Feedback given, with behaviour change evidence}
+\noindent\textbf{Table 4: Support received --- who, what, and how it changed my working}
 
-\begin{tabularx}{\textwidth}{@{}l L L L@{}}
+\begin{tabularx}{\textwidth}{@{}l L L@{}}
 \toprule
-\textbf{Recipient} & \textbf{What I said/did} & \textbf{Their reaction} & \textbf{Behaviour change observed} \\
+\textbf{From whom} & \textbf{What they specifically did} & \textbf{How it changed my work} \\
 \midrule
-Demetro (wk16) & Built 2 FDR slides + 465-word speaking scripts; iterated 4--5 times. On 3rd pass he pushed back: wording wasn't how he spoke & Delivered the slides confidently on FDR day, in his own cadence & A week later prepared his own next slides using specific numbers instead of adjectives --- a habit I'd modelled in draft 3 \\
-Robin (wk19) & Sent Teams message naming exact variable (\texttt{consecutive\_lost}) and line in his flight script; suggested time-based timeout with ascend-and-retry fallback & Fixed it same afternoon & A week later pulled me aside: he'd caught a similar timeout bug in another module because he was ``looking for that shape of bug'' \\
-Pilot (wk22) & Showed first \texttt{pi\_flight.py} dashboard; he said button grid too dense to hit while holding RC transmitter. Proposed 4-button set (Y/N/M/L) mapped to thumb-reach & Read rewritten card aloud in one pass without pause & During field-day dry runs, triggered abort 3 times without looking at the screen \\
+Robin & Refused to integrate against my first state machine (wk17). Argued it was over-engineered and unmaintainable & Forced the \texttt{main.py} refactor (1411$\to$754 lines). Made me separate ``right design'' from ``right design for this team.'' Led to the HTTP interface he integrated against unaided \\
+Robin & Suggested repulsive-force concept for NFZ avoidance & I ran with it --- developed and tested it over several days. Became a core safety feature of the simulation \\
+Sid & Provided the single DJI flight video with SRT telemetry & That one video was all the real data I had. Anchored FOV calibration (54.4$^\circ$), validated GPS averaging, fed model retraining (mAP50\,=\,0.995). I squeezed everything possible from it \\
+\textcolor{red}{Robin} & \textcolor{red}{[APOLLO: you mentioned Robin cut sharp sentences from the complaint letter --- confirm: which draft, what he said, how it changed the tone]} & \textcolor{red}{[How did that shape your approach to written confrontation?]} \\
+\textcolor{red}{Harish} & \textcolor{red}{[APOLLO: Harish handled hardware + comms. Did he debug something that unblocked you? Set up the Cube wiring? Specific incident?]} & \textcolor{red}{[Effect on your work]} \\
+\textcolor{red}{Edward} & \textcolor{red}{[APOLLO: Edward shared CV responsibility. Did he flag a technical issue? Help on a flight day? Did his trained model inform any of your decisions, even if you didn't use it?]} & \textcolor{red}{[Effect on your work]} \\
+\textcolor{red}{Zian} & \textcolor{red}{[APOLLO: Zian did path planning. Did his output feed into your simulator? Did he contribute anything that shaped your work?]} & \textcolor{red}{[Effect on your work]} \\
 \bottomrule
 \end{tabularx}
 }
-\vspace{0.3em}
+\vspace{0.2em}
 
-The Demetro episode taught me something I hadn't expected about my own delivery: my first three drafts were in my register, not his. Good feedback to a peer presenter means writing in \emph{their} voice, not polishing yours. The scarce resource was register, not prose quality. I now see this connects to Lencioni's Level 4 (avoidance of accountability): I was holding Demetro accountable to \emph{my} standard of delivery rather than helping him find \emph{his} standard --- and the difference matters because accountability that isn't anchored in the recipient's own goals produces compliance, not development.
+Robin's wk17 pushback is the episode that matters most. What I'd framed as a technical disagreement was actually a maintainability one, and I preferred the technical framing because it protected me from noticing I'd built something only I could read. In Lencioni's (2002) terms, I was ring-fencing work because I didn't trust the team to navigate it --- and that looked like technical conviction when it was territorial reflex. I proposed a compromise: keep the full FSM for autonomous mode, strip it to HTTP polling for Robin's script. He accepted. Integration took an afternoon instead of a week.
 
-The Robin episode carries a harder lesson about me. My instinct to ``finish debugging before asking'' isn't professionalism --- it's a cost I force teammates to pay for my comfort with solitude. I should be asking the moment I notice I've been stuck for twenty minutes, not the moment frustration has built up enough that the help-request feels justified to me.
+Robin and I were the two proactive members of the team. We worked in close coordination on the CV-to-state-machine integration, and ideas were discussed between us as colleagues --- he'd suggest a concept like the repulsive force, I'd take it and develop it, neither of us treated it as a transaction. That dynamic was the closest thing to real engineering collaboration I experienced on the project.
 
-The pilot episode is the non-technical audience adaptation I want to put on record. Two of the five M17.c adaptations landed: jargon removal (``geofence repulsor active within 10\,m buffer'' $\to$ ``the drone pushes itself away from the red fence if it gets within 10\,m'') and visual substitution (replacing a data table with a four-button panel sized for one-handed RC operation). The rewritten interface was read aloud in one pass --- the moment my frame shifted from designing for me-as-operator to designing for a pilot who doesn't have to notice the UI.
+\textcolor{red}{[NOTE TO APOLLO: \S4a is thin because you haven't shared specific support from Harish, Edward, or Zian. The brief expects balanced reflection on what others did FOR you, not just what you did for them. Even small things count: equipment setup, a question that made you rethink, covering a task, moral support on a bad day. This is the biggest gap right now.]}
 
-The quieter half of my support work was infrastructure for the team's memory: \texttt{brain-dump.md}, \texttt{MEMORY.md}, the 500-line blueprint system, and \texttt{FIELD\_QUICK\_REF.md} for no-internet field use.
+\textbf{4b.}~Table~5 maps what I did that helped others work more effectively.
 
-% --- TABLE 5: Dev actions ---
-\vspace{0.3em}
+\vspace{0.2em}
 {\small
-\textbf{Table 5: Self-development actions with outcomes}
+\noindent\textbf{Table 5: Support given --- action, recipient, evidence it worked}
 
-\begin{tabularx}{\textwidth}{@{}L L L@{}}
+\begin{tabularx}{\textwidth}{@{}l L L@{}}
 \toprule
-\textbf{Gap identified} & \textbf{Action taken} & \textbf{Outcome} \\
+\textbf{For whom} & \textbf{What I did} & \textbf{Evidence of effect} \\
 \midrule
-Debugging by intuition, not system (BGR incident, wk14) & Adopted exhaustive-permutation-first protocol & Applied to TFLite bbox bug (wk22): found in 20 min vs hours \\
-Solo building without handoff docs (wk12--16) & Wrote colleague pipeline doc + \texttt{--robin} flag (wk19) & Robin integrated 2 days unaided; 5:1 time trade \\
-Conflating ``right design'' with ``right for this team'' (wk17) & Took 24\,h cool-down before responding to pushback & wk20 complaint letter: Robin cut 3 sharp sentences, I accepted without defensiveness \\
-Treating SITL parity as evidence, not hypothesis (wk15) & Added explicit sim-vs-real disclaimers to all docs & Caught descent-stall bug as SITL-specific; didn't chase it on Pi \\
+Robin & Built \texttt{--robin} flag + HTTP polling so his state machine could consume vision output without touching my code & Integrated for 2 days without a single question. First teamwork move that scaled without my presence \\
+Robin & Provided detection images + attitude-corrected GPS coordinates via defined interface & His state machine made decisions from my output. Building this was expensive (pitch/roll, altitude, averaging) but he never had to understand my internals \\
+Pilot & Redesigned ground station from dense grid to 4-button set (Y/N/M/L) after pilot said original too dense for one-handed RC use & \textcolor{red}{[APOLLO: confirm --- did pilot use it on demo day? Specific evidence?]} \\
+\textcolor{red}{Demetro} & \textcolor{red}{[APOLLO: you mentioned building Demetro's FDR slides. Confirm: how many slides, how many iterations, what happened at FDR day]} & \textcolor{red}{[Outcome --- did he deliver them? Behaviour change?]} \\
+Whole team & Documentation infrastructure: field quick-ref for no-internet use, handoff pipeline docs, blueprints & Team operated on flight day without needing me at every decision \\
+Whole team & Drove the 6-iteration complaint letter about faulty provided hardware (all 5 names) & \textcolor{red}{[APOLLO: was it sent? Did Steve respond? Outcome?]} \\
+Whole team & Simulation as morale anchor during failed flight days & Gave the team a concrete thing to point to when hardware kept failing and morale was lowest \\
 \bottomrule
 \end{tabularx}
 }
-\vspace{0.3em}
+\vspace{0.2em}
 
-\textbf{What I leave believing.} I came as a Ukrainian-trained engineer whose reflex under failure was ``one person delivers.'' I leave believing its near-inversion: \emph{the engineer who delivers alone is one recruitment away from being the single point of failure in whatever she builds.} The wk17 FSM conflict and Robin's wk20 unaided handoff told me, in different registers, that the same act which delivered the report was the act that kept my teammates at the edge of their own project. Falsifiable internship signal: in my first six weeks, does at least one teammate modify a module I own without asking permission? If yes --- even once --- I've started to become an engineer whose work enables other people's work. That is the only kind of engineering I now think is worth aspiring to, and I haven't resolved it yet. The tension between building fast and building together is still live in me, and I don't expect a six-week internship to settle it. But I know what the test looks like now, and that's the thing this project gave me.
+The Robin handoff deserves scrutiny. The \texttt{passive\_watch} HTTP interface traded my solo time for his onboarding time at roughly 5:1 --- four hours writing docs and building the flag bought him twenty hours of unblocked work. I hadn't believed documentation delivered that kind of return. It worked because it gave Robin everything he needed without requiring him to understand my internals. That's the line between capability (I can build it) and enablement (someone else can use it without me) --- and I didn't cross it until wk20.
+
+During the failed practice days, the whole team felt demotivated --- me included. I had loads of scripts ready to test and nowhere to test them. Instead of just sitting with the frustration, I went deeper into the simulation, running it thousands of times, modelling camera blur, thinking through everything that could go wrong. The simulation gave the team something to show when hardware couldn't, and it gave Robin's state machine a testbed that didn't require a drone in the air.
+
+\textbf{What I leave believing.} I came as a Ukrainian-trained engineer whose reflex under failure was ``one person delivers.'' I leave believing its near-inversion: \emph{the engineer who delivers alone is one recruitment away from being the single point of failure in whatever she builds.} The wk17 conflict and Robin's wk20 unaided handoff told me, in different registers, that the same work which delivered the report was the work that kept my teammates at the edge of their own project. Falsifiable internship signal: in my first six weeks, does at least one teammate modify a module I own without asking permission? If yes, even once, I've started to become an engineer whose work enables other people's work. That's the only kind of engineering I now think is worth aspiring to, and I haven't resolved it yet.

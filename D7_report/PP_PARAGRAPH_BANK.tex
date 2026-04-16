@@ -1,0 +1,80 @@
+% PP_PARAGRAPH_BANK.tex — 4 standalone Professional Practice paragraphs
+% Ready to \input{} or paste into any D7 version.
+% All content drawn from Apollo's verified running-context.
+
+%% ──────────────────────────────────────────────
+%% 1. TUCKMAN — Team Development Stages
+%% ──────────────────────────────────────────────
+
+% Drop into §2 (My Team) or §3 (My Impact)
+Tuckman's model of group development provides a useful lens for our trajectory~\cite{tuckman1965}.
+Forming was brief: the first meeting divided responsibilities clearly---Harish on hardware,
+Zian on path planning, Robin on state machines, Apollo and Edward on computer vision---and
+the team moved quickly into preparation.
+Storming, however, was protracted and externally imposed.
+Two practice flight days yielded no usable data because the provided hardware was non-functional,
+while other teams flew successfully; frustration and demotivation spread across the group.
+The team was blocked not by interpersonal conflict but by an inability to validate any hypothesis
+without a working drone, leaving weeks of preparatory work untested.
+Norming finally emerged over Easter, when hardware faults were resolved and the state machine
+was confirmed on real hardware for the first time, giving the team a shared baseline of trust
+in the system.
+\textcolor{red}{[APOLLO: did you ever feel the team reached Performing?]}
+
+%% ──────────────────────────────────────────────
+%% 2. LENCIONI — Five Dysfunctions of a Team
+%% ──────────────────────────────────────────────
+
+% Drop into §2 (My Team) or §4 (My Support)
+Lencioni's pyramid identifies \emph{absence of trust} as the foundational dysfunction from
+which all others cascade~\cite{lencioni2002}.
+In our team this dysfunction was not interpersonal but architectural: 799 of 807 commits
+were made by a single member, meaning code ownership was never genuinely shared.
+Edward and Zian completed assigned tasks competently, yet neither drove work forward
+independently, which meant \emph{avoidance of accountability}---the fourth dysfunction---fell
+disproportionately on Apollo and Robin as the only self-directed contributors.
+Integration happened late: Robin's state machine consumed Apollo's CV output through a
+defined interface built under time pressure after Easter, rather than through iterative
+co-development.
+The result was a system that worked on demo day, but whose bus factor of one represents
+a structural vulnerability that Lencioni's model would predict from the trust deficit at
+the base of the pyramid.
+
+%% ──────────────────────────────────────────────
+%% 3. RISK ASSESSMENT — Progressive Test Ladder + ALARP
+%% ──────────────────────────────────────────────
+
+% Drop into §1 (My Role) or §3 (My Impact)
+The progressive test ladder---bench commands, passive detection during manual flight,
+autonomous search with logging only, then full mission---was designed as a formal risk
+mitigation framework, reducing both the likelihood and consequence of failure at each
+stage before escalating to the next.
+When the provided hardware failed on both practice flight days, this represented the
+materialisation of a schedule risk that no amount of simulation could absorb: the team
+entered demo day having skipped intermediate rungs of the ladder entirely.
+Flight altitude decisions followed an ALARP (As Low As Reasonably Practicable) approach:
+conservative parameters (\texttt{--alt 20 --conf 0.5}) were specified for first flights
+to keep residual risk tolerable while still achieving detection.
+The runtime geofence---which triggers emergency RTL if the drone breaches the Flight Area
+polygon---was implemented as a likelihood-reduction control, ensuring that even a software
+fault could not send the aircraft into the adjacent SSSI no-fly zone.
+
+%% ──────────────────────────────────────────────
+%% 4. SIMULATION AS THINKING TOOL — Graham / Innovation Tools
+%% ──────────────────────────────────────────────
+
+% Drop into §1 (My Role) or §3 (My Impact)
+Graham's Innovation Tools lecture argues that tools support thinking rather than replace
+it~\cite{graham_innovation}.
+The full-mission simulation embodied this principle: rather than holding failure modes
+in my head, I had a concrete environment to run and observe.
+I ran the simulation thousands of times, deliberately injecting camera blur, GPS drift,
+and edge cases such as a casualty placed near the no-fly zone boundary.
+Each run externalised a question---\emph{what happens if the drone detects at the NFZ
+edge?}---and returned an observable answer, converting abstract worry into tested knowledge.
+Robin's suggestion of repulsive force fields for NFZ avoidance, for example, was explored
+over several days of simulated experimentation rather than debated in the abstract.
+When hardware failures consumed both practice flight days, the simulation became the
+only venue for iterative learning; the fact that the full pipeline worked on demo day
+without prior real-hardware integration owes much to the thousands of simulated rehearsals
+that preceded it.

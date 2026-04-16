@@ -323,43 +323,96 @@ h1 { font-size: 22px; margin-bottom: 8px; color: #f0f6fc; }
     </div>
 
     <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:16px;margin-bottom:16px;">
-      <h3 style="color:#58a6ff;margin-bottom:10px;">Running Context — Pure Text (auto-updated from Apollo's dumps)</h3>
-      <p style="font-size:11px;color:#8b949e;margin-bottom:12px">This is the ongoing merged narrative of everything Apollo has shared. No duplicates. Keeps growing as more context is provided.</p>
+      <h3 style="color:#58a6ff;margin-bottom:10px;">Running Context — REAL (from Apollo's own words only)</h3>
+      <p style="font-size:11px;color:#8b949e;margin-bottom:12px">This is ONLY what Apollo actually said. No agent fabrications. No quotes from earlier drafts. Pure Apollo context.</p>
       <div style="font-size:13px;color:#c9d1d9;line-height:1.8;background:#0d1117;border:1px solid #21262d;border-radius:6px;padding:16px;" id="running-context">
 
 <p>There were 5 of us: Apollo, Robin, Harish, Edward, and Zian.</p>
 
 <p>After the first team meeting we looked at all the tasks that might be needed and split them up. Harish was responsible for hardware setup and communications between components. Zian was responsible for path planning. Robin was responsible for state machines. Apollo and Edward shared responsibility for computer vision — Apollo delegated the CV model training to Edward.</p>
 
-<p>Edward and Zian were not very proactive. They would do what they were told to do, and it seemed like they did a lot of work, but they weren't self-directed. Edward did train a CV model as delegated, but we didn't end up using it — went with a standard YOLO model instead. The reasons: not enough flight days to collect realistic aerial training data, couldn't run proper experiments to validate a custom model.</p>
+<p>Edward and Zian were not very proactive. They would do what they were told to do, and it seemed like they did a lot of work, but they weren't self-directed — they did whatever was assigned to them, which is fair enough in a way, but they weren't driving anything forward on their own initiative.</p>
 
-<p>Apollo's formal responsibility was computer vision, but in practice he took on far more. He built the full CV pipeline: detection to GPS coordinate conversion, using calibration and altitude compensation. This required pitch and roll correction because the drone's attitude affects coordinate accuracy. Single GPS estimates from detections had significant error, so he developed and tested multiple averaging techniques. He tested all of these against the one real flight video provided by Sid — that single video was all the real data available, so he made the most of it.</p>
+<p>Edward did train a CV model as delegated, but we didn't end up using it. We went with a standard YOLO person detection model instead, playing it safe. The reasons: not enough flight days to collect realistic aerial training data, and we couldn't run proper experiments to validate a custom model. We did have trained models for detecting different items of interest, but in the end the YOLO person detection was the safer choice given our limited real-world testing.</p>
+
+<p>Apollo's formal responsibility was computer vision, but in practice he took on far more. He built the full CV pipeline: detection to GPS coordinate conversion, using calibration and altitude compensation. This required pitch and roll correction because the drone's attitude affects coordinate accuracy. Single GPS estimates from detections had significant error, so he developed and tested multiple averaging techniques — a variety of them, testing which one gives the best results, each with pluses and minuses. He tested all of these against the one real flight video provided by Sid — that single video was all the real data available. He made the most of that extremely limited data, using it both for model evaluation and to retrain the model. He also deduced ground truth from the video to benchmark the averaging techniques against.</p>
 
 <p>Apollo did thorough camera calibration in the lab — field of view, focal length measurements. He created post-processing scripts for the DJI footage from Sid, calibration scripts for camera parameters, and video analysis tools — all designed to maximise learning from extremely limited real flight data.</p>
 
-<p>He built multiple dashboards and monitoring tools: a passive watch dashboard for monitoring and detection during manual flight, a diagnostics dashboard showing all drone subsystems at once, with the ability to switch between different vision models live to compare performance. All built for the Pi (headless, browser-based) so they could run on actual drone hardware.</p>
+<p>He built multiple dashboards and monitoring tools: a passive watch dashboard for monitoring and detection during manual flight, a diagnostics dashboard showing all drone subsystems at once with the ability to switch between different vision models live to compare performance. All built for the Pi (headless, browser-based) so they could run on actual drone hardware.</p>
 
-<p>He wrote progressive test scripts for empirical drone performance testing — blur effect at different speeds, detection range vs altitude, detection rate at various conditions. These formed a safety-critical test ladder designed for step-by-step confidence building before attempting a full mission. Due to limited flight time, the full test suite was never run on real hardware.</p>
+<p>He wrote progressive test scripts for empirical drone performance testing — blur effect at different speeds, detection range vs altitude, detection rate at various conditions. These formed a safety-critical test ladder designed for step-by-step confidence building before attempting a full mission. He also created benchmark scripts and scripts for post-processing and correcting GPS estimation errors. Due to limited flight time, the full test suite was never run on real hardware — but he would have liked to run them step by step to feel confident that the real mission could be done safely.</p>
 
-<p>In parallel, Apollo built an in-depth simulation of the entire mission. This was because the team had limited flight days and the hardware wasn't working. He wanted the team to keep moving forward despite hardware holdups, and the simulation served as both a backup and a way to anticipate issues. He built a safety-critical layer with zone repulsive fields and geofencing. Robin suggested the repulsive force concept for NFZ avoidance — Apollo developed and implemented it over several days of experimentation, testing edge cases like what happens when the dummy is placed very close to the no-fly zone boundary. The simulation was thoroughly tested and could verify all R01-R12 requirements. Apollo spent 3-4x more hours than expected on this project, largely because of the simulation work.</p>
+<p>As a "side thing" alongside his main CV responsibility, Apollo built an in-depth simulation of the entire mission. He took it upon himself because he wanted to see a successful mission, and because the team had limited flight days with hardware that wasn't working. The simulation served multiple purposes: a backup if the actual mission didn't work, a way to anticipate problems, and something useful to his colleagues. He built a safety-critical layer with zone repulsive fields and geofencing. Robin suggested the repulsive force concept for NFZ avoidance — Apollo thought it was a great idea, got into it, and developed it over several days of experimentation, testing edge cases like what happens when the dummy is placed very close to the no-fly zone boundary. He could write up extensive documentation on the simulation alone — there were so many parts to it. The simulation was thoroughly tested and could verify all R01-R12 requirements. Apollo spent 3-4x more hours than expected on this project, largely because of the simulation work.</p>
 
-<p>The team did a lot of preparatory work, but when it came to flight days they got quite disheartened and demotivated because they didn't know what actually worked and what didn't until they actually flew the drone. Many things could only be tested with real GPS signal, which wasn't available in the lab. So the team could only test GPS-dependent features on flight days — and flight time was extremely limited.</p>
+<p>He communicated his simulation work to the team and they were happy with it. He believes the simulation is almost ready to be run in real mode, but to be confident about it they would have needed more flight days. He has a bunch of scripts ready to make them confident about each step before attempting the full mission.</p>
 
-<p>There were only two practice flight days and then a third day which was the performance for guests. On the first two practice days the team had everything prepared, but they were given faulty hardware. Things just didn't work, and they weren't sure what the issues were. This was very frustrating.</p>
+<p>The team had a while to work on everything before the flight days came. They did a lot of preparatory work, but when it came to flight days they got quite disheartened and demotivated. The core issue was that they didn't know what actually worked and what didn't until they actually flew the drone. Many things could only be tested with real GPS signal, which wasn't available in the lab — for example, anything requiring GPS coordinates could only be verified on flight days. They were essentially working on hypotheses about what might work, but couldn't actually test those hypotheses without flying.</p>
 
-<p>There were also organisational problems on flight days. The Wi-Fi signal was prioritised for teams that were actively flying their drones, while the other teams were supposed to be tinkering with their drones on the ground. But without good Wi-Fi, the team couldn't connect to their drone to test or configure things. IP address and naming conflicts added to the frustration. The hardware that wasn't working wasn't the team's responsibility — it was provided to them. The organisation of flight day logistics could have been better, though this should be mentioned diplomatically since the course organiser (who marks the report) was in charge of organising it.</p>
+<p>There were two practice flight days, then Easter holiday (with two extra days), and then the third day which was the performance for guests. On the first two practice flight days the team had everything prepared — an in-depth simulation they wanted to test, a bunch of test scripts they wanted to run — but they were given faulty hardware. Things just didn't work, and they weren't sure what the issues were. This was very frustrating and disheartening.</p>
 
-<p>Luckily, before the third day (demo day), there was an Easter holiday period that included two extra flight days. During these, things started working — the hardware issue was resolved. So on the actual demo day the team managed to demonstrate something functional, even though they had planned for something much more advanced.</p>
+<p>All the other teams had working hardware from the start. The team's hardware was not functional until Easter. The first two practice flight days effectively didn't count because the hardware wasn't working — and Easter shouldn't really count as a work day either, since the team sacrificed their holiday to get things going.</p>
 
-<p>After sorting out hardware issues, Robin needed detection output for his state machine. Apollo provided captured images and GPS coordinates via a defined interface. Building this interface was "quite expensive" — it required attitude correction for pitch and roll, altitude compensation, and dealing with significant single-estimate error. Ideas were discussed between Apollo and Robin as colleagues. Robin's state machine consumed Apollo's CV output.</p>
+<p>There were also organisational problems on flight days. The Wi-Fi signal was prioritised for teams that were actively flying their drones, while the other teams were supposed to be tinkering on the ground. But without good Wi-Fi, the team couldn't connect to their drone to test or configure anything. There were IP address and naming conflicts. The hardware that wasn't working wasn't the team's responsibility — it was provided to them. Some of these logistics issues were the responsibility of the course organiser, but this should be mentioned diplomatically in the report since he marks it.</p>
 
-<p>Everything came together on the actual flight day without prior real-hardware testing of the full pipeline. This worked because the simulation was thorough — but it was also somewhat lucky. Apollo would have preferred to run the full progressive test ladder step-by-step to build confidence that the real mission could be done safely. The test infrastructure existed for exactly this purpose but was never fully executed due to time constraints.</p>
+<p>During Easter holiday, the team got two extra flight days. On the first of those there were still some issues, but they managed to fix the hardware problems and get something going — finally getting confirmation that their state machine worked. After having that confirmation, they could start building on top of it. So really, the team had about one and a half functioning flight days before the performance day.</p>
+
+<p>Building on the success of that one and a half days, the team managed to come up with something decent for the demo — a minimum viable product. It was not the standard they wanted; on the very first flight day they'd already had a bunch of things ready to run, including the in-depth simulation they wanted to test and all those test scripts. But they did the best they could given the hardware limitations, and what they delivered was solid given the constraints.</p>
+
+<p>After sorting out hardware issues, Robin needed detection output for his state machine. Apollo provided captured images and GPS coordinates via a defined interface. Building this interface was "quite expensive" — it required attitude correction for pitch and roll, altitude compensation, and dealing with significant single-estimate error. Ideas were discussed between Apollo and Robin as colleagues. Robin's state machine consumed Apollo's CV output. Apollo was in close contact with Robin during this integration period.</p>
+
+<p>Everything came together on the actual flight day without prior real-hardware testing of the full pipeline. This worked because the simulation was thorough — but it was also somewhat lucky. The fact that it all came together pretty well on the actual flight day without any real testing beforehand says something about the quality of the simulation work. Apollo would have preferred to run the full progressive test ladder step-by-step to build confidence that the real mission could be done safely, but time didn't allow for it.</p>
+
+<p>Apollo believes the team did a great job given the circumstances. They did the best they could with the hardware they were provided. Their limitations were not of their own making — they were provided with non-functional hardware and facilities that constrained what they could test. Despite all of this, they produced a working system that demonstrated on demo day.</p>
+
+<p>What Apollo is most proud of: the simulation work and the CV detection-to-GPS estimation pipeline. Given the limited time and data available (one video from Sid), he managed to create a realistic way to estimate the dummy's GPS position from camera detections. He's very proud of how much he squeezed out of that limited data.</p>
+
+<p>Robin and Apollo were the two proactive members of the team. They worked in close coordination, especially on the integration between CV output and Robin's state machine. The rest of the team were less proactive — they would do assigned work but didn't drive things forward independently.</p>
+
+<p>During the failed flight days, the whole team felt demotivated — Apollo included. He had loads of things he wanted to run and test. But instead of just being frustrated, he decided to be proactive: he would go ahead and spend more time figuring things out in simulation, aiming for a nice final product. The simulation was very useful and very detailed — he simulated camera blur, thought through everything that could go wrong, and ran the simulation thousands of times observing closely. Instead of just holding problems in his head, he had a concrete simulation to run and test against. This helped him think through potential issues ahead of time rather than waiting to discover them during the real mission.</p>
+
+<p>There will be a complaint letter mentioned in the D7. Apollo will write the actual letter separately — for now just note that it exists and was sent to Steve about the hardware situation.</p>
+
+<p><b>IMPORTANT: No mention of AI usage in the D7 report. None at all.</b></p>
 
       </div>
     </div>
     </div>
   </div>
 </div>
+
+    <div style="background:#161b22;border:1px solid #30363d;border-left:3px solid #f97583;border-radius:8px;padding:16px;margin-bottom:16px;">
+      <h3 style="color:#f97583;margin-bottom:10px;">⚠ Agent-Generated Context (UNVERIFIED — may contain fabrications)</h3>
+      <p style="font-size:11px;color:#f97583;margin-bottom:12px">This was generated by agents reading old D7 drafts, git history, and docs. Some of it may be accurate but some was fabricated by earlier writing agents. DO NOT treat as fact. Apollo must verify before using.</p>
+      <details>
+        <summary style="cursor:pointer;color:#8b949e;font-size:12px">Click to expand agent-generated context (use with caution)</summary>
+        <div style="font-size:12px;color:#8b949e;line-height:1.6;margin-top:10px;opacity:0.7">
+          <p><b>Potentially fabricated conflict episodes from earlier D7 drafts:</b></p>
+          <ul style="margin:6px 0 6px 20px">
+            <li>wk17 FSM pushback with Robin — agents wrote detailed resolution narrative, but Apollo hasn't confirmed this happened</li>
+            <li>wk19 ROS vs MAVLink debate — agents wrote "fait accompli" resolution, unverified</li>
+            <li>wk21 Pilot button spacing conflict — agents wrote detailed UI feedback story, unverified</li>
+            <li>Complaint letter with 6 iterations — the letter exists in docs/ but team dynamics around it are unverified</li>
+          </ul>
+          <p><b>Potentially fabricated quotes:</b></p>
+          <ul style="margin:6px 0 6px 20px">
+            <li>"I would rather Robin never needed my help again than that he thank me for giving it" — agent-authored</li>
+            <li>"Engineering leadership is less about being the person who can fix anything and more about making disagreement safe" — agent-authored</li>
+            <li>"The uncomfortable realisation is that my greatest individual strength was simultaneously the team's largest single point of failure" — agent-authored</li>
+          </ul>
+          <p><b>Context from CONTEXT_FROM_*.md files (agents scoured docs/git/memory):</b></p>
+          <ul style="margin:6px 0 6px 20px">
+            <li>799/807 commits by Apollo (99%) — this is REAL from git log</li>
+            <li>GROUP_STATUS.md meeting notes are blank — REAL from git</li>
+            <li>COMPLAINT_LETTER.md exists with Steve chat history — REAL file exists</li>
+            <li>8 lessons learned documented — REAL files exist</li>
+            <li>Demetro FDR slides help — some basis in git commits but details may be embellished</li>
+            <li>Robin integration via passive_watch_2 --robin flag — REAL code exists</li>
+          </ul>
+          <p style="color:#f97583"><b>Rule: nothing from this section goes into the D7 unless Apollo confirms it happened.</b></p>
+        </div>
+      </details>
+    </div>
 
 <!-- VIEW 2: CARDS -->
 <div id="cards" class="view">
