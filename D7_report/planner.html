@@ -375,6 +375,8 @@ h1 { font-size: 22px; margin-bottom: 8px; color: #f0f6fc; }
 
 <p><b>IMPORTANT: No mention of AI usage in the D7 report. None at all.</b></p>
 
+<p><b>Self-criticism (from Apollo):</b> Edward and Apollo trusted each other to do their jobs, but communication could have been better. When the team got dismayed after failed flight days, Apollo decided to just work on simulation by himself, hoping it would be useful — rather than actively pulling Edward and Zian in or finding ways to keep them engaged. He could have communicated more with Edward about the CV work. When Edward and Zian weren't proactive, instead of trying to engage them or delegate more meaningfully, Apollo just did things himself. This pattern of retreating into solo work when things got hard is the core self-criticism — capability over enablement, building alone instead of building the team up.</p>
+
       </div>
     </div>
     </div>
@@ -439,6 +441,7 @@ h1 { font-size: 22px; margin-bottom: 8px; color: #f0f6fc; }
   <button class="btn btn-primary" onclick="saveAll()">Save</button>
   <button class="btn" onclick="exportMD()">Export .md</button>
   <button class="btn" onclick="exportJSON()">Export JSON</button>
+  <button class="btn" style="color:#7ee787" onclick="loadPrefill()">Load Prefill</button>
   <button class="btn" style="color:#f97583" onclick="clearAll()">Clear</button>
   <span class="status" id="status"></span>
   <span style="flex:1"></span>
@@ -661,6 +664,17 @@ function exportMD() {
 function exportJSON() {
   const data = JSON.parse(localStorage.getItem('d7-planner-v2') || '{}');
   download('d7_planner_export.json', JSON.stringify(data, null, 2), 'application/json');
+}
+
+function loadPrefill() {
+  fetch('PLANNER_PREFILL.js').then(r=>r.text()).then(t=>{
+    eval(t);
+    loadAll();
+    document.getElementById('status').textContent = 'Prefill loaded! All cells populated from real context.';
+  }).catch(()=>{
+    // Inline fallback if fetch fails
+    alert('Could not load PLANNER_PREFILL.js — make sure the server is running from D7_report/ directory');
+  });
 }
 
 function download(name, content, type) {
