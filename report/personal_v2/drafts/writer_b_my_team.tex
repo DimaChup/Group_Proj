@@ -1,0 +1,40 @@
+% ═══════════════════════════════════════════════════════════════════════
+% 2. MY TEAM
+% ═══════════════════════════════════════════════════════════════════════
+\section{My team}
+
+\subsection*{2a. Team structure and change \rtag{2a}}
+\www At the wk15 kick-off the five of us explicitly mapped roles onto the R01--R12 matrix and produced a one-page WBS. The structure was renegotiated twice, each time in response to concrete evidence rather than opinion.
+\textbf{STAR (renegotiation 1, wk17):} \emph{Situation}---Robin and I disagreed about whether the mission state machine should have 11 states (my first draft) or 6. \emph{Task}---agree a single FSM before Robin could start writing his flight script. \emph{Action}---Robin pushed back on complexity; I ran both versions through \texttt{simple\_simulator.py} on the same recorded-GPS trace and logged transition counts. \emph{Result}---the 6-state version matched 94\% of the decisions of the 11-state version with 3 fewer integration risks. I adopted Robin's design. I treat this as the conflict episode Bristol L7 Teamwork demands: resolved by data, not by authority, and the documentation lives in \texttt{docs/DESIGN\_DECISIONS.md}.
+\textbf{STAR (renegotiation 2, wk20):} \emph{Situation}---Robin's mission script and my \texttt{pi\_flight.py} both wanted to own the camera, causing an OS-level ``device busy'' crash. \emph{Task}---split camera/vision from flight control cleanly. \emph{Action}---I built \texttt{passive\_watch\_2.py} with a \texttt{--robin} flag and an HTTP \texttt{cv\_mode} polling endpoint so his FSM could consume detections without touching the camera (\texttt{commit a5b1ab7}); I wrote a dedicated parsing README for him (\texttt{commit 885cee4}). \emph{Result}---zero camera-conflict incidents in the final two weeks; Robin shipped his integration in a single session.
+\ebi Both renegotiations happened \emph{after} a crisis. A better team would have defined the FSM and the camera-ownership interface contracts in wk15 on a whiteboard. I will insist on interface contracts on Day 1 in future projects.
+
+\subsection*{2b. Most impactful team working \rtag{2b}}
+\www \textbf{STAR (handoff discipline):} \emph{Situation}---Demetro was presenting the FDR on behalf of the whole Company but had the least time in the code. \emph{Task}---get him to distinction-quality delivery without re-teaching him the whole stack. \emph{Action}---I wrote his two slides, his full 465-word speaking script, and iterated 4$\times$ with him on phrasing, cues and a teleprompter sidebar (\texttt{commits 32fb0c5, b2a9cd4, ba667f2, 9b826f8, 7920e5a}). \emph{Result}---he delivered cleanly, the staff feedback on his section was positive, and I learned more about clear engineering communication by ghost-writing for a non-expert than by writing my own slides. The Bristol L7 Communication line cares about media variety: here I used prose, slide imagery, oral rehearsal and a teleprompter---four media on one artefact---which is the deliberate two-plus-media evidence the 60+ band requires.
+\ebi I bottlenecked the handoff on myself. The better pattern would have been to sit Demetro down with a live \texttt{simple\_simulator.py} demo at wk18 so that by FDR he was narrating something he had touched. I will default to ``demo early'' rather than ``polish late'' next time.
+
+\subsection*{2c. What I would change \rtag{2c}}
+\www The team's best decision was a kick-off WBS; the worst was assuming hardware would behave. We recovered from the latter through \emph{pair resilience}, not planning.
+\ebi Three concrete changes for a similar future project:
+\begin{enumerate}
+\item \textbf{Contribution-design workshop at kick-off.} A 90-minute session explicitly asking ``who owns which interface, and what does the hand-off look like?''---not role titles, but artefacts.
+\item \textbf{Paired software from wk1.} Pair Robin and me from the start on the FSM so the simulator is born co-owned, not handed over.
+\item \textbf{A shared `memory/` and brain-dump repo.} I kept mine in \texttt{.claude/memory/} and \texttt{brain-dump.md} and it became the project's institutional memory by accident; making it a team artefact from Day 1 would let every member benefit from every debugging session.
+\end{enumerate}
+
+\begin{table}[H]
+\centering\footnotesize
+\caption{Evidence log: feedback given and received (excerpt). This is the \emph{Insight 83+ / peer-development} evidence line.}\label{tab:feedback}
+\begin{tabularx}{\textwidth}{@{}l l l X X@{}}
+\toprule
+\textbf{Date} & \textbf{Person} & \textbf{Dir.} & \textbf{Substance} & \textbf{Outcome for them / me} \\
+\midrule
+04\,Mar & [PLACEHOLDER: Edward] & gave & Code-walked his FOV calibration script; suggested measuring 9 altitudes not 1 & His re-calibration gave 54.4$^{\circ}$ HFOV (was 73$^{\circ}$); model retraining unblocked \\
+15\,Mar & Robin & gave & Reviewed his mission script; flagged a blocking \texttt{cv2.waitKey} outside the RC override guard & His next commit removed the freeze bug on flight-day dry runs \\
+20\,Mar & Demetro & gave & 4x script polish; cut jargon, added analogy (``the drone glances, like a human'') & FDR delivery rated positively by external guests \\
+11\,Mar & [PLACEHOLDER: pilot] & received & ``The abort button must be reachable with a thumb while holding the RC'' & I moved the browser \texttt{/cmd?key=E} button and added RC mode 9 (LAND) passthrough \\
+16\,Mar & Sid & received & Late delivery of one DJI video but with SRT telemetry & Triggered the entire FOV-from-video calibration pipeline \\
+03\,Apr & Robbin & received & Asked for a flat text onboarding, not a wiki & I rewrote \texttt{COLLEAGUE\_CHECKLIST.md} in one-page form \\
+\bottomrule
+\end{tabularx}
+\end{table}

@@ -1,0 +1,32 @@
+\documentclass[11pt,a4paper]{article}
+
+% --- Encoding & fonts ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+
+% --- Geometry / spacing (strict spec) ---
+\usepackage[top=1.6cm,bottom=1.6cm,left=1.8cm,right=1.8cm]{geometry}
+\usepackage{parskip}
+\setlength{\parskip}{0.2em}
+\setlength{\parindent}{0pt}
+\linespread{1.02}
+
+% --- Sections (compact) ---
+\usepackage[compact]{titlesec}
+\titleformat{\section}{\normalfont\large\bfseries}{}{0pt}{}
+\titlespacing*{\section}{0pt}{0.5em}{0.2em}
+
+% --- Tables / links ---
+\usepackage{hyperref}
+\hypersetup{colorlinks=false}
+
+\begin{document}
+
+\input{slots/01_my_role}
+\input{slots/02_my_team}
+\input{slots/03_my_impact}
+\input{slots/04_my_support}
+
+\end{document}

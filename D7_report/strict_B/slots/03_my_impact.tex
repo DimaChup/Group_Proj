@@ -1,0 +1,33 @@
+\section{My impact}
+
+\textbf{3a.}~The honest thesis is the one I wrote into our group complaint letter: \emph{the simulation framework we built ourselves is the only reason this project produced any verifiable engineering output at all.} I want to defend that with mechanism, not assertion, because at Merit-level it reads as self-flattery.
+
+The anchor is a full Kolb (1984) cycle, used deliberately rather than retrospectively. \emph{Concrete experience}: three collapsed flight days --- 2026-03-11 weather cancellation, the 2026-03-30 session that produced no airborne minutes, a third that ended with Edward and me debugging a corrupt \texttt{calibration\_data.npz} while the pilot stood on a wet field. \emph{Reflective observation}: the team's entire definition of ``progress'' had silently assumed hardware access we didn't have, and everyone was idle because their planned work needed a drone in the air. I was blocked too, but I had a laptop. That asymmetry was the data point. \emph{Abstract conceptualisation}: if \texttt{vision.py} exposed a single interface (\texttt{detect\_in\_image} returning \texttt{(found, x, y, conf)}) and auto-selected between Ultralytics on laptop and TFLite on Pi, then the same state machine could run in both places --- anything proven in simulation would, in principle, run on hardware. \emph{Active experimentation}: six weeks of hammering on that premise. \texttt{simple\_simulator.py} grew to 2508 lines with GPS drift and camera shake. \texttt{main.py} was refactored 1411\,$\to$\,754 lines across six modules with 146 pytest tests. The \texttt{tests/flight/0a--4} ladder plus 127 unit tests gave me a way to know, before any field day, which scripts could survive contact with hardware. When we finally ran on the Pi the delta was thin --- a bbox-coordinate bug (commit \texttt{3d62e6a}), a double-scaling fix (\texttt{7eb7cc8}), a deleted calibration file --- and the system came up.
+
+I also unblocked Robin by building a dedicated HTTP integration path (\texttt{passive\_watch\_2.py}, commit \texttt{a5b1ab7}) with JSON schema and \texttt{--smart-clear} flag, unblocked Demetro by building his two FDR slides and writing 465 words of speaking script across 4--5 iterations, and drove the team's external communication via the six-iteration complaint letter.
+
+% --- TABLE 3: Communication methods evaluation ---
+\vspace{0.3em}
+{\small
+\textbf{Table 3: Communication methods evaluated against 48-h independent-action criterion}
+
+\begin{tabularx}{\textwidth}{@{}c L l l L@{}}
+\toprule
+& \textbf{Method \& audience} & \textbf{Hit?} & \textbf{Author hrs} & \textbf{Lesson} \\
+\midrule
+A & Markdown handoff docs (Robin, wk19) & Yes & 4\,h & Scales; but sat unread until needed \\
+B & In-person pair walkthrough (Edward, wk20) & Yes & 1\,h & Compresses clarification loop; doesn't scale \\
+C & Plain-language bug report (PM, wk21) & Yes & 0.5\,h & Jargon removal: ``ACK race'' $\to$ ``drone waiting for a message that never comes'' \\
+D & Minimal button UI (pilot, wk22) & Yes & 3\,h & Non-tech audience: 4-button RC thumb-reach; jargon $\to$ plain English \\
+E & FDR speaking script (Demetro, wk16) & Yes & 5\,h & My register $\ne$ his register; good feedback means writing in their voice \\
+F & Complaint letter (course organiser, wk20) & Yes & 6\,h & Non-engineering reader; 6 tone iterations; Robin cut 3 sharp sentences \\
+\bottomrule
+\end{tabularx}
+}
+\vspace{0.3em}
+
+The finding I didn't expect: communication effectiveness isn't about clarity --- it's about \emph{cost asymmetry}. I spent twenty hours on the Markdown doc and Robin spent four integrating. Pair walkthroughs inverted that ratio. The same author-hour budget produced dramatically different behaviour change depending on which method the hours went into.
+
+But the sober closing of 3a: the simulation framework couldn't tell us what it couldn't tell us. It couldn't predict motion blur at 5\,m/s with a real IMX296. It couldn't find the descent stall we accepted as a SITL artefact. It couldn't tell us what GPS timing lag would do to a multi-pass lock. Sim-to-real parity is an argument I can only win about things I modelled, and I was disciplined about that only because I'd been forced to be.
+
+\textbf{3b.}~Against R01--R12, our system hit 12/12 in simulation but 4/12 on real hardware by flight day. Three of the eight gaps were bench-test items, not engineering failures --- coordination was the limiting factor, not effort. I mistook technical leadership for team leadership. They're orthogonal: you can build great tools that don't enable anyone. The evidence: the number of times a teammate other than me edited \texttt{simple\_simulator.py} or \texttt{main.py} was zero. Three mechanisms for my internship. First: every new tool must have a named teammate beneficiary documented \emph{before} it ships --- if I can't name them, I don't start. Second: no file over 500 lines gets refactored solo; I pair on the review, and the signal is whether the partner can edit independently within 48 hours. Third: two hours per week of explicit teaching, graded not by whether I explained but by whether the teammate completes a task within 48 hours without a second question.

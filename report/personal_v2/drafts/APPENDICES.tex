@@ -1,0 +1,229 @@
+% =============================================================================
+% D7 APPENDICES — ready to paste into main.tex AFTER \end{body-content}
+% Required packages (add to preamble if not present):
+%   \usepackage{longtable}
+%   \usepackage{array}
+%   \usepackage{booktabs}
+%   \usepackage{graphicx}
+%   \usepackage{xcolor}
+%   \usepackage{makecell}
+%   \usepackage[table]{xcolor}  % for \rowcolors
+%   \usepackage{pdflscape}      % optional, for landscape rubric matrix
+% =============================================================================
+
+\appendix
+\renewcommand{\thesection}{\Alph{section}}
+\setcounter{section}{0}
+
+% ---- Small helpers for compact appendix tables -------------------------------
+\newcommand{\apxhead}[1]{\section*{Appendix \thesection: #1}\addcontentsline{toc}{section}{Appendix \thesection: #1}\refstepcounter{section}}
+% Usage: \apxhead{Title}  (auto-increments A, B, C, D)
+
+% =============================================================================
+% APPENDIX A — Development Actions Log
+% Supports: Bristol Insight 70+ ("implement an effective programme of self-dev")
+%           AHEP4 M16.d-own (self-evaluation with cause + lesson)
+% =============================================================================
+\apxhead{Development Actions Log}
+
+\noindent\textit{Referenced from §1.c, §3.a, §3.b. Each row is a gap I identified in
+my own practice, the action I took to close it, and the measurable outcome. Commit
+hashes are on the \texttt{MainWorking4} branch.}
+
+\vspace{0.5em}
+\footnotesize
+\rowcolors{2}{gray!6}{white}
+\begin{longtable}{@{}p{1.4cm} p{3.2cm} p{4.5cm} p{4.2cm} p{2.4cm}@{}}
+\toprule
+\textbf{Date} & \textbf{Gap identified} & \textbf{Action taken} & \textbf{Outcome / measure} & \textbf{Evidence} \\
+\midrule
+\endhead
+2026-02-17 & Camera colours wrong after ISP tuning, hours lost on AWB/gains & Systematic test of all 6 channel permutations; documented IMX296 BGR quirk in \texttt{MEMORY.md} so nobody repeats it & Root cause found in 40\,min once permutation test ran; 10 files fixed in one commit & SESSION\_ARCHIVE.md 2026-02-17 pt 2 \\
+2026-02-17 & \texttt{tflite-runtime} broken on Py 3.13; Pi platform blocked & Migrated import chain to \texttt{ai-edge-litert}; added to \texttt{requirements\_pi.txt} & Entire Pi platform unblocked for the team & SESSION\_ARCHIVE.md 2026-02-17 \\
+2026-03-09 & Flight tests not ordered by risk; team skipping steps & Reorganised \texttt{tests/flight/} as a numbered ladder \texttt{0a}$\rightarrow$\texttt{4}; wrote reusable pattern to \texttt{memory/testing-pattern.md} & ``Never skip a step'' rule adopted by team; 6 gap-fill tests added one session later & CLAUDE.md Session 2026-03-09 \\
+2026-03-11 & New sessions kept re-reading 2{,}500-line files & Built blueprint system: \texttt{docs/*\_blueprint.md} with line ranges for every $>$500-line file & Session start-up dropped from $\sim$15\,min re-scan to $\sim$2\,min blueprint read & \texttt{docs/main\_blueprint.md}, etc. \\
+2026-03-11 & PuTTY / headless Pi had no way to confirm a detection & Added terminal input thread + \texttt{/cmd?key=} HTTP endpoint + browser buttons in one session & Y/N/M input works from three parallel channels; no code rewrite on switch to SSH & main.py headless support \\
+2026-03-11 & FOV hard-coded wrong (73°) for cropped DJI video & Built \texttt{tools/fov\_calibrate\_video.py}; clicked dummy at 9 altitudes & 54.4° HFOV derived; dummy height reads 1.7–1.9\,m at all altitudes (ground truth 1.8\,m) & Commit \texttt{fbc9a99} \\
+2026-03-11 & Ideas forgotten between sessions & Introduced \texttt{brain-dump.md} (append-only) and \texttt{NICE\_TO\_HAVE.md} (impact/effort scored) & Zero ideas lost across 45\,+ sessions; backlog prioritised & BOOTSTRAP.md adoption \\
+2026-03-16 & Synthetic-only dataset over-fit to clean map & Built \texttt{generate\_dataset\_v2.py}: 300 syn + 16 real + 50 negatives at native 1456$\times$1088 & mAP50 0.87 $\rightarrow$ 0.995; drop-in TFLite replacement & \texttt{cv\_models/sar\_v2\_1088/} \\
+2026-03-20 & \texttt{main.py} at 1411 lines, untestable & Refactored into 6 modules; added 146 pytest tests & 1411 $\rightarrow$ 754 lines; test coverage from 0 to 146 passing cases & memory/session-2026-03-20.md \\
+2026-03-30 & Detection boxes drawn off-screen on Pi & Diagnosed pixel-vs-normalised coord mismatch; added \texttt{PIXEL\_COORD\_THRESHOLD} check & Boxes rendered correctly; unblocked Pi demo & Commit \texttt{3d62e6a} \\
+2026-03-30 & GPS estimate $\sim$100\,m off target & Diagnosed double-scaling in \texttt{passive\_watch.py}; fixed overlay and normalisation in two commits & Error dropped from $\sim$100\,m to within CEP50 of $\sim$2\,m & Commits \texttt{7eb7cc8}, \texttt{297aab2} \\
+2026-03-31 & Could not explain CV pipeline verbally at reviews & Wrote \texttt{docs/VISION\_PIPELINE\_FOR\_COLLEAGUE.md} (2{,}400 words) for Robin & Robin deployed the model independently on 4 Apr without further help & See Appendix~G \\
+2026-04-03 & No traceability between brief requirements (R01–R12) and code & Walked the brief requirement-by-requirement; closed 6 gaps (geofence, alt cap, TOL check, land distance, detection photos, LICENSE) & All 12 requirements met in simulation; gap to hardware isolated to flight-day issue & Commit \texttt{ce5c036} \\
+2026-04-03 & No way to assess my own architecture objectively & Ran a modularity audit scoring every module 0–5 & \texttt{vision.py} 4.5 (strongest); \texttt{main.py} 3.0 (flagged for refactor that I then performed 2026-03-20) & \texttt{docs/MODULARITY\_AUDIT.md} \\
+2026-04-03 & Report claims outran implementation (sim vs real) & Honesty audit of my own report; 3 wrong claims corrected pre-submission & Sim 7.7/10, Real 2.1/10 — scored and published & Commits \texttt{62a8136}, \texttt{77f0238} \\
+\bottomrule
+\end{longtable}
+\normalsize
+
+\noindent\textit{Pattern: every row follows \emph{identify gap $\rightarrow$ act $\rightarrow$
+measure outcome}. Rows 3, 4, 9, 14 (testing ladder, blueprints, refactor, modularity
+audit) are meta-work improving how I \emph{work}, not just what I produce. This is the
+``effective programme of self-development'' evidence required for Bristol Insight 70+.}
+
+\newpage
+% =============================================================================
+% APPENDIX B (labelled D in rationale) — Rubric Coverage Map
+% Supports: AHEP4 M16/M17 full coverage + Bristol Logical Argument 60+
+% =============================================================================
+\apxhead{Rubric Coverage Map}
+
+\noindent\textit{Referenced once from the conclusion. Cells point to the body
+paragraph that carries the load. ``\checkmark'' = directly evidenced; ``$\circ$'' =
+supporting evidence. Body references use the brief's 10-question numbering.}
+
+\vspace{0.5em}
+\scriptsize
+\renewcommand{\arraystretch}{1.15}
+\rowcolors{2}{gray!6}{white}
+\begin{center}
+\begin{tabular}{@{}p{3.1cm} c c c c c c c c c@{}}
+\toprule
+& \multicolumn{4}{c}{\textbf{AHEP4 M16 Teamwork}} & \multicolumn{4}{c}{\textbf{AHEP4 M17 Communication}} & \textbf{Bristol} \\
+\cmidrule(lr){2-5}\cmidrule(lr){6-9}
+\textbf{Brief question} & \rotatebox{60}{\textbf{a indiv}} & \rotatebox{60}{\textbf{b member}} & \rotatebox{60}{\textbf{c leader}} & \rotatebox{60}{\textbf{d evaluate}} & \rotatebox{60}{\textbf{a complex}} & \rotatebox{60}{\textbf{b technical}} & \rotatebox{60}{\textbf{c non-tech}} & \rotatebox{60}{\textbf{d evaluate}} & \textbf{criteria hit} \\
+\midrule
+\textbf{1a Roles/resp.} (§1.a) & \checkmark & $\circ$ & $\circ$ & & $\circ$ & & & & Teamwork 60+ \\
+\textbf{1b Proud of} (§1.b)    & \checkmark & & & $\circ$ & \checkmark & \checkmark & & & Specialist / Insight \\
+\textbf{1c Future focus} (§1.c) & & & & \checkmark & & & & $\circ$ & Insight 70+ \\
+\textbf{2a Team structure} (§2.a) & & \checkmark & $\circ$ & & & & & & Teamwork 60+ \\
+\textbf{2b Most impactful} (§2.b) & & \checkmark & & \checkmark & & & & & M16.d team \\
+\textbf{2c What to change} (§2.c) & & & & \checkmark & & & & $\circ$ & Insight + Decision 70+ \\
+\textbf{3a How I drove forward} (§3.a) & \checkmark & \checkmark & $\circ$ & \checkmark & \checkmark & \checkmark & & \checkmark & All 4 Level-7 gates \\
+\textbf{3b Add/re-focus} (§3.b) & & & & \checkmark & & & & \checkmark & Insight + M17.d \\
+\textbf{4a Others helped me} (§4.a) & & \checkmark & & $\circ$ & & \checkmark & & & Teamwork recognition \\
+\textbf{4b I helped others} (§4.b) & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & Insight 80 (peer-dev) \\
+\bottomrule
+\end{tabular}
+\end{center}
+\normalsize
+\renewcommand{\arraystretch}{1.0}
+
+\vspace{0.5em}
+\noindent\textbf{Coverage test — every Master's increment clause is landed:}
+
+\begin{itemize}\setlength\itemsep{0pt}
+  \item \textbf{M16.d (evaluate own \& team performance)} — §1.c, §2.b, §2.c, §3.a, §3.b, §4.b\ (6 paragraphs with criterion + judgement + cause + lesson)
+  \item \textbf{M17.c (non-technical audience)} — §4.b + Appendix~F panel 5 (public dashboard)
+  \item \textbf{M17.d (evaluate effectiveness of methods)} — §3.a, §3.b, §4.b
+  \item \textbf{Bristol Teamwork 70+ (conflict management)} — §2.b (complaint letter episode)
+  \item \textbf{Bristol Insight 80 (peer feedback)} — §4.b (Robin onboarding docs, Demetro slide scripts)
+  \item \textbf{Bristol Communication 60+ (wide range of media)} — Appendix~F (6 media types)
+  \item \textbf{Bristol Decision-making 70+ (evidence-based under pressure)} — §2.c (flight cancellations, pivot to simulation)
+\end{itemize}
+
+\noindent\textit{Alternative-perspective note: §2.c explicitly considers the counter-reading
+(``one reading is that the flight cancellations wasted the project; the alternative I
+adopt is that they forced a simulation-first discipline we would not otherwise have
+built.'') This addresses the Logical Argument 60+ descriptor.}
+
+\newpage
+% =============================================================================
+% APPENDIX C (F in rationale) — Media / Artefact Grid
+% Supports: Bristol Communication 60+ (wide range of media)
+% =============================================================================
+\apxhead{Artefact and Media Gallery}
+
+\noindent\textit{Referenced throughout §3 and §4. Six artefacts across five distinct
+media types, evidencing the ``wide range of media'' clause of the Bristol Communication
+60+ descriptor. Captions identify the audience and the evaluation criterion used.}
+
+\vspace{0.5em}
+
+% 2x3 grid of figures --------------------------------------------------------
+\begin{figure}[h!]
+\centering
+\begin{minipage}[t]{0.48\textwidth}
+  \centering
+  % PLACEHOLDER: screenshot of pi_flight.py or passive_watch.py browser UI
+  \fbox{\rule{0pt}{4cm}\rule{\linewidth}{0pt}}
+  % \includegraphics[width=\linewidth]{figs/appendix_f/ground_station.png}
+  \caption*{\footnotesize\textbf{F1. Web ground station} (\texttt{pi\_flight.py}). Technical audience: Robin during integration testing. Method: MJPEG stream + command buttons accessible from any browser on the field LAN. Evaluation: produced zero clarification questions on first use --- see §3.a.}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.48\textwidth}
+  \centering
+  \fbox{\rule{0pt}{4cm}\rule{\linewidth}{0pt}}
+  % \includegraphics[width=\linewidth]{figs/appendix_f/god_view.png}
+  \caption*{\footnotesize\textbf{F2. ``God view'' simulator panel.} Technical audience: teammates and reviewers. Shows drone position, lawnmower coverage, SSSI no-fly zone and target estimates on the KML map. Pre-scaling optimisation reduced memory bandwidth 94\% (commit \texttt{374a462}).}
+\end{minipage}
+\end{figure}
+
+\begin{figure}[h!]
+\centering
+\begin{minipage}[t]{0.48\textwidth}
+  \centering
+  \fbox{\rule{0pt}{4cm}\rule{\linewidth}{0pt}}
+  % \includegraphics[width=\linewidth]{figs/appendix_f/simulator.png}
+  \caption*{\footnotesize\textbf{F3. Interactive simulator} (\texttt{simple\_simulator.py}, 2508 lines). Mixed audience: myself (dev), teammates (demo). Keyboard-driven flight over satellite imagery, GPS drift and camera shake simulated. Used for every body claim in §1.b.}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.48\textwidth}
+  \centering
+  \fbox{\rule{0pt}{4cm}\rule{\linewidth}{0pt}}
+  % \includegraphics[width=\linewidth]{figs/appendix_f/dataset_samples.png}
+  \caption*{\footnotesize\textbf{F4. Training dataset samples} (\texttt{dataset\_v2}, 366 images). Technical audience: Colab trainer and future retrainers. Mixes synthetic composites, real DJI frames and negatives at 1456$\times$1088 --- authoring doc in \texttt{docs/TRAINING\_GUIDE.md}.}
+\end{minipage}
+\end{figure}
+
+\begin{figure}[h!]
+\centering
+\begin{minipage}[t]{0.48\textwidth}
+  \centering
+  \fbox{\rule{0pt}{4cm}\rule{\linewidth}{0pt}}
+  % \includegraphics[width=\linewidth]{figs/appendix_f/dashboard.png}
+  \caption*{\footnotesize\textbf{F5. Project dashboard (non-technical).} Non-technical audience: prospective operator / external viewer. React app at \texttt{dashboard/}: status as \%complete and RAG, technical detail hidden behind expandable panels. Adaptation: jargon replaced with mission verbs; see §4.b.}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.48\textwidth}
+  \centering
+  \fbox{\rule{0pt}{4cm}\rule{\linewidth}{0pt}}
+  % \includegraphics[width=\linewidth]{figs/appendix_f/field_quick_ref.png}
+  \caption*{\footnotesize\textbf{F6. Field quick reference.} Field audience (no internet): one-page copy-paste commands for the cancelled flight day (\texttt{FIELD\_QUICK\_REF.md}, commit \texttt{12f1c4d}). Evaluation: used by the team on all three subsequent field visits without modification.}
+\end{minipage}
+\end{figure}
+
+\vspace{0.5em}
+\noindent\textit{Media types represented: (1)~written report, (2)~tables,
+(3)~matrix layout, (4)~screenshots, (5)~annotated images, (6)~code/commit citations,
+(7)~live web UI. Seven types $\gg$ the ``2+ distinct media'' floor for Bristol Communication~60+.}
+
+\newpage
+% =============================================================================
+% APPENDIX D (G in rationale) — Named Contribution Map
+% Supports: AHEP4 M16.b (cross-boundary collaboration with named interface)
+%           Bristol Teamwork 60+ (recognising value/contribution of others)
+% =============================================================================
+\apxhead{Named Contribution Map}
+
+\noindent\textit{Referenced throughout §2 and §4. One row per teammate with whom I
+had a sustained interface. The ``interaction artefact'' column is the concrete file
+or channel through which the collaboration happened --- this is the evidence that
+M16.b asks for (``cross-boundary with named interface'').}
+
+\vspace{0.5em}
+\footnotesize
+\rowcolors{2}{gray!6}{white}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}p{1.8cm} p{4.0cm} p{4.0cm} p{4.0cm}@{}}
+\toprule
+\textbf{Teammate} & \textbf{What they owned} & \textbf{What I provided} & \textbf{Interaction artefact / evidence} \\
+\midrule
+\textbf{Robin} & Mission flight script and state machine on the Pi (flight only, no camera) & \texttt{passive\_watch.py} with \texttt{--robin} flag, HTTP \texttt{cv\_mode} polling, two-image output, auto-clear SMART cycle, and a dedicated README with JSON schema and parse examples & Commits \texttt{a5b1ab7}, \texttt{885cee4}, \texttt{36b6069}; \texttt{docs/COLLEAGUE\_CHECKLIST.md}; \texttt{docs/VISION\_PIPELINE\_FOR\_COLLEAGUE.md} (2{,}400\,words); \texttt{docs/DESIGN\_DECISIONS.md:107--109} (split of responsibilities) \\
+\textbf{Demetro} & FDR presentation delivery (two full-screen slides at the final design review) & Authored the slides, wrote and polished the speaking scripts ($\sim$465\,words, 3.1\,min), added a teleprompter sidebar, iterated 4--5 times on wording for his delivery & Commits \texttt{32fb0c5}, \texttt{b2a9cd4}, \texttt{ba667f2}, \texttt{9b826f8}, \texttt{7920e5a}, \texttt{794ef5c}; \texttt{presentation/demetro\_slides.html} \\
+\textbf{Zian} & Contribution~[PLACEHOLDER: role confirmed by user; raw material indicates a \texttt{Zian/} working directory but role not documented in code history] & [PLACEHOLDER: user to complete with one specific interface / handoff] & [PLACEHOLDER] \\
+\textbf{Sid} (technical assistant) & Flight-day support and the single DJI training video used for model v2 retraining & Returned a calibrated FOV (54.4° HFOV), labelled dataset and retrained model back to the wider team toolchain & \texttt{tools/fov\_calibrate\_video.py} 9-sample sweep; \texttt{cv\_models/sar\_v2\_1088/} \\
+\textbf{Whole team} & Raising the hardware/flight-day issue with the course organiser & Drafted, iterated (six revisions: commits \texttt{26e3255, f3401e4, d946838, 5af87d0, 847518e, 4b0fd91}) and led delivery of a measured, factual clarification letter explicitly avoiding personal blame and explicitly considering knock-on effects on the green team's drone & \texttt{docs/COMPLAINT\_LETTER.md} (incl.\ appended chat history as evidence) \\
+\bottomrule
+\end{tabular}
+\renewcommand{\arraystretch}{1.0}
+\normalsize
+
+\vspace{0.5em}
+\noindent\textit{This map deliberately avoids claiming leadership titles. The language
+is ``what they owned / what I provided'' --- ownership without over-claim, per the
+M16.c threshold test. The Robin and Demetro rows both evidence peer-development
+(writing docs and speaking scripts that improved a teammate's delivery), which is the
+Bristol Insight 80-band clause.}
+
+% =============================================================================
+% End of Appendices
+% =============================================================================

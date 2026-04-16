@@ -1,0 +1,66 @@
+\documentclass[11pt,a4paper]{article}
+
+% --- Encoding & fonts ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+
+% --- Geometry / spacing ---
+\usepackage[top=1.6cm,bottom=1.6cm,left=1.8cm,right=1.8cm]{geometry}
+\usepackage{parskip}
+\setlength{\parskip}{0.25em}
+\setlength{\parindent}{0pt}
+\linespread{1.02}
+
+% --- Sections (compact) ---
+\usepackage[compact]{titlesec}
+\titleformat{\section}{\normalfont\large\bfseries}{}{0pt}{}
+\titlespacing*{\section}{0pt}{0.6em}{0.3em}
+\titleformat{\subsection}{\normalfont\normalsize\bfseries\itshape}{}{0pt}{}
+\titlespacing*{\subsection}{0pt}{0.5em}{0.2em}
+
+% --- Lists ---
+\usepackage{enumitem}
+\setlist{itemsep=0pt,topsep=2pt,partopsep=0pt}
+
+% --- Tables / graphics / links ---
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{xcolor}
+\definecolor{headblue}{RGB}{0,51,102}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,linkcolor=headblue,urlcolor=headblue,citecolor=headblue}
+
+\begin{document}
+
+% --- Cover page (excluded from body page limit) ---
+\input{cover_page}
+
+% --- Rubric map (assessor navigation aid) ---
+\begin{center}
+{\large\bfseries Rubric Map}
+\end{center}
+\vspace{-0.4em}
+\begin{tabularx}{\textwidth}{@{}l l >{\raggedright\arraybackslash}X l@{}}
+\toprule
+\textbf{Question} & \textbf{Section} & \textbf{Key evidence} & \textbf{Rubric hit} \\
+\midrule
+Q1 My role       & \S1 My role    & Commit \texttt{7eb7cc8} (02:14, 2026-03-31); drift from CV lead to infra owner; wk18 simulator pivot reframed as team repositioning; Hatton L4; internship 48-h signal. & Specialist; Self-awareness \\
+Q2 My team       & \S2 My team    & Kickoff structure, silent wk16 drift, wk17 FSM conflict (\texttt{DESIGN\_DECISIONS.md:107--109}), wk20 PM/complaint-letter conflict. & Team; Decision; M16.c \\
+Q3 My impact     & \S3 My impact  & Full Kolb cycle on sim-first pivot; R01--R12 12/12 sim vs 4/12 real; 1411\,$\to$\,754 refactor, 146 pytests; 6-method comms A--F cost-asymmetry evaluation. & Specialist; Comms; M16.d; M17.d \\
+Q4 My support    & \S4 My support & Edward (mavproxy), Robin (CENTERING timeout + L4 motive), Demetro (FDR register), pilot (jargon + 4-button), Sid (DJI video). & Team; Self-awareness; M17.c \\
+\bottomrule
+\end{tabularx}
+
+\vspace{0.6em}
+
+% --- Body sections ---
+\input{slots/01_my_role}
+\input{slots/02_my_team}
+\input{slots/03_my_impact}
+\input{slots/04_my_support}
+
+\end{document}

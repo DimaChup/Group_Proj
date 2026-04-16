@@ -1,0 +1,29 @@
+% §3 My impact — ALTERNATIVE DRAFT (Kolb deep-dive on main.py refactor)
+% Compare against slots/03_my_impact.tex which uses the simulator story.
+
+\section*{My impact}
+
+\textbf{3a.} My clearest contribution to the team's forward motion was not a single artefact but a change in the \emph{shape} of the codebase that let other people enter it. In the first half of the project I wrote \texttt{main.py} as one 1411-line file with the state machine, the MAVLink loop, the vision callbacks, the geofence, the key handler and the HTTP server all braided together. It ran, and in simulation it flew the mission end-to-end. What I initially framed as a technical triumph --- ``one file, one mind, total control'' --- turned out to be the reason Robin could not meaningfully contribute to the mission logic and why Demetro had to ask me to run every test. The uncomfortable realisation, some time around week 19, was that the file was not a capability: it was a bottleneck with my name on it.
+
+The four development actions below were the ones I can point to as actually moving the team, rather than just moving my own todo list.
+
+\begin{center}
+\small
+\begin{tabular}{@{}p{3.2cm}p{4.4cm}p{4.8cm}@{}}
+\toprule
+\textbf{Action} & \textbf{What I did} & \textbf{Team-forward effect} \\
+\midrule
+\texttt{main.py} refactor (wk 19--20) & 1411$\rightarrow$754 lines, 6 modules, 146 pytest tests & Robin could read \texttt{state\_machine.py} without touching MAVLink \\
+\addlinespace[2pt]
+\texttt{passive\_watch\_2.py} \texttt{--robin} flag & HTTP \texttt{cv\_mode} polling + 2-image output & Robin's script consumed vision over JSON without importing \texttt{vision.py} \\
+\addlinespace[2pt]
+Progressive test ladder \texttt{0a}--\texttt{4} & Numbered bench$\rightarrow$flight sequence, 127 unit tests & Team could agree what ``ready'' meant for each flight day \\
+\addlinespace[2pt]
+Demetro FDR scripts & 465 words of speaking prose, iterated 4--5 times & Demetro presented confidently without rewriting under time pressure \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\emph{Kolb deep-dive --- the refactor as a learning cycle.} I want to walk through one of these properly because it was the first time in this project that I changed not just a file but a belief. \textit{Concrete experience:} in a week-17 session Robin asked me to add a ``stop polling on manual override'' branch to the mission loop. I gave him the line number, he opened \texttt{main.py}, scrolled, and closed it. He said, politely, ``I'll just wait until you have time.'' That was the experience --- a teammate with every technical qualification backing out of the codebase because my architecture had taxed his attention beyond what the change was worth. \textit{Reflective observation:} I had been telling myself the file was fine because \emph{I} could navigate it. But Robin's behaviour was evidence that navigability is not a property of a file, it is a property of the relationship between a file and a reader, and I had optimised for exactly one reader. \textit{Abstract conceptualisation:} the lesson I pulled out was that modular boundaries are not an aesthetic preference --- they are the unit in which team trust is denominated. A file you can onboard a teammate into in twenty minutes is a file a teammate will actually touch. \textit{Active experimentation:} over the following three days I split \texttt{main.py} into six modules (\texttt{state\_machine}, \texttt{navigation}, \texttt{geofence}, \texttt{vision\_interface}, \texttt{mission\_io}, \texttt{overlay}), wrote 146 pytest tests as a contract against regressions, and --- the test that mattered --- asked Robin to add the manual-override branch himself. He opened \texttt{state\_machine.py}, added seven lines, and pushed. I had not explained anything; the shape of the code had done the explaining. That is the moment I stopped treating modularity as engineering hygiene and started treating it as a form of team communication.
+
+\textbf{3b.} In hindsight, the refactor was the right thing done eight weeks late, and I am still uneasy about that. Had I acted on the shape of the file a month earlier, Robin and Demetro would have had a usable mission codebase during the window when it could have changed how we ran the second and third flight days, rather than only the post-hoc reports. What I would add or refocus in future projects is therefore not ``write better code'' --- I know how to do that --- but a \emph{collaboration diagnostic} applied from week one: a recurring fortnightly check where another teammate is asked to make a trivial change to the module I own, and the time they take (or abandon) is logged. The mechanism is deliberately falsifiable: if two teammates in a row take more than thirty minutes to add a three-line change, the module is too heavy regardless of how elegant I think it is. I will carry this out of the project as a permanent rule, because the uncomfortable truth is that I will always drift toward solo ownership under stress, and the only cure I have found so far is a scheduled, external signal that tells me when the drift has become a cost to somebody else.

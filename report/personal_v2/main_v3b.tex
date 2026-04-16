@@ -1,0 +1,66 @@
+\documentclass[11pt,a4paper]{article}
+
+% --- Encoding & fonts ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+
+% --- Geometry / spacing ---
+\usepackage[top=1.8cm,bottom=1.8cm,left=2cm,right=2cm]{geometry}
+\usepackage{parskip}
+\setlength{\parskip}{0.3em}
+\setlength{\parindent}{0pt}
+\linespread{1.05}
+
+% --- Sections (compact) ---
+\usepackage[compact]{titlesec}
+\titleformat{\section}{\normalfont\large\bfseries}{}{0pt}{}
+\titlespacing*{\section}{0pt}{0.6em}{0.3em}
+\titleformat{\subsection}{\normalfont\normalsize\bfseries\itshape}{}{0pt}{}
+\titlespacing*{\subsection}{0pt}{0.5em}{0.2em}
+
+% --- Lists ---
+\usepackage{enumitem}
+\setlist{itemsep=0pt,topsep=2pt,partopsep=0pt}
+
+% --- Tables / graphics / links ---
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{xcolor}
+\definecolor{headblue}{RGB}{0,51,102}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,linkcolor=headblue,urlcolor=headblue,citecolor=headblue}
+
+\begin{document}
+
+% --- Cover page (excluded from body page limit) ---
+\input{drafts/cover_page}
+
+% --- Rubric map (assessor navigation aid) ---
+\begin{center}
+{\large\bfseries Rubric Map}
+\end{center}
+\vspace{-0.4em}
+\begin{tabularx}{\textwidth}{@{}l l X l@{}}
+\toprule
+\textbf{Question} & \textbf{Section} & \textbf{Key evidence} & \textbf{Rubric hit} \\
+\midrule
+Q1 My role       & \S1 My role    & Allocated CV lead vs.\ emergent infra owner; scope-drift mechanism; Kolb reframing of ``trust my hands over a conversation.'' & Specialist; Self-awareness \\
+Q2 My team       & \S2 My team    & Kickoff structure, two drifts, renegotiation (\texttt{DESIGN\_DECISIONS.md:107--109}); cadence vs.\ task-division trade-off. & Team; Decision \\
+Q3 My impact     & \S3 My impact  & Full Kolb cycle; sim-first architecture; 1411\,$\to$\,754-line refactor, 146 pytests; bbox bug \texttt{3d62e6a}. & Specialist; Communication \\
+Q4 My support    & \S4 My support & Edward (mavproxy), Robin (state-machine renegotiation), Demetro (FDR), PM (cadence); specific mechanisms. & Team; Self-awareness \\
+\bottomrule
+\end{tabularx}
+
+\vspace{0.6em}
+
+% --- Body sections ---
+\input{slots/01_my_role}
+\input{slots/02_my_team_alt}
+\input{slots/03_my_impact_alt}
+\input{slots/04_my_support}
+
+\end{document}

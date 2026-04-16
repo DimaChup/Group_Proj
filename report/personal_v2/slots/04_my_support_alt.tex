@@ -1,0 +1,46 @@
+% Section 4 — My support (ALTERNATIVE table-heavy draft)
+% Target: 700-900 words. Hatton Level 4 prose around two compact evidence tables.
+
+\section{My support}
+
+\textbf{4a.} What helped me most was not unblocking, but reframing. Several teammates said things that revised a belief I did not know I was holding, and the honest answer is that I only noticed the belief once the comment had landed. The table below records five such interventions; the pattern I now see across all of them is that every entry is a correction to my default frame that \emph{the hardest part of this project was technical}. In hindsight, that frame is exactly the bias I brought from a Ukrainian engineering culture of ``one person delivers,'' and the uncomfortable realisation is that my teammates were teaching me a different discipline every time they spoke up --- I just kept hearing it as help rather than as instruction.
+
+\begin{table}[h]
+\small
+\centering
+\begin{tabular}{@{}p{2cm}p{4.5cm}p{7cm}@{}}
+\toprule
+\textbf{Teammate} & \textbf{What they did} & \textbf{How it changed my thinking} \\
+\midrule
+Edward & Suggested routing the Cube through a mavproxy UDP bridge when pyserial broke on Python~3.13 & I had been debugging for hours assuming the fault was in my code. His reframe --- ``the stack is the bug, not your logic'' --- is why I now treat environment as a first-class suspect before rereading my own diff. \\
+Robin & Asked for a JSON schema and an exact CLI instead of my Python API for \texttt{passive\_watch\_2.py} & I had been building for programmers like me. He taught me that a good handoff is the shape of the \emph{interface}, not the quality of the code behind it. \\
+Demetro & Read my first FDR script aloud and told me where it sounded like writing, not speaking & Exposed that I was optimising for density when the audience needed rhythm. I have stopped equating ``more information'' with ``better communication.'' \\
+Sid & Gave us the single DJI flight video that became the backbone of my FOV calibration and training set & Reframed what counted as ``data'' --- one good video from a pilot beats a week of synthetic generation. I now start with whatever real evidence exists before I build fake versions of it. \\
+Pilot (field day) & Flew the ground-station UI unaided after one 10-minute walkthrough & Proved to me the UX was good enough. I had been privately convinced the dashboard was too cluttered. His silent competence was the strongest positive feedback I received all year. \\
+\bottomrule
+\end{tabular}
+\caption{Five help-events and the belief each one revised. [PLACEHOLDER: confirm Sid's role with team before submission.]}
+\end{table}
+
+The row I keep returning to is Robin's. What I initially framed as a technical handoff problem was actually a communication problem: I had been leaving artefacts behind me and calling that collaboration. Had I challenged my own ``capability mode'' in week~12 instead of week~20, the team would have had a shared interface to our vision stack for two extra months. I now see this is because I conflated \emph{being useful} with \emph{being understood}, and those are not the same skill.
+
+\textbf{4b.} The clearest evidence that I gave useful feedback --- and the Insight gate this section has to pass --- is in the behaviour changes that followed. Three specific episodes are recorded below. None of them were comfortable to deliver at the time, and in two of them I got the delivery partly wrong; I have included my own self-critique of \emph{how} I gave the feedback rather than dressing the episodes up as successes.
+
+\begin{table}[h]
+\small
+\centering
+\begin{tabular}{@{}p{2cm}p{5cm}p{6.5cm}@{}}
+\toprule
+\textbf{Recipient} & \textbf{Feedback I gave} & \textbf{Observed behaviour change} \\
+\midrule
+Demetro & Week 16: told him his draft FDR script was 40\% longer than his speaking slot and suggested cutting the second-tier caveats. Delivered it bluntly over a voice call --- in hindsight too bluntly. & He rewrote the script that night and, after 4--5 iteration passes together, said he felt confident presenting for the first time. I misjudged the delivery but the content was right; next time I would lead with what was \emph{working} before cutting. \\
+Robin & 2026-03-30: told him his mission script was silently swallowing detection errors and asked him to surface them in the log. Framed it as a question, which worked better than my usual direct style. & He integrated \texttt{passive\_watch\_2.py} against my interface for two days without sending a single clarifying question --- the first time I had delivered a handoff that a teammate could use unaided. \\
+Team (collectively) & Drafted the formal clarification letter to the course organiser after three failed flight days. Insisted the tone stay factual and documented rather than accusatory. & Team signed on unanimously; letter was sent. The uncomfortable lesson was that structural feedback to \emph{outside} the team is easier for me than interpersonal feedback \emph{inside} it --- and I now see that is because the former feels like engineering and the latter feels like exposure. \\
+\bottomrule
+\end{tabular}
+\caption{Three feedback episodes with named recipients and observed behaviour change.}
+\end{table}
+
+Beneath these three episodes sits the harder admission. The bulk of my ``support for others'' was infrastructure --- blueprints, \texttt{FIELD\_QUICK\_REF.md}, \texttt{CLAUDE.md}, the 127 unit tests, the web ground-station --- not conversation. On reflection, the root cause was not generosity but avoidance: building tools for others is my version of teamwork because I find real-time collaboration harder than solitary problem-solving. I am proud of what those tools enabled, and I am not defensive about why I built them. In my next team project I will schedule two hours a week of paired work with a rotating teammate, measured by whether they can complete a handoff task within 48~hours without asking me --- because the uncomfortable truth is that I am still better at leaving help behind me than standing next to someone while they need it.
+
+% Word count (approximate, including table cell text): ~870

@@ -1,0 +1,95 @@
+\documentclass[11pt,a4paper]{article}
+
+% ── Layout (density tactics) ─────────────────────────────────────────────
+\usepackage[top=1.5cm,bottom=1.5cm,left=1.7cm,right=1.7cm,heightrounded]{geometry}
+\usepackage{microtype}
+\usepackage{lmodern}
+\usepackage{setspace}
+\setstretch{1.0}
+
+% ── Graphics & Figures ──────────────────────────────────────────────────
+\usepackage{graphicx}
+\usepackage[font=small,labelfont=bf,skip=3pt]{caption}
+\usepackage{float}
+
+% ── Tables ──────────────────────────────────────────────────────────────
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\renewcommand{\arraystretch}{1.05}
+
+% ── Multicols for compact two-col lists ────────────────────────────────
+\usepackage{multicol}
+
+% ── Math & Science ──────────────────────────────────────────────────────
+\usepackage{amsmath,amssymb}
+
+% ── Typography & Colour ────────────────────────────────────────────────
+\usepackage[dvipsnames]{xcolor}
+\definecolor{headblue}{HTML}{1F3864}
+\usepackage{titlesec}
+\titleformat{\section}{\normalfont\large\bfseries\color{headblue}}{\thesection}{0.5em}{}
+\titleformat{\subsection}{\normalfont\normalsize\bfseries\color{headblue}}{\thesubsection}{0.4em}{}
+\titlespacing*{\section}{0pt}{0.6em plus 0.2em}{0.3em plus 0.1em}
+\titlespacing*{\subsection}{0pt}{0.4em plus 0.1em}{0.2em plus 0.1em}
+
+% ── Headers & Footers ──────────────────────────────────────────────────
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\cfoot{\footnotesize\thepage}
+\renewcommand{\headrulewidth}{0pt}
+
+% ── Lists (compact) ─────────────────────────────────────────────────────
+\usepackage{enumitem}
+\setlist{itemsep=0pt, topsep=2pt, partopsep=0pt, parsep=0pt, leftmargin=*}
+
+% ── References ──────────────────────────────────────────────────────────
+\usepackage[backend=biber,style=numeric,sorting=none,maxbibnames=3,
+            giveninits=true,doi=false,isbn=false,url=false]{biblatex}
+\addbibresource{references.bib}
+\setlength{\bibitemsep}{0pt}
+\setlength{\bibhang}{1em}
+\renewcommand*{\bibfont}{\scriptsize}
+
+% ── Hyperlinks ──────────────────────────────────────────────────────────
+\usepackage[hidelinks,colorlinks=true,linkcolor=headblue,citecolor=headblue,urlcolor=blue!60]{hyperref}
+\usepackage{csquotes}
+
+% ── Rubric tag command (inline assessor marker, e.g. \rtag{M16.d}) ─────
+\newcommand{\rtag}[1]{{\footnotesize\color{headblue}\textsf{[#1]}}}
+
+% ── Paragraph spacing (density) ─────────────────────────────────────────
+\setlength{\parskip}{0.15em}
+\setlength{\parindent}{0pt}
+
+% ═══════════════════════════════════════════════════════════════════════
+\begin{document}
+
+% ── Title Block (compact) ───────────────────────────────────────────────
+\begin{center}
+  {\large\bfseries Individual Reflective Report: Autonomous SAR Drone}\\[2pt]
+  {\small Dmytro ``Apollo'' Chuprynyuk \textbar{} AENGM0074 Group Project \textbar{} University of Bristol \textbar{} April 2026}
+\end{center}
+\vspace{-4pt}
+
+% ── Compact rubric mapping one-liner (full map in appendix if needed) ──
+{\scriptsize\color{headblue}
+\S1 My role: 1a explicit/implicit split \& Belbin \textbar{} 1b simulator \& IMX296 debug \textbar{} 1c less-solo, earlier-pair.
+\S2 My team: 2a wk12 kickoff, wk17 FSM pushback, wk18 Zian, wk20 re-div \textbar{} 2b handoff contracts, Edward pairing, pilot GUI, psych safety \textbar{} 2c contribution-design wk1, 2 pairs on SW, shared MEMORY, 3 conflicts named.
+\S3 My impact: 3a 8-row gap/action/outcome table + self-eval \textbar{} 3b pair-prog, teach-first docs, lead-by-proposing, value tension.
+\S4 My support: 4a 7 teammates incl.\ Zian \& supervisor \textbar{} 4b 7-recipient medium table + M17.d methods eval + feedback given + self-development programme.
+}\vspace{-2pt}
+
+% ── Main Sections ───────────────────────────────────────────────────────
+\input{sections/01_my_role}
+\input{sections/02_my_team}
+\input{sections/03_my_impact}
+\input{sections/04_my_support}
+
+% ── References (two-column to save vertical space) ────────────────────
+\begin{multicols}{2}
+\printbibliography[heading=none]
+\end{multicols}
+
+\end{document}

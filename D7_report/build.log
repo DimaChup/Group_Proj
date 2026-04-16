@@ -1,0 +1,279 @@
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex.fmt)
+ restricted \write18 enabled.
+entering extended mode
+(main.tex
+LaTeX2e <2025-11-01>
+L3 programming layer <2026-01-19>
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/base\article.cls
+Document Class: article 2025/01/22 v1.4n Standard LaTeX document class
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/base\size11.clo))
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/base\inputenc.sty)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/base\fontenc.sty)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/lm\lmodern.sty)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/microtype\microtype.s
+ty
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/graphics\keyval.sty)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/etoolbox\etoolbox.sty
+)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/microtype\microtype-p
+dftex.def)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/microtype\microtype.c
+fg))
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/geometry\geometry.sty
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/iftex\ifvtex.sty
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/iftex\iftex.sty))
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/geometry\geometry.cfg
+))
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/parskip\parskip.sty
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/kvoptions\kvoptions.s
+ty
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/ltxcmds\ltxcmds.sty
+)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/kvsetkeys\kvsetkeys.s
+ty)))
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/titlesec\titlesec.sty
+)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/enumitem\enumitem.sty
+) (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/tools\tabularx.sty
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/tools\array.sty))
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/booktabs\booktabs.sty
+) (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/xcolor\xcolor.sty
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/graphics-cfg\color.cf
+g)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/graphics-def\pdftex.d
+ef)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/graphics\mathcolor.lt
+x))
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/graphics\graphicx.sty
+
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/graphics\graphics.sty
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/graphics\trig.sty)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/graphics-cfg\graphics
+.cfg)))
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\hyperref.sty
+
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/kvdefinekeys\kvdefi
+nekeys.sty)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pdfescape\pdfescape
+.sty
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pdftexcmds\pdftexcm
+ds.sty
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/infwarerr\infwarerr
+.sty)))
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/hycolor\hycolor.sty)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\nameref.sty
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/refcount\refcount.sty
+)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/gettitlestring\gett
+itlestring.sty))
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/stringenc\stringenc
+.sty)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\pd1enc.def)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/intcalc\intcalc.sty
+) (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\puenc.def)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/url\url.sty)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/bitset\bitset.sty
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/bigintcalc\bigintca
+lc.sty)))
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\hpdftex.def
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/rerunfilecheck\rerunf
+ilecheck.sty
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/uniquecounter\uniqu
+ecounter.sty)))
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/lm\t1lmr.fd)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/l3backend\l3backend-p
+dftex.def)
+No file main.aux.
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/microtype\mt-cmr.cfg)
+
+*geometry* driver: auto-detecting
+*geometry* detected driver: pdftex
+
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/context/base/mkii\supp-pdf.
+mkii
+[Loading MPS to PDF converter (version 2006.09.02).]
+)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/epstopdf-pkg\epstopdf
+-base.sty
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/00miktex\epstopdf-sys
+.cfg)) (cover_page.tex
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/lm\ot1lmr.fd)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/lm\omllmm.fd)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/lm\omslmsy.fd)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/lm\omxlmex.fd)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/lm\t1lmtt.fd)
+[1{C:/Users/Bristol/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map}{C:/Users/
+Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-ec.enc}{C:/Users/Br
+istol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathsy.enc}])
+Overfull \hbox (11.08765pt too wide) in paragraph at lines 56--56
+\T1/lmr/m/n/10.95 (-20) (\T1/lmtt/m/n/10.95 DESIGN_DECISIONS.md:107--109\T1/lmr
+/m/n/10.95 (-20) ), 
+(slots/01_my_role.tex
+pdfTeX warning (ext4): destination with the same identifier (name{page.1}) has 
+been already used, duplicate ignored
+<to be read again> 
+                   \relax 
+l.6 
+     [1]) (slots/02_my_team.tex [2]) (slots/03_my_impact.tex [3])
+(slots/04_my_support.tex [4]
+Overfull \hbox (1.79642pt too wide) in paragraph at lines 17--18
+[]\T1/lmr/m/n/10.95 (-20) The qui-eter half of this work was in-fras-truc-ture 
+for the team's mem-ory rather than its code: \T1/lmtt/m/n/10.95 brain-dump.md\T
+1/lmr/m/n/10.95 (-20) ,
+) [5] (main.aux)
+
+Package rerunfilecheck Warning: File `main.out' has changed.
+(rerunfilecheck)                Rerun to get outlines right
+(rerunfilecheck)                or use package `bookmark'.
+
+ )
+(see the transcript file for additional information)<C:/Users/Bristol/AppData/L
+ocal/Programs/MiKTeX/fonts/type1/public/lm/lmbx10.pfb><C:/Users/Bristol/AppData
+/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx12.pfb><C:/Users/Bristol/AppDa
+ta/Local/Programs/MiKTeX/fonts/type1/public/lm/lmcsc10.pfb><C:/Users/Bristol/Ap
+pData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr10.pfb><C:/Users/Bristol/A
+ppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr12.pfb><C:/Users/Bristol/
+AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr9.pfb><C:/Users/Bristol/
+AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmri10.pfb><C:/Users/Bristo
+l/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmri12.pfb><C:/Users/Bris
+tol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmri9.pfb><C:/Users/Bri
+stol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy10.pfb><C:/Users/B
+ristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtt10.pfb>
+Output written on main.pdf (6 pages, 296787 bytes).
+Transcript written on main.log.
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex.fmt)
+ restricted \write18 enabled.
+entering extended mode
+(main.tex
+LaTeX2e <2025-11-01>
+L3 programming layer <2026-01-19>
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/base\article.cls
+Document Class: article 2025/01/22 v1.4n Standard LaTeX document class
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/base\size11.clo))
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/base\inputenc.sty)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/base\fontenc.sty)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/lm\lmodern.sty)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/microtype\microtype.s
+ty
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/graphics\keyval.sty)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/etoolbox\etoolbox.sty
+)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/microtype\microtype-p
+dftex.def)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/microtype\microtype.c
+fg))
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/geometry\geometry.sty
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/iftex\ifvtex.sty
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/iftex\iftex.sty))
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/geometry\geometry.cfg
+))
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/parskip\parskip.sty
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/kvoptions\kvoptions.s
+ty
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/ltxcmds\ltxcmds.sty
+)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/kvsetkeys\kvsetkeys.s
+ty)))
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/titlesec\titlesec.sty
+)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/enumitem\enumitem.sty
+) (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/tools\tabularx.sty
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/tools\array.sty))
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/booktabs\booktabs.sty
+) (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/xcolor\xcolor.sty
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/graphics-cfg\color.cf
+g)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/graphics-def\pdftex.d
+ef)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/graphics\mathcolor.lt
+x))
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/graphics\graphicx.sty
+
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/graphics\graphics.sty
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/graphics\trig.sty)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/graphics-cfg\graphics
+.cfg)))
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\hyperref.sty
+
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/kvdefinekeys\kvdefi
+nekeys.sty)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pdfescape\pdfescape
+.sty
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/pdftexcmds\pdftexcm
+ds.sty
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/infwarerr\infwarerr
+.sty)))
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/hycolor\hycolor.sty)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\nameref.sty
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/refcount\refcount.sty
+)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/gettitlestring\gett
+itlestring.sty))
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/stringenc\stringenc
+.sty)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\pd1enc.def)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/intcalc\intcalc.sty
+) (C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\puenc.def)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/url\url.sty)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/bitset\bitset.sty
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/bigintcalc\bigintca
+lc.sty)))
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\hpdftex.def
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/rerunfilecheck\rerunf
+ilecheck.sty
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/generic/uniquecounter\uniqu
+ecounter.sty)))
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/lm\t1lmr.fd)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/l3backend\l3backend-p
+dftex.def) (main.aux)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/microtype\mt-cmr.cfg)
+
+*geometry* driver: auto-detecting
+*geometry* detected driver: pdftex
+
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/context/base/mkii\supp-pdf.
+mkii
+[Loading MPS to PDF converter (version 2006.09.02).]
+)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/epstopdf-pkg\epstopdf
+-base.sty
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/00miktex\epstopdf-sys
+.cfg)) (main.out) (main.out) (cover_page.tex
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/lm\ot1lmr.fd)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/lm\omllmm.fd)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/lm\omslmsy.fd)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/lm\omxlmex.fd)
+(C:\Users\Bristol\AppData\Local\Programs\MiKTeX\tex/latex/lm\t1lmtt.fd)
+[1{C:/Users/Bristol/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map}{C:/Users/
+Bristol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-ec.enc}{C:/Users/Br
+istol/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathsy.enc}])
+Overfull \hbox (11.08765pt too wide) in paragraph at lines 56--56
+\T1/lmr/m/n/10.95 (-20) (\T1/lmtt/m/n/10.95 DESIGN_DECISIONS.md:107--109\T1/lmr
+/m/n/10.95 (-20) ), 
+(slots/01_my_role.tex
+pdfTeX warning (ext4): destination with the same identifier (name{page.1}) has 
+been already used, duplicate ignored
+<to be read again> 
+                   \relax 
+l.6 
+     [1]) (slots/02_my_team.tex [2]) (slots/03_my_impact.tex [3])
+(slots/04_my_support.tex [4]
+Overfull \hbox (1.79642pt too wide) in paragraph at lines 17--18
+[]\T1/lmr/m/n/10.95 (-20) The qui-eter half of this work was in-fras-truc-ture 
+for the team's mem-ory rather than its code: \T1/lmtt/m/n/10.95 brain-dump.md\T
+1/lmr/m/n/10.95 (-20) ,
+) [5] (main.aux) )
+(see the transcript file for additional information)<C:/Users/Bristol/AppData/L
+ocal/Programs/MiKTeX/fonts/type1/public/lm/lmbx10.pfb><C:/Users/Bristol/AppData
+/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx12.pfb><C:/Users/Bristol/AppDa
+ta/Local/Programs/MiKTeX/fonts/type1/public/lm/lmcsc10.pfb><C:/Users/Bristol/Ap
+pData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr10.pfb><C:/Users/Bristol/A
+ppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr12.pfb><C:/Users/Bristol/
+AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr9.pfb><C:/Users/Bristol/
+AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmri10.pfb><C:/Users/Bristo
+l/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmri12.pfb><C:/Users/Bris
+tol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmri9.pfb><C:/Users/Bri
+stol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy10.pfb><C:/Users/B
+ristol/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtt10.pfb>
+Output written on main.pdf (6 pages, 297955 bytes).
+Transcript written on main.log.

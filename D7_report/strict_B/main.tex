@@ -1,0 +1,71 @@
+\documentclass[11pt,a4paper]{article}
+
+% --- Encoding & fonts ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+
+% --- Geometry / spacing ---
+\usepackage[top=1.6cm,bottom=1.6cm,left=1.8cm,right=1.8cm]{geometry}
+\usepackage{parskip}
+\setlength{\parskip}{0.2em}
+\setlength{\parindent}{0pt}
+\linespread{1.02}
+
+% --- Sections (compact) ---
+\usepackage[compact]{titlesec}
+\titleformat{\section}{\normalfont\large\bfseries}{}{0pt}{}
+\titlespacing*{\section}{0pt}{0.5em}{0.2em}
+\titleformat{\subsection}{\normalfont\normalsize\bfseries\itshape}{}{0pt}{}
+\titlespacing*{\subsection}{0pt}{0.4em}{0.15em}
+
+% --- Lists ---
+\usepackage{enumitem}
+\setlist{itemsep=0pt,topsep=2pt,partopsep=0pt}
+
+% --- Tables / graphics / links ---
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{xcolor}
+\definecolor{headblue}{RGB}{0,51,102}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,linkcolor=headblue,urlcolor=headblue,citecolor=headblue}
+
+% --- Compact table helper ---
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}
+
+\begin{document}
+
+% ============================================================
+%  RUBRIC MAP — assessor navigation (fits ~6 lines)
+% ============================================================
+\begin{center}
+{\large\bfseries D7 Individual Reflective Report --- Dmytro Chuprynyuk}
+\end{center}
+\vspace{-0.3em}
+
+{\small
+\begin{tabularx}{\textwidth}{@{}l l L l@{}}
+\toprule
+\textbf{Q} & \textbf{Section} & \textbf{Key evidence} & \textbf{Rubric} \\
+\midrule
+1a--c & \S1 My role    & 820+ commits; CV lead $\to$ infra owner; wk18 sim pivot; Sch\"on BGR debug; 48-h handoff signal & Specialist; Self-mgmt \\
+2a--c & \S2 My team    & Tuckman mapping (Table~2); wk17 FSM conflict; wk20 complaint letter; Lencioni trust diagnostic & Team; Decision; M16.c \\
+3a--b & \S3 My impact  & Kolb sim-first cycle; R01--12 traceability; 6-method comms evaluation (Table~3); cost-asymmetry finding & Specialist; M16.d; M17.d \\
+4a--b & \S4 My support & Edward/Robin/Demetro/pilot/Sid named; 3 feedback episodes (Table~4); register lesson; jargon removal & Insight; M17.c \\
+\bottomrule
+\end{tabularx}
+}
+
+\vspace{0.4em}
+
+% --- Body sections ---
+\input{slots/01_my_role}
+\input{slots/02_my_team}
+\input{slots/03_my_impact}
+\input{slots/04_my_support}
+
+\end{document}

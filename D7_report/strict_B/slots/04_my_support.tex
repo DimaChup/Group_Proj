@@ -1,0 +1,54 @@
+\section{My support}
+
+\textbf{4a.}~Four people changed how I worked. A generic thank-you list is a Merit-ceiling move, so I'll name the specific mechanism for each.
+
+\textbf{Edward} is the reason the Cube ever spoke to the Pi. Around wk15 I'd spent a weekend trying to make \texttt{pymavlink} read from \texttt{/dev/ttyAMA0} on Python 3.13. Edward pointed out that \texttt{pyserial} reads are broken on 3.13 and the workaround was a \texttt{mavproxy} UDP bridge. That 40-minute conversation unlocked roughly two weeks of Pi testing. His throwaway remark --- ``just because the test passes on laptop doesn't mean the hardware does'' --- reframed how I thought about simulation fidelity for the rest of the project. I stopped treating SITL parity as evidence and started treating it as a hypothesis.
+
+\textbf{Robin} helped me by refusing to integrate against my first state machine. His wk17 pushback is the reason the \texttt{main.py} refactor happened at all. What I'd framed as a technical disagreement was actually a maintainability one, and I preferred the technical framing because it protected me from noticing I'd built something only I could read. \textbf{Demetro} accepted drafts without turning collaboration into a status contest. \textbf{Sid} delivered the single DJI flight video with SRT telemetry that anchored FOV calibration and the retrained model at mAP50\,=\,0.995.
+
+\textbf{4b.}~Three specific feedback episodes. ``I gave constructive feedback when needed'' is the single most common Merit-ceiling sentence in UK engineering reflection, so I won't write it --- I'll show the evidence instead.
+
+% --- TABLE 4: Feedback given ---
+\vspace{0.3em}
+{\small
+\textbf{Table 4: Feedback given, with behaviour change evidence}
+
+\begin{tabularx}{\textwidth}{@{}l L L L@{}}
+\toprule
+\textbf{Recipient} & \textbf{What I said/did} & \textbf{Their reaction} & \textbf{Behaviour change observed} \\
+\midrule
+Demetro (wk16) & Built 2 FDR slides + 465-word speaking scripts; iterated 4--5 times. On 3rd pass he pushed back: wording wasn't how he spoke & Delivered the slides confidently on FDR day, in his own cadence & A week later prepared his own next slides using specific numbers instead of adjectives --- a habit I'd modelled in draft 3 \\
+Robin (wk19) & Sent Teams message naming exact variable (\texttt{consecutive\_lost}) and line in his flight script; suggested time-based timeout with ascend-and-retry fallback & Fixed it same afternoon & A week later pulled me aside: he'd caught a similar timeout bug in another module because he was ``looking for that shape of bug'' \\
+Pilot (wk22) & Showed first \texttt{pi\_flight.py} dashboard; he said button grid too dense to hit while holding RC transmitter. Proposed 4-button set (Y/N/M/L) mapped to thumb-reach & Read rewritten card aloud in one pass without pause & During field-day dry runs, triggered abort 3 times without looking at the screen \\
+\bottomrule
+\end{tabularx}
+}
+\vspace{0.3em}
+
+The Demetro episode taught me something I hadn't expected about my own delivery: my first three drafts were in my register, not his. Good feedback to a peer presenter means writing in \emph{their} voice, not polishing yours. The scarce resource was register, not prose quality. I now see this connects to Lencioni's Level 4 (avoidance of accountability): I was holding Demetro accountable to \emph{my} standard of delivery rather than helping him find \emph{his} standard --- and the difference matters because accountability that isn't anchored in the recipient's own goals produces compliance, not development.
+
+The Robin episode carries a harder lesson about me. My instinct to ``finish debugging before asking'' isn't professionalism --- it's a cost I force teammates to pay for my comfort with solitude. I should be asking the moment I notice I've been stuck for twenty minutes, not the moment frustration has built up enough that the help-request feels justified to me.
+
+The pilot episode is the non-technical audience adaptation I want to put on record. Two of the five M17.c adaptations landed: jargon removal (``geofence repulsor active within 10\,m buffer'' $\to$ ``the drone pushes itself away from the red fence if it gets within 10\,m'') and visual substitution (replacing a data table with a four-button panel sized for one-handed RC operation). The rewritten interface was read aloud in one pass --- the moment my frame shifted from designing for me-as-operator to designing for a pilot who doesn't have to notice the UI.
+
+The quieter half of my support work was infrastructure for the team's memory: \texttt{brain-dump.md}, \texttt{MEMORY.md}, the 500-line blueprint system, and \texttt{FIELD\_QUICK\_REF.md} for no-internet field use.
+
+% --- TABLE 5: Dev actions ---
+\vspace{0.3em}
+{\small
+\textbf{Table 5: Self-development actions with outcomes}
+
+\begin{tabularx}{\textwidth}{@{}L L L@{}}
+\toprule
+\textbf{Gap identified} & \textbf{Action taken} & \textbf{Outcome} \\
+\midrule
+Debugging by intuition, not system (BGR incident, wk14) & Adopted exhaustive-permutation-first protocol & Applied to TFLite bbox bug (wk22): found in 20 min vs hours \\
+Solo building without handoff docs (wk12--16) & Wrote colleague pipeline doc + \texttt{--robin} flag (wk19) & Robin integrated 2 days unaided; 5:1 time trade \\
+Conflating ``right design'' with ``right for this team'' (wk17) & Took 24\,h cool-down before responding to pushback & wk20 complaint letter: Robin cut 3 sharp sentences, I accepted without defensiveness \\
+Treating SITL parity as evidence, not hypothesis (wk15) & Added explicit sim-vs-real disclaimers to all docs & Caught descent-stall bug as SITL-specific; didn't chase it on Pi \\
+\bottomrule
+\end{tabularx}
+}
+\vspace{0.3em}
+
+\textbf{What I leave believing.} I came as a Ukrainian-trained engineer whose reflex under failure was ``one person delivers.'' I leave believing its near-inversion: \emph{the engineer who delivers alone is one recruitment away from being the single point of failure in whatever she builds.} The wk17 FSM conflict and Robin's wk20 unaided handoff told me, in different registers, that the same act which delivered the report was the act that kept my teammates at the edge of their own project. Falsifiable internship signal: in my first six weeks, does at least one teammate modify a module I own without asking permission? If yes --- even once --- I've started to become an engineer whose work enables other people's work. That is the only kind of engineering I now think is worth aspiring to, and I haven't resolved it yet. The tension between building fast and building together is still live in me, and I don't expect a six-week internship to settle it. But I know what the test looks like now, and that's the thing this project gave me.

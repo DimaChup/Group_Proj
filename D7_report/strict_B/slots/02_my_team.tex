@@ -1,0 +1,30 @@
+\section{My team}
+
+\textbf{2a.}~At the wk12 kickoff --- credit to Robin for insisting we hold this conversation, I would've skipped it --- we split on module ownership: Robin took the flight loop and state execution, I took perception and simulation, Edward took the Cube and hardware interface, Demetro took FDR communication, and our PM coordinated schedule. We deliberately declined a single technical lead because the brief devolves autonomy-level choices to the team. The structure drifted twice. The first drift was silent: around wk16, as hardware kept slipping, the project's centre of gravity migrated to my laptop. Nobody declared this. The second was loud: wk17, after Robin and I discovered we'd been building overlapping state machines in parallel, I asked for a renegotiation. We agreed in writing (\texttt{DESIGN\_DECISIONS.md:107--109}) that his script would own the flight loop and call my \texttt{passive\_watch} as an HTTP service. I now see unexplicit structure is a luxury that only survives in slack-rich teams.
+
+% --- TABLE 1: Tuckman stage mapping ---
+\vspace{0.3em}
+{\small
+\textbf{Table 2: Tuckman stage mapping} (Graham/Tuckman, 1965; Jensen, 1977)
+
+\begin{tabularx}{\textwidth}{@{}l L L L@{}}
+\toprule
+\textbf{Stage} & \textbf{Our team evidence} & \textbf{What I did} & \textbf{What I'd change} \\
+\midrule
+Forming (wk12--14) & Polite role division; trivial questions; looking for leadership that nobody claimed & Accepted CV-only scope; didn't push for interface contracts & Front-load a 2-h whiteboard session on inputs/outputs at every seam \\
+Storming (wk15--18) & wk17 FSM conflict; Robin's pushback; overlapping code; PM friction after 2nd cancellation & Proposed 11-state FSM; took 24\,h to separate ``right design'' from ``right design for this team''; compromised to HTTP interface & Surface conflicts explicitly in wk15, not wait until overlap is discovered \\
+Norming (wk19--20) & \texttt{DESIGN\_DECISIONS.md} contract; Robin integrates unaided; in-jokes about ``the missing drone'' & Wrote handoff docs; built \texttt{--robin} flag; drafted complaint letter collaboratively & Institute weekly 1-line decision log from wk1 \\
+Performing (wk21--22) & Parallel tracks productive; pilot operates GCS unaided; D6 sections flowing & Refactored main.py 1411$\to$754; built 146 pytests; ran R01--12 audit & Pair on refactors instead of soloing \\
+Transforming (wk23) & Lessons-learned doc; sense of loss over untested hardware & Wrote \texttt{LESSONS\_LEARNED.md}; captured 8 reusable patterns & Share the losses openly, not just the lessons \\
+\bottomrule
+\end{tabularx}
+}
+\vspace{0.3em}
+
+\textbf{2b.}~The most impactful team-working element, measured by what it unblocked, was a handoff ratio I hadn't noticed before: the four hours I spent writing \texttt{VISION\_PIPELINE\_FOR\_COLLEAGUE.md} and the \texttt{--robin} integration flag bought Robin roughly twenty hours of unblocked integration time across wk20. He wired \texttt{passive\_watch} into his mission script without asking me a single clarifying question for two days. I now understand those docs worked because they traded my solo time for Robin's onboarding time at roughly 5:1 --- better team economics than I'd assumed documentation ever delivered.
+
+The wk17 FSM conflict needs to be on record. I proposed an 11-state FSM with timeout guards and a geofence repulsor. Robin argued a two-out-of-five maintainability floor meant it was over-engineered; Demetro said the extra states wouldn't survive a hardware-debug session with Edward. My first reaction was defensive. I took 24 hours, reread Robin's flight script, and the uncomfortable realisation was that half of my insistence was that the FSM was \emph{my} code. I proposed a compromise on the wk17 call: keep the full FSM for autonomous mode in \texttt{main.py}, strip it to lightweight HTTP polling for Robin's script. He accepted. The integration took an afternoon instead of a week. Using Lencioni's (2002) framework from our Professional Practice sessions: the conflict was productive because we had just enough trust (Level 1) to disagree openly rather than routing it through back-channels --- but I notice I was close to the ``fear of conflict'' edge, because I needed 24 hours to stop conflating design critique with personal critique.
+
+A second conflict: the wk20 complaint letter about hardware failures. Instead of confronting the PM directly --- something I historically do badly --- I drafted the letter in measured prose, iterated the tone six times, and shared it only after Robin cut three sentences that were ``technically accurate but personally sharp.'' The PM disagreed with one paragraph; we rewrote it together. The letter went out with all five names. What I hadn't noticed before is that I can only handle confrontation when it's mediated by writing --- and this is a pattern across my personal life, not just this project.
+
+\textbf{2c.}~Three changes, each falsifiable. First: a weekly one-line decision log from wk1, not wk12 --- every call that bound more than one person's work. The wk16 silent drift would've been caught by any written record; signal: zero overlapping-work surprises at integration. Second: interface contracts \emph{before} parallel work --- a single wk14 session on the \texttt{passive\_watch} HTTP contract would've prevented the entire wk17 conflict. Third: stop treating documentation as a substitute for conversation. The two pieces of writing that actually changed behaviour were the 400-word pivot message and the complaint letter --- both short, timely, paired with a live call. The 3000-word colleague handoff doc sat unread until Robin needed it. Signal for next time: any doc over 500 words gets a 15-minute walkthrough inside a week, or I treat it as unsent.

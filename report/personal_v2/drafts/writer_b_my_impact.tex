@@ -1,0 +1,37 @@
+% ═══════════════════════════════════════════════════════════════════════
+% 3. MY IMPACT
+% ═══════════════════════════════════════════════════════════════════════
+\section{My impact}
+
+\subsection*{3a. How my contributions drove the team forward \rtag{3a}}
+\www My single most load-bearing contribution was the decision, in wk16, to treat the absent drone as a software problem rather than a blocker. \textbf{STAR:} \emph{Situation}---we had a flyable mission spec, no flyable drone, and a eight-week wait. \emph{Task}---generate enough verifiable output to keep assessment credible. \emph{Action}---I built a three-artefact stack that the team consumed daily: (i)~\texttt{simple\_simulator.py} for end-to-end mission validation, (ii)~a retrained multiclass dataset pipeline (\texttt{generate\_dataset\_v3.py}, 5 classes, 3500 imgs), and (iii)~a test ladder (\texttt{tests/flight/0a--0f, 1--4}) and 127 unit tests across \texttt{tests/unit/}. \emph{Result}---by wk22 the Company closed 12/12 R01--R12 requirements in simulation (commit \texttt{ce5c036}); D6 Reportflow scored 87.2/100 with the simulator framed as the Company's defining engineering artefact.
+
+\www \textbf{Team-performance evaluation (M16.d).} \emph{Criterion}: WBS tasks closed per week; R-requirements coverage; lines of integration code not duplicated between members. \emph{Judgement}: the team closed 7, 5, 4, 9, 11 tasks in weeks 18--22---a mid-project dip then a recovery. Requirements coverage ended 12/12 in simulation but 4/12 on real hardware (the gap is the cancelled flights, not effort). \emph{Cause}: interface contracts were agreed late, which stalled Robin's FSM in weeks 19--20 while he waited on my vision API. \emph{Lesson applied in-project}: in wk20 I wrote the explicit HTTP contract for \texttt{passive\_watch\_2.py} with \texttt{--robin} mode, which unblocked Robin's next two sessions.
+
+\www \textbf{Kolb deep dive---the simulator-solo story.}
+\emph{Concrete experience:} in wk16--17 I built \texttt{simple\_simulator.py} alone, fast, and in a coding trance; I produced 2500 lines in four sessions. \emph{Reflective observation:} in wk18 I noticed that although teammates \emph{used} the simulator, none of them modified it or added features. When I was ill for two days the simulator effectively stopped evolving. Single-point-of-failure risk. \emph{Abstract conceptualisation:} the failure was not that I worked alone---it was that I had not built an interface at which other people could contribute without reading my entire head. The fix is not ``stop working alone''; it is ``design a handover contract before coding''. \emph{Active experimentation:} from wk19 onwards I refactored the vision layer into a single \texttt{detect\_in\_image()} function (\texttt{vision.py}), wrote the Robin-specific HTTP contract, created \texttt{docs/VISION\_PIPELINE\_FOR\_COLLEAGUE.md}, and split my subsequent work (main.py refactor 1411$\to$754 lines, 6 modules, 146 pytest tests) into reviewable chunks I pushed on the same day. The measurable outcome: Robbin, a new team member onboarded on 03 Apr, submitted a working vision tweak within 48 h---evidence that the interface now tolerates hands other than mine. This is the Kolb cycle I will reach for whenever I notice myself in a coding trance in future projects.
+
+\subsection*{3b. What I might add or re-focus on in future \rtag{3b}}
+\www I now have strong evidence I can deliver complex systems solo under pressure. \ebi The next growth edge is exactly opposite: \emph{delivering through others}. Three commitments for future projects:
+\begin{enumerate}
+\item \textbf{Cap solo sessions at 6 h then force a review push.} My longest solo session on this project was $\sim$14 h. A shorter cycle would have produced earlier feedback and smaller integration pain.
+\item \textbf{Budget 25\% of my time explicitly on teaching.} I will enter that line in my Gantt as a first-class task, not a residual.
+\item \textbf{Score myself on a non-code metric each week.} On this project I scored modularity (3.8/5.0) and sim-vs-real honesty (I audited my own D6 draft and removed three over-claims, commits \texttt{62a8136, 77f0238}). I will keep a weekly ``what did I do this week that wasn't code?'' log.
+\end{enumerate}
+
+\begin{table}[H]
+\centering\footnotesize
+\caption{Self-development actions log---implemented within the project timeline. This is the Bristol L7 \emph{Insight 70+ / implemented programme of self-development} evidence line.}\label{tab:selfdev}
+\begin{tabularx}{\textwidth}{@{}l X X X@{}}
+\toprule
+\textbf{Weakness spotted} & \textbf{Action taken (date)} & \textbf{Artefact} & \textbf{Measurable outcome} \\
+\midrule
+Unbounded exploration spikes & Timebox 4\,h rule (30\,Mar) & \texttt{brain-dump.md} entry; NCNN stopped at 4\,h & NCNN abandoned same-day; 2 days saved on next spike \\
+Over-claiming in reports & Sim-vs-real honesty audit (02\,Apr) & commits \texttt{62a8136, 77f0238} & 3 inflated claims corrected before submission \\
+Fragile GPS estimate & 7-method comparison of estimators & commits \texttt{dbd24f3, 94144bd, dc67a8e} & CEP50 7\,m $\to$ 1.5\,m \\
+Hardcoded FOV (73$^{\circ}$) & Empirical calibration from video at 9 altitudes & \texttt{tools/fov\_calibrate\_video.py} & HFOV corrected to 54.4$^{\circ}$; detection recall up \\
+Main.py bloat (1411 L) & Six-module refactor, pytest harness & 754-line main.py + \texttt{tests/unit/} & 146 passing tests; modularity 3.0 $\to$ 4.2 \\
+Blueprint-less large files & Blueprint system ($>$500 L $=$ blueprint) & \texttt{docs/*\_blueprint.md} & New-session ramp-up time down from hours to minutes \\
+\bottomrule
+\end{tabularx}
+\end{table}

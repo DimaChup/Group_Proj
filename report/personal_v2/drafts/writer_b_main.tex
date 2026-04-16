@@ -1,0 +1,81 @@
+\documentclass[11pt,a4paper]{article}
+
+% ── Compact preamble (Writer B) ─────────────────────────────────────────
+\usepackage[top=2cm,bottom=2cm,left=2cm,right=2cm]{geometry}
+\usepackage{microtype}
+\usepackage{lmodern}
+\usepackage{setspace}
+\linespread{1.05}
+
+\usepackage{graphicx}
+\usepackage[font=small,labelfont=bf,skip=3pt]{caption}
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\renewcommand{\arraystretch}{1.05}
+
+\usepackage[dvipsnames]{xcolor}
+\definecolor{headblue}{HTML}{1F3864}
+\definecolor{tagcol}{HTML}{8B0000}
+\usepackage{titlesec}
+\titleformat{\section}{\normalfont\large\bfseries\color{headblue}}{\thesection}{0.5em}{}
+\titleformat{\subsection}{\normalfont\normalsize\bfseries\color{headblue}}{\thesubsection}{0.4em}{}
+\titlespacing*{\section}{0pt}{0.5em plus 0.2em}{0.25em}
+\titlespacing*{\subsection}{0pt}{0.35em}{0.15em}
+
+\usepackage{enumitem}
+\setlist{itemsep=0pt, topsep=2pt, partopsep=0pt, parsep=0pt, leftmargin=*}
+
+\usepackage{fancyhdr}
+\pagestyle{fancy}\fancyhf{}\cfoot{\footnotesize\thepage}\renewcommand{\headrulewidth}{0pt}
+
+\usepackage[hidelinks]{hyperref}
+
+\setlength{\parskip}{0.3em}
+\setlength{\parindent}{0pt}
+
+% Rubric margin tag: \tag{1a} places a small red marker in the margin
+\newcommand{\rtag}[1]{\marginpar{\footnotesize\color{tagcol}\textbf{#1}}}
+% Make margin notes closer / narrower
+\setlength{\marginparwidth}{1.2cm}
+\setlength{\marginparsep}{4pt}
+
+% WWW / EBI sub-tags
+\newcommand{\www}{\textit{What went well.}\ }
+\newcommand{\ebi}{\textit{Even better if.}\ }
+
+\begin{document}
+
+\begin{center}
+  {\large\bfseries Individual Reflective Report --- Writer B Draft}\\[2pt]
+  {\small Dmytro ``Apollo'' Chuprynyuk \textbar{} AENGM0074 Group Project in Aerial Robotics \textbar{} University of Bristol \textbar{} April 2026}
+\end{center}
+\vspace{-6pt}
+
+% ── Compact evidence table 1: rubric mapping ────────────────────────────
+{\footnotesize
+\begin{tabularx}{\textwidth}{@{}l l l X@{}}
+\toprule
+\textbf{Q} & \textbf{Heading} & \textbf{AHEP4 / L7 hook} & \textbf{Lead evidence} \\
+\midrule
+1a & My role & M16.a indiv. & Paper role = CV lead; de-facto: simulator, safety, reports, teammate tooling \\
+1b & My role & M16.a / Insight 70+ & \texttt{simple\_simulator.py} (2508 L) unlocked two months of dead time \\
+1c & My role & Insight 70+ fwd & Stop hoarding; timebox spikes (4h); pair earlier \\
+2a & My team & M16.b member & 5-person split renegotiated twice (wk17 FSM, wk20 handoff) \\
+2b & My team & M16.b / Teamwork 70+ & Handoff contracts: \texttt{passive\_watch\_2.py} HTTP API for Robin \\
+2c & My team & Teamwork 70+ fwd & Contribution-design workshop at kickoff; pair from wk1 \\
+3a & My impact & M16.d team eval. & $\sim$50 sim runs replacing flights; 12/12 R\,sim; main.py 1411$\to$754 \\
+3b & My impact & Insight 70+ fwd & Less solo scripting; earlier teaching and delegation \\
+4a & My support & M16.b / Comms & Pilot's abort-button feedback; Sid's DJI video; Robin's FSM pushback \\
+4b & My support & Insight 83+ & Feedback to Edward (FOV help) and Demetro (4x script polish) with outcomes \\
+\bottomrule
+\end{tabularx}}
+\vspace{-2pt}
+
+\input{writer_b_my_role}
+\input{writer_b_my_team}
+\input{writer_b_my_impact}
+\input{writer_b_my_support}
+
+\end{document}

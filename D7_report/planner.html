@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>D7 Reflection Planner</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0d1117; color: #c9d1d9; }
+.tabs { display: flex; background: #161b22; border-bottom: 1px solid #30363d; position: sticky; top: 0; z-index: 10; }
+.tab { padding: 12px 24px; cursor: pointer; border-bottom: 2px solid transparent; color: #8b949e; font-size: 14px; }
+.tab:hover { color: #c9d1d9; }
+.tab.active { color: #58a6ff; border-bottom-color: #58a6ff; }
+.view { display: none; padding: 20px; max-width: 1600px; margin: 0 auto; }
+.view.active { display: block; }
+h1 { font-size: 22px; margin-bottom: 8px; color: #f0f6fc; }
+.subtitle { color: #8b949e; font-size: 13px; margin-bottom: 16px; }
+.legend { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; font-size: 12px; line-height: 1.8; }
+.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+
+/* Matrix */
+.matrix { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed; }
+.matrix th { background: #161b22; padding: 8px 6px; text-align: center; border: 1px solid #30363d; position: sticky; top: 48px; font-size: 11px; }
+.matrix th.q-th { text-align: left; }
+.matrix td { padding: 4px; border: 1px solid #30363d; vertical-align: top; }
+.matrix textarea { width: 100%; min-height: 56px; background: #0d1117; color: #c9d1d9; border: 1px solid #30363d; border-radius: 4px; padding: 5px; font-size: 11px; resize: vertical; font-family: inherit; line-height: 1.4; }
+.matrix textarea:focus { border-color: #58a6ff; outline: none; }
+.section-col { width: 7%; font-weight: bold; color: #f0f6fc; font-size: 11px; text-align: center !important; }
+.q-col { width: 14%; font-size: 11px; }
+.meta-col { width: 13%; }
+
+/* Relevance levels */
+.cell-primary { background: #0d1117; }
+.cell-secondary { background: #0f1318; }
+.cell-na { background: #12151a; }
+.cell-na textarea { opacity: 0.35; min-height: 32px; }
+.cell-na:hover textarea { opacity: 0.7; }
+.relevance { font-size: 9px; text-align: center; margin-bottom: 2px; }
+.rel-star { color: #f9c74f; }
+.rel-dot { color: #484f58; }
+.rel-dash { color: #21262d; }
+
+/* Section colors */
+.s1 { border-left: 3px solid #f97583 !important; }
+.s2 { border-left: 3px solid #58a6ff !important; }
+.s3 { border-left: 3px solid #7ee787 !important; }
+.s4 { border-left: 3px solid #d2a8ff !important; }
+
+/* Column header colors */
+.th-influence { color: #7ee787; }
+.th-develop { color: #58a6ff; }
+.th-different { color: #d2a8ff; }
+.th-www { color: #f9c74f; }
+.th-ebi { color: #f97583; }
+
+/* Cards view */
+.cards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 16px; }
+.card-header { font-size: 14px; font-weight: bold; margin-bottom: 4px; }
+.card-q { font-size: 12px; color: #7ee787; margin-bottom: 4px; }
+.card-full { font-size: 11px; color: #8b949e; margin-bottom: 10px; }
+.card textarea { width: 100%; min-height: 80px; background: #0d1117; color: #c9d1d9; border: 1px solid #30363d; border-radius: 4px; padding: 8px; font-size: 13px; resize: vertical; font-family: inherit; }
+.card textarea:focus { border-color: #58a6ff; outline: none; }
+.card-split { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+.card-split label { font-size: 11px; display: block; margin-bottom: 3px; }
+.card-split textarea { min-height: 50px; }
+
+/* Nested view */
+.nested-section { background: #161b22; border: 1px solid #30363d; border-radius: 8px; margin-bottom: 16px; overflow: hidden; }
+.nested-header { padding: 12px 16px; font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; }
+.nested-body { padding: 0 16px 16px; }
+.nested-q { background: #0d1117; border: 1px solid #21262d; border-radius: 6px; padding: 12px; margin-bottom: 10px; }
+.nested-q-title { font-size: 13px; font-weight: bold; color: #7ee787; margin-bottom: 4px; }
+.nested-q-text { font-size: 12px; color: #8b949e; margin-bottom: 8px; }
+.nested-q textarea { width: 100%; min-height: 70px; background: #161b22; color: #c9d1d9; border: 1px solid #30363d; border-radius: 4px; padding: 8px; font-size: 13px; resize: vertical; font-family: inherit; }
+.nested-q textarea:focus { border-color: #58a6ff; outline: none; }
+
+/* Lens view */
+.lens-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+.lens-col { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 12px; }
+.lens-col h3 { font-size: 13px; margin-bottom: 4px; }
+.lens-col .desc { font-size: 10px; color: #8b949e; margin-bottom: 10px; }
+.lens-item { background: #0d1117; border: 1px solid #21262d; border-radius: 6px; padding: 8px; margin-bottom: 6px; }
+.lens-item .from { font-size: 10px; color: #8b949e; margin-bottom: 4px; }
+.lens-item textarea { width: 100%; min-height: 44px; background: #161b22; color: #c9d1d9; border: 1px solid #30363d; border-radius: 4px; padding: 5px; font-size: 11px; resize: vertical; font-family: inherit; }
+.lens-item textarea:focus { border-color: #58a6ff; outline: none; }
+.lens-item.na { opacity: 0.3; }
+.lens-item.na:hover { opacity: 0.7; }
+
+/* Toolbar */
+.toolbar { background: #161b22; border-top: 1px solid #30363d; padding: 10px 20px; position: fixed; bottom: 0; width: 100%; display: flex; gap: 12px; align-items: center; z-index: 10; }
+.btn { padding: 7px 14px; border-radius: 6px; border: 1px solid #30363d; background: #21262d; color: #c9d1d9; cursor: pointer; font-size: 12px; }
+.btn:hover { background: #30363d; }
+.btn-primary { background: #238636; border-color: #2ea043; color: white; }
+.btn-primary:hover { background: #2ea043; }
+.status { font-size: 11px; color: #7ee787; }
+</style>
+</head>
+<body>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchView('matrix')">Matrix View</div>
+  <div class="tab" onclick="switchView('cards')">Card View</div>
+  <div class="tab" onclick="switchView('nested')">Nested View</div>
+  <div class="tab" onclick="switchView('lens')">Meta-Lens View</div>
+  <div class="tab" onclick="switchView('pp')">PP Concepts</div>
+  <div class="tab" onclick="switchView('questionnaire')">Questionnaire</div>
+</div>
+
+<!-- VIEW 1: MATRIX -->
+<div id="matrix" class="view active">
+  <h1>D7 Reflection Planner — Matrix View</h1>
+  <p class="subtitle">10 questions × 5 lenses. Stars = primary focus. Dots = secondary. Greyed = optional (click to expand).</p>
+  <div class="legend">
+    <span><span class="dot" style="background:#f97583"></span>§1 My role</span>&nbsp;&nbsp;
+    <span><span class="dot" style="background:#58a6ff"></span>§2 My team</span>&nbsp;&nbsp;
+    <span><span class="dot" style="background:#7ee787"></span>§3 My impact</span>&nbsp;&nbsp;
+    <span><span class="dot" style="background:#d2a8ff"></span>§4 My support</span>&nbsp;&nbsp;|&nbsp;&nbsp;
+    <span class="rel-star">★</span> = primary focus &nbsp;
+    <span class="rel-dot">●</span> = relevant &nbsp;
+    <span class="rel-dash">—</span> = optional (greyed)
+  </div>
+  <table class="matrix" id="matrix-table"></table>
+
+  <div style="margin-top:32px; border-top:2px solid #30363d; padding-top:20px;">
+    <h2 style="color:#f0f6fc; margin-bottom:8px;">Professional Practice Concepts — D7 Relevance Map</h2>
+    <p class="subtitle">Every framework from PP lectures. Tick what to include. ★ MUST = brief expects it. ● SHOULD = boosts score. ○ COULD = if space. ✗ SKIP = not D7.</p>
+    <div id="pp-table"></div>
+  </div>
+
+  <div style="margin-top:32px; border-top:2px solid #30363d; padding-top:20px;">
+    <h2 style="color:#f0f6fc; margin-bottom:4px;">Questionnaire — Your Real Context</h2>
+    <p class="subtitle">72 questions. Answer honestly — short is fine. Your answers make the D7 sound like YOU, not AI. Auto-saves.</p>
+    <div id="q-inline"></div>
+  </div>
+
+  <div style="margin-top:32px; border-top:2px solid #30363d; padding-top:20px;">
+    <h2 style="color:#f0f6fc; margin-bottom:4px;">Context Dump — What Actually Happened</h2>
+    <p class="subtitle">Raw context from Apollo. This is the real story — use it to write authentic D7 content. Add more anytime.</p>
+
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:16px;margin-bottom:16px;">
+      <h3 style="color:#f97583;margin-bottom:10px;">The Team (5 members)</h3>
+      <table class="matrix" style="table-layout:auto;font-size:12px">
+        <tr><th style="width:12%;text-align:left">Name</th><th style="width:15%;text-align:left">Assigned Role</th><th style="width:35%;text-align:left">What they actually did</th><th style="width:38%;text-align:left">Apollo's honest assessment</th></tr>
+        <tr>
+          <td style="font-weight:bold;color:#f97583">Apollo (me)</td>
+          <td>Computer Vision (shared with Edward)</td>
+          <td>CV, simulation framework, state machine, main.py, ground station, safety layer, report writing, all documentation, Demetro's FDR scripts, Robin's handoff docs, complaint letter</td>
+          <td><textarea data-key="ctx-apollo" placeholder="How would you describe your own role honestly?">Ended up doing most of the technical work. 820+ commits. Built the simulation as a backup when hardware kept failing. Delegated CV training to Edward but we ended up using YOLO anyway.</textarea></td>
+        </tr>
+        <tr>
+          <td style="font-weight:bold;color:#58a6ff">Robin</td>
+          <td>State machines</td>
+          <td><textarea data-key="ctx-robin" placeholder="What did Robin actually do?">State machine work. Had the FSM pushback at wk17.</textarea></td>
+          <td><textarea data-key="ctx-robin-assess" placeholder="Your honest view of Robin's contribution"></textarea></td>
+        </tr>
+        <tr>
+          <td style="font-weight:bold;color:#7ee787">Harish</td>
+          <td>Hardware + communications</td>
+          <td><textarea data-key="ctx-harish" placeholder="What did Harish actually do?">Hardware setup, communications between components.</textarea></td>
+          <td><textarea data-key="ctx-harish-assess" placeholder="Your honest view of Harish's contribution"></textarea></td>
+        </tr>
+        <tr>
+          <td style="font-weight:bold;color:#d2a8ff">Edward</td>
+          <td>Computer Vision (shared with Apollo)</td>
+          <td><textarea data-key="ctx-edward" placeholder="What did Edward actually do?">CV model training. Trained a model but we didn't end up using it — went with YOLO instead. Not enough flight days to test with realistic data.</textarea></td>
+          <td><textarea data-key="ctx-edward-assess" placeholder="Your honest view">Would do what was told but not very proactive. Seemed to do a lot of work but wasn't self-directed.</textarea></td>
+        </tr>
+        <tr>
+          <td style="font-weight:bold;color:#f9c74f">Zian</td>
+          <td>Path planning</td>
+          <td><textarea data-key="ctx-zian" placeholder="What did Zian actually do?">Path planning work.</textarea></td>
+          <td><textarea data-key="ctx-zian-assess" placeholder="Your honest view">Similar to Edward — would do what was told but not proactive. Did whatever they were assigned.</textarea></td>
+        </tr>
+      </table>
+    </div>
+
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:16px;margin-bottom:16px;">
+      <h3 style="color:#58a6ff;margin-bottom:10px;">How Work Was Split (after first team meeting)</h3>
+      <div style="font-size:13px;color:#c9d1d9;line-height:1.7">
+        <p>After the first meeting, the team looked at all the tasks needed and split them up:</p>
+        <ul style="margin:8px 0 8px 20px">
+          <li><b>Harish</b> — hardware setup + communications</li>
+          <li><b>Zian</b> — path planning</li>
+          <li><b>Robin</b> — state machines</li>
+          <li><b>Apollo + Edward</b> — computer vision (Apollo delegated CV training to Edward)</li>
+        </ul>
+        <p style="margin-top:8px"><textarea data-key="ctx-split-more" style="width:100%;min-height:60px;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;padding:8px;font-size:12px;resize:vertical;font-family:inherit" placeholder="Add more detail about how the split was decided, who suggested it, was it discussed or just happened..."></textarea></p>
+      </div>
+    </div>
+
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:16px;margin-bottom:16px;">
+      <h3 style="color:#7ee787;margin-bottom:10px;">Flight Days — What Actually Happened</h3>
+      <div style="font-size:13px;color:#c9d1d9;line-height:1.7">
+        <table class="matrix" style="table-layout:auto;font-size:12px">
+          <tr><th style="width:12%;text-align:left">Day</th><th style="width:15%;text-align:left">Type</th><th style="width:40%;text-align:left">What happened</th><th style="width:33%;text-align:left">Impact on team</th></tr>
+          <tr>
+            <td>Practice Day 1</td>
+            <td>Practice</td>
+            <td>Had everything prepared. Given faulty hardware. Things just didn't work. Weren't sure what the issues were.</td>
+            <td style="color:#f97583">Very frustrating. Couldn't identify the problem.</td>
+          </tr>
+          <tr>
+            <td>Practice Day 2</td>
+            <td>Practice</td>
+            <td>Same situation — hardware issues continued.</td>
+            <td style="color:#f97583">More frustration. Started losing confidence in hardware path.</td>
+          </tr>
+          <tr>
+            <td>Easter Holiday</td>
+            <td>Extra practice (2 days)</td>
+            <td>Things started working. Resolved the hardware issue.</td>
+            <td style="color:#7ee787">Relief. Finally had working hardware before demo day.</td>
+          </tr>
+          <tr>
+            <td>Day 3 (Demo)</td>
+            <td>Performance for guests</td>
+            <td>Managed to demonstrate something. Not as advanced as planned, but functional.</td>
+            <td style="color:#f9c74f">Delivered, but below original ambition.</td>
+          </tr>
+        </table>
+        <p style="margin-top:8px"><textarea data-key="ctx-flights-more" style="width:100%;min-height:60px;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;padding:8px;font-size:12px;resize:vertical;font-family:inherit" placeholder="Add more detail — specific dates, what exactly failed, who was there, what did you personally do on each day..."></textarea></p>
+      </div>
+    </div>
+
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:16px;margin-bottom:16px;">
+      <h3 style="color:#d2a8ff;margin-bottom:10px;">The Simulation Decision</h3>
+      <div style="font-size:13px;color:#c9d1d9;line-height:1.7">
+        <p>After the hardware holdups on practice days 1-2, Apollo decided to build an in-depth simulation as a backup. Reasons:</p>
+        <ul style="margin:8px 0 8px 20px">
+          <li>Team had limited flight days and hardware wasn't working</li>
+          <li>Wanted the team to keep moving forward despite hardware issues</li>
+          <li>Simulation could anticipate issues before real flight</li>
+          <li>Could verify all R01-R12 requirements in sim even if hardware failed</li>
+          <li>Served as inspiration and proof-of-concept</li>
+        </ul>
+        <p style="margin-top:8px"><textarea data-key="ctx-sim-more" style="width:100%;min-height:60px;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;padding:8px;font-size:12px;resize:vertical;font-family:inherit" placeholder="More context — when exactly did you start the sim? Did the team support it or was it your solo decision? Did anyone else use the sim?"></textarea></p>
+      </div>
+    </div>
+
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:16px;margin-bottom:16px;">
+      <h3 style="color:#f97583;margin-bottom:10px;">Apollo's Contributions — Detailed Context</h3>
+      <div style="font-size:13px;color:#c9d1d9;line-height:1.8;">
+        <p><b>Formal responsibility:</b> Computer Vision (shared with Edward). But in practice, took on far more.</p>
+
+        <p style="margin-top:10px"><b>Computer Vision pipeline:</b></p>
+        <ul style="margin:6px 0 6px 20px">
+          <li>Built full CV pipeline: detection → GPS coordinate conversion using calibration + altitude compensation</li>
+          <li>Developed techniques for pitch/roll correction (drone attitude affects coordinate accuracy)</li>
+          <li>Created averaging techniques for single-detection GPS estimates (significant error in single estimates)</li>
+          <li>Tested all averaging approaches against the one real flight video provided by Sid</li>
+          <li>Made the most of extremely limited flight data — one video from Sid was all we had</li>
+          <li>Did thorough FOV calibration in the lab (field of view, focal length measurements)</li>
+        </ul>
+
+        <p style="margin-top:10px"><b>Simulation framework (massive time investment):</b></p>
+        <ul style="margin:6px 0 6px 20px">
+          <li>Created full mission simulation as backup when hardware kept failing</li>
+          <li>Built safety-critical layer with zone repulsive fields, geofencing</li>
+          <li>Robin suggested the repulsive force concept — Apollo developed and implemented it over several days</li>
+          <li>Tested extensive edge cases (e.g. dummy placed near no-fly zone boundary)</li>
+          <li>Simulation was thoroughly tested and could verify all R01-R12 requirements</li>
+          <li>Spent 3-4x more hours than expected on this project because of simulation work</li>
+        </ul>
+
+        <p style="margin-top:10px"><b>Testing infrastructure:</b></p>
+        <ul style="margin:6px 0 6px 20px">
+          <li>Wrote progressive test scripts for empirical drone performance testing</li>
+          <li>Tests included: blur effect at different speeds, detection range vs altitude, detection rate</li>
+          <li>Would have liked to run these step-by-step on real drone to build confidence before full mission</li>
+          <li>Due to limited flight time, never got to run the full test suite on real hardware</li>
+          <li>Created safety-critical test ladder (step-by-step confidence building)</li>
+        </ul>
+
+        <p style="margin-top:10px"><b>Dashboards & monitoring tools:</b></p>
+        <ul style="margin:6px 0 6px 20px">
+          <li>Passive watch dashboard — monitoring + detection during manual flight</li>
+          <li>Diagnostics dashboard — see all drone subsystems at once, check if everything is functioning</li>
+          <li>Could switch between different vision models live to compare performance</li>
+          <li>Built for the Pi (headless, browser-based) so could run on the actual drone hardware</li>
+        </ul>
+
+        <p style="margin-top:10px"><b>Post-processing & calibration tools:</b></p>
+        <ul style="margin:6px 0 6px 20px">
+          <li>Video analysis scripts for DJI footage from Sid</li>
+          <li>Calibration scripts for camera parameters</li>
+          <li>All designed to maximise learning from limited real flight data</li>
+        </ul>
+
+        <p style="margin-top:10px"><b>Collaboration with Robin:</b></p>
+        <ul style="margin:6px 0 6px 20px">
+          <li>After hardware issues were sorted, Robin needed detection output for his state machine</li>
+          <li>Apollo provided captured images + GPS coordinates via a defined interface</li>
+          <li>The interface was "quite expensive" — required attitude correction (pitch/roll), altitude compensation</li>
+          <li>Robin suggested repulsive force for NFZ avoidance — Apollo implemented it</li>
+          <li>Ideas were discussed between them as colleagues</li>
+        </ul>
+
+        <p style="margin-top:10px"><b>Edward's CV work:</b></p>
+        <ul style="margin:6px 0 6px 20px">
+          <li>Edward did train a model as delegated</li>
+          <li>Didn't end up using it — went with standard YOLO model instead</li>
+          <li>Reasons: not enough flight days to collect realistic training data, couldn't run proper experiments</li>
+          <li>The plan was to retrain with real aerial photos but never got enough data</li>
+        </ul>
+
+        <p style="margin-top:10px"><b>The flight day outcome:</b></p>
+        <ul style="margin:6px 0 6px 20px">
+          <li>Everything came together on actual flight day without prior real-hardware testing</li>
+          <li>This worked because simulation was thorough — but it was also lucky</li>
+          <li>Would have preferred the step-by-step test approach to build confidence</li>
+          <li>The progressive test ladder was designed exactly for this but never fully executed due to time</li>
+        </ul>
+
+        <p style="margin-top:10px;color:#8b949e;font-style:italic">"I have to think about how we worked as a team later — this is just context about my personal contributions."</p>
+      </div>
+    </div>
+
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:16px;margin-bottom:16px;">
+      <h3 style="color:#f9c74f;margin-bottom:10px;">General Context Dump</h3>
+      <p style="font-size:11px;color:#8b949e;margin-bottom:8px">Free-form space. Tell me anything else — team dynamics, frustrations, wins, specific incidents, conversations, feelings. The messier and more honest, the better. I'll structure it for you.</p>
+      <textarea data-key="ctx-general" style="width:100%;min-height:200px;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;padding:12px;font-size:13px;resize:vertical;font-family:inherit;line-height:1.6" placeholder="Keep adding more context here..."></textarea>
+    </div>
+
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:16px;margin-bottom:16px;">
+      <h3 style="color:#58a6ff;margin-bottom:10px;">Running Context — Pure Text (auto-updated from Apollo's dumps)</h3>
+      <p style="font-size:11px;color:#8b949e;margin-bottom:12px">This is the ongoing merged narrative of everything Apollo has shared. No duplicates. Keeps growing as more context is provided.</p>
+      <div style="font-size:13px;color:#c9d1d9;line-height:1.8;background:#0d1117;border:1px solid #21262d;border-radius:6px;padding:16px;" id="running-context">
+
+<p>There were 5 of us: Apollo, Robin, Harish, Edward, and Zian.</p>
+
+<p>After the first team meeting we looked at all the tasks that might be needed and split them up. Harish was responsible for hardware setup and communications between components. Zian was responsible for path planning. Robin was responsible for state machines. Apollo and Edward shared responsibility for computer vision — Apollo delegated the CV model training to Edward.</p>
+
+<p>Edward and Zian were not very proactive. They would do what they were told to do, and it seemed like they did a lot of work, but they weren't self-directed. Edward did train a CV model as delegated, but we didn't end up using it — went with a standard YOLO model instead. The reasons: not enough flight days to collect realistic aerial training data, couldn't run proper experiments to validate a custom model.</p>
+
+<p>Apollo's formal responsibility was computer vision, but in practice he took on far more. He built the full CV pipeline: detection to GPS coordinate conversion, using calibration and altitude compensation. This required pitch and roll correction because the drone's attitude affects coordinate accuracy. Single GPS estimates from detections had significant error, so he developed and tested multiple averaging techniques. He tested all of these against the one real flight video provided by Sid — that single video was all the real data available, so he made the most of it.</p>
+
+<p>Apollo did thorough camera calibration in the lab — field of view, focal length measurements. He created post-processing scripts for the DJI footage from Sid, calibration scripts for camera parameters, and video analysis tools — all designed to maximise learning from extremely limited real flight data.</p>
+
+<p>He built multiple dashboards and monitoring tools: a passive watch dashboard for monitoring and detection during manual flight, a diagnostics dashboard showing all drone subsystems at once, with the ability to switch between different vision models live to compare performance. All built for the Pi (headless, browser-based) so they could run on actual drone hardware.</p>
+
+<p>He wrote progressive test scripts for empirical drone performance testing — blur effect at different speeds, detection range vs altitude, detection rate at various conditions. These formed a safety-critical test ladder designed for step-by-step confidence building before attempting a full mission. Due to limited flight time, the full test suite was never run on real hardware.</p>
+
+<p>In parallel, Apollo built an in-depth simulation of the entire mission. This was because the team had limited flight days and the hardware wasn't working. He wanted the team to keep moving forward despite hardware holdups, and the simulation served as both a backup and a way to anticipate issues. He built a safety-critical layer with zone repulsive fields and geofencing. Robin suggested the repulsive force concept for NFZ avoidance — Apollo developed and implemented it over several days of experimentation, testing edge cases like what happens when the dummy is placed very close to the no-fly zone boundary. The simulation was thoroughly tested and could verify all R01-R12 requirements. Apollo spent 3-4x more hours than expected on this project, largely because of the simulation work.</p>
+
+<p>The team did a lot of preparatory work, but when it came to flight days they got quite disheartened and demotivated because they didn't know what actually worked and what didn't until they actually flew the drone. Many things could only be tested with real GPS signal, which wasn't available in the lab. So the team could only test GPS-dependent features on flight days — and flight time was extremely limited.</p>
+
+<p>There were only two practice flight days and then a third day which was the performance for guests. On the first two practice days the team had everything prepared, but they were given faulty hardware. Things just didn't work, and they weren't sure what the issues were. This was very frustrating.</p>
+
+<p>There were also organisational problems on flight days. The Wi-Fi signal was prioritised for teams that were actively flying their drones, while the other teams were supposed to be tinkering with their drones on the ground. But without good Wi-Fi, the team couldn't connect to their drone to test or configure things. IP address and naming conflicts added to the frustration. The hardware that wasn't working wasn't the team's responsibility — it was provided to them. The organisation of flight day logistics could have been better, though this should be mentioned diplomatically since the course organiser (who marks the report) was in charge of organising it.</p>
+
+<p>Luckily, before the third day (demo day), there was an Easter holiday period that included two extra flight days. During these, things started working — the hardware issue was resolved. So on the actual demo day the team managed to demonstrate something functional, even though they had planned for something much more advanced.</p>
+
+<p>After sorting out hardware issues, Robin needed detection output for his state machine. Apollo provided captured images and GPS coordinates via a defined interface. Building this interface was "quite expensive" — it required attitude correction for pitch and roll, altitude compensation, and dealing with significant single-estimate error. Ideas were discussed between Apollo and Robin as colleagues. Robin's state machine consumed Apollo's CV output.</p>
+
+<p>Everything came together on the actual flight day without prior real-hardware testing of the full pipeline. This worked because the simulation was thorough — but it was also somewhat lucky. Apollo would have preferred to run the full progressive test ladder step-by-step to build confidence that the real mission could be done safely. The test infrastructure existed for exactly this purpose but was never fully executed due to time constraints.</p>
+
+      </div>
+    </div>
+    </div>
+  </div>
+</div>
+
+<!-- VIEW 2: CARDS -->
+<div id="cards" class="view">
+  <h1>D7 Reflection Planner — Card View</h1>
+  <p class="subtitle">One card per question. Main answer + separate WWW / EBI fields.</p>
+  <div class="cards-grid" id="cards-grid"></div>
+</div>
+
+<!-- VIEW 3: NESTED -->
+<div id="nested" class="view">
+  <h1>D7 Reflection Planner — Nested View</h1>
+  <p class="subtitle">Sections → Questions → Your answers + WWW/EBI split.</p>
+  <div id="nested-content"></div>
+</div>
+
+<!-- VIEW 4: META-LENS -->
+<div id="lens" class="view">
+  <h1>D7 Reflection Planner — Meta-Lens View</h1>
+  <p class="subtitle">5 columns = the meta-themes. Each pulls from all 10 questions. Greyed items = low relevance.</p>
+  <div class="lens-grid" id="lens-grid"></div>
+</div>
+
+<div class="toolbar">
+  <button class="btn btn-primary" onclick="saveAll()">Save</button>
+  <button class="btn" onclick="exportMD()">Export .md</button>
+  <button class="btn" onclick="exportJSON()">Export JSON</button>
+  <button class="btn" style="color:#f97583" onclick="clearAll()">Clear</button>
+  <span class="status" id="status"></span>
+  <span style="flex:1"></span>
+  <span style="font-size:10px;color:#484f58">Auto-saves on keystroke | planner.html</span>
+</div>
+<!-- PP CONCEPTS (standalone tab still accessible) -->
+<div id="pp" class="view">
+  <h1>Professional Practice Concepts — D7 Relevance Map</h1>
+  <p class="subtitle">Standalone view. Also visible below the matrix on the Matrix View tab.</p>
+  <div id="pp-table-standalone"></div>
+</div>
+
+<!-- QUESTIONNAIRE (standalone tab) -->
+<div id="questionnaire" class="view">
+  <h1>Questionnaire for Apollo</h1>
+  <p class="subtitle">Standalone view. Also at bottom of Matrix View.</p>
+  <div id="q-standalone"></div>
+</div>
+
+<div style="height:56px"></div>
+
+<script>
+const DATA = [
+  { id:'1a', sec:'§1 My role', sc:'s1', color:'#f97583', q:'1a', full:'What were your roles and responsibilities in this project? Which of these were explicitly allocated, and which did you take on/were you given implicitly? Did they change over the course of the project?' },
+  { id:'1b', sec:'§1 My role', sc:'s1', color:'#f97583', q:'1b', full:'What elements of your contribution are you most happy about and/or proud of?' },
+  { id:'1c', sec:'§1 My role', sc:'s1', color:'#f97583', q:'1c', full:'What different things might you focus on in your future work?' },
+  { id:'2a', sec:'§2 My team', sc:'s2', color:'#58a6ff', q:'2a', full:'How was your team structured? Was this discussed explicitly? What changed over the course of the project?' },
+  { id:'2b', sec:'§2 My team', sc:'s2', color:'#58a6ff', q:'2b', full:'What elements of team working do you think were most impactful on your outputs?' },
+  { id:'2c', sec:'§2 My team', sc:'s2', color:'#58a6ff', q:'2c', full:'What would you change if you were to do a similar project in future?' },
+  { id:'3a', sec:'§3 My impact', sc:'s3', color:'#7ee787', q:'3a', full:'How did your contributions drive the team forward and contribute to success?' },
+  { id:'3b', sec:'§3 My impact', sc:'s3', color:'#7ee787', q:'3b', full:'What might you add or re-focus on in future projects?' },
+  { id:'4a', sec:'§4 My support', sc:'s4', color:'#d2a8ff', q:'4a', full:'What did other team members do that helped you work more effectively?' },
+  { id:'4b', sec:'§4 My support', sc:'s4', color:'#d2a8ff', q:'4b', full:'What actions did you take that helped other individuals and/or the team as a whole work more effectively?' },
+];
+
+// Relevance map: 3=primary(★), 2=secondary(●), 1=optional(—)
+const REL = {
+  '1a': { influence:2, develop:2, different:2, www:2, ebi:2 },
+  '1b': { influence:3, develop:3, different:1, www:3, ebi:1 },
+  '1c': { influence:1, develop:3, different:3, www:1, ebi:3 },
+  '2a': { influence:2, develop:2, different:2, www:2, ebi:2 },
+  '2b': { influence:3, develop:2, different:1, www:3, ebi:1 },
+  '2c': { influence:1, develop:2, different:3, www:1, ebi:3 },
+  '3a': { influence:3, develop:2, different:1, www:3, ebi:1 },
+  '3b': { influence:1, develop:3, different:3, www:1, ebi:3 },
+  '4a': { influence:1, develop:3, different:2, www:3, ebi:2 },
+  '4b': { influence:3, develop:2, different:2, www:3, ebi:2 },
+};
+
+const LENSES = [
+  { key:'influence', label:'What I did to INFLUENCE', cls:'th-influence', brief:'"what you did to influence the team\'s working practices and outputs"' },
+  { key:'develop', label:'How I DEVELOPED', cls:'th-develop', brief:'"how you developed"' },
+  { key:'different', label:'What I\'d do DIFFERENTLY', cls:'th-different', brief:'"what you might do differently in comparable future situations"' },
+  { key:'www', label:'What Went Well', cls:'th-www', brief:'"what went well"' },
+  { key:'ebi', label:'Even Better If', cls:'th-ebi', brief:'"even better if"' },
+];
+
+function relIcon(level) {
+  if (level === 3) return '<span class="rel-star">★</span>';
+  if (level === 2) return '<span class="rel-dot">●</span>';
+  return '<span class="rel-dash">—</span>';
+}
+function relClass(level) {
+  if (level === 3) return 'cell-primary';
+  if (level === 2) return 'cell-secondary';
+  return 'cell-na';
+}
+
+function switchView(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// BUILD MATRIX
+function buildMatrix() {
+  const t = document.getElementById('matrix-table');
+  let html = '<tr><th class="q-th" style="width:7%">Sec</th><th class="q-th" style="width:14%">Question</th>';
+  LENSES.forEach(l => { html += `<th class="${l.cls}" style="width:15.8%">${l.label}</th>`; });
+  html += '</tr>';
+
+  let prevSec = '';
+  DATA.forEach((d, i) => {
+    const sameCount = DATA.filter(x => x.sec === d.sec).length;
+    const isFirst = d.sec !== prevSec;
+    html += `<tr class="${d.sc}">`;
+    if (isFirst) {
+      html += `<td class="section-col" rowspan="${sameCount}" style="color:${d.color}">${d.sec.replace('§','§<br>')}</td>`;
+    }
+    html += `<td class="q-col"><b>${d.q}.</b> <span style="color:#8b949e;font-size:10px">${d.full}</span></td>`;
+    LENSES.forEach(l => {
+      const r = REL[d.id][l.key];
+      const cls = relClass(r);
+      html += `<td class="${cls}"><div class="relevance">${relIcon(r)}</div><textarea data-key="m-${d.id}-${l.key}" placeholder="${r===1 ? '(optional)' : d.id + ' ' + l.key + '...'}"></textarea></td>`;
+    });
+    html += '</tr>';
+    prevSec = d.sec;
+  });
+  t.innerHTML = html;
+}
+
+// BUILD CARDS
+function buildCards() {
+  const g = document.getElementById('cards-grid');
+  g.innerHTML = '';
+  DATA.forEach(d => {
+    const c = document.createElement('div');
+    c.className = 'card';
+    c.style.borderLeft = `3px solid ${d.color}`;
+    c.innerHTML = `
+      <div class="card-header" style="color:${d.color}">${d.sec}</div>
+      <div class="card-q"><b>${d.q}</b></div>
+      <div class="card-full">${d.full}</div>
+      <textarea data-key="c-${d.id}" placeholder="Your main reflection for ${d.id}..."></textarea>
+      <div class="card-split">
+        <div><label style="color:#f9c74f">★ What went well:</label><textarea data-key="c-${d.id}-www" placeholder="WWW..."></textarea></div>
+        <div><label style="color:#f97583">★ Even better if:</label><textarea data-key="c-${d.id}-ebi" placeholder="EBI..."></textarea></div>
+      </div>
+    `;
+    g.appendChild(c);
+  });
+}
+
+// BUILD NESTED
+function buildNested() {
+  const container = document.getElementById('nested-content');
+  container.innerHTML = '';
+  const sections = [...new Map(DATA.map(d => [d.sec, d])).keys()];
+  sections.forEach(sec => {
+    const items = DATA.filter(d => d.sec === sec);
+    const color = items[0].color;
+    const div = document.createElement('div');
+    div.className = 'nested-section';
+    div.style.borderLeft = `3px solid ${color}`;
+    let qs = items.map(d => `
+      <div class="nested-q">
+        <div class="nested-q-title" style="color:${color}">${d.q}</div>
+        <div class="nested-q-text">${d.full}</div>
+        <textarea data-key="n-${d.id}" placeholder="Your reflection..."></textarea>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <div style="flex:1"><label style="font-size:11px;color:#f9c74f">What went well:</label><textarea data-key="n-${d.id}-www" style="min-height:45px" placeholder="WWW..."></textarea></div>
+          <div style="flex:1"><label style="font-size:11px;color:#f97583">Even better if:</label><textarea data-key="n-${d.id}-ebi" style="min-height:45px" placeholder="EBI..."></textarea></div>
+        </div>
+      </div>
+    `).join('');
+    div.innerHTML = `<div class="nested-header" style="color:${color}" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">${sec} <span>▼</span></div><div class="nested-body">${qs}</div>`;
+    container.appendChild(div);
+  });
+}
+
+// BUILD LENS
+function buildLens() {
+  const g = document.getElementById('lens-grid');
+  g.innerHTML = '';
+  LENSES.forEach(l => {
+    const col = document.createElement('div');
+    col.className = 'lens-col';
+    let items = DATA.map(d => {
+      const r = REL[d.id][l.key];
+      const na = r === 1 ? ' na' : '';
+      return `<div class="lens-item${na}">
+        <div class="from"><span style="color:${d.color}">●</span> ${d.q} ${relIcon(r)}</div>
+        <textarea data-key="l-${d.id}-${l.key}" placeholder="${r===1?'(optional)':d.id+'...'}"></textarea>
+      </div>`;
+    }).join('');
+    col.innerHTML = `<h3 class="${l.cls}">${l.label}</h3><div class="desc">${l.brief}</div>${items}`;
+    g.appendChild(col);
+  });
+}
+
+// SAVE / LOAD
+function saveAll() {
+  const data = {};
+  document.querySelectorAll('textarea[data-key]').forEach(ta => {
+    if (ta.value.trim()) data[ta.dataset.key] = ta.value;
+  });
+  document.querySelectorAll('input[type="checkbox"][data-key]').forEach(cb => {
+    data[cb.dataset.key] = cb.checked;
+  });
+  localStorage.setItem('d7-planner-v2', JSON.stringify(data));
+  document.getElementById('status').textContent = `Saved ${Object.keys(data).length} entries — ${new Date().toLocaleTimeString()}`;
+}
+
+function loadAll() {
+  try {
+    const data = JSON.parse(localStorage.getItem('d7-planner-v2') || '{}');
+    document.querySelectorAll('textarea[data-key]').forEach(ta => {
+      if (data[ta.dataset.key]) ta.value = data[ta.dataset.key];
+    });
+    document.querySelectorAll('input[type="checkbox"][data-key]').forEach(cb => {
+      if (data[cb.dataset.key] !== undefined) cb.checked = data[cb.dataset.key];
+    });
+  } catch(e) {}
+}
+
+function clearAll() {
+  if (confirm('Clear ALL answers? This cannot be undone.')) {
+    localStorage.removeItem('d7-planner-v2');
+    document.querySelectorAll('textarea').forEach(ta => ta.value = '');
+    document.getElementById('status').textContent = 'Cleared.';
+  }
+}
+
+function exportMD() {
+  const data = JSON.parse(localStorage.getItem('d7-planner-v2') || '{}');
+  let md = '# D7 Planner Export\n\n';
+  DATA.forEach(d => {
+    md += `## ${d.sec} — ${d.q}\n${d.full}\n\n`;
+    const keys = Object.keys(data).filter(k => k.includes(d.id));
+    keys.forEach(k => {
+      const label = k.split('-').slice(2).join('-') || 'main';
+      md += `**${label}:** ${data[k]}\n\n`;
+    });
+    md += '---\n\n';
+  });
+  download('d7_planner_export.md', md, 'text/markdown');
+}
+
+function exportJSON() {
+  const data = JSON.parse(localStorage.getItem('d7-planner-v2') || '{}');
+  download('d7_planner_export.json', JSON.stringify(data, null, 2), 'application/json');
+}
+
+function download(name, content, type) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content], {type}));
+  a.download = name;
+  a.click();
+}
+
+document.addEventListener('input', e => {
+  if (e.target.tagName === 'TEXTAREA') saveAll();
+});
+
+// PP CONCEPTS DATA
+const PP = [
+  // ═══════════════════════════════════════════════════════════════
+  // MUST — Five Dysfunctions (Lencioni/Graham)
+  // ═══════════════════════════════════════════════════════════════
+  { id:'FD-01', pri:'must', name:'Pyramid Model (sequential, bottom-up)', src:'Five Dysfunctions (Graham)', sections:'§3a, §2a', how:'Overarching framework. Trust must be fixed before conflict, conflict before commitment, etc. Map your team\'s journey bottom-up.', quote:'"Each level builds on the one below it. Fix from the bottom up."', ref:'Lencioni (2002); Graham (2025)' },
+  { id:'FD-02', pri:'must', name:'Absence of Trust -- Invulnerability', src:'Five Dysfunctions (Graham)', sections:'§1a, §2a, §3a', how:'Solo-coding (1411-line main.py, 820 commits) = textbook invulnerability. Refusing to delegate = refusing to be vulnerable.', quote:'"Hiding our weaknesses, our mistakes and our humanity prevents the growth of trust."', ref:'Lencioni (2002); Graham (2025)' },
+  { id:'FD-03', pri:'must', name:'Ring-fencing work (trust symptom)', src:'Five Dysfunctions (Graham)', sections:'§1a, §2b', how:'Name your behaviour explicitly as Lencioni\'s "ring-fencing." The 1411-line monolith was an architectural ring-fence.', quote:'"Acting defensively / ring-fencing work"', ref:'Lencioni (2002)' },
+  { id:'FD-04', pri:'must', name:'Fear of Conflict -- Artificial Harmony', src:'Five Dysfunctions (Graham)', sections:'§2b, §3a', how:'Team avoided difficult conversations about unequal workload. Wk20 complaint surfaced late. Robin\'s FSM pushback was one of few moments of real conflict.', quote:'"This apparent harmony is really an artificial harmony."', ref:'Lencioni (2002)' },
+  { id:'FD-05', pri:'must', name:'Back channels and gossip (conflict symptom)', src:'Five Dysfunctions (Graham)', sections:'§2b', how:'Important comms via side-channels rather than open team meetings. Direct Lencioni symptom of fear of conflict.', quote:'"Important communication happens via back channels and gossip rather than open, transparent channels."', ref:'Lencioni (2002)' },
+  { id:'FD-06', pri:'must', name:'Lack of Commitment -- Ambiguity', src:'Five Dysfunctions (Graham)', sections:'§2a, §2c, §3a', how:'No written objectives until late. FSM architecture revisited rather than committed to. The weasel pattern of avoiding written commitments.', quote:'"Commitment needs clarity and buy-in."', ref:'Lencioni (2002)' },
+  { id:'FD-07', pri:'must', name:'The Weasel Metaphor (commitment avoidance)', src:'Five Dysfunctions (Graham)', sections:'§2b, §2c', how:'Some avoided written commitments. Apollo also avoided committing to collaboration -- 820 solo commits = hiding behind ambiguity.', quote:'"Usually more slippery than a weasel and are typically the ones who hate action logs."', ref:'Graham (2025)' },
+  { id:'FD-08', pri:'must', name:'Avoidance of Accountability -- Low Standards', src:'Five Dysfunctions (Graham)', sections:'§2b, §4b, §3a', how:'Accountability fell almost entirely on Apollo. No peer challenge on code quality, deadlines, or contributions. 820 commits vs near-zero.', quote:'"If I was never committed to the team\'s goals in the first place, how can you call me out?"', ref:'Lencioni (2002)' },
+  { id:'FD-09', pri:'must', name:'Peer pressure beats bureaucracy', src:'Five Dysfunctions (Graham)', sections:'§2b, §2c, §4b', how:'Team had neither trust nor peer pressure. Accountability collapsed onto leader. Explains why top-down management failed.', quote:'"Peer pressure in the team, providing there\'s a foundation of trust, is way more effective than a bureaucratic measurement system."', ref:'Graham (2025)' },
+  { id:'FD-10', pri:'must', name:'The Leader Burden (accountability consequence)', src:'Five Dysfunctions (Graham)', sections:'§2b, §4b', how:'Apollo became sole source of discipline. Exactly what Lencioni predicts when Level 4 fails.', quote:'"With little accountability within the team, the burden falls back on the team leader."', ref:'Graham (2025)' },
+  { id:'FD-11', pri:'must', name:'Inattention to Results -- Status and Ego', src:'Five Dysfunctions (Graham)', sections:'§2b, §3b, §3a', how:'Members focused on own marks. Apollo\'s solo commits = optimising own output rather than building team capability.', quote:'"Individual success and ego become more relevant than the success of the group."', ref:'Lencioni (2002)' },
+  { id:'FD-12', pri:'must', name:'Why teams exist (not individuals)', src:'Five Dysfunctions (Graham)', sections:'§3a, §4a', how:'Frame identity shift: solo-coding instinct was wrong even though faster. Complex problems require teams.', quote:'"If the problem was simple, it could have been fixed by an individual and we wouldn\'t need a team."', ref:'Graham (2025)' },
+  { id:'FD-13', pri:'must', name:'Consensus NOT required for commitment', src:'Five Dysfunctions (Graham)', sections:'§2c, §3b', how:'Didn\'t need everyone to agree, just ensure voices heard. FSM pushback could have been handled by hearing then committing.', quote:'"Most team members don\'t expect the team should agree with their personal views... what they object to is when they don\'t feel like their voice has been heard."', ref:'Lencioni (2002)' },
+
+  // ═══════════════════════════════════════════════════════════════
+  // MUST — Team Development (Tuckman/Graham)
+  // ═══════════════════════════════════════════════════════════════
+  { id:'TD-01', pri:'must', name:'Forming -- dependency, politeness, anxiety', src:'Team Development (Graham)', sections:'§2a, §2b', how:'Map Wk12 kickoff: polite role allocation, lots of questions, no clear understanding. Apollo looked to for technical direction (dependency). Forming was too brief.', quote:'"People will be very polite and show some goodwill to others... Trust will be limited."', ref:'Tuckman (1965)' },
+  { id:'TD-02', pri:'must', name:'Storming -- rivals compete, politeness drops', src:'Team Development (Graham)', sections:'§2a, §2b, §2c, §4a', how:'Map Wk17 FSM conflict + Wk20 workload tensions. Individual differences pronounced. Architecture disagreement (monolithic vs modular).', quote:'"Levels of politeness drop as individuals start to realise that the clock is ticking."', ref:'Tuckman (1965)' },
+  { id:'TD-06', pri:'must', name:'Team regression -- undevelopment, moving right-to-left', src:'Team Development (Graham)', sections:'§2a, §2c', how:'Flight cancellations caused regression from Norming. THE L4 move: showing the model is non-linear from lived experience.', quote:'"You can go from right to left. Your team could undevelop."', ref:'Tuckman (1965); Graham lecture' },
+  { id:'TD-08', pri:'must', name:'Violently agreeing = artificial harmony', src:'Team Development (Graham)', sections:'§2b, §2c, §4a', how:'Ask: did the team violently agree? If yes, flag as weakness -- absent diversity of thought. If no, evidence of healthy Storming.', quote:'"You might find you\'re all violently agreeing with each other all the time. Be careful of that."', ref:'Tuckman (1965); Graham lecture' },
+  { id:'TD-11', pri:'must', name:'Worst-case timeline -- too little Forming', src:'Team Development (Graham)', sections:'§2a, §2c', how:'Wk12 kickoff too brief = worst-case scenario: no trust foundation, extended Storming. High-value L4.', quote:'"Too little time spent forming, which means no building of trust."', ref:'Tuckman (1965); Graham lecture' },
+  { id:'TD-15', pri:'must', name:'Dominant personalities -- possibly you', src:'Team Development (Graham)', sections:'§1a, §1b, §2b, §4a', how:'Self-reflect: as primary dev, you may have been the dominant personality. "That dominant character might even be you." HIGH-VALUE L4.', quote:'"Dominant personalities in the group exerting an unequal impact... Possibly that dominant character might even be you."', ref:'Graham lecture' },
+  { id:'TD-21', pri:'must', name:'Irony: skip management = spend MORE time managing', src:'Team Development (Graham)', sections:'§2b, §2c', how:'KILLER insight: team resisted structured processes, but confusion consumed more time than processes would have.', quote:'"Teams that don\'t bother to think about how they work... will have to spend even more time trying to manage the team."', ref:'Graham lecture' },
+  { id:'TD-24', pri:'must', name:'Investment paradox -- manage well now = less later', src:'Team Development (Graham)', sections:'§2c, §3b, §4a', how:'THE takeaway for "what I\'d do differently": front-load team process discussions. Ground rules, norms, conflict resolution protocols.', quote:'"Teams that invest in managing themselves well will have to spend less time managing themselves in the end."', ref:'Graham lecture' },
+  { id:'TD-25', pri:'must', name:'Limitation: therapy groups, not engineering teams', src:'Team Development (Graham)', sections:'§2a, §2c', how:'L4 CRITICAL: Tuckman derived from therapy group literature. Applicability to time-bounded MSc engineering project debatable.', quote:'"Tuckman reviewed literature on therapy groups... cannot be considered truly representative."', ref:'Tuckman (1965, p.384)' },
+  { id:'TD-26', pri:'must', name:'Limitation: linearity assumption -- real teams oscillate', src:'Team Development (Graham)', sections:'§2a', how:'L4 CRITICAL: model implies sequential progression but experience was cyclical. Supports Bonebright (2010) critique.', quote:'"Real teams oscillate between stages rather than progressing linearly."', ref:'Tuckman (1965); Bonebright (2010)' },
+  { id:'TD-32', pri:'must', name:'Storming is universal -- every team, no exceptions', src:'Team Development (Graham)', sections:'§2a, §2b', how:'Normalise conflict: "Without exception, every team has experienced this stage." Wk17 conflict was expected and necessary.', quote:'"Without exception, every new team I\'ve worked within or managed has experienced this stage."', ref:'Graham lecture' },
+  { id:'TD-35', pri:'must', name:'L3 Dialogic: compare theory to experience', src:'Team Development (Graham)', sections:'all', how:'Every Tuckman reference should be L3 minimum: "Tuckman predicts X; we experienced Y." Never just describe.', quote:'"Tuckman predicts universal Storming; we experienced this during Wk 17 when..."', ref:'Hatton & Smith (1995)' },
+  { id:'TD-36', pri:'must', name:'L4 Critical: evaluate model limitations', src:'Team Development (Graham)', sections:'§2a, §2c', how:'At least ONE L4 move per page. Question therapy-group basis, linearity assumption, or cultural bias.', quote:'"Tuckman\'s original study was conducted on therapy groups, not engineering teams."', ref:'Tuckman (1965, p.384); Bonebright (2010)' },
+
+  // ═══════════════════════════════════════════════════════════════
+  // MUST — Risk Management (Graham/ISO 31000/HSE)
+  // ═══════════════════════════════════════════════════════════════
+  { id:'RM-05', pri:'must', name:'Risk Number = Likelihood x Consequence', src:'Risk Management (Graham)', sections:'§1a, §1c, §3a, §3b', how:'Score every risk with f and c. Weather-cancellation (f=4, c=3, fxc=12 INTOLERABLE) actually materialised. Show pre/post mitigation.', quote:'"The resulting number guides you as to what to do."', ref:'Graham (2025)' },
+  { id:'RM-07', pri:'must', name:'Risk Compensation (Helmet Makes You Careless)', src:'Risk Management (Graham)', sections:'§1c, §3b', how:'Highest-value L4 self-reflection. (1) NCNN speed tempts higher flight speed. (2) Simulation success (7.7/10) created overconfidence.', quote:'"The climber might think they are safer because they have a helmet and be less careful."', ref:'Graham (2025)' },
+  { id:'RM-15', pri:'must', name:'ALARP (As Low As Reasonably Practicable)', src:'Risk Management (Graham)', sections:'§1c, §3a', how:'Apply with NUMBERS. 35m vs 20m altitude: +15% detection but 3.1x more passes (8 vs 25 min). Not reasonably practicable.', quote:'"In most cases there are no hard and fast rules about what is reasonably practical."', ref:'HSAWA (1974)' },
+  { id:'RM-22', pri:'must', name:'Solo risk assessment is suboptimal', src:'Risk Management (Graham)', sections:'§3a', how:'Acknowledge risk register primarily authored by one member. Diversity of views needed. Progressive test ladder served as implicit peer review.', quote:'"Working alone on a risk assessment is suboptimal as a diversity of views are needed."', ref:'Graham (2025)' },
+
+  // ═══════════════════════════════════════════════════════════════
+  // MUST — Innovation Tools (Graham)
+  // ═══════════════════════════════════════════════════════════════
+  { id:'IT-01', pri:'must', name:'Divergent vs Convergent Thinking', src:'Innovation Tools (Graham)', sections:'§1b, §2b, §3a', how:'Divergent (brainstorm search patterns, CV backends) then convergent (down-select using benchmarks). Loop back when choices fail.', quote:'"You may need to repeat the loop and generate new ideas if the one that you converged on does not satisfy your requirements."', ref:'Graham (2025)' },
+  { id:'IT-04', pri:'must', name:'Controlled Convergence / Pugh Matrix', src:'Innovation Tools (Graham)', sections:'§1b, §2b, §3a', how:'Model selection as Pugh matrix. Datum = YOLOv8n baseline. sar_v2_1088 wins (+accuracy, =speed, -size). Flight test ladder also a controlled convergence.', quote:'"Just because it\'s the only idea left doesn\'t mean it\'s the one that you have to use."', ref:'Graham (2025)' },
+  { id:'IT-05', pri:'must', name:'MCDA (Multi-Criteria Decision Analysis)', src:'Innovation Tools (Graham)', sections:'§1b, §2b, §3a', how:'Weighted scoring for inference backend. Speed 0.35, accuracy 0.25, compatibility 0.20, deployment 0.10, support 0.10. NCNN wins 4.15 vs TFLite 3.55.', quote:'"Most popular tool with engineers as the process is very logical, very effective, but not over complicated."', ref:'Graham (2025)' },
+  { id:'IT-06', pri:'must', name:'Requirements Analysis Before Solution Selection', src:'Innovation Tools (Graham)', sections:'§1a, §3a', how:'R01-R12 defined BEFORE selecting solutions. Skip requirements = solution selection takes longer.', quote:'"If you skip the requirements analysis, you\'ll most likely find that the solution selection takes much longer."', ref:'Graham (2025)' },
+  { id:'IT-07', pri:'must', name:'"Tools Support Thinking, Not Replace It"', src:'Innovation Tools (Graham)', sections:'§3a, §4a', how:'KEY Hatton L4: team\'s decision is final. Gap between tool output and final choice is OK IF justified.', quote:'"These are only simple tools, and they are there to support your thinking, not to replace it."', ref:'Graham (2025)' },
+
+  // ═══════════════════════════════════════════════════════════════
+  // MUST — Project Management (Graham)
+  // ═══════════════════════════════════════════════════════════════
+  { id:'PM-07', pri:'must', name:'WBS (100% Rule, Max 5 Levels)', src:'PM1 (Graham)', sections:'§1a, §3a', how:'Dashboard WBS, progressive test ladder = testing WBS. 41 test scripts in 6 categories. WBS -> List -> Kanban pipeline.', quote:'"No more than 5 levels. Captures everything (the 100% rule)."', ref:'Graham (2025)' },
+  { id:'PM-09', pri:'must', name:'Critical Path Method (CPM)', src:'PM1 + Specialist (Graham)', sections:'§2b, §3b', how:'Hardware integration = critical path with zero float. Software had float. Weather cancellation extended CP. "Any delay to a CP task delays the entire project."', quote:'"When earliest finish and latest start are equal, the event is part of the critical path."', ref:'Graham (2025)' },
+  { id:'PM-13', pri:'must', name:'Waterfall vs Agile vs Hybrid', src:'PM1 (Graham)', sections:'§1a, §2b', how:'Hybrid: waterfall for safety-critical hardware (sequential testing), agile for software (sprints, backlog, Kanban). "Not one size fits all."', quote:'"Not one size fits all."', ref:'Graham (2025)' },
+  { id:'PM-18', pri:'must', name:'Group of Individuals != Team', src:'PM2 (Graham)', sections:'§2b, §3a', how:'"Lone Genius" (castle) and "Drifting along" (raft, TIME is the shark). Was team truly integrated or 5 individuals in parallel?', quote:'"A group of individuals is not a team."', ref:'Graham (2025)' },
+
+  // ═══════════════════════════════════════════════════════════════
+  // MUST — Cross-Cutting Hatton L4
+  // ═══════════════════════════════════════════════════════════════
+  { id:'L4-01', pri:'must', name:'Hatton L4: What We Should Have Done', src:'Cross-cutting synthesis', sections:'§3a, §4a', how:'CV backend selection driven by benchmarks, not structured MCDA. Formal comparison would have forced explicit trade-off articulation.', quote:'(original critical analysis)', ref:'Graham (2025); Hatton & Smith (1995)' },
+  { id:'L4-02', pri:'must', name:'Hatton L4: Float as Strategic Resource', src:'Cross-cutting synthesis', sections:'§3a', how:'vision.py had significant float (not on CP). Iteratively refined across 3 model versions without blocking CP. Planned float consumption.', quote:'(original critical analysis)', ref:'Graham (2025)' },
+  { id:'L4-03', pri:'must', name:'Hatton L4: Risk-Driven Hybrid Methodology', src:'Cross-cutting synthesis', sections:'§1a, §3a', how:'Hardware path = strict waterfall. Software path = agile sprints. Risk profile determined methodology, not ideology.', quote:'"Not one size fits all." -- Graham (2025)', ref:'Graham (2025)' },
+
+  // ═══════════════════════════════════════════════════════════════
+  // SHOULD — Five Dysfunctions
+  // ═══════════════════════════════════════════════════════════════
+  { id:'FD-14', pri:'should', name:'Personal Histories Exercise (trust antidote)', src:'Five Dysfunctions (Graham)', sections:'§2c, §3b', how:'Concrete "what I\'d do differently": run personal histories exercise at project start. Simple sharing recognises the human in others.', quote:'"Simple sharing exercises -- helps us to recognise the human in others."', ref:'Lencioni (2005)' },
+  { id:'FD-15', pri:'should', name:'Team Effectiveness Exercise', src:'Five Dysfunctions (Graham)', sections:'§2c, §3b', how:'Team identifies most/least effective contributions each member makes. Tough but builds trust AND accountability.', quote:'"Team identifies the most/least effective contributions others make to the team."', ref:'Lencioni (2005)' },
+  { id:'FD-16', pri:'should', name:'Conflict Mining (conflict antidote)', src:'Five Dysfunctions (Graham)', sections:'§2c, §3b', how:'Designate someone to arbitrate disputes. Could have appointed a conflict miner during FSM debate.', quote:'"Someone who can arbitrate a dispute and help team members share their points of view."', ref:'Lencioni (2005)' },
+  { id:'FD-17', pri:'should', name:'Real-Time Permission (conflict antidote)', src:'Five Dysfunctions (Graham)', sections:'§2c, §3b', how:'Give explicit permission in the moment: "I want your honest opinion even if it disagrees with mine."', quote:'"Real-time permission method."', ref:'Lencioni (2005)' },
+  { id:'FD-18', pri:'should', name:'Cascading Messaging (commitment antidote)', src:'Five Dysfunctions (Graham)', sections:'§2c, §3b', how:'After a decision, cascade clearly to all members. Prevents ambiguity about what was agreed.', quote:'"Cascading messaging."', ref:'Lencioni (2005)' },
+  { id:'FD-19', pri:'should', name:'Project Pre-Mortems', src:'Five Dysfunctions (Graham)', sections:'§2c, §3b', how:'Before starting, imagine failure -- what went wrong? Forces commitment to avoiding failure modes.', quote:'"Project pre-mortems, worst case analysis."', ref:'Lencioni (2005)' },
+  { id:'FD-20', pri:'should', name:'Team Scoreboard / Dashboard', src:'Five Dysfunctions (Graham)', sections:'§2c, §3b', how:'Built a dashboard but tracked individual tasks not collective outcomes. Reframe: team-level metrics.', quote:'"Team Scoreboard, Dashboard."', ref:'Lencioni (2005)' },
+  { id:'FD-21', pri:'should', name:'Public Declaration of Results', src:'Five Dysfunctions (Graham)', sections:'§2c, §3b', how:'Publicly declare team goals. Makes it harder to drift to individual agendas.', quote:'"Public declaration of results."', ref:'Lencioni (2005)' },
+  { id:'FD-22', pri:'should', name:'Results-Based Rewards (not individual)', src:'Five Dysfunctions (Graham)', sections:'§2c, §3b', how:'Celebrate collective milestones (drone flew!) not individual commit counts.', quote:'"Results-based rewards, team rewards (not individual)."', ref:'Lencioni (2005)' },
+  { id:'FD-23', pri:'should', name:'The 38-Question Diagnostic Tool', src:'Five Dysfunctions (Graham)', sections:'§3a, §2b', how:'Could have used mid-project to identify dysfunction levels. Include brief self-assessment in D7.', quote:'"Rate each statement 1-5. Takes under 15 minutes."', ref:'Lencioni (2002)' },
+  { id:'FD-24', pri:'should', name:'Behavioural Profiling (DISC, MBTI)', src:'Five Dysfunctions (Graham)', sections:'§2c, §3b', how:'In future teams, use to build trust faster by understanding individual styles.', quote:'"Behavioural profiling tools (DISC, MBTI etc.)"', ref:'Lencioni (2005)' },
+  { id:'FD-25', pri:'should', name:'Shared Experiences as Trust Builder', src:'Five Dysfunctions (Graham)', sections:'§2c, §3b', how:'Limited in-person time contributed to trust deficit. Teambuilding, social events, working together.', quote:'"Anything that drives shared experiences (teambuilding etc.)"', ref:'Lencioni (2005)' },
+  { id:'FD-26', pri:'should', name:'Publication of Goals and Standards', src:'Five Dysfunctions (Graham)', sections:'§2c, §3b', how:'Write down objectives, deadlines, quality standards. Links to weasel metaphor.', quote:'"Publication/recording goals and standards."', ref:'Lencioni (2005)' },
+  { id:'FD-27', pri:'should', name:'Regular Progress Reviews', src:'Five Dysfunctions (Graham)', sections:'§2c, §3b', how:'Not just status updates but genuine accountability reviews against committed goals.', quote:'"Regular progress reviews."', ref:'Lencioni (2005)' },
+  { id:'FD-28', pri:'should', name:'Worst Case Analysis (commitment antidote)', src:'Five Dysfunctions (Graham)', sections:'§2c, §3b', how:'What\'s the worst if we commit? Reduces fear by bounding downside.', quote:'"Worst case analysis."', ref:'Lencioni (2005)' },
+  { id:'FD-29', pri:'should', name:'Dysfunctions as Linked Chain', src:'Five Dysfunctions (Graham)', sections:'§3a', how:'Break one link, whole chain fails. One lower-level dysfunction drags everything above down.', quote:'"Dysfunctions are linked; break one link and the whole chain fails."', ref:'Graham (2025)' },
+  { id:'FD-30', pri:'should', name:'Hatton L4 Reflection Moves (pre-written)', src:'Five Dysfunctions (Graham)', sections:'§1a, §2a, §2b, §3a, §4a', how:'Four pre-written L4 paragraphs reinterpreting project events through Lencioni\'s lens.', quote:'"I now see that my 1411-line main.py was not just poor modularity -- it was an absence of trust made architectural."', ref:'Lencioni (2002); Hatton & Smith (1995)' },
+
+  // ═══════════════════════════════════════════════════════════════
+  // SHOULD — Team Development
+  // ═══════════════════════════════════════════════════════════════
+  { id:'TD-03', pri:'should', name:'Norming -- sense of belonging, in-jokes', src:'Team Development (Graham)', sections:'§2a, §2b', how:'Evidence: handoff docs, Robin integration, Git workflow, constructive code review.', quote:'"A team starts to develop its own culture, possibly with its own language and its own in-jokes."', ref:'Tuckman (1965)' },
+  { id:'TD-04', pri:'should', name:'Performing -- fluidity, differences useful', src:'Team Development (Graham)', sections:'§2a, §3a', how:'Be honest: did we reach Performing? If yes, cite field day fluidity. If no, say so -- L4 honesty > L3 pretence.', quote:'"Roles may become much more fluid. Differences between team members become useful."', ref:'Tuckman (1965)' },
+  { id:'TD-07', pri:'should', name:'Regression triggers -- 6 specific causes', src:'Team Development (Graham)', sections:'§2a, §2c', how:'Which hit your team: (1) new member (Robin), (3) scope change (flight cancellations), (5) external pressure (weather, hardware delays).', quote:'"New members bring their own working style, temporarily disrupting established norms."', ref:'Tuckman (1965); Graham lecture' },
+  { id:'TD-09', pri:'should', name:'True Norming = resolved conflict, not absent', src:'Team Development (Graham)', sections:'§2b', how:'Distinguish "we never argued" (bad) from "we argued, resolved, moved on" (good).', quote:'"True Norming involves resolved conflict, not absent conflict."', ref:'Tuckman synthesis' },
+  { id:'TD-10', pri:'should', name:'Best-case timeline (very rare)', src:'Team Development (Graham)', sections:'§2a, §2c', how:'Project plans built on best-case Tuckman (short Storming). Naive. Budget for Storming in Gantt charts.', quote:'"This is what all project managers will optimistically base their timing plans on... very, very rare."', ref:'Tuckman (1965); Graham lecture' },
+  { id:'TD-13', pri:'should', name:'Extroverts speak-to-think vs introverts think-to-speak', src:'Team Development (Graham)', sections:'§2b, §2c, §4a, §4b', how:'In future: circulate agendas beforehand, allow async written input. Accommodate both styles.', quote:'"Extroverts speak to think... introverts tend to think to speak."', ref:'Graham lecture' },
+  { id:'TD-14', pri:'should', name:'Groupthink -- echo chamber', src:'Team Development (Graham)', sections:'§2b, §2c', how:'Did team have genuine intellectual diversity? Were different approaches seriously considered?', quote:'"Being surrounded by people who think just like you creates an echo chamber and the problem of groupthink."', ref:'Graham lecture' },
+  { id:'TD-16', pri:'should', name:'Diffusion of responsibility -- nobody reading the map', src:'Team Development (Graham)', sections:'§2b, §3a, §4a', how:'Hiking analogy: everyone relied on group, no one was reading the map. Apply to tasks that fell through cracks.', quote:'"People were relying on the group to manage the risk and no one realised that no one else was reading the map."', ref:'Graham lecture' },
+  { id:'TD-18', pri:'should', name:'Democratic weakness -- popular != good', src:'Team Development (Graham)', sections:'§2b, §2c', how:'If a team decision was made by popularity that turned out suboptimal. Evaluate ideas on technical merit.', quote:'"Just because it\'s popular doesn\'t make it good or right."', ref:'Graham lecture' },
+  { id:'TD-20', pri:'should', name:'Team time allocation -- 4 scenarios', src:'Team Development (Graham)', sections:'§2b, §2c, §3b', how:'Poor teams spend >50% on management. Self-assess which scenario matched. During Storming = poor; by Norming = ideal.', quote:'"Teams that invest in managing themselves well will have to spend less time managing themselves in the end."', ref:'Graham lecture' },
+  { id:'TD-27', pri:'should', name:'Limitation: cultural bias -- 1960s American', src:'Team Development (Graham)', sections:'§2c', how:'Multicultural team: collectivist members may suppress conflict that surfaces later.', quote:'"Collectivist cultures may exhibit different patterns."', ref:'Tuckman (1965)' },
+  { id:'TD-37', pri:'should', name:'L4: synthesise Tuckman with Belbin', src:'Team Development (Graham)', sections:'§2a, §2b', how:'Storming conflicts align with Belbin role clashes. Two Shapers competing = intense Storming.', quote:'"Belbin explains why Storming occurs -- role clashes."', ref:'Tuckman (1965); Belbin (2010)' },
+  { id:'TD-40', pri:'should', name:'Best-case requires active management', src:'Team Development (Graham)', sections:'§2c, §3b', how:'In future: schedule explicit Forming activities and facilitated Storming resolution. Don\'t rely on organic development.', quote:'"Unless you\'re naturally gifted or lucky, you will have to actively manage the team."', ref:'Graham lecture' },
+
+  // ═══════════════════════════════════════════════════════════════
+  // SHOULD — Risk Management
+  // ═══════════════════════════════════════════════════════════════
+  { id:'RM-01', pri:'should', name:'ISO 31000 Definition of Risk', src:'Risk Management (Graham)', sections:'§3a', how:'Open risk section with formal definition. Frame every risk as "uncertainty affecting our objective."', quote:'"Risk is the effect of uncertainty on objectives." -- ISO 31000:2018', ref:'ISO 31000 (2018)' },
+  { id:'RM-02', pri:'should', name:'Risk as Choice (Risacare Etymology)', src:'Risk Management (Graham)', sections:'§3a', how:'Reframe risk as deliberate engineering choice. "We chose to fly at 35m -- risk is a choice we made deliberately."', quote:'"The word risk derives from the early Italian risicare, meaning to dare."', ref:'Bernstein (1996)' },
+  { id:'RM-03', pri:'should', name:'Six Risk Types', src:'Risk Management (Graham)', sections:'§3a', how:'Categorise risks: Safety (crash/SSSI), Schedule (3 cancelled flights), Performance (AI detection rate). Show breadth beyond safety.', quote:'(classification from lecture)', ref:'Graham (2025)' },
+  { id:'RM-04', pri:'should', name:'Hazard vs Risk Distinction', src:'Risk Management (Graham)', sections:'§3a', how:'Hazard = spinning propeller. Risk = likelihood of contact x consequence of laceration. Examiners notice conflation.', quote:'"Hazard: Something that has the potential to do harm."', ref:'ISO 31000 (2018)' },
+  { id:'RM-06', pri:'should', name:'Mitigations: Reduce Likelihood, Consequence, or Both', src:'Risk Management (Graham)', sections:'§3a', how:'Geofence = BOTH. RC kill switch = consequence only. Progressive test ladder = likelihood only. This analytical mapping gets L4.', quote:'"Different mitigations can improve the likelihood, consequence, or both."', ref:'Graham (2025)' },
+  { id:'RM-09', pri:'should', name:'HSE 5-Step Risk Assessment Cycle', src:'Risk Management (Graham)', sections:'§3a', how:'Map each step to project action. The CYCLIC nature is key -- show you went around the loop more than once.', quote:'"The process is cyclic -- risk assessments should be reviewed on a regular basis."', ref:'HSE (1974)' },
+  { id:'RM-10', pri:'should', name:'Risk Assessment Pro Forma (9 Columns)', src:'Risk Management (Graham)', sections:'§3a', how:'Use exactly this 9-column format. Having all 9 columns shows direct framework application.', quote:'(pro forma from lecture)', ref:'Graham (2025)' },
+  { id:'RM-14', pri:'should', name:'5x5 Criticality Matrix', src:'Risk Management (Graham)', sections:'§3a', how:'1-5 Negligible, 6-10 Tolerable, 11-25 Intolerable. Weather risk fxc=12 = Intolerable, which is exactly what happened.', quote:'"11-25: Intolerable. Activity must halt."', ref:'Graham (2025)' },
+  { id:'RM-17', pri:'should', name:'Three Pillars: Moral, Economic, Legal', src:'Risk Management (Graham)', sections:'§1c, §3a', how:'All three on RC override: Moral (pilot protects bystanders), Economic (~2000 GBP equipment), Legal (ANO 2016 liability).', quote:'"You have a moral obligation to work safely... This obligation is above all others."', ref:'Graham (2025)' },
+  { id:'RM-18', pri:'should', name:'Reasonably Practicable (legal standard)', src:'Risk Management (Graham)', sections:'§1c, §3a', how:'Not just common sense -- a LEGAL STANDARD requiring cost-benefit analysis. Secondary GPS (~500 GBP) not reasonably practicable.', quote:'"Duty upon employers to ensure, as far as is reasonably practicable..."', ref:'HSAWA (1974)' },
+  { id:'RM-20', pri:'should', name:'Flixborough Disaster (1974)', src:'Risk Management (Graham)', sections:'§3a', how:'28 deaths from temporary piping fix. Accelerated HSAWA. Pivot: "Our test ladder embodies the same principle: never skip safety steps."', quote:'"Flixborough accelerated the implementation of the Health and Safety at Work Act."', ref:'Graham (2025)' },
+  { id:'RM-31', pri:'should', name:'Mitigations May Cause Additional Risks', src:'Risk Management (Graham)', sections:'§3a', how:'RTL geofence = mitigation for SSSI but introduces secondary risk of uncontrolled climb. Chain of mitigation-upon-mitigation.', quote:'"Mitigations may cause unwanted additional risks."', ref:'Graham (2025)' },
+  { id:'RM-36', pri:'should', name:'Iterative Risk Re-Assessment', src:'Risk Management (Graham)', sections:'§3a', how:'Strongest L4 move. After corrupt calibration file, re-scored AI-fails-to-detect from f=2 to f=4. Going around the cycle MORE THAN ONCE.', quote:'"This assessment requires an update by [date]."', ref:'HSE (1974)' },
+  { id:'RM-42', pri:'should', name:'Cascading/Compounding Risk', src:'Risk Management (Graham)', sections:'§3a', how:'CRITIQUE the framework: standard matrix assumes independent risks. GPS-loss cascades into geofence AND navigation failure. L4 meta-move.', quote:'(original critical analysis)', ref:'Graham (2025)' },
+
+  // ═══════════════════════════════════════════════════════════════
+  // SHOULD — Innovation Tools
+  // ═══════════════════════════════════════════════════════════════
+  { id:'IT-02', pri:'should', name:'Simple Pairwise Comparison', src:'Innovation Tools (Graham)', sections:'§3a', how:'Rank flight test priorities pairwise. Output: ordinal rank. Reflects on whether formalising would have surfaced disagreements earlier.', quote:'"I have put the count for A as 2.5 because A was shown to be more important twice and equal once."', ref:'Graham (2025)' },
+  { id:'IT-03', pri:'should', name:'Numerical Pairwise (9/3/1 Scale)', src:'Innovation Tools (Graham)', sections:'§3a', how:'Produces % weightings for MCDA. Speed "much more important" (9) vs model size (1) -> speed ~41% weight.', quote:'"The other numbers shown here are just the inverse of these numbers."', ref:'Graham (2025)' },
+  { id:'IT-08', pri:'should', name:'Survivor Bias Warning', src:'Innovation Tools (Graham)', sections:'§3a', how:'Lawnmower was "last idea standing" -- but was it truly optimal or just the survivor? Loop-back principle.', quote:'"Just because it\'s the only idea left doesn\'t mean it\'s the one that you have to use."', ref:'Graham (2025)' },
+  { id:'IT-09', pri:'should', name:'Benefits of Structured Tools', src:'Innovation Tools (Graham)', sections:'§2b, §3a', how:'Three benefits: faster agreement, neutralises loud voices, stakeholder explanation.', quote:'"Using an analytical tool is a great way of taking the focus away from personalities."', ref:'Graham (2025)' },
+  { id:'IT-10', pri:'should', name:'Risks of Structured Tools', src:'Innovation Tools (Graham)', sections:'§3a', how:'GIGO, hiding behind the tool, too systematic kills creativity. Apollo used engineering judgement alongside data.', quote:'"If you put rubbish in, you will get rubbish out."', ref:'Graham (2025)' },
+
+  // ═══════════════════════════════════════════════════════════════
+  // SHOULD — Project Management
+  // ═══════════════════════════════════════════════════════════════
+  { id:'PM-04', pri:'should', name:'Existing vs Additional Mitigations', src:'PM1 (Graham)', sections:'§3a', how:'Distinguish what was ALREADY in place vs what the RA process ADDED. Pre-mitigation score accounts for existing controls.', quote:'"The score is based on existing mitigations."', ref:'Graham (2025)' },
+  { id:'PM-08', pri:'should', name:'Network Diagrams (AOA/AON)', src:'PM1 + Specialist (Graham)', sections:'§3a', how:'Flight test dependency chain IS a network diagram. AON is "most popular method."', quote:'"Activities drawn as arrows, Events as circles, Time increases left to right."', ref:'Graham (2025)' },
+  { id:'PM-10', pri:'should', name:'Gantt Chart -- Five Components', src:'PM2 (Graham)', sections:'§3a', how:'Dependencies, CP tasks, float, project length, milestones. Dashboard WBS = living Gantt equivalent.', quote:'"Notice groupings of linked tasks."', ref:'Graham (2025)' },
+  { id:'PM-11', pri:'should', name:'Resource Levelling', src:'PM2 (Graham)', sections:'§2b, §3a', how:'Pi = bottleneck. Colab = subcontracted manufacturing. While training ran, team worked on scripts + docs. Using float to keep humans productive.', quote:'"Resource levelling allows same duration with zero additional staff by exploiting float."', ref:'Graham (2025)' },
+  { id:'PM-12', pri:'should', name:'Rolling Wave Planning', src:'PM2 (Graham)', sections:'§1a, §1c', how:'Near-term = detailed, far-term = abstract. "I don\'t have enough detail? Start planning anyway."', quote:'"I don\'t have enough detail to plan? Start planning anyway."', ref:'Graham (2025)' },
+  { id:'PM-17', pri:'should', name:'Museum of Mediocrity Anti-Pattern', src:'PM2 (Graham)', sections:'§3a', how:'Motivated living documentation (CLAUDE.md, session logs, blueprints) rather than static plan obsolete by Week 3.', quote:'(concept from slide 29)', ref:'Graham (2025)' },
+  { id:'PM-21', pri:'should', name:'Seven Planning Challenges', src:'PM Specialist (Graham)', sections:'§3a', how:'Real-life complexity, software limitations, non-continuous working, precedence types, resource scheduling, intra-team deps, macro/micro scale.', quote:'"Man-days != days taken."', ref:'Graham (2025)' },
+  { id:'PM-23', pri:'should', name:'Precedence Relationships (FS/SS/FF/SF)', src:'PM Specialist (Graham)', sections:'§3a', how:'FS: simulation FINISH before Pi integration START. SS: Pi setup + software dev in parallel. FF: tests finish near module finish.', quote:'"Concrete can be drilled 2 days after it has been laid."', ref:'Graham (2025)' },
+  { id:'PM-25', pri:'should', name:'Non-Continuous Working', src:'PM Specialist (Graham)', sections:'§3a', how:'Man-days != elapsed days. Weather cancellation = delay node. Pi shared = serialised access.', quote:'"The whole network might need recalculating multiple times."', ref:'Graham (2025)' },
+  { id:'PM-26', pri:'should', name:'Intra-Team Dependencies as Interfaces', src:'PM Specialist (Graham)', sections:'§2b, §3a', how:'vision.py 4-tuple interface defined BEFORE implementation. Stable across 3 model versions. "Programming to interfaces" as PM technique.', quote:'"Intra-team dependencies (inputs/outputs) are shown on the network and Gantt."', ref:'Graham (2025)' },
+
+  // ═══════════════════════════════════════════════════════════════
+  // SHOULD — Cross-Cutting L4
+  // ═══════════════════════════════════════════════════════════════
+  { id:'L4-04', pri:'should', name:'Hatton L4: Dynamic Critical Path', src:'Cross-cutting synthesis', sections:'§3a, §3b', how:'CP shifted: initially through software, then pivoted to hardware after weather cancelled testing. CP analysis must be continuous.', quote:'(original critical analysis)', ref:'Graham (2025)' },
+  { id:'L4-05', pri:'should', name:'Hatton L4: Tuckman + Rolling Wave Synthesis', src:'Cross-cutting synthesis', sections:'§2a, §3a', how:'During Forming/Storming, could only plan at module level. In Norming/Performing, resolution increased naturally. Rolling wave = response to team maturity.', quote:'(original critical analysis)', ref:'Graham (2025); Tuckman (1965)' },
+
+  // ═══════════════════════════════════════════════════════════════
+  // COULD — Five Dysfunctions
+  // ═══════════════════════════════════════════════════════════════
+  { id:'FD-31', pri:'could', name:'Hiding mistakes (trust symptom)', src:'Five Dysfunctions (Graham)', sections:'§2b', how:'Did team members hide mistakes? If yes, cite as evidence of trust dysfunction.', quote:'"Hiding mistakes; Not asking for help; Acting defensively."', ref:'Lencioni (2002)' },
+  { id:'FD-32', pri:'could', name:'Slow to apologise (trust symptom)', src:'Five Dysfunctions (Graham)', sections:'§2b', how:'Minor symptom, worth mentioning with specific instance.', quote:'"Slow to apologise."', ref:'Lencioni (2002)' },
+  { id:'FD-33', pri:'could', name:'Boring meetings / safe topics', src:'Five Dysfunctions (Graham)', sections:'§2b', how:'Meetings only covered safe topics while hard issues avoided = Level 2 dysfunction evidence.', quote:'"Boring meetings that only touch on less important or safe topics."', ref:'Lencioni (2002)' },
+  { id:'FD-34', pri:'could', name:'Revisiting same discussions', src:'Five Dysfunctions (Graham)', sections:'§2b, §2c', how:'FSM debate being revisited = symptom of lack of commitment.', quote:'"Revisiting the same discussions again and again."', ref:'Lencioni (2002)' },
+  { id:'FD-35', pri:'could', name:'Opinions not solicited', src:'Five Dysfunctions (Graham)', sections:'§2b', how:'If decisions made without soliciting input = conflict-avoidance symptom.', quote:'"Opinions of others not solicited."', ref:'Lencioni (2002)' },
+  { id:'FD-36', pri:'could', name:'Never sharing personal life', src:'Five Dysfunctions (Graham)', sections:'§2b', how:'Remaining too private = don\'t trust team members. Ukrainian context not shared.', quote:'"The message you\'re sending by remaining too private is that you don\'t trust team members."', ref:'Graham (2025)' },
+  { id:'FD-37', pri:'could', name:'Academic departments as Level 5 example', src:'Five Dysfunctions (Graham)', sections:'§3a', how:'Academics measured on personal publishing not collective. Parallel to individual marks/reports.', quote:'"Academics are measured against their personal publishing record."', ref:'Graham (2025)' },
+  { id:'FD-38', pri:'could', name:'Dysfunctions not virtues (model design)', src:'Five Dysfunctions (Graham)', sections:'§3a', how:'Negative framing lets you recognise opposite behaviours to pursue.', quote:'"By identifying dysfunction, we can recognise the opposite behaviours."', ref:'Graham (2025)' },
+  { id:'FD-39', pri:'could', name:'Exercises may feel awkward', src:'Five Dysfunctions (Graham)', sections:'§3b', how:'Acknowledge trust-building feels cheesy but is necessary. Shows maturity.', quote:'"You might find some of the exercises to be quite cheesy or awkward."', ref:'Graham (2025)' },
+  { id:'FD-40', pri:'could', name:'Ice Climber visual (trust metaphor)', src:'Five Dysfunctions (Graham)', sections:'§3a', how:'Teams in high-risk environments require trust, like ice climbers. Drone project = literally high-risk.', quote:'"Ice climber -- high-risk environment requiring trust."', ref:'Graham (2025)' },
+  { id:'FD-41', pri:'could', name:'Resentment in both directions', src:'Five Dysfunctions (Graham)', sections:'§2b', how:'High performers resent low performers; low performers resent being called out.', quote:'"Resentment in both directions."', ref:'Lencioni (2002)' },
+  { id:'FD-42', pri:'could', name:'Human behaviours not resources', src:'Five Dysfunctions (Graham)', sections:'§4a, §3b', how:'Closing identity-shift: soft skills mattered more than technical code output.', quote:'"It\'s generally not a lack of resources or technical skill that prevents most teams from succeeding."', ref:'Graham (2025)' },
+
+  // ═══════════════════════════════════════════════════════════════
+  // COULD — Team Development
+  // ═══════════════════════════════════════════════════════════════
+  { id:'TD-05', pri:'could', name:'Transforming / Adjourning', src:'Team Development (Graham)', sections:'§1c, §3b', how:'Future-looking: invest more in Transforming -- capturing lessons before team disbands.', quote:'"When you\'ve invested years of your life into a project and someone pulls the plug, it can be really painful."', ref:'Tuckman and Jensen (1977)' },
+  { id:'TD-12', pri:'could', name:'Probable timeline -- compressed Performing', src:'Team Development (Graham)', sections:'§2a', how:'Extended Forming/Storming compressed Performing to 2-3 weeks.', quote:'"Forming and storming stages are longer, compressing the performing aspect."', ref:'Tuckman (1965); Graham lecture' },
+  { id:'TD-17', pri:'could', name:'Collective courage', src:'Team Development (Graham)', sections:'§1b, §3a', how:'Project scope would have been impossible solo. Team provided "safety in numbers."', quote:'"Teams will often undertake challenges that no individual would consider doing alone."', ref:'Graham lecture' },
+  { id:'TD-19', pri:'could', name:'Underground conflict from democratic peacekeeping', src:'Team Development (Graham)', sections:'§2b, §2c', how:'Voting/consensus to avoid confrontation pushes issues underground.', quote:'"Democratic approaches to find peace can push issues underground."', ref:'Tuckman (1965); Graham lecture' },
+  { id:'TD-22', pri:'could', name:'Worker/mid-manager/senior manager time split', src:'Team Development (Graham)', sections:'§1a, §1c', how:'Career reflection: experienced the mid-manager split (balancing own dev with coordination).', quote:'"As a senior manager... it can often feel like you never get to work on your own work."', ref:'Graham lecture' },
+  { id:'TD-23', pri:'could', name:'Engineering-to-management transition pain', src:'Team Development (Graham)', sections:'§1c', how:'Forced detachment from technical work. Coordination less satisfying than coding.', quote:'"The forced detachment from the technical work... can be too much to bear."', ref:'Graham lecture' },
+  { id:'TD-28', pri:'could', name:'Limitation: no timeframes given', src:'Team Development (Graham)', sections:'§2a', how:'Can\'t distinguish "healthy extended Storming" from "stuck Storming." 3-week period felt long but may have been necessary.', quote:'"The model gives no indication of how long each stage should last."', ref:'Tuckman (1965)' },
+  { id:'TD-29', pri:'could', name:'Limitation: pre-assigned vs self-selected', src:'Team Development (Graham)', sections:'§2a, §2c', how:'University teams assigned, not chosen. Changes Forming dynamics, may extend Storming.', quote:'"University project teams are assigned, not chosen."', ref:'Tuckman synthesis' },
+  { id:'TD-31', pri:'could', name:'Fractal teams -- Tuckman repeats at each level', src:'Team Development (Graham)', sections:'§2a, §3b', how:'Sub-teams (software, hardware, flight ops) each went through micro-Tuckman cycles.', quote:'"Your team is part of a developing division. You will need to repeat some aspects."', ref:'Graham lecture' },
+  { id:'TD-33', pri:'could', name:'Good teams > sum of parts', src:'Team Development (Graham)', sections:'§3a', how:'Combined output exceeded what any individual could build.', quote:'"Good teams should add up to more than the sum of their parts."', ref:'Graham lecture' },
+  { id:'TD-34', pri:'could', name:'Team interaction creates accidental discoveries', src:'Team Development (Graham)', sections:'§2b, §3a', how:'If serendipitous moment occurred from conversation, cite it.', quote:'"Being in a group creates new opportunities for interaction and creativity."', ref:'Graham lecture' },
+  { id:'TD-38', pri:'could', name:'Forming is deceptively pleasant', src:'Team Development (Graham)', sections:'§2a', how:'Forming felt easy -- everyone friendly, deliverables distant.', quote:'"At the very beginning of projects, it\'s not normally the hardest or most unpleasant phase."', ref:'Graham lecture' },
+  { id:'TD-39', pri:'could', name:'Two parallel dimensions -- interpersonal + task', src:'Team Development (Graham)', sections:'§2a', how:'Interpersonal development lagged behind task development: delivering code before resolving tensions.', quote:'"Group Structure: Testing & Dependence -> Intragroup Conflict -> Development of Cohesion."', ref:'Tuckman (1965)' },
+  { id:'TD-41', pri:'could', name:'5 indicators of reaching Norming', src:'Team Development (Graham)', sections:'§2a', how:'Checklist: constructive criticism, inside jokes, realistic plans, free-flowing info, sense of belonging. Team demonstrated 3-4 of 5.', quote:'"1. Criticism is constructive. 2. Team has inside jokes. 3. Plans are realistic."', ref:'Graham lecture' },
+  { id:'TD-42', pri:'could', name:'Forming (chaotic) vs Performing (intentional fluidity)', src:'Team Development (Graham)', sections:'§2a', how:'Both feature ambiguous roles but for opposite reasons. Early confusion vs productive role-swapping during field testing.', quote:'"Forming = unclear (chaotic). Performing = flexible (intentional)."', ref:'Tuckman synthesis' },
+  { id:'TD-43', pri:'could', name:'Team\'s work IS your work', src:'Team Development (Graham)', sections:'§1a, §1c', how:'Reframed frustration with coordination: enabling team = equally my work.', quote:'"The reality is that the team\'s work is your work."', ref:'Graham lecture' },
+
+  // ═══════════════════════════════════════════════════════════════
+  // COULD — Risk Management
+  // ═══════════════════════════════════════════════════════════════
+  { id:'RM-08', pri:'could', name:'Electricians Overconfident in Circuit Breakers', src:'Risk Management (Graham)', sections:'§3b', how:'Parallel analogy for risk compensation. Trust in geofence could reduce vigilance about GPS accuracy.', quote:'"Electricians seem increasingly careless... overconfident in modern circuit breakers."', ref:'Graham (2025)' },
+  { id:'RM-11', pri:'could', name:'Frequency Scoring (1-5 Logarithmic)', src:'Risk Management (Graham)', sections:'§3a', how:'Define project-specific scale. Note logarithmic nature -- jump from 4 to 5 is not linear.', quote:'"The scales are rarely linear and more often logarithmic."', ref:'Graham (2025)' },
+  { id:'RM-12', pri:'could', name:'Consequence Scoring (Network Rail)', src:'Risk Management (Graham)', sections:'§3a', how:'Adapt 5-level scale to drone context. Citing Network Rail shows industry awareness.', quote:'"Network Rail consequence scale ranges from Minor safety event (1) to Catastrophic (5)."', ref:'Network Rail' },
+  { id:'RM-13', pri:'could', name:'Pre/Post Mitigation Scoring', src:'Risk Management (Graham)', sections:'§3a', how:'Show BEFORE and AFTER for at least 2 risks. SSSI: pre fxc=12, post fxc=4.', quote:'"The residual risk is the risk that remains even after mitigations."', ref:'Graham (2025)' },
+  { id:'RM-19', pri:'could', name:'Duty of Care (Priestley v Fowler 1835)', src:'Risk Management (Graham)', sections:'§3a', how:'Historical mention: employer duty of care since 1835. Team lead responsibility.', quote:'"Established that employers owe employees a duty of care."', ref:'Graham (2025)' },
+  { id:'RM-21', pri:'could', name:'Corporate Manslaughter Act 2007', src:'Risk Management (Graham)', sections:'§3a', how:'Systemic failures, not just individual errors, cause harm. Relevant to software architecture decisions.', quote:'"Enables prosecution of organisations as well as individuals."', ref:'CMA (2007)' },
+  { id:'RM-23', pri:'could', name:'No One Has to Be Harmed for an Offence', src:'Risk Management (Graham)', sections:'§3a', how:'Geofence matters even though no SSSI incursion occurred. Creating risk of harm = offence.', quote:'"No one has to be harmed for an offence to be committed -- there only has to be a risk of harm."', ref:'HSAWA (1974)' },
+  { id:'RM-24', pri:'could', name:'Risk Assessment Is Continuous and Unconscious', src:'Risk Management (Graham)', sections:'§3a', how:'Bridge from theory to practice. Formalised RM makes implicit process explicit and auditable.', quote:'"Risk assessing is something you do continuously but unconsciously every day."', ref:'Graham (2025)' },
+  { id:'RM-27', pri:'could', name:'HSAWA Six Employer Duties', src:'Risk Management (Graham)', sections:'§3a', how:'Map 3+ duties to project: safe systems (test ladder), training (flight day briefing), written policy (risk register).', quote:'(6 duties from HSAWA Section 2)', ref:'HSAWA (1974)' },
+  { id:'RM-28', pri:'could', name:'Mental Health as Employer Duty', src:'Risk Management (Graham)', sections:'§3a', how:'Duty extends to mental health. Cancelled flights + deadline = stress. Simulation-first fallback reduced anxiety.', quote:'"Employers also have a duty of care for employees\' mental health."', ref:'Graham (2025)' },
+  { id:'RM-29', pri:'could', name:'F1 Pit-Stop Risk Assessment', src:'Risk Management (Graham)', sections:'§3a', how:'Domain-specific frequency scales. SAR frequency scale should be flight-specific.', quote:'(worked example from quiz)', ref:'Graham (2025)' },
+  { id:'RM-32', pri:'could', name:'Non-Experts Add Value to Risk Assessment', src:'Risk Management (Graham)', sections:'§3a', how:'Non-expert asked why drone obeys commands if GPS lost -- prompted GPS-fix pre-condition.', quote:'"Non-experts often ask great questions."', ref:'Graham (2025)' },
+  { id:'RM-34', pri:'could', name:'Don\'t Walk By -- Report Hazards', src:'Risk Management (Graham)', sections:'§3a', how:'Any team member could call a halt at any time. Pre-flight checklist required all sign-off.', quote:'"If you see something you don\'t like, please don\'t walk by."', ref:'Graham (2025)' },
+  { id:'RM-35', pri:'could', name:'Professional Approach Starts Now', src:'Risk Management (Graham)', sections:'§3a', how:'University safety practice = preparation for professional standard.', quote:'"Your professional approach to working safely starts now."', ref:'Graham (2025)' },
+  { id:'RM-38', pri:'could', name:'Risk Management as Art', src:'Risk Management (Graham)', sections:'§3a', how:'Scores involve judgement. Limited flight experience = risk factor itself.', quote:'"The art of risk management, for it is an art."', ref:'Graham (2025)' },
+  { id:'RM-40', pri:'could', name:'Strong Safety Culture Drives Improvement', src:'Risk Management (Graham)', sections:'§3a', how:'Best businesses drive improvement even when record is good. Progressive test ladder embodies this.', quote:'"The best businesses will be those that have a strong health and safety culture at their core."', ref:'Graham (2025)' },
+  { id:'RM-43', pri:'could', name:'Supplier Safety Records', src:'Risk Management (Graham)', sections:'§3a', how:'Good businesses refuse weak safety record suppliers. Safe operations = competitive advantage.', quote:'"Any good business will refuse to work with a supplier that has a weak safety record."', ref:'Graham (2025)' },
+  { id:'RM-45', pri:'could', name:'Auditors Check Risk Assessments', src:'Risk Management (Graham)', sections:'§3a', how:'Risk register + checklists serve audit function -- evidence that safety was considered systematically.', quote:'"Having a look at the risk assessments is one of the key things an auditor does."', ref:'Graham (2025)' },
+
+  // ═══════════════════════════════════════════════════════════════
+  // COULD — Project Management
+  // ═══════════════════════════════════════════════════════════════
+  { id:'PM-05', pri:'could', name:'Pairwise + MCDA Pipeline', src:'PM1 (Graham)', sections:'§3a', how:'Pairwise weightings feed directly into MCDA. Risk assessment INFORMED down-selection.', quote:'"Weightings from this Pairwise comparison can be used as the weightings in the MCDA."', ref:'Graham (2025)' },
+  { id:'PM-06', pri:'could', name:'Expert vs Democratic Weighting', src:'PM1 (Graham)', sections:'§2b', how:'CV specialist vote on model choice should carry more weight. Passion/experience matters.', quote:'"Is more democratic necessarily better? Should each voice carry equal weight?"', ref:'Graham (2025)' },
+  { id:'PM-14', pri:'could', name:'Project Lifecycle Models', src:'PM1 (Graham)', sections:'§3a', how:'4-phase (Concept/Definition/Development/Handover) maps to project timeline.', quote:'"Not one size fits all."', ref:'Graham (2025)' },
+  { id:'PM-19', pri:'could', name:'Don\'t Wait for Perfect Information', src:'PM2 (Graham)', sections:'§1a', how:'"I\'ll start when I have all the information" = fatal. Started before knowing Pi specs, adjusted as data emerged.', quote:'"I\'ll start when I have all the information" (anti-pattern)', ref:'Graham (2025)' },
+  { id:'PM-20', pri:'could', name:'Table / Network / Gantt Equivalence', src:'PM2 (Graham)', sections:'§3a', how:'Each can be derived from the others. Knowing when to use which representation.', quote:'(three equivalent representations)', ref:'Graham (2025)' },
+  { id:'PM-22', pri:'could', name:'10-Level Competence Ladder', src:'PM Specialist (Graham)', sections:'§3a', how:'Self-assess: reached Level 7-8 (tasks defined, deps shown, CP identified, timings computed). Honest assessment = L4.', quote:'"Items >= 7 are exponentially more challenging."', ref:'Graham (2025)' },
+
+  // ═══════════════════════════════════════════════════════════════
+  // SKIP — All Sources
+  // ═══════════════════════════════════════════════════════════════
+  { id:'FD-43', pri:'skip', name:'TEDx: Are You an Ideal Team Player?', src:'Five Dysfunctions (Graham)', sections:'—', how:'Separate Lencioni talk. Not directly from Five Dysfunctions model.', quote:'—', ref:'Lencioni (2016)' },
+  { id:'FD-44', pri:'skip', name:'Decision Tech fable context', src:'Five Dysfunctions (Graham)', sections:'—', how:'Book is a fable about fictional CEO. Not useful for D7.', quote:'—', ref:'Lencioni (2002)' },
+  { id:'TD-30', pri:'skip', name:'Limitation: remote/hybrid not covered', src:'Team Development (Graham)', sections:'—', how:'Only relevant if team worked remotely. Model predates remote work.', quote:'—', ref:'Tuckman synthesis' },
+  { id:'TD-44', pri:'skip', name:'Will of the people (provocative)', src:'Team Development (Graham)', sections:'—', how:'Too provocative for reflective report. Use softer version (TD-18) instead.', quote:'"Some of the worst acts in history have been as a result of the will of the people."', ref:'Graham lecture' },
+  { id:'RM-16', pri:'skip', name:'VPF (Value of Prevented Fatality)', src:'Risk Management (Graham)', sections:'—', how:'Brief context for ALARP maths. Not needed for D7 reflection.', quote:'"Would you spend 5,000,000 to save 20 lives or 50 lives?"', ref:'DfT (2016)' },
+  { id:'RM-25', pri:'skip', name:'Secondary Legislation / Regulations', src:'Risk Management (Graham)', sections:'—', how:'Legislative hierarchy detail. Brief mention at most.', quote:'—', ref:'Graham (2025)' },
+  { id:'RM-26', pri:'skip', name:'HSE Inspectors > Police Powers', src:'Risk Management (Graham)', sections:'—', how:'Brief flavour. Not central to D7 reflection.', quote:'"HSE inspectors have greater powers than the police."', ref:'Graham (2025)' },
+  { id:'RM-30', pri:'skip', name:'FMEA Variants', src:'Risk Management (Graham)', sections:'—', how:'Alternative risk tools. Brief awareness mention at most.', quote:'—', ref:'Graham (2025)' },
+  { id:'RM-33', pri:'skip', name:'Improvement Since 1974 (651 to 150)', src:'Risk Management (Graham)', sections:'—', how:'Historical context showing framework works. Brief mention.', quote:'"Is that good enough? Well, no, not really."', ref:'Graham (2025)' },
+  { id:'RM-37', pri:'skip', name:'Bernstein / Against the Gods', src:'Risk Management (Graham)', sections:'—', how:'Optional scholarly reference for depth.', quote:'"Humanity\'s changed approach to risk is what separates modern from ancient times."', ref:'Bernstein (1996)' },
+  { id:'RM-39', pri:'skip', name:'Risk Management Unlocks Opportunity', src:'Risk Management (Graham)', sections:'—', how:'Closing statement. Demonstrated RM skill unlocks exciting projects.', quote:'"The most exciting projects often involve high levels of risk."', ref:'Graham (2025)' },
+  { id:'RM-41', pri:'skip', name:'White Phosphorus / Phossy Jaw', src:'Risk Management (Graham)', sections:'—', how:'Historical industrial hazard. Optional colour.', quote:'—', ref:'Graham (2025)' },
+  { id:'RM-44', pri:'skip', name:'Factory Act 1802 -- No Enforcement', src:'Risk Management (Graham)', sections:'—', how:'Legislation without enforcement is ineffective. Parallel to risk register without enforcement mechanisms.', quote:'"No legal powers of enforcement."', ref:'Graham (2025)' },
+  { id:'PM-15', pri:'skip', name:'Project / Programme / Portfolio', src:'PM1 (Graham)', sections:'—', how:'Too enterprise-level for student MSc project.', quote:'—', ref:'Graham (2025)' },
+  { id:'PM-24', pri:'skip', name:'PDM Node Anatomy (6-Field Box)', src:'PM Specialist (Graham)', sections:'—', how:'Too mechanical for D7 reflection. "How to draw" rather than "how to apply."', quote:'—', ref:'Graham (2025)' },
+];
+
+function buildPP() {
+  const container = document.getElementById('pp-table');
+  const priColors = { must:'#7ee787', should:'#f9c74f', could:'#484f58', skip:'#f97583' };
+  const priLabels = { must:'★ MUST', should:'● SHOULD', could:'○ COULD', skip:'✗ SKIP' };
+
+  let html = '<table class="matrix" style="table-layout:auto">';
+  const priHeaders = {
+    must: '★ MUST INCLUDE — Brief expects these frameworks cited',
+    should: '● SHOULD INCLUDE — Strengthens rubric score if space allows',
+    could: '○ COULD INCLUDE — Only if space, adds depth',
+    skip: '✗ SKIP — Not relevant to D7 personal reflection'
+  };
+  const priHeaderColors = { must:'#7ee787', should:'#f9c74f', could:'#484f58', skip:'#f97583' };
+  ['must','should','could','skip'].forEach(pri => {
+    const items = PP.filter(p => p.pri === pri);
+    html += `<tr><td colspan="8" style="background:#161b22;padding:10px 8px;border:1px solid #30363d;font-weight:bold;color:${priHeaderColors[pri]};font-size:13px">${priHeaders[pri]} (${items.length})</td></tr>`;
+    html += '<tr style="background:#0d1117"><th style="width:5%;text-align:center;font-size:10px">Use?</th><th style="width:3%;font-size:10px">P</th><th style="width:15%;text-align:left;font-size:10px">Framework</th><th style="width:10%;text-align:left;font-size:10px">Source</th><th style="width:10%;text-align:left;font-size:10px">D7 Section(s)</th><th style="width:22%;text-align:left;font-size:10px">How to use in D7</th><th style="width:20%;text-align:left;font-size:10px">Key quote(s)</th><th style="width:15%;text-align:left;font-size:10px">Your notes</th></tr>';
+    items.forEach((p, i) => {
+      const opacity = pri === 'skip' ? 'opacity:0.4' : '';
+      html += `<tr style="${opacity}">`;
+      html += `<td style="width:5%;text-align:center"><input type="checkbox" data-key="pp-check-${p.id}" ${pri==='must'?'checked':''} onchange="saveAll()"></td>`;
+      html += `<td style="width:3%;color:${priColors[pri]};text-align:center;font-size:10px">${priLabels[pri]}</td>`;
+      html += `<td style="width:15%;font-weight:bold;font-size:12px">${p.name}</td>`;
+      html += `<td style="width:10%;font-size:11px;color:#8b949e">${p.src}</td>`;
+      html += `<td style="width:10%;font-size:11px">${p.sections}</td>`;
+      html += `<td style="width:22%;font-size:11px">${p.how}</td>`;
+      html += `<td style="width:20%;font-size:11px;color:#f9c74f;font-style:italic">${p.quote}</td>`;
+      html += `<td style="width:15%"><textarea data-key="pp-note-${p.id}" placeholder="Your notes..." style="min-height:36px;font-size:11px"></textarea></td>`;
+      html += '</tr>';
+    });
+    if (pri !== 'skip') html += '<tr><td colspan="8" style="height:8px;border:none"></td></tr>';
+  });
+  html += '</table>';
+  container.innerHTML = html;
+  // Also populate standalone tab
+  const standalone = document.getElementById('pp-table-standalone');
+  if (standalone) standalone.innerHTML = html;
+}
+
+const QS = [
+  { sec:'A', title:'Your Voice & Identity', color:'#f97583', qs:[
+    {id:'A1',q:'How would you describe yourself in one sentence to someone who doesn\'t know you?',why:'Sets the voice baseline.'},
+    {id:'A2',q:'What phrases do you catch yourself repeating? Verbal tics, pet phrases — English or Ukrainian.',why:'Sprinkling your verbal patterns = #1 way to pass AI detection.'},
+    {id:'A3',q:'When you\'re frustrated with code or a teammate, what do you actually say — in your head or out loud?',why:'Real emotional language vs "I was frustrated" (AI).'},
+    {id:'A4',q:'Do you think in Ukrainian or English when reflecting on yourself?',why:'Phrasing patterns from your thinking language make writing distinctive.'},
+    {id:'A5',q:'What\'s the bluntest thing you said to a teammate during this project?',why:'One real blunt sentence > three diplomatically hedged paragraphs.'},
+    {id:'A6',q:'How would your teammates describe your working style in 3 words?',why:'Self-awareness gap = Insight 72+ material.'},
+    {id:'A7',q:'What\'s one thing about Ukrainian culture that showed up in how you worked on this project?',why:'Genuine cultural observation = unique evidence.'},
+  ]},
+  { sec:'B', title:'My Role — Q1a, Q1b, Q1c', color:'#f97583', qs:[
+    {id:'B1',q:'What were you OFFICIALLY assigned at the start? Exact role title, which week?',why:'Q1a "explicitly allocated" — 3 marks at risk.'},
+    {id:'B2',q:'List everything you ACTUALLY ended up doing. Every module, every doc, everything you owned.',why:'Gap between B1-B2 = "implicit roles" evidence.'},
+    {id:'B3',q:'When did you first notice the drift? A specific moment — meeting, message, deadline?',why:'"I noticed in week X that..." = L3. "I noticed because..." = L4.'},
+    {id:'B4',q:'Did you actively CHOOSE to take on more, or did it accumulate? Decision or drift?',why:'The distinction reveals self-awareness.'},
+    {id:'B5',q:'Did anyone explicitly ask you to take on something that wasn\'t your job? Who, what, when?',why:'"Were you given implicitly" — named instance with date.'},
+    {id:'B6',q:'What are you MOST PROUD of? Not most impressive — the thing that felt most like YOU.',why:'Q1b worth ~3 marks. Specific > generic.'},
+    {id:'B7',q:'Why THAT thing specifically? What does it say about who you are?',why:'"I\'m proud of X because it revealed Y about me" = Level 4.'},
+    {id:'B8',q:'Is there something you\'re proud of that surprised you? Didn\'t expect to care about?',why:'Surprise = belief revision = Level 4 depth.'},
+    {id:'B9',q:'What SPECIFIC mechanism would you use differently in future? (e.g. "48-hour pair-programming rule before any module exceeds 500 lines")',why:'Vague commitments score 0. Mechanisms with falsifiability tests score full.'},
+    {id:'B10',q:'One sentence of advice to yourself at week 1?',why:'Often becomes the D7 closer.'},
+    {id:'B11',q:'What did you spend too much time on that didn\'t matter in the end?',why:'Anti-humblebrag. Honest time-waste admission = 72+.'},
+    {id:'B12',q:'What didn\'t you spend enough time on that you should have?',why:'Shows self-awareness of priority misjudgement.'},
+    {id:'B13',q:'Did your understanding of "good engineering" change during this project? How?',why:'"I used to think X, now I think Y" = identity-shift closing.'},
+    {id:'B14',q:'A moment where you chose between "technically right" and "right for the team"?',why:'Heart of the FSM compromise. Level 4 move worth 2-3 marks.'},
+  ]},
+  { sec:'C', title:'My Team — Q2a, Q2b, Q2c', color:'#58a6ff', qs:[
+    {id:'C1',q:'How was the team structured at the start? Kickoff meeting? Who suggested it? Discussed or just happened?',why:'Q2a "was this discussed explicitly?"'},
+    {id:'C2',q:'When did the structure change? What caused it? Specific week/event?',why:'Q2a "what changed?"'},
+    {id:'C3',q:'Each teammate\'s ACTUAL contribution (not assigned role). One sentence each.\n- Robin:\n- Demetro:\n- Edward:\n- Zian:\n- 5th teammate:',why:'Rubric 62+ requires "recognising contributions of others."'},
+    {id:'C4',q:'Who was the pilot? What was their role beyond flying?',why:'Pilot = non-technical audience evidence.'},
+    {id:'C5',q:'Who was the PM? What did they ACTUALLY do?',why:'PM role = where structure discussions live.'},
+    {id:'C6',q:'Single most impactful moment of team working? Date, who was there, what happened.',why:'One vivid incident > three vague claims.'},
+    {id:'C7',q:'The FSM pushback with Robin — walk me through it: What did Robin want? What did you want? What was said? How did you feel? What did you do? Outcome?',why:'Primary conflict evidence. Missing this caps Teamwork at 58.'},
+    {id:'C8',q:'Did you have a SECOND genuine disagreement? Different person, different issue?',why:'Two conflicts resolved differently → unlocks 83+.'},
+    {id:'C9',q:'The complaint letter — what was it about? Who wrote it? Anyone disagree about sending? Steve\'s reaction?',why:'M16.c leadership + M17.c non-technical audience.'},
+    {id:'C10',q:'Did you ever feel isolated or frustrated with the team? When? Why?',why:'Honest isolation admission = Distinction-level anti-humblebrag.'},
+    {id:'C11',q:'Tuckman stages at different points:\n- Wk12-13 (kickoff):\n- Wk16-17 (FSM conflict):\n- Wk20-21 (handoff docs):\n- Wk22+ (final push):\n- Did you ever reach Performing?',why:'Tuckman is from Professional Practice. Apply honestly.'},
+    {id:'C12',q:'Lencioni: which dysfunction was MOST present? (1) Trust (2) Conflict (3) Commitment (4) Accountability (5) Results?',why:'Lencioni is from PP. Naming specific dysfunction + evidence = Level 4.'},
+    {id:'C13',q:'What would you CHANGE about team structure next time? Specific mechanism, not "communicate more."',why:'Q2c needs concrete fix someone could implement.'},
+    {id:'C14',q:'A moment where better team structure would have prevented a problem?',why:'Connects "what broke" to "specific fix."'},
+    {id:'C15',q:'Did the team ever explicitly discuss HOW you were working together (not WHAT)?',why:'Meta-work = leadership threshold test.'},
+    {id:'C16',q:'Anyone on the team who surprised you vs your first impression?',why:'"I initially thought X about [name], now I see Z" = Level 4.'},
+  ]},
+  { sec:'D', title:'My Impact — Q3a, Q3b', color:'#7ee787', qs:[
+    {id:'D1',q:'The ONE thing you did that moved the team forward the most? Not biggest build — biggest UNBLOCK.',why:'"Drive" implies unblocking, not just building.'},
+    {id:'D2',q:'If you hadn\'t been on this team, what wouldn\'t exist? List concrete things.',why:'Counterfactual thinking = M16.a evidence.'},
+    {id:'D3',q:'What did you build that OTHERS actually used? Not for yourself — things teammates ran/read/depended on.',why:'"I built X AND Robin used it for Y" = 83+ band.'},
+    {id:'D4',q:'Did anyone tell you directly something you did helped them? Exact words? Who? When?',why:'Direct teammate quote = highest-value evidence. Worth 2-3 marks.'},
+    {id:'D5',q:'The simulation framework — why? Planned or reactive? When did you start? Team\'s reaction?',why:'Key leadership moment. "Repositioned the team" = +2 marks.'},
+    {id:'D6',q:'The main.py refactor (1411→754) — what triggered it? How did Robin react?',why:'Refactoring someone else\'s dependency = team-impact moment.'},
+    {id:'D7',q:'Did you ever deliberately hold back from doing something, to let a teammate do it instead?',why:'Restraint = delegation = 83+ "responsive to group members\' interests."'},
+    {id:'D8',q:'What behaviour/process/practice would you add or refocus on in future?',why:'Q3b needs named behaviour + mechanism + signal.'},
+    {id:'D9',q:'Something you DIDN\'T do that you now wish you had? Something you avoided or postponed?',why:'"I should have done X in week Y but didn\'t because Z" = Level 4.'},
+    {id:'D10',q:'What would you do differently about the relationship between YOUR work and the TEAM\'S work?',why:'Bridges Q3b and Q2c. Shapes the forward commitment.'},
+  ]},
+  { sec:'E', title:'My Support — Q4a, Q4b (THE 85+ GATE)', color:'#d2a8ff', qs:[
+    {id:'E1',q:'Something SPECIFIC each person did that helped YOU:\n- Robin:\n- Demetro:\n- Edward:\n- Pilot:\n- 5th teammate:\n- Steve:\n- Sid:',why:'Q4a needs "named teammate + specific help + what it unblocked."'},
+    {id:'E2',q:'Did any teammate say something that changed how you THINK? Not what you do — how you think about yourself/engineering/teamwork?',why:'Mutual-growth evidence = Level 4.'},
+    {id:'E3',q:'★ THE 85+ GATE: Did Robin/Demetro/Edward ever tell you they reflected differently about THEMSELVES because of something you said/did? Even a rough paraphrase.',why:'Insight 83+ says "feedback to aid their SELF-DEVELOPMENT." Without this, ceiling is 77-80.'},
+    {id:'E4',q:'Feedback to Demetro — FDR scripts: what did you change? How many drafts? What did he say?',why:'Specific details turn a claim into evidence.'},
+    {id:'E5',q:'Feedback to Robin — handoff docs, CENTERING timeout, "shape of bug" conversation — what happened exactly?',why:'Primary peer-feedback episode. If Robin said "I now see I default to optimistic timeouts" = 83+.'},
+    {id:'E6',q:'Feedback to Edward — what was he working on? What did you help with? How did he respond?',why:'Third peer-feedback episode. Three named = 83-100 band.'},
+    {id:'E7',q:'Did you ever give feedback that was received BADLY?',why:'Failed feedback = Level 4 gold.'},
+    {id:'E8',q:'Did you ever HOLD BACK feedback you should have given? Why?',why:'Withheld feedback reveals conflict avoidance pattern.'},
+    {id:'E9',q:'Complaint letter — purpose? Who was involved? Everyone agree? What changed?',why:'M16.c leadership + delegation/collective action.'},
+    {id:'E10',q:'Blueprint system, MEMORY.md, brain-dump, NICE_TO_HAVE — did anyone ELSE use these? Who? How do you know?',why:'"If Robin navigated via blueprint" = Self-management 83+.'},
+    {id:'E11',q:'FIELD_QUICK_REF.md — did anyone use it? Which day? Did it help?',why:'Your self-organisation raising the team\'s floor = "outstanding" vs "very good."'},
+    {id:'E12',q:'Web ground station (browser dashboard) — who used it besides you? Pilot? Robin? Reaction?',why:'Non-technical audience evidence + M17.c.'},
+    {id:'E13',q:'Anything to help the team that wasn\'t about code? Scheduling, morale, disputes, explaining, advocating?',why:'Non-technical contributions = "meta-work" leadership test.'},
+    {id:'E14',q:'Actions you took that helped the team but nobody noticed or thanked you for?',why:'Unacknowledged contribution = honest and human.'},
+  ]},
+  { sec:'F', title:'Non-Engineer Audience (M17.c — weakest clause)', color:'#f9c74f', qs:[
+    {id:'F1',q:'Did you explain a technical concept to a non-engineer? Who? What concept? How did you simplify?',why:'M17.c needs "audience with NO engineering background, real stake." Without this, ceiling 59.'},
+    {id:'F2',q:'Did Steve/anyone non-technical react to specific wording in the complaint letter? Quote anything back? Did you revise technical language for them?',why:'Before/after jargon pair with recipient reaction = +3-4 marks.'},
+    {id:'F3',q:'Did the pilot comment on the ground station UI? Buttons, layout, video stream? What words?',why:'Pilot feedback on UI = non-technical reception evidence.'},
+    {id:'F4',q:'Did you explain the project to someone completely outside engineering? Friend, family, social event? How?',why:'Backup M17.c evidence.'},
+  ]},
+  { sec:'G', title:'Self-Development & Growth (Insight 72+)', color:'#7ee787', qs:[
+    {id:'G1',q:'A specific skill you developed DURING this project you didn\'t have before? Not a tool — a capability or way of thinking.',why:'"I learned Python" = CV padding. "I learned to design for people who won\'t read docs" = Level 4.'},
+    {id:'G2',q:'How did you develop it? What did you actually DO? Specific actions.',why:'"Implement an effective programme" = past tense, concrete.'},
+    {id:'G3',q:'A belief you held at the START that you no longer hold?',why:'"I used to think X, now Y because Z" = most powerful reflective structure.'},
+    {id:'G4',q:'The most uncomfortable thing you learned about yourself?',why:'Scoring doc says: "specific, actionable, proportionate, structural not dispositional."'},
+    {id:'G5',q:'"What kind of engineer are you?" — answer NOW vs September?',why:'Becomes the D7 closer. Identity-shift move #10.'},
+    {id:'G6',q:'Did you try an approach, see it fail, and change? Before and after?',why:'Kolb cycle in real life. Name all 4 steps = +2 marks.'},
+    {id:'G7',q:'A weakness you identified early and actively worked on? What did you do? Did it improve? How do you know?',why:'"In-timeline self-development with measurable improvement" = 83+ Insight.'},
+    {id:'G8',q:'What\'s still unresolved? What question about yourself are you still working out?',why:'Distinction closings "acknowledge what is still unresolved."'},
+  ]},
+  { sec:'H', title:'AI Usage Disclosure (Cat 2 Minimal)', color:'#484f58', qs:[
+    {id:'H1',q:'How did you use AI (Claude) in this project? Be straightforward.',why:'You may need to discuss this.'},
+    {id:'H2',q:'What did Claude help with that you couldn\'t have done yourself? What did you do that Claude couldn\'t?',why:'Understanding the boundary = tool vs author.'},
+    {id:'H3',q:'Where was the line between your thinking and Claude\'s output?',why:'Category 3 Selective for software. Be clear about engineering judgement.'},
+    {id:'H4',q:'How will you discuss AI usage in the D7 if asked? Your honest framing?',why:'Prepared honest position > being caught off guard.'},
+  ]},
+  { sec:'X', title:'Bonus: Specific Evidence Requests', color:'#f9c74f', qs:[
+    {id:'X1',q:'Between wk19-22, did Robin add timeout guards or error handling to his modules? Roughly how many?',why:'"3 timeout guards appeared where 0 had existed" = +1-2 marks on Insight.'},
+    {id:'X2',q:'Did Robin or Demetro ever use the blueprint files to navigate the codebase? How do you know?',why:'Self-organisation raising team floor = +1-1.5 marks.'},
+    {id:'X3',q:'R01-R12: how many met in simulation vs real hardware? What were the gaps?',why:'"12/12 sim, X/12 hardware, Y gaps = Z" = M16.d-team +1.5-2 marks.'},
+    {id:'X4',q:'Did your supervisor give you direct feedback? What did they say?',why:'External validation evidence.'},
+    {id:'X5',q:'Anyone outside the team who saw the project and commented? What did they say?',why:'External perspective = alternative viewpoint evidence.'},
+  ]},
+];
+
+function buildQ(targetId) {
+  const container = document.getElementById(targetId);
+  if (!container) return;
+  let html = '';
+  QS.forEach(section => {
+    html += `<div style="background:#161b22;border:1px solid #30363d;border-left:3px solid ${section.color};border-radius:8px;margin-bottom:16px;overflow:hidden">`;
+    html += `<div style="padding:12px 16px;font-weight:bold;font-size:15px;color:${section.color};cursor:pointer" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">Section ${section.sec}: ${section.title} (${section.qs.length} questions) ▼</div>`;
+    html += '<div style="padding:0 16px 16px">';
+    section.qs.forEach(q => {
+      html += `<div style="background:#0d1117;border:1px solid #21262d;border-radius:6px;padding:12px;margin-bottom:8px">`;
+      html += `<div style="font-size:13px;font-weight:bold;color:${section.color};margin-bottom:4px">${q.id}.</div>`;
+      html += `<div style="font-size:12px;color:#c9d1d9;margin-bottom:4px;white-space:pre-line">${q.q}</div>`;
+      html += `<div style="font-size:10px;color:#484f58;margin-bottom:6px;font-style:italic">↳ ${q.why}</div>`;
+      html += `<textarea data-key="q-${q.id}" style="width:100%;min-height:64px;background:#161b22;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;padding:8px;font-size:12px;resize:vertical;font-family:inherit" placeholder="Your answer..."></textarea>`;
+      html += '</div>';
+    });
+    html += '</div></div>';
+  });
+  container.innerHTML = html;
+}
+
+buildMatrix();
+buildCards();
+buildNested();
+buildLens();
+buildPP();
+buildQ('q-inline');
+buildQ('q-standalone');
+loadAll();
+</script>
+</body>
+</html>
